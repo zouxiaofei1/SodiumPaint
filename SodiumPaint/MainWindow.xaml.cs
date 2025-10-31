@@ -1825,9 +1825,10 @@ namespace SodiumPaint
             System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        public MainWindow()
+        public MainWindow(string startFilePath)
         {
-            _currentFilePath = @"E:\dev\106117173_p12.jpg";
+            //if (startFilePath == null) return;
+            _currentFilePath = startFilePath;
             InitializeComponent();
             // DataContext = new ViewModels.MainWindowViewModel();
             DataContext = this;
@@ -2264,71 +2265,90 @@ namespace SodiumPaint
         }
 
 
-        private void LoadImage(string filePath)
+
+        private async Task LoadImage(string filePath)
         {
             if (!File.Exists(filePath))
             {
-                System.Windows.MessageBox.Show($"找不到图片文件: {filePath}");
+                s($"找不到图片文件: {filePath}");
                 return;
             }
 
             try
             {
-                _bitmap = LoadBitmapWith96Dpi(filePath);
-                _currentFileName = System.IO.Path.GetFileName(_currentFilePath);
-                BackgroundImage.Source = _bitmap;
-                if (_surface == null)
-                    _surface = new CanvasSurface(_bitmap);
-                else
-                    _surface.Attach(_bitmap);
-
-                if (_undo != null)
+                // 🧩 后台线程进行解码和位图创建
+                var wb = await Task.Run(() =>
                 {
-                    _undo.ClearUndo();
-                    _undo.ClearRedo();
-                }
+                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    var img = new BitmapImage();
+                    img.BeginInit();
+                    img.CacheOption = BitmapCacheOption.OnLoad; // 一次性加载到内存
+                    img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile; // 加快解码
+                    img.StreamSource = fs;
+                    img.EndInit();
+                    img.Freeze(); // 使其可被跨线程访问
 
-                // BackgroundImage.Source = _bitmap;
+                    // 在后台线程上创建 WriteableBitmap
+                    var wbmp = new WriteableBitmap(img);
+                    wbmp.Freeze(); // 同样冻结可跨线程用
+                    return wbmp;
+                });
 
-                _currentFilePath = filePath;
-                _isEdited = false; // 新加载时标记未修改
+                // ✅ 回到 UI 线程更新
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    _bitmap = new WriteableBitmap(wb); ;
+                    _currentFileName = System.IO.Path.GetFileName(filePath);
+                    BackgroundImage.Source = _bitmap;
 
-                // === 新增：扫描当前目录所有图片 ===
-                string folder = System.IO.Path.GetDirectoryName(filePath);
-                _imageFiles = Directory.GetFiles(folder, "*.*")
-                                  .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
-                                           || f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
-                                           || f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
-                                           || f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
-                                  .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                                  .ToList();
+                    if (_surface == null)
+                        _surface = new CanvasSurface(_bitmap);
+                    else
+                        _surface.Attach(_bitmap);
 
-                _currentImageIndex = _imageFiles.IndexOf(filePath);
+                    _undo?.ClearUndo();
+                    _undo?.ClearRedo();
 
-                // 调整窗口和画布大小
-                double imgWidth = _bitmap.Width;
-                double imgHeight = _bitmap.Height;
+                    _currentFilePath = filePath;
+                    _isEdited = false;
 
+                    // 扫描同目录图片文件
+                    string folder = System.IO.Path.GetDirectoryName(filePath)!;
+                    _imageFiles = Directory.GetFiles(folder, "*.*")
+                        .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
 
+                    _currentImageIndex = _imageFiles.IndexOf(filePath);
 
-                BackgroundImage.Width = imgWidth;
-                BackgroundImage.Height = imgHeight;
+                    // 窗口调整逻辑
+                    double imgWidth = _bitmap.Width;
+                    double imgHeight = _bitmap.Height;
 
-                // 根据屏幕情况（最多占 90%）
-                double maxWidth = SystemParameters.WorkArea.Width;
-                double maxHeight = SystemParameters.WorkArea.Height;
+                    BackgroundImage.Width = imgWidth;
+                    BackgroundImage.Height = imgHeight;
 
-                _imageSize = $"{_surface.Width}×{_surface.Height}";
-                OnPropertyChanged(nameof(ImageSize));
-                UpdateWindowTitle();
+                    double maxWidth = SystemParameters.WorkArea.Width;
+                    double maxHeight = SystemParameters.WorkArea.Height;
 
-                SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.7, 10, 10);
+                    _imageSize = $"{_surface.Width}×{_surface.Height}";
+                    OnPropertyChanged(nameof(ImageSize));
+                    UpdateWindowTitle();
+
+                    SetZoomAndOffset(
+                        Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.7,
+                        10, 10);
+                }, System.Windows.Threading.DispatcherPriority.Background);
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"加载图片失败: {ex.Message}");
+                s($"加载图片失败: {ex.Message}");
             }
         }
+
 
 
         private void OnSaveClick(object sender, RoutedEventArgs e)
