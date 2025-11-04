@@ -4,7 +4,19 @@
              xmlns:local="clr-namespace:SodiumPaint"
             >
     <Application.Resources>
-       
+        <Style TargetType="Separator">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Background="#888"
+                            Opacity="0.5"
+                            
+                            Width="1"
+                                VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
     </Application.Resources>
 </Application>

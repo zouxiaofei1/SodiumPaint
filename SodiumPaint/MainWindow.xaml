@@ -6,10 +6,172 @@
         Height="900" Width="1250"
         Top=" 100" Left="100"
         SizeToContent="Manual"
+         AllowsTransparency="True"
+        WindowStyle="None"
+        Background="{x:Null}"
         MouseWheel="OnMouseWheelZoom">
 
     <Window.Resources>
+        <!-- 通用标题栏按钮样式 -->
+        <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="0"
+                            CornerRadius="4">
+                            <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#EEE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#DDD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
+        <!-- 专门用于“关闭”按钮的样式 -->
+        <Style x:Key="CloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
+            <Setter Property="FontSize" Value="18"/>
+            <!-- 字体更大 -->
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4">
+                            <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- 悬浮红色 -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#FF5555"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <!-- 点击深红色 -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#CC3333"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernMenuItemStyle" TargetType="{x:Type MenuItem}">
+        <!-- 设置内边距，让背景比文字大一些 -->
+        <Setter Property="Padding" Value="10,5"/>
+        <!-- 设置外边距，让菜单项之间有间距 -->
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type MenuItem}">
+                    <!-- 使用 Grid 布局，方便放置 Header 和 Popup -->
+                    <Grid Background="Transparent">
+                        <!-- 视觉元素：圆角边框，用于悬浮效果 -->
+                        <Border x:Name="BgBorder" 
+                                Background="Transparent" 
+                                BorderBrush="Transparent" 
+                                BorderThickness="1"
+                                CornerRadius="2">
+                            <!-- 内容显示：绑定 Header 和 Padding -->
+                            <ContentPresenter ContentSource="Header" 
+                                              RecognizesAccessKey="True"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+
+                        <!-- 功能核心：Popup 用于显示子菜单 -->
+                        <!-- IsOpen 属性与 MenuItem 的 IsSubmenuOpen 状态绑定 -->
+                        <Popup x:Name="SubMenuPopup"
+                               IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               Placement="Bottom"
+                               Focusable="false"
+                               AllowsTransparency="True"
+                               PopupAnimation="Fade">
+                            <!-- 子菜单的容器和外观 -->
+                            <Border Name="SubmenuBorder"
+                                    Background="White"
+                                    BorderBrush="#E0E0E0"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Margin="5,0"
+                                    Padding="2">
+                                <!-- ItemsPresenter 用于显示所有子 MenuItem -->
+                                <ItemsPresenter x:Name="ItemsPresenter"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                Grid.IsSharedSizeScope="true"
+                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                KeyboardNavigation.TabNavigation="Cycle"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <!-- 触发器：定义不同状态下的样式 -->
+                    <ControlTemplate.Triggers>
+                        <!-- 1. 鼠标悬浮时的样式 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#E0E0E0"/>
+                        </Trigger>
+                        
+                        <!-- 2. 当子菜单打开时，保持高亮状态 -->
+                        <Trigger Property="IsSubmenuOpen" Value="True">
+                            <Setter TargetName="BgBorder" Property="Background" Value="#E6E6E6"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+        <Style x:Key="RoundedMenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#EEE"/>
+                                <Setter Property="BorderBrush" Value="#CCC"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#DDD"/>
+                                <Setter Property="BorderBrush" Value="#AAA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
 
         <Style x:Key="SliderRepeatButtonStyle" TargetType="RepeatButton">
@@ -26,47 +188,33 @@
             </Setter.Value>
         </Setter>
         </Style>
-
-
-        <!-- 扁平菜单样式 -->
-        <Style x:Key="ModernMenuItemStyle" TargetType="MenuItem">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Padding" Value="8,4"/>
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="MenuItem">
-                        <Border x:Name="Border"
-                            CornerRadius="6"
-                            Background="{TemplateBinding Background}"
-                            Padding="{TemplateBinding Padding}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <ContentPresenter Grid.Column="0"
-                                              ContentSource="Icon"
-                                              Margin="0,0,8,0"
-                                              VerticalAlignment="Center"/>
-                                <ContentPresenter Grid.Column="1"
-                                              ContentSource="Header"
-                                              VerticalAlignment="Center"/>
-                            </Grid>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#303030"/>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#333"/>
                             </Trigger>
-                            <Trigger Property="IsSubmenuOpen" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#404040"/>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#555"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+
+        <!-- 扁平菜单样式 -->
+       
         <Style TargetType="Button" x:Key="ToolButton">
             <Setter Property="Background" Value="#ccc"/>
             <Setter Property="Foreground" Value="White"/>
@@ -132,28 +280,135 @@
             <MenuItem Header="水平翻转" Foreground="White" Click="OnFlipHorizontalClick"/>
         </ContextMenu>
     </Window.Resources>
-
-    <Grid>
+    <!--<WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" 
+                      ResizeBorderThickness="8"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="True" />
+    </WindowChrome.WindowChrome>-->
+    <Grid Background="Transparent">
         <DockPanel LastChildFill="True">
-            <!-- 顶部菜单栏 -->
-            <Menu DockPanel.Dock="Top"
-      ItemContainerStyle="{x:Null}">
-                <MenuItem Header="文件">
-                    <MenuItem Header="新建" Click="OnNewClick" InputGestureText="Ctrl+N"/>
-                    <MenuItem Header="打开" Click="OnOpenClick" InputGestureText="Ctrl+O"/>
-                    <Separator/>
-                    <MenuItem Header="保存" Click="OnSaveClick" InputGestureText="Ctrl+S"/>
-                    <MenuItem Header="另存为..." Click="OnSaveAsClick"/>
-                </MenuItem>
-            </Menu>
 
+
+            <Border DockPanel.Dock="Top"
+        Height="40"
+        Background="#22FFFFFF"
+        VerticalAlignment="Top"
+        HorizontalAlignment="Stretch"   
+                MouseLeftButtonDown="Border_MouseLeftButtonDown">
+
+                <DockPanel LastChildFill="True">
+                    <!-- 允许右边自动靠边 -->
+                    <!-- 左边标题 -->
+                    <Image x:Name="AppIcon"
+               Source="pack://application:,,,/Resources/SodiumPaint.ico"
+               Width="24" Height="24"
+               Margin="10,0,5,0"/>
+
+                    <!-- 标题文字 -->
+                    <TextBlock x:Name="TitleTextBlock"
+                   Text="SodiumPaint"
+                   VerticalAlignment="Center"
+                   FontSize="14"
+                   Foreground="Black"/>
+                    <!-- 右边控制按钮 -->
+                    <StackPanel DockPanel.Dock="Right"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"   
+                        Margin="0,0,6,0">
+                        <!-- 加一点右边距 -->
+                        <Button Width="40" Height="30" Content="—" Foreground="Black"
+                    Click="Minimize_Click" Style="{StaticResource TitleBarButtonStyle}"/>
+                        <Button Width="40" Height="30" Content="□" FontSize="24" Foreground="Black"
+                    Click="MaximizeRestore_Click" Style="{StaticResource TitleBarButtonStyle}"/>
+                        <Button Width="40" Height="30" Content="×" Foreground="Black"
+                    Click="Close_Click" Style="{StaticResource CloseButtonStyle}"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+
+
+
+            <!-- 顶部菜单栏 -->
+
+            <Border DockPanel.Dock="Top" Height="40" Background="Transparent" Padding="2,2,2,2">
+                <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="8,0">
+                    <Menu DockPanel.Dock="Left"
+              Background="Transparent"
+              Foreground="Black"
+              VerticalAlignment="Center"
+              BorderThickness="0"
+              FontSize="14"
+              Padding="0"
+              Margin="0">
+
+                        <!-- 左边菜单 -->
+                        <MenuItem Header="文件" Style="{StaticResource ModernMenuItemStyle}">
+                            <MenuItem Header="新建" Click="OnNewClick" InputGestureText="Ctrl+N"/>
+                            <MenuItem Header="打开" Click="OnOpenClick" InputGestureText="Ctrl+O"/>
+                            <Separator/>
+                            <MenuItem Header="保存" Click="OnSaveClick" InputGestureText="Ctrl+S"/>
+                            <MenuItem Header="另存为..." Click="OnSaveAsClick"/>
+                            <Separator/>
+                            <MenuItem Header="退出" Click="OnExitClick"/>
+                            <Separator/>
+                        </MenuItem>
+
+                        <!-- 编辑菜单 -->
+                        <MenuItem Header="编辑" Style="{StaticResource ModernMenuItemStyle}">
+                            <MenuItem Header="撤销" Click="OnUndoClick" InputGestureText="Ctrl+Z"/>
+                            <MenuItem Header="重做" Click="OnRedoClick" InputGestureText="Ctrl+Y"/>
+                            <Separator/>
+                            <MenuItem Header="复制" Click="EmptyClick" InputGestureText="C"/>
+                            <MenuItem Header="剪切" Click="EmptyClick" InputGestureText="C"/>
+                            <MenuItem Header="粘贴" Click="EmptyClick" InputGestureText="C"/> 
+                        </MenuItem>
+
+                        <!-- 查看菜单 -->
+                        <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
+                            <MenuItem Header="暂无" Click="EmptyClick" InputGestureText="C"/>
+                            <MenuItem Header="暂无" Click="EmptyClick" InputGestureText="C"/>
+                            <Separator/>
+                            <MenuItem Header="暂无" Click="EmptyClick" InputGestureText="C"/>
+                            <MenuItem Header="暂无" Click="EmptyClick" InputGestureText="C"/>
+                            <MenuItem Header="暂无" Click="EmptyClick" InputGestureText="C"/>
+                            <MenuItem Header="暂无" Click="EmptyClick" InputGestureText="C"/>
+                        </MenuItem>
+
+                    </Menu>
+
+                    <!-- 中间分隔线 -->
+                    <Border DockPanel.Dock="Left" Width="1" Background="#bbb" Margin="2,0"/>
+
+                    <!-- 图片按钮栏 -->
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                        
+                        <!-- 保存按钮 -->
+                        <Button Margin="6,0" Style="{StaticResource RoundedMenuButtonStyle}">
+                            <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="20" Height="20"/>
+                        </Button>
+                        <!-- 撤销按钮 -->
+                        <Button Margin="6,0" Style="{StaticResource RoundedMenuButtonStyle}">
+                            <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="20" Height="20"/>
+                        </Button>
+                        <!-- 重做按钮 -->
+                        <Button Margin="6,0" Style="{StaticResource RoundedMenuButtonStyle}">
+                            <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="20" Height="20"/>
+                        </Button>
+                    </StackPanel>
+
+                </DockPanel>
+            </Border>
 
 
 
 
 
             <!-- 工具栏 -->
-            <ToolBarTray DockPanel.Dock="Top" >
+            <ToolBarTray DockPanel.Dock="Top" Background="Transparent" >
                 <ToolBar  >
                     <Button Content="铅笔" Click="OnPenClick"/>
                     <Button Content="取颜色" Click="OnPickColorClick"/>
@@ -298,7 +553,7 @@
 
 
             <!-- 文件标签栏 -->
-            <Border DockPanel.Dock="Top" Height="100" Background="#EEE">
+            <Border DockPanel.Dock="Top" Height="100" Background="Transparent">
                 <Grid Background="Transparent">
                     <!-- 两列：左侧缩略图列表 + 右侧垂直滚动条 -->
                     <Grid.ColumnDefinitions>
@@ -485,7 +740,7 @@ PreviewMouseDown="PreviewSlider_PreviewMouseDown"--><!--IsMove PreviewMouseDown=
               HorizontalScrollBarVisibility="Auto"
               VerticalScrollBarVisibility="Auto"
               PreviewMouseWheel="OnMouseWheelZoom"
-                      Background="#f0f0f0">
+                      Background="Transparent">
 
 
 

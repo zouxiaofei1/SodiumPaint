@@ -12,14 +12,16 @@
 
   <ItemGroup>
     <None Remove="Resources\colorwheel_64x64.png" />
+    <None Remove="Resources\SodiumPaint_64x64.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Resources\SodiumPaint.ico" />
+    <Resource Include="Resources\SodiumPaint.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\colorwheel_64x64.png" />
+    <Resource Include="Resources\SodiumPaint_64x64.png" />
   </ItemGroup>
 
   <ItemGroup>

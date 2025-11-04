@@ -15,6 +15,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
@@ -54,7 +55,7 @@ namespace SodiumPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.2"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.3"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
@@ -2693,11 +2694,14 @@ namespace SodiumPaint
 
         private void UpdateWindowTitle()
         {
-            // 如果有未保存的修改，加上 '*'
             string dirtyMark = _isFileSaved ? "" : "*";
-            //_currentImageIndex = 0;
-            //_imageFiles.Count();
-            this.Title = $"{dirtyMark}{_currentFileName} ({_currentImageIndex + 1}/{_imageFiles.Count})- SodiumPaint {_programVersion}";
+            string newTitle = $"{dirtyMark}{_currentFileName} ({_currentImageIndex + 1}/{_imageFiles.Count}) - SodiumPaint {_programVersion}";
+
+            // 更新窗口系统标题栏（任务栏显示）
+            this.Title = newTitle;
+
+            // 同步更新自定义标题栏显示内容
+            TitleTextBlock.Text = newTitle;
         }
 
         private void OnTextClick(object sender, RoutedEventArgs e)
@@ -2798,7 +2802,10 @@ namespace SodiumPaint
             }
         }
 
-
+        private void OnExitClick(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Application.Current.Shutdown();
+        }
 
 
 
@@ -2824,7 +2831,41 @@ namespace SodiumPaint
         //
         /// </summary>
         /// <param name="startFilePath"></param>
+        private void Minimize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+        private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
 
+        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+                WindowState = WindowState.Normal;
+            else
+                WindowState = WindowState.Maximized;
+        }
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void OnSourceInitialized(object? sender, EventArgs e)
+        {
+            var hwnd = new WindowInteropHelper(this).Handle;
+
+            // 让 WPF 的合成目标透明，否则会被清成黑色
+            var src = (HwndSource)PresentationSource.FromVisual(this)!;
+            src.CompositionTarget.BackgroundColor = Colors.Transparent;
+
+            //DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdrop, sizeof(int));
+        }
         public MainWindow(string startFilePath)
         {
             //if (startFilePath == null) return;
@@ -2851,8 +2892,11 @@ namespace SodiumPaint
             UnderlineBtn.Checked += FontSettingChanged;
             UnderlineBtn.Unchecked += FontSettingChanged;
 
-
-
+            SourceInitialized += OnSourceInitialized;
+            Loaded += (s, e) =>
+            {
+                MicaAcrylicManager.ApplyEffect(this);
+            };
             ZoomSlider.ValueChanged += (s, e) =>
             {
                 ZoomScale = ZoomSlider.Value; // 更新属性而不是直接访问 zoomscale
@@ -2958,6 +3002,7 @@ namespace SodiumPaint
 
         private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
         private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
+        private void EmptyClick(object sender, RoutedEventArgs e) { }
         private void OnDrawUp(object sender, MouseButtonEventArgs e)
         {
             if (!_isDrawing || _preDrawSnapshot == null) return;
@@ -3284,6 +3329,8 @@ namespace SodiumPaint
             // 转成 WriteableBitmap
             return new WriteableBitmap(newSource);
         }
+
+
 
 
 
@@ -3798,7 +3845,7 @@ namespace SodiumPaint
                     UpdateWindowTitle();
 
                     SetZoomAndOffset(
-                        Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.65,
+                        Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.6,
                         10, 10);
 
                 }, System.Windows.Threading.DispatcherPriority.Background);
@@ -3855,8 +3902,6 @@ namespace SodiumPaint
         private void OnSelectClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Select);
 
 
-
-
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)
         {
             _bitmap = new WriteableBitmap(_bmpWidth, _bmpHeight, 96, 96, PixelFormats.Bgra32, null);
@@ -3911,7 +3956,7 @@ namespace SodiumPaint
             OnPropertyChanged(nameof(ImageSize));
             UpdateWindowTitle();
 
-            SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.7, 10, 10);
+            SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.65, 10, 10);
 
         }
 
