@@ -105,7 +105,7 @@ namespace SodiumPaint
         {
             string Name { get; }
             System.Windows.Input.Cursor Cursor { get; }
-
+            void Cleanup(ToolContext ctx);
             void OnPointerDown(ToolContext ctx, Point viewPos);
             void OnPointerMove(ToolContext ctx, Point viewPos);
             void OnPointerUp(ToolContext ctx, Point viewPos);
@@ -120,6 +120,7 @@ namespace SodiumPaint
             public virtual void OnPointerMove(ToolContext ctx, Point viewPos) { }
             public virtual void OnPointerUp(ToolContext ctx, Point viewPos) { }
             public virtual void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
+            public virtual void Cleanup(ToolContext ctx) { }
         }
 
 
@@ -1024,7 +1025,18 @@ namespace SodiumPaint
                 BottomLeft, BottomMiddle, BottomRight
             }
 
-
+            public void CleanUp(ToolContext ctx)
+            {
+                HidePreview(ctx);
+                ctx.SelectionOverlay.Children.Clear();
+                ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+                // 清空状态
+                _selecting = false;
+                _draggingSelection = false;
+                _resizing = false;
+                _currentAnchor = ResizeAnchor.None;
+                _selectionData = null;
+            }
             public void CutSelection(ToolContext ctx, bool paste)
             {
                 if (_selectionData == null) return;
@@ -1850,6 +1862,31 @@ namespace SodiumPaint
                 LeftMiddle, RightMiddle,
                 BottomLeft, BottomMiddle, BottomRight
             }
+            public override void Cleanup(ToolContext ctx)
+            {
+                if (_textBox != null && !string.IsNullOrWhiteSpace(_textBox.Text))CommitText(ctx);
+                
+                if (_textBox != null && ctx.EditorOverlay.Children.Contains(_textBox))
+                {
+                    ctx.EditorOverlay.Children.Remove(_textBox);
+                    _textBox = null;
+                }
+                if (ctx.SelectionOverlay != null)
+                {
+                    ctx.SelectionOverlay.Children.Clear();
+                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+                }
+               ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
+
+                // 5️⃣ 重置工具状态
+                _dragging = false;
+                _resizing = false;
+                _currentAnchor = ResizeAnchor.None;
+                _textRect = new Int32Rect();
+                lag = 0;
+
+                Mouse.OverrideCursor = System.Windows.Input.Cursors.Arrow;
+            }
 
             private List<Point> GetHandlePositions(Int32Rect rect)
             {
@@ -1872,9 +1909,6 @@ namespace SodiumPaint
 
                 return handles;
             }
-
-
-
 
             public void DrawTextboxOverlay(ToolContext ctx)
             {
@@ -2036,7 +2070,6 @@ namespace SodiumPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                // Debug.Print("1123245");
                 if (_textBox != null)
                 {
                     Point p = viewPos;
@@ -2056,10 +2089,6 @@ namespace SodiumPaint
                     }
                     else
                     {
-                        // 点击外部 → 提交到画布
-
-
-
                         CommitText(ctx);
                         DeselectCurrentBox(ctx);
                         ctx.EditorOverlay.IsHitTestVisible = false;
@@ -2105,6 +2134,8 @@ namespace SodiumPaint
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
+
+                if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Text) return;
                 if (_resizing)
                 {
                     _resizing = false;// return;
@@ -2131,7 +2162,6 @@ namespace SodiumPaint
                     ctx.EditorOverlay.IsHitTestVisible = true;
                     Canvas.SetZIndex(ctx.EditorOverlay, 999);
                     ctx.EditorOverlay.Children.Add(_textBox);
-
 
 
                     ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_textBox);
@@ -2324,8 +2354,6 @@ namespace SodiumPaint
                 CurrentTool = defaultTool;
                 _ctx.ViewElement.MouseDown += (s, e) => CurrentTool.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));
                 _ctx.ViewElement.MouseMove += ViewElement_MouseMove;
-
-                //_ctx.ViewElement.MouseMove += (s, e) => CurrentTool.OnPointerMove(_ctx, e.GetPosition(_ctx.ViewElement));
                 _ctx.ViewElement.MouseUp += (s, e) => CurrentTool.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement));
             }
 
@@ -2345,6 +2373,7 @@ namespace SodiumPaint
 
             public void SetTool(ITool tool)
             {
+                CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
                 Mouse.OverrideCursor = tool.Cursor;
             }
@@ -2508,27 +2537,19 @@ namespace SodiumPaint
 
         public enum BrushStyle { Round, Square, Brush, Spray, Pencil }
 
-        // private BrushStyle _currentBrushStyle = BrushStyle.Round;
-        private void ShowRotateMenu(object sender, RoutedEventArgs e)
-        {
-            var menu = (System.Windows.Controls.ContextMenu)FindResource("RotateContextMenu");
-            menu.PlacementTarget = RotateMenuButton;
-            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-            menu.IsOpen = true; // 弹出菜单
-        }
-
         private void OnBrushStyleClick(object sender, RoutedEventArgs e)
         {
-            if (sender is ToggleButton btn && Enum.TryParse(btn.Tag.ToString(), out BrushStyle style))
+            if (sender is System.Windows.Controls.MenuItem menuItem
+                && menuItem.Tag is string tagString
+                && Enum.TryParse(tagString, out BrushStyle style))
             {
-                //   _currentBrushStyle = style;
-                _ctx.PenStyle = style;
-                // 可选：取消其它按钮的选中状态
-                var toolbar = (btn.Parent as System.Windows.Controls.ToolBar);
-                foreach (var child in toolbar.Items.OfType<ToggleButton>())
-                    if (!ReferenceEquals(child, btn)) child.IsChecked = false;
+                _ctx.PenStyle = style; // 你的画笔样式枚举
             }
+
+            // 点击后关闭下拉按钮
+            BrushToggle.IsChecked = false;
         }
+
 
         private void ThicknessSlider_DragStarted(object sender, DragStartedEventArgs e)
         {
@@ -2590,24 +2611,20 @@ namespace SodiumPaint
 
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;
-
-            // 确保居中
-            //ThicknessPreview.HorizontalAlignment = HorizontalAlignment.Center;
-            //ThicknessPreview.VerticalAlignment = VerticalAlignment.Center;
         }
         private void OnRotateLeftClick(object sender, RoutedEventArgs e)
         {
-            RotateBitmap(-90);
+            RotateBitmap(-90); RotateFlipMenuToggle.IsChecked = false;
         }
 
         private void OnRotateRightClick(object sender, RoutedEventArgs e)
         {
-            RotateBitmap(90);
+            RotateBitmap(90); RotateFlipMenuToggle.IsChecked = false;
         }
 
         private void OnRotate180Click(object sender, RoutedEventArgs e)
         {
-            RotateBitmap(180);
+            RotateBitmap(180); RotateFlipMenuToggle.IsChecked = false;
         }
 
 
@@ -2634,12 +2651,12 @@ namespace SodiumPaint
         }
         private void OnFlipVerticalClick(object sender, RoutedEventArgs e)
         {
-            FlipBitmap(flipVertical: true);
+            FlipBitmap(flipVertical: true); RotateFlipMenuToggle.IsChecked = false;
         }
 
         private void OnFlipHorizontalClick(object sender, RoutedEventArgs e)
         {
-            FlipBitmap(flipVertical: false);
+            FlipBitmap(flipVertical: false); RotateFlipMenuToggle.IsChecked = false;
         }
 
 
@@ -2741,6 +2758,10 @@ namespace SodiumPaint
             System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        static void s()
+        {
+            System.Windows.MessageBox.Show("空messagebox", "标题", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
         static void msgbox<T>(T a)
         {
             System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -3121,7 +3142,12 @@ namespace SodiumPaint
 
         private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
         private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
-        private void EmptyClick(object sender, RoutedEventArgs e) { }
+        private void EmptyClick(object sender, RoutedEventArgs e) 
+        {
+            RotateFlipMenuToggle.IsChecked = false;
+            BrushToggle.IsChecked = false;
+        }
+
         private void OnDrawUp(object sender, MouseButtonEventArgs e)
         {
             if (!_isDrawing || _preDrawSnapshot == null) return;
@@ -3210,7 +3236,10 @@ namespace SodiumPaint
             SetUndoRedoButtonState();
         }
     
-
+        //private void LoadImage_ToolClearUp()
+        //{
+        //    _ctx.
+        //}
 
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
         {
@@ -4013,7 +4042,7 @@ namespace SodiumPaint
                     SetZoomAndOffset(
                         Math.Min(maxWidth / imgWidth, maxHeight / imgHeight) * 0.6,
                         10, 10);
-
+                    
                 }, System.Windows.Threading.DispatcherPriority.Background);
             }
             catch (Exception ex)
@@ -4056,7 +4085,9 @@ namespace SodiumPaint
             Pen,
             Eyedropper,
             Eraser,
-            Fill
+            Fill,
+            Text,
+            Select
         }
 
         private ToolMode _currentTool = ToolMode.Pen;
@@ -4067,7 +4098,11 @@ namespace SodiumPaint
         private void OnFillClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Fill);
         private void OnSelectClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Select);
 
-
+        private void OnEffectButtonClick(object sender, RoutedEventArgs e)
+        {
+            var btn = (System.Windows.Controls.Button)sender;
+            btn.ContextMenu.IsOpen = true;
+        }
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)
         {
             _bitmap = new WriteableBitmap(_bmpWidth, _bmpHeight, 96, 96, PixelFormats.Bgra32, null);
@@ -4123,7 +4158,7 @@ namespace SodiumPaint
             UpdateWindowTitle();
 
             SetZoomAndOffset(Math.Min(SystemParameters.WorkArea.Width / imgWidth, SystemParameters.WorkArea.Height / imgHeight) * 0.65, 10, 10);
-
+            _router.SetTool(_tools.Pen);
         }
 
         private void OnNewClick(object sender, RoutedEventArgs e)

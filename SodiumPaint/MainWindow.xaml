@@ -313,7 +313,65 @@
             </Setter>
         </Style>
 
+        <Style x:Key="DropDownButtonStyle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Padding" Value="7,7"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <!-- 使用 Border 来实现悬浮和点击时的背景效果 -->
+                        <Border x:Name="BgBorder" 
+                        Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
+                                <!-- 左侧：显示文字内容，如 "效果" -->
+                                <ContentPresenter Grid.Column="0"
+                                          ContentSource="Content" 
+                                          RecognizesAccessKey="True"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+
+                                <!-- 右侧：显示下拉箭头图标，作为实际的点击区域 -->
+                                <Path x:Name="Arrow"
+                                      Grid.Column="1"
+                                      Data="M 0 0 L 4 4 L 8 0 "
+                                      Stroke="#333"
+                                      StrokeThickness="1"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,8,0">
+                                    
+                                </Path>
+
+                            </Grid>
+                        </Border>
+
+                        <!-- 触发器：定义不同状态下的样式 -->
+                        <ControlTemplate.Triggers>
+                            <!-- 1. 鼠标悬浮时的样式 -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BgBorder" Property="Background" Value="#77E0E0E0"/>
+                            </Trigger>
+
+                            <!-- 2. 当按钮被按下（子菜单打开）时，保持高亮状态 -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="BgBorder" Property="Background" Value="#77EAEAEA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <!-- 扁平菜单样式 -->
 
         <Style TargetType="Button" x:Key="ToolButton">
@@ -597,75 +655,128 @@
                     </Button>
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
 
-                    <Menu DockPanel.Dock="Left"
-                    Background="Transparent"
-                    Foreground="Black"
-                    VerticalAlignment="Center"
-                    BorderThickness="0"
-                    FontSize="14"
-                    Padding="0"
-                    Margin="0">
+                    
+                    
+                    <Grid>
+                        <ToggleButton x:Name="RotateFlipMenuToggle" 
+                 
+                  Style="{StaticResource DropDownButtonStyle}">
+                            <Image      Source="{StaticResource Spin180_Image}" Width="16" Height="16"/>
+                        </ToggleButton>
 
-                        <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
-                            <MenuItem Header="粘贴"  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="EmptyClick">
-                                <MenuItem.Icon>
-                                    <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="粘贴"  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="EmptyClick">
-                                <MenuItem.Icon>
-                                    <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
-                            <MenuItem Header="粘贴"  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="EmptyClick">
-                                <MenuItem.Icon>
-                                    <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="粘贴"  Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="EmptyClick">
-                                <MenuItem.Icon>
-                                    <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                        </MenuItem>
-                    </Menu>
+                        <Popup x:Name="SubMenuPopup"
+                       IsOpen="{Binding IsChecked, ElementName=RotateFlipMenuToggle, Mode=TwoWay}"
+                       PlacementTarget="{Binding ElementName=RotateFlipMenuToggle}"
+                               Placement="Bottom"
+                             
+                               AllowsTransparency="True"
+                               PopupAnimation="Fade"
+                                  StaysOpen="{Binding IsMouseOver, ElementName=RotateFlipMenuToggle}">
 
-                    <Button x:Name="RotateMenuButton"
-                Background="#222"
-                             Style="{StaticResource ToolButton}"
-                Foreground="White"
-                FontWeight="Bold"
-                Padding="10,6"
-                Margin="4,2"
-                Click="ShowRotateMenu">
-                        <StackPanel Orientation="Horizontal">
-                            <!--<Image Source="pack://application:,,,/Resources/rotate_icon.png"
-                       Width="16" Height="16" Margin="0,0,6,0"/>-->
-                            <TextBlock Text="旋转 / 翻转"/>
-                        </StackPanel>
-                    </Button>
-
-
-
-                    <Label Content="画笔样式:"/>
-
-                    <ToggleButton Content="圆形笔" Width="60" Margin="2"
-              Click="OnBrushStyleClick" Tag="Round"/>
-                    <ToggleButton Content="方形笔" Width="60" Margin="2"
-              Click="OnBrushStyleClick" Tag="Square"/>
-                    <ToggleButton Content="毛刷" Width="60" Margin="2"
-              Click="OnBrushStyleClick" Tag="Brush"/>
-                    <ToggleButton Content="喷枪" Width="60" Margin="2"
-              Click="OnBrushStyleClick" Tag="Spray"/>
-
-
-
+                            <!-- 子菜单的容器和外观 -->
+                            <Border Name="SubmenuBorder"
+                                Background="White"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Margin="5,0"
+                                Padding="2">
+                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
+                                    <MenuItem Header="向右旋转90°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Rotate_Right_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="向左旋转90°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Rotate_Left_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="旋转180°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotate180Click">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Spin180_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <Separator Style="{StaticResource MenuSeparator}"/>
+                                    <MenuItem Header="垂直翻转"  Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Flip_Vertical_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="水平翻转"  Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Flip_Horizontal_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
 
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+                    <Grid>
+                            <ToggleButton x:Name="BrushToggle" 
+                 
+                Style="{StaticResource DropDownButtonStyle}">
+                            <Image      Source="{StaticResource Brush_Image}" Width="16" Height="16"/>
+                                        </ToggleButton>
+
+                                        <Popup x:Name="SubMenuPopupBrush"
+                     IsOpen="{Binding IsChecked, ElementName=BrushToggle, Mode=TwoWay}"
+                     PlacementTarget="{Binding ElementName=BrushToggle}"
+                             Placement="Bottom"
+           
+                         AllowsTransparency="True"
+                         PopupAnimation="Fade"
+                            StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
+
+                                        <!-- 子菜单的容器和外观 -->
+                            <Border Name="SubmenuBorderBrush"
+                          Background="White"
+                          BorderBrush="#E0E0E0"
+                          BorderThickness="1"
+                          CornerRadius="4"
+                          Margin="5,0"
+                               Padding="2">
+                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
+                                    <MenuItem Header="圆形笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Round">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="方形笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Square">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="毛刷"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Brush">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="喷枪"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Spray">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <Separator Style="{StaticResource MenuSeparator}"/>
+                                    <MenuItem Header="蜡笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Spray">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="水彩画笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Spray">
+                                        <MenuItem.Icon>
+                                            <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+
+           
 
                     <Button    ToolTip="自定义颜色" Click="OnCustomColorClick" Margin="10,0" Padding="0" Style="{StaticResource RoundedMenuButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left">
                         <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png"  Width="32"  Height="32"/>
