@@ -24,6 +24,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using static SodiumPaint.MainWindow;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 
 
@@ -55,7 +56,7 @@ namespace SodiumPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.3"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.4"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
@@ -451,7 +452,7 @@ namespace SodiumPaint
                 var combined = CombineRects(_strokeRects);
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
                 _undo.Push(new UndoAction(combined, region, null, UndoActionType.Draw));
-
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
                 _preStrokeSnapshot = null;
             }
 
@@ -1740,7 +1741,7 @@ namespace SodiumPaint
                 ctx.IsDirty = true;
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
-
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
             }
 
 
@@ -2300,6 +2301,7 @@ namespace SodiumPaint
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 ctx.EditorOverlay.Children.Remove(_textBox);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
                 lag = 1;
             }
         }
@@ -2835,21 +2837,138 @@ namespace SodiumPaint
         {
             WindowState = WindowState.Minimized;
         }
+        private Point _dragStartPoint;
+        private bool _draggingFromMaximized = false;
+
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
+            {
+                MaximizeRestore_Click(sender, null);
+                return;
+            }
+
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                this.DragMove();
+                if (_maximized)
+                {
+                    // 记录按下位置，准备看是否拖动
+                    _dragStartPoint = e.GetPosition(this);
+                    _draggingFromMaximized = true;
+                    MouseMove += Border_MouseMoveFromMaximized;
+                }
+                else
+                {
+                    DragMove(); // 普通拖动
+                }
             }
         }
 
+        private void Border_MouseMoveFromMaximized(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_draggingFromMaximized && e.LeftButton == MouseButtonState.Pressed)
+            {
+                // 鼠标移动的阈值，比如 5px
+                var currentPos = e.GetPosition(this);
+                if (Math.Abs(currentPos.X - _dragStartPoint.X) > 5 ||
+                    Math.Abs(currentPos.Y - _dragStartPoint.Y) > 5)
+                {
+                    // 超过阈值，恢复窗口大小，并开始拖动
+                    _draggingFromMaximized = false;
+                    MouseMove -= Border_MouseMoveFromMaximized;
+
+                    _maximized = false;
+
+                    var percentX = _dragStartPoint.X / ActualWidth;
+
+                    Left = e.GetPosition(this).X - _restoreBounds.Width * percentX;
+                    Top = e.GetPosition(this).Y;
+                    Width = _restoreBounds.Width;
+                    Height = _restoreBounds.Height;
+                    SetMaximizeIcon();
+                    DragMove();
+                }
+            }
+        }
+
+
         private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
         {
-            if (WindowState == WindowState.Maximized)
-                WindowState = WindowState.Normal;
+            if (!_maximized)
+            {
+                _restoreBounds = new Rect(Left, Top, Width, Height);
+                _maximized = true;
+
+                var workArea = SystemParameters.WorkArea;
+                Left = workArea.Left;
+                Top = workArea.Top;
+                Width = workArea.Width;
+                Height = workArea.Height;
+
+                // 切换到还原图标
+                SetRestoreIcon();
+            }
             else
-                WindowState = WindowState.Maximized;
+            {
+                _maximized = false;
+                Left = _restoreBounds.Left;
+                Top = _restoreBounds.Top;
+                Width = _restoreBounds.Width;
+                Height = _restoreBounds.Height;
+                WindowState = WindowState.Normal;
+
+                // 切换到最大化矩形图标
+                SetMaximizeIcon();
+            }
         }
+
+        private void SetRestoreIcon()
+        {
+            MaxRestoreButton.Content = new Image
+            {
+                Source = (DrawingImage)FindResource("Restore_Image"),
+                Width = 12,
+                Height = 12
+            };
+        }
+        private void SetMaximizeIcon()
+        {
+            MaxRestoreButton.Content = new Viewbox
+            {
+                Width = 10,
+                Height = 10,
+                Child = new Rectangle
+                {
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 1,
+                    Width = 12,
+                    Height = 12
+                }
+            };
+        }
+        private bool _maximized = false;
+        private Rect _restoreBounds;
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+            {
+                _restoreBounds = new Rect(Left, Top, Width, Height);
+                _maximized = true;
+
+                var workArea = SystemParameters.WorkArea;
+                Left = workArea.Left;
+                Top = workArea.Top;
+                Width = workArea.Width;
+                Height = workArea.Height;
+
+                // 切换到还原图标
+                SetRestoreIcon();
+                WindowState = WindowState.Normal;
+            }
+
+        }
+
+
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
@@ -2879,7 +2998,7 @@ namespace SodiumPaint
             OpenImageAndTabs(_currentFilePath, true);
             // LoadAllFilePaths(basepath);
 
-
+            StateChanged += MainWindow_StateChanged; // 监听系统状态变化
             Select = new SelectTool();
 
             // 初始化字体大小事件
@@ -3042,8 +3161,55 @@ namespace SodiumPaint
             int h = (int)Math.Abs(p1.Y - p2.Y) + 2;
             return new Int32Rect(x, y, w, h);
         }
-        private void Undo() { _undo.Undo(); _ctx.IsDirty = true; }
-        private void Redo() { _undo.Redo(); _ctx.IsDirty = true; }
+        private void SetUndoRedoButtonState()
+        {
+             UpdateBrushAndButton(UndoButton,UndoIcon, _undo.CanUndo);
+            UpdateBrushAndButton(RedoButton, RedoIcon, _undo.CanRedo);
+
+        }
+
+        private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
+        {
+            button.IsEnabled = isEnabled;
+
+            // 获取当前 UI 使用的绘图对象
+            var frozenDrawingImage = (DrawingImage)image.Source;
+
+            // 克隆出可修改的副本
+            var modifiableDrawingImage = frozenDrawingImage.Clone();
+
+            // DrawingImage.Drawing 可能是 DrawingGroup 或 GeometryDrawing
+            if (modifiableDrawingImage.Drawing is GeometryDrawing geoDrawing)
+            {
+                geoDrawing.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
+            }
+            else if (modifiableDrawingImage.Drawing is DrawingGroup group)
+            {
+                foreach (var child in group.Children)
+                {
+                    if (child is GeometryDrawing childGeo)
+                    {
+                        childGeo.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
+                    }
+                }
+            }
+
+            // 替换 Image.Source，让 UI 用新的对象
+            image.Source = modifiableDrawingImage;
+        }
+
+        private void Undo() 
+        {
+            
+            _undo.Undo(); _ctx.IsDirty = true;
+            SetUndoRedoButtonState();
+        }
+        private void Redo() 
+        {
+            _undo.Redo(); _ctx.IsDirty = true;
+            SetUndoRedoButtonState();
+        }
+    
 
 
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
@@ -3969,7 +4135,7 @@ namespace SodiumPaint
             _currentFileName = "未命名";
             Clean_bitmap(_bmpWidth, _bmpHeight);
 
-
+            UpdateWindowTitle();
         }
 
     }
