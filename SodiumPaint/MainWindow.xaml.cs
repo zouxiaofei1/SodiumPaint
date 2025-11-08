@@ -2229,8 +2229,10 @@ namespace SodiumPaint
                         ClearRect(ctx, _selectionRect, ctx.EraserColor);
 
                         var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
+                            
                             ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
                         int stride = _selectionRect.Width * 4;
+                        //s(_selectionRect);
                         previewBmp.WritePixels(new Int32Rect(0, 0, _selectionRect.Width, _selectionRect.Height),
                                                _selectionData, stride, 0);
 
@@ -2325,6 +2327,7 @@ namespace SodiumPaint
                 HidePreview(ctx);
                 _selectionData = null;
                 ctx.IsDirty = true;
+              
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
@@ -3167,6 +3170,7 @@ namespace SodiumPaint
 
         private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (!_isInitialLayoutComplete) return;
             PenThickness = e.NewValue;
             UpdateThicknessPreviewPosition();
 
@@ -3692,13 +3696,25 @@ namespace SodiumPaint
             var src = (HwndSource)PresentationSource.FromVisual(this)!;
             src.CompositionTarget.BackgroundColor = Colors.Transparent;
         }
+
+
         public MainWindow(string startFilePath)
         {
+            
             _currentFilePath = startFilePath;
+
+
             InitializeComponent();
-            // DataContext = new ViewModels.MainWindowViewModel();
+           
+           
+            Loaded += (s, e) =>
+            {
+                MicaAcrylicManager.ApplyEffect(this);
+            };
+            Loaded += MainWindow_Loaded;
+            this.Show();
+
             DataContext = this;
-            OpenImageAndTabs(_currentFilePath, true);
             // LoadAllFilePaths(basepath);
 
             StateChanged += MainWindow_StateChanged; // 监听系统状态变化
@@ -3713,18 +3729,15 @@ namespace SodiumPaint
             ItalicBtn.Unchecked += FontSettingChanged;
             UnderlineBtn.Checked += FontSettingChanged;
             UnderlineBtn.Unchecked += FontSettingChanged;
-
+           
             SourceInitialized += OnSourceInitialized;
-            Loaded += (s, e) =>
-            {
-                MicaAcrylicManager.ApplyEffect(this);
-            };
+
             ZoomSlider.ValueChanged += (s, e) =>
             {
                 UpdateSliderBarValue(ZoomSlider.Value);
                 //ZoomScale = ZoomSlider.Value; // 更新属性而不是直接访问 zoomscale
             };
-
+     
             CanvasWrapper.MouseDown += OnCanvasMouseDown;
             CanvasWrapper.MouseMove += OnCanvasMouseMove;
             CanvasWrapper.MouseUp += OnCanvasMouseUp;
@@ -3746,8 +3759,27 @@ namespace SodiumPaint
             };
             SetBrushStyle(BrushStyle.Round);
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+           
+            //  OpenImageAndTabs(_currentFilePath, true);
             this.Focusable = true;
+           // this.Focus();
+        }
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
             this.Focus();
+
+            // 在后台线程运行，不阻塞UI线程
+            Task.Run(async () =>
+            {
+                //s(1);
+                await OpenImageAndTabs(_currentFilePath, true);
+
+                // 如果你需要在完成后通知UI，要切回UI线程
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _isInitialLayoutComplete = true;
+                });
+            });
         }
 
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -4241,6 +4273,7 @@ namespace SodiumPaint
             if (dlg.ShowDialog() == true)
             {
                 _currentFilePath = dlg.FileName;
+                _currentImageIndex = -1;
                 OpenImageAndTabs(_currentFilePath, true);
                 // Clean_bitmap(_bmpWidth, _bmpHeight);
             }
@@ -4257,7 +4290,7 @@ namespace SodiumPaint
             if (_currentImageIndex >= _imageFiles.Count)
                 _currentImageIndex = 0; // 循环到第一张
 
-            OpenImageAndTabs(_imageFiles[_currentImageIndex]);
+            RequestImageLoad(_imageFiles[_currentImageIndex]);
         }
 
         private void ShowPrevImage()
@@ -4275,7 +4308,7 @@ namespace SodiumPaint
             if (_currentImageIndex < 0)
                 _currentImageIndex = _imageFiles.Count - 1; // 循环到最后一张
 
-            OpenImageAndTabs(_imageFiles[_currentImageIndex]);
+            RequestImageLoad(_imageFiles[_currentImageIndex]);
         }
         private void ClearRect(ToolContext ctx, Int32Rect rect, Color color)
         {
@@ -4535,27 +4568,61 @@ namespace SodiumPaint
             }
 
             // 异步加载缩略图（调用时自动更新UI）
-            public async Task LoadThumbnailAsync(int size)
+            // 需要 using System.Drawing; 
+            // 和 using System.IO;
+
+            public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
             {
-                await Task.Run(() =>
+                var thumbnail = await Task.Run(() =>
                 {
                     try
                     {
+                        // 步骤 1: 使用 System.Drawing.Image 获取原始尺寸
+                        double originalWidth, originalHeight;
+                        using (var img = System.Drawing.Image.FromFile(FilePath))
+                        {
+                            originalWidth = img.Width;
+                            originalHeight = img.Height;
+                        }
+
+                        // 步骤 2, 3, 4 与方案一完全相同
+                        double ratioX = containerWidth / originalWidth;
+                        double ratioY = containerHeight / originalHeight;
+                        double finalRatio = Math.Min(ratioX, ratioY);
+
+                        if (finalRatio > 1.0)
+                        {
+                            finalRatio = 1.0;
+                        }
+
+                        int decodeWidth = (int)(originalWidth * finalRatio);
+                        if (decodeWidth < 1) decodeWidth = 1;
+
+                        // 步骤 5: 创建并加载BitmapImage
                         var bmp = new BitmapImage();
                         bmp.BeginInit();
                         bmp.CacheOption = BitmapCacheOption.OnLoad;
-                        bmp.DecodePixelWidth = size;
                         bmp.UriSource = new Uri(FilePath);
+                        bmp.DecodePixelWidth = decodeWidth;
                         bmp.EndInit();
                         bmp.Freeze();
-
-                        Thumbnail = bmp;
+                      //  s(bmp.PixelWidth.ToString() + " " + bmp.PixelHeight.ToString());
+                        return bmp;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Debug.WriteLine($"Failed to load thumbnail for {FilePath}: {ex.Message}");
+                        return null;
                     }
                 });
+
+                if (thumbnail != null)
+                {
+                    Thumbnail = thumbnail;
+                }
             }
+
+
 
             public event PropertyChangedEventHandler? PropertyChanged;
             protected void OnPropertyChanged(string name)
@@ -4589,7 +4656,7 @@ namespace SodiumPaint
                 if (tab.Thumbnail == null && !tab.IsLoading)
                 {
                     tab.IsLoading = true;
-                    _ = tab.LoadThumbnailAsync(100);
+                    _ = tab.LoadThumbnailAsync(100,60);
                 }
         }
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
@@ -4623,9 +4690,13 @@ namespace SodiumPaint
 
         // 文件总数绑定属性
         public int ImageFilesCount;
-
+        private bool _isInitialLayoutComplete = false;
         private async void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            if (!_isInitialLayoutComplete)
+            {
+                return; // <--- 在这里添加守卫
+            }
             double itemWidth = 124;
             int firstIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
             int visibleCount = (int)(FileTabsScroller.ViewportWidth / itemWidth) + 2;
@@ -4669,7 +4740,7 @@ namespace SodiumPaint
             }
 
             // 懒加载缩略图，仅当有新增或明显滚动时触发
-            if (needload || e.HorizontalChange != 0)
+            if (needload || e.HorizontalChange != 0 || e.ExtentWidthChange != 0)
             {
                 int end = Math.Min(lastIndex, FileTabs.Count);
                 for (int i = firstIndex; i < end; i++)
@@ -4678,7 +4749,7 @@ namespace SodiumPaint
                     if (tab.Thumbnail == null && !tab.IsLoading)
                     {
                         tab.IsLoading = true;
-                        _ = tab.LoadThumbnailAsync(100);
+                        _ = tab.LoadThumbnailAsync(100,60);
                     }
                 }
             }
@@ -4784,7 +4855,7 @@ namespace SodiumPaint
             value = Math.Max(slider.Minimum, Math.Min(slider.Maximum, value));
 
             slider.Value = value;
-            //   s(value.ToString());
+          //    s(value.ToString());
             Debug.Print("111");
             await OpenImageAndTabs(_imageFiles[(int)value], true);
             //OpenImageAndTabs()
@@ -4867,17 +4938,127 @@ namespace SodiumPaint
             if (current != null)
                 current.IsSelected = true;
 
+            if (_currentImageIndex==-1)  ScanFolderImages(filePath);
             // 加载对应图片
+            RefreshTabPageAsync(_currentImageIndex, refresh);
             await LoadImage(filePath);
-            await RefreshTabPageAsync(_currentImageIndex, refresh);
+            
 
             // 标签栏刷新后，重新选中对应项
             var reopened = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
             if (reopened != null)
                 reopened.IsSelected = true;
         }
+        /// <summary>
+        /// 实际执行图片加载和UI更新的内部方法。
+        /// </summary>
+        /// 
 
+        private readonly object _queueLock = new object();
 
+        // “待办事项”：只存放最新的一个图片加载请求
+        private string _pendingFilePath = null;
+
+        // 标志位：表示图像加载“引擎”是否正在工作中
+        private bool _isProcessingQueue = false;
+        public void RequestImageLoad(string filePath)
+        {
+            lock (_queueLock)
+            {
+                _pendingFilePath = filePath;
+                if (!_isProcessingQueue)
+                {
+                    _isProcessingQueue = true;
+                    _ = ProcessImageLoadQueueAsync();
+                }
+            }
+        }
+        private async Task ProcessImageLoadQueueAsync()
+        {
+            while (true)
+            {
+                string filePathToLoad;
+
+                // 进入临界区，检查并获取下一个任务
+                lock (_queueLock)
+                {
+                    // 1. 检查是否还有待办事项
+                    if (_pendingFilePath == null)
+                    {
+                        // 如果没有了，说明工作完成，工人可以下班了
+                        _isProcessingQueue = false;
+                        break; // 退出循环
+                    }
+
+                    // 2. 获取当前最新的待办事项
+                    filePathToLoad = _pendingFilePath;
+
+                    // 3. 清空待办事项，表示我们已经接手了这个任务
+                    _pendingFilePath = null;
+                }
+                await LoadAndDisplayImageInternalAsync(filePathToLoad);
+            }
+        }
+        private async Task LoadAndDisplayImageInternalAsync(string filePath)
+        {
+            // 这里就是您原来 OpenImageAndTabs 的核心代码
+            try
+            {
+                // 找到当前图片在总列表中的索引
+                int newIndex = _imageFiles.IndexOf(filePath);
+                if (newIndex < 0) return;
+                _currentImageIndex = newIndex;
+
+                // --- UI 更新逻辑 ---
+
+                // 1. 清除所有旧的选中状态
+                foreach (var tab in FileTabs)
+                    tab.IsSelected = false;
+
+                // 2. 找到并选中新标签（如果它已在可视区域）
+                var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                if (currentTab != null)
+                    currentTab.IsSelected = true;
+
+                // 3. 加载主图片
+                await LoadImage(filePath); // 假设这是您加载大图的方法
+
+                // 4. 刷新和滚动标签栏
+                await RefreshTabPageAsync(_currentImageIndex);
+
+                // 5. 再次确保标签被选中（因为RefreshTabPageAsync可能重建了列表）
+                var reopenedTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                if (reopenedTab != null)
+                    reopenedTab.IsSelected = true;
+
+                // 6. 更新Slider
+                SetPreviewSlider();
+            }
+            catch (Exception ex)
+            {
+                // 最好有异常处理
+                Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
+            }
+        }
+
+        private void ScanFolderImages(string filePath)
+        {
+            // 扫描同目录图片文件
+            string folder = System.IO.Path.GetDirectoryName(filePath)!;
+            _imageFiles = Directory.GetFiles(folder, "*.*")
+                .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
+                            f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            _currentImageIndex = _imageFiles.IndexOf(filePath);
+        }
 
         private void SetPreviewSlider()
         {
@@ -4963,21 +5144,7 @@ namespace SodiumPaint
                     _currentFilePath = filePath;
                     _isEdited = false;
 
-                    // 扫描同目录图片文件
-                    string folder = System.IO.Path.GetDirectoryName(filePath)!;
-                    _imageFiles = Directory.GetFiles(folder, "*.*")
-                        .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
-                                    f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
-                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-
-                    _currentImageIndex = _imageFiles.IndexOf(filePath);
+                    
                     //ImageFilesCount = _currentImageIndex - 1;
                     // s(_currentImageIndex);
                     SetPreviewSlider();

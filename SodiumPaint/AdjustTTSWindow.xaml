@@ -6,7 +6,7 @@
         mc:Ignorable="d"
         Title="调整色温/色调/饱和度" Height="220" Width="400"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
-	<Grid Margin="15">
+    <Grid Margin="15" >
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto"/>

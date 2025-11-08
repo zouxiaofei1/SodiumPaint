@@ -34,7 +34,7 @@ namespace SodiumPaint
             }
 
             var window = new MainWindow(filePath);
-            window.Show();
+            //window.Show();
         }
 
     }
