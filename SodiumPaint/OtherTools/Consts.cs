@@ -20,6 +20,8 @@ using System.Windows.Threading;
 //
 //SodiumPaint主程序
 //
+//几乎不会变的常量
+//
 
 namespace SodiumPaint
 {

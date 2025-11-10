@@ -45,7 +45,7 @@ namespace SodiumPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.5"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.6 alpha"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "X:0, Y:0";
@@ -1008,28 +1008,50 @@ namespace SodiumPaint
             _bitmap.Unlock();
         }
 
-       
-        // Ctrl + 滚轮 缩放事件
-        private void FitToWindow()
-        {
+        private void FitToWindow(double addscale = 1)
+        { 
             if (BackgroundImage.Source != null)
             {
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
-
+                //s(ScrollContainer.ViewportWidth);
                 double viewWidth = ScrollContainer.ViewportWidth;
                 double viewHeight = ScrollContainer.ViewportHeight;
-
+                
                 double scaleX = viewWidth / imgWidth;
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
-                zoomscale = fitScale;
-
+                zoomscale = fitScale* addscale;
+               // s(fitScale);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
+                //UpdateImagePosition();
             }
         }
+        // Ctrl + 滚轮 缩放事件
+        // 改造 FitToWindow，使其接收像素尺寸作为参数
+        private void CenterImage()
+        {
+            if (_bitmap == null || BackgroundImage == null)
+                return;
+
+            BackgroundImage.Width = BackgroundImage.Source.Width;
+            BackgroundImage.Height = BackgroundImage.Source.Height;
+
+            // 如果在 ScrollViewer 中，自动滚到中心
+            if (ScrollContainer != null)
+            {
+                ScrollContainer.ScrollToHorizontalOffset(
+                    (BackgroundImage.Width - ScrollContainer.ViewportWidth) / 2);
+                ScrollContainer.ScrollToVerticalOffset(
+                    (BackgroundImage.Height - ScrollContainer.ViewportHeight) / 2);
+            }
+
+            BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
+        }
+
+
         private void FitToWindow_Click(object sender, RoutedEventArgs e)
         {
             FitToWindow();
@@ -1326,7 +1348,7 @@ namespace SodiumPaint
                         bmp.BeginInit();
                         bmp.CacheOption = BitmapCacheOption.OnLoad;
                         bmp.UriSource = new Uri(FilePath);
-                        bmp.DecodePixelWidth = decodeWidth;
+                        bmp.DecodePixelWidth = 100;
                         bmp.EndInit();
                         bmp.Freeze();
                         //  s(bmp.PixelWidth.ToString() + " " + bmp.PixelHeight.ToString());
@@ -1350,7 +1372,7 @@ namespace SodiumPaint
         public ObservableCollection<FileTabItem> FileTabs { get; }
             = new ObservableCollection<FileTabItem>();
         // 加载当前页 + 前后页文件到显示区
-        private async Task LoadTabPageAsync(int centerIndex)
+        private void LoadTabPageAsync(int centerIndex)
         {//全部清空并重新加载!!!
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
@@ -1375,7 +1397,7 @@ namespace SodiumPaint
             if (_imageFiles == null || _imageFiles.Count == 0)return;
 
             if (refresh)
-                await LoadTabPageAsync(centerIndex);
+                 LoadTabPageAsync(centerIndex);
 
             // 计算当前选中图片在 FileTabs 中的索引
             var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[centerIndex]);
@@ -1398,7 +1420,7 @@ namespace SodiumPaint
         // 文件总数绑定属性
         public int ImageFilesCount;
         private bool _isInitialLayoutComplete = false;
-        private async void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
+        private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             if (!_isInitialLayoutComplete)return;
            
@@ -1448,7 +1470,7 @@ namespace SodiumPaint
                     if (tab.Thumbnail == null && !tab.IsLoading)
                     {
                         tab.IsLoading = true;
-                        _ = tab.LoadThumbnailAsync(100, 60);
+                        _ =  tab.LoadThumbnailAsync(100, 60);
                     }
                 }
             }

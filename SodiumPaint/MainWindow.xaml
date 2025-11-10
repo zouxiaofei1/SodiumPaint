@@ -927,7 +927,8 @@
                                         <StackPanel Orientation="Vertical">
                                             <Image Source="{Binding Thumbnail}"
                                        Width="100" Height="60"
-                                       Stretch="None"/>
+                                        HorizontalAlignment="Center" Stretch="Uniform"
+       VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding DisplayName}"
                                            FontSize="12"
                                            TextAlignment="Center"/>

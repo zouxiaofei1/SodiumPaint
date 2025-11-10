@@ -25,6 +25,14 @@ namespace SodiumPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private readonly object _queueLock = new object();
+
+        // “待办事项”：只存放最新的一个图片加载请求
+        private string _pendingFilePath = null;
+
+        // 标志位：表示图像加载“引擎”是否正在工作中
+        private bool _isProcessingQueue = false;
+        private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
             foreach (var tab in FileTabs)
@@ -37,22 +45,20 @@ namespace SodiumPaint
 
             if (_currentImageIndex == -1) ScanFolderImages(filePath);
             // 加载对应图片
+            int newIndex = _imageFiles.IndexOf(filePath);
+            _currentImageIndex = newIndex;
+
             RefreshTabPageAsync(_currentImageIndex, refresh);
             await LoadImage(filePath);
 
+      
 
             // 标签栏刷新后，重新选中对应项
             var reopened = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
             if (reopened != null)
                 reopened.IsSelected = true;
         }
-        private readonly object _queueLock = new object();
-
-        // “待办事项”：只存放最新的一个图片加载请求
-        private string _pendingFilePath = null;
-
-        // 标志位：表示图像加载“引擎”是否正在工作中
-        private bool _isProcessingQueue = false;
+    
         public void RequestImageLoad(string filePath)
         {
             lock (_queueLock)
@@ -150,64 +156,255 @@ namespace SodiumPaint
 
             _currentImageIndex = _imageFiles.IndexOf(filePath);
         }
-    }
 
-      private async Task LoadImage(string filePath)
-        {//不推荐直接使用
-            if (!File.Exists(filePath)) { s($"找不到图片文件: {filePath}"); return; }
+        //private async Task LoadImage(string filePath)
+        //{//不推荐直接使用
+        //    if (!File.Exists(filePath)) { s($"找不到图片文件: {filePath}"); return; }
+
+        //    try
+        //    {
+        //        // 🧩 后台线程进行解码和位图创建
+        //        var wb = await Task.Run(() =>
+        //        {
+        //            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        //            // 先用解码器获取原始尺寸
+        //            var decoder = BitmapDecoder.Create(
+        //                fs,
+        //                BitmapCreateOptions.IgnoreColorProfile,
+        //                BitmapCacheOption.None
+        //            );
+        //            int originalWidth = decoder.Frames[0].PixelWidth;
+        //            int originalHeight = decoder.Frames[0].PixelHeight;
+
+        //            fs.Position = 0; // 重置流位置以重新读取
+
+        //            var img = new BitmapImage();
+        //            img.BeginInit();
+        //            img.CacheOption = BitmapCacheOption.OnLoad;
+        //            img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+        //            img.StreamSource = fs;
+
+        //            // 如果超过 16384，就等比例缩放
+        //            const int maxSize = 16384;
+        //            if (originalWidth > maxSize || originalHeight > maxSize)
+        //            {
+        //                if (originalWidth >= originalHeight)
+        //                {
+        //                    img.DecodePixelWidth = maxSize;
+        //                }
+        //                else
+        //                {
+        //                    img.DecodePixelHeight = maxSize;
+        //                }
+        //            }
+
+        //            img.EndInit();
+        //            img.Freeze();
+
+        //            return img;
+        //        });
+
+        //        // ✅ 回到 UI 线程更新
+        //        await Dispatcher.InvokeAsync(() =>
+        //        {
+        //            _bitmap = new WriteableBitmap(wb);
+
+        //            _currentFileName = System.IO.Path.GetFileName(filePath);
+        //            BackgroundImage.Source = _bitmap;
+
+        //            if (_surface == null)
+        //                _surface = new CanvasSurface(_bitmap);
+        //            else
+        //                _surface.Attach(_bitmap);
+
+        //            _undo?.ClearUndo();
+        //            _undo?.ClearRedo();
+
+        //            _currentFilePath = filePath;
+        //            _isEdited = false;
+
+        //            SetPreviewSlider();
+
+        //            // 窗口调整逻辑
+        //            double imgWidth = _bitmap.Width;
+        //            double imgHeight = _bitmap.Height;
+
+        //            BackgroundImage.Width = imgWidth;
+        //            BackgroundImage.Height = imgHeight;
+
+        //            _imageSize = $"{_surface.Width}×{_surface.Height}";
+        //            OnPropertyChanged(nameof(ImageSize));
+        //            UpdateWindowTitle();
+
+        //            FitToWindow();
+
+        //        }, System.Windows.Threading.DispatcherPriority.Background);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        s($"加载图片失败: {ex.Message}");
+        //    }
+        //}
+
+        // 新增的辅助方法 1: 专门用于解码低分辨率预览图
+        private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
+        {
+            if (token.IsCancellationRequested) return null;
+
+            using var ms = new System.IO.MemoryStream(imageBytes);
+            var img = new BitmapImage();
+            img.BeginInit();
+            img.CacheOption = BitmapCacheOption.OnLoad;
+            // 关键：设置解码宽度，速度极快
+            img.DecodePixelWidth = 480; // 建议值，50太小了，可能看不清内容
+            img.StreamSource = ms;
+            img.EndInit();
+            img.Freeze();
+            return img;
+        }
+
+        // 新增的辅助方法 2: 专门用于解码全分辨率图像
+        private BitmapImage DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
+        {
+            if (token.IsCancellationRequested) return null;
+
+            using var ms = new System.IO.MemoryStream(imageBytes);
+
+            // 先用解码器获取原始尺寸
+            var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+            int originalWidth = decoder.Frames[0].PixelWidth;
+            int originalHeight = decoder.Frames[0].PixelHeight;
+
+            ms.Position = 0; // 重置流位置以重新读取
+
+            var img = new BitmapImage();
+            img.BeginInit();
+            img.CacheOption = BitmapCacheOption.OnLoad;
+            img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+            img.StreamSource = ms;
+
+            const int maxSize = 16384;
+            if (originalWidth > maxSize || originalHeight > maxSize)
+            {
+                if (originalWidth >= originalHeight) img.DecodePixelWidth = maxSize;
+                else img.DecodePixelHeight = maxSize;
+            }
+
+            img.EndInit();
+            img.Freeze();
+            return img;
+        }
+
+        private Task<(int Width, int Height)> GetImageDimensionsAsync(byte[] imageBytes)
+        {
+            return Task.Run(() =>
+            {
+                using var ms = new System.IO.MemoryStream(imageBytes);
+                // Create a decoder but only access the metadata, which is very fast.
+                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                return (decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
+            });
+        }
+
+        private readonly object _lockObj = new object();
+        private async Task LoadImage(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                s($"找不到图片文件: {filePath}");
+                return;
+            }
+
+            _loadImageCts?.Cancel();
+            _loadImageCts = new CancellationTokenSource();
+            var token = _loadImageCts.Token;
 
             try
             {
-                // 🧩 后台线程进行解码和位图创建
-                var wb = await Task.Run(() =>
+                // 步骤 1: 异步读取文件并快速获取最终尺寸
+                var imageBytes = await File.ReadAllBytesAsync(filePath, token);
+                if (token.IsCancellationRequested) return;
+
+                var (originalWidth, originalHeight) = await GetImageDimensionsAsync(imageBytes);
+                if (token.IsCancellationRequested) return;
+
+                // 步骤 2: 并行启动中等预览图和完整图的解码任务
+                Task<BitmapImage> previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
+                Task<BitmapImage> fullResTask = Task.Run(() => DecodeFullResBitmap(imageBytes, token), token);
+
+                // --- 阶段 0: (新增) 立即显示已缓存的缩略图 ---
+                bool isInitialLayoutSet = false;
+                // 查找与当前文件路径匹配的 Tab 项
+                var tabItem = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+
+                if (tabItem?.Thumbnail != null)
                 {
-                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                    // 先用解码器获取原始尺寸
-                    var decoder = BitmapDecoder.Create(
-                        fs,
-                        BitmapCreateOptions.IgnoreColorProfile,
-                        BitmapCacheOption.None
-                    );
-                    int originalWidth = decoder.Frames[0].PixelWidth;
-                    int originalHeight = decoder.Frames[0].PixelHeight;
-
-                    fs.Position = 0; // 重置流位置以重新读取
-
-                    var img = new BitmapImage();
-                    img.BeginInit();
-                    img.CacheOption = BitmapCacheOption.OnLoad;
-                    img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                    img.StreamSource = fs;
-
-                    // 如果超过 16384，就等比例缩放
-                    const int maxSize = 16384;
-                    if (originalWidth > maxSize || originalHeight > maxSize)
+                    // 如果找到了并且它已经有缩略图，立即在UI线程上显示它
+                    await Dispatcher.InvokeAsync(() =>
                     {
-                        if (originalWidth >= originalHeight)
-                        {
-                            img.DecodePixelWidth = maxSize;
-                        }
-                        else
-                        {
-                            img.DecodePixelHeight = maxSize;
-                        }
-                    }
+                        if (token.IsCancellationRequested) return;
 
-                    img.EndInit();
-                    img.Freeze();
+                        // 使用已有的、超低分辨率的缩略图作为第一帧
+                        BackgroundImage.Source = tabItem.Thumbnail;
 
-                    return img;
-                });
+                        // 更新窗口标题等基本信息
+                        _currentFileName = System.IO.Path.GetFileName(filePath);
+                        _currentFilePath = filePath;
+                        UpdateWindowTitle();
 
-                // ✅ 回到 UI 线程更新
+                        // 立即适配并居中
+                        FitToWindow(1);
+                        CenterImage(); // 或者你更新后的 UpdateImagePosition()
+                        BackgroundImage.InvalidateVisual();
+                        Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+                        isInitialLayoutSet = true; // 标记初始布局已完成
+
+                    });
+                }
+
+                // --- 阶段 1: 等待 480p 预览图并更新 ---
+                var previewBitmap = await previewTask;
+                if (token.IsCancellationRequested || previewBitmap == null) return;
+
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    _bitmap = new WriteableBitmap(wb);
+                    if (token.IsCancellationRequested) return;
 
-                    _currentFileName = System.IO.Path.GetFileName(filePath);
+                    // 如果阶段 0 没有执行（因为没有缓存的缩略图），
+                    // 那么在这里完成初始布局设置。
+                    if (!isInitialLayoutSet)
+                    {
+                        BackgroundImage.Source = previewBitmap;
+                        //BackgroundImage.Width = originalWidth;
+                        //BackgroundImage.Height = originalHeight;
+                        _currentFileName = System.IO.Path.GetFileName(filePath);
+                        _currentFilePath = filePath;
+                        UpdateWindowTitle();
+                        FitToWindow();
+                        CenterImage();
+                        BackgroundImage.InvalidateVisual();
+                        Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+                    }
+
+                    // 用质量更好的 480p 预览图替换掉之前的图像
+                   
+                });
+
+                // --- 阶段 2: 等待完整图并最终更新 ---
+                var fullResBitmap = await fullResTask;
+                if (token.IsCancellationRequested || fullResBitmap == null) return;
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+
+                    _bitmap = new WriteableBitmap(fullResBitmap);
+
+                    // 最终替换为高清图。尺寸和位置都已正确，只需换源。
                     BackgroundImage.Source = _bitmap;
 
+                    // 更新所有依赖完整图的状态
                     if (_surface == null)
                         _surface = new CanvasSurface(_bitmap);
                     else
@@ -215,30 +412,30 @@ namespace SodiumPaint
 
                     _undo?.ClearUndo();
                     _undo?.ClearRedo();
-
-                    _currentFilePath = filePath;
                     _isEdited = false;
 
                     SetPreviewSlider();
 
-                    // 窗口调整逻辑
-                    double imgWidth = _bitmap.Width;
-                    double imgHeight = _bitmap.Height;
-
-                    BackgroundImage.Width = imgWidth;
-                    BackgroundImage.Height = imgHeight;
-
                     _imageSize = $"{_surface.Width}×{_surface.Height}";
                     OnPropertyChanged(nameof(ImageSize));
-                    UpdateWindowTitle();
 
+                    // 因为尺寸可能因解码有微小差异，最后再校准一次布局是好习惯
                     FitToWindow();
-
-                }, System.Windows.Threading.DispatcherPriority.Background);
+                    CenterImage();
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.WriteLine($"Image load for {filePath} was canceled.");
             }
             catch (Exception ex)
             {
-                s($"加载图片失败: {ex.Message}");
+                Dispatcher.Invoke(() => s($"加载图片失败: {ex.Message}"));
             }
         }
+        // (你的两个辅助方法 DecodePreviewBitmap 和 DecodeFullResBitmap 保持不变)
+
+
+
     }
+}
