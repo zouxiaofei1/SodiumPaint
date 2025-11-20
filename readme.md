@@ -1,9 +1,9 @@
-# 🎨 TabPrint (Alpha)
+# 🎨 TabPaint (Alpha)
 
 ![Platform](https://img.shields.io/badge/Platform-Windows-blue) ![Language](https://img.shields.io/badge/Language-C%23%20%7C%20WPF-purple) ![Status](https://img.shields.io/badge/Status-Alpha%20v0.6-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
 
-![项目LOGO](./TabPrint/Resources/screenshot.png)
+![项目LOGO](./TabPaint/Resources/screenshot.png)
 
 > **English** | [中文](#chinese)
 
@@ -11,7 +11,7 @@
 
 ## 🇬🇧 English Introduction
 
-**TabPrint** is a lightweight image editor and viewer tailored for Windows, built with C# and WPF. 
+**TabPaint** is a lightweight image editor and viewer tailored for Windows, built with C# and WPF. 
 
 It is designed for the **"10-second edit" workflow**: when you just need to screenshot, circle a highlight, add a note, and paste it into a document. It combines the familiarity of the classic MS Paint with modern efficiency features like multi-tabs and seamless drag-and-drop.
 
@@ -53,9 +53,9 @@ This software is currently in the **Alpha Testing** stage. It is **NOT** stable 
 
 ## 🇨🇳 中文介绍
 
-**TabPrint** 是一款基于 C# WPF 开发的轻量级 Windows 图片编辑与查看工具。
+**TabPaint** 是一款基于 C# WPF 开发的轻量级 Windows 图片编辑与查看工具。
 
-它的开发初衷是为了解决 **“10秒内快速修图”** 的痛点：当你只需要截图、圈出重点、写个备注，然后发给同事或插入文档时，PS 太重，原生画图功能又太弱（且不支持多开）。TabPrint 完美结合了经典画图的低上手门槛和现代工具的高效特性。
+它的开发初衷是为了解决 **“10秒内快速修图”** 的痛点：当你只需要截图、圈出重点、写个备注，然后发给同事或插入文档时，PS 太重，原生画图功能又太弱（且不支持多开）。TabPaint 完美结合了经典画图的低上手门槛和现代工具的高效特性。
 
 ### 🚧 Alpha 版本预警（必读）
 **当前版本：v0.6 (开发测试版)**
@@ -102,6 +102,6 @@ Requirements:
 *   .NET 6.0 / .NET 8.0 SDK (WPF Workload)
 
 ```bash
-git clone https://github.com/YourUsername/TabPrint.git
-cd TabPrint
+git clone https://github.com/YourUsername/TabPaint.git
+cd TabPaint
 dotnet build
