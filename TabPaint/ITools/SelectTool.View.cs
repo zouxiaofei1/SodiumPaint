@@ -41,7 +41,7 @@ namespace TabPaint
 
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
-                return;
+                //return;
                 double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();

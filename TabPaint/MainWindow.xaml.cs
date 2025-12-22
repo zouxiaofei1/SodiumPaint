@@ -99,6 +99,8 @@ namespace TabPaint
         public SolidColorBrush ForegroundBrush { get; set; } = new SolidColorBrush(Colors.Black);
         public SolidColorBrush BackgroundBrush { get; set; } = new SolidColorBrush(Colors.White);
         // 当前画笔颜色属性，可供工具使用
+        public Color BackgroundColor;
+        public Color ForegroundColor;
         public SolidColorBrush SelectedBrush { get; set; } = new SolidColorBrush(Colors.Black);
 
         // 绑定到 ItemsControl 的预设颜色集合
@@ -136,7 +138,7 @@ namespace TabPaint
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
         String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp";
         ITool LastTool;
-
+        private bool useSecondColor = false;//是否使用备用颜色
 
 
 
@@ -149,18 +151,25 @@ namespace TabPaint
 
 
 
-        public void UpdateForegroundButtonColor(Color color) // 更新前景色按钮颜色
+        public void UpdateCurrentColor(Color color,bool secondColor=false) // 更新前景色按钮颜色
         {
-            ForegroundBrush = new SolidColorBrush(color);
-            OnPropertyChanged(nameof(ForegroundBrush)); // 通知绑定刷新
+            if (secondColor)
+            {
+                BackgroundBrush = new SolidColorBrush(color);
+                OnPropertyChanged(nameof(BackgroundBrush)); // 通知绑定刷新
+                _ctx.PenColor = color;
+                BackgroundColor = color;
+            }
+            else
+            {
+                ForegroundBrush = new SolidColorBrush(color);
+                OnPropertyChanged(nameof(ForegroundBrush)); // 通知绑定刷新
+                ForegroundColor = color;
+            }
+            
         }
-        public void UpdateBackgroundButtonColor(Color color)    // 更新背景色按钮颜色（可选）
-        {
-            BackgroundBrush = new SolidColorBrush(color);
-            OnPropertyChanged(nameof(BackgroundBrush)); // 通知绑定刷新
-        }
+   
 
-      
 
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
         {  // 工具函数 - 查找所有子元素
@@ -334,6 +343,13 @@ namespace TabPaint
                 WindowState = WindowState.Normal;
             }
 
+        }
+        private void UpdateColorHighlight()
+        {
+          
+            // 假设你的两个颜色按钮在 XAML 里设置了 Name="ColorBtn1" 和 Name="ColorBtn2"
+            ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
+            ColorBtn2.Tag = useSecondColor ?"True" :"False";
         }
 
         private void OnSourceInitialized(object? sender, EventArgs e)

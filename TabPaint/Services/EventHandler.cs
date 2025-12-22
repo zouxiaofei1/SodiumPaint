@@ -453,34 +453,21 @@ namespace TabPaint
             BrushToggle.IsChecked = false;
         }
 
-        private void OnForegroundColorClick(object sender, RoutedEventArgs e)
+        private void OnColorOneClick(object sender, RoutedEventArgs e)
         {
-            var dlg = new System.Windows.Forms.ColorDialog();
-            dlg.Color = System.Drawing.Color.FromArgb(ForegroundBrush.Color.A, ForegroundBrush.Color.R, ForegroundBrush.Color.G, ForegroundBrush.Color.B);
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                ForegroundBrush = new SolidColorBrush(
-                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
-                DataContext = this; // 刷新绑定
-
-                _ctx.PenColor = ForegroundBrush.Color;
-                UpdateForegroundButtonColor(ForegroundBrush.Color);
-            }
+            useSecondColor = false;
+            _ctx.PenColor = ForegroundColor;
+            UpdateColorHighlight(); // 更新高亮
         }
 
-        private void OnBackgroundColorClick(object sender, RoutedEventArgs e)
+        private void OnColorTwoClick(object sender, RoutedEventArgs e)
         {
-            var dlg = new System.Windows.Forms.ColorDialog();
-            dlg.Color = System.Drawing.Color.FromArgb(BackgroundBrush.Color.A, BackgroundBrush.Color.R, BackgroundBrush.Color.G, BackgroundBrush.Color.B);
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                BackgroundBrush = new SolidColorBrush(
-                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
-                DataContext = this; // 刷新绑定
-                UpdateBackgroundButtonColor(BackgroundBrush.Color);
-            }
+            useSecondColor = true;
+            _ctx.PenColor = BackgroundColor;
+            UpdateColorHighlight(); // 更新高亮
         }
-        private void OnColorButtonClick(object sender, RoutedEventArgs e)
+
+        private void OnColorButtonClick(object sender, RoutedEventArgs e)//选色按钮
         {
             if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
             {
@@ -488,7 +475,7 @@ namespace TabPaint
 
                 // 如果你有 ToolContext，可同步笔颜色，例如：
                 _ctx.PenColor = brush.Color;
-                UpdateForegroundButtonColor(_ctx.PenColor);
+                UpdateCurrentColor(_ctx.PenColor,useSecondColor);
             }
         }
 
@@ -504,7 +491,7 @@ namespace TabPaint
 
                 // 同步到绘图上下文
                 _ctx.PenColor = color;
-                UpdateForegroundButtonColor(color);
+                UpdateCurrentColor(_ctx.PenColor, useSecondColor);
             }
         }
 

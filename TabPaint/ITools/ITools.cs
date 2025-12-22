@@ -52,7 +52,7 @@ namespace TabPaint
                 if (ctrl == null) continue;
                 bool isTarget = (ctrl == target);
                 ctrl.Tag = isTarget;
-                if (_router.CurrentTool == BrushToggle && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Eraser)
+                if (_router.CurrentTool == _tools.Pen && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
                     BrushToggle.BorderBrush= PurpleHighlightBrush;
                     BrushToggle.Background= PurpleBackgroundBrush;

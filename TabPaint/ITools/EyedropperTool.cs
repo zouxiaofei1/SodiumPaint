@@ -38,7 +38,7 @@ namespace TabPaint
                 a.s("EyedropperTool");
                 var px = ctx.ToPixel(viewPos);
                 ctx.PenColor = ctx.Surface.GetPixel((int)px.X, (int)px.Y);
-                ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateForegroundButtonColor(ctx.PenColor);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateCurrentColor(ctx.PenColor, ((MainWindow)System.Windows.Application.Current.MainWindow).useSecondColor);
                 ((MainWindow)System.Windows.Application.Current.MainWindow)._router.SetTool(((MainWindow)System.Windows.Application.Current.MainWindow).LastTool);
             }
         }
