@@ -142,50 +142,13 @@ namespace TabPaint
 
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // 各种ITool + InputRouter
+        // 各种ITool + InputRouter + EventHandler 相关过程
         //已经被拆分到Itools文件夹中
 
-        //MainWindow 类通用过程
+        //MainWindow 类通用过程,很多都是找不到归属的
 
 
-        private void OnForegroundColorClick(object sender, RoutedEventArgs e)
-        {
-            var dlg = new System.Windows.Forms.ColorDialog();
-            dlg.Color = System.Drawing.Color.FromArgb(ForegroundBrush.Color.A, ForegroundBrush.Color.R, ForegroundBrush.Color.G, ForegroundBrush.Color.B);
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                ForegroundBrush = new SolidColorBrush(
-                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
-                DataContext = this; // 刷新绑定
 
-                _ctx.PenColor = ForegroundBrush.Color;
-                UpdateForegroundButtonColor(ForegroundBrush.Color);
-            }
-        }
-
-        private void OnBackgroundColorClick(object sender, RoutedEventArgs e)
-        {
-            var dlg = new System.Windows.Forms.ColorDialog();
-            dlg.Color = System.Drawing.Color.FromArgb(BackgroundBrush.Color.A, BackgroundBrush.Color.R, BackgroundBrush.Color.G, BackgroundBrush.Color.B);
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                BackgroundBrush = new SolidColorBrush(
-                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
-                DataContext = this; // 刷新绑定
-                UpdateBackgroundButtonColor(BackgroundBrush.Color);
-            }
-        }
-        private void OnColorButtonClick(object sender, RoutedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
-            {
-                SelectedBrush = new SolidColorBrush(brush.Color);
-
-                // 如果你有 ToolContext，可同步笔颜色，例如：
-                _ctx.PenColor = brush.Color;
-                UpdateForegroundButtonColor(_ctx.PenColor);
-            }
-        }
         public void UpdateForegroundButtonColor(Color color) // 更新前景色按钮颜色
         {
             ForegroundBrush = new SolidColorBrush(color);
@@ -197,21 +160,7 @@ namespace TabPaint
             OnPropertyChanged(nameof(BackgroundBrush)); // 通知绑定刷新
         }
 
-        private void OnCustomColorClick(object sender, RoutedEventArgs e)// 点击彩虹按钮自定义颜色
-        {
-            var dlg = new ColorDialog();
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                var color = Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B);
-                var brush = new SolidColorBrush(color);
-                SelectedBrush = brush;
-                //HighlightSelectedButton(null);
-
-                // 同步到绘图上下文
-                _ctx.PenColor = color;
-                UpdateForegroundButtonColor(color);
-            }
-        }
+      
 
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
         {  // 工具函数 - 查找所有子元素
@@ -232,60 +181,15 @@ namespace TabPaint
                 }
             }
         }
-        private void OnBrushStyleClick(object sender, RoutedEventArgs e)
-        {
-            //  _currentTool = ToolMode.Pen;
-            if (sender is System.Windows.Controls.MenuItem menuItem
-                && menuItem.Tag is string tagString
-                && Enum.TryParse(tagString, out BrushStyle style))
-            {
-                _router.SetTool(_tools.Pen);
-                _ctx.PenStyle = style; // 你的画笔样式枚举
-            }
 
-            // 点击后关闭下拉按钮
-            BrushToggle.IsChecked = false;
-        }
 
         private void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，所有画笔都是pen工具
             _router.SetTool(_tools.Pen);
             _ctx.PenStyle = style;
+            UpdateToolSelectionHighlight();
         }
 
-        private void ThicknessSlider_DragStarted(object sender, DragStartedEventArgs e)
-        {
-            ThicknessPreview.Visibility = Visibility.Visible;
-            UpdateThicknessPreviewPosition(); // 初始定位
-
-            ThicknessTip.Visibility = Visibility.Visible;
-            SetThicknessSlider_Pos(0);
-        }
-
-        private void ThicknessSlider_DragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            ThicknessPreview.Visibility = Visibility.Collapsed;
-
-            ThicknessTip.Visibility = Visibility.Collapsed;
-        }
-
-        private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (!_isInitialLayoutComplete) return;
-            PenThickness = e.NewValue;
-            UpdateThicknessPreviewPosition();
-
-            if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null)
-                return;
-
-            PenThickness = e.NewValue;
-            ThicknessTipText.Text = $"{(int)PenThickness} 像素";
-
-            // 让提示显示出来
-            ThicknessTip.Visibility = Visibility.Visible;
-            SetThicknessSlider_Pos(e.NewValue);
-
-        }
 
         private void SetThicknessSlider_Pos(double newValue)
         {
@@ -302,7 +206,7 @@ namespace TabPaint
 
         private void UpdateThicknessPreviewPosition()
         {
-            if (ThicknessPreview == null)return;
+            if (ThicknessPreview == null) return;
 
             // 图像缩放比例
             double zoom = ZoomTransform.ScaleX;   // or ScaleY，通常两者相等
@@ -314,39 +218,13 @@ namespace TabPaint
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;
         }
-        private void OnRotateLeftClick(object sender, RoutedEventArgs e)
-        {
-            RotateBitmap(-90); RotateFlipMenuToggle.IsChecked = false;
-        }
-
-        private void OnRotateRightClick(object sender, RoutedEventArgs e)
-        {
-            RotateBitmap(90); RotateFlipMenuToggle.IsChecked = false;
-        }
-
-        private void OnRotate180Click(object sender, RoutedEventArgs e)
-        {
-            RotateBitmap(180); RotateFlipMenuToggle.IsChecked = false;
-        }
-
-
-        private void OnFlipVerticalClick(object sender, RoutedEventArgs e)
-        {
-            FlipBitmap(flipVertical: true); RotateFlipMenuToggle.IsChecked = false;
-        }
-
-        private void OnFlipHorizontalClick(object sender, RoutedEventArgs e)
-        {
-            FlipBitmap(flipVertical: false); RotateFlipMenuToggle.IsChecked = false;
-        }
-
 
         private void ApplyTransform(System.Windows.Media.Transform transform)
         {
             if (BackgroundImage.Source is not BitmapSource src || _surface?.Bitmap == null)
                 return;
 
-           
+
             var undoRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight); // --- 1. 捕获变换前的状态 (for UNDO) ---
             var undoPixels = _surface.ExtractRegion(undoRect);
             if (undoPixels == null) return; // 如果提取失败则中止
@@ -362,7 +240,7 @@ namespace TabPaint
             BackgroundImage.Source = _bitmap;
             _surface.Attach(_bitmap);
             _surface.ReplaceBitmap(_bitmap);
-         
+
             _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. 将完整的变换信息作为一个原子操作压入 Undo 栈 ---
 
             SetUndoRedoButtonState();
@@ -410,186 +288,7 @@ namespace TabPaint
             _activeTextBox = null;
         }
 
-        private void FontSettingChanged(object? sender, RoutedEventArgs e)
-        {
-            if (_activeTextBox == null) return;
-
-            if (FontFamilyBox.SelectedItem is FontFamily family)
-                _activeTextBox.FontFamily = family;
-            if (double.TryParse((FontSizeBox.SelectedItem as ComboBoxItem)?.Content?.ToString(), out double size))
-                _activeTextBox.FontSize = size;
-
-            _activeTextBox.FontWeight = BoldBtn.IsChecked == true ? FontWeights.Bold : FontWeights.Normal;
-            _activeTextBox.FontStyle = ItalicBtn.IsChecked == true ? FontStyles.Italic : FontStyles.Normal;
-            _activeTextBox.TextDecorations = UnderlineBtn.IsChecked == true ? TextDecorations.Underline : null;
-
-
-
-            if (_tools.Text is TextTool st) // 强转成 SelectTool
-            {
-                _activeTextBox.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    st.DrawTextboxOverlay(_ctx);
-                }), DispatcherPriority.Background);
-            }
-        }
-
-        private void OnExitClick(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Application.Current.Shutdown();
-        }
-
-
-
-
-  
-        private void MainWindow_Deactivated(object sender, EventArgs e)
-        {
-            // When the window loses focus, tell the current tool to stop its action.
-            _router.CurrentTool?.StopAction(_ctx);
-        }
-
-        private void Minimize_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
-        }
-        private Point _dragStartPoint;
-        private bool _draggingFromMaximized = false;
-
-        private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-
-            if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
-            {
-                MaximizeRestore_Click(sender, null);
-                return;
-            }
-
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                if (_maximized)
-                {
-                    // 记录按下位置，准备看是否拖动
-                    _dragStartPoint = e.GetPosition(this);
-                    _draggingFromMaximized = true;
-                    MouseMove += Border_MouseMoveFromMaximized;
-                }
-                else
-                {
-                    DragMove(); // 普通拖动
-                }
-            }
-        }
-
-        private void Border_MouseMoveFromMaximized(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-
-            if (_draggingFromMaximized && e.LeftButton == MouseButtonState.Pressed)
-            {
-                // 鼠标移动的阈值，比如 5px
-                var currentPos = e.GetPosition(this);
-                if (Math.Abs(currentPos.X - _dragStartPoint.X) > 5 ||
-                    Math.Abs(currentPos.Y - _dragStartPoint.Y) > 5)
-                {
-                    // 超过阈值，恢复窗口大小，并开始拖动
-                    _draggingFromMaximized = false;
-                    MouseMove -= Border_MouseMoveFromMaximized;
-
-                    _maximized = false;
-
-                    var percentX = _dragStartPoint.X / ActualWidth;
-
-                    Left = e.GetPosition(this).X - _restoreBounds.Width * percentX;
-                    Top = e.GetPosition(this).Y;
-                    Width = _restoreBounds.Width;
-                    Height = _restoreBounds.Height;
-                    SetMaximizeIcon();
-                    DragMove();
-                }
-            }
-        }
-
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e);
-            var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
-            hwndSource.AddHook(WndProc);
-        }
-
-
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (msg == WM_NCHITTEST)
-            {
-                if (_maximized)
-                {
-                    handled = true;
-                    return (IntPtr)1; // HTCLIENT
-                }
-                // 获得鼠标相对于窗口的位置
-                var mousePos = PointFromScreen(new Point(
-                    (short)(lParam.ToInt32() & 0xFFFF),
-                    (short)((lParam.ToInt32() >> 16) & 0xFFFF)));
-
-                double width = ActualWidth;
-                double height = ActualHeight;
-                int resizeBorder = 12; // 可拖动边框宽度
-
-                handled = true;
-
-                // 判断边缘区域
-                if (mousePos.Y <= resizeBorder)
-                {
-                    if (mousePos.X <= resizeBorder) return (IntPtr)HTTOPLEFT;
-                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTTOPRIGHT;
-                    return (IntPtr)HTTOP;
-                }
-                else if (mousePos.Y >= height - resizeBorder)
-                {
-                    if (mousePos.X <= resizeBorder) return (IntPtr)HTBOTTOMLEFT;
-                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTBOTTOMRIGHT;
-                    return (IntPtr)HTBOTTOM;
-                }
-                else
-                {
-                    if (mousePos.X <= resizeBorder) return (IntPtr)HTLEFT;
-                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTRIGHT;
-                }
-
-                // 否则返回客户区
-                return (IntPtr)1; // HTCLIENT
-            }
-            return IntPtr.Zero;
-        }
-        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
-        {
-            if (!_maximized)
-            {
-                _restoreBounds = new Rect(Left, Top, Width, Height);
-                _maximized = true;
-
-                var workArea = SystemParameters.WorkArea;
-                //s((SystemParameters.BorderWidth));
-                Left = workArea.Left - (SystemParameters.BorderWidth) * 2;
-                Top = workArea.Top - (SystemParameters.BorderWidth) * 2;
-                Width = workArea.Width + (SystemParameters.BorderWidth * 4);
-                Height = workArea.Height + (SystemParameters.BorderWidth * 4);
-
-                SetRestoreIcon();  // 切换到还原图标
-            }
-            else
-            {
-                _maximized = false;
-                Left = _restoreBounds.Left;
-                Top = _restoreBounds.Top;
-                Width = _restoreBounds.Width;
-                Height = _restoreBounds.Height;
-                WindowState = WindowState.Normal;
-
-                // 切换到最大化矩形图标
-                SetMaximizeIcon();
-            }
-        }
+ 
 
         private void SetRestoreIcon()
         {
@@ -637,47 +336,6 @@ namespace TabPaint
 
         }
 
-        private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            // Get the position relative to the scaled CanvasWrapper
-            Point pos = e.GetPosition(CanvasWrapper);
-            _router.ViewElement_MouseDown(pos, e);
-        }
-
-        private void OnCanvasMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            Point pos = e.GetPosition(CanvasWrapper);
-            _router.ViewElement_MouseMove(pos, e);
-        }
-
-        private void OnCanvasMouseUp(object sender, MouseButtonEventArgs e)
-        {
-            Point pos = e.GetPosition(CanvasWrapper);
-            _router.ViewElement_MouseUp(pos, e);
-        }
-
-        private void OnCanvasMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            _router.CurrentTool?.StopAction(_ctx);
-        }
-
-
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-        private void CropMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            // 假设你的当前工具存储在一个属性 CurrentTool 中
-            // 并且你的 SelectTool 实例是可访问的
-            if (_router.CurrentTool is SelectTool selectTool)
-            {
-                // 创建或获取当前的 ToolContext
-                // var toolContext = CreateToolContext(); // 你应该已经有类似的方法
-
-                selectTool.CropToSelection(_ctx);
-            }
-        }
         private void OnSourceInitialized(object? sender, EventArgs e)
         {
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -691,7 +349,7 @@ namespace TabPaint
 
 
 
-        
+
         public MainWindow(string startFilePath)///////////////////////////////////////////////////主窗口初始化
         {
 
@@ -757,6 +415,9 @@ namespace TabPaint
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.Focus();
+
+           
+
             Task.Run(async () => // 在后台线程运行，不阻塞UI线程
             {
                 await OpenImageAndTabs(_currentFilePath, true);
@@ -793,6 +454,20 @@ namespace TabPaint
                         OnOpenClick(sender, e);
                         e.Handled = true;
                         break;
+                    case Key.V:
+                        if (Keyboard.Modifiers == ModifierKeys.Control)
+                        {
+                            _router.SetTool(_tools.Select); // 切换到选择工具
+
+                            if (_tools.Select is SelectTool st) // 强转成 SelectTool
+                            {
+                                st.PasteSelection(_ctx, true);
+                            }
+                            e.Handled = true;
+                        }
+                        break;
+                       
+
                     case Key.A:
                         if (Keyboard.Modifiers == ModifierKeys.Control)
                         {
@@ -835,36 +510,9 @@ namespace TabPaint
             }
             return region;
         }
-        private void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
-        {
-            if (_bitmap == null) return;// 1. (为Undo做准备) 保存当前图像的完整快照
-            var fullRect = new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight);
-            _undo.PushFullImageUndo(); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
-            var dialog = new AdjustBCEWindow(_bitmap, BackgroundImage);   // 3. 显示对话框并根据结果操作
-            if (dialog.ShowDialog() == true)
-            {// 4. 从对话框获取处理后的位图
-                WriteableBitmap adjustedBitmap = dialog.FinalBitmap;   // 5. 将处理后的像素数据写回到主位图 (_bitmap) 中
-                int stride = adjustedBitmap.BackBufferStride;
-                int byteCount = adjustedBitmap.PixelHeight * stride;
-                byte[] pixelData = new byte[byteCount];
-                adjustedBitmap.CopyPixels(pixelData, stride, 0);
-                _bitmap.WritePixels(fullRect, pixelData, stride, 0);
-                SetUndoRedoButtonState();
-            }
-            else
-            {  // 用户点击了 "取消" 或关闭了窗口
-                _undo.Undo(); // 弹出刚刚压入的快照
-                _undo.ClearRedo(); // 清空因此产生的Redo项
-                SetUndoRedoButtonState();
-            }
-        }
-        private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
-        private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
-        private void EmptyClick(object sender, RoutedEventArgs e)
-        {
-            RotateFlipMenuToggle.IsChecked = false;
-            BrushToggle.IsChecked = false;
-        }
+
+       
+
         private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
         {
             // Clamp 左上角坐标到合法范围
@@ -883,39 +531,12 @@ namespace TabPaint
             UpdateBrushAndButton(RedoButton, RedoIcon, _undo.CanRedo);
 
         }
-        private void OnCopyClick(object sender, RoutedEventArgs e)
-        {
-            // 确保 SelectTool 是当前工具
-            if (_router.CurrentTool != _tools.Select)
-                _router.SetTool(_tools.Select); // 切换到选择工具
 
-            if (_router.CurrentTool is SelectTool selectTool)
-                selectTool.CopySelection(_ctx);
-        }
-
-        private void OnCutClick(object sender, RoutedEventArgs e)
-        {
-            if (_router.CurrentTool != _tools.Select)
-                _router.SetTool(_tools.Select); // 切换到选择工具
-
-            if (_router.CurrentTool is SelectTool selectTool)
-                selectTool.CutSelection(_ctx, true);
-        }
-
-        private void OnPasteClick(object sender, RoutedEventArgs e)
-        {
-            if (_router.CurrentTool != _tools.Select)
-                _router.SetTool(_tools.Select); // 切换到选择工具
-
-            if (_router.CurrentTool is SelectTool selectTool)
-                selectTool.PasteSelection(_ctx, false);
-
-        }
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
         {
             button.IsEnabled = isEnabled;
 
-           
+
             var frozenDrawingImage = (DrawingImage)image.Source; // 获取当前 UI 使用的绘图对象
             var modifiableDrawingImage = frozenDrawingImage.Clone();    // 克隆出可修改的副本
             if (modifiableDrawingImage.Drawing is GeometryDrawing geoDrawing)  // DrawingImage.Drawing 可能是 DrawingGroup 或 GeometryDrawing
@@ -936,10 +557,7 @@ namespace TabPaint
             // 替换 Image.Source，让 UI 用新的对象
             image.Source = modifiableDrawingImage;
         }
-        private void OnTextClick(object sender, RoutedEventArgs e)
-        {
-            _router.SetTool(_tools.Text);
-        }
+    
         private void Undo()
         {
 
@@ -968,13 +586,40 @@ namespace TabPaint
         }
         private void SaveBitmap(string path)
         {
+            // 1. 原有的保存逻辑
             using (FileStream fs = new FileStream(path, FileMode.Create))
             {
                 BitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(_bitmap));
                 encoder.Save(fs);
             }
+
+            // 2. 新增：更新对应标签页的缩略图
+            UpdateTabThumbnail(path);
         }
+        private void UpdateTabThumbnail(string path)
+        {
+            // 在 ObservableCollection 中找到对应的 Tab
+            var tab = FileTabs.FirstOrDefault(t => t.FilePath == path);
+            if (tab == null) return;
+
+            // 从当前的 _bitmap (WriteableBitmap) 创建一个缩小的版本
+            // 假设缩略图宽度为 100 (和你 LoadThumbnailAsync 保持一致)
+            double targetWidth = 100;
+            double scale = targetWidth / _bitmap.PixelWidth;
+
+            // 使用 TransformedBitmap 进行快速缩放
+            var transformedBitmap = new TransformedBitmap(_bitmap, new ScaleTransform(scale, scale));
+
+            // 转为 RenderTargetBitmap 或直接转回 WriteableBitmap 以便冻结
+            // 冻结 (Freeze) 是为了确保它可以在 UI 线程安全显示
+            var newThumb = new WriteableBitmap(transformedBitmap);
+            newThumb.Freeze();
+
+            // 触发 UI 更新
+            tab.Thumbnail = newThumb;
+        }
+
         private Color GetPixelColor(int x, int y)
         {
             if (x < 0 || y < 0 || x >= _bmpWidth || y >= _bmpHeight) return Colors.Transparent;
@@ -1013,7 +658,7 @@ namespace TabPaint
         }
 
         private void FitToWindow(double addscale = 1)
-        { 
+        {
             if (BackgroundImage.Source != null)
             {
                 double imgWidth = BackgroundImage.Source.Width;
@@ -1021,13 +666,13 @@ namespace TabPaint
                 //s(ScrollContainer.ViewportWidth);
                 double viewWidth = ScrollContainer.ViewportWidth;
                 double viewHeight = ScrollContainer.ViewportHeight;
-                
+
                 double scaleX = viewWidth / imgWidth;
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
-                zoomscale = fitScale* addscale;
-               // s(fitScale);
+                zoomscale = fitScale * addscale;
+                // s(fitScale);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
                 //UpdateImagePosition();
@@ -1056,38 +701,8 @@ namespace TabPaint
         }
 
 
-        private void FitToWindow_Click(object sender, RoutedEventArgs e)
-        {
-            FitToWindow();
-        }
 
-        private void ZoomOut_Click(object sender, RoutedEventArgs e)
-        {
-            double newScale = zoomscale / ZoomTimes;
-            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-            UpdateSliderBarValue(zoomscale);
-        }
-
-        private void ZoomIn_Click(object sender, RoutedEventArgs e)
-        {
-            double newScale = zoomscale * ZoomTimes;
-            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-            UpdateSliderBarValue(zoomscale);
-        }
-
-        private void ZoomMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.ComboBox combo && combo.SelectedItem is ComboBoxItem item && item.Tag != null)
-            {
-                double selectedScale = Convert.ToDouble(item.Tag);
-                zoomscale = Math.Clamp(selectedScale, MinZoom, MaxZoom);
-                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-                // s(zoomscale);
-                UpdateSliderBarValue(zoomscale);
-            }
-        }
+      
         private void UpdateSliderBarValue(double newScale)
         {
             ZoomSlider.Value = newScale;
@@ -1099,7 +714,7 @@ namespace TabPaint
             if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
 
             e.Handled = false; // 阻止默认滚动
-           // s();
+                               // s();
             double oldScale = zoomscale;
             double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes);
             newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
@@ -1117,21 +732,15 @@ namespace TabPaint
             double newOffsetY = (offsetY + mouseInScroll.Y) * (newScale / oldScale) - mouseInScroll.Y;
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
-        }
-
-        private void OnOpenClick(object sender, RoutedEventArgs e)
-        {
-            var dlg = new Microsoft.Win32.OpenFileDialog
+            if (_tools.Select is SelectTool st)
             {
-                Filter = PicFilterString
-            };
-            if (dlg.ShowDialog() == true)
-            {
-                _currentFilePath = dlg.FileName;
-                _currentImageIndex = -1;
-                OpenImageAndTabs(_currentFilePath, true);
+                // 假设你的 ctx 实例在 MainWindow 中可以访问
+                // 或者你把 ctx 传给这个方法
+                st.RefreshOverlay(_ctx);
             }
         }
+
+      
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
@@ -1181,31 +790,7 @@ namespace TabPaint
             ctx.Surface.Bitmap.AddDirtyRect(rect);
             ctx.Surface.Bitmap.Unlock();
         }
-        private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)
-        {
-            if (_bitmap == null) return;
-            _undo.PushFullImageUndo();// 1. (为Undo做准备) 保存当前图像的完整快照
-            var dialog = new AdjustTTSWindow(_bitmap); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
-            // 注意：这里我们传入的是 _bitmap 本身，因为 AdjustTTSWindow 内部会自己克隆一个原始副本
-
-           
-            if (dialog.ShowDialog() == true) // 更新撤销/重做按钮的状态
-                SetUndoRedoButtonState();
-            else// 用户点击了 "取消"
-            {
-                _undo.Undo();
-                _undo.ClearRedo();
-                SetUndoRedoButtonState();
-            }
-        }
-        private void OnConvertToBlackAndWhiteClick(object sender, RoutedEventArgs e)
-        {
-          
-            if (_bitmap == null)return;  // 1. 检查图像是否存在
-            _undo.PushFullImageUndo();
-            ConvertToBlackAndWhite(_bitmap);
-            SetUndoRedoButtonState();
-        }
+      
         private void ConvertToBlackAndWhite(WriteableBitmap bmp)
         {
             bmp.Lock();
@@ -1239,27 +824,12 @@ namespace TabPaint
             bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
             bmp.Unlock();
         }
-        private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
-        {
-            if (_surface?.Bitmap == null) return;
-            var dialog = new ResizeCanvasDialog(// 1. 创建并配置对话框
-                _surface.Bitmap.PixelWidth,
-                _surface.Bitmap.PixelHeight
-            );
-            dialog.Owner = this; // 设置所有者，使对话框显示在主窗口中央
-            if (dialog.ShowDialog() == true)  // 2. 显示对话框，并检查用户是否点击了“确定”
-            {
-                // 3. 如果用户点击了“确定”，获取新尺寸并调用缩放方法
-                int newWidth = dialog.ImageWidth;
-                int newHeight = dialog.ImageHeight;
-                ResizeCanvas(newWidth, newHeight);
-            }
-        }
+      
         private void ResizeCanvas(int newWidth, int newHeight)
         {
             var oldBitmap = _surface.Bitmap;
             if (oldBitmap == null) return; // 如果尺寸没有变化，则不执行任何操作
-            if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight)return;
+            if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight) return;
 
             var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);  // --- 1. 捕获变换前的完整状态 (for UNDO) ---
             var undoPixels = new byte[oldBitmap.PixelHeight * oldBitmap.BackBufferStride];
@@ -1287,431 +857,11 @@ namespace TabPaint
             SetUndoRedoButtonState();
         }
 
-
-        public class FileTabItem : INotifyPropertyChanged
+        private void OnPenClick(object sender, RoutedEventArgs e)
         {
-            public string FilePath { get; }
-            public string FileName => System.IO.Path.GetFileName(FilePath);
-            public string DisplayName => System.IO.Path.GetFileNameWithoutExtension(FilePath);
-            private bool _isSelected;
-            public bool IsSelected
-            {
-                get => _isSelected;
-                set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
-            }
-            private bool _isLoading;
-            public bool IsLoading
-            {
-                get => _isLoading;
-                set { _isLoading = value; OnPropertyChanged(nameof(IsLoading)); }
-            }
-
-            private BitmapSource? _thumbnail;
-            public BitmapSource? Thumbnail
-            {
-                get => _thumbnail;
-                set
-                {
-                    _thumbnail = value;
-                    OnPropertyChanged(nameof(Thumbnail));
-                }
-            }
-
-            public FileTabItem(string path) {FilePath = path;}
-            public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
-            {  // 异步加载缩略图（调用时自动更新UI）
-            // 需要 using System.Drawing; 
-            // 和 using System.IO;
-                var thumbnail = await Task.Run(() =>
-                {
-                    try
-                    {
-                        // 步骤 1: 使用 System.Drawing.Image 获取原始尺寸
-                        double originalWidth, originalHeight;
-                        using (var img = System.Drawing.Image.FromFile(FilePath))
-                        {
-                            originalWidth = img.Width;
-                            originalHeight = img.Height;
-                        }
-
-                        // 步骤 2, 3, 4 与方案一完全相同
-                        double ratioX = containerWidth / originalWidth;
-                        double ratioY = containerHeight / originalHeight;
-                        double finalRatio = Math.Min(ratioX, ratioY);
-
-                        if (finalRatio > 1.0)
-                        {
-                            finalRatio = 1.0;
-                        }
-
-                        int decodeWidth = (int)(originalWidth * finalRatio);
-                        if (decodeWidth < 1) decodeWidth = 1;
-
-                        // 步骤 5: 创建并加载BitmapImage
-                        var bmp = new BitmapImage();
-                        bmp.BeginInit();
-                        bmp.CacheOption = BitmapCacheOption.OnLoad;
-                        bmp.UriSource = new Uri(FilePath);
-                        bmp.DecodePixelWidth = 100;
-                        bmp.EndInit();
-                        bmp.Freeze();
-                        //  s(bmp.PixelWidth.ToString() + " " + bmp.PixelHeight.ToString());
-                        return bmp;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Failed to load thumbnail for {FilePath}: {ex.Message}");
-                        return null;
-                    }
-                });
-                if (thumbnail != null)Thumbnail = thumbnail;
-            }
-            public event PropertyChangedEventHandler? PropertyChanged;
-            protected void OnPropertyChanged(string name)
-                => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            SetBrushStyle(BrushStyle.Pencil);
         }
 
-        private const int PageSize = 10; // 每页标签数量（可调整）
-
-        public ObservableCollection<FileTabItem> FileTabs { get; }
-            = new ObservableCollection<FileTabItem>();
-        // 加载当前页 + 前后页文件到显示区
-        private void LoadTabPageAsync(int centerIndex)
-        {//全部清空并重新加载!!!
-            if (_imageFiles == null || _imageFiles.Count == 0) return;
-
-
-            FileTabs.Clear();
-            int start = Math.Max(0, centerIndex - PageSize);
-            int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
-            //s(centerIndex);
-            foreach (var path in _imageFiles.Skip(start).Take(end - start + 1))
-                FileTabs.Add(new FileTabItem(path));
-
-            foreach (var tab in FileTabs)
-                if (tab.Thumbnail == null && !tab.IsLoading)
-                {
-                    tab.IsLoading = true;
-                    _ = tab.LoadThumbnailAsync(100, 60);
-                }
-        }
-        private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
-        {
-
-            if (_imageFiles == null || _imageFiles.Count == 0)return;
-
-            if (refresh)
-                 LoadTabPageAsync(centerIndex);
-
-            // 计算当前选中图片在 FileTabs 中的索引
-            var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[centerIndex]);
-            if (currentTab == null)return;
-
-            int selectedIndex = FileTabs.IndexOf(currentTab);
-            if (selectedIndex < 0)return;
-
-            double itemWidth = 124;                   // 与 Button 实际宽度一致
-            double viewportWidth = FileTabsScroller.ViewportWidth;
-            double targetOffset = selectedIndex * itemWidth - viewportWidth / 2 + itemWidth / 2;
-
-            targetOffset = Math.Max(0, targetOffset); // 防止负数偏移
-            double maxOffset = Math.Max(0, FileTabs.Count * itemWidth - viewportWidth);
-            targetOffset = Math.Min(targetOffset, maxOffset); // 防止超出范围
-
-            FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
-        }
-
-        // 文件总数绑定属性
-        public int ImageFilesCount;
-        private bool _isInitialLayoutComplete = false;
-        private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            if (!_isInitialLayoutComplete)return;
-           
-            double itemWidth = 124;
-            int firstIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
-            int visibleCount = (int)(FileTabsScroller.ViewportWidth / itemWidth) + 2;
-            int lastIndex = firstIndex + visibleCount;
-            PreviewSlider.Value = firstIndex;
-            bool needload = false;
-
-            // 尾部加载
-            if (lastIndex >= FileTabs.Count - 10 && FileTabs.Count < _imageFiles.Count)
-            {
-                int currentFirstIndex = _imageFiles.IndexOf(FileTabs[FileTabs.Count - 1].FilePath);
-                if (currentFirstIndex > 0)
-                {
-                    int start = Math.Min(_imageFiles.Count - 1, currentFirstIndex);
-                    foreach (var path in _imageFiles.Skip(start).Take(PageSize))
-                        FileTabs.Add(new FileTabItem(path));
-                    needload = true;
-                }
-            }
-
-            // 前端加载
-            if (FileTabs.Count > 0 && firstIndex < 10 && FileTabs[0].FilePath != _imageFiles[0])
-            {
-                int currentFirstIndex = _imageFiles.IndexOf(FileTabs[0].FilePath);
-                if (currentFirstIndex > 0)
-                {
-                    int start = Math.Min(0, currentFirstIndex - PageSize);
-                    double offsetBefore = FileTabsScroller.HorizontalOffset;
-
-                    var prevPaths = _imageFiles.Skip(start).Take(currentFirstIndex - start);
-
-                    foreach (var path in prevPaths.Reverse())
-                        FileTabs.Insert(0, new FileTabItem(path));
-                    FileTabsScroller.ScrollToHorizontalOffset(offsetBefore + prevPaths.Count() * itemWidth);
-                    needload = true;
-                }
-            }
-            if (needload || e.HorizontalChange != 0 || e.ExtentWidthChange != 0)  // 懒加载缩略图，仅当有新增或明显滚动时触发
-            {
-                int end = Math.Min(lastIndex, FileTabs.Count);
-                for (int i = firstIndex; i < end; i++)
-                {
-                    var tab = FileTabs[i];
-                    if (tab.Thumbnail == null && !tab.IsLoading)
-                    {
-                        tab.IsLoading = true;
-                        _ =  tab.LoadThumbnailAsync(100, 60);
-                    }
-                }
-            }
-        }
-        private void FileTabsScroller_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
-        {
-            if (sender is ScrollViewer scroller)
-            {
-                // ManipulationDelta.Translation 包含了手指在 X 和 Y 方向上的移动距离
-                // 我们只关心 X 方向的移动 (水平)
-                var offset = scroller.HorizontalOffset - e.DeltaManipulation.Translation.X;
-
-                // 滚动到新的位置
-                scroller.ScrollToHorizontalOffset(offset);
-
-                // 标记事件已处理，防止其他控件响应
-                e.Handled = true;
-            }
-        }
-        // 鼠标滚轮横向滚动
-        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
-        {
-            var scrollViewer = sender as ScrollViewer;
-            if (scrollViewer != null)
-            {
-                // 横向滚动
-                double offset = scrollViewer.HorizontalOffset - (e.Delta);
-                scrollViewer.ScrollToHorizontalOffset(offset);
-                e.Handled = true;
-            }
-        }
-
-        // 阻止边界反馈
-        private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)
-        {
-            e.Handled = true;
-        }
-
-        // 如果需要鼠标拖动滚动（模拟触摸）
-        private Point? _scrollMousePoint = null;
-        private double _scrollHorizontalOffset;
-
-        private void FileTabsScroller_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _scrollMousePoint = e.GetPosition(FileTabsScroller);
-            _scrollHorizontalOffset = FileTabsScroller.HorizontalOffset;
-            FileTabsScroller.CaptureMouse();
-        }
-
-        private void FileTabsScroller_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (_scrollMousePoint.HasValue && e.LeftButton == MouseButtonState.Pressed)
-            {
-                var currentPoint = e.GetPosition(FileTabsScroller);
-                var offset = _scrollHorizontalOffset + (_scrollMousePoint.Value.X - currentPoint.X);
-                FileTabsScroller.ScrollToHorizontalOffset(offset);
-            }
-        }
-
-        private void FileTabsScroller_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            _scrollMousePoint = null;
-            FileTabsScroller.ReleaseMouseCapture();
-        }
-
-        private async void OnFileTabClick(object sender, RoutedEventArgs e)// 点击标签打开图片
-        {
-            if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item) await OpenImageAndTabs(item.FilePath);
-        }
-
-        // 鼠标滚轮横向滑动标签栏
-        //private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
-        //{
-        //    //s(1);
-        //    double offset = FileTabsScroller.HorizontalOffset - e.Delta / 2;
-        //    FileTabsScroller.ScrollToHorizontalOffset(offset);
-        //    e.Handled = true;
-        //}
-
-        private bool _isDragging = false;
-        private void Slider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            // 如果点击的目标是 Thumb 本身或其子元素，则不作任何处理。
-            // 让 Slider 的默认 Thumb 拖动逻辑去工作。
-            if (IsMouseOverThumb(e))return;
-
-            // 如果点击的是轨道部分
-            _isDragging = true;
-            var slider = (Slider)sender;
-
-            // 捕获鼠标，这样即使鼠标移出 Slider 范围，我们也能继续收到 MouseMove 事件
-            slider.CaptureMouse();
-
-            // 更新 Slider 的值到当前点击的位置
-            UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
-
-            // 标记事件已处理，防止其他控件响应
-            e.Handled = true;
-        }
-
-        private void Slider_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            // 仅当我们通过点击轨道开始拖动时，才处理 MouseMove 事件
-            if (_isDragging)
-            {
-                var slider = (Slider)sender;
-                // 持续更新 Slider 的值
-                UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
-            }
-        }
-
-        private void Slider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            // 如果我们正在拖动
-            if (_isDragging)
-            {
-                _isDragging = false;
-                var slider = (Slider)sender;
-                // 释放鼠标捕获
-                slider.ReleaseMouseCapture();
-                e.Handled = true;
-            }
-        }
-
-        private void Slider_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            var slider = (Slider)sender;
-
-            // 根据滚轮方向调整值
-            double change = slider.LargeChange; // 使用 LargeChange 作为滚动步长
-            if (e.Delta < 0)
-            {
-                change = -change;
-            }
-
-            slider.Value += change;
-            e.Handled = true;
-        }
-        private async void UpdateSliderValueFromPoint(Slider slider, Point position)
-        {
-            double ratio = position.Y / slider.ActualHeight; // 计算点击位置在总高度中的比例
-
-            // 将比例转换为滑块的值范围
-            double value = slider.Minimum + (slider.Maximum - slider.Minimum) * (1 - ratio);
-           
-            value = Math.Max(slider.Minimum, Math.Min(slider.Maximum, value)); // 确保值在有效范围内
-
-            slider.Value = value;
-            await OpenImageAndTabs(_imageFiles[(int)value], true);
-        }
-        private bool IsMouseOverThumb(MouseButtonEventArgs e)/// 检查鼠标事件的原始源是否是 Thumb 或其内部的任何元素。
-        {
-            var slider = (Slider)e.Source;
-            var track = slider.Template.FindName("PART_Track", slider) as Track;
-            if (track == null) return false;
-
-            return track.Thumb.IsMouseOver;
-        }
-        public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject    // 这是一个通用的辅助方法，用于在可视化树中查找特定类型的子控件
-        {
-            if (parent == null) return null;
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                if (child != null && child is T)
-                {
-                    return (T)child;
-                }
-                else
-                {
-                    T childOfChild = FindVisualChild<T>(child);
-                    if (childOfChild != null)
-                    {
-                        return childOfChild;
-                    }
-                }
-            }
-            return null;
-        }
-  
-
-        private void SetPreviewSlider()
-        {
-            if (_imageFiles == null || _imageFiles.Count == 0) return;
-            PreviewSlider.Minimum = 0;
-            PreviewSlider.Maximum = _imageFiles.Count - 1;
-            PreviewSlider.Value = _currentImageIndex;
-            //if(_imageFiles.Count < 30)
-            //    PreviewSlider.Visibility= Visibility.Collapsed;
-            //else
-            //    PreviewSlider.Visibility = Visibility.Visible;
-        }
-
-      
-        private void OnSaveClick(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(_currentFilePath))
-            {
-                OnSaveAsClick(sender, e); // 如果没有当前路径，就走另存为
-            }
-            else SaveBitmap(_currentFilePath);
-        }
-        private string _currentFilePath = string.Empty;
-
-        private void OnSaveAsClick(object sender, RoutedEventArgs e)
-        {
-            var dlg = new Microsoft.Win32.SaveFileDialog
-            {
-                Filter = PicFilterString,
-                FileName = "image.png"
-            };
-            if (dlg.ShowDialog() == true)
-            {
-                _currentFilePath = dlg.FileName;
-                SaveBitmap(_currentFilePath);
-            }
-        }
-    
-        private void OnPickColorClick(object s, RoutedEventArgs e)
-        {
-            LastTool = ((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool;
-            _router.SetTool(_tools.Eyedropper);
-        }
-
-        private void OnEraserClick(object s, RoutedEventArgs e)
-        {
-            SetBrushStyle(BrushStyle.Eraser);
-        }
-        private void OnFillClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Fill);
-        private void OnSelectClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Select);
-
-        private void OnEffectButtonClick(object sender, RoutedEventArgs e)
-        {
-            var btn = (System.Windows.Controls.Button)sender;
-            btn.ContextMenu.IsOpen = true;
-        }
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)
         {
             _bitmap = new WriteableBitmap(_bmpWidth, _bmpHeight, 96, 96, PixelFormats.Bgra32, null);
@@ -1764,16 +914,7 @@ namespace TabPaint
             SetBrushStyle(BrushStyle.Round);
         }
 
-        private void OnNewClick(object sender, RoutedEventArgs e)
-        {
-            _bmpWidth = 1200; // 可以弹出对话框让用户输入宽高，也可以用默认尺寸
-            _bmpHeight = 900;
-            _currentFilePath = string.Empty; // 新建后没有路径
-            _currentFileName = "未命名";
-            Clean_bitmap(_bmpWidth, _bmpHeight);
-
-            UpdateWindowTitle();
-        }
+    
 
     }
 

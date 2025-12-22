@@ -306,3 +306,23 @@ using System.Windows;
 //        e.Handled = true;
 //    }
 //}
+
+//double finalX = 0, finalY = 0;
+//_selectionRect = new Int32Rect((int)finalX, (int)finalY, _selectionRect.Width, _selectionRect.Height);
+
+//if (ctx.SelectionPreview.RenderTransform is TranslateTransform t1)
+//{
+//    finalX = t1.X;
+//    finalY = t1.Y;
+//}
+//else if (ctx.SelectionPreview.RenderTransform is TransformGroup tg)
+//{
+//    var tt = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
+//    if (tt != null)
+//    {
+//        finalX = tt.X;
+//        finalY = tt.Y;
+//    }
+//}
+
+//_selectionRect = new Int32Rect((int)finalX, (int)finalY, _selectionRect.Width, _selectionRect.Height);

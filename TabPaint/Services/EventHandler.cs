@@ -1,0 +1,627 @@
+﻿using Microsoft.Win32;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using System.Windows.Threading;
+
+//
+//TabPaint主程序
+//
+
+namespace TabPaint
+{
+    public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
+    {
+        private void OnSaveClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_currentFilePath))
+            {
+                OnSaveAsClick(sender, e); // 如果没有当前路径，就走另存为
+            }
+            else SaveBitmap(_currentFilePath);
+        }
+        private string _currentFilePath = string.Empty;
+
+        private void OnSaveAsClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = PicFilterString,
+                FileName = "image.png"
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                _currentFilePath = dlg.FileName;
+                SaveBitmap(_currentFilePath);
+            }
+        }
+
+        private void OnPickColorClick(object s, RoutedEventArgs e)
+        {
+            LastTool = ((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool;
+            _router.SetTool(_tools.Eyedropper);
+        }
+
+        private void OnEraserClick(object s, RoutedEventArgs e)
+        {
+            SetBrushStyle(BrushStyle.Eraser);
+        }
+        private void OnFillClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Fill);
+        private void OnSelectClick(object s, RoutedEventArgs e) => _router.SetTool(_tools.Select);
+
+        private void OnEffectButtonClick(object sender, RoutedEventArgs e)
+        {
+            var btn = (System.Windows.Controls.Button)sender;
+            btn.ContextMenu.IsOpen = true;
+        }
+
+
+        private void FitToWindow_Click(object sender, RoutedEventArgs e)
+        {
+            FitToWindow();
+        }
+
+        private void ZoomOut_Click(object sender, RoutedEventArgs e)
+        {
+            double newScale = zoomscale / ZoomTimes;
+            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+            UpdateSliderBarValue(zoomscale);
+        }
+
+        private void ZoomIn_Click(object sender, RoutedEventArgs e)
+        {
+            double newScale = zoomscale * ZoomTimes;
+            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+            UpdateSliderBarValue(zoomscale);
+        }
+
+        private void OnCopyClick(object sender, RoutedEventArgs e)
+        {
+            // 确保 SelectTool 是当前工具
+            if (_router.CurrentTool != _tools.Select)
+                _router.SetTool(_tools.Select); // 切换到选择工具
+
+            if (_router.CurrentTool is SelectTool selectTool)
+                selectTool.CopySelection(_ctx);
+        }
+
+        private void OnCutClick(object sender, RoutedEventArgs e)
+        {
+            if (_router.CurrentTool != _tools.Select)
+                _router.SetTool(_tools.Select); // 切换到选择工具
+
+            if (_router.CurrentTool is SelectTool selectTool)
+                selectTool.CutSelection(_ctx, true);
+        }
+
+        private void OnPasteClick(object sender, RoutedEventArgs e)
+        {
+            if (_router.CurrentTool != _tools.Select)
+                _router.SetTool(_tools.Select); // 切换到选择工具
+
+            if (_router.CurrentTool is SelectTool selectTool)
+                selectTool.PasteSelection(_ctx, false);
+
+        }
+
+        private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
+        private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
+        private void EmptyClick(object sender, RoutedEventArgs e)
+        {
+            RotateFlipMenuToggle.IsChecked = false;
+            BrushToggle.IsChecked = false;
+        }
+
+        private void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
+        {
+            if (_bitmap == null) return;// 1. (为Undo做准备) 保存当前图像的完整快照
+            var fullRect = new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight);
+            _undo.PushFullImageUndo(); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
+            var dialog = new AdjustBCEWindow(_bitmap, BackgroundImage);   // 3. 显示对话框并根据结果操作
+            if (dialog.ShowDialog() == true)
+            {// 4. 从对话框获取处理后的位图
+                WriteableBitmap adjustedBitmap = dialog.FinalBitmap;   // 5. 将处理后的像素数据写回到主位图 (_bitmap) 中
+                int stride = adjustedBitmap.BackBufferStride;
+                int byteCount = adjustedBitmap.PixelHeight * stride;
+                byte[] pixelData = new byte[byteCount];
+                adjustedBitmap.CopyPixels(pixelData, stride, 0);
+                _bitmap.WritePixels(fullRect, pixelData, stride, 0);
+                SetUndoRedoButtonState();
+            }
+            else
+            {  // 用户点击了 "取消" 或关闭了窗口
+                _undo.Undo(); // 弹出刚刚压入的快照
+                _undo.ClearRedo(); // 清空因此产生的Redo项
+                SetUndoRedoButtonState();
+            }
+        }
+
+
+        private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // Get the position relative to the scaled CanvasWrapper
+            Point pos = e.GetPosition(CanvasWrapper);
+            _router.ViewElement_MouseDown(pos, e);
+        }
+
+        private void OnCanvasMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Point pos = e.GetPosition(CanvasWrapper);
+            _router.ViewElement_MouseMove(pos, e);
+        }
+
+        private void OnCanvasMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Point pos = e.GetPosition(CanvasWrapper);
+            _router.ViewElement_MouseUp(pos, e);
+        }
+
+        private void OnCanvasMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            _router.CurrentTool?.StopAction(_ctx);
+        }
+
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+        private void CropMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            // 假设你的当前工具存储在一个属性 CurrentTool 中
+            // 并且你的 SelectTool 实例是可访问的
+            if (_router.CurrentTool is SelectTool selectTool)
+            {
+                // 创建或获取当前的 ToolContext
+                // var toolContext = CreateToolContext(); // 你应该已经有类似的方法
+
+                selectTool.CropToSelection(_ctx);
+            }
+        }
+
+        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_maximized)
+            {
+                _restoreBounds = new Rect(Left, Top, Width, Height);
+                _maximized = true;
+
+                var workArea = SystemParameters.WorkArea;
+                //s((SystemParameters.BorderWidth));
+                Left = workArea.Left - (SystemParameters.BorderWidth) * 2;
+                Top = workArea.Top - (SystemParameters.BorderWidth) * 2;
+                Width = workArea.Width + (SystemParameters.BorderWidth * 4);
+                Height = workArea.Height + (SystemParameters.BorderWidth * 4);
+
+                SetRestoreIcon();  // 切换到还原图标
+            }
+            else
+            {
+                _maximized = false;
+                Left = _restoreBounds.Left;
+                Top = _restoreBounds.Top;
+                Width = _restoreBounds.Width;
+                Height = _restoreBounds.Height;
+                WindowState = WindowState.Normal;
+
+                // 切换到最大化矩形图标
+                SetMaximizeIcon();
+            }
+        }
+
+        private void FontSettingChanged(object? sender, RoutedEventArgs e)
+        {
+            if (_activeTextBox == null) return;
+
+            if (FontFamilyBox.SelectedItem is FontFamily family)
+                _activeTextBox.FontFamily = family;
+            if (double.TryParse((FontSizeBox.SelectedItem as ComboBoxItem)?.Content?.ToString(), out double size))
+                _activeTextBox.FontSize = size;
+
+            _activeTextBox.FontWeight = BoldBtn.IsChecked == true ? FontWeights.Bold : FontWeights.Normal;
+            _activeTextBox.FontStyle = ItalicBtn.IsChecked == true ? FontStyles.Italic : FontStyles.Normal;
+            _activeTextBox.TextDecorations = UnderlineBtn.IsChecked == true ? TextDecorations.Underline : null;
+
+
+
+            if (_tools.Text is TextTool st) // 强转成 SelectTool
+            {
+                _activeTextBox.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    st.DrawTextboxOverlay(_ctx);
+                }), DispatcherPriority.Background);
+            }
+        }
+
+        private void OnExitClick(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Application.Current.Shutdown();
+        }
+
+
+
+
+
+        private void MainWindow_Deactivated(object sender, EventArgs e)
+        {
+            // When the window loses focus, tell the current tool to stop its action.
+            _router.CurrentTool?.StopAction(_ctx);
+        }
+
+        private void Minimize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+        private Point _dragStartPoint;
+        private bool _draggingFromMaximized = false;
+
+        private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+
+            if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
+            {
+                MaximizeRestore_Click(sender, null);
+                return;
+            }
+
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                if (_maximized)
+                {
+                    // 记录按下位置，准备看是否拖动
+                    _dragStartPoint = e.GetPosition(this);
+                    _draggingFromMaximized = true;
+                    MouseMove += Border_MouseMoveFromMaximized;
+                }
+                else
+                {
+                    DragMove(); // 普通拖动
+                }
+            }
+        }
+
+        private void Border_MouseMoveFromMaximized(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+
+            if (_draggingFromMaximized && e.LeftButton == MouseButtonState.Pressed)
+            {
+                // 鼠标移动的阈值，比如 5px
+                var currentPos = e.GetPosition(this);
+                if (Math.Abs(currentPos.X - _dragStartPoint.X) > 5 ||
+                    Math.Abs(currentPos.Y - _dragStartPoint.Y) > 5)
+                {
+                    // 超过阈值，恢复窗口大小，并开始拖动
+                    _draggingFromMaximized = false;
+                    MouseMove -= Border_MouseMoveFromMaximized;
+
+                    _maximized = false;
+
+                    var percentX = _dragStartPoint.X / ActualWidth;
+
+                    Left = e.GetPosition(this).X - _restoreBounds.Width * percentX;
+                    Top = e.GetPosition(this).Y;
+                    Width = _restoreBounds.Width;
+                    Height = _restoreBounds.Height;
+                    SetMaximizeIcon();
+                    DragMove();
+                }
+            }
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
+            hwndSource.AddHook(WndProc);
+        }
+
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == WM_NCHITTEST)
+            {
+                if (_maximized)
+                {
+                    handled = true;
+                    return (IntPtr)1; // HTCLIENT
+                }
+                // 获得鼠标相对于窗口的位置
+                var mousePos = PointFromScreen(new Point(
+                    (short)(lParam.ToInt32() & 0xFFFF),
+                    (short)((lParam.ToInt32() >> 16) & 0xFFFF)));
+
+                double width = ActualWidth;
+                double height = ActualHeight;
+                int resizeBorder = 12; // 可拖动边框宽度
+
+                handled = true;
+
+                // 判断边缘区域
+                if (mousePos.Y <= resizeBorder)
+                {
+                    if (mousePos.X <= resizeBorder) return (IntPtr)HTTOPLEFT;
+                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTTOPRIGHT;
+                    return (IntPtr)HTTOP;
+                }
+                else if (mousePos.Y >= height - resizeBorder)
+                {
+                    if (mousePos.X <= resizeBorder) return (IntPtr)HTBOTTOMLEFT;
+                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTBOTTOMRIGHT;
+                    return (IntPtr)HTBOTTOM;
+                }
+                else
+                {
+                    if (mousePos.X <= resizeBorder) return (IntPtr)HTLEFT;
+                    if (mousePos.X >= width - resizeBorder) return (IntPtr)HTRIGHT;
+                }
+
+                // 否则返回客户区
+                return (IntPtr)1; // HTCLIENT
+            }
+            return IntPtr.Zero;
+        }
+
+
+        private void OnRotateLeftClick(object sender, RoutedEventArgs e)
+        {
+            RotateBitmap(-90); RotateFlipMenuToggle.IsChecked = false;
+        }
+
+        private void OnRotateRightClick(object sender, RoutedEventArgs e)
+        {
+            RotateBitmap(90); RotateFlipMenuToggle.IsChecked = false;
+        }
+
+        private void OnRotate180Click(object sender, RoutedEventArgs e)
+        {
+            RotateBitmap(180); RotateFlipMenuToggle.IsChecked = false;
+        }
+
+
+        private void OnFlipVerticalClick(object sender, RoutedEventArgs e)
+        {
+            FlipBitmap(flipVertical: true); RotateFlipMenuToggle.IsChecked = false;
+        }
+
+        private void OnFlipHorizontalClick(object sender, RoutedEventArgs e)
+        {
+            FlipBitmap(flipVertical: false); RotateFlipMenuToggle.IsChecked = false;
+        }
+
+
+        private void ThicknessSlider_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            ThicknessPreview.Visibility = Visibility.Visible;
+            UpdateThicknessPreviewPosition(); // 初始定位
+
+            ThicknessTip.Visibility = Visibility.Visible;
+            SetThicknessSlider_Pos(0);
+        }
+
+        private void ThicknessSlider_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            ThicknessPreview.Visibility = Visibility.Collapsed;
+
+            ThicknessTip.Visibility = Visibility.Collapsed;
+        }
+
+        private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!_isInitialLayoutComplete) return;
+            PenThickness = e.NewValue;
+            UpdateThicknessPreviewPosition();
+
+            if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null)
+                return;
+
+            PenThickness = e.NewValue;
+            ThicknessTipText.Text = $"{(int)PenThickness} 像素";
+
+            // 让提示显示出来
+            ThicknessTip.Visibility = Visibility.Visible;
+            SetThicknessSlider_Pos(e.NewValue);
+
+        }
+
+        private void OnBrushStyleClick(object sender, RoutedEventArgs e)
+        {
+            //  _currentTool = ToolMode.Pen;
+            if (sender is System.Windows.Controls.MenuItem menuItem
+                && menuItem.Tag is string tagString
+                && Enum.TryParse(tagString, out BrushStyle style))
+            {
+                _router.SetTool(_tools.Pen);
+                _ctx.PenStyle = style; // 你的画笔样式枚举
+            }
+            UpdateToolSelectionHighlight();
+            // 点击后关闭下拉按钮
+            BrushToggle.IsChecked = false;
+        }
+
+        private void OnForegroundColorClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new System.Windows.Forms.ColorDialog();
+            dlg.Color = System.Drawing.Color.FromArgb(ForegroundBrush.Color.A, ForegroundBrush.Color.R, ForegroundBrush.Color.G, ForegroundBrush.Color.B);
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                ForegroundBrush = new SolidColorBrush(
+                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
+                DataContext = this; // 刷新绑定
+
+                _ctx.PenColor = ForegroundBrush.Color;
+                UpdateForegroundButtonColor(ForegroundBrush.Color);
+            }
+        }
+
+        private void OnBackgroundColorClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new System.Windows.Forms.ColorDialog();
+            dlg.Color = System.Drawing.Color.FromArgb(BackgroundBrush.Color.A, BackgroundBrush.Color.R, BackgroundBrush.Color.G, BackgroundBrush.Color.B);
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                BackgroundBrush = new SolidColorBrush(
+                    Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B));
+                DataContext = this; // 刷新绑定
+                UpdateBackgroundButtonColor(BackgroundBrush.Color);
+            }
+        }
+        private void OnColorButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
+            {
+                SelectedBrush = new SolidColorBrush(brush.Color);
+
+                // 如果你有 ToolContext，可同步笔颜色，例如：
+                _ctx.PenColor = brush.Color;
+                UpdateForegroundButtonColor(_ctx.PenColor);
+            }
+        }
+
+        private void OnCustomColorClick(object sender, RoutedEventArgs e)// 点击彩虹按钮自定义颜色
+        {
+            var dlg = new ColorDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var color = Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B);
+                var brush = new SolidColorBrush(color);
+                SelectedBrush = brush;
+                //HighlightSelectedButton(null);
+
+                // 同步到绘图上下文
+                _ctx.PenColor = color;
+                UpdateForegroundButtonColor(color);
+            }
+        }
+
+        private void OnScrollContainerMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
+            {
+                // 获取点击位置（相对于 CanvasWrapper，即考虑了缩放和偏移的逻辑坐标）
+                Point pt = e.GetPosition(CanvasWrapper);
+
+                // 判定：点击是否不在选区内，且不在缩放句柄上
+                bool hitHandle = selTool.HitTestHandle(pt, selTool._selectionRect) != SelectTool.ResizeAnchor.None;
+                bool hitInside = selTool.IsPointInSelection(pt);
+
+                if (!hitHandle && !hitInside)
+                {
+                    // 检查点击的来源
+                    // 如果点击的是滚动条本身，则不提交（防止想滚动时误提交）
+                    if (e.OriginalSource is System.Windows.Controls.Primitives.ScrollBar ||
+                        e.OriginalSource is System.Windows.Controls.Primitives.Thumb)
+                    {
+                        return;
+                    }
+
+                    // 执行提交
+                    selTool.CommitSelection(this._ctx);
+                    selTool.CleanUp(this._ctx);
+
+                    // 此时可以手动标志事件已处理，防止 CanvasWrapper 再次触发 Down 事件
+                    // e.Handled = true; 
+                }
+            }
+        }
+
+        private void OnTextClick(object sender, RoutedEventArgs e)
+        {
+            _router.SetTool(_tools.Text);
+        }
+
+        private void ZoomMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo && combo.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                double selectedScale = Convert.ToDouble(item.Tag);
+                zoomscale = Math.Clamp(selectedScale, MinZoom, MaxZoom);
+                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+                // s(zoomscale);
+                UpdateSliderBarValue(zoomscale);
+            }
+        }
+
+        private void OnOpenClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = PicFilterString
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                _currentFilePath = dlg.FileName;
+                _currentImageIndex = -1;
+                OpenImageAndTabs(_currentFilePath, true);
+            }
+        }
+
+        private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)
+        {
+            if (_bitmap == null) return;
+            _undo.PushFullImageUndo();// 1. (为Undo做准备) 保存当前图像的完整快照
+            var dialog = new AdjustTTSWindow(_bitmap); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
+                                                       // 注意：这里我们传入的是 _bitmap 本身，因为 AdjustTTSWindow 内部会自己克隆一个原始副本
+
+
+            if (dialog.ShowDialog() == true) // 更新撤销/重做按钮的状态
+                SetUndoRedoButtonState();
+            else// 用户点击了 "取消"
+            {
+                _undo.Undo();
+                _undo.ClearRedo();
+                SetUndoRedoButtonState();
+            }
+        }
+        private void OnConvertToBlackAndWhiteClick(object sender, RoutedEventArgs e)
+        {
+
+            if (_bitmap == null) return;  // 1. 检查图像是否存在
+            _undo.PushFullImageUndo();
+            ConvertToBlackAndWhite(_bitmap);
+            SetUndoRedoButtonState();
+        }
+
+        private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
+        {
+            if (_surface?.Bitmap == null) return;
+            var dialog = new ResizeCanvasDialog(// 1. 创建并配置对话框
+                _surface.Bitmap.PixelWidth,
+                _surface.Bitmap.PixelHeight
+            );
+            dialog.Owner = this; // 设置所有者，使对话框显示在主窗口中央
+            if (dialog.ShowDialog() == true)  // 2. 显示对话框，并检查用户是否点击了“确定”
+            {
+                // 3. 如果用户点击了“确定”，获取新尺寸并调用缩放方法
+                int newWidth = dialog.ImageWidth;
+                int newHeight = dialog.ImageHeight;
+                ResizeCanvas(newWidth, newHeight);
+            }
+        }
+
+        private void OnNewClick(object sender, RoutedEventArgs e)
+        {
+            _bmpWidth = 1200; // 可以弹出对话框让用户输入宽高，也可以用默认尺寸
+            _bmpHeight = 900;
+            _currentFilePath = string.Empty; // 新建后没有路径
+            _currentFileName = "未命名";
+            Clean_bitmap(_bmpWidth, _bmpHeight);
+
+            UpdateWindowTitle();
+        }
+    }
+}

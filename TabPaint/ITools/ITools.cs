@@ -25,6 +25,49 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        // 定义高亮颜色
+        private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9333EA"));
+        private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
+
+        private void UpdateToolSelectionHighlight()
+        {
+            var toolControls = new System.Windows.Controls.Control[] { PickColorButton, EraserButton, SelectButton, FillButton, TextButton, BrushToggle, PenButton };
+
+            System.Windows.Controls.Control target = _router.CurrentTool switch
+            {
+                EyedropperTool => PickColorButton,
+                FillTool => FillButton,
+                SelectTool => SelectButton,
+                TextTool => TextButton,
+                PenTool when _ctx.PenStyle == BrushStyle.Eraser => EraserButton,
+                PenTool when _ctx.PenStyle == BrushStyle.Pencil => PenButton,
+                PenTool => BrushToggle,
+                _ => null
+            };
+
+
+            foreach (var ctrl in toolControls)
+            {
+                
+                if (ctrl == null) continue;
+                bool isTarget = (ctrl == target);
+                ctrl.Tag = isTarget;
+                if (_router.CurrentTool == BrushToggle && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Eraser)
+                {
+                    BrushToggle.BorderBrush= PurpleHighlightBrush;
+                    BrushToggle.Background= PurpleBackgroundBrush;
+                }
+                // 2. 关键：清除之前可能存在的本地颜色赋值，让 Style 重新接管控制权
+                ctrl.ClearValue(System.Windows.Controls.Control.BorderBrushProperty);
+                ctrl.ClearValue(System.Windows.Controls.Control.BackgroundProperty);
+            }
+
+        }
+        
+
+
+
+
         public interface ITool
         {
             string Name { get; }
@@ -130,7 +173,12 @@ namespace TabPaint
                     ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"X:{(int)px.X} Y:{(int)px.Y}";
                 }
                 CurrentTool.OnPointerMove(_ctx, position);
-            }
+            }// 定义高亮颜色
+            private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#886CE4"));
+            private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
+
+
+
 
             public void SetTool(ITool tool)
             {
@@ -138,6 +186,7 @@ namespace TabPaint
                 if (CurrentTool == tool) return; // Optional: Don't do work if it's the same tool.
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
+               
                 a.s("Set to:" + CurrentTool.ToString());
 
                 _ctx.ViewElement.Cursor = tool.Cursor;
@@ -151,6 +200,7 @@ namespace TabPaint
                 {
                     ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = Visibility.Collapsed;
                 }
+                ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateToolSelectionHighlight();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)
     => CurrentTool?.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));

@@ -241,40 +241,57 @@
         <Style x:Key="RoundedMenuButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
             <Setter Property="Padding" Value="8"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
+                        <!-- 命名 Border 为 mainBorder 方便 Trigger 指定目标 -->
+                        <Border x:Name="mainBorder" 
+                        Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="3"  Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
+                        CornerRadius="3"  
+                        Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+
                         <ControlTemplate.Triggers>
+                            <!-- 1. 基础悬停效果 -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#77E0E0E0"/>
+                                <Setter TargetName="mainBorder" Property="Background" Value="#159333EA"/>
+                                <Setter TargetName="mainBorder" Property="BorderBrush" Value="#C084FC"/>
                             </Trigger>
+
+                            <!-- 2. 基础按下效果 -->
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#77EAEAEA"/>
+                                <Setter TargetName="mainBorder" Property="Background" Value="#309333EA"/>
+                                <Setter TargetName="mainBorder" Property="BorderBrush" Value="#9333EA"/>
                             </Trigger>
+
+                            <!-- 3. 选中状态效果 (通过 Tag 判断) -->
+                            <!-- 当 Tag 为 True 时，即使鼠标移出，颜色也会保持 -->
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                                <Setter TargetName="mainBorder" Property="BorderBrush" Value="Purple"/>
+                                <Setter TargetName="mainBorder" Property="Background" Value="#20800080"/>
+                            </DataTrigger>
+
+                            <!-- 4. 选中 + 悬停 (叠加效果，可选) -->
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="Tag" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="mainBorder" Property="Background" Value="#40800080"/>
+                                <Setter TargetName="mainBorder" Property="BorderBrush" Value="Purple"/>
+                            </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
-                
             </Setter>
-            <Style.Triggers>
-             
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter Property="Background" Value="#CCFFFFFF"/>
-                    <Setter Property="Foreground" Value="Black"/>
-                    <Setter Property="BorderBrush" Value="#FF2266FF"/>
-                </DataTrigger>
-            </Style.Triggers>
         </Style>
+
 
 
         <Style x:Key="SliderRepeatButtonStyle" TargetType="RepeatButton">
@@ -641,32 +658,32 @@
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
                              
 
-                    <!--铅笔--><!--
-                    <Button Margin="2,0"  Name="PenButton" Click="OnPenClick" Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <!--铅笔-->
+                    <Button Margin="6,0,2,0"  Name="PenButton" Click="OnPenClick" Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="PenIcon"      Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
-                    </Button>-->
+                    </Button>
                     <!--取颜色-->
-                    <Button Margin="6,0,2,0"  Name="PickColorButton" Click="OnPickColorClick" Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0"  Name="PickColorButton" ToolTip="取颜色" Click="OnPickColorClick" Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="PickColorIcon"      Source="{StaticResource Pick_Colour_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--橡皮擦-->
-                    <Button Margin="2,0"  Name="EraserButton" Click="OnEraserClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0"  Name="EraserButton" ToolTip="橡皮擦" Click="OnEraserClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="EraserIcon"      Source="{StaticResource Eraser_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--选择-->
-                    <Button Margin="2,0"  Name="SelectButton" Click="OnSelectClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0"  Name="SelectButton"  ToolTip="选择区域" Click="OnSelectClick"  Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="SelectIcon"      Source="{StaticResource Select_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--裁剪选区-->
-                    <Button Margin="2,0"  Name="CutImage" Click="CropMenuItem_Click"  Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0"  Name="CutImage"  ToolTip="裁剪选区" Click="CropMenuItem_Click"  Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="CutImageIcon"      Source="{StaticResource Cut_Selection_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--填充-->
-                    <Button Margin="2,0"  Name="FillButton" Click="OnFillClick" Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0"  Name="FillButton"  ToolTip="填充" Click="OnFillClick" Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="FillIcon"      Source="{StaticResource Fill_Bucket_Image}" Width="16" Height="16"/>
                     </Button>
                     <!--文字-->
-                    <Button Margin="2,0"  Name="TextButton" Click="OnTextClick" Style="{StaticResource RoundedMenuButtonStyle}" >
+                    <Button Margin="2,0"  Name="TextButton"  ToolTip="文字" Click="OnTextClick" Style="{StaticResource RoundedMenuButtonStyle}" >
                         <Image x:Name="TextIcon"      Source="{StaticResource Text_Image}" Width="16" Height="16"/>
                     </Button>
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
@@ -755,11 +772,11 @@
                           Margin="5,0"
                                Padding="2">
                                 <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
-                                    <MenuItem Header="铅笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Pen">
+                                    <!--<MenuItem Header="铅笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Pencil">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
-                                    </MenuItem>
+                                    </MenuItem>-->
                                     <MenuItem Header="圆形笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Round">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Brush_Normal_Image}" Width="16" Height="16"/>
@@ -1094,7 +1111,8 @@
               HorizontalScrollBarVisibility="Auto"
               VerticalScrollBarVisibility="Auto"
               PreviewMouseWheel="OnMouseWheelZoom"
-                      Background="Transparent">
+                      Background="Transparent" 
+                          PreviewMouseDown="OnScrollContainerMouseDown" >
 
 
 
@@ -1120,18 +1138,26 @@
 
                     <!-- 选区预览层 -->
                     <Image Name="SelectionPreview"
-           Stretch="None"
-           HorizontalAlignment="Left"
-           VerticalAlignment="Top"
-           IsHitTestVisible="False"
-           RenderOptions.BitmapScalingMode="NearestNeighbor"
-           Visibility="Collapsed" />
+       Stretch="Fill" 
+       HorizontalAlignment="Left"
+       VerticalAlignment="Top"
+       IsHitTestVisible="False"
+       RenderOptions.BitmapScalingMode="NearestNeighbor"
+       UseLayoutRounding="True"
+                            RenderOptions.EdgeMode="Aliased"
+                           Margin="0" 
+       SnapsToDevicePixels="True"
+       Visibility="Collapsed"/>
 
                     <!-- 选区边框 & 句柄层 -->
                     <Canvas Name="SelectionOverlayCanvas"
             Visibility="Collapsed"
             IsHitTestVisible="False"
-            Background="Transparent">
+            Background="Transparent"
+                            UseLayoutRounding="False"
+                            SnapsToDevicePixels="False"
+                            >
+                        
                     </Canvas>
 
                     <Canvas Name="EditorOverlayCanvas"
