@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Media3D;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 //namespace TabPaint.Resources
 //{
@@ -555,4 +557,60 @@ using System.Windows;
 //        // 标记事件已处理，防止其他控件响应
 //        e.Handled = true;
 //    }
+//}
+//public class HalfValueConverter : System.Windows.Data.IValueConverter
+//{
+//    public object Convert(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
+//    {
+//        if (value is double d) return d / 2.0;
+//        return 0.0;
+//    }
+
+//    public object ConvertBack(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
+//    {
+//        throw new System.NotImplementedException();
+//    }
+//}
+//  < !--< MenuItem Header = "铅笔"  Style = "{StaticResource SubMenuItemStyle}" Click = "OnBrushStyleClick" Tag = "Pencil" >
+//    < MenuItem.Icon >
+//        < Image Source = "{StaticResource Pencil_Image}" Width = "16" Height = "16" />
+//    </ MenuItem.Icon >
+//</ MenuItem > -->
+
+//< !--< MenuItem Header = "向右旋转90°"  Style = "{StaticResource SubMenuItemStyle}" Click = "OnRotateRightClick" >
+//                         < MenuItem.Icon >
+//                             < Image Source = "{StaticResource Rotate_Right_Image}" Width = "16" Height = "16" />
+//                         </ MenuItem.Icon >
+//                     </ MenuItem >
+//                     < MenuItem Header = "向左旋转90°"  Style = "{StaticResource SubMenuItemStyle}" Click = "OnRotateLeftClick" >
+//                         < MenuItem.Icon >
+//                             < Image Source = "{StaticResource Rotate_Left_Image}" Width = "16" Height = "16" />
+//                         </ MenuItem.Icon >
+//                     </ MenuItem > -->
+
+
+// 如果需要鼠标拖动滚动（模拟触摸）
+//private Point? _scrollMousePoint = null;
+//private double _scrollHorizontalOffset;
+
+//private void FileTabsScroller_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+//{
+//    _scrollMousePoint = e.GetPosition(FileTabsScroller);
+//    _scrollHorizontalOffset = FileTabsScroller.HorizontalOffset;
+//    FileTabsScroller.CaptureMouse();
+//}
+
+//private void FileTabsScroller_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+//{
+//    if (_scrollMousePoint.HasValue && e.LeftButton == MouseButtonState.Pressed)
+//    {
+//        var currentPoint = e.GetPosition(FileTabsScroller);
+//        var offset = _scrollHorizontalOffset + (_scrollMousePoint.Value.X - currentPoint.X);
+//        FileTabsScroller.ScrollToHorizontalOffset(offset);
+//    }
+//}
+//private void FileTabsScroller_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+//{
+//    _scrollMousePoint = null;
+//    FileTabsScroller.ReleaseMouseCapture();
 //}

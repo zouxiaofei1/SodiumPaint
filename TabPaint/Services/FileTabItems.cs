@@ -10,23 +10,54 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 //
-//TabPaint主程序
+//ImageBar图片选择框相关代码
 //
 
 namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-
-
         public class FileTabItem : INotifyPropertyChanged
         {
             public string FilePath { get; set; } // 允许 set，因为新建文件可能一开始没有路径
+            private int _untitledNumber;
+            public int UntitledNumber
+            {
+                get => _untitledNumber;
+                set
+                {
+                    _untitledNumber = value;
+                    OnPropertyChanged(nameof(UntitledNumber));
+                    OnPropertyChanged(nameof(FileName));
+                    OnPropertyChanged(nameof(DisplayName));
+                }
+            }
+            public string FileName
+            {
+                get
+                {
+                    if (!string.IsNullOrEmpty(FilePath))
+                        return System.IO.Path.GetFileName(FilePath);
+                    if (IsNew) // 如果是新建文件，显示 "未命名 X"
+                        return $"未命名 {UntitledNumber}";
 
-            // 逻辑文件名：如果有路径显示文件名，如果是新建的显示 "未命名"
-            public string FileName => !string.IsNullOrEmpty(FilePath) ? System.IO.Path.GetFileName(FilePath) : "未命名";
-            public string DisplayName => !string.IsNullOrEmpty(FilePath) ? System.IO.Path.GetFileNameWithoutExtension(FilePath) : "未命名";
+                    return "未命名";
+                }
+            }
 
+            public string DisplayName// 🔄 修改：DisplayName (不带扩展名) 的显示逻辑同理
+            {
+                get
+                {
+                    if (!string.IsNullOrEmpty(FilePath))
+                        return System.IO.Path.GetFileNameWithoutExtension(FilePath);
+
+                    if (IsNew)
+                        return $"未命名 {UntitledNumber}";
+
+                    return "未命名";
+                }
+            }
             private bool _isSelected;
             public bool IsSelected
             {
@@ -64,13 +95,9 @@ namespace TabPaint
                 set { _thumbnail = value; OnPropertyChanged(nameof(Thumbnail)); }
             }
 
-            // 预留给 UI 绑定的关闭命令（可选，或者直接在 View 处理 Click）
             public ICommand CloseCommand { get; set; }
-            // 🔥 新增：唯一ID，用于生成缓存文件名
             public string Id { get; set; } = Guid.NewGuid().ToString();
-            // 🔥 新增：缓存文件的路径
             public string BackupPath { get; set; }
-            // 🔥 新增：最后一次备份的时间 (可选，用于调试)
             public DateTime LastBackupTime { get; set; }
             public FileTabItem(string path)
             {
@@ -80,18 +107,12 @@ namespace TabPaint
             // ... LoadThumbnailAsync 方法保持不变 ...
             public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
             {
-                // 保持你原有的逻辑
-                // 注意：如果是 IsNew=True 的文件，Thumbnail 应该直接从 Canvas 生成，而不是读取磁盘
                 if (IsNew || string.IsNullOrEmpty(FilePath)) return;
 
                 var thumbnail = await Task.Run(() =>
                 {
                     try
                     {
-                        // 你的 System.Drawing 逻辑...
-                        // 略... (保持你原有的代码)
-
-                        // 为了演示完整性，这里简写，请保留你原有的完整代码
                         using (var img = System.Drawing.Image.FromFile(FilePath)) { /*...*/ }
 
                         var bmp = new BitmapImage();
@@ -117,6 +138,10 @@ namespace TabPaint
 
         public ObservableCollection<FileTabItem> FileTabs { get; }
             = new ObservableCollection<FileTabItem>();
+        private bool _isProgrammaticScroll = false;
+        // 文件总数绑定属性
+        public int ImageFilesCount;
+        private bool _isInitialLayoutComplete = false;
 
         private void LoadTabPageAsync(int centerIndex)
         {
@@ -153,8 +178,6 @@ namespace TabPaint
                     newTab.IsLoading = true;
                     _ = newTab.LoadThumbnailAsync(100, 60);
 
-                    // 插入逻辑：找到合适的位置
-                    // 我们希望 viewport 内的图片保持有序，且在列表的最左侧
                     int insertIndex = 0;
                     bool inserted = false;
 
@@ -191,10 +214,7 @@ namespace TabPaint
 
         }
 
-
-
-        // 在 MainWindow 类成员变量里加一个锁标记
-        private bool _isProgrammaticScroll = false;
+        
 
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
         {
@@ -203,8 +223,6 @@ namespace TabPaint
             if (refresh)
             {
                 LoadTabPageAsync(centerIndex);
-                // 强制给 UI 一点时间去生成那些 Tab 的控件
-                // 使用 DispatcherPriority.ContextIdle 等待布局渲染完成
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
             }
 
@@ -232,9 +250,9 @@ namespace TabPaint
             {
                 try
                 {
-                    _isProgrammaticScroll = true; // 🔒 上锁：告诉 ScrollChanged 别乱动
+                    _isProgrammaticScroll = true; 
                     FileTabsScroller.ScrollToHorizontalOffset(targetOffset);
-                    FileTabsScroller.UpdateLayout(); // 强制刷新一下确保位置正确
+                    FileTabsScroller.UpdateLayout(); 
                 }
                 finally
                 {
@@ -242,11 +260,6 @@ namespace TabPaint
                 }
             });
         }
-
-
-        // 文件总数绑定属性
-        public int ImageFilesCount;
-        private bool _isInitialLayoutComplete = false;
 
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
@@ -260,29 +273,23 @@ namespace TabPaint
 
             if (PreviewSlider.Value != firstIndex)
             {
-                _isUpdatingUiFromScroll = true;  // 🔒 上锁：告诉 Slider "别激动，这只是同步显示，不是用户在拖你"
+                _isUpdatingUiFromScroll = true; 
                 PreviewSlider.Value = firstIndex;
-                _isUpdatingUiFromScroll = false; // 🔓 解锁
+                _isUpdatingUiFromScroll = false; 
             }
             bool needload = false;
 
-            // 尾部加载
-            // 尾部加载 (修复版)
             if (FileTabs.Count > 0&&lastIndex >= FileTabs.Count - 2 && FileTabs.Count < _imageFiles.Count) // 阈值调小一点，体验更丝滑
             {
-                // 获取当前列表最后一个文件的真实索引
                 var lastTab = FileTabs[FileTabs.Count - 1];
                 int lastFileIndex = _imageFiles.IndexOf(lastTab.FilePath);
 
-                // 只有当它在文件列表中存在，且不是最后一张时才加载
                 if (lastFileIndex >= 0 && lastFileIndex < _imageFiles.Count - 1)
                 {
-                    // 关键修复：从 lastFileIndex + 1 开始取，防止重复！
                     var nextItems = _imageFiles.Skip(lastFileIndex + 1).Take(PageSize);
 
                     foreach (var path in nextItems)
                     {
-                        // 双重保险：防止异步滚动时的并发重复
                         if (!FileTabs.Any(t => t.FilePath == path))
                         {
                             FileTabs.Add(new FileTabItem(path));
@@ -344,8 +351,7 @@ namespace TabPaint
             }
         }
 
-        // 鼠标滚轮横向滚动
-        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
+        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)// 鼠标滚轮横向滚动
         {
             var scrollViewer = sender as ScrollViewer;
             if (scrollViewer != null)
@@ -357,53 +363,45 @@ namespace TabPaint
             }
         }
 
-        // 阻止边界反馈
-        private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)
+        
+        private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)// 阻止边界反馈
         {
             e.Handled = true;
         }
 
-        // 如果需要鼠标拖动滚动（模拟触摸）
-        private Point? _scrollMousePoint = null;
-        private double _scrollHorizontalOffset;
 
-        private void FileTabsScroller_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _scrollMousePoint = e.GetPosition(FileTabsScroller);
-            _scrollHorizontalOffset = FileTabsScroller.HorizontalOffset;
-            FileTabsScroller.CaptureMouse();
-        }
-
-        private void FileTabsScroller_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (_scrollMousePoint.HasValue && e.LeftButton == MouseButtonState.Pressed)
-            {
-                var currentPoint = e.GetPosition(FileTabsScroller);
-                var offset = _scrollHorizontalOffset + (_scrollMousePoint.Value.X - currentPoint.X);
-                FileTabsScroller.ScrollToHorizontalOffset(offset);
-            }
-        }
-
-        private void FileTabsScroller_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            _scrollMousePoint = null;
-            FileTabsScroller.ReleaseMouseCapture();
-        }
 
         private async void OnFileTabClick(object sender, RoutedEventArgs e)
         {
             if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem clickedItem)
             {
-                // 1. 更新选中视觉状态 (可选，如果你用了RadioButton风格可省略)
+                if (_currentTabItem != null && _currentTabItem == clickedItem)
+                {
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(_currentFilePath) &&
+                    clickedItem.FilePath == _currentFilePath &&
+                    !clickedItem.IsNew)
+                {
+                    return;
+                }
                 foreach (var tab in FileTabs) tab.IsSelected = false;
                 clickedItem.IsSelected = true;
 
-                // 2. 核心修复：分支判断
+                // 2. 核心逻辑：分支判断
                 if (clickedItem.IsNew)
                 {
+                    // 如果是从普通文件切换到“新建未命名”
                     if (_currentTabItem != clickedItem)
                     {
-                        Clean_bitmap(1200, 900); // 调用你旧有的初始化白板方法
+                        // 保存上一个文件的缓存（如果需要）
+                        if (_currentTabItem != null && !_currentTabItem.IsNew)
+                        {
+                            await SaveCurrentToCacheAsync();
+                        }
+
+                        Clean_bitmap(1200, 900); // 初始化白板
                         _currentFilePath = string.Empty;
                         _currentFileName = "未命名";
                         UpdateWindowTitle();
@@ -411,14 +409,14 @@ namespace TabPaint
                 }
                 else
                 {
-                    // B. 普通文件，走原有逻辑
                     await OpenImageAndTabs(clickedItem.FilePath);
                 }
 
-                // 记录当前正在激活的 Tab，方便后续插入位置计算
+                // 3. 记录当前正在激活的 Tab
                 _currentTabItem = clickedItem;
             }
         }
+
 
         // 补充定义：在类成员里加一个引用，记录当前是谁
         private FileTabItem _currentTabItem;
@@ -426,18 +424,11 @@ namespace TabPaint
         private bool _isDragging = false;
         private void Slider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // 如果点击的目标是 Thumb 本身或其子元素，则不作任何处理。
-            // 让 Slider 的默认 Thumb 拖动逻辑去工作。
             if (IsMouseOverThumb(e)) return;
 
-            // 如果点击的是轨道部分
             _isDragging = true;
             var slider = (Slider)sender;
-
-            // 捕获鼠标，这样即使鼠标移出 Slider 范围，我们也能继续收到 MouseMove 事件
             slider.CaptureMouse();
-
-            // 更新 Slider 的值到当前点击的位置
             UpdateSliderValueFromPoint(slider, e.GetPosition(slider));
 
             // 标记事件已处理，防止其他控件响应
@@ -484,14 +475,13 @@ namespace TabPaint
         }
         private async void UpdateSliderValueFromPoint(Slider slider, Point position)
         {
-            double ratio = position.Y / slider.ActualHeight; // 计算点击位置在总高度中的比例
-
-            // 将比例转换为滑块的值范围
+            double ratio = position.Y / slider.ActualHeight; 
             double value = slider.Minimum + (slider.Maximum - slider.Minimum) * (1 - ratio);
 
             value = Math.Max(slider.Minimum, Math.Min(slider.Maximum, value)); // 确保值在有效范围内
 
             slider.Value = value;
+            
             await OpenImageAndTabs(_imageFiles[(int)value], true);
         }
         private bool IsMouseOverThumb(MouseButtonEventArgs e)/// 检查鼠标事件的原始源是否是 Thumb 或其内部的任何元素。
@@ -524,7 +514,6 @@ namespace TabPaint
             }
             return null;
         }
-
 
         private void SetPreviewSlider()
         {

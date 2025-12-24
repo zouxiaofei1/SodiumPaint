@@ -160,19 +160,12 @@ namespace TabPaint
                 double scaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
                 double scaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
 
-                // 2. 强制设置预览图的 UI 尺寸
-                // 这一步非常关键：必须让 Image 控件的大小正好等于其对应的像素大小 * 缩放
                 ctx.SelectionPreview.Width = _selectionRect.Width * scaleX;
                 ctx.SelectionPreview.Height = _selectionRect.Height * scaleY;
 
-                // 3. 计算相对于 ViewElement (底图) 的偏移
-                // 我们不再依赖父容器偏移，而是计算相对于底图左上角的偏移
                 double localX = pixelX * scaleX;
                 double localY = pixelY * scaleY;
 
-                // 4. 对坐标进行取整，防止半像素偏移
-                // 我们使用 Math.Round(n, 0) 来确保它对齐到 UI 像素点
-                // 这里的 RenderTransform 将相对于 Image 控件在布局中的原始位置进行平移
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(
                     Math.Round(localX, 0),
                     Math.Round(localY, 0)
@@ -197,7 +190,6 @@ namespace TabPaint
                     PixelFormats.Bgra32, null,
                     data, dataStride);
 
-                // 2. Create a temporary file
                 string tempFilePath = System.IO.Path.Combine(
                     System.IO.Path.GetTempPath(),
                     $"selection_{Guid.NewGuid()}.png"
@@ -205,7 +197,6 @@ namespace TabPaint
 
                 try
                 {
-                    // 3. Encode the bitmap to the temporary PNG file
                     using (var fileStream = new System.IO.FileStream(tempFilePath, System.IO.FileMode.Create))
                     {
                         PngBitmapEncoder encoder = new PngBitmapEncoder();
@@ -213,16 +204,12 @@ namespace TabPaint
                         encoder.Save(fileStream);
                     }
 
-                    // 4. Prepare the data object for drag-drop
                     var dataObject = new System.Windows.DataObject();
-                    // The data is a string array containing the full path(s) to the file(s)
                     dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
 
-                    // Hide the selection preview during the external drag for a cleaner look
                     HidePreview(ctx);
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
 
-                    // 5. Start the blocking drag-drop operation
                     DragDrop.DoDragDrop(ctx.ViewElement, dataObject, System.Windows.DragDropEffects.Copy);
                     _originalRect = new Int32Rect();
                     _transformStep = 0;
@@ -235,39 +222,24 @@ namespace TabPaint
                 }
                 finally
                 {
-                    // 6. Clean up: ALWAYS delete the temporary file
                     if (System.IO.File.Exists(tempFilePath)) System.IO.File.Delete(tempFilePath);
 
                 }
             }
             private void ResetPreviewState(ToolContext ctx)
             {
-                // 1. 隐藏预览
                 ctx.SelectionPreview.Visibility = Visibility.Collapsed;
-
-                // 2. 彻底清除位图源，释放内存
                 ctx.SelectionPreview.Source = null;
-
-                // 3. 关键：重置所有变换
                 ctx.SelectionPreview.RenderTransform = Transform.Identity;
-
-                // 4. 关键：清除之前的裁剪区域
                 ctx.SelectionPreview.Clip = null;
-
-                // 5. 重置 Canvas 位置（可选，但建议）
                 Canvas.SetLeft(ctx.SelectionPreview, 0);
                 Canvas.SetTop(ctx.SelectionPreview, 0);
-
-                // 6. 重置逻辑状态
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
             }
             public void CommitSelection(ToolContext ctx)
             {
                 if (_selectionData == null) return;
-                // 写回后重置计数
-
-                // 缩放或拉伸的比例
                 ctx.Undo.BeginStroke();
                 ctx.Undo.AddDirtyRect(_selectionRect);
 

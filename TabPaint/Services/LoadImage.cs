@@ -35,7 +35,6 @@ namespace TabPaint
         private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
-          
             // 1. 如果是第一次加载，初始化文件列表
             if (_currentImageIndex == -1) ScanFolderImages(filePath);
 
@@ -46,12 +45,8 @@ namespace TabPaint
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;
 
-            // 4. 🔥 关键修复：先刷新 UI 列表！
-            // 这步操作会将目标图片附近的 Tab 添加到 FileTabs 集合中
-            // 务必加上 await，确保列表生成完毕后再往下执行
             RefreshTabPageAsync(_currentImageIndex, refresh);
 
-            // 5. 现在再去查找，这时候 FileTabs 里肯定有这个对象了
             var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
             // 6. 更新选中状态
@@ -63,11 +58,8 @@ namespace TabPaint
             }
             else
             {
-                // 极端情况：如果在 RefreshTabPageAsync 后还找不到，说明该文件不在当前 Viewport 策略内
-                // 你可能需要手动 new 一个 FileTabItem 并 Add 进去，或者检查 Viewport 逻辑
             }
 
-            // 7. 决定加载哪个文件（缓存 vs 原图）
             string fileToLoad = filePath;
             var isFileLoadedFromCache = false;
 
@@ -77,14 +69,11 @@ namespace TabPaint
                 isFileLoadedFromCache = true;
             }
 
-            // 8. 加载图片到画布
-            //s(fileToLoad);
             await LoadImage(fileToLoad);
 
             // 9. 重置脏状态追踪器
             ResetDirtyTracker();
 
-            // 10. 如果加载的是缓存，强制标记为脏
             if (isFileLoadedFromCache)
             {
                 _savedUndoPoint = -1; // 设为 -1，使得 0 != -1，触发脏状态
@@ -133,37 +122,21 @@ namespace TabPaint
         }
         private async Task LoadAndDisplayImageInternalAsync(string filePath)
         {
-            // 这里就是您原来 OpenImageAndTabs 的核心代码
             try
             {
-                // 找到当前图片在总列表中的索引
                 int newIndex = _imageFiles.IndexOf(filePath);
                 if (newIndex < 0) return;
                 _currentImageIndex = newIndex;
 
-                // --- UI 更新逻辑 ---
-
-                // 1. 清除所有旧的选中状态
                 foreach (var tab in FileTabs)
                     tab.IsSelected = false;
 
-                // 2. 找到并选中新标签（如果它已在可视区域）
-                //var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-                //if (currentTab != null)
-                //    currentTab.IsSelected = true;
 
                 // 3. 加载主图片
                 await LoadImage(filePath); // 假设这是您加载大图的方法
 
-                // 4. 刷新和滚动标签栏
                 await RefreshTabPageAsync(_currentImageIndex);
 
-                // 5. 再次确保标签被选中（因为RefreshTabPageAsync可能重建了列表）
-                //var reopenedTab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-                //if (reopenedTab != null)
-                //    reopenedTab.IsSelected = true;
-
-                // 6. 更新Slider
                 SetPreviewSlider();
             }
             catch (Exception ex)
@@ -191,9 +164,6 @@ namespace TabPaint
             _currentImageIndex = _imageFiles.IndexOf(filePath);
         }
 
-
-
-        // 新增的辅助方法 1: 专门用于解码低分辨率预览图
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
@@ -210,7 +180,6 @@ namespace TabPaint
             return img;
         }
 
-        // 新增的辅助方法 2: 专门用于解码全分辨率图像
         private BitmapImage DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
@@ -323,8 +292,6 @@ namespace TabPaint
                     if (!isInitialLayoutSet)
                     {
                         BackgroundImage.Source = previewBitmap;
-                        //BackgroundImage.Width = originalWidth;
-                        //BackgroundImage.Height = originalHeight;
                         _currentFileName = System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
@@ -334,9 +301,6 @@ namespace TabPaint
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
                         _canvasResizer.UpdateUI();
                     }
-
-                    // 用质量更好的 480p 预览图替换掉之前的图像
-
                 });
 
                 // --- 阶段 2: 等待完整图并最终更新 ---
@@ -348,8 +312,6 @@ namespace TabPaint
                     if (token.IsCancellationRequested) return;
 
                     _bitmap = new WriteableBitmap(fullResBitmap);
-
-                    // 最终替换为高清图。尺寸和位置都已正确，只需换源。
                     BackgroundImage.Source = _bitmap;
 
                     // 更新所有依赖完整图的状态
@@ -382,9 +344,5 @@ namespace TabPaint
                 Dispatcher.Invoke(() => s($"加载图片失败: {ex.Message}"));
             }
         }
-        // (你的两个辅助方法 DecodePreviewBitmap 和 DecodeFullResBitmap 保持不变)
-
-
-
     }
 }

@@ -31,8 +31,6 @@ namespace TabPaint
             private byte[]? _clipboardData;
             private int _clipboardWidth;
             private int _clipboardHeight;
-
-
             private ResizeAnchor _currentAnchor = ResizeAnchor.None;
             private bool _resizing = false;
             private Point _startMouse;
@@ -49,9 +47,6 @@ namespace TabPaint
                 BottomLeft, BottomMiddle, BottomRight
             }
 
-         
-
-           
         }
 
     }

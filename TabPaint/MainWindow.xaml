@@ -17,16 +17,12 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 这里的 Source 路径根据你的实际文件位置编写 -->
-                <!-- 如果在根目录：Source="ButtonStyles.xaml" -->
-                <!-- 如果在文件夹：Source="Themes/ButtonStyles.xaml" -->
-
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- 你依然可以在这里保留少量只属于 MainWindow 的私有资源 -->
 
-            <local:HalfValueConverter x:Key="HalfValueConverter"/>
+          
             <Style x:Key="ResizeHandleStyle" TargetType="Thumb">
                 <Setter Property="Width" Value="8"/>
                 <Setter Property="Height" Value="8"/>
@@ -356,11 +352,7 @@
                         Margin="5,0"
                              Padding="2">
                                 <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle">
-                                    <!--<MenuItem Header="铅笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Pencil">
-                                      <MenuItem.Icon>
-                                          <Image Source="{StaticResource Pencil_Image}" Width="16" Height="16"/>
-                                      </MenuItem.Icon>
-                                  </MenuItem>-->
+
                                     <MenuItem Header="圆形笔"  Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick" Tag="Round">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Brush_Normal_Image}" Width="16" Height="16"/>
@@ -424,16 +416,7 @@
 
                     <Grid>
                      
-                        <!--<MenuItem Header="向右旋转90°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick">
-                            <MenuItem.Icon>
-                                <Image Source="{StaticResource Rotate_Right_Image}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="向左旋转90°"  Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick">
-                            <MenuItem.Icon>
-                                <Image Source="{StaticResource Rotate_Left_Image}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>-->
+                     
                         <ToggleButton x:Name="RotateFlipMenuToggle" 
                  
                   Style="{StaticResource DropDownButtonStyle}">

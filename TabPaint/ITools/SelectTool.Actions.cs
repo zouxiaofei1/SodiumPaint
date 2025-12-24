@@ -17,8 +17,7 @@ namespace TabPaint
         {
 
             private void CopyToSystemClipboard(ToolContext ctx)
-            {       // 确定要复制的图像的原始尺寸和数据
-                // 如果进行过缩放，_originalRect 存的是原始尺寸
+            { 
                 if (_selectionData == null) return;
                 int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
                 int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
@@ -99,7 +98,6 @@ namespace TabPaint
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
                     sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
 
-                // --- 【自动扩展画布逻辑】 ---
                 int imgW = sourceBitmap.PixelWidth;
                 int imgH = sourceBitmap.PixelHeight;
                 int canvasW = ctx.Surface.Bitmap.PixelWidth;
@@ -121,7 +119,6 @@ namespace TabPaint
                     {
                         byte* p = (byte*)newBmp.BackBuffer;
                         int totalBytes = newBmp.BackBufferStride * newBmp.PixelHeight;
-                        // 快速填充白色 (B G R A)
                         for (int i = 0; i < totalBytes; i++) p[i] = 255;
                     }
                     newBmp.Unlock();
@@ -129,19 +126,13 @@ namespace TabPaint
                     // 写回旧内容
                     newBmp.WritePixels(oldRect, oldPixels, canvasW * 4, 0);
                     ctx.Surface.ReplaceBitmap(newBmp);
-
-                    // 压入撤销栈
                     Int32Rect redoRect = new Int32Rect(0, 0, newW, newH);
                     byte[] redoPixels = ctx.Surface.ExtractRegion(redoRect);
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
-
-                    // 通知 UI 更新
                     var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
                 }
-
-                // --- 【初始化选区状态】 ---
                 int stride = imgW * 4;
                 var newData = new byte[imgH * stride];
                 sourceBitmap.CopyPixels(newData, stride, 0);
@@ -150,7 +141,6 @@ namespace TabPaint
                 _selectionRect = new Int32Rect(0, 0, imgW, imgH);
                 _originalRect = _selectionRect;
 
-                // 设置预览图源
                 ctx.SelectionPreview.Source = new WriteableBitmap(sourceBitmap);
 
                 // 默认放在左上角 (0,0)
@@ -166,7 +156,6 @@ namespace TabPaint
 
             public void PasteSelection(ToolContext ctx, bool ins)
             {
-                // 1. 提交当前的选区（如果有）
                 if (_selectionData != null) CommitSelection(ctx);
 
                 BitmapSource? sourceBitmap = null;
@@ -201,8 +190,6 @@ namespace TabPaint
                     InsertImageAsSelection(ctx, sourceBitmap);
                 }
             }
-
-            // 安全加载文件的辅助方法
             private BitmapSource? LoadImageFromFile(string path)
             {
                 try
@@ -227,9 +214,6 @@ namespace TabPaint
                     return null;
                 }
             }
-
-
-
             public void CopySelection(ToolContext ctx)
             {
                 if (_selectionData == null) SelectAll(ctx, false);
@@ -247,10 +231,8 @@ namespace TabPaint
 
             public void SelectAll(ToolContext ctx, bool cut = true)
             {
-                if (ctx.Surface?.Bitmap == null)
-                    return;
+                if (ctx.Surface?.Bitmap == null)return;
 
-                // 选区 = 整幅图像
                 _selectionRect = new Int32Rect(0, 0,
             ctx.Surface.Bitmap.PixelWidth,
             ctx.Surface.Bitmap.PixelHeight);
@@ -294,7 +276,6 @@ namespace TabPaint
                 int stride = wb.PixelWidth * (wb.Format.BitsPerPixel / 8);
                 byte[] pixels = new byte[wb.PixelHeight * stride];
 
-                // 将像素复制到数组
                 wb.CopyPixels(pixels, stride, 0);
                 byte[] finalSelectionData;
                 int finalWidth = _selectionRect.Width;
@@ -305,7 +286,6 @@ namespace TabPaint
                 if (_originalRect.Width > 0 && _originalRect.Height > 0 &&
                     (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height))
                 {
-                    // 应用缩放变换来获取最终的像素数据
                     var src = BitmapSource.Create(
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
@@ -327,7 +307,6 @@ namespace TabPaint
                     finalStride = finalWidth * 4;
                 }
 
-                // 3. 创建一个新的、尺寸与选区相同的WriteableBitmap
                 var newBitmap = new WriteableBitmap(
                     finalWidth,
                     finalHeight,
@@ -337,7 +316,6 @@ namespace TabPaint
                     null
                 );
 
-                // 4. 将选区数据写入新位图
                 newBitmap.WritePixels(
                     new Int32Rect(0, 0, finalWidth, finalHeight),
                     finalSelectionData,
@@ -561,11 +539,8 @@ namespace TabPaint
                     var mainWindow = System.Windows.Application.Current.MainWindow;
                     if (mainWindow != null)
                     {
-                        // 1. 将当前的鼠标位置转换为相对于【整个窗口】的逻辑坐标
                         Point posInWindow = ctx.ViewElement.TranslatePoint(viewPos, mainWindow);
 
-                        // 2. 判定逻辑坐标是否超出了窗口的实际宽高 (ActualWidth/Height)
-                        // 我们给 5 像素的缓冲区，防止边缘判定太死板
                         double margin = -5;
                         bool isOutside = posInWindow.X < margin ||
                                          posInWindow.Y < margin ||
@@ -698,16 +673,6 @@ namespace TabPaint
 
                         // --- 核心修复：记录原始尺寸 ---
                         _originalRect = _selectionRect;
-                        // ---------------------------
-
-                        //ctx.Undo.BeginStroke();
-                        //ctx.Undo.AddDirtyRect(_selectionRect);
-                        //ctx.Undo.CommitStroke();
-
-                        // 2. 擦除原画布内容
-                      //  ClearRect(ctx, _selectionRect, ctx.EraserColor);
-
-                        // 3. 创建预览
                         var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
                             ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
@@ -727,8 +692,6 @@ namespace TabPaint
                 {
                     _draggingSelection = false;
 
-                    // 1. 获取 Preview 控件左上角相对于 ViewElement (画布容器) 的绝对坐标
-                    // 无论你是用 Canvas.Left 还是 RenderTransform 移动的，这行代码都能拿到最终视觉位置
                     Point relativePoint = ctx.SelectionPreview.TranslatePoint(new Point(0, 0), ctx.ViewElement);
 
                     // 2. 将视觉坐标转换为位图像素坐标
@@ -737,8 +700,6 @@ namespace TabPaint
                     // 3. 更新逻辑选区矩形
                     _selectionRect.X = (int)Math.Round(pixelPoint.X);
                     _selectionRect.Y = (int)Math.Round(pixelPoint.Y);
-
-
                 }
 
                 if (_resizing)

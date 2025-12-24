@@ -644,74 +644,77 @@ namespace TabPaint
 
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
-            // 1. 尝试确定插入锚点
             int insertIndex = -1;
-
-            // 优先使用明确点击过的 Tab
             if (_currentTabItem != null && FileTabs.Contains(_currentTabItem))
             {
                 insertIndex = FileTabs.IndexOf(_currentTabItem) + 1;
             }
-            // 如果没有明确点击过，尝试查找 UI 上被选中的 Tab
             else
             {
                 var selectedTab = FileTabs.FirstOrDefault(t => t.IsSelected);
                 if (selectedTab != null)
                 {
                     insertIndex = FileTabs.IndexOf(selectedTab) + 1;
-                    _currentTabItem = selectedTab; // 顺便修正引用
+                    _currentTabItem = selectedTab;
                 }
-                // 如果 UI 也没选中，尝试通过当前文件路径查找
                 else if (!string.IsNullOrEmpty(_currentFilePath))
                 {
                     var pathTab = FileTabs.FirstOrDefault(t => t.FilePath == _currentFilePath);
                     if (pathTab != null)
                     {
                         insertIndex = FileTabs.IndexOf(pathTab) + 1;
-                        _currentTabItem = pathTab; // 顺便修正引用
+                        _currentTabItem = pathTab;
                     }
                 }
             }
 
-            // 保底逻辑：如果还是算不出来（比如列表为空），就插在最后
-            if (insertIndex < 0 || insertIndex > FileTabs.Count)
+            if (insertIndex < 0 || insertIndex > FileTabs.Count)insertIndex = FileTabs.Count;
+            
+            var usedNumbers = new HashSet<int>();
+            foreach (var tab in FileTabs)
             {
-                insertIndex = FileTabs.Count;
+                if (tab.IsNew)
+                {
+                    usedNumbers.Add(tab.UntitledNumber);
+                }
             }
 
-            // 2. 创建新 Tab
+            // 从 1 开始向上找，找到第一个不在集合里的数字
+            int newNumber = 1;
+            while (usedNumbers.Contains(newNumber))newNumber++;
+            
             var newTab = new FileTabItem(null)
             {
                 IsNew = true,
+                UntitledNumber = newNumber, // 👈 赋值编号
                 IsDirty = false,
-                IsSelected = true, // 新建的自然是被选中的
-                Thumbnail = CreateWhiteThumbnail() // 调用之前写的生成白图方法
+                IsSelected = true,
+                Thumbnail = CreateWhiteThumbnail()
             };
 
-            // 3. 插入集合
+            // 4. 插入集合
             FileTabs.Insert(insertIndex, newTab);
 
-            // 4. 立即激活新 Tab
-            // 更新选中状态
+            // 5. 立即激活新 Tab
             foreach (var tab in FileTabs)
                 if (tab != newTab) tab.IsSelected = false;
 
-            // 更新引用
             _currentTabItem = newTab;
 
-            // 执行清空画布操作
+            // 6. 执行清空画布操作
             Clean_bitmap(1200, 900);
             _currentFilePath = string.Empty;
-            _currentFileName = "未命名";
+
+            // 🔥 这里也要更新一下，让标题栏显示 "TabPaint - 未命名 X"
+            _currentFileName = newTab.FileName;
             UpdateWindowTitle();
 
-            // 5. 滚动到可见位置 (简单处理，往后滚一点)
+            // 7. 滚动到可见位置
             if (insertIndex > FileTabs.Count - 2)
                 FileTabsScroller.ScrollToRightEnd();
         }
 
-        // 辅助方法：生成纯白缩略图
-        private BitmapSource CreateWhiteThumbnail()
+        private BitmapSource CreateWhiteThumbnail()  // 辅助方法：生成纯白缩略图
         {
             int w = 100; int h = 60;
             var bmp = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
@@ -725,6 +728,50 @@ namespace TabPaint
             bmp.Freeze();
             return bmp;
         }
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+            {
+                _restoreBounds = new Rect(Left, Top, Width, Height);
+                _maximized = true;
+
+                var workArea = SystemParameters.WorkArea;
+                Left = workArea.Left;
+                Top = workArea.Top;
+                Width = workArea.Width;
+                Height = workArea.Height;
+
+                // 切换到还原图标
+                SetRestoreIcon();
+                WindowState = WindowState.Normal;
+            }
+
+        }
+        private void OnPrependTabClick(object sender, RoutedEventArgs e)
+        {
+            var newTab = new FileTabItem(null)
+            {
+                IsNew = true,
+                IsDirty = false
+                // 记得生成一个默认的白色 Thumbnail 赋值进去，否则 UI 上是空的
+            };
+
+            var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
+            var drawingVisual = new DrawingVisual();
+            using (var context = drawingVisual.RenderOpen())
+            {
+                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, 100, 60));
+            }
+            bmp.Render(drawingVisual);
+            bmp.Freeze();
+            newTab.Thumbnail = bmp;
+            FileTabs.Insert(0, newTab); // 👈 关键：插入到 0
+
+            // 滚回去看它
+            FileTabsScroller.ScrollToHorizontalOffset(0);
+        }
+
+
 
     }
 }

@@ -1,15 +1,12 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -18,6 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
+
 //
 //TabPaint主程序
 //
@@ -88,7 +86,7 @@ namespace TabPaint
                 }
             }
         }
-        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon,Highlighter,Mosaic }
+        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon, Highlighter, Mosaic }
         public enum UndoActionType
         {
             Draw,         // 普通绘图
@@ -140,9 +138,29 @@ namespace TabPaint
         String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp";
         ITool LastTool;
         private bool useSecondColor = false;//是否使用备用颜色
-
-
-
+        private bool _maximized = false;
+        private Rect _restoreBounds;
+        public class PaintSession
+        {
+            public string LastViewedFile { get; set; } // 上次正在看的文件
+            public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>();
+        }
+        public class SessionTabInfo
+        {
+            public string Id { get; set; }          // Tab的GUID
+            public string OriginalPath { get; set; } // 原始文件路径 (如果是新建未保存则为 null)
+            public string BackupPath { get; set; }   // 缓存文件路径
+            public bool IsDirty { get; set; }        // 是否有未保存的修改
+            public bool IsNew { get; set; }          // 是否是纯新建文件
+        }
+        private string _sessionPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TabPaint", "session.json");
+        private readonly string _cacheDir = System.IO.Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "TabPaint", "Cache");
+        private System.Windows.Threading.DispatcherTimer _autoSaveTimer;
+        public CanvasResizeManager _canvasResizer;
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // 各种ITool + InputRouter + EventHandler 相关过程
@@ -169,9 +187,6 @@ namespace TabPaint
             }
 
         }
-
-
-
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
         {  // 工具函数 - 查找所有子元素
             if (depObj != null)
@@ -179,22 +194,15 @@ namespace TabPaint
                 for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
                 {
                     DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-                    if (child != null && child is T)
-                    {
-                        yield return (T)child;
-                    }
+                    if (child != null && child is T) yield return (T)child;
 
-                    foreach (T childOfChild in FindVisualChildren<T>(child))
-                    {
-                        yield return childOfChild;
-                    }
+                    foreach (T childOfChild in FindVisualChildren<T>(child)) yield return childOfChild;
                 }
             }
         }
         private void SetPenResizeBarVisibility(bool vis)
         {
             ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
-
         }
 
         private void SetBrushStyle(BrushStyle style)
@@ -202,10 +210,9 @@ namespace TabPaint
             _router.SetTool(_tools.Pen);
             _ctx.PenStyle = style;
             UpdateToolSelectionHighlight();
-            
-            SetPenResizeBarVisibility( _ctx.PenStyle != BrushStyle.Pencil);
-        }
 
+            SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
+        }
 
         private void SetThicknessSlider_Pos(double newValue)
         {
@@ -239,7 +246,6 @@ namespace TabPaint
         {
             if (BackgroundImage.Source is not BitmapSource src || _surface?.Bitmap == null)
                 return;
-
 
             var undoRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight); // --- 1. 捕获变换前的状态 (for UNDO) ---
             var undoPixels = _surface.ExtractRegion(undoRect);
@@ -276,15 +282,23 @@ namespace TabPaint
         private void UpdateWindowTitle()
         {
             string dirtyMark = _isFileSaved ? "" : "*";
-            string newTitle = $"{dirtyMark}{_currentFileName} ({_currentImageIndex + 1}/{_imageFiles.Count}) - TabPaint {_programVersion}";
+            string countInfo;
 
-            // 更新窗口系统标题栏（任务栏显示）
+            // 1. 判断当前是否是 "新建且未保存" 的 Tab
+            if (_currentTabItem != null && _currentTabItem.IsNew) countInfo = "";
+            else
+            {
+                int total = _imageFiles.Count;
+                int current = (_currentImageIndex >= 0 && total > 0) ? _currentImageIndex + 1 : 0;
+
+                countInfo = $"({current}/{total})";
+            }
+            string newTitle = $"{dirtyMark}{_currentFileName} {countInfo} - TabPaint {_programVersion}";
+
+            // 更新系统窗口标题
             this.Title = newTitle;
-
-            // 同步更新自定义标题栏显示内容
-            TitleTextBlock.Text = newTitle;
+            if (TitleTextBlock != null) TitleTextBlock.Text = newTitle;
         }
-
 
         public void ShowTextToolbarFor(System.Windows.Controls.TextBox tb)
         {
@@ -303,9 +317,6 @@ namespace TabPaint
             TextEditBar.Visibility = Visibility.Collapsed;
             _activeTextBox = null;
         }
-
-
-
         private void SetRestoreIcon()
         {
             MaxRestoreButton.Content = new Image
@@ -330,27 +341,8 @@ namespace TabPaint
                 }
             };
         }
-        private bool _maximized = false;
-        private Rect _restoreBounds;
-        private void MainWindow_StateChanged(object sender, EventArgs e)
-        {
-            if (WindowState == WindowState.Maximized)
-            {
-                _restoreBounds = new Rect(Left, Top, Width, Height);
-                _maximized = true;
 
-                var workArea = SystemParameters.WorkArea;
-                Left = workArea.Left;
-                Top = workArea.Top;
-                Width = workArea.Width;
-                Height = workArea.Height;
 
-                // 切换到还原图标
-                SetRestoreIcon();
-                WindowState = WindowState.Normal;
-            }
-
-        }
         private void UpdateColorHighlight()
         {
 
@@ -396,42 +388,13 @@ namespace TabPaint
                 e.Handled = true;
             }
         }
-
         private void OnSourceInitialized(object? sender, EventArgs e)
         {
             var hwnd = new WindowInteropHelper(this).Handle;
 
-            // 让 WPF 的合成目标透明，否则会被清成黑色
-            var src = (HwndSource)PresentationSource.FromVisual(this)!;
+            var src = (HwndSource)PresentationSource.FromVisual(this)!;// 让 WPF 的合成目标透明，否则会被清成黑色
             src.CompositionTarget.BackgroundColor = Colors.Transparent;
         }
-
-        // Session 数据结构
-        public class PaintSession
-        {
-            public string LastViewedFile { get; set; } // 上次正在看的文件
-            public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>();
-        }
-        public class SessionTabInfo
-        {
-            public string Id { get; set; }          // Tab的GUID
-            public string OriginalPath { get; set; } // 原始文件路径 (如果是新建未保存则为 null)
-            public string BackupPath { get; set; }   // 缓存文件路径
-            public bool IsDirty { get; set; }        // 是否有未保存的修改
-            public bool IsNew { get; set; }          // 是否是纯新建文件
-        }
-
-        // 在 MainWindow 类中添加：
-        private string _sessionPath = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "TabPaint", "session.json");
-
-
-        private readonly string _cacheDir = System.IO.Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "TabPaint", "Cache");
-
-        private System.Windows.Threading.DispatcherTimer _autoSaveTimer;
 
         // 2. 初始化计时器 (请在 MainWindow 构造函数中调用此方法)
         private void InitializeAutoSave()
@@ -446,7 +409,7 @@ namespace TabPaint
 
         // 3. 外部调用接口：当用户绘画结束（MouseUp）或修改内容时调用此方法
         // 例如：在 InkCanvas_MouseUp 或 StrokeCollected 事件中调用
-        public void NotifyCanvasChanged(int timeleft=3)
+        public void NotifyCanvasChanged(int timeleft = 3)
         {
 
             _autoSaveTimer.Stop();
@@ -463,19 +426,12 @@ namespace TabPaint
         // 5. 核心保存逻辑
         private async Task SaveCurrentToCacheAsync()
         {
-           
-
             if (_currentTabItem == null) return;
-            
-            // 获取当前画布的截图 (这一步必须在 UI 线程做)
-            // 假设你有一个方法 GetCurrentCanvasBitmapSource() 获取当前画布图像
-            // 如果没有，你需要实现一个 RenderTargetBitmap 的逻辑
+
             BitmapSource bitmap = GetCurrentCanvasSnapshot();
 
             if (bitmap == null) return;
 
-            // 克隆一份数据用于后台线程保存 (避免跨线程访问 UI 对象)
-            // Freezable 对象 Freeze 后可以跨线程
             if (bitmap.IsFrozen == false) bitmap.Freeze();
 
             var tabToSave = _currentTabItem; // 捕获当前引用
@@ -485,7 +441,7 @@ namespace TabPaint
                 try
                 {
                     string fileName = $"{tabToSave.Id}.png"; // 使用 ID 做文件名
-                    a.s(fileName);
+                    //a.s(fileName);
                     string fullPath = System.IO.Path.Combine(_cacheDir, fileName);
 
                     using (var fileStream = new FileStream(fullPath, FileMode.Create))
@@ -495,17 +451,13 @@ namespace TabPaint
                         encoder.Save(fileStream);
                     }
 
-                    // 更新 Tab 信息（注意线程安全，简单属性赋值通常没问题，严谨需 Dispatcher）
                     tabToSave.BackupPath = fullPath;
                     tabToSave.LastBackupTime = DateTime.Now;
 
-                    // 可选：每次备份完更新一次 session.json，防止崩溃丢失索引
-                    // SaveSession(); 
                 }
                 catch (Exception ex)
-                {
-                    // 记录日志或忽略
-                    System.Diagnostics.Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
+                { // 记录日志或忽略
+                   System.Diagnostics.Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
                 }
             });
         }
@@ -513,9 +465,6 @@ namespace TabPaint
         // 辅助：获取当前画布截图 (请根据你的实际 Canvas 控件名称修改)
         private BitmapSource GetCurrentCanvasSnapshot()
         {
-            // 假设你的画布控件叫 MainCanvas 或 InkCanvas
-            // 这里只是示例，你需要替换为你真实的画布控件
-
             if (BackgroundImage == null || BackgroundImage.ActualWidth <= 0) return null;
 
             RenderTargetBitmap rtb = new RenderTargetBitmap(
@@ -526,13 +475,11 @@ namespace TabPaint
             rtb.Render(BackgroundImage);
             return rtb;
         }
-        protected  async void OnClosing()
+        protected async void OnClosing()
         {
             // 立即保存当前的
             if (_currentTabItem != null && _currentTabItem.IsDirty)
             {
-                // 这里不能用 await Task.Run，因为主线程关闭会杀掉后台线程
-                // 必须同步执行，或者阻塞等待
                 _autoSaveTimer.Stop();
                 // 同步保存逻辑（简化版，直接复用代码但去掉 Task.Run）
                 var bmp = GetCurrentCanvasSnapshot();
@@ -548,7 +495,6 @@ namespace TabPaint
                     _currentTabItem.BackupPath = path;
                 }
             }
-
             SaveSession(); // 更新 JSON
             Close();
         }
@@ -562,8 +508,6 @@ namespace TabPaint
 
             foreach (var tab in FileTabs)
             {
-                // 我们只保存那些 "脏" 的，或者 "纯新建" 的 Tab
-                // 普通未修改的文件不需要存 Session，下次直接读文件夹即可
                 if (tab.IsDirty || tab.IsNew)
                 {
                     session.Tabs.Add(new SessionTabInfo
@@ -576,7 +520,6 @@ namespace TabPaint
                     });
                 }
             }
-
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_sessionPath));
             string json = System.Text.Json.JsonSerializer.Serialize(session);
             File.WriteAllText(_sessionPath, json);
@@ -595,7 +538,6 @@ namespace TabPaint
                 {
                     foreach (var info in session.Tabs)
                     {
-                        // 检查缓存文件还在不在
                         if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
                         {
                             var tab = new FileTabItem(info.OriginalPath)
@@ -605,15 +547,7 @@ namespace TabPaint
                                 IsDirty = info.IsDirty, // 恢复脏状态
                                 BackupPath = info.BackupPath
                             };
-
-                            // ⚡ 关键：这里需要逻辑，让 Tab 的 Thumbnail 显示 BackupPath 的图，而不是 OriginalPath
-                            // 同时，当你点击这个 Tab 打开时，应该读取 BackupPath 的内容到画布
-
-                            // 预加载缩略图 (这里偷懒直接用缓存图做缩略图)
                             tab.IsLoading = true;
-                            // 你可能需要修改 LoadThumbnailAsync 支持传入指定路径，或者手动设置
-                            // tab.Thumbnail = LoadBitmap(info.BackupPath); 
-
                             FileTabs.Add(tab);
                         }
                     }
@@ -622,10 +556,7 @@ namespace TabPaint
             catch { /* Handle Json Error */ }
         }
 
-
-
-
-        public CanvasResizeManager _canvasResizer;
+       
 
         public MainWindow(string startFilePath)///////////////////////////////////////////////////主窗口初始化
         {
@@ -633,7 +564,7 @@ namespace TabPaint
             _currentFilePath = startFilePath;
             InitializeComponent();
 
- 
+
             Loaded += (s, e) =>
             {
                 LoadSession();
@@ -660,7 +591,7 @@ namespace TabPaint
             UnderlineBtn.Unchecked += FontSettingChanged;
 
             SourceInitialized += OnSourceInitialized;
-           
+
             ZoomSlider.ValueChanged += (s, e) =>
             {
                 UpdateSliderBarValue(ZoomSlider.Value);
@@ -690,9 +621,9 @@ namespace TabPaint
             SetCropButtonState();
             this.PreviewKeyDown += MainWindow_PreviewKeyDown;
 
-            
+
             _canvasResizer = new CanvasResizeManager(this);
-          
+
             this.Focusable = true;
         }
 
@@ -720,7 +651,7 @@ namespace TabPaint
                         _router.SetTool(_tools.Select);
                         // 3. 调用我们刚才提取的逻辑
                         // 注意：这里需要传入你的 ToolContext
-                       
+
                         if (_tools.Select is SelectTool st) // 强转成 SelectTool
                         {
                             st.InsertImageAsSelection(_ctx, bitmap);
@@ -787,7 +718,9 @@ namespace TabPaint
 
             // 调用你的加载逻辑，并不触发滚动条反向更新 Slider
             _isSyncingSlider = true;
-            await OpenImageAndTabs(_imageFiles[index],true);
+            // a.s("PreviewSlider_ValueChanged");
+            // await OpenImageAndTabs(_imageFiles[index],true);
+            //这个会导致双重加载!!
             _isSyncingSlider = false;
         }
 
@@ -799,7 +732,7 @@ namespace TabPaint
 
             Task.Run(async () => // 在后台线程运行，不阻塞UI线程
             {
-               // await 
+                // await 
                 await OpenImageAndTabs(_currentFilePath, true);
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>// 如果你需要在完成后通知UI，要切回UI线程
                 {
@@ -915,8 +848,7 @@ namespace TabPaint
 
         public void SetCropButtonState()
         {
-           // s(1);
-            UpdateBrushAndButton(CutImage, CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility!=Visibility.Collapsed);
+            UpdateBrushAndButton(CutImage, CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility != Visibility.Collapsed);
         }
 
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
@@ -993,16 +925,12 @@ namespace TabPaint
             var tab = FileTabs.FirstOrDefault(t => t.FilePath == path);
             if (tab == null) return;
 
-            // 从当前的 _bitmap (WriteableBitmap) 创建一个缩小的版本
-            // 假设缩略图宽度为 100 (和你 LoadThumbnailAsync 保持一致)
             double targetWidth = 100;
             double scale = targetWidth / _bitmap.PixelWidth;
 
             // 使用 TransformedBitmap 进行快速缩放
             var transformedBitmap = new TransformedBitmap(_bitmap, new ScaleTransform(scale, scale));
 
-            // 转为 RenderTargetBitmap 或直接转回 WriteableBitmap 以便冻结
-            // 冻结 (Freeze) 是为了确保它可以在 UI 线程安全显示
             var newThumb = new WriteableBitmap(transformedBitmap);
             newThumb.Freeze();
 
@@ -1065,11 +993,9 @@ namespace TabPaint
                 // s(fitScale);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
-                //UpdateImagePosition();
             }
         }
-        // Ctrl + 滚轮 缩放事件
-        // 改造 FitToWindow，使其接收像素尺寸作为参数
+     
         private void CenterImage()
         {
             if (_bitmap == null || BackgroundImage == null)
@@ -1090,9 +1016,6 @@ namespace TabPaint
             BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
         }
 
-
-
-
         private void UpdateSliderBarValue(double newScale)
         {
             ZoomSlider.Value = newScale;
@@ -1104,7 +1027,6 @@ namespace TabPaint
             if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
 
             e.Handled = false; // 阻止默认滚动
-                               // s();
             double oldScale = zoomscale;
             double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes);
             newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
@@ -1122,20 +1044,12 @@ namespace TabPaint
             double newOffsetY = (offsetY + mouseInScroll.Y) * (newScale / oldScale) - mouseInScroll.Y;
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
-            if (_tools.Select is SelectTool st)
-            {
-                // 假设你的 ctx 实例在 MainWindow 中可以访问
-                // 或者你把 ctx 传给这个方法
-                st.RefreshOverlay(_ctx);
-            }
-            if (_tools.Text is TextTool tx)
-            {
-                tx.DrawTextboxOverlay(_ctx);
-            }
-                _canvasResizer.UpdateUI();
+            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+   
+            if (_tools.Text is TextTool tx)tx.DrawTextboxOverlay(_ctx);
+            _canvasResizer.UpdateUI();
         }
 
-        // 1. 实现 Ctrl+N 或点击 (+) 按钮
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
             // 创建一个纯内存的 Tab
@@ -1145,8 +1059,6 @@ namespace TabPaint
                 IsDirty = false // 新建初始状态可以是 False，画了一笔后变 True
             };
 
-            // 生成一个白色背景的缩略图 (这里简单演示)
-            // 实际项目中，你应该把当前的 Canvas 清空并让新 Tab 处于激活状态
             var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
             var drawingVisual = new DrawingVisual();
             using (var context = drawingVisual.RenderOpen())
@@ -1174,10 +1086,8 @@ namespace TabPaint
             {
                 IsNew = true,
                 IsSelected = true
-                // 可以在这里设置一个默认的白板缩略图
             };
 
-            // 取消其他选中
             foreach (var tab in FileTabs) tab.IsSelected = false;
 
             // 添加到列表末尾
@@ -1224,7 +1134,6 @@ namespace TabPaint
                 // 简单策略：选中最后一个，或者选中相邻的
                 var last = FileTabs.Last();
                 last.IsSelected = true;
-                // OpenImageAndTabs(last.FilePath);
             }
         }
 
@@ -1233,7 +1142,7 @@ namespace TabPaint
         {
             if (e.Key == Key.N && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                
+
                 CreateNewTab();
                 e.Handled = true;
             }
@@ -1391,9 +1300,6 @@ namespace TabPaint
 
             // 计算要隐藏的宽度 = 按钮宽度 + Margin
             double hiddenWidth = LeftAddBtn.ActualWidth + LeftAddBtn.Margin.Left + LeftAddBtn.Margin.Right;
-
-            // 如果没有打开特定的图片（比如 session 也没恢复，只是纯启动），就隐藏左侧按钮
-            // 如果有打开图片，OpenImageAndTabs 里的 ScrollTo 会自动覆盖这个，不用担心冲突
             if (FileTabsScroller.HorizontalOffset == 0)
             {
                 FileTabsScroller.ScrollToHorizontalOffset(hiddenWidth);
@@ -1412,13 +1318,8 @@ namespace TabPaint
             try
             {
                 // 情况 A: 这是一个新建的未命名文件，还没路径
-                if (tab.IsNew && string.IsNullOrEmpty(tab.FilePath))
-                {
-                    // 对于批量保存，通常跳过未命名的，或者你需要在这里弹出 SaveFileDialog
-                    // 这里我们选择跳过，让用户单独处理
-                    return;
-                }
-
+                if (tab.IsNew && string.IsNullOrEmpty(tab.FilePath))return;
+                
                 // 情况 B: 这是当前正在编辑的 Tab -> 从画布保存
                 if (tab == _currentTabItem)
                 {
@@ -1485,11 +1386,8 @@ namespace TabPaint
 
             _currentTabItem.IsDirty = false;
 
-            // 你的其他逻辑（如移除 session 中的脏记录）
             SaveSession();
         }
-
-        // 1. 保存所有 (Save All)
         private void OnSaveAllClick(object sender, RoutedEventArgs e)
         {
             // 筛选出所有脏文件
@@ -1525,9 +1423,6 @@ namespace TabPaint
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
-
-                // 逻辑：没有修改(Dirty=false) 且 (不是新文件 或 新文件不是当前的)
-                // 如果是新文件且是当前的，通常保留给用户看
                 if (!tab.IsDirty)
                 {
                     // 如果删掉的是当前正在看的，做个标记
@@ -1536,8 +1431,6 @@ namespace TabPaint
                     FileTabs.RemoveAt(i);
                 }
             }
-
-            // 如果把当前正在看的删了，需要重新选一个显示
             if (currentRemoved)
             {
                 if (FileTabs.Count > 0)
@@ -1629,33 +1522,14 @@ namespace TabPaint
         }
 
 
-
-
-
-
-
-        private void OnPrependTabClick(object sender, RoutedEventArgs e)
+        
+        public void LogCallerInfo([CallerMemberName] string callerName = "",
+                           [CallerFilePath] string filePath = "",
+                           [CallerLineNumber] int lineNumber = 0)
         {
-            var newTab = new FileTabItem(null)
-            {
-                IsNew = true,
-                IsDirty = false
-                // 记得生成一个默认的白色 Thumbnail 赋值进去，否则 UI 上是空的
-            };
-
-            var bmp = new RenderTargetBitmap(100, 60, 96, 96, PixelFormats.Pbgra32);
-            var drawingVisual = new DrawingVisual();
-            using (var context = drawingVisual.RenderOpen())
-            {
-                context.DrawRectangle(Brushes.White, null, new Rect(0, 0, 100, 60));
-            }
-            bmp.Render(drawingVisual);
-            bmp.Freeze();
-            newTab.Thumbnail = bmp;
-            FileTabs.Insert(0, newTab); // 👈 关键：插入到 0
-
-            // 滚回去看它
-            FileTabsScroller.ScrollToHorizontalOffset(0);
+            Console.WriteLine($"调用者方法名: {callerName}");
+            Console.WriteLine($"调用者文件路径: {filePath}");
+            Console.WriteLine($"调用者行号: {lineNumber}");
         }
 
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)
@@ -1710,20 +1584,6 @@ namespace TabPaint
             SetBrushStyle(BrushStyle.Round);
         }
 
-
-
     }
-    public class HalfValueConverter : System.Windows.Data.IValueConverter
-    {
-        public object Convert(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value is double d) return d / 2.0;
-            return 0.0;
-        }
 
-        public object ConvertBack(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
 }

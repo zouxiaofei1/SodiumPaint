@@ -394,9 +394,6 @@ namespace TabPaint
                         Point pos = e.GetPosition(ctx.EditorOverlay);
                         OnPointerMove(ctx, pos);
                     };
-
-                    // 👉 在这里添加 PreviewMouseDown 事件绑定
-                    // 👉 修正后的 PreviewMouseDown 事件绑定
                     ctx.EditorOverlay.PreviewMouseDown += (s, e) =>
                     {
                         Point pos = e.GetPosition(ctx.EditorOverlay); // 获取当前点击在 Overlay 上的位置
@@ -452,9 +449,6 @@ namespace TabPaint
                     _textBox.Loaded += (s, e) => _textBox.Focus();
                 }
             }
-
-
-
             private void SelectCurrentBox()
             {
                 if (_textBox != null)
@@ -537,10 +531,7 @@ namespace TabPaint
                 var visual = new DrawingVisual();
                 using (var dc = visual.RenderOpen())
                 {
-                    // ✨ 修复点：使用 RenderOptions 来设置附加属性，解决 DrawingVisual 不包含定义的问题
                     TextOptions.SetTextRenderingMode(visual, TextRenderingMode.Grayscale);
-
-                    // HintingMode 也是附加属性，或者可以使用 TextFormattingMode
                     TextOptions.SetTextFormattingMode(visual, TextFormattingMode.Display);
 
                     dc.DrawText(formattedText, new Point(_textBox.Padding.Left, _textBox.Padding.Top));
@@ -551,8 +542,6 @@ namespace TabPaint
                 int renderHeight = (int)Math.Ceiling(
                     Math.Max(h, formattedText.Height + _textBox.Padding.Top + _textBox.Padding.Bottom) * (dpiY / 96.0)
                 );
-
-                // 强制最小 1x1 像素防止异常
                 renderWidth = Math.Max(1, renderWidth);
                 renderHeight = Math.Max(1, renderHeight);
 
@@ -570,10 +559,6 @@ namespace TabPaint
 
                 // ✨ 修复点：直接使用渲染出的 wb 的尺寸，不依赖 ctx.Surface.PixelWidth
                 Int32Rect dirtyRect = new Int32Rect((int)x, (int)y, wb.PixelWidth, wb.PixelHeight);
-
-                // 如果你的 CanvasSurface 没有暴露 PixelWidth/PixelHeight，
-                // 我们暂时移除越界检查，或者你可以根据你的代码逻辑手动限制坐标。
-                // 这里先保证编译通过：
                 ctx.Undo.AddDirtyRect(dirtyRect);
                 ctx.Surface.WriteRegion(dirtyRect, pixels, stride, false);
 
@@ -590,8 +575,6 @@ namespace TabPaint
                 _textBox = null;
                 lag = 1;
             }
-
-
         }
 
     }
