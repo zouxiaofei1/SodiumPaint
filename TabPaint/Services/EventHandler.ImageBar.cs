@@ -21,8 +21,58 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        // 这里的 1 表示下一个新建文件的编号
-        private int _nextUntitledIndex = 1;
+        private void OnFileTabCloseClick(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is FileTabItem item)
+            {
+                CloseTab(item);
+            }
+        }
+        private async void OnFileTabClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem clickedItem)
+            {
+                // 1. 拦截：如果点击的是当前正在激活的 Tab，不做任何操作
+                if (_currentTabItem == clickedItem) return;
+
+                // 2. 拦截：如果点击的是同一个文件路径（非新建页），也不做操作
+                if (!clickedItem.IsNew &&
+                    !string.IsNullOrEmpty(_currentFilePath) &&
+                    clickedItem.FilePath == _currentFilePath)
+                {
+                    return;
+                }
+                if (_currentTabItem != null)
+                {
+                    _autoSaveTimer.Stop();
+
+                    if (_currentTabItem.IsDirty || _currentTabItem.IsNew)
+                    {
+                        UpdateTabThumbnail(_currentTabItem);
+                        TriggerBackgroundBackup();
+                    }
+                }
+
+                foreach (var tab in FileTabs) tab.IsSelected = false;
+                clickedItem.IsSelected = true;
+                ScrollToTabCenter(clickedItem);
+                if (clickedItem.IsNew)
+                {
+                    Clean_bitmap(1200, 900); // 这里可以使用默认尺寸或上次记忆的尺寸
+
+                    _currentFilePath = string.Empty;
+                    _currentFileName = "未命名";
+                    UpdateWindowTitle();
+                }
+                else
+                {
+                    await OpenImageAndTabs(clickedItem.FilePath);
+                }
+                _currentTabItem = clickedItem;
+            }
+        }
 
         private FileTabItem CreateNewUntitledTab()
         {
@@ -234,8 +284,6 @@ namespace TabPaint
         // 3. 放弃所有编辑 (Discard All) - 终极清理版
         private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
         {
-            // [修改点1]：现在的目标不仅是脏文件，还包括所有新建的未命名文件
-            // 只要有任何改动，或者有任何新建的临时页，都允许执行重置
             bool hasTargets = FileTabs.Any(t => t.IsDirty || t.IsNew);
             if (!hasTargets) return;
 
@@ -324,6 +372,80 @@ namespace TabPaint
             GC.Collect();
         }
 
+        private void OnFileTabPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Middle)
+            {
+                if (sender is System.Windows.Controls.Button btn && btn.DataContext is FileTabItem item)
+                {
+                    CloseTab(item); // 复用已有的关闭逻辑
+                    e.Handled = true; // 阻止事件冒泡，防止触发其他点击行为
+                }
+                return;
+            }
 
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                _dragStartPoint = e.GetPosition(null);
+            }
+        }
+        private void OnFileTabPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return; // 必须按 Ctrl
+
+            Vector diff = _dragStartPoint - e.GetPosition(null);
+            if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+            {
+                var button = sender as System.Windows.Controls.Button;
+                var tabItem = button?.DataContext as FileTabItem;
+                if (tabItem == null) return;
+
+                // --- 核心修改开始 ---
+
+                string finalDragPath = tabItem.FilePath;
+                bool needTempFile = false;
+                if (string.IsNullOrEmpty(finalDragPath) || !System.IO.File.Exists(finalDragPath) || tabItem.IsDirty)
+                {
+                    needTempFile = true;
+                }
+
+                if (needTempFile)
+                {
+                    try
+                    {
+                        // 1. 获取高清图 (调用上面的方法)
+                        BitmapSource highResBitmap = GetHighResImageForTab(tabItem);
+
+                        if (highResBitmap != null)
+                        {
+                            // 2. 生成临时路径
+                            string fileName = string.IsNullOrEmpty(tabItem.FileName) ? "Image" : System.IO.Path.GetFileNameWithoutExtension(tabItem.FileName);
+                            string tempFileName = $"{fileName}_{DateTime.Now:HHmmss}.png";
+                            finalDragPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), tempFileName);
+
+                            // 3. 保存到 Temp
+                            SaveBitmapToPng(highResBitmap, finalDragPath);
+                        }
+                        else
+                        {
+                            return; // 获取失败，不拖拽
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Drag gen failed: " + ex.Message);
+                        return;
+                    }
+                }
+                if (!string.IsNullOrEmpty(finalDragPath) && System.IO.File.Exists(finalDragPath))
+                {
+                    var dataObject = new System.Windows.DataObject(System.Windows.DataFormats.FileDrop, new string[] { finalDragPath });
+                    DragDrop.DoDragDrop(button, dataObject, System.Windows.DragDropEffects.Copy);
+                    e.Handled = true;
+                }
+            }
+        }
     }
 }

@@ -143,6 +143,7 @@ namespace TabPaint
         {
             if (BackgroundImage.Source != null)
             {
+              //  s(1);
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
                 //s(ScrollContainer.ViewportWidth);
@@ -155,8 +156,10 @@ namespace TabPaint
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale;
                 // s(fitScale);
+
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
+                _canvasResizer.UpdateUI();
             }
         }
      
@@ -237,7 +240,28 @@ namespace TabPaint
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
         }
-       
+        public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject    // 这是一个通用的辅助方法，用于在可视化树中查找特定类型的子控件
+        {
+            if (parent == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child != null && child is T)
+                {
+                    return (T)child;
+                }
+                else
+                {
+                    T childOfChild = FindVisualChild<T>(child);
+                    if (childOfChild != null)
+                    {
+                        return childOfChild;
+                    }
+                }
+            }
+            return null;
+        }
     }
 
 }

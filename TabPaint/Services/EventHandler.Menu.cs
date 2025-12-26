@@ -1,5 +1,6 @@
 ﻿
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -29,76 +30,57 @@ namespace TabPaint
 
         private void OnSaveAsClick(object sender, RoutedEventArgs e)
         {
-            // 1. 【修复默认文件名】
-            // 逻辑：如果是已存在的文件，默认显示原名；如果是新建文件，显示"未命名"
-            string defaultName = "image.png";
-
-            if (_currentTabItem != null && !_currentTabItem.IsNew && !string.IsNullOrEmpty(_currentTabItem.FilePath))
-            {
-                // 这里的 Path.GetFileName 确保只获取文件名（如 photo.jpg），而不是全路径
-                defaultName = System.IO.Path.GetFileName(_currentTabItem.FilePath);
-            }
-            else
-            {
-                defaultName = "未命名.png";
-            }
+            // 1. 准备默认文件名
+            // 如果是新建的，DisplayName 会返回 "未命名 1"，如果是已有的，会返回原文件名
+            string defaultName = _currentTabItem?.DisplayName ?? "image";
+            if (!defaultName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                defaultName += ".png";
 
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = PicFilterString,
-                FileName = defaultName // 设置计算好的默认名
+                FileName = defaultName
             };
+
+            // 2. 需求2：默认位置为打开的文件夹 (即 _currentFilePath 所在目录)
+            string initialDir = "";
+            if (!string.IsNullOrEmpty(_currentFilePath))
+                initialDir = System.IO.Path.GetDirectoryName(_currentFilePath);
+            else if (_imageFiles != null && _imageFiles.Count > 0)
+                initialDir = System.IO.Path.GetDirectoryName(_imageFiles[0]);
+
+            if (!string.IsNullOrEmpty(initialDir) && Directory.Exists(initialDir))
+                dlg.InitialDirectory = initialDir;
 
             if (dlg.ShowDialog() == true)
             {
                 string newPath = dlg.FileName;
+                SaveBitmap(newPath); // 实际保存文件
 
-                // 执行实际保存
-                SaveBitmap(newPath);
-
-                // 2. 【修复图片数量更新】核心逻辑
-                // 更新全局路径变量
+                // 3. 更新状态
                 _currentFilePath = newPath;
                 _currentFileName = System.IO.Path.GetFileName(newPath);
 
                 if (_currentTabItem != null)
                 {
-                    // 如果这个 Tab 之前是“新建”状态，或者另存为了一个新路径
-                    bool isNewFileAdded = false;
+                    // 这里会触发 FilePath 的 setter，进而自动触发 DisplayName 的通知
+                    _currentTabItem.FilePath = newPath;
 
-                    // 更新 Tab 对象的核心数据
-                    _currentTabItem.FilePath = newPath; // 将 Tab 指向新路径
-
-                    // 如果之前是 IsNew，现在变成了正式文件
                     if (_currentTabItem.IsNew)
                     {
-                        _currentTabItem.IsNew = false;
-                        // 此时需要把新路径加入到文件夹列表里，否则 (x/y) 数量不对
-                        if (!_imageFiles.Contains(newPath))
-                        {
-                            _imageFiles.Add(newPath);
-                            // 可选：如果你希望按文件名自动排序，可以在这里 Sort 一下
-                            // _imageFiles.Sort(); 
-                            isNewFileAdded = true;
-                        }
+                        _currentTabItem.IsNew = false; // 也会触发 DisplayName 更新通知
+                        if (!_imageFiles.Contains(newPath)) _imageFiles.Add(newPath);
                     }
-                    // 如果是老文件另存为新名字
                     else if (!_imageFiles.Contains(newPath))
                     {
                         _imageFiles.Add(newPath);
-                        isNewFileAdded = true;
                     }
 
-                    // 3. 重新计算索引 (非常重要，否则 (x/y) 显示错误)
-                    if (isNewFileAdded || _currentImageIndex == -1)
-                    {
-                        _currentImageIndex = _imageFiles.IndexOf(newPath);
-                    }
+                    _currentImageIndex = _imageFiles.IndexOf(newPath);
                 }
 
-                // 4. 标记已保存并刷新标题
                 _isFileSaved = true;
-                UpdateWindowTitle(); // 这里现在会正确显示 (x/y) 而不是 [新画板]
+                UpdateWindowTitle();
             }
         }
 

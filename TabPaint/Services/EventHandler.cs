@@ -248,7 +248,7 @@ namespace TabPaint
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
             if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
-
+            //s(1);
             e.Handled = false; // 阻止默认滚动
             double oldScale = zoomscale;
             double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes);

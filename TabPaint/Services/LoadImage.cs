@@ -135,7 +135,7 @@ namespace TabPaint
 
                 // 3. 加载主图片
                 await LoadImage(filePath); // 假设这是您加载大图的方法
-
+              
                 await RefreshTabPageAsync(_currentImageIndex);
 
                 SetPreviewSlider();

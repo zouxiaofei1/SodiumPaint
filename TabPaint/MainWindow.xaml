@@ -354,7 +354,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <Button Width="120" Height="80" Margin="2" Padding="4" Click="OnFileTabClick" PreviewMouseLeftButtonDown="OnFileTabPreviewMouseDown" PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
+                                            <Button Width="120" Height="80" Margin="2" Padding="4" Click="OnFileTabClick" PreviewMouseDown="OnFileTabPreviewMouseDown" PreviewMouseMove="OnFileTabPreviewMouseMove" ToolTip="{Binding FileName}">
                                                 <Button.Template>
                                                     <ControlTemplate TargetType="Button">
                                                         <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">

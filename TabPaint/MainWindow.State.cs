@@ -145,14 +145,20 @@ namespace TabPaint
             public string LastViewedFile { get; set; } // 上次正在看的文件
             public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>();
         }
+
+
         public class SessionTabInfo
         {
-            public string Id { get; set; }          // Tab的GUID
-            public string OriginalPath { get; set; } // 原始文件路径 (如果是新建未保存则为 null)
-            public string BackupPath { get; set; }   // 缓存文件路径
-            public bool IsDirty { get; set; }        // 是否有未保存的修改
-            public bool IsNew { get; set; }          // 是否是纯新建文件
+            public string Id { get; set; }
+            public string OriginalPath { get; set; }
+            public string BackupPath { get; set; }
+            public bool IsDirty { get; set; }
+            public bool IsNew { get; set; }
+
+            // [新增] 记录该标签页所属的工作目录
+            public string WorkDirectory { get; set; }
         }
+
         private string _sessionPath = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TabPaint", "session.json");
