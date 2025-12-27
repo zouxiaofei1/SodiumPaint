@@ -321,7 +321,24 @@ namespace TabPaint
                 Mouse.OverrideCursor = null; // 恢复光标
             }
         }
+        private void ShowDragOverlay(string mainText, string subText, string iconData = null)
+        {
+            if (DragOverlay.Visibility != Visibility.Visible)
+            {
+                DragOverlay.Visibility = Visibility.Visible;
+            }
 
+            DragOverlayText.Text = mainText;
+            DragOverlaySubText.Text = subText;
+
+            // 可选：根据不同操作改变图标 (这里简化处理，你可以根据需要扩展)
+            // if (iconData != null) DragOverlayIcon.Data = Geometry.Parse(iconData);
+        }
+
+        private void HideDragOverlay()
+        {
+            DragOverlay.Visibility = Visibility.Collapsed;
+        }
     }
 
 }

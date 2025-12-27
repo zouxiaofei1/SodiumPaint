@@ -853,5 +853,26 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <!-- 浅灰底色 -->
+                <GeometryDrawing Brush="#FFF0F0F0">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,20,20"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- 深灰格子 -->
+                <GeometryDrawing Brush="#FFD0D0D0">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="0,0,10,10"/>
+                            <RectangleGeometry Rect="10,10,10,10"/>
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <!-- 如果有引用的颜色，也可以放在这里或引用 Brushes.xaml -->
 </ResourceDictionary>

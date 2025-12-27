@@ -14,13 +14,14 @@ using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
 //
-//更新按钮状态的相关代码
+//更新(广义上)按钮状态的相关代码
 //
 
 namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+       
         public void UpdateCurrentColor(Color color, bool secondColor = false) // 更新前景色按钮颜色
         {
             if (secondColor)
@@ -237,17 +238,62 @@ namespace TabPaint
         }
         private void SaveBitmap(string path)
         {
-            // 1. 原有的保存逻辑
+            // 1. 获取当前编辑的像素数据
+            // _bitmap 是 96 DPI 的，我们只取它的像素内容
+            int width = _bitmap.PixelWidth;
+            int height = _bitmap.PixelHeight;
+            int stride = width * 4;
+            byte[] pixels = new byte[height * stride];
+            _bitmap.CopyPixels(pixels, stride, 0);
+
+            // 2. 创建用于保存的 BitmapSource，并恢复原始 DPI
+            // 这样用看图软件打开时，尺寸信息（英寸/厘米）才是对的
+            var saveSource = BitmapSource.Create(
+                width, height,
+                _originalDpiX, // <--- 恢复原始 X DPI
+                _originalDpiY, // <--- 恢复原始 Y DPI
+                PixelFormats.Bgra32,
+                null,
+                pixels,
+                stride
+            );
+
+            // 3. 根据扩展名选择编码器
+            BitmapEncoder encoder;
+            string ext = System.IO.Path.GetExtension(path).ToLower();
+
+            // 这里简单判断，你可以根据 PicFilterString 里的逻辑扩展
+            if (ext == ".jpg" || ext == ".jpeg")
+            {
+                encoder = new JpegBitmapEncoder { QualityLevel = 90 }; // JPG 质量
+            }
+            else if (ext == ".bmp")
+            {
+                encoder = new BmpBitmapEncoder();
+            }
+            else if (ext == ".tiff" || ext == ".tif")
+            {
+                encoder = new TiffBitmapEncoder();
+            }
+            else // 默认 PNG
+            {
+                encoder = new PngBitmapEncoder();
+            }
+
+            encoder.Frames.Add(BitmapFrame.Create(saveSource));
+
+            // 4. 写入文件
             using (FileStream fs = new FileStream(path, FileMode.Create))
             {
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(_bitmap));
                 encoder.Save(fs);
             }
+
             MarkAsSaved();
-            // 2. 新增：更新对应标签页的缩略图
+
+            // 5. 新增：更新对应标签页的缩略图
             UpdateTabThumbnail(path);
         }
+
 
         private Color GetPixelColor(int x, int y)
         {

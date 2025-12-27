@@ -41,7 +41,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.7 alpha"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.7.1 alpha"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "0,0像素";
@@ -175,5 +175,7 @@ namespace TabPaint
             get => _currentImageFullInfo;
             set { _currentImageFullInfo = value; OnPropertyChanged(nameof(CurrentImageFullInfo)); }
         }
+        private double _originalDpiX = 96.0;
+        private double _originalDpiY = 96.0;
     }
 }

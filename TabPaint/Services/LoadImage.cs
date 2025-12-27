@@ -184,16 +184,31 @@ namespace TabPaint
             if (token.IsCancellationRequested) return null;
 
             using var ms = new System.IO.MemoryStream(imageBytes);
+
+            // 1. 先只读取元数据获取原始尺寸，不解码像素，速度极快
+            var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+            int originalWidth = decoder.Frames[0].PixelWidth;
+
+            // 重置流位置以供 BitmapImage 读取
+            ms.Position = 0;
+
             var img = new BitmapImage();
             img.BeginInit();
             img.CacheOption = BitmapCacheOption.OnLoad;
-            // 关键：设置解码宽度，速度极快
-            img.DecodePixelWidth = 480; // 建议值，50太小了，可能看不清内容
+
+            // 2. 只有当原图宽度大于 480 时才进行降采样
+            if (originalWidth > 480)
+            {
+                img.DecodePixelWidth = 480;
+            }
+            // 否则不设置 DecodePixelWidth（默认为0，即加载原图尺寸），避免小图报错或被拉伸
+
             img.StreamSource = ms;
             img.EndInit();
             img.Freeze();
             return img;
         }
+
 
         private BitmapImage DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
         {
@@ -445,9 +460,43 @@ namespace TabPaint
                 {
                     if (token.IsCancellationRequested) return;
 
-                    _bitmap = new WriteableBitmap(fullResBitmap);
+                    // 【关键修改开始】 --------------------------------------------------
+
+                    // 1. 记录原始 DPI (用于保存时恢复)
+                    _originalDpiX = fullResBitmap.DpiX;
+                    _originalDpiY = fullResBitmap.DpiY;
+
+                    // 2. 强制转换为 BGRA32 (统一格式，不仅为了 DPI，也为了绘图性能)
+                    FormatConvertedBitmap formatted = new FormatConvertedBitmap();
+                    formatted.BeginInit();
+                    formatted.Source = fullResBitmap;
+                    formatted.DestinationFormat = PixelFormats.Bgra32;
+                    formatted.EndInit();
+
+                    // 3. 创建强制为 96 DPI 的 WriteableBitmap
+                    // 无论原图是多少 DPI，这里都强制设为 96.0, 96.0
+                    // 这样 WPF 的显示系统就会认为 1 像素 = 1 屏幕单位 (在 100% 缩放下)
+                    _bitmap = new WriteableBitmap(
+                        formatted.PixelWidth,
+                        formatted.PixelHeight,
+                        96.0, // <--- 强制 96
+                        96.0, // <--- 强制 96
+                        PixelFormats.Bgra32,
+                        null);
+
+                    // 4. 填充像素数据
+                    int stride = formatted.PixelWidth * 4;
+                    byte[] pixels = new byte[formatted.PixelHeight * stride];
+                    formatted.CopyPixels(pixels, stride, 0);
+                    _bitmap.WritePixels(
+                        new Int32Rect(0, 0, formatted.PixelWidth, formatted.PixelHeight),
+                        pixels, stride, 0);
+
+                    // 【关键修改结束】 --------------------------------------------------
+
                     BackgroundImage.Source = _bitmap;
-                    this.CurrentImageFullInfo = metadataString;
+                    this.CurrentImageFullInfo = metadataString; // 这里的 metadataString 还是基于原图的，信息是对的
+
                     // 更新所有依赖完整图的状态
                     if (_surface == null)
                         _surface = new CanvasSurface(_bitmap);

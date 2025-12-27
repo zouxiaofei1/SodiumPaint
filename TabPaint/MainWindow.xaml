@@ -25,7 +25,7 @@
         <DockPanel LastChildFill="True">
 
             <!-- #region 1. 自定义标题栏 (TitleBar) -->
-            <Border DockPanel.Dock="Top" Height="28" Background="#50FFFFFF" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="Border_MouseLeftButtonDown">
+            <Border DockPanel.Dock="Top" Height="28" Background="#50FFFFFF" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="Border_MouseLeftButtonDown" AllowDrop="True" DragOver="OnTopBarDragOver" Drop="OnTopBarDrop">
                 <DockPanel LastChildFill="True">
                     <!-- Icon -->
                     <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"/>
@@ -54,7 +54,7 @@
             <!-- #endregion -->
 
             <!-- #region 2. 菜单栏 (MenuBar) -->
-            <Border DockPanel.Dock="Top" Height="36" Background="Transparent">
+            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" AllowDrop="True" DragOver="OnTopBarDragOver" Drop="OnTopBarDrop">
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
                     <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                         <!-- 文件菜单 -->
@@ -151,7 +151,7 @@
             <!-- #endregion -->
 
             <!-- #region 3. 工具栏 (ToolBar) -->
-            <Border DockPanel.Dock="Top" Height="36" Background="Transparent">
+            <Border DockPanel.Dock="Top" Height="36" Background="Transparent" AllowDrop="True" DragOver="OnTopBarDragOver" Drop="OnTopBarDrop">
                 <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
                     <!-- 基础工具 -->
                     <Button Margin="6,0,2,0" Name="PenButton" Click="OnPenClick" Style="{StaticResource RoundedMenuButtonStyle}">
@@ -229,16 +229,10 @@
                             </Border>
                         </Popup>
                     </Grid>
-
-                    
-                    <!-- 在 BrushToggle 的 Grid 后面添加这个 Grid -->
                     <Grid Margin="0,0,0,0">
-                        <!-- 图形工具主按钮 -->
                         <ToggleButton x:Name="ShapeToggle" Style="{StaticResource DropDownButtonStyle}">
-                            <!-- 默认显示矩形图标，后续会根据选择变动 -->
                             <Image x:Name="CurrentShapeIcon" Source="{StaticResource Shapes_Image}" Width="16" Height="16"/>
                         </ToggleButton>
-                        <!-- 下拉菜单 -->
                         <Popup x:Name="SubMenuPopupShape" IsOpen="{Binding IsChecked, ElementName=ShapeToggle, Mode=TwoWay}"
            PlacementTarget="{Binding ElementName=ShapeToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
            StaysOpen="{Binding IsMouseOver, ElementName=ShapeToggle}">
@@ -249,29 +243,21 @@
                                             <Image Source="{StaticResource Icon_Shape_Rectangle}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-
-                                    <!-- 圆角矩形 -->
                                     <MenuItem Header="圆角矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="RoundedRectangle">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Icon_Shape_RoundedRect}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-
-                                    <!-- 圆形 -->
                                     <MenuItem Header="圆形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Ellipse">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Icon_Shape_Ellipse}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-
-                                    <!-- 直线 -->
                                     <MenuItem Header="直线" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Line">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Icon_Shape_Line}" Width="16" Height="16"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-
-                                    <!-- 箭头 -->
                                     <MenuItem Header="箭头" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick" Tag="Arrow">
                                         <MenuItem.Icon>
                                             <Image Source="{StaticResource Icon_Shape_Arrow}" Width="16" Height="16"/>
@@ -282,7 +268,6 @@
                         </Popup>
                     </Grid>
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
-                    <!-- 图像操作 -->
                     <Button Margin="2,0" Name="CutImage" ToolTip="裁剪选区" Click="CropMenuItem_Click" Style="{StaticResource RoundedMenuButtonStyle}">
                         <Image x:Name="CutImageIcon" Source="{StaticResource Cut_Selection_Image}" Width="16" Height="16"/>
                     </Button>
@@ -325,8 +310,8 @@
                     <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
 
                     <!-- 颜色区域 -->
-                    <Button ToolTip="自定义颜色" Click="OnCustomColorClick" Margin="10,0" Padding="0" Style="{StaticResource RoundedMenuButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left">
-                        <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="32" Height="32"/>
+                    <Button ToolTip="自定义颜色" Click="OnCustomColorClick" Margin="5,2,5,0" Padding="0" Style="{StaticResource RoundedMenuButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Top" HorizontalContentAlignment="Left">
+                        <Image Source="pack://application:,,,/Resources/colorwheel_64x64.png" Width="28" Height="28"/>
                     </Button>
 
                     <Button x:Name="ColorBtn1" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}"/>
@@ -615,7 +600,7 @@
                     </ContextMenu>
                 </ScrollViewer.ContextMenu>
 
-                <Grid Name="CanvasWrapper" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                <Grid Name="CanvasWrapper" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True" Background="{StaticResource CheckerboardBrush}">
                     <Grid.LayoutTransform>
                         <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                     </Grid.LayoutTransform>
@@ -715,6 +700,24 @@
             </Border>
         </Grid>
         <!-- #endregion -->
+        <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
+        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#77111111">
 
+            <!-- 虚线边框背景 -->
+            <Rectangle Stroke="White" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
+
+            <!-- 文字和图标内容 -->
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <!-- 图标 -->
+                <Path x:Name="DragOverlayIcon" Width="64" Height="64" Fill="White" Stretch="Uniform" Margin="0,0,0,20"
+                      Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+
+                <!-- 提示文字 -->
+                <TextBlock x:Name="DragOverlayText" Text="拖放以打开" Foreground="White" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
+
+                <!-- 副标题 -->
+                <TextBlock x:Name="DragOverlaySubText" Text="释放鼠标以确认" Foreground="#CCC" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

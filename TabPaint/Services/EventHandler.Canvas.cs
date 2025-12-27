@@ -19,18 +19,16 @@ namespace TabPaint
     {
         private void OnCanvasDragOver(object sender, System.Windows.DragEventArgs e)
         {
-            // 1. 检查是否是内部拖拽 (如果是，直接忽略)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 e.Effects = System.Windows.DragDropEffects.None;
                 e.Handled = true;
                 return;
             }
-
-            // 2. 正常的外部文件检查
             if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
             {
                 e.Effects = System.Windows.DragDropEffects.Copy;
+                ShowDragOverlay("插入图片", "在当前画布中插入图片");
                 e.Handled = true;
             }
             else
@@ -42,7 +40,7 @@ namespace TabPaint
 
         private void OnCanvasDrop(object sender, System.Windows.DragEventArgs e)
         {
-            // 1. 拦截内部拖拽
+            HideDragOverlay();
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 e.Handled = true;

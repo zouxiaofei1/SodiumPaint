@@ -96,11 +96,11 @@ namespace TabPaint
         }
         private void OnImageBarDragOver(object sender, System.Windows.DragEventArgs e)
         {
-            // 修改点：同时检查 FileDrop 和 Bitmap
             if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop) ||
                 e.Data.GetDataPresent(System.Windows.DataFormats.Bitmap))
             {
                 e.Effects = System.Windows.DragDropEffects.Copy;
+                ShowDragOverlay("添加到当前列表", "将图片作为新标签页加入");
             }
             else
             {
@@ -113,6 +113,7 @@ namespace TabPaint
         // 2. 拖拽放下处理：核心逻辑
         private async void OnImageBarDrop(object sender, System.Windows.DragEventArgs e)
         {
+            HideDragOverlay(); // 隐藏遮罩
             if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) return;
 
             string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
