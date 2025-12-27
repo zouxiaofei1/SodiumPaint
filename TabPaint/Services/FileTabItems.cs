@@ -22,12 +22,17 @@ namespace TabPaint
 
         private void LoadTabPageAsync(int centerIndex)
         {
+            // a.s("LoadTabPageAsync", centerIndex); // 调试日志
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
             // 1. 确定当前“文件夹视图”的范围
             int start = Math.Max(0, centerIndex - PageSize);
             int end = Math.Min(_imageFiles.Count - 1, centerIndex + PageSize);
             var viewportPaths = new HashSet<string>();
+
+            // 获取中心图片路径（用户明确选中的）
+            string centerPath = (centerIndex >= 0 && centerIndex < _imageFiles.Count) ? _imageFiles[centerIndex] : null;
+
             for (int i = start; i <= end; i++) viewportPaths.Add(_imageFiles[i]);
 
             // 2. 清理阶段：只移除那些 "既不在视野内，又不是脏数据，也不是新文件" 的项
@@ -35,7 +40,7 @@ namespace TabPaint
             {
                 var tab = FileTabs[i];
                 bool isViewport = viewportPaths.Contains(tab.FilePath);
-                bool isKeepAlive = tab.IsDirty || tab.IsNew; // 🔥 关键：只要脏了或者新了，就永远不删
+                bool isKeepAlive = tab.IsDirty || tab.IsNew;
 
                 if (!isViewport && !isKeepAlive)
                 {
@@ -43,9 +48,24 @@ namespace TabPaint
                 }
             }
 
+            // 3. 添加阶段
             for (int i = start; i <= end; i++)
             {
                 string path = _imageFiles[i];
+
+                // --- [新增逻辑] ---
+                // 如果该文件在黑名单里，且不是用户当前选中的那张图(centerPath)，则跳过不加载
+                if (_explicitlyClosedFiles.Contains(path) && path != centerPath)
+                {
+                    continue;
+                }
+                // 如果用户强行选中了这张图(centerPath)，说明他反悔了，从黑名单移除
+                if (path == centerPath && _explicitlyClosedFiles.Contains(path))
+                {
+                    _explicitlyClosedFiles.Remove(path);
+                }
+                // ------------------
+
                 var existingTab = FileTabs.FirstOrDefault(t => t.FilePath == path);
 
                 if (existingTab == null)
@@ -84,12 +104,9 @@ namespace TabPaint
 
                     if (!inserted) FileTabs.Add(newTab);
                 }
-                else
-                {
-                }
             }
-
         }
+
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
         {
             if (_imageFiles == null || _imageFiles.Count == 0) return;
@@ -177,7 +194,7 @@ namespace TabPaint
 
         private async void CloseTab(FileTabItem item)
         {
-            // 1. 脏检查（保持原有逻辑）
+            // 1. 脏检查（保持不变）
             if (item.IsDirty)
             {
                 var result = System.Windows.MessageBox.Show(
@@ -186,57 +203,82 @@ namespace TabPaint
                     MessageBoxButton.YesNoCancel);
 
                 if (result == MessageBoxResult.Cancel) return;
-                if (result == MessageBoxResult.Yes)
-                {
-                    SaveSingleTab(item); // 保存逻辑
-                }
-                // 如果选 No，直接继续往下走
+                if (result == MessageBoxResult.Yes) SaveSingleTab(item);
             }
-            int removedIndex = FileTabs.IndexOf(item);
-            bool wasSelected = item.IsSelected; // 或者 item == _currentTabItem
 
-            // 3. 移除 Tab
+            // 记录下要删除的路径和当前的选中状态
+            string pathToRemove = item.FilePath;
+            int removedUiIndex = FileTabs.IndexOf(item);
+            bool wasSelected = item.IsSelected;
+
+            // 2. 从 UI 列表移除 Tab
             FileTabs.Remove(item);
 
-            // 清理该 Tab 的临时缓存文件（如果是 dirty 的或者 new 的，且用户选择关闭/不保存）
+            // 3. 【核心修改】从后台数据源列表中彻底移除该文件
+            // 这样下次滚动或者计算 Index 时，这张图就不存在了
+            if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))
+            {
+                _imageFiles.Remove(pathToRemove);
+            }
+
+            // 4. 同步底部的 Slider 范围（因为总数变少了）
+            if (PreviewSlider != null)
+            {
+                // 重新设置最大值，防止 Slider 滑块位置越界
+                PreviewSlider.Maximum = Math.Max(0, _imageFiles.Count - 1);
+            }
+
+            // 清理临时文件（保持不变）
             if (!string.IsNullOrEmpty(item.BackupPath) && File.Exists(item.BackupPath))
             {
                 try { File.Delete(item.BackupPath); } catch { }
             }
-
-            // 4. 情况 A：列表空了 -> 生成新的空图片
             if (FileTabs.Count == 0)
             {
+                _imageFiles.Clear();
                 ResetToNewCanvas();
                 return;
             }
+
             if (wasSelected)
             {
-                int newIndex = removedIndex - 1;
-                if (newIndex < 0) newIndex = 0; // 边界修正
+                int newIndex = removedUiIndex - 1;
+                if (newIndex < 0) newIndex = 0;
+                // 防止越界（虽然前面判空了）
+                if (newIndex >= FileTabs.Count) newIndex = FileTabs.Count - 1;
 
-                // 获取新 Tab 对象
                 var newTab = FileTabs[newIndex];
-
-                // 更新 UI 选中态
                 foreach (var tab in FileTabs) tab.IsSelected = false;
                 newTab.IsSelected = true;
                 _currentTabItem = newTab;
 
-                // 加载新 Tab 的画布内容
+                if (!string.IsNullOrEmpty(newTab.FilePath))
+                {
+                    _currentImageIndex = _imageFiles.IndexOf(newTab.FilePath);
+                }
+                else
+                {
+                    _currentImageIndex = -1;
+                }
+
+                // 同步 Slider 的当前值
+                if (PreviewSlider != null && _currentImageIndex >= 0)
+                {
+                    _isUpdatingUiFromScroll = true; // 上锁
+                    PreviewSlider.Value = _currentImageIndex;
+                    _isUpdatingUiFromScroll = false;
+                }
+
+                // 加载新 Tab 内容
                 if (newTab.IsNew)
                 {
                     if (!string.IsNullOrEmpty(newTab.BackupPath) && File.Exists(newTab.BackupPath))
-                    {
                         await OpenImageAndTabs(newTab.BackupPath);
-                    }
                     else
                     {
-                        // 纯新页，清空画布
                         Clean_bitmap(1200, 900);
                         _currentFilePath = string.Empty;
-                        _currentFileName = "未命名"; // 可以在这里加上 newTab.DisplayName
-                        UpdateWindowTitle();
+                        _currentFileName = "未命名";
                     }
                 }
                 else
@@ -245,8 +287,28 @@ namespace TabPaint
                 }
                 ResetDirtyTracker();
             }
-            // 情况 C：关闭的是后台 Tab -> 保持当前画面不变，无需操作
+            else
+            {
+                if (_currentTabItem != null && !string.IsNullOrEmpty(_currentTabItem.FilePath))
+                {
+                    _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+
+                    // 同步 Slider
+                    if (PreviewSlider != null && _currentImageIndex >= 0)
+                    {
+                        _isUpdatingUiFromScroll = true;
+                        PreviewSlider.Value = _currentImageIndex;
+                        _isUpdatingUiFromScroll = false;
+                    }
+                }
+            }
+
+            // 7. 最后统一刷新标题栏 (显示如 1/4)
+            UpdateWindowTitle();
         }
+
+
+
 
         private void InitializeScrollPosition()
         {

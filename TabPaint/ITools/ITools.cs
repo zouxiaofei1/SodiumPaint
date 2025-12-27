@@ -187,9 +187,6 @@ namespace TabPaint
                 if (CurrentTool == tool) return; // Optional: Don't do work if it's the same tool.
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
-               
-                a.s("Set to:" + CurrentTool.ToString());
-
                 _ctx.ViewElement.Cursor = tool.Cursor;
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
 

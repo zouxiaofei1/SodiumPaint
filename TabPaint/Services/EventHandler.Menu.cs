@@ -77,6 +77,7 @@ namespace TabPaint
                     }
 
                     _currentImageIndex = _imageFiles.IndexOf(newPath);
+                   // s(_currentImageIndex);
                 }
 
                 _isFileSaved = true;

@@ -482,8 +482,9 @@ namespace TabPaint
                 Clean_bitmap(1200, 900); // 使用默认尺寸
                 _currentFilePath = string.Empty;
                 _currentFileName = "未命名";
-                UpdateWindowTitle();
                 _currentTabItem = newTab;
+                UpdateWindowTitle();
+               
 
                 // 重置撤销栈
                 ResetDirtyTracker();

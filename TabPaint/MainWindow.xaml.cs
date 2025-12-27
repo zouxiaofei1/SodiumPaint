@@ -25,30 +25,28 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
 
-        public MainWindow(string startFilePath)///////////////////////////////////////////////////主窗口初始化
+        public MainWindow(string startFilePath)
         {
-
             _currentFilePath = startFilePath;
             InitializeComponent();
 
+            DataContext = this;
 
-            Loaded += (s, e) =>
-            {
-              
-                LoadSession();
-                MicaAcrylicManager.ApplyEffect(this);
-            };
+            // 1. 统一绑定到一个 Loaded 处理函数，移除构造函数里的 lambda
             Loaded += MainWindow_Loaded;
+
             InitializeAutoSave();
+
+            // 注意：建议移除这里的 this.Show()，通常由 App.xaml.cs 控制显示
+            // 如果必须在这里显示，保持不动即可
             this.Show();
 
-            DataContext = this;
-            // LoadAllFilePaths(basepath);
-
-            StateChanged += MainWindow_StateChanged; // 监听系统状态变化
+            // ... 其他事件绑定保持不变 ...
+            StateChanged += MainWindow_StateChanged;
             Select = new SelectTool();
             this.Deactivated += MainWindow_Deactivated;
-            // 初始化字体大小事件
+
+            // 字体事件
             FontFamilyBox.SelectionChanged += FontSettingChanged;
             FontSizeBox.SelectionChanged += FontSettingChanged;
             BoldBtn.Checked += FontSettingChanged;
@@ -63,38 +61,84 @@ namespace TabPaint
             ZoomSlider.ValueChanged += (s, e) =>
             {
                 UpdateSliderBarValue(ZoomSlider.Value);
-                //ZoomScale = ZoomSlider.Value; // 更新属性而不是直接访问 zoomscale
             };
 
+            // Canvas 事件
             CanvasWrapper.MouseDown += OnCanvasMouseDown;
             CanvasWrapper.MouseMove += OnCanvasMouseMove;
             CanvasWrapper.MouseUp += OnCanvasMouseUp;
-
-            // 3. (Failsafe) Handle the mouse leaving the element
             CanvasWrapper.MouseLeave += OnCanvasMouseLeave;
+
+            // 初始化工具
             _surface = new CanvasSurface(_bitmap);
             _undo = new UndoRedoManager(_surface);
             _ctx = new ToolContext(_surface, _undo, BackgroundImage, SelectionPreview, SelectionOverlayCanvas, EditorOverlayCanvas, CanvasWrapper);
             _tools = new ToolRegistry();
             _ctx.ViewElement.Cursor = _tools.Pen.Cursor;
-            _router = new InputRouter(_ctx, _tools.Pen); // 默认画笔
+            _router = new InputRouter(_ctx, _tools.Pen);
+
             this.PreviewKeyDown += (s, e) =>
             {
-                // 保持原有 Ctrl+Z/Y/S/N/O 与方向键导航逻辑
                 MainWindow_PreviewKeyDown(s, e);
-                // 再路由给当前工具（例如文本工具用键盘输入）
                 _router.OnPreviewKeyDown(s, e);
             };
+
             SetBrushStyle(BrushStyle.Round);
             SetCropButtonState();
-            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
 
+            // 移除重复的绑定
+            // this.PreviewKeyDown += MainWindow_PreviewKeyDown; 
 
             _canvasResizer = new CanvasResizeManager(this);
-
             this.Focusable = true;
         }
 
+        // 修改为 async void，以便使用 await
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Focus();
+
+            // 应用特效
+            MicaAcrylicManager.ApplyEffect(this);
+
+            try
+            {
+                // 1. 先加载上次会话 (Tabs结构)
+                LoadSession();
+
+                // 2. 如果有启动参数传入的文件，打开它
+                if (!string.IsNullOrEmpty(_currentFilePath))
+                {
+                    // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
+                    await OpenImageAndTabs(_currentFilePath, true);
+                }
+                else if (FileTabs.Count == 0) // 如果既没 Session 也没参数，新建空画板
+                {
+                    ResetToNewCanvas();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"启动加载失败: {ex.Message}");
+                // 可以在这里弹窗提示用户
+            }
+            finally
+            {
+                // 3. 【关键】无论成功失败，最后必须把锁解开
+                // 此时 UI 线程已经空闲，可以安全地更新布局
+                _isInitialLayoutComplete = true;
+
+                // 再次刷新滚动位置
+                InitializeScrollPosition();
+
+                // 如果有图片，触发一次滚动条同步，确保 Slider 位置正确
+                if (FileTabs.Count > 0)
+                {
+                    // 模拟触发一次滚动检查
+                    OnFileTabsScrollChanged(FileTabsScroller, null);
+                }
+            }
+        }
 
 
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
@@ -119,23 +163,7 @@ namespace TabPaint
        
 
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            this.Focus();
-
-            InitializeScrollPosition();
-
-            Task.Run(async () => // 在后台线程运行，不阻塞UI线程
-            {
-                // await 
-                await OpenImageAndTabs(_currentFilePath, true);
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>// 如果你需要在完成后通知UI，要切回UI线程
-                {
-                    InitializeScrollPosition();
-                    _isInitialLayoutComplete = true;
-                });
-            });
-        }
+     
      
 
 

@@ -77,6 +77,7 @@ namespace TabPaint
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 mw.SetUndoRedoButtonState(); // 更新按钮可用性
                 mw.CheckDirtyState();        // 更新红点状态
+               mw.UpdateWindowTitle();
             }
             public UndoRedoManager(CanvasSurface surface) { _surface = surface; }
 
@@ -118,6 +119,7 @@ namespace TabPaint
                 _undo.Push(new UndoAction(combined, region));
                 UpdateUI();
                 _preStrokeSnapshot = null;
+                
                 ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
 

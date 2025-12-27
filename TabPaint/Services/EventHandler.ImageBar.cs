@@ -64,6 +64,7 @@ namespace TabPaint
 
                     _currentFilePath = string.Empty;
                     _currentFileName = "未命名";
+                    _currentTabItem = clickedItem;
                     UpdateWindowTitle();
                 }
                 else
@@ -76,7 +77,6 @@ namespace TabPaint
 
         private FileTabItem CreateNewUntitledTab()
         {
-            a.s(1);
             var newTab = new FileTabItem(null)
             {
                 IsNew = true,
@@ -224,9 +224,6 @@ namespace TabPaint
             if (successCount > 0)
                 System.Windows.MessageBox.Show($"已保存 {successCount} 张图片。");
         }
-
-        // 2. 清空未编辑 (Clear Unedited)
-        // 2. 清空未编辑 (Clear Unedited)
         private void OnClearUneditedClick(object sender, RoutedEventArgs e)
         {
             var originalCurrent = _currentTabItem;
@@ -392,7 +389,7 @@ namespace TabPaint
         private void OnFileTabPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (e.LeftButton != MouseButtonState.Pressed) return;
-            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return; // 必须按 Ctrl
+            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
 
             Vector diff = _dragStartPoint - e.GetPosition(null);
             if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
@@ -401,8 +398,6 @@ namespace TabPaint
                 var button = sender as System.Windows.Controls.Button;
                 var tabItem = button?.DataContext as FileTabItem;
                 if (tabItem == null) return;
-
-                // --- 核心修改开始 ---
 
                 string finalDragPath = tabItem.FilePath;
                 bool needTempFile = false;
@@ -415,37 +410,39 @@ namespace TabPaint
                 {
                     try
                     {
-                        // 1. 获取高清图 (调用上面的方法)
                         BitmapSource highResBitmap = GetHighResImageForTab(tabItem);
-
                         if (highResBitmap != null)
                         {
-                            // 2. 生成临时路径
                             string fileName = string.IsNullOrEmpty(tabItem.FileName) ? "Image" : System.IO.Path.GetFileNameWithoutExtension(tabItem.FileName);
                             string tempFileName = $"{fileName}_{DateTime.Now:HHmmss}.png";
                             finalDragPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), tempFileName);
-
-                            // 3. 保存到 Temp
-                            SaveBitmapToPng(highResBitmap, finalDragPath);
+                            SaveBitmapToPng(highResBitmap, finalDragPath); // 这一行需要取消注释才能真正生成文件
                         }
-                        else
-                        {
-                            return; // 获取失败，不拖拽
-                        }
+                        else return;
                     }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine("Drag gen failed: " + ex.Message);
-                        return;
-                    }
+                    catch { return; }
                 }
+
                 if (!string.IsNullOrEmpty(finalDragPath) && System.IO.File.Exists(finalDragPath))
                 {
-                    var dataObject = new System.Windows.DataObject(System.Windows.DataFormats.FileDrop, new string[] { finalDragPath });
+                    // --- 核心修改 ---
+                    var dataObject = new System.Windows.DataObject();
+
+                    // 1. 放入标准文件格式 (给 Explorer/桌面用)
+                    var fileList = new System.Collections.Specialized.StringCollection();
+                    fileList.Add(finalDragPath);
+                    dataObject.SetFileDropList(fileList);
+
+                    // 2. 放入自定义记号 (给 TabPaint 自己识别用)
+                    dataObject.SetData("TabPaintInternalDrag", true);
+
                     DragDrop.DoDragDrop(button, dataObject, System.Windows.DragDropEffects.Copy);
                     e.Handled = true;
                 }
             }
         }
+
+
+
     }
 }

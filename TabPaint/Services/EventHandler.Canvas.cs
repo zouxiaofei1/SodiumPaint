@@ -19,12 +19,19 @@ namespace TabPaint
     {
         private void OnCanvasDragOver(object sender, System.Windows.DragEventArgs e)
         {
-            // 检查拖动的是否是文件
+            // 1. 检查是否是内部拖拽 (如果是，直接忽略)
+            if (e.Data.GetDataPresent("TabPaintInternalDrag"))
+            {
+                e.Effects = System.Windows.DragDropEffects.None;
+                e.Handled = true;
+                return;
+            }
+
+            // 2. 正常的外部文件检查
             if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
             {
-                // 设置鼠标效果为“复制”图标，告知系统和用户这里可以放下
                 e.Effects = System.Windows.DragDropEffects.Copy;
-                e.Handled = true; // 标记事件已处理
+                e.Handled = true;
             }
             else
             {
@@ -32,26 +39,34 @@ namespace TabPaint
             }
         }
 
+
         private void OnCanvasDrop(object sender, System.Windows.DragEventArgs e)
         {
+            // 1. 拦截内部拖拽
+            if (e.Data.GetDataPresent("TabPaintInternalDrag"))
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
             {
                 string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-                if (files.Length > 0)
+                if (files != null && files.Length > 0)
                 {
                     string filePath = files[0];
                     try
                     {
-                        // 1. 加载图片文件
                         BitmapImage bitmap = new BitmapImage();
                         bitmap.BeginInit();
                         bitmap.UriSource = new Uri(filePath);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad; // 必须 Load，否则文件会被占用
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
+                        bitmap.Freeze(); // 建议加上 Freeze
 
                         _router.SetTool(_tools.Select);
 
-                        if (_tools.Select is SelectTool st) // 强转成 SelectTool
+                        if (_tools.Select is SelectTool st)
                         {
                             st.InsertImageAsSelection(_ctx, bitmap);
                         }
@@ -64,6 +79,7 @@ namespace TabPaint
                 }
             }
         }
+
         private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
         {
             // Get the position relative to the scaled CanvasWrapper

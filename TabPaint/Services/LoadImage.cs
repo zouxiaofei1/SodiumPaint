@@ -38,10 +38,7 @@ namespace TabPaint
             // 1. 如果是第一次加载，初始化文件列表
             if (_currentImageIndex == -1) ScanFolderImages(filePath);
 
-            a.s(3);
-            // 2. 切图前保存上一个 Tab 的缓存 (如果有的话)
             TriggerBackgroundBackup();
-            a.s(4);
             // 3. 计算新图片的索引
             int newIndex = _imageFiles.IndexOf(filePath);
             _currentImageIndex = newIndex;
@@ -132,7 +129,8 @@ namespace TabPaint
                 foreach (var tab in FileTabs)
                     tab.IsSelected = false;
 
-
+                var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                current.IsSelected=true;
                 // 3. 加载主图片
                 await LoadImage(filePath); // 假设这是您加载大图的方法
               

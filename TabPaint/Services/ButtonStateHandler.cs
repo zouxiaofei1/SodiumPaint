@@ -79,7 +79,6 @@ namespace TabPaint
 
         private void UpdateWindowTitle()
         {
-            // 0. 防御性编程：如果没有选中项，显示默认标题
             if (_currentTabItem == null)
             {
                 this.Title = $"TabPaint {_programVersion}";
@@ -89,7 +88,7 @@ namespace TabPaint
 
             string dirtyMark = _currentTabItem.IsDirty ? "*" : "";
             string displayFileName = _currentTabItem.FileName;
-
+            
             string countInfo = "";
             if (_currentTabItem.IsNew)
             {

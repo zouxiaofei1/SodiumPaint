@@ -28,83 +28,108 @@ namespace TabPaint
         private bool _isUpdatingUiFromScroll = false;
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (_isProgrammaticScroll) return;
-            if (!_isInitialLayoutComplete || _isUpdatingUiFromScroll) return;
+            
+            if (_isProgrammaticScroll) return;   
+            if (!_isInitialLayoutComplete) return;
+            if (e == null) return;
 
-            double itemWidth = 124;
-            int firstIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
+            double itemWidth = 124; // 请确保这与 XAML 中 Tab 的实际宽度(包含Margin)一致
+         
+            // 1. 计算当前视图内可见的 Tab 范围（局部索引）
+            int firstLocalIndex = (int)(FileTabsScroller.HorizontalOffset / itemWidth);
             int visibleCount = (int)(FileTabsScroller.ViewportWidth / itemWidth) + 2;
-            int lastIndex = firstIndex + visibleCount;
 
-            if (PreviewSlider.Value != firstIndex)
+            // 2. 【核心修复】将局部索引映射为全局索引，同步 Slider
+            if (!_isSyncingSlider && FileTabs.Count > 0 && firstLocalIndex >= 0 && firstLocalIndex < FileTabs.Count)
             {
-                _isUpdatingUiFromScroll = true;
-                PreviewSlider.Value = firstIndex;
-                _isUpdatingUiFromScroll = false;
+                var firstVisibleTab = FileTabs[firstLocalIndex];
+                int globalIndex = _imageFiles.IndexOf(firstVisibleTab.FilePath);
+
+                if (globalIndex >= 0 && PreviewSlider.Value != globalIndex)
+                {
+                    _isUpdatingUiFromScroll = true;
+                    PreviewSlider.Value = globalIndex;
+                    _isUpdatingUiFromScroll = false;
+                }
             }
-            bool needload = false;
+            
 
-            if (FileTabs.Count > 0 && lastIndex >= FileTabs.Count - 2 && FileTabs.Count < _imageFiles.Count) // 阈值调小一点，体验更丝滑
+            bool needLoadThumbnail = false;
+
+            // 3. 【向后加载】逻辑优化 (Load Next)
+            // 只要看到最后 5 个以内，且还有更多文件，就加载
+            // 阈值调大到 5，防止滚动过快时出现空白
+            if (FileTabs.Count > 0 &&
+        firstLocalIndex + visibleCount >= FileTabs.Count - 5 &&
+        FileTabs.Count < _imageFiles.Count)
             {
-                var lastTab = FileTabs[FileTabs.Count - 1];
+                var lastTab = FileTabs.Last();
                 int lastFileIndex = _imageFiles.IndexOf(lastTab.FilePath);
 
                 if (lastFileIndex >= 0 && lastFileIndex < _imageFiles.Count - 1)
                 {
-                    var nextItems = _imageFiles.Skip(lastFileIndex + 1).Take(PageSize);
+                    int takeCount = PageSize;
+                    var nextItems = _imageFiles.Skip(lastFileIndex + 1).Take(takeCount);
 
                     foreach (var path in nextItems)
                     {
-                        if (!FileTabs.Any(t => t.FilePath == path))
+                        // --- [修改部分 START] ---
+                        // 增加黑名单检查：如果已经在Tab里，或者被手动关闭过，就跳过
+                        if (!FileTabs.Any(t => t.FilePath == path) && !_explicitlyClosedFiles.Contains(path))
                         {
                             FileTabs.Add(new FileTabItem(path));
                         }
+                        // --- [修改部分 END] ---
                     }
-                    needload = true;
+                    needLoadThumbnail = true;
                 }
             }
 
-
-            // 前端加载 (修复版)
-            if (firstIndex < 2 && FileTabs.Count > 0)
+            // 4. 【向前加载】逻辑优化 (Load Previous)
+            if (firstLocalIndex < 3 && FileTabs.Count > 0)
             {
-                // 获取当前列表第一个文件的真实索引
                 var firstTab = FileTabs[0];
                 int firstFileIndex = _imageFiles.IndexOf(firstTab.FilePath);
 
-                if (firstFileIndex > 0) // 如果前面还有图
+                if (firstFileIndex > 0)
                 {
-                    // 计算需要拿多少张
+                    // ... [保留计算 takeCount 的代码] ...
                     int takeCount = PageSize;
-                    // 如果前面不够 PageSize 张了，就只拿剩下的
-                    if (firstFileIndex < PageSize) takeCount = firstFileIndex;
+                    int start = Math.Max(0, firstFileIndex - takeCount);
+                    int actualTake = firstFileIndex - start;
 
-                    // 关键修复：从 firstFileIndex - takeCount 开始拿
-                    int start = firstFileIndex - takeCount;
-
-                    var prevPaths = _imageFiles.Skip(start).Take(takeCount);
-
-                    // 使用 Insert(0, ...) 会导致大量 UI 重绘，建议反转顺序逐个插入
-                    int insertPos = 0;
-                    foreach (var path in prevPaths)
+                    if (actualTake > 0)
                     {
-                        if (!FileTabs.Any(t => t.FilePath == path))
+                        var prevPaths = _imageFiles.Skip(start).Take(actualTake).Reverse();
+
+                        int insertCount = 0;
+                        foreach (var path in prevPaths)
                         {
-                            FileTabs.Insert(insertPos, new FileTabItem(path));
-                            insertPos++; // 保持插入顺序
+                            // --- [修改部分 START] ---
+                            if (!FileTabs.Any(t => t.FilePath == path) && !_explicitlyClosedFiles.Contains(path))
+                            {
+                                FileTabs.Insert(0, new FileTabItem(path));
+                                insertCount++;
+                            }
+                            // --- [修改部分 END] ---
+                        }
+
+                        if (insertCount > 0)
+                        {
+                            FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + insertCount * itemWidth);
+                            needLoadThumbnail = true;
                         }
                     }
-
-                    // 修正滚动条位置，防止因为插入元素导致视图跳动
-                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + insertPos * itemWidth);
-                    needload = true;
                 }
             }
 
-            if (needload || e.HorizontalChange != 0 || e.ExtentWidthChange != 0)  // 懒加载缩略图，仅当有新增或明显滚动时触发
+            // 5. 触发缩略图懒加载
+            if (needLoadThumbnail || Math.Abs(e.HorizontalChange) > 1 || Math.Abs(e.ExtentWidthChange) > 1)
             {
-                int end = Math.Min(lastIndex, FileTabs.Count);
-                for (int i = firstIndex; i < end; i++)
+                int checkStart = Math.Max(0, firstLocalIndex - 2);
+                int checkEnd = Math.Min(firstLocalIndex + visibleCount + 2, FileTabs.Count);
+
+                for (int i = checkStart; i < checkEnd; i++)
                 {
                     var tab = FileTabs[i];
                     if (tab.Thumbnail == null && !tab.IsLoading)
@@ -115,41 +140,55 @@ namespace TabPaint
                 }
             }
         }
-
-        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)// 鼠标滚轮横向滚动
+        private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
         {
             var scrollViewer = sender as ScrollViewer;
             if (scrollViewer != null)
             {
-                // 横向滚动
-                double offset = scrollViewer.HorizontalOffset - (e.Delta);
+                // 增加滚动速度系数 (例如 1.5倍)，让滚轮更跟手
+                double scrollSpeed = 1.5;
+                double offset = scrollViewer.HorizontalOffset - (e.Delta * scrollSpeed);
+
+                // 边界检查
+                if (offset < 0) offset = 0;
+                if (offset > scrollViewer.ScrollableWidth) offset = scrollViewer.ScrollableWidth;
+
                 scrollViewer.ScrollToHorizontalOffset(offset);
                 e.Handled = true;
             }
         }
 
-        // 当滑块拖动时触发
         private async void PreviewSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            // 如果是由滚动条触发的 Slider 变化，什么都不做，防止循环
             if (_isUpdatingUiFromScroll) return;
 
-            if (_isSyncingSlider) return;
+            // 如果正在初始化，跳过
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
-            // 只有当变化量足够大（或者是拖动结束）时才加载图片，防止滑动太快卡顿
-            // 这里做一个简单的去抖动处理，或者直接加载
-            int index = (int)e.NewValue;
-
-            // 边界检查
-            if (index < 0) index = 0;
-            if (index >= _imageFiles.Count) index = _imageFiles.Count - 1;
-
-            // 调用你的加载逻辑，并不触发滚动条反向更新 Slider
+            // 防止过于频繁触发
+            if (_isSyncingSlider) return;
             _isSyncingSlider = true;
-            // a.s("PreviewSlider_ValueChanged");
-            // await OpenImageAndTabs(_imageFiles[index],true);
-            //这个会导致双重加载!!
-            _isSyncingSlider = false;
+
+            try
+            {
+                int index = (int)Math.Round(e.NewValue);
+                // 边界保护
+                if (index < 0) index = 0;
+                if (index >= _imageFiles.Count) index = _imageFiles.Count - 1;
+
+                // 这里是【拖动滑块】的逻辑：跳转到该位置
+                // 1. 重新生成以该索引为中心的 Tab 列表
+                await RefreshTabPageAsync(index, true);
+
+                // 注意：RefreshTabPageAsync 里会重置 FileTabs，
+                // 这会自动触发 OnFileTabsScrollChanged，但由于我们处于 _isSyncingSlider = true 状态，
+                // 且 ScrollChanged 里有校验，应该没问题。
+            }
+            finally
+            {
+                _isSyncingSlider = false;
+            }
         }
         private void SetPreviewSlider()
         {
