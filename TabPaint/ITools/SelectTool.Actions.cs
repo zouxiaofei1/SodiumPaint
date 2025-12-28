@@ -15,6 +15,52 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
+            public bool HasActiveSelection => _selectionData != null;
+
+            // 添加：执行删除选区的具体逻辑
+            public void DeleteSelection(ToolContext ctx)
+            {
+                if (_selectionData == null) return;
+
+                // 情况 A: 选区还在原位没动过 (只是画了个框就按 Delete)
+                // 此时需要把画布对应位置“抠掉”并记录 Undo
+                if (!_hasLifted)
+                {
+                    ctx.Undo.BeginStroke();
+
+                    // 重要：告诉 Undo 管理器哪个区域变了
+                    ctx.Undo.AddDirtyRect(_selectionRect);
+
+                    // 执行擦除
+                    ClearRect(ctx, _selectionRect, ctx.EraserColor);
+
+                    // 提交到 Undo 栈
+                    ctx.Undo.CommitStroke();
+                    ctx.IsDirty = true;
+                }
+                HidePreview(ctx);
+                if (ctx.SelectionOverlay != null)
+                {
+                    ctx.SelectionOverlay.Children.Clear();
+                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+                }
+
+                // 3. 彻底重置 SelectTool 状态
+                _selectionData = null;
+                _selectionRect = new Int32Rect(0, 0, 0, 0);
+                _originalRect = new Int32Rect(0, 0, 0, 0);
+                _hasLifted = false;
+                _transformStep = 0;
+                _draggingSelection = false;
+                _resizing = false;
+                Mouse.OverrideCursor = null;
+
+                // 4. 通知 UI 更新
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                mw.SetCropButtonState();
+                mw.SelectionSize = "0×0像素";
+                mw.SetUndoRedoButtonState();
+            }
 
             private void CopyToSystemClipboard(ToolContext ctx)
             { 
@@ -648,7 +694,7 @@ namespace TabPaint
                     switch (e.Key)
                     {
                         case Key.Delete:
-                            CutSelection(ctx, false);
+                            DeleteSelection(ctx);
                             e.Handled = true;
                             break;
                     }

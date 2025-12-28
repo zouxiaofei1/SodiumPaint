@@ -124,8 +124,6 @@ namespace TabPaint
             }
             finally
             {
-                // 3. 【关键】无论成功失败，最后必须把锁解开
-                // 此时 UI 线程已经空闲，可以安全地更新布局
                 _isInitialLayoutComplete = true;
 
                 // 再次刷新滚动位置
@@ -160,11 +158,66 @@ namespace TabPaint
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
-       
 
 
-     
-     
+
+
+
+        private async Task OpenFilesAsNewTabs(string[] files)
+        {
+            if (files == null || files.Length == 0) return;
+
+            // 1. 确定插入位置
+            int insertIndex = _imageFiles.Count;
+            int uiInsertIndex = FileTabs.Count;
+
+            if (_currentTabItem != null && !_currentTabItem.IsNew)
+            {
+                int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                if (currentIndexInFiles >= 0) insertIndex = currentIndexInFiles + 1;
+
+                int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
+                if (currentIndexInTabs >= 0) uiInsertIndex = currentIndexInTabs + 1;
+            }
+
+            FileTabItem firstNewTab = null;
+            int addedCount = 0;
+
+            foreach (string file in files)
+            {
+                if (IsImageFile(file))
+                {
+                    if (_imageFiles.Contains(file)) continue; // 去重
+
+                    _imageFiles.Insert(insertIndex + addedCount, file);
+                    var newTab = new FileTabItem(file) { IsLoading = true };
+
+                    if (uiInsertIndex + addedCount <= FileTabs.Count)
+                        FileTabs.Insert(uiInsertIndex + addedCount, newTab);
+                    else
+                        FileTabs.Add(newTab);
+
+                    _ = newTab.LoadThumbnailAsync(100, 60);
+                    if (firstNewTab == null) firstNewTab = newTab;
+                    addedCount++;
+                }
+            }
+
+            if (addedCount > 0)
+            {
+                ImageFilesCount = _imageFiles.Count;
+                SetPreviewSlider();
+
+                if (firstNewTab != null)
+                {
+                    if (_currentTabItem != null) _currentTabItem.IsSelected = false;
+                    firstNewTab.IsSelected = true;
+                    _currentTabItem = firstNewTab;
+                    await OpenImageAndTabs(firstNewTab.FilePath);
+                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1);
+                }
+            }
+        }
 
 
         private void FitToWindow(double addscale = 1)
@@ -182,7 +235,7 @@ namespace TabPaint
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
-                zoomscale = fitScale * addscale;
+                zoomscale = fitScale * addscale*0.98;
                 // s(fitScale);
 
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
@@ -574,6 +627,8 @@ namespace TabPaint
         {
             DragOverlay.Visibility = Visibility.Collapsed;
         }
+
+
     }
 
 }

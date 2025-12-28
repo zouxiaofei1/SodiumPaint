@@ -113,94 +113,15 @@ namespace TabPaint
         // 2. 拖拽放下处理：核心逻辑
         private async void OnImageBarDrop(object sender, System.Windows.DragEventArgs e)
         {
-            HideDragOverlay(); // 隐藏遮罩
-            if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) return;
-
-            string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
-            if (files == null || files.Length == 0) return;
-
-            // 1. 确定插入位置
-            int insertIndex = _imageFiles.Count; // 默认插到最后
-            int uiInsertIndex = FileTabs.Count;
-
-            // 如果当前有选中的 Tab，且不是新建的空文件，则插在它后面
-            if (_currentTabItem != null && !_currentTabItem.IsNew)
+            HideDragOverlay();
+            if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
             {
-                int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
-                if (currentIndexInFiles >= 0)
-                {
-                    insertIndex = currentIndexInFiles + 1;
-                }
-
-                int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
-                if (currentIndexInTabs >= 0)
-                {
-                    uiInsertIndex = currentIndexInTabs + 1;
-                }
-            }
-
-            FileTabItem firstNewTab = null;
-            int addedCount = 0;
-
-            foreach (string file in files)
-            {
-                if (IsImageFile(file))
-                {
-                    // 去重检查（可选，如果允许重复打开则去掉这行）
-                    if (_imageFiles.Contains(file)) continue;
-
-                    // 2. 插入到底层数据源 _imageFiles
-                    // 注意：每次插入后，insertIndex 要递增，保证多张图片按顺序排在后面
-                    _imageFiles.Insert(insertIndex + addedCount, file);
-
-                    // 3. 插入到 UI 列表 FileTabs
-                    var newTab = new FileTabItem(file);
-                    newTab.IsLoading = true;
-
-                    // 安全检查：防止 uiIndex 越界（虽然逻辑上不太可能）
-                    if (uiInsertIndex + addedCount <= FileTabs.Count)
-                    {
-                        FileTabs.Insert(uiInsertIndex + addedCount, newTab);
-                    }
-                    else
-                    {
-                        FileTabs.Add(newTab);
-                    }
-
-                    // 异步加载缩略图
-                    _ = newTab.LoadThumbnailAsync(100, 60);
-
-                    // 记录第一张新图，用于稍后跳转
-                    if (firstNewTab == null) firstNewTab = newTab;
-
-                    addedCount++;
-                }
-            }
-
-            if (addedCount > 0)
-            {
-                // 更新 Slider 范围
-                ImageFilesCount = _imageFiles.Count;
-                SetPreviewSlider();
-
-                // 4. 自动切换到第一张新加入的图片
-                if (firstNewTab != null)
-                {
-                    // 取消当前选中状态
-                    if (_currentTabItem != null) _currentTabItem.IsSelected = false;
-
-                    // 选中新图
-                    firstNewTab.IsSelected = true;
-                    _currentTabItem = firstNewTab;
-
-                    await OpenImageAndTabs(firstNewTab.FilePath);
-
-                    // 确保新加的图片在视野内
-                    FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + 1); // 微调触发 Layout 更新
-                                                                                                      // 如果需要精确滚动到新元素，可能需要计算 Offset，或者依赖之后的 Layout 刷新
-                }
+                string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+                await OpenFilesAsNewTabs(files);
+                e.Handled = true;
             }
         }
+
 
         private void OnSaveAllClick(object sender, RoutedEventArgs e)
         {
@@ -267,6 +188,7 @@ namespace TabPaint
                     _ = OpenImageAndTabs(newTab.FilePath);
                 }
             }
+            UpdateImageBarSliderState();
         }
 
         private void OnNewTabClick(object sender, RoutedEventArgs e)
@@ -400,6 +322,7 @@ namespace TabPaint
 
             // 强制 GC
             GC.Collect();
+            UpdateImageBarSliderState();
         }
         private void OnTabOpenFolderClick(object sender, RoutedEventArgs e)
         {
@@ -693,6 +616,7 @@ namespace TabPaint
                 // 刷新底部 Slider 数量
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
+                UpdateImageBarSliderState();
             }
         }
 

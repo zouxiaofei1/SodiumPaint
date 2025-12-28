@@ -103,6 +103,7 @@ namespace TabPaint
                     }
 
                     if (!inserted) FileTabs.Add(newTab);
+                    UpdateImageBarSliderState();
                 }
             }
         }
@@ -194,7 +195,7 @@ namespace TabPaint
 
         private async void CloseTab(FileTabItem item)
         {
-            // 1. 脏检查（保持不变）
+            // 1. 脏检查
             if (item.IsDirty)
             {
                 var result = System.Windows.MessageBox.Show(
@@ -206,70 +207,49 @@ namespace TabPaint
                 if (result == MessageBoxResult.Yes) SaveSingleTab(item);
             }
 
-            // 记录下要删除的路径和当前的选中状态
+            // 记录状态
             string pathToRemove = item.FilePath;
             int removedUiIndex = FileTabs.IndexOf(item);
             bool wasSelected = item.IsSelected;
 
-            // 2. 从 UI 列表移除 Tab
+            // 2. 从 UI 和数据源移除
             FileTabs.Remove(item);
-
-            // 3. 【核心修改】从后台数据源列表中彻底移除该文件
-            // 这样下次滚动或者计算 Index 时，这张图就不存在了
             if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))
             {
                 _imageFiles.Remove(pathToRemove);
             }
 
-            // 4. 同步底部的 Slider 范围（因为总数变少了）
-            if (PreviewSlider != null)
-            {
-                // 重新设置最大值，防止 Slider 滑块位置越界
-                PreviewSlider.Maximum = Math.Max(0, _imageFiles.Count - 1);
-            }
-
-            // 清理临时文件（保持不变）
+            // 3. 基本清理
             if (!string.IsNullOrEmpty(item.BackupPath) && File.Exists(item.BackupPath))
             {
                 try { File.Delete(item.BackupPath); } catch { }
             }
+
+            // 4. 如果没有 Tab 了，重置画布
             if (FileTabs.Count == 0)
             {
                 _imageFiles.Clear();
                 ResetToNewCanvas();
+                UpdateImageBarSliderState(); // 刷新显隐
                 return;
             }
 
+            // 5. 处理选中项切换
             if (wasSelected)
             {
-                int newIndex = removedUiIndex - 1;
-                if (newIndex < 0) newIndex = 0;
-                // 防止越界（虽然前面判空了）
-                if (newIndex >= FileTabs.Count) newIndex = FileTabs.Count - 1;
-
+                int newIndex = Math.Max(0, Math.Min(removedUiIndex - 1, FileTabs.Count - 1));
                 var newTab = FileTabs[newIndex];
-                foreach (var tab in FileTabs) tab.IsSelected = false;
+
+                foreach (var t in FileTabs) t.IsSelected = false;
                 newTab.IsSelected = true;
                 _currentTabItem = newTab;
 
                 if (!string.IsNullOrEmpty(newTab.FilePath))
-                {
                     _currentImageIndex = _imageFiles.IndexOf(newTab.FilePath);
-                }
                 else
-                {
                     _currentImageIndex = -1;
-                }
 
-                // 同步 Slider 的当前值
-                if (PreviewSlider != null && _currentImageIndex >= 0)
-                {
-                    _isUpdatingUiFromScroll = true; // 上锁
-                    PreviewSlider.Value = _currentImageIndex;
-                    _isUpdatingUiFromScroll = false;
-                }
-
-                // 加载新 Tab 内容
+                // 加载新内容
                 if (newTab.IsNew)
                 {
                     if (!string.IsNullOrEmpty(newTab.BackupPath) && File.Exists(newTab.BackupPath))
@@ -289,23 +269,21 @@ namespace TabPaint
             }
             else
             {
+                // 即使没删选中项，也要更新当前选中项在总表里的索引
                 if (_currentTabItem != null && !string.IsNullOrEmpty(_currentTabItem.FilePath))
                 {
                     _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
-
-                    // 同步 Slider
-                    if (PreviewSlider != null && _currentImageIndex >= 0)
-                    {
-                        _isUpdatingUiFromScroll = true;
-                        PreviewSlider.Value = _currentImageIndex;
-                        _isUpdatingUiFromScroll = false;
-                    }
                 }
             }
 
-            // 7. 最后统一刷新标题栏 (显示如 1/4)
+            // 6. 【核心修复】同步 Slider 状态
+            // 此方法内部会处理 PreviewSlider.Maximum 和 Visibility
+            UpdateImageBarSliderState();
+
+            // 7. 更新标题
             UpdateWindowTitle();
         }
+
 
 
 

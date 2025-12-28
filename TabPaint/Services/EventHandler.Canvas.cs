@@ -19,26 +19,56 @@ namespace TabPaint
     {
         private void OnCanvasDragOver(object sender, System.Windows.DragEventArgs e)
         {
+            // 1. 内部拖拽逻辑拦截
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 e.Effects = System.Windows.DragDropEffects.None;
                 e.Handled = true;
                 return;
             }
+
+            // 2. 文件拖入检查
             if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
             {
-                e.Effects = System.Windows.DragDropEffects.Copy;
-                ShowDragOverlay("插入图片", "在当前画布中插入图片");
-                e.Handled = true;
+                string[] allFiles = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
+
+                // 过滤出有效的图片文件路径
+                var imageFiles = allFiles?.Where(f => IsImageFile(f)).ToArray();
+
+                if (imageFiles != null && imageFiles.Length > 0)
+                {
+                    e.Effects = System.Windows.DragDropEffects.Copy;
+
+                    // 根据过滤后的有效图片数量显示不同的提示
+                    if (imageFiles.Length > 1)
+                    {
+                        ShowDragOverlay("打开图片", $"作为 {imageFiles.Length} 个新标签页打开");
+                    }
+                    else
+                    {
+                        ShowDragOverlay("插入图片", "在当前画布中插入图片");
+                    }
+                }
+                else
+                {
+                    // 如果一个图片文件都没有，不允许放下
+                    e.Effects = System.Windows.DragDropEffects.None;
+                    HideDragOverlay(); // 必须调用，防止从有效区移到无效区时遮罩残留
+                }
             }
             else
             {
                 e.Effects = System.Windows.DragDropEffects.None;
+                HideDragOverlay();
             }
+
+            e.Handled = true;
         }
 
 
-        private void OnCanvasDrop(object sender, System.Windows.DragEventArgs e)
+
+
+        private async void OnCanvasDrop(object sender, System.Windows.DragEventArgs e)
         {
             HideDragOverlay();
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
@@ -52,31 +82,42 @@ namespace TabPaint
                 string[] files = (string[])e.Data.GetData(System.Windows.DataFormats.FileDrop);
                 if (files != null && files.Length > 0)
                 {
-                    string filePath = files[0];
-                    try
+                    // --- 核心修改：逻辑分流 ---
+                    if (files.Length > 1)
                     {
-                        BitmapImage bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(filePath);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze(); // 建议加上 Freeze
-
-                        _router.SetTool(_tools.Select);
-
-                        if (_tools.Select is SelectTool st)
+                        // 如果是多文件，走新建标签页逻辑
+                        await OpenFilesAsNewTabs(files);
+                    }
+                    else
+                    {
+                        // 如果是单文件，走原有的“插入当前画布”逻辑
+                        string filePath = files[0];
+                        try
                         {
-                            st.InsertImageAsSelection(_ctx, bitmap);
+                            BitmapImage bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.UriSource = new Uri(filePath);
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            bitmap.Freeze(); // 保持你的建议，加上 Freeze
+
+                            _router.SetTool(_tools.Select);
+
+                            if (_tools.Select is SelectTool st)
+                            {
+                                st.InsertImageAsSelection(_ctx, bitmap);
+                            }
                         }
-                        e.Handled = true;
+                        catch (Exception ex)
+                        {
+                            System.Windows.MessageBox.Show("无法识别的图片格式: " + ex.Message);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show("无法识别的图片格式: " + ex.Message);
-                    }
+                    e.Handled = true;
                 }
             }
         }
+
 
         private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -138,9 +179,6 @@ namespace TabPaint
                     // 执行提交
                     selTool.CommitSelection(this._ctx);
                     selTool.CleanUp(this._ctx);
-
-                    // 如果不希望 Canvas 接收这次点击（例如防止开始一次新的拖拽），可以拦截
-                    // e.Handled = true; 
                 }
             }
         }

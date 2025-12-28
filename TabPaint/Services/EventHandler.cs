@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -20,12 +21,12 @@ namespace TabPaint
     {
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-           
+
             if (e.Key == Key.V &&
                 (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
                 (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
-              
+
                 PasteClipboardAsNewTab();
                 e.Handled = true;
                 return; // 处理完毕，直接返回
@@ -93,10 +94,56 @@ namespace TabPaint
                         ShowNextImage();
                         e.Handled = true;
                         break;
+                    case Key.Delete:
+                        if (_tools.Select is SelectTool st && st.HasActiveSelection)
+                        {
+                            st.DeleteSelection(_ctx);
+                        }
+                        else
+                        {
+                            // 否则，执行你考虑加入的“删除物理文件”功能
+                            HandleDeleteFileAction();
+                        }
+                        break;
                 }
             }
         }
+        private void HandleDeleteFileAction()
+        {
+            // 2. 处理物理文件删除
+            var currentTab = FileTabs?.FirstOrDefault(t => t.IsSelected);
+            if (currentTab == null || string.IsNullOrEmpty(currentTab.FilePath)) return;
 
+            // 检查文件是否存在（防止 0.7.2 中的 Undo null 异常或路径错误）
+            if (!System.IO.File.Exists(currentTab.FilePath)) return;
+
+            var result = System.Windows.MessageBox.Show(
+                $"确定要将图片移至回收站吗？\n{currentTab.FileName}",
+                "删除文件",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                string pathToDelete = currentTab.FilePath;
+
+                try
+                {
+                    CloseTab(currentTab);
+
+                    // 5. 调用系统接口移至回收站
+                    // 这样用户万一删错了还能在回收站找回来，比 File.Delete 安全得多
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
+                        pathToDelete,
+                        UIOption.OnlyErrorDialogs,
+                        RecycleOption.SendToRecycleBin);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"删除失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
         private void EmptyClick(object sender, RoutedEventArgs e)
         {
             RotateFlipMenuToggle.IsChecked = false;
@@ -105,7 +152,7 @@ namespace TabPaint
 
         private void InitializeClipboardMonitor()
         {
-           // s();
+            // s();
             var helper = new WindowInteropHelper(this);
             if (helper.Handle != IntPtr.Zero)
             {
@@ -179,7 +226,7 @@ namespace TabPaint
         {
             if (msg == WM_CLIPBOARDUPDATE)
             {
-                if (_isMonitoringClipboard )
+                if (_isMonitoringClipboard)
                 {
                     OnClipboardContentChanged();
                 }
@@ -248,7 +295,7 @@ namespace TabPaint
                 if (System.Windows.Clipboard.ContainsFileDropList())
                 {
                     var files = System.Windows.Clipboard.GetFileDropList();
-                    foreach (var file in files)if (IsImageFile(file)) filesToLoad.Add(file);
+                    foreach (var file in files) if (IsImageFile(file)) filesToLoad.Add(file);
                 }
                 // 情况 B: 剪切板是位图数据 (截图)
                 else if (System.Windows.Clipboard.ContainsImage())
@@ -285,7 +332,7 @@ namespace TabPaint
             return false;
         }
 
-       
+
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
             if (WindowState == WindowState.Maximized)
@@ -322,6 +369,10 @@ namespace TabPaint
                 }
                 e.Handled = true; // 阻止回车产生额外的换行或响铃
             }
+        }
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+           // UpdateImageBarSliderState();
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
