@@ -22,7 +22,9 @@ namespace TabPaint
         private void OnSettingsClick(object sender, RoutedEventArgs e)
         {
             // 打开设置窗口
+            
             var settingsWindow = new SettingsWindow();
+            settingsWindow.ProgramVersion = this.ProgramVersion;
             settingsWindow.Owner = this; // 设置主窗口为父窗口，实现模态
             settingsWindow.ShowDialog();
         }

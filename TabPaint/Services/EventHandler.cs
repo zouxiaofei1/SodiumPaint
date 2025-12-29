@@ -155,7 +155,7 @@ namespace TabPaint
 
         private void InitializeClipboardMonitor()
         {
-            // s();
+          
             var helper = new WindowInteropHelper(this);
             if (helper.Handle != IntPtr.Zero)
             {
@@ -224,13 +224,48 @@ namespace TabPaint
                 }
             }
         }
+        // 在类成员变量区域添加
+
+        // 在构造函数 MainWindow() 中调用此方法，或者直接把代码放进去
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern uint GetClipboardSequenceNumber();
+
+        // 状态变量
+        private uint _lastClipboardSequenceNumber = 0;
+        private DateTime _lastClipboardActionTime = DateTime.MinValue;
+        private const int CLIPBOARD_COOLDOWN_MS = 1000; 
+        // 计时器触发事件：真正的执行逻辑
+
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == WM_CLIPBOARDUPDATE)
             {
-                if (_isMonitoringClipboard)
+                if (SettingsManager.Instance.Current.EnableClipboardMonitor)
                 {
+                    // 1. 获取当前剪切板的系统序列号
+                    uint currentSeq = GetClipboardSequenceNumber();
+
+                    // 2. 检查是否完全重复的消息 (序列号没变 = 剪切板内容没变，纯粹是系统发神经)
+                    if (currentSeq == _lastClipboardSequenceNumber)
+                    {
+                        // 忽略
+                        return IntPtr.Zero;
+                    }
+
+                    var timeSinceLast = (DateTime.Now - _lastClipboardActionTime).TotalMilliseconds;
+                    if (timeSinceLast < CLIPBOARD_COOLDOWN_MS)
+                    {
+                       
+                        // 虽然跳过逻辑，但要更新序列号，以免冷却结束后把旧消息当新消息
+                        _lastClipboardSequenceNumber = currentSeq;
+                        return IntPtr.Zero;
+                    }
+
+                    // 4. 通过所有检查，记录状态并执行
+                    _lastClipboardSequenceNumber = currentSeq;
+                    _lastClipboardActionTime = DateTime.Now;
                     OnClipboardContentChanged();
                 }
             }
@@ -282,7 +317,6 @@ namespace TabPaint
             //if (ClipboardMonitorToggle.IsChecked == true)
             {
                 _isMonitoringClipboard = true;
-                // 开启时立即检查一次剪切板
                 OnClipboardContentChanged();
             }
         }
@@ -377,44 +411,83 @@ namespace TabPaint
         {
             UpdateImageBarSliderState();
         }
+        private void SetZoom(double targetScale, Point? center = null)
+        {
+            double oldScale = zoomscale;
+
+            // 1. 计算最小缩放比例限制 (原有逻辑: 自适应图片大小)
+            double minrate = 1.0;
+            if (_bitmap != null)
+            {
+                // 确保除数不为0
+                double maxDim = Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
+                if (maxDim > 0)
+                    minrate = 1500.0 / maxDim;
+            }
+
+            // 2. 限制缩放范围
+            double newScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
+
+            // 如果缩放比例没有变化（例如已经到了极限），直接返回，避免不必要的UI刷新
+            if (Math.Abs(newScale - oldScale) < 0.0001) return;
+
+            // 3. 确定缩放锚点（鼠标位置 或 视图中心）
+            Point anchorPoint;
+            if (center.HasValue)
+            {
+                anchorPoint = center.Value;
+            }
+            else
+            {
+                // 如果没有指定点（比如通过按钮缩放），则以当前 ScrollViewer 可视区域的中心为锚点
+                anchorPoint = new Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
+            }
+
+            // 4. 更新数据
+            zoomscale = newScale;
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
+            UpdateSliderBarValue(zoomscale);
+
+            // 5. 计算并应用滚动条偏移量 (维持锚点相对位置不变的平移公式)
+            double offsetX = ScrollContainer.HorizontalOffset;
+            double offsetY = ScrollContainer.VerticalOffset;
+
+            double newOffsetX = (offsetX + anchorPoint.X) * (newScale / oldScale) - anchorPoint.X;
+            double newOffsetY = (offsetY + anchorPoint.Y) * (newScale / oldScale) - anchorPoint.Y;
+
+            ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
+            ScrollContainer.ScrollToVerticalOffset(newOffsetY);
+
+            // 6. 刷新工具图层 (原有逻辑)
+            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+            _canvasResizer.UpdateUI();
+        }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
+            // 1. 处理 Shift + 滚轮 (水平滚动)
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
-                e.Handled = true; // 阻止默认垂直滚动
-                                  // 滚轮向上(Delta>0)向左滚，向下(Delta<0)向右滚
-                                  // 48 是常见的行高，你可以根据手感调整倍率
+                e.Handled = true;
                 double scrollAmount = e.Delta > 0 ? -48 : 48;
                 ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + scrollAmount);
                 return;
             }
+
+            // 2. 处理 Ctrl + 滚轮 (缩放)
             if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
-            //s(1);
-            e.Handled = false; // 阻止默认滚动
-            double oldScale = zoomscale;
-            double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes);
-            double minrate = 1;
-            if (_bitmap != null)
-                minrate = 1500 / Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
-            newScale = Math.Clamp(newScale, MinZoom* minrate, MaxZoom);
-            zoomscale = newScale;
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
 
+            e.Handled = true; // 阻止默认滚动行为，防止画面抖动
 
-            Point mouseInScroll = e.GetPosition(ScrollContainer);
+            // 计算目标倍率
+            double deltaFactor = e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes;
+            double targetScale = zoomscale * deltaFactor;
 
-            double offsetX = ScrollContainer.HorizontalOffset;
-            double offsetY = ScrollContainer.VerticalOffset;
-            UpdateSliderBarValue(zoomscale);
-            // 维持鼠标相对画布位置不变的平移公式
-            double newOffsetX = (offsetX + mouseInScroll.X) * (newScale / oldScale) - mouseInScroll.X;
-            double newOffsetY = (offsetY + mouseInScroll.Y) * (newScale / oldScale) - mouseInScroll.Y;
-            ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
-            ScrollContainer.ScrollToVerticalOffset(newOffsetY);
-            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            // 获取鼠标在 ScrollContainer 中的位置作为缩放中心
+            Point mousePos = e.GetPosition(ScrollContainer);
 
-            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-            _canvasResizer.UpdateUI();
+            // 调用抽象出的方法
+            SetZoom(targetScale, mousePos);
         }
     }
 }

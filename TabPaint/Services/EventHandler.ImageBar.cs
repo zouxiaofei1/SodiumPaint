@@ -38,7 +38,7 @@ namespace TabPaint
             {
                 IsNew = true,
                 IsDirty = false,
-                UntitledNumber = _nextUntitledIndex++,
+                UntitledNumber = GetNextAvailableUntitledNumber(),
                 Thumbnail = GenerateBlankThumbnail()
             };
             return newTab;
@@ -438,12 +438,14 @@ namespace TabPaint
                     }
                 }
             }
+           
             if (insertIndex == -1) insertIndex = _imageFiles.Count;
 
             bool hasHandled = false;
             IDataObject data = Clipboard.GetDataObject(); 
             if (data.GetDataPresent(DataFormats.FileDrop))
-            {
+            {//图片文件
+               
                 string[] files = (string[])data.GetData(DataFormats.FileDrop);
                 if (files != null && files.Length > 0)
                 {
@@ -465,16 +467,17 @@ namespace TabPaint
                 }
             }
             else if (data.GetDataPresent(DataFormats.Bitmap))
-            {
+            {//非文件图片
                 try
                 {
                     // 获取位图数据
                     BitmapSource source = Clipboard.GetImage();
+                    
                     if (source != null)
                     {
                         var newTab = CreateNewUntitledTab();
 
-                        string cacheFileName = $"{newTab.Id}.cache.png";
+                        string cacheFileName = $"{newTab.Id}.png";
                         string fullCachePath = System.IO.Path.Combine(_cacheDir, cacheFileName);
 
                         using (var fileStream = new FileStream(fullCachePath, FileMode.Create))
@@ -487,7 +490,7 @@ namespace TabPaint
                         // 3. 设置 Tab 属性
                         newTab.BackupPath = fullCachePath;
                         newTab.IsDirty = true; 
-                        UpdateTabThumbnail(fullCachePath); 
+                        UpdateTabThumbnailFromBitmap(newTab, source); 
                         FileTabs.Insert(uiInsertIndex, newTab);
                         MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 120);
 

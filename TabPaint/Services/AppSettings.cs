@@ -1,50 +1,142 @@
-﻿using System;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
-using System.Windows.Media;
+using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
-    // 定义配置的数据模型
-    public class AppSettings
+    public partial class MainWindow 
     {
+        private void SaveAppState()
+        {
+            var settings = TabPaint.SettingsManager.Instance.Current;
 
-        #region 未实装设置区域
-        // === 常规设置 ===
+            if (_router?.CurrentTool != null)
+            {
+                settings.LastToolName = _router.CurrentTool.GetType().Name;
+            }
+            if (_ctx != null)
+            {
+                settings.LastBrushStyle = _ctx.PenStyle;
+            }
+            TabPaint.SettingsManager.Instance.Save();
+        }
 
-        [JsonPropertyName("theme_mode")]
-        public string ThemeMode { get; set; } = "System"; // System, Light, Dark
+        /// <summary>
+        /// 2. 恢复上次的应用状态
+        /// </summary>
+        private void RestoreAppState()
+        {
+            try
+            { 
 
-        [JsonPropertyName("language")]
-        public string Language { get; set; } = "en-US";
+            var settings = TabPaint.SettingsManager.Instance.Current;
 
-        [JsonPropertyName("auto_check_updates")]
-        public bool AutoCheckUpdates { get; set; } = true;
+            // 1. 恢复笔刷大小
+            if (_ctx != null)
+            {
+                _ctx.PenThickness = settings.PenThickness;
+            }
 
-        // === 绘图行为 ===
+            // 2. 恢复工具和样式
+            ITool targetTool = null; // 默认
+            BrushStyle targetStyle = settings.LastBrushStyle;
 
-        [JsonPropertyName("default_brush_color")]
-        public string DefaultBrushColorHex { get; set; } = "#FF000000"; // 默认黑色
+            switch (settings.LastToolName)
+            {
+                case "EyedropperTool": targetTool = _tools.Eyedropper; break;
+                case "FillTool": targetTool = _tools.Fill; break;
+                case "SelectTool": targetTool = _tools.Select; break;
+                case "TextTool": targetTool = _tools.Text; break;
+                case "ShapeTool": targetTool = _tools.Shape; break;
+                case "PenTool":
+                default:
+                    targetTool = _tools.Pen;
+                    break;
+            }
 
-        [JsonPropertyName("default_brush_size")]
-        public double DefaultBrushSize { get; set; } = 5.0;
+            if (_ctx != null)
+            {
+                _ctx.PenStyle = targetStyle;
+            }
 
-        [JsonPropertyName("enable_autosave")]
-        public bool EnableAutoSave { get; set; } = true;
+            // 3. 应用工具切换
+            // 注意：这里需要确保界面元素(MainToolBar)已经加载完毕，否则高亮更新可能会空引用
+            Dispatcher.InvokeAsync(() =>
+            {
+                _router.SetTool(targetTool);
 
-        [JsonPropertyName("autosave_interval_seconds")]
-        public int AutoSaveIntervalSeconds { get; set; } = 3; // 对应待办事项16
+            }, System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+            finally
+            {
 
-        // === 界面/UX ===
+            }
+        }
+    }
+    public class AppSettings : INotifyPropertyChanged
+    {
+        private double _penThickness = 5.0; // 默认值
 
-        [JsonPropertyName("show_transparent_grid")]
-        public bool ShowTransparentGrid { get; set; } = true; // 灰白格子
+        [JsonPropertyName("pen_thickness")]
+        public double PenThickness
+        {
+            get => _penThickness;
+            set
+            {
+                // 如果值没变，什么都不做
+                if (Math.Abs(_penThickness - value) < 0.01) return;
 
-        [JsonPropertyName("remember_clipboard_monitor")]
-        public bool RememberClipboardMonitor { get; set; } = false; // 对应待办事项20
+                _penThickness = value;
+                OnPropertyChanged();
+            }
+        }
 
-        // === 快捷键 (预留) ===
-        // 后续可以用 Dictionary<string, Key> 来存储
-        #endregion
+        // 在 AppSettings 类中添加
+        private bool _isFixedZoom = false;
+
+        [JsonPropertyName("is_fixed_zoom")]
+        public bool IsFixedZoom
+        {
+            get => _isFixedZoom;
+            set
+            {
+                if (_isFixedZoom != value)
+                {
+                    _isFixedZoom = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        [JsonPropertyName("enable_clipboard_monitor")]
+        public bool EnableClipboardMonitor
+        {
+            get => _enableClipboardMonitor;
+            set
+            {
+                if (_enableClipboardMonitor != value)
+                {
+                    _enableClipboardMonitor = value;
+                    OnPropertyChanged();
+                    //SettingsManager.Instance.Save(); // 自动保存
+                }
+            }
+        }
+        private bool _enableClipboardMonitor = false; // 默认关闭
+
+
+
+        [JsonPropertyName("last_tool_name")]
+        public string LastToolName { get; set; } = "PenTool"; // 默认为笔
+
+        [JsonPropertyName("last_brush_style")]
+        public BrushStyle LastBrushStyle { get; set; } = BrushStyle.Pencil; // 默认为铅笔
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
     }
 }

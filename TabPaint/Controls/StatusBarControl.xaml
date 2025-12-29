@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			xmlns:app="clr-namespace:TabPaint"
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="30" d:DesignWidth="1000">
@@ -56,18 +57,24 @@
         <StatusBarItem HorizontalAlignment="Right">
             <StackPanel Orientation="Horizontal">
                 <!-- 剪切板监听开关 -->
-                <ToggleButton HorizontalAlignment="Right" x:Name="ClipboardMonitorToggle" 
-                              Width="24" Height="24" 
-                              Margin="2,0" Padding="0"
-                              ToolTip="监听剪切板 (自动粘贴新图片)"
-                              Style="{StaticResource RoundedMenuToggleButtonStyle}"
-                              Click="OnClipboardMonitorToggleClick">
-                    <Grid>
-                        <Image Source="{StaticResource ClipBoard_Image}" Width="16" Height="16" Opacity="0.8"/>
-                    </Grid>
-                </ToggleButton>
+				<!-- 剪切板监听开关 -->
+				<ToggleButton x:Name="ClipboardMonitorToggle"
+							  Width="24" Height="24"
+							  Margin="2,0" Padding="0"
+							  ToolTip="监听剪切板 (自动粘贴新图片)"
+							  Style="{StaticResource RoundedMenuToggleButtonStyle}"
+              
+							  DataContext="{Binding Source={x:Static app:SettingsManager.Instance}, Path=Current}"
+							  IsChecked="{Binding EnableClipboardMonitor, Mode=TwoWay}"
+              
+							  Click="OnClipboardMonitorToggleClick">
+					<Grid>
+						<Image Source="{StaticResource ClipBoard_Image}" Width="16" Height="16" Opacity="0.8"/>
+					</Grid>
+				</ToggleButton>
 
-                <!-- 信息按钮 -->
+
+				<!-- 信息按钮 -->
                 <Button Width="24" Height="24" 
                         Style="{StaticResource RoundedMenuButtonStyle}" 
                         Padding="2,0" 

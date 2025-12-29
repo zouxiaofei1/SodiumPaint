@@ -110,7 +110,7 @@ namespace TabPaint
         {
             if (_currentTabItem == null)
             {
-                this.Title = $"TabPaint {_programVersion}";
+                this.Title = $"TabPaint {ProgramVersion}";
                 if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = this.Title;
                 return;
             }
@@ -142,7 +142,7 @@ namespace TabPaint
             }
 
             // 4. 拼接标题
-            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint {_programVersion}";
+            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint {ProgramVersion}";
 
             // 5. 更新 UI
             this.Title = newTitle;
@@ -204,12 +204,8 @@ namespace TabPaint
         {
             base.OnSourceInitialized(e); // 必须调用基类方法
 
-            a.s("OnSourceInitialized 执行了！");
-
-            // 1. 初始化剪切板监听
             InitializeClipboardMonitor();
 
-            // 2. 设置透明背景（Mica/Acrylic 必须）
             var src = (HwndSource)PresentationSource.FromVisual(this);
             if (src != null)
             {
@@ -373,6 +369,7 @@ namespace TabPaint
             MyStatusBar.ZoomSliderControl.Value = newScale;
             ZoomLevel = newScale.ToString("P0");
             MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
+            SetZoom(newScale);
         }
     }
 }

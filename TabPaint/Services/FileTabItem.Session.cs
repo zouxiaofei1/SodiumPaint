@@ -202,7 +202,6 @@ namespace TabPaint
             _currentFileName = "未命名";
             UpdateWindowTitle();
 
-            _nextUntitledIndex = 1;
             var newTab = CreateNewUntitledTab();
             newTab.IsSelected = true; // 设为选中态
             FileTabs.Add(newTab);
@@ -232,7 +231,7 @@ namespace TabPaint
             tab.Thumbnail = newThumb;
         }
         private void UpdateTabThumbnail(FileTabItem tabItem)
-        {
+        {//用当前canvas更新tabitem的thumbail
             if (tabItem == null || BackgroundImage.ActualWidth <= 0) return;
 
             try
@@ -250,6 +249,33 @@ namespace TabPaint
 
                 var scaleTransform = new ScaleTransform(scale, scale);
                 var transformedBitmap = new TransformedBitmap(rtb, scaleTransform);
+                transformedBitmap.Freeze();
+
+                // 3. 立即更新 UI (ViewModel)
+                tabItem.Thumbnail = transformedBitmap;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Thumbnail update failed: {ex.Message}");
+            }
+        }
+        private void UpdateTabThumbnailFromBitmap(FileTabItem tabItem,BitmapSource bitmap)
+        {//用当前canvas更新tabitem的thumbail
+            if (tabItem == null || BackgroundImage.ActualWidth <= 0) return;
+
+            try
+            {
+                RenderTargetBitmap rtb = new RenderTargetBitmap(
+                    (int)bitmap.PixelWidth,
+                    (int)bitmap.PixelHeight,
+                    96d, 96d, PixelFormats.Pbgra32);
+
+     
+                double scale = 60.0 / rtb.PixelHeight;
+                if (scale > 1) scale = 1; // 不放大
+
+                var scaleTransform = new ScaleTransform(scale, scale);
+                var transformedBitmap = new TransformedBitmap(bitmap, scaleTransform);
                 transformedBitmap.Freeze();
 
                 // 3. 立即更新 UI (ViewModel)
@@ -305,6 +331,7 @@ namespace TabPaint
         protected async void OnClosing()
         {
             this.Hide();
+            SaveAppState();
             // 立即保存当前的
             if (_currentTabItem != null && _currentTabItem.IsDirty)
             {
@@ -819,7 +846,7 @@ namespace TabPaint
         private string GenerateVirtualPath()
         {
             // 格式： ::TABPAINT_NEW::{ID}
-            return $"{VirtualFilePrefix}{_nextUntitledIndex++}";
+            return $"{VirtualFilePrefix}{GetNextAvailableUntitledNumber()}";
         }
     }
 }

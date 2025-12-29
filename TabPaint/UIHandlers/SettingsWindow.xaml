@@ -147,7 +147,7 @@
         <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="#F3F3F3" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0">
             <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="24,0">
                 <!-- 左下角版本号 -->
-                <TextBlock DockPanel.Dock="Left" Text="TabPaint v0.7.1 alpha" Foreground="#888888" VerticalAlignment="Center" FontSize="12"/>
+                <TextBlock DockPanel.Dock="Left"  Text="{Binding ProgramVersion}"  Foreground="#888888" VerticalAlignment="Center" FontSize="12"/>
 
                 <!-- 右下角确定按钮，应用了新的 Win11 样式 -->
                 <Button DockPanel.Dock="Right" 

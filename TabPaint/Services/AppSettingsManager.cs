@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
-using System.Diagnostics;
+using System.Windows.Threading;
+using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
@@ -104,5 +106,9 @@ namespace TabPaint
                 Debug.WriteLine($"[Settings] Save failed: {ex.Message}");
             }
         }
+
+       
+        
+
     }
 }

@@ -203,7 +203,7 @@ namespace TabPaint
         public int ImageFilesCount;
         private bool _isInitialLayoutComplete = false;
         // 这里的 1 表示下一个新建文件的编号
-        private int _nextUntitledIndex = 1;
+        
         // 存储当前会话中被用户手动关闭的图片路径，防止自动滚动时诈尸
         private HashSet<string> _explicitlyClosedFiles = new HashSet<string>();
         private long _currentCanvasVersion = 0;

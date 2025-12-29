@@ -1,25 +1,16 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.ObjectModel;
+﻿
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
-using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 //
-//TabPaint主程序
+//图片加载队列机制
 //
 
 namespace TabPaint
@@ -97,11 +88,6 @@ namespace TabPaint
                     CheckDirtyState();
                 }
 
-                // [适配] 如果是纯新建文件，加载后应该是 Clean 状态，但要确保 UI 状态正确
-                if (IsVirtualPath(filePath) && !isFileLoadedFromCache)
-                {
-                    // 纯白纸状态，无需做 Dirty 检查
-                }
             }
             finally
             {
@@ -110,10 +96,6 @@ namespace TabPaint
                 OnPropertyChanged("IsLoadingImage");
             }
         }
-
-
-
-
         public void RequestImageLoad(string filePath)
         {
             lock (_queueLock)
@@ -143,15 +125,10 @@ namespace TabPaint
                     // 1. 检查是否还有待办事项
                     if (_pendingFilePath == null)
                     {
-                        // 如果没有了，说明工作完成，工人可以下班了
                         _isProcessingQueue = false;
                         break; // 退出循环
                     }
-
-                    // 2. 获取当前最新的待办事项
                     filePathToLoad = _pendingFilePath;
-
-                    // 3. 清空待办事项，表示我们已经接手了这个任务
                     _pendingFilePath = null;
                 }
                 await LoadAndDisplayImageInternalAsync(filePathToLoad);
@@ -159,8 +136,6 @@ namespace TabPaint
             }
             finally
             {
-                // [新增] 只有当循环结束（队列空了）或者发生异常退出时，才取消加载状态
-                // 这样可以防止连续加载时的状态闪烁
                 _isLoadingImage = false;
                 OnPropertyChanged("IsLoadingImage");
             }
@@ -300,123 +275,7 @@ namespace TabPaint
                 return (decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
             });
         }
-        private Task<string> GetImageMetadataInfoAsync(byte[] imageBytes, string filePath, BitmapImage bitmap)
-        {
-            return Task.Run(() =>
-            {
-                try
-                {
-                    StringBuilder sb = new StringBuilder();
-                    // 1. 文件与画布信息 (始终显示)
-                    sb.AppendLine("[文件信息]");
-                    sb.AppendLine($"路径: {filePath}");
-                    sb.AppendLine($"大小: {(imageBytes.Length / 1024.0 / 1024.0):F2} MB");
-                    sb.AppendLine();
-                    sb.AppendLine("[画布信息]");
-                    sb.AppendLine($"尺寸: {bitmap.PixelWidth} × {bitmap.PixelHeight} px");
-                    sb.AppendLine($"DPI: {bitmap.DpiX:F0} × {bitmap.DpiY:F0}");
-                    sb.AppendLine($"格式: {bitmap.Format}");
 
-                    // 2. 尝试读取 EXIF 元数据
-                    using var ms = new MemoryStream(imageBytes);
-                    var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                    var metadata = decoder.Frames[0].Metadata as BitmapMetadata;
-
-                    if (metadata != null)
-                    {
-                        StringBuilder exifSb = new StringBuilder();
-
-                        // 拍摄设备
-                        string device = "";
-                        if (!string.IsNullOrEmpty(metadata.CameraManufacturer)) device += metadata.CameraManufacturer + " ";
-                        if (!string.IsNullOrEmpty(metadata.CameraModel)) device += metadata.CameraModel;
-                        if (!string.IsNullOrEmpty(device)) exifSb.AppendLine($"设备: {device.Trim()}");
-
-                        // 核心摄影参数 (使用 GetQuery)
-                        // 曝光时间 (1/100s)
-                        var expTime = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33434}");
-                        if (expTime != null) exifSb.AppendLine($"曝光时间: {expTime}s");
-
-                        // 光圈值 (f/2.8)
-                        var fNumber = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33437}");
-                        if (fNumber != null) exifSb.AppendLine($"光圈值: f/{Convert.ToDouble(fNumber):F1}");
-
-                        // ISO 速度
-                        var iso = TryGetQuery(metadata, "/app1/ifd/exif/{uint=34855}");
-                        if (iso != null) exifSb.AppendLine($"ISO速度: ISO-{iso}");
-
-                        // 曝光补偿 (EV)
-                        var ev = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37380}");
-                        if (ev != null) exifSb.AppendLine($"曝光补偿: {ev} step");
-
-                        // 焦距 (mm)
-                        var focal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37386}");
-                        if (focal != null) exifSb.AppendLine($"焦距: {focal}mm");
-
-                        // 35mm等效焦距
-                        var focal35 = TryGetQuery(metadata, "/app1/ifd/exif/{uint=41989}");
-                        if (focal35 != null) exifSb.AppendLine($"35mm焦距: {focal35}mm");
-
-                        // 测光模式
-                        var meter = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37383}");
-                        if (meter != null) exifSb.AppendLine($"测光模式: {MapMeteringMode(meter)}");
-
-                        // 闪光灯
-                        var flash = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37385}");
-                        if (flash != null) exifSb.AppendLine($"闪光灯: {((Convert.ToInt32(flash) & 1) == 1 ? "开启" : "关闭")}");
-
-                        // 软件/后期
-                        if (!string.IsNullOrEmpty(metadata.ApplicationName)) exifSb.AppendLine($"处理软件: {metadata.ApplicationName}");
-                        if (!string.IsNullOrEmpty(metadata.DateTaken)) exifSb.AppendLine($"拍摄日期: {metadata.DateTaken}");
-
-                        // 镜头型号 (部分现代相机支持)
-                        var lens = TryGetQuery(metadata, "/app1/ifd/exif/{uint=42036}");
-                        if (lens != null) exifSb.AppendLine($"镜头: {lens}");
-
-                        // --- 只有当 exifSb 里面有内容时，才添加标题并合并 ---
-                        if (exifSb.Length > 0)
-                        {
-                            sb.AppendLine();
-                            sb.AppendLine("[照片元数据]");
-                            sb.Append(exifSb.ToString());
-                        }
-                    }
-                    return sb.ToString().TrimEnd();
-                }
-                catch (Exception ex)
-                {
-                    return "无法解析详细信息: " + ex.Message;
-                }
-            });
-        }
-
-        // 辅助方法：安全读取 Query
-        private object TryGetQuery(BitmapMetadata metadata, string query)
-        {
-            try
-            {
-                if (metadata.ContainsQuery(query))
-                    return metadata.GetQuery(query);
-            }
-            catch { }
-            return null;
-        }
-
-        // 辅助方法：测光模式映射
-        private string MapMeteringMode(object val)
-        {
-            int code = Convert.ToInt32(val);
-            return code switch
-            {
-                1 => "平均测光",
-                2 => "中央重点平均测光",
-                3 => "点测光",
-                4 => "多点测光",
-                5 => "模式测光",
-                6 => "部分测光",
-                _ => "未知"
-            };
-        }
 
         private readonly object _lockObj = new object();
         private async Task LoadImage(string filePath)
@@ -471,7 +330,7 @@ namespace TabPaint
                     OnPropertyChanged(nameof(ImageSize));
                     UpdateWindowTitle();
 
-                    if (!IsFixedZoom) FitToWindow(1); // 默认 100% 或 适应窗口
+                    if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow(1); // 默认 100% 或 适应窗口
                     CenterImage();
                     _canvasResizer.UpdateUI();
                     SetPreviewSlider();
@@ -524,7 +383,7 @@ namespace TabPaint
                         UpdateWindowTitle();
 
                         // 立即适配并居中
-                        if (!IsFixedZoom) FitToWindow(1);
+                        if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow(1);
                         CenterImage(); // 或者你更新后的 UpdateImagePosition()
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -550,7 +409,7 @@ namespace TabPaint
                         _currentFileName = System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
-                        if (!IsFixedZoom) FitToWindow();
+                        if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow();
                         CenterImage();
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -642,7 +501,7 @@ namespace TabPaint
                     _imageSize = $"{_surface.Width}×{_surface.Height}像素";
                     OnPropertyChanged(nameof(ImageSize));
 
-                    if (!IsFixedZoom) FitToWindow();
+                    if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow();
                     CenterImage();
                     _canvasResizer.UpdateUI();
 

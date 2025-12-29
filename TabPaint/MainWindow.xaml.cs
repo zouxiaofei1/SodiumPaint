@@ -32,7 +32,7 @@ namespace TabPaint
             InitializeComponent();
 
             DataContext = this;
-
+            
             // 1. 统一绑定到一个 Loaded 处理函数，移除构造函数里的 lambda
             Loaded += MainWindow_Loaded;
 
@@ -41,7 +41,7 @@ namespace TabPaint
             // 注意：建议移除这里的 this.Show()，通常由 App.xaml.cs 控制显示
             // 如果必须在这里显示，保持不动即可
             this.Show();
-
+            
             // ... 其他事件绑定保持不变 ...
             StateChanged += MainWindow_StateChanged;
             Select = new SelectTool();
@@ -105,7 +105,7 @@ namespace TabPaint
             {
                 // 1. 先加载上次会话 (Tabs结构)
                 LoadSession();
-
+                
                 // 2. 如果有启动参数传入的文件，打开它
                 if (!string.IsNullOrEmpty(_currentFilePath))
                 {
@@ -116,6 +116,7 @@ namespace TabPaint
                 {
                     ResetToNewCanvas();
                 }
+                RestoreAppState();
             }
             catch (Exception ex)
             {
@@ -137,7 +138,6 @@ namespace TabPaint
                 }
             }
         }
-
 
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
         {  // 工具函数 - 查找所有子元素
@@ -250,9 +250,6 @@ namespace TabPaint
 
             try
             {
-                // ---------------------------------------------------------
-                // 情况 A: 剪切板包含文件列表 (例如在资源管理器中 Ctrl+C)
-                // ---------------------------------------------------------
                 if (Clipboard.ContainsFileDropList())
                 {
                     var dropList = Clipboard.GetFileDropList();
@@ -268,9 +265,6 @@ namespace TabPaint
                         }
                     }
                 }
-                // ---------------------------------------------------------
-                // 情况 B: 剪切板包含纯图像数据 (例如截图、网页右键复制图片)
-                // ---------------------------------------------------------
                 else if (Clipboard.ContainsImage())
                 {
                     var bitmapSource = Clipboard.GetImage();
