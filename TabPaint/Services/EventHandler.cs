@@ -101,10 +101,13 @@ namespace TabPaint
                         }
                         else
                         {
-                            // 否则，执行你考虑加入的“删除物理文件”功能
                             HandleDeleteFileAction();
                         }
                         break;
+                    case Key.F11:
+                        MaximizeWindowHandler();
+                        break;
+
                 }
             }
         }
@@ -390,7 +393,10 @@ namespace TabPaint
             e.Handled = false; // 阻止默认滚动
             double oldScale = zoomscale;
             double newScale = oldScale * (e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes);
-            newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
+            double minrate = 1;
+            if (_bitmap != null)
+                minrate = 1500 / Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
+            newScale = Math.Clamp(newScale, MinZoom* minrate, MaxZoom);
             zoomscale = newScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
 

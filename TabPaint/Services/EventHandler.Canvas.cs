@@ -20,6 +20,7 @@ namespace TabPaint
  
         private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (_isLoadingImage) return;
             // Get the position relative to the scaled CanvasWrapper
             Point pos = e.GetPosition(CanvasWrapper);
             _router.ViewElement_MouseDown(pos, e);
@@ -27,18 +28,21 @@ namespace TabPaint
 
         private void OnCanvasMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (_isLoadingImage) return;
             Point pos = e.GetPosition(CanvasWrapper);
             _router.ViewElement_MouseMove(pos, e);
         }
 
         private void OnCanvasMouseUp(object sender, MouseButtonEventArgs e)
         {
+            if (_isLoadingImage) return;
             Point pos = e.GetPosition(CanvasWrapper);
             _router.ViewElement_MouseUp(pos, e);
         }
 
         private void OnCanvasMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (_isLoadingImage) return;
             _router.CurrentTool?.StopAction(_ctx);
         }
 

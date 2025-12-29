@@ -36,7 +36,7 @@ namespace TabPaint
                     MainImageBar.Slider.Visibility = Visibility.Collapsed;
                     return;
                 }
-                a.s(_imageFiles.Count);
+               // a.s(_imageFiles.Count);
                 double itemWidth = 124.0;
 
                 // --- 改进点 1: 更加鲁棒的宽度获取 ---

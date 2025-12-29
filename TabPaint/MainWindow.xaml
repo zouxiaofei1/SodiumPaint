@@ -210,7 +210,7 @@
                 <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
             </Border.Effect>
             <Grid x:Name="SliderContainer">
-                <Slider x:Name="ThicknessSlider" Style="{StaticResource Win11VerticalSliderStyle}" Orientation="Vertical" Minimum="1" Maximum="250" Value="{Binding PenThickness, Mode=TwoWay}" IsSnapToTickEnabled="True" TickFrequency="1" Thumb.DragStarted="ThicknessSlider_DragStarted" Thumb.DragCompleted="ThicknessSlider_DragCompleted" ValueChanged="ThicknessSlider_ValueChanged">
+                <Slider x:Name="ThicknessSlider" Style="{StaticResource Win11VerticalSliderStyle}" Orientation="Vertical" Minimum="1" Maximum="400" Value="{Binding PenThickness, Mode=TwoWay}" IsSnapToTickEnabled="True" TickFrequency="1" Thumb.DragStarted="ThicknessSlider_DragStarted" Thumb.DragCompleted="ThicknessSlider_DragCompleted" ValueChanged="ThicknessSlider_ValueChanged">
                     <Slider.ToolTip>
                         <ToolTip Background="Black" Foreground="White" BorderThickness="0" Padding="8,4">
                             <StackPanel Orientation="Horizontal">

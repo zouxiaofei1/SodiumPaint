@@ -786,7 +786,8 @@
                     <ControlTemplate.Triggers>
                         <!-- 1. 鼠标悬浮时的样式 -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="BgBorder" Property="Background" Value="#77E0E0E0"/>
+                            <Setter TargetName="BgBorder" Property="Background" Value="#159333EA"/>
+                            <Setter TargetName="BgBorder" Property="BorderBrush" Value="#C084FC"/>
                         </Trigger>
 
                         <!-- 2. 当按钮被按下（子菜单打开）时，保持高亮状态 -->

@@ -51,7 +51,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        private string _programVersion = "v0.7.2 alpha"; // 可以从 Assembly 读取
+        private string _programVersion = "v0.7.3 alpha"; // 可以从 Assembly 读取
         private bool _isFileSaved = true; // 是否有未保存修改
 
         private string _mousePosition = "0,0像素";
@@ -200,5 +200,7 @@ namespace TabPaint
                 }
             }
         }
+        private bool _isPaintingMode = true;//画图模式
+        private bool _isLoadingImage = true;//是否正在加载图像,false时不能画图
     }
 }

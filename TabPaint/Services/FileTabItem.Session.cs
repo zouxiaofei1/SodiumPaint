@@ -165,9 +165,9 @@ namespace TabPaint
             if (BackgroundImage.Source is BitmapSource source)
             {
                 double pixels = source.PixelWidth * source.PixelHeight;
-                if (pixels > 3840 * 2160) delayMs = 5000; // 大图给 5秒
-                else if (pixels > 1920 * 1080) delayMs = 3000; // 中图给 3秒
-                else delayMs = 1500; // 小图 1.5秒，响应更快
+                if (pixels > 3840 * 2160) delayMs = 2000; // 大图给 5秒
+                else if (pixels > 1920 * 1080) delayMs = 1000; // 中图给 3秒
+                else delayMs = 500; // 小图 1.5秒，响应更快
             }
             _autoSaveTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
             _autoSaveTimer.Start();

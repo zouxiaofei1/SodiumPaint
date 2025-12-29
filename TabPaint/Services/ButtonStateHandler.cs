@@ -39,7 +39,35 @@ namespace TabPaint
             }
 
         }
+        public void MaximizeWindowHandler()
+        {
+            if (!_maximized)
+            {
+                _restoreBounds = new Rect(Left, Top, Width, Height);
+                _maximized = true;
 
+                var workArea = SystemParameters.WorkArea;
+                //s((SystemParameters.BorderWidth));
+                Left = workArea.Left - (SystemParameters.BorderWidth) * 2;
+                Top = workArea.Top - (SystemParameters.BorderWidth) * 2;
+                Width = workArea.Width + (SystemParameters.BorderWidth * 4);
+                Height = workArea.Height + (SystemParameters.BorderWidth * 4);
+
+                SetRestoreIcon();  // 切换到还原图标
+            }
+            else
+            {
+                _maximized = false;
+                Left = _restoreBounds.Left;
+                Top = _restoreBounds.Top;
+                Width = _restoreBounds.Width;
+                Height = _restoreBounds.Height;
+                WindowState = WindowState.Normal;
+
+                // 切换到最大化矩形图标
+                SetMaximizeIcon();
+            }
+        }
         private void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，所有画笔都是pen工具
             _router.SetTool(_tools.Pen);

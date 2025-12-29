@@ -70,25 +70,18 @@ namespace TabPaint
 
         private void OnShapeStyleClick(object sender, RoutedEventArgs e)
         {
-            // 确保发送者是 MenuItem 且 Tag 是字符串
-            if (sender is System.Windows.Controls.MenuItem item && item.Tag is string tag)
+            // 注意：这里要用 e.OriginalSource
+            if (e.OriginalSource is System.Windows.Controls.MenuItem item && item.Tag is string tag)
             {
-                // 1. 获取 Shape 工具实例
                 var shapeTool = _tools.Shape as ShapeTool;
                 if (shapeTool == null) return;
 
-                // 2. 解析 Tag 字符串为枚举 (自动支持 Rectangle, Ellipse, Line, Arrow, RoundedRectangle)
                 if (Enum.TryParse(tag, out ShapeTool.ShapeType type))
                 {
-                    // 设置逻辑形状
                     shapeTool.SetShapeType(type);
-
-                    // 切换当前工具为 ShapeTool
                     _router.SetTool(shapeTool);
 
-                    // 3. (可选) 更新主按钮图标以反映当前选择
-                    // 只有当你已经在 XAML 资源中定义了这些 Key (如 "Img_Rect", "Img_Arrow" 等) 时才取消注释
-
+                    // 更新图标逻辑保持不变
                     switch (type)
                     {
                         case ShapeTool.ShapeType.Rectangle:
@@ -107,13 +100,11 @@ namespace TabPaint
                             MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_RoundedRect");
                             break;
                     }
-
                 }
-
-                // 4. 关闭下拉菜单
                 MainToolBar.ShapeToggle.IsChecked = false;
             }
         }
+
 
         private void FitToWindow_Click(object sender, RoutedEventArgs e)
         {
@@ -233,35 +224,49 @@ namespace TabPaint
             }
         }
 
-        private void OnCustomColorClick(object sender, RoutedEventArgs e)// 点击彩虹按钮自定义颜色
+        private void OnCustomColorClick(object sender, RoutedEventArgs e)
         {
-            var dlg = new ColorDialog();
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            // 获取当前颜色作为初始值
+            Color initialColor = _ctx.PenColor;
+            // 如果 _ctx.PenColor 是 Colors.Transparent 或者其他特殊值，最好给个默认值
+            if (initialColor == Colors.Transparent) initialColor = Colors.Black;
+
+            // 使用新的现代化窗口
+            var dlg = new ModernColorPickerWindow(initialColor);
+            dlg.Owner = this; // 确保在主窗口之上
+
+            if (dlg.ShowDialog() == true)
             {
-                var color = Color.FromArgb(255, dlg.Color.R, dlg.Color.G, dlg.Color.B);
+                var color = dlg.SelectedColor;
                 var brush = new SolidColorBrush(color);
+
+                // 你的原有逻辑
                 SelectedBrush = brush;
-                //HighlightSelectedButton(null);
+                // HighlightSelectedButton(null);
 
                 // 同步到绘图上下文
                 _ctx.PenColor = color;
                 UpdateCurrentColor(_ctx.PenColor, useSecondColor);
             }
         }
+
         private void OnBrushStyleClick(object sender, RoutedEventArgs e)
         {
-            //  _currentTool = ToolMode.Pen;
-            if (sender is System.Windows.Controls.MenuItem menuItem
+            // 注意：这里要用 e.OriginalSource，因为 sender 现在是 ToolBarControl
+            if (e.OriginalSource is System.Windows.Controls.MenuItem menuItem
                 && menuItem.Tag is string tagString
                 && Enum.TryParse(tagString, out BrushStyle style))
             {
                 _router.SetTool(_tools.Pen);
-                _ctx.PenStyle = style; // 你的画笔样式枚举
+                
+                _ctx.PenStyle = style;
+
+                UpdateToolSelectionHighlight();
+                SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
+
+                // 关闭 UserControl 里的 ToggleButton
+                MainToolBar.BrushToggle.IsChecked = false;
             }
-            UpdateToolSelectionHighlight();
-            SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
-            // 点击后关闭下拉按钮
-            MainToolBar.BrushToggle.IsChecked = false;
         }
         private void ZoomMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

@@ -36,67 +36,78 @@ namespace TabPaint
         private CancellationTokenSource _loadImageCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
-            if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
+            _isLoadingImage = true;
+            OnPropertyChanged("IsLoadingImage");
+            try
             {
-                ScanFolderImages(filePath);
-            }
-
-            // 触发当前图的备份
-            TriggerBackgroundBackup();
-
-            // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
-            if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
-            {
-                _imageFiles.Add(filePath);
-            }
-
-            int newIndex = _imageFiles.IndexOf(filePath);
-            _currentImageIndex = newIndex;
-            RefreshTabPageAsync(_currentImageIndex, refresh);
-
-            var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-
-            if (current != null)
-            {
-                foreach (var tab in FileTabs) tab.IsSelected = false;
-                current.IsSelected = true;
-                _currentTabItem = current;
-            }
-
-            // --- 智能加载逻辑 ---
-            string fileToLoad = filePath;
-            bool isFileLoadedFromCache = false;
-
-            // 检查是否有缓存
-            // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
-            if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
-            {
-                if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
+                if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
-                    await pendingSave;
+                    ScanFolderImages(filePath);
                 }
 
-                if (File.Exists(current.BackupPath))
+                // 触发当前图的备份
+                TriggerBackgroundBackup();
+
+                // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
+                if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
                 {
-                    //s(current.BackupPath);
-                    fileToLoad = current.BackupPath;
-                    isFileLoadedFromCache = true;
+                    _imageFiles.Add(filePath);
+                }
+
+                int newIndex = _imageFiles.IndexOf(filePath);
+                _currentImageIndex = newIndex;
+                RefreshTabPageAsync(_currentImageIndex, refresh);
+
+                var current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+
+                if (current != null)
+                {
+                    foreach (var tab in FileTabs) tab.IsSelected = false;
+                    current.IsSelected = true;
+                    _currentTabItem = current;
+                }
+
+                // --- 智能加载逻辑 ---
+                string fileToLoad = filePath;
+                bool isFileLoadedFromCache = false;
+
+                // 检查是否有缓存
+                // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
+                if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
+                {
+                    if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
+                    {
+                        await pendingSave;
+                    }
+
+                    if (File.Exists(current.BackupPath))
+                    {
+                        //s(current.BackupPath);
+                        fileToLoad = current.BackupPath;
+                        isFileLoadedFromCache = true;
+                    }
+                }
+                await LoadImage(fileToLoad);
+
+                ResetDirtyTracker();
+
+                if (isFileLoadedFromCache)
+                {
+                    _savedUndoPoint = -1;
+                    CheckDirtyState();
+                }
+
+                // [适配] 如果是纯新建文件，加载后应该是 Clean 状态，但要确保 UI 状态正确
+                if (IsVirtualPath(filePath) && !isFileLoadedFromCache)
+                {
+                    // 纯白纸状态，无需做 Dirty 检查
                 }
             }
-            await LoadImage(fileToLoad);
-
-            ResetDirtyTracker();
-
-            if (isFileLoadedFromCache)
+            finally
             {
-                _savedUndoPoint = -1;
-                CheckDirtyState();
-            }
-
-            // [适配] 如果是纯新建文件，加载后应该是 Clean 状态，但要确保 UI 状态正确
-            if (IsVirtualPath(filePath) && !isFileLoadedFromCache)
-            {
-                // 纯白纸状态，无需做 Dirty 检查
+                // [新增] 无论上面发生什么错误，最终都必须关闭加载状态
+                _isLoadingImage = false;
+                OnPropertyChanged("IsLoadingImage");
             }
         }
 
@@ -117,7 +128,12 @@ namespace TabPaint
         }
         private async Task ProcessImageLoadQueueAsync()
         {
-            while (true)
+            _isLoadingImage = true;
+            OnPropertyChanged("IsLoadingImage"); // 如果你有绑定属性，请通知界面
+
+            try
+            {
+                while (true)
             {
                 string filePathToLoad;
 
@@ -139,6 +155,14 @@ namespace TabPaint
                     _pendingFilePath = null;
                 }
                 await LoadAndDisplayImageInternalAsync(filePathToLoad);
+                }
+            }
+            finally
+            {
+                // [新增] 只有当循环结束（队列空了）或者发生异常退出时，才取消加载状态
+                // 这样可以防止连续加载时的状态闪烁
+                _isLoadingImage = false;
+                OnPropertyChanged("IsLoadingImage");
             }
         }
         private async Task LoadAndDisplayImageInternalAsync(string filePath)
@@ -624,8 +648,8 @@ namespace TabPaint
 
                     // 6. 强制执行垃圾回收 (LOH 压缩)
                     // 对于画图软件，加载大图后的瞬间卡顿是可以接受的，换取的是内存不崩溃
-                    GC.Collect(2, GCCollectionMode.Forced, true);
-                    GC.WaitForPendingFinalizers();
+                    //GC.Collect(2, GCCollectionMode.Forced, true);
+                    //GC.WaitForPendingFinalizers();
                 }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); // 稍微降低优先级，确保UI先响应
             }
             catch (OperationCanceledException)

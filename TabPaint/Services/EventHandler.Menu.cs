@@ -178,32 +178,7 @@ namespace TabPaint
 
         private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
         {
-            if (!_maximized)
-            {
-                _restoreBounds = new Rect(Left, Top, Width, Height);
-                _maximized = true;
-
-                var workArea = SystemParameters.WorkArea;
-                //s((SystemParameters.BorderWidth));
-                Left = workArea.Left - (SystemParameters.BorderWidth) * 2;
-                Top = workArea.Top - (SystemParameters.BorderWidth) * 2;
-                Width = workArea.Width + (SystemParameters.BorderWidth * 4);
-                Height = workArea.Height + (SystemParameters.BorderWidth * 4);
-
-                SetRestoreIcon();  // 切换到还原图标
-            }
-            else
-            {
-                _maximized = false;
-                Left = _restoreBounds.Left;
-                Top = _restoreBounds.Top;
-                Width = _restoreBounds.Width;
-                Height = _restoreBounds.Height;
-                WindowState = WindowState.Normal;
-
-                // 切换到最大化矩形图标
-                SetMaximizeIcon();
-            }
+            MaximizeWindowHandler();
         }
 
 
