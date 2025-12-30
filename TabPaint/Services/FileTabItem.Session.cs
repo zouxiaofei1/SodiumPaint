@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using static TabPaint.MainWindow;
 
 //
 //ImageBar后台逻辑 
@@ -659,7 +660,7 @@ namespace TabPaint
             }
             if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
             {
-                selTool.Cleanup(_ctx);
+                selTool.GiveUpSelection(this._ctx);
             }
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);

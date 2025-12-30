@@ -151,53 +151,16 @@ namespace TabPaint
         {
             FlipBitmap(flipVertical: false); MainToolBar.RotateFlipMenuToggle.IsChecked = false;
         }
-        private void FontSettingChanged(object? sender, RoutedEventArgs e)
+        private void FontSettingChanged(object sender, RoutedEventArgs e)
         {
-            if (_activeTextBox == null) return;
+            // 防止初始化时触发
+            if (_tools == null || _router.CurrentTool != _tools.Text) return;
 
-            // --- 1. 处理字体 (兼容手动输入和选择) ---
-            if (FontFamilyBox.SelectedItem is FontFamily family)
-            {
-                _activeTextBox.FontFamily = family;
-            }
-            else if (!string.IsNullOrWhiteSpace(FontFamilyBox.Text))
-            {
-                try
-                {
-                    // 尝试根据输入的字符串创建字体
-                    _activeTextBox.FontFamily = new FontFamily(FontFamilyBox.Text);
-                }
-                catch { /* 输入了非法字体名则忽略 */ }
-            }
-
-            // --- 2. 处理字号 (兼容手动输入) ---
-            // 注意：ComboBox 可编辑时，FontSizeBox.Text 是获取输入值的最直接方式
-            if (double.TryParse(FontSizeBox.Text, out double size))
-            {
-                if (size > 0 && size < 1000) // 限制一个合理的范围
-                {
-                    _activeTextBox.FontSize = size;
-                }
-            }
-
-            // --- 3. 处理样式按钮 ---
-            _activeTextBox.FontWeight = BoldBtn.IsChecked == true ? FontWeights.Bold : FontWeights.Normal;
-            _activeTextBox.FontStyle = ItalicBtn.IsChecked == true ? FontStyles.Italic : FontStyles.Normal;
-            _activeTextBox.TextDecorations = UnderlineBtn.IsChecked == true ? TextDecorations.Underline : null;
-
-            // --- 4. 强制布局更新并重绘虚线框 ---
-            if (_tools.Text is TextTool st)
-            {
-                // 关键：先让 TextBox 根据新属性重新计算自己的实际宽高
-                _activeTextBox.UpdateLayout();
-
-                // 使用 Render 优先级确保在界面渲染时更新虚线框位置
-                _activeTextBox.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    st.DrawTextboxOverlay(_ctx);
-                }), System.Windows.Threading.DispatcherPriority.Render);
-            }
+            // 调用 TextTool 内部方法刷新当前 TextBox
+            // 注意：需要将 _tools.Text 强制转换为 TextTool 类型才能访问 UpdateCurrentTextBoxAttributes
+            (_tools.Text as TextTool)?.UpdateCurrentTextBoxAttributes();
         }
+
         private void OnColorOneClick(object sender, RoutedEventArgs e)
         {
             useSecondColor = false;

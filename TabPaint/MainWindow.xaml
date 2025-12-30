@@ -217,42 +217,79 @@
         <!-- #region 7. 悬浮面板 (Floating UI) -->
 
         <!-- 文本编辑条 -->
+        <!-- 文本编辑条 -->
         <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Background="#FAFAFA" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="6">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="#20000000" Opacity="0.4"/>
             </Border.Effect>
             <StackPanel Orientation="Horizontal">
-                <ComboBox x:Name="FontFamilyBox" Style="{StaticResource FluentComboBoxStyle}" Width="180"  SelectedValuePath="Source" KeyDown="Control_KeyDown" IsEditable="True" StaysOpenOnEdit="True" TextSearch.TextPath="Source" SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged" SelectedIndex="0">
-                    <ComboBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel />
-                        </ItemsPanelTemplate>
-                    </ComboBox.ItemsPanel>
+                <!-- 字体选择: 初始为空，代码懒加载 -->
+                <ComboBox x:Name="FontFamilyBox" 
+          Style="{StaticResource FluentComboBoxStyle}" 
+          Width="160" 
+          IsEditable="True" 
+          Background="White"
+          SelectionChanged="FontSettingChanged" 
+          TextBoxBase.TextChanged="FontSettingChanged">
                 </ComboBox>
-                <ComboBox x:Name="FontSizeBox" Style="{StaticResource FluentComboBoxStyle}" Width="80" SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged" KeyDown="Control_KeyDown" IsEditable="True" Text="12">
-                    <System:Double>8</System:Double>
+                <!-- 字号 -->
+                <ComboBox x:Name="FontSizeBox" Style="{StaticResource FluentComboBoxStyle}" Width="70" 
+                  IsEditable="True" Text="24"
+                  SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged">
+                    <!-- 常用字号 -->
                     <System:Double>9</System:Double>
                     <System:Double>10</System:Double>
                     <System:Double>11</System:Double>
                     <System:Double>12</System:Double>
                     <System:Double>14</System:Double>
-                    <System:Double>16</System:Double>
                     <System:Double>18</System:Double>
                     <System:Double>24</System:Double>
                     <System:Double>36</System:Double>
                     <System:Double>48</System:Double>
+                    <System:Double>64</System:Double>
                     <System:Double>72</System:Double>
+                    <System:Double>96</System:Double>
                 </ComboBox>
+
                 <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="4,0,8,0"/>
-                <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="加粗">
+
+                <!-- 基础样式 -->
+                <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="加粗">
                     <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16"/>
                 </ToggleButton>
-                <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="斜体">
+                <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="斜体">
                     <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16"/>
                 </ToggleButton>
-                <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="下划线">
+                <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="下划线">
                     <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16"/>
                 </ToggleButton>
+                <ToggleButton x:Name="StrikeBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="删除线">
+                    <TextBlock Text="S" TextDecorations="Strikethrough" FontFamily="Segoe UI" FontSize="16"/>
+                </ToggleButton>
+
+                <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="8,0,8,0"/>
+
+                <!-- 对齐方式 (使用 Path 绘制图标) -->
+                <ToggleButton x:Name="AlignLeftBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Left" IsChecked="True" ToolTip="左对齐">
+                    <Path Data="M0,2 L14,2 M0,6 L10,6 M0,10 L14,10 M0,14 L10,14" Stroke="Black" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </ToggleButton>
+                <ToggleButton x:Name="AlignCenterBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Center" ToolTip="居中">
+                    <Path Data="M0,2 L14,2 M2,6 L12,6 M0,10 L14,10 M2,14 L12,14" Stroke="Black" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </ToggleButton>
+                <ToggleButton x:Name="AlignRightBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Right" ToolTip="右对齐">
+                    <Path Data="M0,2 L14,2 M4,6 L14,6 M0,10 L14,10 M4,14 L14,14" Stroke="Black" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </ToggleButton>
+
+                <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="8,0,8,0"/>
+
+                <!-- 背景填充 -->
+                <ToggleButton x:Name="TextBackgroundBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="不透明背景">
+                    <Grid>
+                        <Rectangle Width="14" Height="14" Fill="White" Stroke="#333" StrokeThickness="1"/>
+                        <TextBlock Text="A" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                    </Grid>
+                </ToggleButton>
+
             </StackPanel>
         </Border>
 

@@ -298,6 +298,7 @@ namespace TabPaint
                     _originalDpiX = 96.0;
                     _originalDpiY = 96.0;
                     BackgroundImage.Source = _bitmap;
+               
 
                     // 查找 Tab 以获取正确的显示名 (如 "未命名 1")
                     var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
@@ -305,6 +306,8 @@ namespace TabPaint
                     _currentFilePath = filePath; // 保持虚拟路径
 
                     this.CurrentImageFullInfo = "[新建图像] 内存文件";
+
+                    this.FileSize = "未保存";
 
                     if (_surface == null) _surface = new CanvasSurface(_bitmap);
                     else _surface.Attach(_bitmap);
@@ -325,9 +328,6 @@ namespace TabPaint
                 return;
             }
 
-            // ==========================================
-            // 分支 B: 处理物理文件 (普通图片 或 缓存文件)
-            // ==========================================
 
             if (!File.Exists(filePath))
             {
@@ -341,6 +341,10 @@ namespace TabPaint
                 // 步骤 1: 异步读取文件并快速获取最终尺寸
                 var imageBytes = await File.ReadAllBytesAsync(filePath, token);
                 if (token.IsCancellationRequested) return;
+
+                string sizeString = FormatFileSize(imageBytes.Length);
+                await Dispatcher.InvokeAsync(() => this.FileSize = sizeString);
+
 
                 var (originalWidth, originalHeight) = await GetImageDimensionsAsync(imageBytes);
                 if (token.IsCancellationRequested) return;
@@ -471,9 +475,6 @@ namespace TabPaint
                     // 解除引用
                     source = null;
                     fullResBitmap = null;
-                    // 如果 imageBytes 还是局部变量，此时引用计数还没归零，最好将其设为 null 如果它是类成员
-                    // 这里 imageBytes 是局部变量，方法结束会自动释放，但为了大图，建议强制回收
-
                     // 更新 UI
                     BackgroundImage.Source = _bitmap;
                     this.CurrentImageFullInfo = metadataString;

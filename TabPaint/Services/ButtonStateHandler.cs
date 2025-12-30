@@ -182,10 +182,35 @@ namespace TabPaint
           
         }
 
+        private bool _fontsLoaded = false;
 
+        // 懒加载字体的核心方法
+        private void EnsureFontsLoaded()
+        {
+            if (_fontsLoaded) return;
+
+            // 可以在后台线程加载以防卡顿，但字体列表通常很快，这里用简单的 Task 包装
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                // 获取系统字体
+                var fonts = Fonts.SystemFontFamilies.OrderBy(f => f.Source).ToList();
+
+                // 切回 UI 线程更新
+                Dispatcher.Invoke(() =>
+                {
+                    FontFamilyBox.ItemsSource = fonts;
+                    // 设置默认字体 (例如 Microsoft YaHei 或 Segoe UI)
+                    FontFamilyBox.SelectedItem = fonts.FirstOrDefault(f => f.Source.Contains("Microsoft YaHei"))
+                                              ?? fonts.FirstOrDefault(f => f.Source.Contains("Segoe UI"))
+                                              ?? fonts.FirstOrDefault();
+                    _fontsLoaded = true;
+                });
+            });
+        }
 
         public void ShowTextToolbarFor(System.Windows.Controls.TextBox tb)
         {
+            EnsureFontsLoaded();
             _activeTextBox = tb;
             TextEditBar.Visibility = Visibility.Visible;
 

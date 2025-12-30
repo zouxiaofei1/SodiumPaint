@@ -34,7 +34,19 @@ namespace TabPaint
 
         private HwndSource _hwndSource;
         private bool _isMonitoringClipboard = false;
-
+        private string _fileSize = "0 KB";
+        public string FileSize
+        {
+            get => _fileSize;
+            set
+            {
+                if (_fileSize != value)
+                {
+                    _fileSize = value;
+                    OnPropertyChanged(nameof(FileSize));
+                }
+            }
+        }
         private CanvasSurface _surface;
         public UndoRedoManager _undo;
         public ToolContext _ctx;

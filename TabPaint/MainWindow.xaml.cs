@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -439,11 +440,72 @@ namespace TabPaint
             sb.Children.Add(fadeOut);
             sb.Begin();
         }
+        // 在 MainWindow 类中添加
 
+        // 统一处理文字对齐点击
+        private void TextAlign_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleButton btn && btn.Tag is string align)
+            {
+                // 实现互斥
+                AlignLeftBtn.IsChecked = (align == "Left");
+                AlignCenterBtn.IsChecked = (align == "Center");
+                AlignRightBtn.IsChecked = (align == "Right");
+
+                FontSettingChanged(sender, null);
+            }
+        }
+
+        // 核心方法：将 Toolbar 状态应用到 TextBox
+        public void ApplyTextSettings(System.Windows.Controls.TextBox tb)
+        {
+            if (tb == null) return;
+
+            // 1. 字体与大小
+            if (FontFamilyBox.SelectedValue != null)
+                tb.FontFamily = new FontFamily(FontFamilyBox.SelectedValue.ToString());
+
+            if (double.TryParse(FontSizeBox.Text, out double size))
+                tb.FontSize = Math.Max(1, size);
+
+            // 2. 粗体/斜体
+            tb.FontWeight = (BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
+            tb.FontStyle = (ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
+
+            // 3. 装饰线 (下划线 + 删除线)
+            var decors = new TextDecorationCollection();
+            if (UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
+            if (StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
+            tb.TextDecorations = decors;
+
+            // 4. 对齐
+            if (AlignLeftBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Left;
+            else if (AlignCenterBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Center;
+            else if (AlignRightBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Right;
+
+            // 5. 背景填充
+            // 这里使用白色作为填充色，如果你的App有SecondaryColor，可以换成那个颜色
+            if (TextBackgroundBtn.IsChecked == true)
+                tb.Background = Brushes.White;
+            else
+                tb.Background = Brushes.Transparent;
+        }
+
+        // 修改原有的 FontSettingChanged，让它调用 TextTool 的更新
+        private string FormatFileSize(long bytes)
+        {
+            if (bytes < 1024) return $"大小: {bytes} B";
+            if (bytes < 1024 * 1024) return $"大小: {bytes / 1024.0:F1} KB";
+            return $"大小: {bytes / 1024.0 / 1024.0:F2} MB";
+        }
 
         private void ShowNextImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
+            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
+            {
+                selTool.GiveUpSelection(this._ctx);
+            }
             _currentImageIndex++;
             if (_currentImageIndex >= _imageFiles.Count)
             {
@@ -457,7 +519,10 @@ namespace TabPaint
         private void ShowPrevImage()
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-
+            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
+            {
+                selTool.GiveUpSelection(this._ctx);
+            }
             // 自动保存已编辑图片
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
@@ -630,5 +695,7 @@ namespace TabPaint
         {
             DragOverlay.Visibility = Visibility.Collapsed;
         }
+
+
     }
 }

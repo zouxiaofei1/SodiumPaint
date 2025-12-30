@@ -10,7 +10,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 //
-//图片加载队列机制
+//ExifMetadata
 //
 
 namespace TabPaint

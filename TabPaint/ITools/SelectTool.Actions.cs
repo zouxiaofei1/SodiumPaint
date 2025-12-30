@@ -376,7 +376,7 @@ namespace TabPaint
 
 
                 ctx.Surface.ReplaceBitmap(newBitmap);
-                CleanUp(ctx); // 使用你已有的清理方法
+                Cleanup(ctx); // 使用你已有的清理方法
                 ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
                 ctx.IsDirty = true;
 

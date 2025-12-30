@@ -25,6 +25,15 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void FontSettingChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_router.CurrentTool is TextTool textTool)
+            {
+               // s(1);
+                textTool.UpdateCurrentTextBoxAttributes();
+            }
+            
+        }
         public class TextTool : ToolBase
         {
             public override string Name => "Text";
@@ -335,6 +344,7 @@ namespace TabPaint
                 // 必须在外矩形内 && 不在内矩形内 → 才是边框区域
                 return inOuter && !inInner;
             }
+            
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
 
@@ -468,23 +478,45 @@ namespace TabPaint
             }
             private System.Windows.Controls.TextBox CreateTextBox(ToolContext ctx, double x, double y)
             {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+
                 var tb = new System.Windows.Controls.TextBox
                 {
-                    FontSize = 16,
+                    FontSize = 24, // 默认值，会被 ApplyTextSettings 覆盖
                     AcceptsReturn = true,
                     TextWrapping = TextWrapping.Wrap,
                     Foreground = new SolidColorBrush(ctx.PenColor),
+                    // 初始透明
                     BorderBrush = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
-                    Background = Brushes.Transparent
+                    Background = Brushes.Transparent,
+                    Padding = new Thickness(5) // 给一点内边距好看
                 };
 
                 Canvas.SetLeft(tb, x);
                 Canvas.SetTop(tb, y);
+
+                // 立即应用当前工具栏的设置
+                mw.ApplyTextSettings(tb);
+
                 return tb;
             }
+            public void UpdateCurrentTextBoxAttributes()
+            {
+                if (_textBox == null) return;
 
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
 
+                // 1. 应用新的字体、大小、颜色等设置
+                mw.ApplyTextSettings(_textBox);
+
+                // 2. 【核心修复】强制 WPF 立即更新布局
+                // 这样 _textBox.ActualWidth 和 ActualHeight 才会变成应用新字体后的数值
+                _textBox.UpdateLayout();
+
+                // 3. 使用更新后的尺寸重绘虚线框和手柄
+                DrawTextboxOverlay(mw._ctx);
+            }
             public void CommitText(ToolContext ctx)
             {
                 if (_textBox == null) return;
@@ -499,72 +531,72 @@ namespace TabPaint
                     return;
                 }
 
-                // 1. 获取 DPI (改从 ViewElement 获取，绕过 CanvasSurface 的定义问题)
                 var dpiInfo = VisualTreeHelper.GetDpi(ctx.ViewElement);
                 double dpiX = dpiInfo.PixelsPerInchX;
                 double dpiY = dpiInfo.PixelsPerInchY;
 
-                // 2. 获取位置和尺寸
                 double x = Canvas.GetLeft(_textBox);
                 double y = Canvas.GetTop(_textBox);
                 double w = _textBox.ActualWidth;
                 double h = _textBox.ActualHeight;
 
-                // 3. 构建文本对象
+                // 1. 构建 FormattedText
                 var formattedText = new FormattedText(
                     _textBox.Text,
                     CultureInfo.CurrentCulture,
-                   System.Windows.FlowDirection.LeftToRight,
+                    System.Windows.FlowDirection.LeftToRight,
                     new Typeface(_textBox.FontFamily, _textBox.FontStyle, _textBox.FontWeight, _textBox.FontStretch),
                     _textBox.FontSize,
                     _textBox.Foreground,
                     dpiInfo.PixelsPerDip
                 )
                 {
+                    // 减去 Padding 确保文字位置准确
                     MaxTextWidth = Math.Max(1, w - _textBox.Padding.Left - _textBox.Padding.Right),
                     MaxTextHeight = double.MaxValue,
                     Trimming = TextTrimming.None,
                     TextAlignment = _textBox.TextAlignment
                 };
 
-                // 4. 绘制到 DrawingVisual
+                // 2. 应用修饰 (下划线/删除线)
+                formattedText.SetTextDecorations(_textBox.TextDecorations);
+
+                // 3. 渲染
                 var visual = new DrawingVisual();
                 using (var dc = visual.RenderOpen())
                 {
+                    // 如果有背景色，先画背景矩形
+                    if (_textBox.Background is SolidColorBrush bgBrush && bgBrush.Color.A > 0)
+                    {
+                        dc.DrawRectangle(bgBrush, null, new Rect(0, 0, w, h));
+                    }
+
                     TextOptions.SetTextRenderingMode(visual, TextRenderingMode.Grayscale);
                     TextOptions.SetTextFormattingMode(visual, TextFormattingMode.Display);
 
+                    // 绘制文字 (考虑 Padding)
                     dc.DrawText(formattedText, new Point(_textBox.Padding.Left, _textBox.Padding.Top));
                 }
 
-                // 5. 计算像素尺寸并渲染
                 int renderWidth = (int)Math.Ceiling(w * (dpiX / 96.0));
-                int renderHeight = (int)Math.Ceiling(
-                    Math.Max(h, formattedText.Height + _textBox.Padding.Top + _textBox.Padding.Bottom) * (dpiY / 96.0)
-                );
-                renderWidth = Math.Max(1, renderWidth);
-                renderHeight = Math.Max(1, renderHeight);
+                int renderHeight = (int)Math.Ceiling(h * (dpiY / 96.0)); // 直接使用控件高度，涵盖背景
+
+                if (renderWidth <= 0 || renderHeight <= 0) return;
 
                 var bmp = new RenderTargetBitmap(renderWidth, renderHeight, dpiX, dpiY, PixelFormats.Pbgra32);
                 bmp.Render(visual);
 
-                // 6. 转换位图数据
                 var wb = new WriteableBitmap(bmp);
                 int stride = wb.PixelWidth * 4;
                 var pixels = new byte[wb.PixelHeight * stride];
                 wb.CopyPixels(pixels, stride, 0);
 
-                // 7. 写入画布
                 ctx.Undo.BeginStroke();
-
-                // ✨ 修复点：直接使用渲染出的 wb 的尺寸，不依赖 ctx.Surface.PixelWidth
                 Int32Rect dirtyRect = new Int32Rect((int)x, (int)y, wb.PixelWidth, wb.PixelHeight);
                 ctx.Undo.AddDirtyRect(dirtyRect);
                 ctx.Surface.WriteRegion(dirtyRect, pixels, stride, false);
-
                 ctx.Undo.CommitStroke();
 
-                // 8. 清理 UI
                 ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
@@ -575,6 +607,7 @@ namespace TabPaint
                 _textBox = null;
                 lag = 1;
             }
+
         }
 
     }

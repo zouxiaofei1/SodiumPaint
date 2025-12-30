@@ -438,41 +438,57 @@ namespace TabPaint
                     }
                 }
             }
-           
+
             if (insertIndex == -1) insertIndex = _imageFiles.Count;
 
             bool hasHandled = false;
-            IDataObject data = Clipboard.GetDataObject(); 
+            FileTabItem tabToSelect = null; // 用于记录最后需要选中的 Tab
+
+            IDataObject data = Clipboard.GetDataObject();
             if (data.GetDataPresent(DataFormats.FileDrop))
-            {//图片文件
-               
+            {
+                // --- 处理文件粘贴 ---
                 string[] files = (string[])data.GetData(DataFormats.FileDrop);
                 if (files != null && files.Length > 0)
                 {
                     int addedCount = 0;
                     foreach (string file in files)
                     {
-                        if (IsImageFile(file) && !_imageFiles.Contains(file))
+                        if (!IsImageFile(file)) continue;
+
+                        // 检查是否已存在
+                        if (!_imageFiles.Contains(file))
                         {
+                            // 1. 不存在：插入新 Tab
                             _imageFiles.Insert(insertIndex + addedCount, file);
 
                             var newTab = new FileTabItem(file) { IsLoading = true };
                             FileTabs.Insert(uiInsertIndex + addedCount, newTab);
                             _ = newTab.LoadThumbnailAsync(100, 60);
 
+                            tabToSelect = newTab; // 标记需要切换到新文件
                             addedCount++;
                         }
+                        else
+                        {
+                            // 2. 已存在：查找对应的 Tab
+                            var existingTab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, file, StringComparison.OrdinalIgnoreCase));
+                            if (existingTab != null)
+                            {
+                                tabToSelect = existingTab; // 标记需要切换到已存在的文件
+                            }
+                        }
                     }
-                    if (addedCount > 0) hasHandled = true;
+                    if (addedCount > 0 || tabToSelect != null) hasHandled = true;
                 }
             }
             else if (data.GetDataPresent(DataFormats.Bitmap))
-            {//非文件图片
+            {
+                // --- 处理位图粘贴 ---
                 try
                 {
-                    // 获取位图数据
                     BitmapSource source = Clipboard.GetImage();
-                    
+
                     if (source != null)
                     {
                         var newTab = CreateNewUntitledTab();
@@ -487,13 +503,15 @@ namespace TabPaint
                             encoder.Save(fileStream);
                         }
 
-                        // 3. 设置 Tab 属性
                         newTab.BackupPath = fullCachePath;
-                        newTab.IsDirty = true; 
-                        UpdateTabThumbnailFromBitmap(newTab, source); 
+                        newTab.IsDirty = true;
+                        UpdateTabThumbnailFromBitmap(newTab, source);
                         FileTabs.Insert(uiInsertIndex, newTab);
+
+                        // 滚动条稍微向右移动一点，增加视觉反馈
                         MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 120);
 
+                        tabToSelect = newTab; // 标记需要切换
                         hasHandled = true;
                     }
                 }
@@ -509,8 +527,15 @@ namespace TabPaint
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
                 UpdateImageBarSliderState();
+
+                // 核心逻辑：执行切换
+                if (tabToSelect != null)
+                {
+                    SwitchToTab(tabToSelect);
+                }
             }
         }
+
 
 
         private void OnTabDeleteClick(object sender, RoutedEventArgs e)

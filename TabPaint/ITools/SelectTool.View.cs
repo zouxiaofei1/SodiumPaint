@@ -15,8 +15,8 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
-            public void CleanUp(ToolContext ctx)
-            {
+            public void Cleanup(ToolContext ctx)
+            {//注意是小写
                 HidePreview(ctx);
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
@@ -27,6 +27,7 @@ namespace TabPaint
                 _resizing = false;
                 _currentAnchor = ResizeAnchor.None;
                 _selectionData = null;
+              
             }
             // 在 SelectTool 类内部
             public void RefreshOverlay(ToolContext ctx)
@@ -236,6 +237,13 @@ namespace TabPaint
                 Canvas.SetTop(ctx.SelectionPreview, 0);
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
+            }
+            public void GiveUpSelection(ToolContext ctx)
+            {
+                if (ctx == null) return;
+                CommitSelection(ctx);
+                Cleanup(ctx);
+                ctx.Undo.Undo();
             }
             public void CommitSelection(ToolContext ctx)
             {

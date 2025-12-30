@@ -58,8 +58,7 @@ public class ShapeTool : ToolBase
             else
             {
                 // 如果点在了空白处 -> 提交上一个图形，结束操控状态
-                selectTool.CommitSelection(ctx);
-                selectTool.CleanUp(ctx); // 清理虚线框
+                selectTool.GiveUpSelection(ctx);
                 _isManipulating = false;
                 // 继续向下执行，进入逻辑分支 B (开始绘制新图形)
             }
@@ -193,21 +192,6 @@ public class ShapeTool : ToolBase
         base.OnKeyDown(ctx, e);
     }
 
-    // 切换工具时（例如用户手动点了其他工具），必须强制提交
-    //public override void Deactivate(ToolContext ctx)
-    //{
-    //    if (_isManipulating)
-    //    {
-    //        var st = GetSelectTool();
-    //        if (st != null)
-    //        {
-    //            st.CommitSelection(ctx);
-    //            st.CleanUp(ctx);
-    //        }
-    //        _isManipulating = false;
-    //    }
-    //    base.Deactivate(ctx);
-    //}
 
     private void UpdatePreviewShape(Point start, Point end, double thickness)
     {
