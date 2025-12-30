@@ -1,6 +1,35 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- 修复代码：添加 ToggleButton 的样式 -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="#F3F3F3"/>
+        <!-- 浅色背景，可根据主题调整 -->
+        <Setter Property="Foreground" Value="#1A1A1A"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#CCCCCC"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="HasDropShadow" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <!-- CornerRadius 设置圆角大小 -->
+                    <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="5"
+                        SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+            
+        </Setter>
+        <Setter Property="ToolTipService.InitialShowDelay" Value="200"/>
+        <!-- BetweenShowDelay: 在两个有 ToolTip 的按钮间移动时的延迟 (毫秒) -->
+        <Setter Property="ToolTipService.BetweenShowDelay" Value="0"/>
+        <!-- ShowDuration: 显示持续时间 (毫秒) -->
+        <Setter Property="ToolTipService.ShowDuration" Value="7000"/>
+    </Style>
     <Style x:Key="RoundedMenuToggleButtonStyle" TargetType="ToggleButton">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>

@@ -200,7 +200,7 @@ namespace TabPaint
             UpdateThicknessPreviewPosition(); // 初始定位
 
             ThicknessTip.Visibility = Visibility.Visible;
-            SetThicknessSlider_Pos(0);
+            SetThicknessSlider_Pos(ThicknessSlider.Value);
         }
 
         private void ThicknessSlider_DragCompleted(object sender, DragCompletedEventArgs e)
@@ -213,20 +213,39 @@ namespace TabPaint
         private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!_isInitialLayoutComplete) return;
-            PenThickness = e.NewValue;
-            UpdateThicknessPreviewPosition();
 
+            // Check: 防止空引用
             if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null)
                 return;
 
-            PenThickness = e.NewValue;
-            ThicknessTipText.Text = $"{(int)PenThickness} 像素";
+            // --- 【关键修改开始】 ---
 
-            // 让提示显示出来
-            ThicknessTip.Visibility = Visibility.Visible;
+            // e.NewValue 现在是 0 到 1 之间的进度值
+            double t = e.NewValue;
+
+            // 手动执行非线性公式，计算出真实的像素值 (1 到 400)
+            // 公式必须与 Converter 中的 ConvertBack 保持一致： Min + (Max - Min) * t^2
+            double realSize = 1.0 + (400.0 - 1.0) * (t * t);
+
+            // 更新本地变量 (如果是双向绑定，这一步其实 ViewModel 已经更新了，但为了预览流畅最好手动赋值)
+            PenThickness = realSize;
+
+            // 1. 更新圆圈预览 (用真实像素值)
+            UpdateThicknessPreviewPosition();
+
+            // 2. 更新提示文字 (用真实像素值)
+            ThicknessTipText.Text = $"{(int)realSize} 像素";
+
+            // 3. 更新提示框位置 (用 Slider 的进度值 0-1)
+            // 注意：这里传入原始的 e.NewValue (0-1)，因为位置是根据进度条比例算的
             SetThicknessSlider_Pos(e.NewValue);
 
+            // --- 【关键修改结束】 ---
+
+            // 确保可见
+            ThicknessTip.Visibility = Visibility.Visible;
         }
+
 
         private void OnOpenClick(object sender, RoutedEventArgs e)
         {

@@ -24,24 +24,20 @@
             </Grid.ColumnDefinitions>
 
             <!-- 1. 左侧控制按钮 -->
-            <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,4,0">
+            <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,2,0">
                 <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
                     <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Path Data="M2,0 L12,0 L14,2 L14,14 L0,14 L0,0 L2,0 M3,12 L11,12 L11,9 L3,9 L3,12 M3,0 L3,5 L9,5 L9,0" Fill="#555" Stretch="Uniform" Width="14" Height="14"/>
+                        <Image Source="{StaticResource Save_Edit_Image}" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="关闭所有未编辑的图片" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Grid Width="16" Height="16">
-                            <Path Data="M5,2 L13,2 L13,10" Stroke="#777" StrokeThickness="1.5" StrokeEndLineCap="Round"/>
-                            <Path Data="M2,5 L10,5 L10,13 L2,13 Z" Stroke="#444" StrokeThickness="1.5"/>
-                            <Path Data="M4.5,7.5 L7.5,10.5 M4.5,10.5 L7.5,7.5" Stroke="#444" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                        </Grid>
+                        <Image Source="{StaticResource Clear_Unedited_Image}" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="放弃所有更改" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Image Source="{StaticResource Reset_Image}" Width="16" Height="16"/>
                     </Button>
                 </UniformGrid>
             </Border>
-
+            
             <!-- 2. 图片标签列表 -->
             <ScrollViewer FocusVisualStyle="{x:Null}" x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" 
                           PreviewMouseWheel="Internal_OnFileTabsWheelScroll" 

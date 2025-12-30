@@ -657,7 +657,10 @@ namespace TabPaint
                     UpdateTabThumbnail(_currentTabItem);
                 }
             }
-            
+            if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
+            {
+                selTool.Cleanup(_ctx);
+            }
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
             //_currentTabItem = tab;
@@ -683,9 +686,10 @@ namespace TabPaint
             {
                 await OpenImageAndTabs(tab.FilePath);
             }
+    
+                // 4. 状态重置
+                ResetDirtyTracker();
 
-            // 4. 状态重置
-            ResetDirtyTracker();
             UpdateWindowTitle();
         }
 

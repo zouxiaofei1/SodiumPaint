@@ -50,3 +50,34 @@
 //    }
 //}
 
+//using System.Diagnostics;
+
+//private async Task LoadAndDisplayImageInternalAsync(string filePath)
+//{
+//    try
+//    {
+//        OpenImageAndTabs(filePath);
+//        //int newIndex = _imageFiles.IndexOf(filePath);
+//        //if (newIndex < 0) return;
+//        //_currentImageIndex = newIndex;
+
+//        //foreach (var tab in FileTabs)
+//        //    tab.IsSelected = false;
+
+//        //FileTabItem current = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+//        //current.IsSelected=true;
+//        //// 3. 加载主图片
+//        //await LoadImage(filePath); // 假设这是您加载大图的方法
+
+//        //await RefreshTabPageAsync(_currentImageIndex);
+//        //_currentTabItem = current;
+//        ////a.s(_currentTabItem.FilePath);
+//        //SetPreviewSlider(); 
+//        //UpdateWindowTitle();
+//    }
+//    catch (Exception ex)
+//    {
+//        // 最好有异常处理
+//        Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
+//    }
+//}

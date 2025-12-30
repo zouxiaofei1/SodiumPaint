@@ -66,12 +66,7 @@
                             <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <Separator Style="{StaticResource MenuSeparator}"/>
-                    <MenuItem Header="调整大小" Style="{StaticResource SubMenuItemStyle}" Click="OnResizeCanvasClick">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource Resize_Image}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
+                  
                 </MenuItem>
 
                 <!-- 效果菜单 -->
@@ -89,6 +84,12 @@
                     <MenuItem Header="黑白" Style="{StaticResource SubMenuItemStyle}" Click="OnBlackWhiteClick">
                         <MenuItem.Icon>
                             <Image Source="{StaticResource Black_And_White_Image}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator Style="{StaticResource MenuSeparator}"/>
+                    <MenuItem Header="调整大小" Style="{StaticResource SubMenuItemStyle}" Click="OnResizeCanvasClick">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource Resize_Image}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>

@@ -51,6 +51,7 @@ namespace TabPaint
         private void RotateBitmap(int angle)
         {
             ApplyTransform(new RotateTransform(angle));
+            _canvasResizer.UpdateUI();
         }
 
         private void FlipBitmap(bool flipVertical)

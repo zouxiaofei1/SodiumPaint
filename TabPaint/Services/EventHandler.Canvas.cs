@@ -21,7 +21,7 @@ namespace TabPaint
         private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (_isLoadingImage) return;
-            // Get the position relative to the scaled CanvasWrapper
+            if (e.ChangedButton != MouseButton.Left) return;
             Point pos = e.GetPosition(CanvasWrapper);
             _router.ViewElement_MouseDown(pos, e);
         }

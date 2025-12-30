@@ -32,6 +32,18 @@ namespace TabPaint
                 return; // 处理完毕，直接返回
             }
 
+            if (e.Key == Key.P &&
+    (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
+    (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
+            {
+                var settings = SettingsManager.Instance.Current;
+                settings.EnableClipboardMonitor = !settings.EnableClipboardMonitor;
+
+                e.Handled = true; 
+                return; // 处理完毕，直接返回
+            }
+
+
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
                 switch (e.Key)
@@ -64,14 +76,44 @@ namespace TabPaint
 
                     // 这里处理普通的 Ctrl + V (画布内粘贴)
                     case Key.V:
-                        _router.SetTool(_tools.Select);
-                        if (_tools.Select is SelectTool st)
+                        bool isMultiFilePaste = false;
+
+                        // 1. 检查剪贴板是否包含文件
+                        if (System.Windows.Clipboard.ContainsFileDropList())
                         {
-                            st.PasteSelection(_ctx, true);
+                            var fileList = System.Windows.Clipboard.GetFileDropList();
+                            if (fileList != null)
+                            {
+                                // 过滤出有效的图片文件 (复用你现有的 IsImageFile 方法)
+                                var validImages = new List<string>();
+                                foreach (string file in fileList)
+                                {
+                                    if (IsImageFile(file))
+                                    {
+                                        validImages.Add(file);
+                                    }
+                                }
+
+                                // 2. 如果是多文件 -> 全部变成新标签页
+                                if (validImages.Count > 1)
+                                {
+                                    // OpenFilesAsNewTabs 是 async 的，但在 KeyDown 中我们不等待它 (Fire and forget)
+                                    _ = OpenFilesAsNewTabs(validImages.ToArray());
+                                    isMultiFilePaste = true;
+                                }
+                            }
                         }
+                        if (!isMultiFilePaste)
+                        {
+                            _router.SetTool(_tools.Select);
+                            if (_tools.Select is SelectTool st)
+                            {
+                                st.PasteSelection(_ctx, true);
+                            }
+                        }
+
                         e.Handled = true;
                         break;
-
                     case Key.A:
                         _router.SetTool(_tools.Select);
                         if (_tools.Select is SelectTool stSelectAll)
@@ -314,11 +356,7 @@ namespace TabPaint
         }
         private void ClipboardMonitorToggle_Click(object sender, RoutedEventArgs e)
         {
-            //if (ClipboardMonitorToggle.IsChecked == true)
-            {
-                _isMonitoringClipboard = true;
-                OnClipboardContentChanged();
-            }
+
         }
 
         // 4. 剪切板内容处理核心

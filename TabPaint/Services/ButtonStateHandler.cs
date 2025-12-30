@@ -77,16 +77,22 @@ namespace TabPaint
             SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
         }
 
-        private void SetThicknessSlider_Pos(double newValue)
+        private void SetThicknessSlider_Pos(double sliderProgressValue)
         {
-            // 根据 Slider 高度和当前值，计算提示位置
-            Rect rect = new Rect(
-             ThicknessSlider.TransformToAncestor(this).Transform(new Point(0, 0)),
-             new Size(ThicknessSlider.ActualWidth, ThicknessSlider.ActualHeight));
-            double trackHeight = ThicknessSlider.ActualHeight;
-            double relativeValue = (ThicknessSlider.Maximum - newValue) / (ThicknessSlider.Maximum - ThicknessSlider.Minimum);
-            double offsetY = relativeValue * trackHeight;
 
+            Rect rect = new Rect(
+                ThicknessSlider.TransformToAncestor(this).Transform(new Point(0, 0)),
+                new Size(ThicknessSlider.ActualWidth, ThicknessSlider.ActualHeight));
+
+            double trackHeight = ThicknessSlider.ActualHeight;
+
+   
+            double relativeValue = (ThicknessSlider.Maximum - sliderProgressValue) / (ThicknessSlider.Maximum - ThicknessSlider.Minimum);
+
+            // 防止除以 0 或越界
+            if (double.IsNaN(relativeValue)) relativeValue = 0;
+
+            double offsetY = relativeValue * trackHeight;
             ThicknessTip.Margin = new Thickness(80, offsetY + rect.Top - 10, 0, 0);
         }
 
@@ -94,20 +100,46 @@ namespace TabPaint
         {
             if (ThicknessPreview == null) return;
 
-            // 图像缩放比例
-            double zoom = ZoomTransform.ScaleX;   // or ScaleY，通常两者相等
-            double size = PenThickness * 2 * zoom; // 半径→界面直径 * 缩放
+            // 1. 获取尺寸
+            double zoom = ZoomTransform.ScaleX;
+            double size = PenThickness * zoom;
 
+            // 2. 设置宽高
             ThicknessPreview.Width = size;
             ThicknessPreview.Height = size;
+
+            if (_ctx.PenStyle == BrushStyle.Square|| _ctx.PenStyle == BrushStyle.Eraser)
+            {
+                // 方形：圆角为 0
+                ThicknessPreview.RadiusX = 0;
+                ThicknessPreview.RadiusY = 0;
+            }
+            else
+            {
+                // 圆形或其他：圆角为尺寸的一半
+                ThicknessPreview.RadiusX = size / 2;
+                ThicknessPreview.RadiusY = size / 2;
+            }
+
+            // (可选) 针对橡皮擦等特殊工具，也可以改变颜色以示区分
+            if (_ctx.PenStyle == BrushStyle.Eraser)
+            {
+                ThicknessPreview.Stroke = Brushes.Black; // 橡皮擦用黑色虚线
+            }
+            else
+            {
+                ThicknessPreview.Stroke = Brushes.Purple;
+            }
 
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;
         }
 
 
+
         private void UpdateWindowTitle()
         {
+          
             if (_currentTabItem == null)
             {
                 this.Title = $"TabPaint {ProgramVersion}";
@@ -147,6 +179,7 @@ namespace TabPaint
             // 5. 更新 UI
             this.Title = newTitle;
             if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = newTitle;
+          
         }
 
 

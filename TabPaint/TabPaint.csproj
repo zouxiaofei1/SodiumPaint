@@ -10,22 +10,29 @@
     <ApplicationIcon>Resources\TabPaint.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+	<PublishReadyToRun>true</PublishReadyToRun>
+	<TieredCompilation>true</TieredCompilation> 
+	<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <WarningLevel>3</WarningLevel>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <WarningLevel>3</WarningLevel>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <WarningLevel>3</WarningLevel>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <WarningLevel>3</WarningLevel>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -26,76 +26,36 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
 
-        public MainWindow(string startFilePath)
+        public MainWindow()
         {
-            _currentFilePath = startFilePath;
+            _currentFilePath = @"E:\dev\0000.png";
+            //默认
+            //filePath = @"E:\dev\res\0000.png";//150+图片
+            //filePath = @"E:\dev\res\pic\00A21CF65912690AD4AFA8C2E86D9FEC.jpg";//7000+图片文件夹
+            //filePath = @"E:\dev\misc\1761874502657.jpg";//BUG图片
+           
+          
+           // 
             InitializeComponent();
-
+           
             DataContext = this;
-            
+
             // 1. 统一绑定到一个 Loaded 处理函数，移除构造函数里的 lambda
             Loaded += MainWindow_Loaded;
 
             InitializeAutoSave();
 
-            // 注意：建议移除这里的 this.Show()，通常由 App.xaml.cs 控制显示
-            // 如果必须在这里显示，保持不动即可
-            this.Show();
-            
+
             // ... 其他事件绑定保持不变 ...
-            StateChanged += MainWindow_StateChanged;
-            Select = new SelectTool();
-            this.Deactivated += MainWindow_Deactivated;
-            // 字体事件
-            FontFamilyBox.SelectionChanged += FontSettingChanged;
-            FontSizeBox.SelectionChanged += FontSettingChanged;
-            BoldBtn.Checked += FontSettingChanged;
-            BoldBtn.Unchecked += FontSettingChanged;
-            ItalicBtn.Checked += FontSettingChanged;
-            ItalicBtn.Unchecked += FontSettingChanged;
-            UnderlineBtn.Checked += FontSettingChanged;
-            UnderlineBtn.Unchecked += FontSettingChanged;
 
-            //SourceInitialized += OnSourceInitialized;
-
-            MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
-            {
-                UpdateSliderBarValue(MyStatusBar.ZoomSliderControl.Value);
-            };
-
-            // Canvas 事件
-            CanvasWrapper.MouseDown += OnCanvasMouseDown;
-            CanvasWrapper.MouseMove += OnCanvasMouseMove;
-            CanvasWrapper.MouseUp += OnCanvasMouseUp;
-            CanvasWrapper.MouseLeave += OnCanvasMouseLeave;
-
-            // 初始化工具
-            _surface = new CanvasSurface(_bitmap);
-            _undo = new UndoRedoManager(_surface);
-            _ctx = new ToolContext(_surface, _undo, BackgroundImage, SelectionPreview, SelectionOverlayCanvas, EditorOverlayCanvas, CanvasWrapper);
-            _tools = new ToolRegistry();
-            _ctx.ViewElement.Cursor = _tools.Pen.Cursor;
-            _router = new InputRouter(_ctx, _tools.Pen);
-
-            this.PreviewKeyDown += (s, e) =>
-            {
-                MainWindow_PreviewKeyDown(s, e);
-                _router.OnPreviewKeyDown(s, e);
-            };
-
-            SetBrushStyle(BrushStyle.Round);
-            SetCropButtonState();
-
-            // 移除重复的绑定
-            // this.PreviewKeyDown += MainWindow_PreviewKeyDown; 
-
-            _canvasResizer = new CanvasResizeManager(this);
             this.Focusable = true;
         }
 
         // 修改为 async void，以便使用 await
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            await Task.Yield();
+
             this.Focus();
 
             // 应用特效
@@ -103,9 +63,56 @@ namespace TabPaint
 
             try
             {
+                StateChanged += MainWindow_StateChanged;
+                Select = new SelectTool();
+                this.Deactivated += MainWindow_Deactivated;
+                // 字体事件
+                FontFamilyBox.SelectionChanged += FontSettingChanged;
+                FontSizeBox.SelectionChanged += FontSettingChanged;
+                BoldBtn.Checked += FontSettingChanged;
+                BoldBtn.Unchecked += FontSettingChanged;
+                ItalicBtn.Checked += FontSettingChanged;
+                ItalicBtn.Unchecked += FontSettingChanged;
+                UnderlineBtn.Checked += FontSettingChanged;
+                UnderlineBtn.Unchecked += FontSettingChanged;
+
+                //SourceInitialized += OnSourceInitialized;
+
+                MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
+                {
+                    UpdateSliderBarValue(MyStatusBar.ZoomSliderControl.Value);
+                };
+
+                // Canvas 事件
+                CanvasWrapper.MouseDown += OnCanvasMouseDown;
+                CanvasWrapper.MouseMove += OnCanvasMouseMove;
+                CanvasWrapper.MouseUp += OnCanvasMouseUp;
+                CanvasWrapper.MouseLeave += OnCanvasMouseLeave;
+
+                // 初始化工具
+                _surface = new CanvasSurface(_bitmap);
+                _undo = new UndoRedoManager(_surface);
+                _ctx = new ToolContext(_surface, _undo, BackgroundImage, SelectionPreview, SelectionOverlayCanvas, EditorOverlayCanvas, CanvasWrapper);
+                _tools = new ToolRegistry();
+                _ctx.ViewElement.Cursor = _tools.Pen.Cursor;
+                _router = new InputRouter(_ctx, _tools.Pen);
+
+                this.PreviewKeyDown += (s, e) =>
+                {
+                    MainWindow_PreviewKeyDown(s, e);
+                    _router.OnPreviewKeyDown(s, e);
+                };
+
+                SetBrushStyle(BrushStyle.Round);
+                SetCropButtonState();
+
+                // 移除重复的绑定
+                // this.PreviewKeyDown += MainWindow_PreviewKeyDown; 
+
+                _canvasResizer = new CanvasResizeManager(this);
                 // 1. 先加载上次会话 (Tabs结构)
                 LoadSession();
-                
+
                 // 2. 如果有启动参数传入的文件，打开它
                 if (!string.IsNullOrEmpty(_currentFilePath))
                 {
@@ -117,6 +124,8 @@ namespace TabPaint
                     ResetToNewCanvas();
                 }
                 RestoreAppState();
+
+
             }
             catch (Exception ex)
             {
