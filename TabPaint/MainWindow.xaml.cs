@@ -13,6 +13,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static TabPaint.MainWindow;
 
 //
@@ -27,13 +28,10 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
 
-        public MainWindow()
+        public MainWindow(string path)
         {
-            _currentFilePath = @"E:\dev\0000.png";
-            //默认
-            //filePath = @"E:\dev\res\0000.png";//150+图片
-            //filePath = @"E:\dev\res\pic\00A21CF65912690AD4AFA8C2E86D9FEC.jpg";//7000+图片文件夹
-            //filePath = @"E:\dev\misc\1761874502657.jpg";//BUG图片
+            _currentFilePath = path;
+           
            
           
            // 
@@ -51,7 +49,31 @@ namespace TabPaint
 
             this.Focusable = true;
         }
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e); // 建议保留 base 调用
 
+            MicaAcrylicManager.ApplyEffect(this);
+            MicaEnabled=true;
+            InitializeClipboardMonitor();
+
+            var src = (HwndSource)PresentationSource.FromVisual(this);
+            if (src != null)
+            {
+                src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            }
+            // 初始化 Mica
+
+        }
+        private void MainWindow_Activated(object sender, EventArgs e)
+        {
+            // 为了性能和避免闪烁，可以加个判断，如果已经是 Mica 则不重复设置
+            if (!MicaEnabled)
+            {
+                MicaAcrylicManager.ApplyEffect(this);
+                MicaEnabled=true;
+            }
+        }
         // 修改为 async void，以便使用 await
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -60,7 +82,7 @@ namespace TabPaint
             this.Focus();
 
             // 应用特效
-            MicaAcrylicManager.ApplyEffect(this);
+            //MicaAcrylicManager.ApplyEffect(this);
 
             try
             {
@@ -77,11 +99,20 @@ namespace TabPaint
                 UnderlineBtn.Checked += FontSettingChanged;
                 UnderlineBtn.Unchecked += FontSettingChanged;
 
-                //SourceInitialized += OnSourceInitialized;
+             //   SourceInitialized += OnSourceInitialized;
 
                 MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
                 {
-                    UpdateSliderBarValue(MyStatusBar.ZoomSliderControl.Value);
+                    if (_isInternalZoomUpdate)
+                    { return;
+                    }
+                    double sliderVal = MyStatusBar.ZoomSliderControl.Value;
+
+                    // 2. 通过算法算出真实的缩放倍率 (例如滑块50 -> 倍率1.26)
+                    double targetScale = SliderToZoom(sliderVal);
+
+                    // 3. 应用缩放 (注意：不要在这里直接设置 Slider.Value，SetZoom 会去做的)
+                    SetZoom(targetScale);
                 };
 
                 // Canvas 事件
@@ -482,11 +513,12 @@ namespace TabPaint
             if (AlignLeftBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Left;
             else if (AlignCenterBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Center;
             else if (AlignRightBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Right;
-
+            tb.Foreground = SelectedBrush;
+            a.s("createtextboix");
             // 5. 背景填充
             // 这里使用白色作为填充色，如果你的App有SecondaryColor，可以换成那个颜色
             if (TextBackgroundBtn.IsChecked == true)
-                tb.Background = Brushes.White;
+                tb.Background = BackgroundBrush;
             else
                 tb.Background = Brushes.Transparent;
         }

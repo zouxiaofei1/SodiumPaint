@@ -209,6 +209,11 @@ namespace TabPaint
         }
         private void MainWindow_Deactivated(object sender, EventArgs e)
         {
+            //if (MicaEnabled)
+            //{
+            //    MicaAcrylicManager.DisableEffect(this);
+            //    MicaEnabled = false;
+            //}
             // When the window loses focus, tell the current tool to stop its action.
             _router.CurrentTool?.StopAction(_ctx);
         }
@@ -445,6 +450,20 @@ namespace TabPaint
                 e.Handled = true; // 阻止回车产生额外的换行或响铃
             }
         }
+        private void UpdateUIStatus(double realScale)
+        {
+            // 更新文本显示
+            MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
+            ZoomLevel = realScale.ToString("P0"); // 如果你有绑定的属性
+
+            // 更新滑块位置 (反向计算)
+            double targetSliderVal = ZoomToSlider(realScale);
+
+            // 【重要】设置标志位，告诉 Slider_ValueChanged 事件：“这是我改的，别触发缩放逻辑”
+            _isInternalZoomUpdate = true;
+            MyStatusBar.ZoomSliderControl.Value = targetSliderVal;
+            _isInternalZoomUpdate = false;
+        }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             UpdateImageBarSliderState();
@@ -484,7 +503,7 @@ namespace TabPaint
             // 4. 更新数据
             zoomscale = newScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
-            UpdateSliderBarValue(zoomscale);
+            UpdateUIStatus(zoomscale);
 
             // 5. 计算并应用滚动条偏移量 (维持锚点相对位置不变的平移公式)
             double offsetX = ScrollContainer.HorizontalOffset;

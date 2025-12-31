@@ -16,15 +16,13 @@ using System.Windows.Forms;
 
 namespace TabPaint
 {
+   
     public class NonLinearRangeConverter : IValueConverter
     {
         // 最小粗细
         private const double MinSize = 1.0;
         // 最大粗细
         private const double MaxSize = 400.0;
-
-        // ConvertBack: Slider (0~1) -> 实际粗细 (1~400)
-        // 公式：y = Min + (Max - Min) * x^2
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is double sliderVal)
@@ -39,9 +37,6 @@ namespace TabPaint
             }
             return MinSize;
         }
-
-        // Convert: 实际粗细 (1~400) -> Slider (0~1)
-        // 公式：x = Sqrt((y - Min) / (Max - Min))
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is double thickness || value is int || value is float)
@@ -111,8 +106,27 @@ namespace TabPaint
         #endregion
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////临时测试代码段
-        ///
-   
+        /// <summary>
+        /// 
+        /// </summary>
+        private const double MinZoomReal = 0.1;  // 10%
+        private const double MaxZoomReal = 16.0; // 1600%
+        private double ZoomToSlider(double realZoom)
+        {
+            // 越界保护
+            if (realZoom < MinZoomReal) realZoom = MinZoomReal;
+            if (realZoom > MaxZoomReal) realZoom = MaxZoomReal;
+
+            // 公式: x = 100 * log(y/min) / log(max/min)
+            return 100.0 * Math.Log(realZoom / MinZoomReal) / Math.Log(MaxZoomReal / MinZoomReal);
+        }
+        private double SliderToZoom(double sliderValue)
+        {
+            // 公式: y = min * (max/min)^(x/100)
+            double percent = sliderValue / 100.0;
+            return MinZoomReal * Math.Pow(MaxZoomReal / MinZoomReal, percent);
+        }
+
         public class TimeRecorder
         {
             private Stopwatch _stopwatch;

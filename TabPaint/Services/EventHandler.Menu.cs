@@ -168,14 +168,10 @@ namespace TabPaint
 
         private void CropMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            // 假设你的当前工具存储在一个属性 CurrentTool 中
-            // 并且你的 SelectTool 实例是可访问的
             if (_router.CurrentTool is SelectTool selectTool)
             {
-                // 创建或获取当前的 ToolContext
-                // var toolContext = CreateToolContext(); // 你应该已经有类似的方法
-
                 selectTool.CropToSelection(_ctx);
+                _canvasResizer.UpdateUI();
             }
         }
 

@@ -16,7 +16,7 @@
     </UserControl.Resources>
 
     <!-- 这里的 Border 不需要 DockPanel.Dock，也不需要 Height (让外部容器决定或自适应) -->
-    <Border Height="36" Background="#50FFFFFF" AllowDrop="True">
+    <Border Height="36" Background="#50FFFFFF" AllowDrop="True" MouseLeftButtonDown="OnRootBorderMouseDown">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                 <!-- 文件菜单 -->

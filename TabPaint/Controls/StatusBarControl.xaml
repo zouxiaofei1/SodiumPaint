@@ -6,6 +6,8 @@
 			xmlns:app="clr-namespace:TabPaint"
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
+             MaxHeight="36"
+              Height="36"
              d:DesignHeight="30" d:DesignWidth="1000">
 
     <UserControl.Resources>
@@ -62,9 +64,7 @@
         <!-- 右侧控制区 -->
         <StatusBarItem HorizontalAlignment="Right">
             <StackPanel Orientation="Horizontal">
-                <!-- 剪切板监听开关 -->
-				<!-- 剪切板监听开关 -->
-				<ToggleButton x:Name="ClipboardMonitorToggle"
+                <ToggleButton x:Name="ClipboardMonitorToggle"
 							  Width="24" Height="24"
 							  Margin="4,0,6,0" Padding="0"
 							  ToolTip="监听剪切板 (Ctrl + Alt + P)"
@@ -103,7 +103,7 @@
                 </Button>
 
                 <!-- 缩放下拉框 -->
-                <ComboBox x:Name="ZoomMenu" Margin="0,0,6,0" Width="80" SelectionChanged="OnZoomMenuSelectionChanged" IsEditable="True">
+                <ComboBox  Style="{StaticResource FluentComboBoxStyle}" x:Name="ZoomMenu" Margin="0,0,6,0" MaxHeight="26" Width="80" SelectionChanged="OnZoomMenuSelectionChanged" IsEditable="True">
                     <ComboBoxItem Content="25%" Tag="0.25"/>
                     <ComboBoxItem Content="50%" Tag="0.5"/>
                     <ComboBoxItem Content="75%" Tag="0.75"/>
@@ -117,15 +117,19 @@
                 </ComboBox>
 
                 <!-- 缩小按钮 -->
-                <Button Width="24" Height="24" ToolTip="缩小" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomOutClick" Padding="2,0">
+                <Button Width="24" Height="24" ToolTip="缩小" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomOutClick" Margin="5,0,5,0" Padding="2,0">
                     <Image Source="{StaticResource Zoom_Out_Image}" Width="16" Height="16"/>
-                </Button>
+                </Button> 
 
                 <!-- 缩放滑块 -->
-                <Slider Name="ZoomSlider" Minimum="0.1" Maximum="16.0" Value="{Binding ZoomScale, Mode=TwoWay}" Width="120" TickFrequency="0.1" SmallChange="0.1" IsSnapToTickEnabled="True"/>
-
+                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" 
+        Name="ZoomSlider" 
+        Minimum="0" 
+        Maximum="100" 
+        Width="120" 
+        IsSnapToTickEnabled="False" />
                 <!-- 放大按钮 -->
-                <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Padding="2,0">
+                <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Margin="5,0,5,0" Padding="2,0">
                     <Image Source="{StaticResource Zoom_In_Image}" Width="16" Height="16"/>
                 </Button>
             </StackPanel>

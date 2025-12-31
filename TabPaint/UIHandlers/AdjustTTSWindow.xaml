@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TabPaint"
         mc:Ignorable="d"
-        Title="色彩调整" Height="260" Width="380"
+        Title="色彩调整" Height="290" Width="380"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="Transparent"
@@ -29,6 +29,7 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,4"/>
             <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinHeight" Value="28"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -234,6 +235,7 @@
                             ValueChanged="Slider_ValueChanged"
                             Thumb.DragStarted="Slider_DragStarted" 
                             Thumb.DragCompleted="Slider_DragCompleted"
+                            MouseDoubleClick="Slider_MouseDoubleClick" 
                             Margin="0,0,0,12"/>
 
                     <!-- 色调 Tint -->
@@ -254,6 +256,7 @@
                             ValueChanged="Slider_ValueChanged"
                             Thumb.DragStarted="Slider_DragStarted" 
                             Thumb.DragCompleted="Slider_DragCompleted"
+                            MouseDoubleClick="Slider_MouseDoubleClick" 
                             Margin="0,0,0,12"/>
 
                     <!-- 饱和度 Saturation -->
@@ -274,6 +277,7 @@
                             ValueChanged="Slider_ValueChanged"
                             Thumb.DragStarted="Slider_DragStarted" 
                             Thumb.DragCompleted="Slider_DragCompleted"
+                            MouseDoubleClick="Slider_MouseDoubleClick" 
                             Margin="0,0,0,5"/>
                 </StackPanel>
             </Border>

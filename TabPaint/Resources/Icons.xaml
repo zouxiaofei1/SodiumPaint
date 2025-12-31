@@ -1137,6 +1137,119 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="Opacity_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF8A8886" Thickness="1.5" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M11.2929,2.29289C11.6834,1.90237,12.3166,1.90237,12.7071,2.29289L12.87,2.455C12.87,2.455 19.5,9.5 19.5,15 19.5,19.1421 16.1421,22.5 12,22.5 7.85786,22.5 4.5,19.1421 4.5,15 4.5,9.5 11.2929,2.29289 11.2929,2.29289z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <DrawingGroup>
+                        <DrawingGroup.Children>
+                            <GeometryDrawing>
+                                <GeometryDrawing.Brush>
+                                    <DrawingBrush ViewportUnits="Absolute" ViewboxUnits="Absolute" Viewport="0,0,4,4" Viewbox="0,0,4,4" TileMode="Tile" Opacity="1">
+                                        <DrawingBrush.Drawing>
+                                            <DrawingGroup>
+                                                <DrawingGroup.Children>
+                                                    <DrawingGroup>
+                                                        <DrawingGroup.Children>
+                                                            <GeometryDrawing Brush="#FFE0E0E0">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="0,0,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                            <GeometryDrawing Brush="#FFE0E0E0">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="2,2,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                            <GeometryDrawing Brush="#FFFFFFFF">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="2,0,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                            <GeometryDrawing Brush="#FFFFFFFF">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="0,2,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                        </DrawingGroup.Children>
+                                                        <DrawingGroup.ClipGeometry>
+                                                            <RectangleGeometry Rect="0,0,4,4" />
+                                                        </DrawingGroup.ClipGeometry>
+                                                        <DrawingGroup.Transform>
+                                                            <TranslateTransform X="0" Y="0" />
+                                                        </DrawingGroup.Transform>
+                                                    </DrawingGroup>
+                                                </DrawingGroup.Children>
+                                            </DrawingGroup>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </GeometryDrawing.Brush>
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M12,2.5C12,2.5 5.5,9.5 5.5,15 5.5,15.5 5.55,16 5.65,16.5L18.35,16.5C18.45,16 18.5,15.5 18.5,15 18.5,9.5 12,2.5 12,2.5z" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                        </DrawingGroup.Children>
+                    </DrawingGroup>
+                    <GeometryDrawing Brush="#FF8A8886">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M4.65,16C4.9,18.8 7.05,21.3 10.3,21.9 10.8,22 11.4,22 12,22 16.1421,22 19.5,18.6421 19.5,14.5 19.5,14 19.45,13.5 19.35,13L4.65,13C4.55,13.5 4.5,14 4.5,14.5 4.5,15 4.55,15.5 4.65,16z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#FF8A8886">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M4.6,13.5C4.6,13.5 7,12.5 9.5,14 12,15.5 14.5,12.5 17,13.5 18.5,14.1 19.4,13.2 19.4,13.2" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
+    <DrawingImage x:Key="Stroke_Width_Image" >
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF616161" Thickness="1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M2,5.5C2,5.5 5,2.5 9,5.5 13,8.5 15,2.5 19,5.5 21,7 22,5.5 22,5.5" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF616161" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M2,12C2,12 5,9 9,12 13,15 15,9 19,12 21,13.5 22,12 22,12" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#FF616161" Thickness="3.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M2,18.5C2,18.5 5,15.5 9,18.5 13,21.5 15,15.5 19,18.5 21,20 22,18.5 22,18.5" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
 </ResourceDictionary>

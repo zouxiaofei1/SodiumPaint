@@ -1,5 +1,6 @@
 ﻿
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -165,6 +166,7 @@ namespace TabPaint
         {
             useSecondColor = false;
             _ctx.PenColor = ForegroundColor;
+            SelectedBrush = new SolidColorBrush(ForegroundColor);
             UpdateColorHighlight(); // 更新高亮
         }
 
@@ -172,12 +174,13 @@ namespace TabPaint
         {
             useSecondColor = true;
             _ctx.PenColor = BackgroundColor;
+            SelectedBrush = new SolidColorBrush(BackgroundColor);
             UpdateColorHighlight(); // 更新高亮
         }
 
         private void OnColorButtonClick(object sender, RoutedEventArgs e)//选色按钮
         {
-            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
+            if (e.OriginalSource is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
             {
                 SelectedBrush = new SolidColorBrush(brush.Color);
 
@@ -190,7 +193,7 @@ namespace TabPaint
         private void OnCustomColorClick(object sender, RoutedEventArgs e)
         {
             // 获取当前颜色作为初始值
-            Color initialColor = _ctx.PenColor;
+            System.Windows.Media.Color initialColor = _ctx.PenColor;
             // 如果 _ctx.PenColor 是 Colors.Transparent 或者其他特殊值，最好给个默认值
             if (initialColor == Colors.Transparent) initialColor = Colors.Black;
 

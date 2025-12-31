@@ -7,11 +7,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
+
+//
+//复制管理mica和亚克力特效的js
+//
+
 namespace TabPaint
 {
+ 
     public static class MicaAcrylicManager
     {
-
+        
         static void s<T>(T a)
         {
             System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -75,7 +82,7 @@ namespace TabPaint
 
             if (IsWin11())
             {
-               
+
                 EnableMica(hwnd);
             }
             else if (IsWin10OrLater())
@@ -87,9 +94,27 @@ namespace TabPaint
                 // 其他平台使用普通背景
             }
         }
+        public static void DisableEffect(Window window)
+        {
+            var hwnd = new WindowInteropHelper(window).Handle;
 
+            if (IsWin11())
+            {
+
+                DisableMica(hwnd);
+            }
+          
+        }
+        public static void DisableMica(IntPtr hwnd)
+        {
+            ((MainWindow)System.Windows.Application.Current.MainWindow).Background = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
+
+            int backdropType = (int)DWMSBT.DWMSBT_NONE;
+            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
+        }
         private static void EnableMica(IntPtr hwnd)/// 启用 Win11 Mica 效果
         {
+            ((MainWindow)System.Windows.Application.Current.MainWindow).Background = new SolidColorBrush(Color.FromArgb(0, 255, 255, 255));
             int cornerPref = 2; // 2 = rounded
             DwmSetWindowAttribute(hwnd, (DWMWINDOWATTRIBUTE)33, ref cornerPref, sizeof(int)); // DWMWA_WINDOW_CORNER_PREFERENCE
 

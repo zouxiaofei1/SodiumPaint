@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace TabPaint.Controls
 {
@@ -66,7 +67,16 @@ namespace TabPaint.Controls
             get { return RedoButton.IsEnabled; }
             set { RedoButton.IsEnabled = value; }
         }
-
+        private void OnRootBorderMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var window = Window.GetWindow(this);
+            if (window == null) return;
+            if (e.LeftButton == MouseButtonState.Pressed)
+            { try
+                { window.DragMove(); }
+                catch{ }
+            }
+        }
         // 如果你的代码里需要直接访问 Button 对象 (例如做动画)，可以这样暴露：
         public Button BtnUndo => UndoButton;
         public Button BtnRedo => RedoButton;

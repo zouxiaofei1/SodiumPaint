@@ -48,7 +48,13 @@ namespace TabPaint
                 ApplyPreview();
             }
         }
-
+        private void Slider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Slider slider)
+            {
+                slider.Value = 0;
+            }
+        }
         // --- 新增：数字输入验证 ---
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {

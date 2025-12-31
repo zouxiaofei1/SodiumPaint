@@ -107,6 +107,7 @@ namespace TabPaint
                 }
             }
         }
+ 
         public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon, Highlighter, Mosaic }
         public enum UndoActionType
         {
@@ -120,8 +121,8 @@ namespace TabPaint
         public SolidColorBrush ForegroundBrush { get; set; } = new SolidColorBrush(Colors.Black);
         public SolidColorBrush BackgroundBrush { get; set; } = new SolidColorBrush(Colors.White);
         // 当前画笔颜色属性，可供工具使用
-        public Color BackgroundColor;
-        public Color ForegroundColor;
+        public Color BackgroundColor= Colors.White;
+        public Color ForegroundColor= Colors.Black;
         public SolidColorBrush SelectedBrush { get; set; } = new SolidColorBrush(Colors.Black);
 
         // 绑定到 ItemsControl 的预设颜色集合
@@ -147,6 +148,7 @@ namespace TabPaint
             };
 
         private double _zoomScale = 1.0;
+        private bool _isInternalZoomUpdate =false;
         private string _zoomLevel = "100%";
         public string ZoomLevel
         {
@@ -215,6 +217,7 @@ namespace TabPaint
             }
         }
         private bool _isPaintingMode = true;//画图模式
+        public bool MicaEnabled = false;
         private bool _isLoadingImage = true;//是否正在加载图像,false时不能画图
     }
 }

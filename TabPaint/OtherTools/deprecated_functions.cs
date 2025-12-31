@@ -81,3 +81,66 @@
 //        Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
 //    }
 //}
+
+
+
+//using System.Globalization;
+//using System.Windows.Data;
+
+//namespace TabPaint.Converters
+//{
+//    // 将 Slider 的线性刻度转换为指数级增长的实际缩放值
+//    public class LogarithmicScaleConverter : IValueConverter
+//    {
+//        // 目标真实倍率范围
+//        private const double RealMin = 0.1;  // 10%
+//        private const double RealMax = 16.0; // 1600%
+
+//        // Slider 控件的逻辑范围 (XAML里要对应设置 Minimum=0 Maximum=100)
+//        private const double SliderMin = 0.0;
+//        private const double SliderMax = 100.0;
+
+//        // 计算常数
+//        private static readonly double LogRealMin = Math.Log(RealMin);
+//        private static readonly double LogRealRange = Math.Log(RealMax) - Math.Log(RealMin);
+//        private static readonly double SliderRange = SliderMax - SliderMin;
+
+//        /// <summary>
+//        /// ViewModel (真实倍率) -> View (Slider位置 0-100)
+//        /// </summary>
+//        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+//        {
+//            if (value is double realZoom)
+//            {
+//                // 边界保护
+//                if (realZoom <= RealMin) return SliderMin;
+//                if (realZoom >= RealMax) return SliderMax;
+
+//                // 公式: slider = (log(zoom) - log(min)) / (log(max) - log(min)) * 100
+//                double sliderVal = ((Math.Log(realZoom) - LogRealMin) / LogRealRange) * SliderRange + SliderMin;
+//                return sliderVal;
+//            }
+//            return SliderMin;
+//        }
+
+//        /// <summary>
+//        /// View (Slider位置 0-100) -> ViewModel (真实倍率)
+//        /// </summary>
+//        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+//        {
+//            if (value is double sliderVal)
+//            {
+//                // 边界保护
+//                if (sliderVal <= SliderMin) return RealMin;
+//                if (sliderVal >= SliderMax) return RealMax;
+
+//                // 公式: zoom = exp( (slider/100) * (log(max)-log(min)) + log(min) )
+//                double relativePos = (sliderVal - SliderMin) / SliderRange;
+//                double realZoom = Math.Exp(relativePos * LogRealRange + LogRealMin);
+
+//                return Math.Round(realZoom, 2); // 保留两位小数
+//            }
+//            return RealMin;
+//        }
+//    }
+//}

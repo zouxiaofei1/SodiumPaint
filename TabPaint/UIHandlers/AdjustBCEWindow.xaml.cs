@@ -65,6 +65,13 @@ namespace TabPaint
             _updateTimer.Stop();
             ApplyPreview();
         }
+        private void Slider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Slider slider)
+            {
+                slider.Value = 0;
+            }
+        }
 
         // --- 核心逻辑修改：滑块变动 ---
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

@@ -62,6 +62,7 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
+            //  s(TabPaint.SettingsManager.Instance.Current.PenOpacity);
                 if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
 
                 // --- 荧光笔遮罩初始化 ---
@@ -322,7 +323,10 @@ namespace TabPaint
             {
                 int r = (int)ctx.PenThickness;
                 Color c = ctx.PenColor;
-                byte cb = c.B, cg = c.G, cr = c.R, ca = c.A;
+                byte finalAlpha = GetCurrentAlpha(c.A);
+                // 如果完全透明，直接不画，节省性能
+                if (finalAlpha == 0) return;
+                byte cb = c.B, cg = c.G, cr = c.R, ca = finalAlpha;
 
                 double dx = p2.X - p1.X;
                 double dy = p2.Y - p1.Y;
@@ -355,8 +359,22 @@ namespace TabPaint
 
                         if (distSq <= rSq)
                         {
-                            byte* p = rowPtr + x * 4;
-                            p[0] = cb; p[1] = cg; p[2] = cr; p[3] = ca;
+                            byte* p = rowPtr + x * 4; if (ca == 255)
+                            {
+                                // 不透明优化：直接覆盖
+                                p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
+                            }
+                            else
+                            {
+                                float alphaNorm = ca / 255.0f;
+                                float invAlpha = 1.0f - alphaNorm;
+
+                                p[0] = (byte)(cb * alphaNorm + p[0] * invAlpha);
+                                p[1] = (byte)(cg * alphaNorm + p[1] * invAlpha);
+                                p[2] = (byte)(cr * alphaNorm + p[2] * invAlpha);
+                                p[3] = (byte)Math.Min(255, p[3] + ca);
+                            }
+                            
                         }
                     }
                 }
@@ -367,7 +385,9 @@ namespace TabPaint
                 int x0 = (int)p1.X; int y0 = (int)p1.Y;
                 int x1 = (int)p2.X; int y1 = (int)p2.Y;
                 Color c = ctx.PenColor;
-                byte cb = c.B, cg = c.G, cr = c.R, ca = c.A;
+                byte finalAlpha = GetCurrentAlpha(c.A);
+                if (finalAlpha == 0) return;
+                byte cb = c.B, cg = c.G, cr = c.R, ca = finalAlpha;
 
                 int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
                 int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
@@ -378,7 +398,21 @@ namespace TabPaint
                     if (x0 >= 0 && x0 < w && y0 >= 0 && y0 < h)
                     {
                         byte* p = basePtr + y0 * stride + x0 * 4;
-                        p[0] = cb; p[1] = cg; p[2] = cr; p[3] = ca;
+
+                        // 同样加入混合逻辑
+                        if (ca == 255)
+                        {
+                            p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
+                        }
+                        else
+                        {
+                            float alphaNorm = ca / 255.0f;
+                            float invAlpha = 1.0f - alphaNorm;
+                            p[0] = (byte)(cb * alphaNorm + p[0] * invAlpha);
+                            p[1] = (byte)(cg * alphaNorm + p[1] * invAlpha);
+                            p[2] = (byte)(cr * alphaNorm + p[2] * invAlpha);
+                            p[3] = 255;
+                        }
                     }
                     if (x0 == x1 && y0 == y1) break;
                     e2 = 2 * err;
@@ -394,8 +428,11 @@ namespace TabPaint
                 int x = (int)p.X - half;
                 int y = (int)p.Y - half;
 
-                Color c = isEraser ? ctx.EraserColor : ctx.PenColor;
-                byte cb = c.B, cg = c.G, cr = c.R, ca = c.A;
+                Color c = isEraser ? ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundColor : ctx.PenColor;
+                byte finalAlpha = GetCurrentAlpha(c.A);
+                // 如果完全透明，直接不画，节省性能
+                if (finalAlpha == 0) return;
+                byte cb = c.B, cg = c.G, cr = c.R, ca = isEraser ? c.A : finalAlpha;
 
                 int xend = Math.Min(w, x + size);
                 int yend = Math.Min(h, y + size);
@@ -489,6 +526,7 @@ namespace TabPaint
             {
                 int radius = (int)ctx.PenThickness;
                 Color baseColor = ctx.PenColor;
+                double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
                 byte alpha = 15;
                 double irregularRadius = radius * (0.9 + _rnd.NextDouble() * 0.2);
 
@@ -525,9 +563,11 @@ namespace TabPaint
 
             private unsafe void DrawOilPaintStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
-                byte alpha = (byte)(0.2 * 255 / Math.Max(1, Math.Pow(ctx.PenThickness, 0.5)));
-                if (alpha == 0) return;
+                double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                byte alpha = (byte)((0.2 * 255 / Math.Max(1, Math.Pow(ctx.PenThickness, 0.5))) * globalOpacity);
 
+                if (alpha == 0) return;
+               
                 int radius = (int)ctx.PenThickness;
                 if (radius < 1) radius = 1;
                 Color baseColor = ctx.PenColor;
@@ -580,8 +620,11 @@ namespace TabPaint
 
             private unsafe void DrawHighlighterLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
-                int r = (int)ctx.PenThickness;
-                Color c = Color.FromArgb(30, 255, 255, 0);
+                int r = (int)ctx.PenThickness; 
+                double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                byte baseAlpha = 30;
+                Color c = Color.FromArgb((byte)(baseAlpha * globalOpacity), 255, 255, 0);
+
 
                 int xmin = (int)Math.Min(p1.X, p2.X) - r;
                 int ymin = (int)Math.Min(p1.Y, p2.Y) - r;
@@ -674,6 +717,13 @@ namespace TabPaint
                 int width = Math.Max(0, right - left);
                 int height = Math.Max(0, bottom - top);
                 return new Int32Rect(left, top, width, height);
+            }
+            private byte GetCurrentAlpha(byte originalAlpha)
+            {
+                // 获取全局设置
+                var globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                // 计算最终 Alpha (0-255)
+                return (byte)(originalAlpha * globalOpacity);
             }
 
             private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)

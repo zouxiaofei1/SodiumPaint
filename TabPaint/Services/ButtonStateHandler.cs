@@ -258,22 +258,11 @@ namespace TabPaint
             MainToolBar.ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
 
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e); // 必须调用基类方法
-
-            InitializeClipboardMonitor();
-
-            var src = (HwndSource)PresentationSource.FromVisual(this);
-            if (src != null)
-            {
-                src.CompositionTarget.BackgroundColor = Colors.Transparent;
-            }
-        }
-
+  
         private void SetPenResizeBarVisibility(bool vis)
         {
             ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
+            ((MainWindow)System.Windows.Application.Current.MainWindow).OpacityPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public void SetUndoRedoButtonState()
@@ -424,6 +413,7 @@ namespace TabPaint
         }
         private void UpdateSliderBarValue(double newScale)
         {
+           
             MyStatusBar.ZoomSliderControl.Value = newScale;
             ZoomLevel = newScale.ToString("P0");
             MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");

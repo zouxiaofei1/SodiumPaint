@@ -300,8 +300,6 @@
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Grid>
-                                        <!-- 外层：悬浮淡紫色边框 (Item 7) -->
-                                        <!-- 默认透明，MouseOver时显示 -->
                                         <Ellipse x:Name="hoverBorder" 
                                      Margin="-3" 
                                      Stroke="#B8AAFF" 

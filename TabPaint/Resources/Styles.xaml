@@ -328,7 +328,7 @@
                         <!-- 滑块内圆 (Win11 特色) -->
                         <Ellipse x:Name="InnerDot" 
                              Fill="{StaticResource Win11AccentBrush}" 
-                             Width="6" Height="6" 
+                             Width="10" Height="10" 
                              VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Ellipse.RenderTransform>
                                 <ScaleTransform ScaleX="1" ScaleY="1" CenterX="3" CenterY="3"/>
@@ -338,30 +338,8 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="OuterRing" Property="Stroke" Value="#888"/>
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
-                                                     Storyboard.TargetProperty="(RenderTransform).ScaleX" 
-                                                     To="1.5" Duration="0:0:0.1"/>
-                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
-                                                     Storyboard.TargetProperty="(RenderTransform).ScaleY" 
-                                                     To="1.5" Duration="0:0:0.1"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
-                                                     Storyboard.TargetProperty="(RenderTransform).ScaleX" 
-                                                     To="1" Duration="0:0:0.1"/>
-                                        <DoubleAnimation Storyboard.TargetName="InnerDot" 
-                                                     Storyboard.TargetProperty="(RenderTransform).ScaleY" 
-                                                     To="1" Duration="0:0:0.1"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
+                            <Setter TargetName="InnerDot" Property="Stroke" Value="#005196"/>
+                            <Setter TargetName="InnerDot" Property="Fill" Value="#005196"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -369,6 +347,18 @@
         </Setter>
     </Style>
 
+    <SolidColorBrush x:Key="SliderTrackBackground" Color="#E0E0E0"/>
+    <!-- 未滑动部分的灰色 -->
+    <SolidColorBrush x:Key="SliderTrackFill" Color="#0067C0"/>
+    <!-- 已滑动部分的蓝色/主题色 -->
+    <SolidColorBrush x:Key="SliderThumbFill" Color="#0067C0"/>
+    <!-- 滑块颜色 -->
+    <SolidColorBrush x:Key="SliderThumbHoverFill" Color="#005A9E"/>
+    <!-- 滑块悬停颜色 -->
+    <SolidColorBrush x:Key="SliderThumbBorder" Color="White"/>
+    <!-- 滑块内部圆圈 -->
+
+    <!-- 2. 滑块(Thumb) 的样式：Win11 是圆形的 -->
     <!-- 2. Slider 整体模板 (修正了 RepeatButton 问题) -->
     <Style x:Key="Win11VerticalSliderStyle" TargetType="Slider">
 
@@ -379,10 +369,10 @@
                     <Grid Margin="0,10">
                         <!-- 轨道背景 -->
                         <Border x:Name="TrackBackground" 
-                            Width="4" 
-                            Background="{StaticResource Win11TrackBackground}" 
-                            CornerRadius="2" 
-                            HorizontalAlignment="Center"/>
+                        Width="4" 
+                        Background="{StaticResource Win11TrackBackground}" 
+                        CornerRadius="2" 
+                        HorizontalAlignment="Center"/>
 
                         <!-- 轨道控制 -->
                         <Track x:Name="PART_Track">
@@ -414,6 +404,75 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- 3. 水平 Slider 整体样式 -->
+    <Style x:Key="Win11HorizontalSliderStyle" TargetType="{x:Type Slider}">
+        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource SliderTrackBackground}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Slider}">
+                    <Border Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid VerticalAlignment="Center" Margin="0,6">
+                            <!-- Margin增加点击判定范围 -->
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" MinHeight="{TemplateBinding MinHeight}"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- 轨道背景 (灰条) -->
+                            <Border x:Name="TrackBackground"
+                                Grid.Row="1"
+                                Height="4"
+                                Background="{StaticResource SliderTrackBackground}"
+                                CornerRadius="2"
+                                VerticalAlignment="Center"/>
+
+                            <!-- 核心轨道部件 -->
+                            <Track x:Name="PART_Track" Grid.Row="1">
+                                <Track.DecreaseRepeatButton>
+                                    <!-- 左侧按钮：伪装成已填充的颜色条 -->
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                <!-- 这里是 Win11 的蓝色填充条 -->
+                                                <Border Height="4" 
+                                                    Background="{StaticResource SliderTrackFill}" 
+                                                    CornerRadius="2,0,0,2"
+                                                    VerticalAlignment="Center"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource Win11SliderThumbStyle}" VerticalAlignment="Center"/>
+                                </Track.Thumb>
+
+                                <Track.IncreaseRepeatButton>
+                                    <!-- 右侧按钮：透明，露出底下的灰色轨道 -->
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                <Border Background="Transparent" Height="10"/>
+                                                <!-- 高度设大一点方便点击 -->
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 
 
     <Style TargetType="ToolBar">

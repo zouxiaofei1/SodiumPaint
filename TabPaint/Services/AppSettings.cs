@@ -91,7 +91,20 @@ namespace TabPaint
                 OnPropertyChanged();
             }
         }
-
+        private double _penOpacity = 1.0; // 默认不透明 (0.0 到 1.0)
+        [JsonPropertyName("pen_opacity")]
+        public double PenOpacity
+        {
+            get => _penOpacity;
+            set
+            {
+                if (_penOpacity != value)
+                {
+                    _penOpacity = value;
+                    OnPropertyChanged(nameof(PenOpacity));
+                }
+            }
+        }
         // 在 AppSettings 类中添加
         private bool _isFixedZoom = false;
 

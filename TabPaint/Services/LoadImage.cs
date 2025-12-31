@@ -267,7 +267,7 @@ namespace TabPaint
         private readonly object _lockObj = new object();
         private async Task LoadImage(string filePath)
         {
-           // a.s(filePath);
+          
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
