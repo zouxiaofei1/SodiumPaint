@@ -26,6 +26,9 @@ namespace TabPaint.Controls
         {
             InitializeComponent();
         }
+        public event MouseButtonEventHandler TitleBarMouseDown;
+
+        // 2. 内部 Border 的点击事件处理器
 
         private void OnMinimizeClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(MinimizeClickEvent));
         private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(MaximizeRestoreClickEvent));
@@ -33,8 +36,15 @@ namespace TabPaint.Controls
 
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Window parentWindow = Window.GetWindow(this);
-            if (parentWindow != null && e.ClickCount != 2) parentWindow.DragMove();
+            // 如果点击的是按钮（最大化/关闭等），通常按钮会拦截事件，但为了保险可以判断 Source
+            if (e.OriginalSource is System.Windows.Controls.Button ||
+                (e.OriginalSource is FrameworkElement fe && fe.TemplatedParent is System.Windows.Controls.Button))
+            {
+                return;
+            }
+
+            // 3. 将事件转发给外部 (即 MainWindow)
+            TitleBarMouseDown?.Invoke(this, e);
         }
     }
 }

@@ -122,6 +122,13 @@ namespace TabPaint
                         }
                         e.Handled = true;
                         break;
+                    case Key.L: RotateBitmap(-90);
+                        e.Handled = true;
+                        break;
+                    case Key.R:
+                        RotateBitmap(90);
+                        e.Handled = true;
+                        break;
                 }
             }
             else if (Keyboard.Modifiers == ModifierKeys.None)
@@ -209,21 +216,16 @@ namespace TabPaint
         }
         private void MainWindow_Deactivated(object sender, EventArgs e)
         {
-            //if (MicaEnabled)
-            //{
-            //    MicaAcrylicManager.DisableEffect(this);
-            //    MicaEnabled = false;
-            //}
-            // When the window loses focus, tell the current tool to stop its action.
             _router.CurrentTool?.StopAction(_ctx);
         }
 
 
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-
+          //  s(1);
             if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
             {
+               
                 MaximizeRestore_Click(sender, null);
                 return;
             }
@@ -249,6 +251,7 @@ namespace TabPaint
 
             if (_draggingFromMaximized && e.LeftButton == MouseButtonState.Pressed)
             {
+               
                 // 鼠标移动的阈值，比如 5px
                 var currentPos = e.GetPosition(this);
                 if (Math.Abs(currentPos.X - _dragStartPoint.X) > 5 ||

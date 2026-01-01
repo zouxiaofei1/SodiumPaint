@@ -174,7 +174,7 @@ namespace TabPaint
             private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#886CE4"));
             private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
 
-            private SelectTool GetSelectTool()
+            public SelectTool GetSelectTool()
             {
                 var mw = (MainWindow)Application.Current.MainWindow;
                 return mw._tools.Select as SelectTool;
@@ -182,11 +182,12 @@ namespace TabPaint
 
             public void CleanUpSelectionandShape()
             {
+                var mw = (MainWindow)Application.Current.MainWindow;
                 if (CurrentTool is SelectTool selTool && selTool._selectionData != null)
                 {
                     selTool.GiveUpSelection(_ctx);
                 }
-                if (CurrentTool is ShapeTool shapetool && GetSelectTool()?._selectionData != null)
+                if (mw._router.CurrentTool is ShapeTool shapetool && GetSelectTool()?._selectionData != null)
                 {
                     shapetool.GiveUpSelection(_ctx);
                 }

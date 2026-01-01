@@ -230,14 +230,8 @@ namespace TabPaint
 
                     newBmp.WritePixels(new Int32Rect(copyX, copyY, copyW, copyH), srcPixels, copyW * 4, 0);
                 }
-
-                // 获取新图的全数据用于 Redo
                 byte[] newPixels = new byte[newW * newH * 4];
                 newBmp.CopyPixels(newPixels, newBmp.BackBufferStride, 0);
-
-                // 4. 执行替换并记录 Undo
-                // 注意：这里需要修改你的 UndoRedoManager 以支持 "ReplaceBitmap" 这种操作
-                // 或者使用 TransformAction
 
                 ((MainWindow)System.Windows.Application.Current.MainWindow)._undo.PushTransformAction(
                     rect, oldPixels,                // Undo: 回到旧尺寸，旧像素
@@ -246,7 +240,7 @@ namespace TabPaint
 
                 // 5. 替换当前显示的位图
                 ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.ReplaceBitmap(newBmp);
-
+                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(newW, newH);
                 // 6. 刷新界面
                 UpdateUI();
             }

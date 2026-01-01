@@ -139,7 +139,7 @@ namespace TabPaint
                 if (_selectionData != null) CommitSelection(ctx);
 
                 if (sourceBitmap == null) return;
-
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 // 强制转换为 Bgra32
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
                     sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
@@ -148,9 +148,10 @@ namespace TabPaint
                 int imgH = sourceBitmap.PixelHeight;
                 int canvasW = ctx.Surface.Bitmap.PixelWidth;
                 int canvasH = ctx.Surface.Bitmap.PixelHeight;
-
+                bool _canvasChanged = false;
                 if (expandCanvas && (imgW > canvasW || imgH > canvasH))
                 {
+                    _canvasChanged = true;
                     int newW = Math.Max(imgW, canvasW);
                     int newH = Math.Max(imgH, canvasH);
 
@@ -175,9 +176,11 @@ namespace TabPaint
                     Int32Rect redoRect = new Int32Rect(0, 0, newW, newH);
                     byte[] redoPixels = ctx.Surface.ExtractRegion(redoRect);
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
-                    var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                    mw.NotifyCanvasSizeChanged(newW, newH);
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
+                    //mw.BackgroundImage.ActualHeight = newH;
+
                 }
                 int stride = imgW * 4;
                 var newData = new byte[imgH * stride];
@@ -198,6 +201,10 @@ namespace TabPaint
                 // 绘制 8 个句柄和虚线框
                 DrawOverlay(ctx, _selectionRect);
                 _transformStep = 0;
+               
+                mw.FitToWindow();
+                mw._canvasResizer.UpdateUI();
+
             }
 
             public void PasteSelection(ToolContext ctx, bool ins)
@@ -379,7 +386,7 @@ namespace TabPaint
                 Cleanup(ctx); // 使用你已有的清理方法
                 ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
                 ctx.IsDirty = true;
-
+                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(finalWidth, finalHeight);
                 // 更新UI（例如Undo/Redo按钮的状态）
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
             }
@@ -490,6 +497,7 @@ namespace TabPaint
                 // 缩放逻辑
                 if (_resizing)
                 {
+                    if (!_hasLifted) LiftSelectionFromCanvas(ctx);
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
 
@@ -589,11 +597,7 @@ namespace TabPaint
                 {
                     if (!_hasLifted)
                     {
-                        ctx.Undo.BeginStroke(); ctx.Undo.AddDirtyRect(_originalRect); ctx.Undo.CommitStroke();
-
-                        ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
-
-                        _hasLifted = true;
+                        LiftSelectionFromCanvas(ctx);
                     }
                     var mainWindow = System.Windows.Application.Current.MainWindow;
                     if (mainWindow != null)
@@ -657,8 +661,11 @@ namespace TabPaint
                     // 计算在预览自身坐标系中的有效显示范围
                     double visibleX = (int)Math.Max(0, -offsetX / ratioX);
                     double visibleY = (int)Math.Max(0, -offsetY / ratioY);
-                    double visibleW = (int)Math.Min(tmprc.Width, (canvasW - offsetX) / ratioX);
-                    double visibleH = (int)Math.Min(tmprc.Height, (canvasH - offsetY) / ratioY);
+
+
+                    double visibleW = (int)Math.Min(tmprc.Width / ratioX, (canvasW - offsetX) / ratioX);
+                    double visibleH = (int)Math.Min(tmprc.Height / ratioY, (canvasH - offsetY) / ratioY);
+
                     Int32Rect intRect = ClampRect(new Int32Rect((int)visibleX, (int)visibleY, (int)visibleW, (int)visibleH), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
                     Rect rect = new Rect(intRect.X, intRect.Y, intRect.Width, intRect.Height);
                     Geometry visibleRect = new RectangleGeometry(rect);
@@ -682,6 +689,21 @@ namespace TabPaint
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SelectionSize =
                         $"{_selectionRect.Width}×{_selectionRect.Height}像素";
                 });
+            }
+            private void LiftSelectionFromCanvas(ToolContext ctx)
+            {
+                if (_hasLifted) return; // 如果已经抠过了，就别再抠了
+
+                // 1. 记录 Undo（确保撤销能恢复原画布的这个洞）
+                ctx.Undo.BeginStroke();
+                ctx.Undo.AddDirtyRect(_originalRect);
+                ctx.Undo.CommitStroke();
+
+                // 2. 将原位置擦除为透明（或者背景色）
+                ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
+
+                // 3. 标记状态
+                _hasLifted = true;
             }
 
             public override void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e)
@@ -717,7 +739,81 @@ namespace TabPaint
                 }
             }
 
+            public void RotateSelection(ToolContext ctx, int angle)
+            {
+                if (_selectionData == null || _originalRect.Width == 0 || _originalRect.Height == 0) return;
 
+                int oldW = _originalRect.Width;
+                int oldH = _originalRect.Height;
+                int stride = oldW * 4;
+
+                // 从 byte[] 创建临时源位图
+                var srcBmp = BitmapSource.Create(
+                    oldW, oldH,
+                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                    PixelFormats.Bgra32, null,
+                    _selectionData, stride);
+
+                // 使用 WPF 变换进行旋转
+                var transform = new TransformedBitmap(srcBmp, new RotateTransform(angle));
+
+                // 获取新尺寸
+                int newOriginalW = transform.PixelWidth;
+                int newOriginalH = transform.PixelHeight;
+                int newStride = newOriginalW * 4;
+
+                // 提取旋转后的像素数据
+                byte[] newPixels = new byte[newOriginalH * newStride];
+                transform.CopyPixels(newPixels, newStride, 0);
+
+                // 更新源数据
+                _selectionData = newPixels;
+                _originalRect.Width = newOriginalW;
+                _originalRect.Height = newOriginalH;
+
+                double centerX = _selectionRect.X + _selectionRect.Width / 2.0;
+                double centerY = _selectionRect.Y + _selectionRect.Height / 2.0;
+
+                int newSelectionW = _selectionRect.Width;
+                int newSelectionH = _selectionRect.Height;
+
+                if (angle % 180 != 0)
+                {
+                    newSelectionW = _selectionRect.Height;
+                    newSelectionH = _selectionRect.Width;
+                }
+                int newX = (int)Math.Round(centerX - newSelectionW / 2.0);
+                int newY = (int)Math.Round(centerY - newSelectionH / 2.0);
+
+                // 更新选区矩形
+                _selectionRect = new Int32Rect(newX, newY, newSelectionW, newSelectionH);
+
+                var previewBmp = new WriteableBitmap(transform);
+                ctx.SelectionPreview.Source = previewBmp;
+
+                SetPreviewPosition(ctx, newX, newY); // 复用你现有的设置位置方法
+
+
+                double scaleX = (double)newSelectionW / newOriginalW;
+                double scaleY = (double)newSelectionH / newOriginalH;
+
+                // 构建变换组：缩放 + 位移
+                var tg = new TransformGroup();
+                tg.Children.Add(new ScaleTransform(scaleX, scaleY));
+                tg.Children.Add(new TranslateTransform(newX, newY)); 
+                ctx.SelectionPreview.RenderTransform = tg;
+
+                Canvas.SetLeft(ctx.SelectionPreview, 0);
+                Canvas.SetTop(ctx.SelectionPreview, 0);
+
+                // 刷新虚线框
+                DrawOverlay(ctx, _selectionRect);
+
+                // 更新状态栏尺寸
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}像素";
+                mw.SetCropButtonState(); // 确保裁剪按钮状态正确
+            }
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
                 if (lag > 0) { lag--; return; }
@@ -727,29 +823,39 @@ namespace TabPaint
                 if (_selecting)
                 {
                     _selecting = false;
-                    _selectionRect = MakeRect(_startPixel, px);
+
+                    // 1. 原始计算出的矩形（可能超出画布）
+                    var rawRect = MakeRect(_startPixel, px);
+
+                    // 2. 【修复关键】将矩形限制在画布范围内
+                    // 必须确保 _selectionRect 和后面提取数据用的矩形完全一致
+                    _selectionRect = ClampRect(rawRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
 
                     if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
                     {
-                        // 1. 提取数据
-                        _selectionData = ctx.Surface.ExtractRegion(ClampRect(_selectionRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight));
+                        // 3. 提取数据 (因为上面已经Clamp过了，这里提取的数据量就是精确匹配 _selectionRect 的)
+                        _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
 
-                        // --- 核心修复：记录原始尺寸 ---
+                        // 4. 记录原始尺寸
                         _originalRect = _selectionRect;
                         var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
                             ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
                         previewBmp.WritePixels(new Int32Rect(0, 0, _selectionRect.Width, _selectionRect.Height),
                                                _selectionData, _selectionRect.Width * 4, 0);
-                        //s(_selectionRect.Width);
-                        ctx.SelectionPreview.Source = previewBmp;
 
-                        // 重置变换，确保预览图从 1:1 开始
+                        ctx.SelectionPreview.Source = previewBmp;
                         ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
+
                         SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
+                    else
+                    {
+                        Cleanup(ctx);
+                    }
                 }
+
 
                 else if (_draggingSelection)
                 {

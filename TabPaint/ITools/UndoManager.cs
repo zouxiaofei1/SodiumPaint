@@ -144,6 +144,7 @@ namespace TabPaint
                     wb.WritePixels(action.UndoRect, action.UndoPixels, wb.BackBufferStride, 0);
                     // 替换主位图
                     _surface.ReplaceBitmap(wb); // 假设你有这个方法
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(action.UndoRect.Width, action.UndoRect.Height);
                 }
                 else // Draw Action
                 {

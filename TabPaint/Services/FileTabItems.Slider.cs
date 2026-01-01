@@ -294,7 +294,12 @@ namespace TabPaint
                 // 跳转逻辑：重新生成 Tab 列表
                 // 注意：这里可能会导致 FileTabs 重置，从而触发 ScrollChanged。
                 // 由于 _isSyncingSlider = true，ScrollChanged 内的逻辑会被跳过，这是安全的。
+                a.s(index);
+                
                 await RefreshTabPageAsync(index, true);
+                var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[index]);
+                if(currentTab!=null)SwitchToTab(currentTab);
+
             }
             finally
             {
@@ -353,7 +358,6 @@ namespace TabPaint
         private void Slider_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             var slider = (Slider)sender;
-
             double step = 1.0;
 
             // 如果按住 Shift 键，可以加速滚动
@@ -373,13 +377,14 @@ namespace TabPaint
                 // 向上滚，减少 Value
                 slider.Value = Math.Max(slider.Minimum, slider.Value - step);
             }
-
+         
             // 标记事件已处理，防止冒泡导致父容器(ScrollViewer)也跟着滚
             e.Handled = true;
         }
 
         private async void UpdateSliderValueFromPoint(Slider slider, Point position)
         {
+        
             double ratio = position.Y / slider.ActualHeight;
 
             // 边界检查

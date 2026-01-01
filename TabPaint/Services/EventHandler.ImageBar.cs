@@ -28,6 +28,7 @@ namespace TabPaint
         { 
             if (e.OriginalSource is FrameworkElement element && element.DataContext is FileTabItem clickedItem)
                 {
+             
                     SwitchToTab(clickedItem);
             }
         }

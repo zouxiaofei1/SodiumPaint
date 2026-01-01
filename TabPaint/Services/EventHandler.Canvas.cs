@@ -25,6 +25,71 @@ namespace TabPaint
             Point pos = e.GetPosition(CanvasWrapper);
             _router.ViewElement_MouseDown(pos, e);
         }
+        private Thumb _opacitySliderThumb;
+
+private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
+{
+    // 尝试在可视树中查找 Slider 内部的 Thumb
+    if (OpacitySlider.Template != null)
+    {
+        // "Thumb" 是 WPF 默认 Slider 模板中滑块部件的标准名称
+        // 如果你的 Win11VerticalSliderStyle 修改了模板，请确认名称是否为 "Thumb"
+        _opacitySliderThumb = OpacitySlider.Template.FindName("Thumb", OpacitySlider) as Thumb;
+    }
+}
+
+        private void OpacitySlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            if (OpacitySlider.ToolTip is System.Windows.Controls.ToolTip toolTip)
+            {
+                toolTip.PlacementTarget = OpacitySlider;
+                toolTip.Placement = System.Windows.Controls.Primitives.PlacementMode.Right;
+
+                // 打开时先更新一次位置
+                UpdateToolTipOffset(toolTip);
+
+                toolTip.IsOpen = true;
+            }
+        }
+
+        private void OpacitySlider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            if (OpacitySlider.ToolTip is System.Windows.Controls.ToolTip toolTip)
+            {
+                toolTip.IsOpen = false;
+            }
+        }
+
+        private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (OpacitySlider.ToolTip is System.Windows.Controls.ToolTip toolTip && toolTip.IsOpen)
+            {
+                UpdateToolTipOffset(toolTip);
+            }
+        }
+
+        // 核心计算逻辑
+        private void UpdateToolTipOffset(System.Windows.Controls.ToolTip toolTip)
+        {
+            // 1. 获取 Slider 的实际高度
+            double sliderHeight = OpacitySlider.ActualHeight;
+
+            double thumbSize = 20;
+
+            // 3. 计算可滑动区域的有效高度
+            double trackHeight = sliderHeight - thumbSize;
+
+            double percent = (OpacitySlider.Value - OpacitySlider.Minimum) / (OpacitySlider.Maximum - OpacitySlider.Minimum);
+
+            double offsetFromTop = (1.0 - percent) * trackHeight;
+
+            toolTip.VerticalOffset = offsetFromTop;
+
+            //var placement = toolTip.Placement;
+            //toolTip.Placement = System.Windows.Controls.Primitives.PlacementMode.Absolute;
+            //toolTip.Placement = placement;
+        }
+
 
         private void OnCanvasMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {

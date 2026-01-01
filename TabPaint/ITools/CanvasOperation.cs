@@ -43,16 +43,33 @@ namespace TabPaint
             _surface.Attach(_bitmap);
             _surface.ReplaceBitmap(_bitmap);
 
-            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. 将完整的变换信息作为一个原子操作压入 Undo 栈 ---
-
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. newBitmap.PixelWidth Undo 栈 ---
+            ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
             SetUndoRedoButtonState();
         }
 
         private void RotateBitmap(int angle)
         {
+            var mw = (MainWindow)Application.Current.MainWindow;
+            // 1. 检查当前工具是否为 SelectTool 且有活动选区
+            if (_tools.Select is SelectTool st && st.HasActiveSelection)
+            {
+                // 调用选区旋转
+                st.RotateSelection(_ctx, angle);
+                    return; // 结束，不旋转画布
+            }
+            if (mw._router.CurrentTool is ShapeTool shapetool && mw._router.GetSelectTool()?._selectionData != null)
+            {
+                mw._router.GetSelectTool()?.RotateSelection(_ctx, angle);
+                return; // 结束，不旋转画布
+            }
+
+            // 2. 原有的画布旋转逻辑
             ApplyTransform(new RotateTransform(angle));
-            _canvasResizer.UpdateUI();
+            NotifyCanvasChanged();
+            _canvasResizer.UpdateUI(); 
         }
+
 
         private void FlipBitmap(bool flipVertical)
         {
@@ -169,15 +186,20 @@ namespace TabPaint
             double imgWidth = _bitmap.Width;
             double imgHeight = _bitmap.Height;
 
-            BackgroundImage.Width = imgWidth;
-            BackgroundImage.Height = imgHeight;
-
-            _imageSize = $"{_surface.Width}×{_surface.Height}像素";
-            OnPropertyChanged(nameof(ImageSize));
+            NotifyCanvasSizeChanged(imgWidth, imgHeight);
             UpdateWindowTitle();
 
             if (!SettingsManager.Instance.Current.IsFixedZoom) FitToWindow();
             SetBrushStyle(BrushStyle.Round);
+        }
+
+        public void NotifyCanvasSizeChanged(double pixwidth, double pixheight)
+        {
+            BackgroundImage.Width = pixwidth;
+            BackgroundImage.Height = pixheight;
+            _imageSize = $"{pixwidth}×{pixheight}像素";
+            OnPropertyChanged(nameof(ImageSize));
+            UpdateWindowTitle();
         }
         private void ResizeCanvas(int newWidth, int newHeight)
         {
@@ -208,7 +230,10 @@ namespace TabPaint
             newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
             _surface.ReplaceBitmap(newBitmap);  // --- 4. 执行变换：用新的位图替换旧的画布 ---
             _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. 将完整的变换信息压入 Undo 栈 ---
+            NotifyCanvasSizeChanged(newWidth, newHeight);
+            NotifyCanvasChanged();
             SetUndoRedoButtonState();
+            _canvasResizer.UpdateUI();
         }
         private void ConvertToBlackAndWhite(WriteableBitmap bmp)
         {

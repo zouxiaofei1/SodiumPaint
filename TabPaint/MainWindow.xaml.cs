@@ -36,7 +36,6 @@ namespace TabPaint
           
            // 
             InitializeComponent();
-           
             DataContext = this;
 
             // 1. 统一绑定到一个 Loaded 处理函数，移除构造函数里的 lambda
@@ -722,6 +721,9 @@ namespace TabPaint
             DragOverlay.Visibility = Visibility.Collapsed;
         }
 
-
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if(!_programClosed)OnClosing();
+        }
     }
 }

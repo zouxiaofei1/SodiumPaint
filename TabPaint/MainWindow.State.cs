@@ -63,7 +63,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        public string ProgramVersion { get; set; } = "v0.7.5 alpha";
+        public string ProgramVersion { get; set; } = "v0.7.6 alpha";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -219,5 +219,6 @@ namespace TabPaint
         private bool _isPaintingMode = true;//画图模式
         public bool MicaEnabled = false;
         private bool _isLoadingImage = true;//是否正在加载图像,false时不能画图
+        private bool _programClosed = false;
     }
 }

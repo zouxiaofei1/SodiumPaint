@@ -14,8 +14,10 @@ using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
+  
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        public bool _isSavingFile = false;
         private System.Collections.Concurrent.ConcurrentDictionary<string, Task> _activeSaveTasks
     = new System.Collections.Concurrent.ConcurrentDictionary<string, Task>();
         private void TriggerBackgroundBackup(BitmapSource? existingSnapshot = null)
@@ -29,6 +31,7 @@ namespace TabPaint
             {
                 return;
             }
+         
             long versionToRecord = _currentCanvasVersion;
             _lastBackedUpVersion = versionToRecord;
             // 1. 获取快照 (必须在 UI 线程完成)
@@ -36,7 +39,7 @@ namespace TabPaint
             BitmapSource bitmap = existingSnapshot ?? GetCurrentCanvasSnapshotSafe();
 
             if (bitmap == null) return;
-
+            _isSavingFile = true;
             // 再次确保冻结
             if (bitmap.IsFrozen == false) bitmap.Freeze();
 
@@ -72,16 +75,17 @@ namespace TabPaint
                             targetTab.BackupPath = fullPath;
                             targetTab.LastBackupTime = DateTime.Now;
                         }
-                    });
+                    }); _isSavingFile = false;
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"AutoBackup Failed: {ex.Message}"); _isSavingFile = false;
                 }
                 finally
                 {
                     // 任务完成后，从字典中移除
                     _activeSaveTasks.TryRemove(fileId, out _);
+                    _isSavingFile = false;
                 }
             });
 
@@ -331,10 +335,10 @@ namespace TabPaint
         }
         protected async void OnClosing()
         {
-            this.Hide();
+            
             SaveAppState();
             // 立即保存当前的
-            if (_currentTabItem != null && _currentTabItem.IsDirty)
+            if (_currentTabItem != null && _currentTabItem.IsDirty&&!_isSavingFile)
             {
                 _autoSaveTimer.Stop();
                 var bmp = GetCurrentCanvasSnapshot();
@@ -350,7 +354,9 @@ namespace TabPaint
                     _currentTabItem.BackupPath = path;
                 }
             }
+            this.Hide();
             SaveSession(); // 更新 JSON
+            _programClosed = true;
             Close();
         }
         private int GetNextAvailableUntitledNumber()
@@ -640,15 +646,15 @@ namespace TabPaint
         {
            
             if (_currentTabItem == tab) return;
-            if (!tab.IsNew &&
-                !string.IsNullOrEmpty(_currentFilePath) &&
-                tab.FilePath == _currentFilePath)
-            {
-                return;
-            }
-           
+            //if (!tab.IsNew &&
+            //    !string.IsNullOrEmpty(_currentFilePath) &&
+            //    tab.FilePath == _currentFilePath)
+            //{
+            //    return;
+            //}
+           // s(1);
             if (tab == null) return;
-
+           
             if (_currentTabItem != null)
             {
                 _autoSaveTimer.Stop();
@@ -661,7 +667,7 @@ namespace TabPaint
             _router.CleanUpSelectionandShape();
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
-            //_currentTabItem = tab;
+           
 
             // 2. 核心变量同步
             _currentFilePath = tab.FilePath;
@@ -687,7 +693,7 @@ namespace TabPaint
     
                 // 4. 状态重置
                 ResetDirtyTracker();
-
+ _currentTabItem = tab;//删除会导致创建未命名→不绘画→切回原图失败bug
             UpdateWindowTitle();
         }
 

@@ -12,6 +12,7 @@
         SizeToContent="Manual"
       AllowsTransparency="False" 
         Background="Transparent"
+        Closing="Window_Closing"
         WindowStyle="None"
         SizeChanged="Window_SizeChanged">
     <WindowChrome.WindowChrome>
@@ -42,7 +43,8 @@
                           DockPanel.Dock="Top" 
                           MinimizeClick="Minimize_Click"
                           MaximizeRestoreClick="MaximizeRestore_Click"
-                          CloseClick="Close_Click"/>
+                          CloseClick="Close_Click"
+                                        TitleBarMouseDown="Border_MouseLeftButtonDown"/>
             <!-- #endregion -->
             
             <!-- #region 2. 菜单栏 (MenuBar) -->
@@ -225,30 +227,14 @@
             StrokeDashArray="3 2" 
             HorizontalAlignment="Center" 
             VerticalAlignment="Center"/>
-                <!-- 左侧控制面板区域 (改为 Grid 布局以支持自动拉伸) -->
-                <!-- VerticalAlignment="Stretch" 确保 Grid 占满整个父容器的高度 -->
-                <!-- 添加 Panel.ZIndex="100" 确保浮在画布之上 -->
-                <!-- 增加 Panel.ZIndex 解决遮挡 -->
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="15,20,0,5" Width="42" Panel.ZIndex="100">
                     <Grid.RowDefinitions>
-                        <!-- 0. 上部弹簧：权重很小(1*)，大屏时吃掉剩余空间，小屏时为0 -->
                         <RowDefinition Height="1*"/>
-
-                        <!-- 1. 粗细条区域：权重极大(10000*)，优先抢占空间，但被 MaxHeight 限制 -->
                         <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
-
-                        <!-- 2. 中间缝隙 -->
                         <RowDefinition Height="15"/>
-
-                        <!-- 3. 透明度条区域：权重极大(10000*) -->
                         <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
-
-                        <!-- 4. 下部弹簧：权重很小(1*) -->
                         <RowDefinition Height="1*"/>
                     </Grid.RowDefinitions>
-
-                    <!-- 1. 粗细调节条 -->
-                    <!-- 关键：放在 Row 1，去除自身的 MaxHeight/MinHeight (已移至Row)，使用默认 Stretch 填满 Row -->
                     <Border Grid.Row="1" x:Name="ThicknessPanel" CornerRadius="12" Background="#F3F3F3" BorderBrush="#D0D0D0" BorderThickness="1">
                         <Border.Resources>
                             <local:NonLinearRangeConverter x:Key="SizeConverter"/>
@@ -288,9 +274,6 @@
                             </Slider>
                         </Grid>
                     </Border>
-
-                    <!-- 2. 透明度调节条 -->
-                    <!-- 放在 Row 3 -->
                     <Border Grid.Row="3" x:Name="OpacityPanel" CornerRadius="12" Background="#F3F3F3" BorderBrush="#D0D0D0" BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
@@ -305,19 +288,24 @@
                             <Image Grid.Row="0" Source="{StaticResource Opacity_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
 
                             <Slider Grid.Row="1" x:Name="OpacitySlider" 
-                    Style="{StaticResource Win11VerticalSliderStyle}" 
-                    Orientation="Vertical" 
-                    Minimum="0" Maximum="1" 
-                    SmallChange="0.05" LargeChange="0.1"
-                    DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-                    Value="{Binding PenOpacity, Mode=TwoWay}" 
-                    Margin="0,0,0,10"
-                    IsSnapToTickEnabled="False">
+        Style="{StaticResource Win11VerticalSliderStyle}" 
+        Orientation="Vertical" 
+        Minimum="0" Maximum="1" 
+        SmallChange="0.05" LargeChange="0.1"
+        DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
+        Value="{Binding PenOpacity, Mode=TwoWay}" 
+        Margin="0,0,0,10"
+        IsSnapToTickEnabled="False"
+                                      Loaded="OpacitySlider_Loaded"  
+        Thumb.DragStarted="OpacitySlider_DragStarted"
+        Thumb.DragCompleted="OpacitySlider_DragCompleted"
+        ValueChanged="OpacitySlider_ValueChanged">
                                 <Slider.ToolTip>
-                                    <ToolTip Background="Black" Foreground="White" BorderThickness="0" Padding="8,4">
+                                    <ToolTip x:Name="OpacityToolTip" Background="#333" Foreground="White" BorderThickness="0" Padding="8,4" Placement="Right" HorizontalOffset="10">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding PenOpacity, StringFormat={}{0:P0}}"/>
-                                            <TextBlock Text=" 透明度" Margin="2,0,0,0"/>
+                                            <!-- 注意：这里增加了 UpdateSourceTrigger 确保拖动时数字实时跳动 -->
+                                            <TextBlock Text="{Binding PenOpacity, StringFormat={}{0:P0}, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <TextBlock Text="" Margin="2,0,0,0"/>
                                         </StackPanel>
                                     </ToolTip>
                                 </Slider.ToolTip>
