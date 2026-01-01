@@ -61,7 +61,7 @@ namespace TabPaint
                 // --- 智能加载逻辑 ---
                 string fileToLoad = filePath;
                 bool isFileLoadedFromCache = false;
-
+                string actualSourcePath = null; // 新增变量
                 // 检查是否有缓存
                 // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
                 if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
@@ -73,12 +73,11 @@ namespace TabPaint
 
                     if (File.Exists(current.BackupPath))
                     {
-                        //s(current.BackupPath);
-                        fileToLoad = current.BackupPath;
-                        isFileLoadedFromCache = true;
+                        // 不要修改 filePath，而是记录实际来源
+                        actualSourcePath = current.BackupPath;
                     }
                 }
-                await LoadImage(fileToLoad);
+                await LoadImage(fileToLoad,actualSourcePath);
 
                 ResetDirtyTracker();
 
@@ -155,37 +154,41 @@ namespace TabPaint
         }
         private void ScanFolderImages(string filePath)
         {
-            // 如果是虚拟路径，不执行磁盘扫描（除非你想扫描上次打开的文件夹）
-            if (IsVirtualPath(filePath)) return;
+            try
+            {
+                // 如果是虚拟路径，不执行磁盘扫描（除非你想扫描上次打开的文件夹）
+                if (IsVirtualPath(filePath)) return;
+                if (string.IsNullOrEmpty(filePath)) return;
+                string folder = System.IO.Path.GetDirectoryName(filePath)!;
 
-            string folder = System.IO.Path.GetDirectoryName(filePath)!;
+                // 1. 获取磁盘上的物理文件
+                var diskFiles = Directory.GetFiles(folder, "*.*")
+                    .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
-            // 1. 获取磁盘上的物理文件
-            var diskFiles = Directory.GetFiles(folder, "*.*")
-                .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
-                            f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                // 2. 获取当前已存在于 FileTabs 中的所有虚拟路径 (::TABPAINT_NEW::...)
+                // 这样可以保证即使切换了文件夹，之前新建的未保存标签依然在列表中
+                var virtualPaths = FileTabs.Where(t => IsVirtualPath(t.FilePath))
+                                           .Select(t => t.FilePath)
+                                           .ToList();
 
-            // 2. 获取当前已存在于 FileTabs 中的所有虚拟路径 (::TABPAINT_NEW::...)
-            // 这样可以保证即使切换了文件夹，之前新建的未保存标签依然在列表中
-            var virtualPaths = FileTabs.Where(t => IsVirtualPath(t.FilePath))
-                                       .Select(t => t.FilePath)
-                                       .ToList();
+                // 3. 整合：虚拟路径在前，磁盘文件在后（或者根据你的喜好排序）
+                var combinedFiles = new List<string>();
+                combinedFiles.AddRange(virtualPaths);
+                combinedFiles.AddRange(diskFiles);
 
-            // 3. 整合：虚拟路径在前，磁盘文件在后（或者根据你的喜好排序）
-            var combinedFiles = new List<string>();
-            combinedFiles.AddRange(virtualPaths);
-            combinedFiles.AddRange(diskFiles);
-
-            _imageFiles = combinedFiles;
-            _currentImageIndex = _imageFiles.IndexOf(filePath);
+                _imageFiles = combinedFiles;
+                _currentImageIndex = _imageFiles.IndexOf(filePath);
+            }
+            catch (Exception ex) { }
         }
 
 
@@ -265,15 +268,18 @@ namespace TabPaint
 
 
         private readonly object _lockObj = new object();
-        private async Task LoadImage(string filePath)
+        private async Task LoadImage(string filePath, string? sourcePath = null)
         {
           
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
+            a.s(filePath);
 
-            if (IsVirtualPath(filePath))
-            {
+            string fileToRead = sourcePath ?? filePath;
+            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath))
+            {// 新建空白图像逻辑，不加载
+
                 await Dispatcher.InvokeAsync(() =>
                 {
                     if (token.IsCancellationRequested) return;
@@ -329,17 +335,17 @@ namespace TabPaint
             }
 
 
-            if (!File.Exists(filePath))
+            if (!File.Exists(fileToRead))
             {
                 // 只有非虚拟路径不存在时才报错
-                s($"找不到图片文件: {filePath}");
+                s($"找不到图片文件: {fileToRead}");
                 return;
             }
 
             try
             {
                 // 步骤 1: 异步读取文件并快速获取最终尺寸
-                var imageBytes = await File.ReadAllBytesAsync(filePath, token);
+                var imageBytes = await File.ReadAllBytesAsync(fileToRead, token);
                 if (token.IsCancellationRequested) return;
 
                 string sizeString = FormatFileSize(imageBytes.Length);
@@ -369,7 +375,9 @@ namespace TabPaint
                         BackgroundImage.Source = tabItem.Thumbnail;
 
                         // 更新窗口标题等基本信息
-                        _currentFileName = System.IO.Path.GetFileName(filePath);
+                        _currentFileName = IsVirtualPath(filePath)
+           ? (FileTabs.FirstOrDefault(t => t.FilePath == filePath)?.FileName ?? "未命名")
+           : System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
 

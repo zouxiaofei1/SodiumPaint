@@ -154,7 +154,8 @@
                     PreviewMouseWheel="Internal_Slider_PreviewMouseWheel">
                 <Slider.Template>
                     <ControlTemplate TargetType="Slider">
-                        <Grid Background="Transparent">
+                        <!-- 1. 给 Grid 加名字 -->
+                        <Grid Background="Transparent" x:Name="RootGrid">
                             <Border Width="4" CornerRadius="2" Background="#333" Opacity="0.1" HorizontalAlignment="Center"/>
                             <Track x:Name="PART_Track" Orientation="Vertical">
                                 <Track.DecreaseRepeatButton>
@@ -166,8 +167,14 @@
                                             <ControlTemplate TargetType="Thumb">
                                                 <Grid>
                                                     <Ellipse Fill="#33000000" Margin="0,2,-1,-2"/>
-                                                    <Ellipse Fill="Purple" Stroke="White" StrokeThickness="2"/>
+                                                    <!-- 2. 给紫色圆点加名字 ThumbDot -->
+                                                    <Ellipse x:Name="ThumbDot" Fill="Purple" Stroke="White" StrokeThickness="2"/>
                                                 </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter TargetName="ThumbDot" Value="Gray" Property="Fill" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -177,6 +184,15 @@
                                 </Track.IncreaseRepeatButton>
                             </Track>
                         </Grid>
+
+                        <!-- 3. 添加触发器 -->
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <!-- 整体变淡 (低透明度) -->
+                                <Setter TargetName="RootGrid" Property="Opacity" Value="0.3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+
                     </ControlTemplate>
                 </Slider.Template>
                 <Slider.Resources>

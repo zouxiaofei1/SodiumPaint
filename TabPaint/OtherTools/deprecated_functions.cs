@@ -144,3 +144,11 @@
 //        }
 //    }
 //}
+
+//if (!tab.IsNew &&
+//    !string.IsNullOrEmpty(_currentFilePath) &&
+//    tab.FilePath == _currentFilePath)
+//{
+//    return;
+//}
+// s(1);

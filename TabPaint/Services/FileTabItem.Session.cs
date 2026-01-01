@@ -164,7 +164,6 @@ namespace TabPaint
         public void NotifyCanvasChanged()
         {
             _currentCanvasVersion++;
-            //a.s("NotifyCanvasChanged");
             _autoSaveTimer.Stop();
             double delayMs = 2000; // 基础延迟 2秒
             if (BackgroundImage.Source is BitmapSource source)
@@ -366,7 +365,6 @@ namespace TabPaint
 
             foreach (var path in _imageFiles)
             {
-                a.s(path);
                 if (IsVirtualPath(path))
                 {
                     // 提取 ::TABPAINT_NEW:: 之后的数字
@@ -646,13 +644,6 @@ namespace TabPaint
         {
            
             if (_currentTabItem == tab) return;
-            //if (!tab.IsNew &&
-            //    !string.IsNullOrEmpty(_currentFilePath) &&
-            //    tab.FilePath == _currentFilePath)
-            //{
-            //    return;
-            //}
-           // s(1);
             if (tab == null) return;
            
             if (_currentTabItem != null)
@@ -673,20 +664,20 @@ namespace TabPaint
             _currentFilePath = tab.FilePath;
             _currentFileName = tab.FileName;
             _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
-            if (tab.IsNew)
-            {
-                // 如果有备份（缓存），加载备份
-                if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
-                {
-                    await OpenImageAndTabs(tab.BackupPath);
-                }
-                else
-                {
-                    // 纯内存新图
-                    Clean_bitmap(1200, 900);
-                }
-            }
-            else
+            //if (tab.IsNew)
+            //{
+            //    // 如果有备份（缓存），加载备份
+            //    if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+            //    {
+            //        await OpenImageAndTabs(tab.BackupPath);
+            //    }
+            //    else
+            //    {
+            //        // 纯内存新图
+            //        Clean_bitmap(1200, 900);
+            //    }
+            //}
+            //else
             {
                 await OpenImageAndTabs(tab.FilePath);
             }

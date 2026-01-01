@@ -292,55 +292,45 @@ namespace TabPaint
             if (e.ChangedButton == MouseButton.Left)
             {
                 _dragStartPoint = e.GetPosition(null);
+                var button = sender as System.Windows.Controls.Button;
+                _mouseDownTabItem = button?.DataContext as FileTabItem;
             }
         }
         private void OnFileTabPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            // 1. 如果左键没按住，直接返回
             if (e.LeftButton != MouseButtonState.Pressed) return;
+            if (_mouseDownTabItem == null) return;
 
             Vector diff = _dragStartPoint - e.GetPosition(null);
-            double dragThreshold = 100.0; 
-            if (Math.Abs(diff.X) < dragThreshold && Math.Abs(diff.Y) < dragThreshold)
+
+            if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold)return;
+            try
             {
-                return;
-            }
+                // 2. 使用锁定的源数据创建数据包
+                var dataObject = new System.Windows.DataObject();
 
-            // --- 以下是原有的拖拽逻辑，保持不变 ---
+                dataObject.SetData("TabPaintReorderItem", _mouseDownTabItem);
+                dataObject.SetData("TabPaintInternalDrag", true);
 
-            var button = sender as System.Windows.Controls.Button;
-            var tabItem = button?.DataContext as FileTabItem;
-            if (tabItem == null) return;
-
-            // === 分支 1: Ctrl + 拖拽 = 导出文件 ===
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
-            {
-                string finalDragPath = tabItem.FilePath;
-                // ...
+                string finalDragPath = _mouseDownTabItem.FilePath;
                 if (!string.IsNullOrEmpty(finalDragPath) && System.IO.File.Exists(finalDragPath))
                 {
-                    var dataObject = new System.Windows.DataObject();
                     var fileList = new System.Collections.Specialized.StringCollection();
                     fileList.Add(finalDragPath);
                     dataObject.SetFileDropList(fileList);
-                    dataObject.SetData("TabPaintInternalDrag", true);
-                    DragDrop.DoDragDrop(button, dataObject, System.Windows.DragDropEffects.Copy);
-                    e.Handled = true;
                 }
-            }
-            // === 分支 2: 直接拖拽 = 内部排序 ===
-            else
-            {
-                var dataObject = new System.Windows.DataObject();
-                dataObject.SetData("TabPaintReorderItem", tabItem);
 
-                // 这里的 DoDragDrop 会阻塞线程直到松手
-                DragDrop.DoDragDrop(button, dataObject, System.Windows.DragDropEffects.Move);
+                DragDrop.DoDragDrop((DependencyObject)sender, dataObject, DragDropEffects.All);
 
-                // 拖拽结束后，标记已处理，防止触发 Click 事件
                 e.Handled = true;
+                _mouseDownTabItem = null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Drag start failed: {ex.Message}");
             }
         }
+
 
 
         private void OnFileTabReorderDragOver(object sender, System.Windows.DragEventArgs e)
@@ -397,6 +387,7 @@ namespace TabPaint
                         UpdateWindowTitle();
                     }
                 }
+                e.Effects = System.Windows.DragDropEffects.Move;
                 e.Handled = true;
             }
         }

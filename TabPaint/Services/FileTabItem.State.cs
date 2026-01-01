@@ -211,5 +211,7 @@ namespace TabPaint
 
         // 上次成功备份时的版本号
         private long _lastBackedUpVersion = -1;
+        private FileTabItem _mouseDownTabItem;
+        private int _dragThreshold = 50;//判定拖拽的阈值（像素）
     }
 }

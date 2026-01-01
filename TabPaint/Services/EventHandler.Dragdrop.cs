@@ -9,7 +9,7 @@ using System.Windows.Media.Imaging;
 using static TabPaint.MainWindow;
 
 //
-//拖拽事件处理cs
+//拖拽事件处理cs(目前只包括全局遮罩的那个)
 //
 
 namespace TabPaint
@@ -21,9 +21,14 @@ namespace TabPaint
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
-                e.Effects = DragDropEffects.None;
-                e.Handled = true;
-                return;
+                Point pos = e.GetPosition(this);
+                if (pos.Y < 210)
+                {
+                    HideDragOverlay();
+                    e.Effects = DragDropEffects.None;
+                    e.Handled = true;
+                    return;
+                }
             }
 
             // 2. 检查是否有文件拖入
@@ -54,7 +59,7 @@ namespace TabPaint
                         // B-2. 单文件 -> 根据位置决定是“添加到列表”还是“插入画布”
                         else
                         {
-                            if (pos.Y < 200)
+                            if (pos.Y < 210)
                             {
                                 ShowDragOverlay("添加到列表", "将图片作为新标签页加入");
                             }

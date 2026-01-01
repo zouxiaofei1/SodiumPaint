@@ -26,54 +26,67 @@ namespace TabPaint
         }
         private bool _isSyncingSlider = false; // 防止死循环
         private bool _isUpdatingUiFromScroll = false;
+        private bool _isWheelScrollingSlider = false;
+        private System.Windows.Threading.DispatcherTimer _wheelLockTimer;
+
+        // 在构造函数或 Window_Loaded 中初始化这个 Timer
+        private void InitWheelLockTimer()
+        {
+            _wheelLockTimer = new System.Windows.Threading.DispatcherTimer();
+            // 200ms 内没有新的滚轮操作，就认为操作结束，释放锁
+            _wheelLockTimer.Interval = TimeSpan.FromMilliseconds(200);
+            _wheelLockTimer.Tick += (s, e) =>
+            {
+                _isWheelScrollingSlider = false;
+                _wheelLockTimer.Stop();
+            };
+        }
+
         private void UpdateImageBarSliderState()
         {
-            // 使用 Dispatcher 延迟执行，确保 WPF 已经完成了 Tab 控件的增删和布局计算
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (_imageFiles == null || _imageFiles.Count == 0)
                 {
-                    MainImageBar.Slider.Visibility = Visibility.Collapsed;
+                    // 以前是隐藏，现在改为禁用
+                    MainImageBar.Slider.IsEnabled = false;
+                    // 确保它是可见的（只是被禁用了）
+                    if (MainImageBar.Slider.Visibility != Visibility.Visible)
+                        MainImageBar.Slider.Visibility = Visibility.Visible;
                     return;
                 }
-               // a.s(_imageFiles.Count);
-                double itemWidth = 124.0;
 
-                // --- 改进点 1: 更加鲁棒的宽度获取 ---
-                // ViewportWidth 是滚动区域可见宽度。如果为 0，则尝试获取控件实际宽度，
-                // 如果还为 0，则说明控件还没加载，此时不应该执行隐藏逻辑。
+                double itemWidth = 124.0;
                 double viewportWidth = MainImageBar.Scroller.ViewportWidth;
                 if (viewportWidth <= 0) viewportWidth = MainImageBar.Scroller.ActualWidth;
-
-                // 如果依然无法获取宽度（例如控件在后台或者还没初始化），先跳过，等加载后再试
                 if (viewportWidth <= 0) return;
 
-                // 理论上需要的总宽度
                 double requiredWidth = _imageFiles.Count * itemWidth;
-
-                // --- 改进点 2: 逻辑判断 ---
-                // 只有当“所需宽度”明显大于“可见宽度”时才显示 Slider
-                // 增加 5 像素的缓冲区，防止因浮点数计算误差导致的闪烁
                 bool needSlider = requiredWidth > (viewportWidth + 5);
+
+                // --- 修改开始 ---
+
+                // 强制保持可见，无论是否需要滑动
+                if (MainImageBar.Slider.Visibility != Visibility.Visible)
+                {
+                    MainImageBar.Slider.Visibility = Visibility.Visible;
+                }
 
                 if (!needSlider)
                 {
-                    if (MainImageBar.Slider.Visibility != Visibility.Collapsed)
-                    {
-                        MainImageBar.Slider.Visibility = Visibility.Collapsed;
-                    }
+                    // 不需要滑动时，禁用控件
+                    MainImageBar.Slider.IsEnabled = false;
+
+                    // 归零（可选，看你喜好，归零会让滑块回到顶部）
+                     MainImageBar.Slider.Value = 0; 
                 }
                 else
                 {
-                    // 确保先设置 Maximum，再显示，防止滑块瞬间跳变
+                    // 需要滑动时，启用控件
+                    MainImageBar.Slider.IsEnabled = true;
                     MainImageBar.Slider.Maximum = Math.Max(0, _imageFiles.Count - 1);
 
-                    if (MainImageBar.Slider.Visibility != Visibility.Visible)
-                    {
-                        MainImageBar.Slider.Visibility = Visibility.Visible;
-                    }
-
-                    // 5. 更新 Slider 位置
+                    // ...原有逻辑保持不变...
                     if (FileTabs.Count > 0 && !_isSyncingSlider)
                     {
                         var firstTab = FileTabs[0];
@@ -96,7 +109,9 @@ namespace TabPaint
                         }
                     }
                 }
-            }), System.Windows.Threading.DispatcherPriority.Loaded); // 使用 Loaded 优先级确保布局已就绪
+                // --- 修改结束 ---
+
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
@@ -113,7 +128,7 @@ namespace TabPaint
             int visibleCount = (int)(MainImageBar.Scroller.ViewportWidth / itemWidth) + 2;
 
             // 2. 【核心修复】使用线性映射实现均匀滚动
-            if (!_isSyncingSlider && _imageFiles.Count > 0 && FileTabs.Count > 0)
+            if (!_isSyncingSlider && !_isWheelScrollingSlider && _imageFiles.Count > 0 && FileTabs.Count > 0)
             {
                 _isUpdatingUiFromScroll = true;
                 try
@@ -275,36 +290,64 @@ namespace TabPaint
                 e.Handled = true;
             }
         }
+        private System.Windows.Threading.DispatcherTimer _sliderDebounceTimer;
 
-        private async void PreviewSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        // 在构造函数或 Window_Loaded 中初始化
+        private void InitDebounceTimer()
         {
-            if (_isUpdatingUiFromScroll) return;
-
+            _sliderDebounceTimer = new System.Windows.Threading.DispatcherTimer();
+            // 延迟时间设置为 50ms 到 100ms 比较合适，既跟手又不卡顿
+            _sliderDebounceTimer.Interval = TimeSpan.FromMilliseconds(10);
+            _sliderDebounceTimer.Tick += OnSliderDebounceTick;
+        }
+        private async void OnSliderDebounceTick(object sender, EventArgs e)
+        {
+            _sliderDebounceTimer.Stop(); // 停止计时器
+           
             if (_imageFiles == null || _imageFiles.Count == 0) return;
+
+            // 获取当前 Slider 对应的最终 Index
+            int index = (int)Math.Round(MainImageBar.Slider.Value);
+
+            // 边界修正
+            if (index < 0) index = 0;
+            if (index >= _imageFiles.Count) index = _imageFiles.Count - 1;
+
+            // 执行耗时操作，此时 _isSyncingSlider 锁应该只包裹这里
             if (_isSyncingSlider) return;
 
             _isSyncingSlider = true;
             try
             {
-                int index = (int)Math.Round(e.NewValue);
-                // 边界保护
-                if (index < 0) index = 0;
-                if (index >= _imageFiles.Count) index = _imageFiles.Count - 1;
-
-                // 跳转逻辑：重新生成 Tab 列表
-                // 注意：这里可能会导致 FileTabs 重置，从而触发 ScrollChanged。
-                // 由于 _isSyncingSlider = true，ScrollChanged 内的逻辑会被跳过，这是安全的。
-                a.s(index);
-                
-                await RefreshTabPageAsync(index, true);
                 var currentTab = FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[index]);
-                if(currentTab!=null)SwitchToTab(currentTab);
+                if (currentTab == null)
+                {
+                    await RefreshTabPageAsync(index, true);
+                }
+                else
+                {
+                    // 如果已经在 Tab 里，可能只需要轻量切换
+                    await RefreshTabPageAsync(index, false);
+                }
 
+                // 确保 UI 同步
+                ScrollToTabCenter(currentTab ?? FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[index]));
             }
             finally
             {
                 _isSyncingSlider = false;
             }
+        }
+        private void PreviewSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // 如果是代码引起的滚动（比如滚轮导致Slider变动），不要触发重载
+            if (_isUpdatingUiFromScroll) return;
+            int index = (int)Math.Round(MainImageBar.Slider.Value);
+
+            a.s(index);
+
+            _sliderDebounceTimer?.Stop();
+            _sliderDebounceTimer?.Start();
         }
         private void SetPreviewSlider()
         {
@@ -344,16 +387,20 @@ namespace TabPaint
 
         private void Slider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            // 如果我们正在拖动
             if (_isDragging)
             {
                 _isDragging = false;
                 var slider = (Slider)sender;
-                // 释放鼠标捕获
                 slider.ReleaseMouseCapture();
+
+                // 停止 Timer，立即执行一次，确保最后停下的位置一定被加载
+                _sliderDebounceTimer?.Stop();
+                OnSliderDebounceTick(null, null);
+
                 e.Handled = true;
             }
         }
+
 
         private void Slider_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
@@ -365,7 +412,11 @@ namespace TabPaint
             {
                 step = 5.0;
             }
+            _isWheelScrollingSlider = true;
 
+            // 2. 重置复位计时器（如果在200ms内连续滚动，锁会一直保持）
+            _wheelLockTimer?.Stop();
+            _wheelLockTimer?.Start();
 
             if (e.Delta < 0)
             {
@@ -382,27 +433,25 @@ namespace TabPaint
             e.Handled = true;
         }
 
-        private async void UpdateSliderValueFromPoint(Slider slider, Point position)
+        private void UpdateSliderValueFromPoint(Slider slider, Point position)
         {
-        
             double ratio = position.Y / slider.ActualHeight;
 
             // 边界检查
             ratio = Math.Max(0, Math.Min(1, ratio));
 
             // 计算对应的 Slider 值
-            double value = slider.Minimum + (slider.Maximum - slider.Minimum) * ratio;
+            double val = slider.Minimum + (slider.Maximum - slider.Minimum) * ratio;
 
-            // 更新 UI
-            slider.Value = value;
-            if (_imageFiles != null && _imageFiles.Count > 0)
-            {
-                int index = (int)Math.Round(value);
-                if (index >= 0 && index < _imageFiles.Count)
-                {
-                    await OpenImageAndTabs(_imageFiles[index], true);
-                }
-            }
+            // 【关键优化】：给首尾一点吸附空间，确保鼠标在最边缘时一定能选中第一张或最后一张
+            // 防止因为像素计算误差导致 ratio=0.999 变成 Count-2
+            if (ratio > 0.99) val = slider.Maximum;
+            if (ratio < 0.01) val = slider.Minimum;
+
+            // 这行代码会触发 PreviewSlider_ValueChanged，进而触发 Timer
+            slider.Value = val;
+
+            // 【删除】不要在这里调用 OpenImageAndTabs，会和 ValueChanged 冲突！
         }
         private bool IsMouseOverThumb(MouseButtonEventArgs e)/// 检查鼠标事件的原始源是否是 Thumb 或其内部的任何元素。
         {

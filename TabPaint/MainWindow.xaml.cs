@@ -37,7 +37,7 @@ namespace TabPaint
            // 
             InitializeComponent();
             DataContext = this;
-
+            InitDebounceTimer(); InitWheelLockTimer();
             // 1. 统一绑定到一个 Loaded 处理函数，移除构造函数里的 lambda
             Loaded += MainWindow_Loaded;
 
@@ -137,22 +137,21 @@ namespace TabPaint
                 SetBrushStyle(BrushStyle.Round);
                 SetCropButtonState();
 
-                // 移除重复的绑定
-                // this.PreviewKeyDown += MainWindow_PreviewKeyDown; 
-
                 _canvasResizer = new CanvasResizeManager(this);
                 // 1. 先加载上次会话 (Tabs结构)
                 LoadSession();
-
+                a.s(FileTabs.Count);
                 // 2. 如果有启动参数传入的文件，打开它
                 if (!string.IsNullOrEmpty(_currentFilePath))
                 {
                     // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
                     await OpenImageAndTabs(_currentFilePath, true);
                 }
-                else if (FileTabs.Count == 0) // 如果既没 Session 也没参数，新建空画板
+                else
                 {
-                    ResetToNewCanvas();
+                    if(FileTabs.Count==0)
+                    CreateNewTab(true);
+                    else SwitchToTab(FileTabs[0]);
                 }
                 RestoreAppState();
 
