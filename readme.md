@@ -1,6 +1,6 @@
 # 🎨 TabPaint (Alpha)
 
-![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-blue) ![Language](https://img.shields.io/badge/Language-C%23%20%7C%20WPF-purple) ![Status](https://img.shields.io/badge/Status-Alpha%20v0.7.2-orange) ![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-blue) ![Language](https://img.shields.io/badge/Language-C%23%20%7C%20WPF-purple) ![Status](https://img.shields.io/badge/Status-Alpha%20v0.7.6-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ![App Screenshot](./TabPaint/Resources/screenshot.png)
 
@@ -10,155 +10,129 @@
 
 ## 🇬🇧 English Introduction
 
-**TabPaint** is a lightweight image editor and viewer tailored for Windows, built with C#, WPF (.NET), and Win32 APIs (DWM/WindowChrome).
+**TabPaint** is a lightweight image editor and viewer tailored for Windows 10/11, built with C#, WPF (.NET), and Win32 APIs (Mica/DWM).
 
-It is designed for the **"10-second edit" workflow**: when you just need to screenshot, circle a highlight, add a note, and paste it into a document. It combines the familiarity of the classic MS Paint with modern efficiency features like **browser-style tabs** and seamless drag-and-drop integration.
+It fits perfectly into the **"10-second edit" workflow**: ideal for when you need to screenshot, annotate, crop, and paste into a document instantly. It bridges the gap between a simple image viewer and an editor, combining the familiarity of MS Paint with **browser-style tabs** and seamless drag-and-drop integration.
 
-### 🚧 Alpha Warning (v0.7.2)
+### 🚧 Alpha Warning (v0.7.6)
 **Current Status: Active Development**
-This software is currently in the **Alpha Testing** stage. 
-*   ⚠️ **Stability**: v0.7.2 introduces many new features. There is a known issue where clearing the runtime cache on exit may occasionally cause a crash.
-*   ⚠️ **ImageBar**: The thumbnail slider logic is under refactoring; scrolling behavior on the ImageBar might be inconsistent.
-*   **Recommendation**: Great for quick edits and screenshots. Please save often!
+This software is in **Alpha Testing**. 
+*   ⚠️ **Stability**: While many bugs have been fixed in v0.7.6, edge cases with large images or complex undo operations may still exist.
+*   **Recommendation**: Perfect for quick screenshots and annotations. Please save your work frequently!
 
 ### ✨ Key Features (v0.7.x)
 *   **Multi-Tab Interface (ImageBar)**: 
-    *   **Browser-like experience**: `Ctrl+W` to close, Middle-click to close.
-    *   **Clipboard Monitor**: Toggle on the bottom bar to auto-paste new clipboard content.
-    *   **Smart Paste**: `Ctrl+Shift+V` to paste as a new tab instantly.
+    *   **Browser-like experience**: `Ctrl+W` to close, `Ctrl+Shift+V` to paste as new tab.
+    *   **Notepad++ Mode**: Keep multiple images open; unsaved edits are cached.
+    *   **Drag & Drop**: Drag files to open; drag selections out to create files directly.
+*   **Powerful Tools**: 
+    *   **Drawing**: Pencil, Brush, Shapes (Circle/Rect/Line/Arrow), Eraser.
+    *   **Text Tool**: Rich text support with alignment, strikethrough, and background fill.
+    *   **Editing**: Crop, Resize (8-point handles), Rotate (`Ctrl+L/R`), Flip.
+    *   **Colors**: Custom color palette, Opacity/Alpha channel support, HSV/RGB adjustments.
 *   **Modern UI & UX**: 
-    *   **Filter Window**: Newly beautified interface for image adjustments.
-    *   **Rich Info Bar**: Displays dimensions, DPI, and EXIF data on hover.
-    *   **Visual Feedback**: Purple highlight borders for active tools.
-*   **Seamless Workflow**: 
-    *   **Drag & Drop**: Drag files into the canvas to open as new tabs; drag selection out to create files.
-    *   **Context Menu**: Right-click thumbnails to "Open File Location".
-*   **Canvas Control**: 
-    *   8-point handle system for resizing.
-    *   Auto-expand canvas when pasting large images.
+    *   **Win11 Style**: Borderless window with Mica effect.
+    *   **Fluent UI**: Modern icons and controls.
+    *   **Info Bar**: Real-time display of dimensions, file size, and zoom level.
 
-### 🗺️ Roadmap & Status
+### 🗺️ Roadmap
 
 | Feature | Status | Note |
 | :--- | :---: | :--- |
-| **Multi-Tab System** | ✅ | Stable. Added `Ctrl+W`, `Ctrl+Shift+V` in v0.7.1. |
-| **Basic Tools** | ✅ | Pencil, Brush, Shapes (Circle/Rect), Crop. |
-| **Filters & Adjustments** | ✅ | Beautified UI in v0.7.1. |
-| **Clipboard Monitor** | ✅ | Toggle added to bottom bar (v0.7.1). |
-| **Viewer/Editor Split** | 📅 | **Target for v0.8**: Separate "View Mode" (dark bg, no UI). |
-| **Advanced Brushes** | 📅 | **Target for v0.9**: High-performance rendering, custom cursors. |
-| **Transparency** | 🔨 | **In Progress**: Alpha channel support & checkerboard bg. |
-| **High DPI Support** | 🐛 | Improving. Selection borders on >100% scaling still need tweaks. |
-| **Settings Page** | 🚧 | Basic "About/Settings" skeleton added. |
-
-### 🐛 Known Issues (v0.7.2)
-*   **Crash on Exit**: Occasional crash related to deleting runtime cache files.
-*   **ImageBar Slider**: Scroll wheel support on the slider is missing or buggy; slider end-point calculation errors.
-*   **File Numbering**: "Untitled" file numbering logic (1, 2 -> 3) needs optimization after closing tabs.
-*   **Large Images**: Very large images (>16k) may trigger compression warnings or select tool lag.
+| **Multi-Tab System** | ✅ | Stable. Supports reordering and file operations. |
+| **Advanced Text Tool** | ✅ | Added alignment, background fill in v0.7.4. |
+| **Transformations** | ✅ | Rotate, Flip, Crop fully implemented. |
+| **Transparency** | 🔨 | **In Progress**: Alpha channel drawing support. |
+| **Viewer Mode** | 📅 | **Target for v0.8**: Separate immersive "View Mode". |
+| **Gif Support** | 📅 | **Target for v0.8**: Playback support. |
+| **High DPI Support** | 🐛 | Optimizing selection borders for >100% scaling. |
 
 ---
 <a name="chinese"></a>
 
 ## 🇨🇳 中文介绍
 
-**TabPaint** 是一款基于 C# WPF 和 Win32 API (DWM) 开发的现代化 Windows 图片编辑与查看工具。
+**TabPaint** 是一款基于 C# WPF 和 Win32 API 开发的现代化 Windows 图片编辑与查看工具，采用 Win11 风格的无边框 Mica 特效窗口。
 
-它的开发初衷是为了解决 **“10秒内快速修图”** 的痛点：当你只需要截图、圈出重点、写个备注，然后发给同事或插入文档时，PS 太重，原生画图不支持多开。TabPaint 完美结合了经典画图的低上手门槛和类似浏览器的多标签页体验。
+它的定位介于“看图软件”和“专业绘图软件”之间，专为 **“10秒内快速修图”** 场景设计：截图 -> 标注 -> 裁剪 -> 拖拽发送。拥有类似 Notepad++ 的多标签页共存模式和强大的剪贴板交互能力。
 
-### 🚧 Alpha 版本预警 (v0.7.2)
+### 🚧 Alpha 版本预警 (v0.7.6)
 **当前状态：活跃开发中**
 本项目目前处于 **Alpha 内测阶段**。
-*   ⚠️ **稳定性**：v0.7.2 引入了大量新特性。已知退出程序时清理缓存文件可能偶发崩溃。
-*   ⚠️ **导航栏**：ImageBar 的滑动条逻辑正在重构，滚轮滚动支持可能不稳定。
-*   **建议**：非常适合日常截图标注和轻量修图，建议养成随手保存的习惯。
+*   ⚠️ **稳定性**：v0.7.6 修复了大量关于旋转、裁剪和内存管理的 Bug，但某些极端操作下仍可能不稳定。
+*   **建议**：适合日常截图标注和轻量修图，建议养成随手保存的习惯。
 
 ### ✨ 核心功能 (v0.7.x)
 *   **多标签页系统 (ImageBar)**：
-    *   **类浏览器操作**：支持 `Ctrl+W` 关闭标签，鼠标中键关闭。
-    *   **剪贴板监听**：底部栏开关，开启后复制图片自动新建标签页。
-    *   **极速粘贴**：`Ctrl+Shift+V` 直接将剪贴板内容粘贴为新标签页。
-*   **现代 UI/UX**：
-    *   **美化滤镜窗口**：全新设计的调整界面。
-    *   **详细信息栏**：鼠标悬浮显示图片尺寸、DPI、EXIF 等信息。
-    *   **视觉反馈**：工具选中时显示紫色强调边框。
-*   **无缝工作流**：
-    *   **拖拽交互**：多文件拖入 Canvas 自动变为新标签页；右键缩略图可“打开所在文件夹”。
-    *   **文件输出**：框选区域直接拖出到桌面生成文件。
-*   **画布控制**：
-    *   支持 8 向拖拽手柄调整大小。
-    *   粘贴大图时画布自动智能扩容。
+    *   **高效管理**：支持拖拽排序、`Ctrl+W` 关闭、中键关闭。
+    *   **智能粘贴**：`Ctrl+Shift+V` 极速粘贴为新标签页；剪贴板监听功能。
+    *   **文件流**：支持多文件拖入打开；支持将选区直接拖出生成文件或拖入 Word。
+*   **全面绘图工具**：
+    *   **画笔与形状**：铅笔、笔刷、直线、箭头、矩形、圆形等，支持调节粗细与不透明度。
+    *   **增强文字工具**：支持左/中/右对齐、删除线、背景填充及字体选择。
+    *   **图像调整**：亮度、对比度、饱和度、色调滤镜；8向手柄调整画布大小。
+    *   **变换操作**：任意角度旋转、`Ctrl+L/R` 快捷旋转、水平/垂直翻转。
+*   **现代交互体验**：
+    *   **Mica 特效**：原生 Win11 云母材质背景。
+    *   **Fluent UI**：美化的滑动条、按钮及颜色选择器。
+    *   **详细信息**：底部栏实时显示图片尺寸、文件大小及缩放比例。
 
-### 🗺️ 开发计划与进度
+### 🗺️ 开发计划
 
 | 功能特性 | 状态 | 说明 |
 | :--- | :---: | :--- |
-| **多标签页支持** | ✅ | v0.7.1 新增 Ctrl+W 关闭，Ctrl+Shift+V 粘贴为新页。 |
-| **基础绘图工具** | ✅ | 铅笔、形状（圆/矩形）、裁剪工具。 |
-| **滤镜与调整** | ✅ | v0.7.1 完成滤镜窗口 UI 美化。 |
-| **剪贴板监听** | ✅ | 底部栏新增监听开关。 |
-| **看图模式** | 📅 | **v0.8 目标**：看图/画图模式分离，沉浸式看图。 |
-| **高级笔刷引擎** | 📅 | **v0.9 目标**：优化笔刷算法（蜡笔、毛刺感）。 |
-| **透明背景支持** | 🔨 | **进行中**：透明度绘图与灰白格子背景。 |
-| **高分屏适配** | 🐛 | 持续优化中，125%/150% 缩放下的选区错位问题正在修复。 |
-| **设置界面** | 🚧 | 已添加基础的关于/设置页面框架。 |
-
-### 🐛 已知问题 (v0.7.2)
-*   **退出崩溃**：运行时删除缓存文件或强制结束进程时，可能导致程序崩溃或图片无法恢复。
-*   **滑动条 Bug**：ImageBar 的 Slider 滚轮滚动未完全实装，末端比例计算有误。
-*   **未命名编号**：新建、关闭、再新建未命名图片时，编号逻辑（Untitled-X）可能出现跳号或重置错误。
-*   **超大图**：16k+ 分辨率图片可能会触发压缩警告，选区工具可能出现粘连。
+| **多标签页支持** | ✅ | v0.7.x 已完善排序、缓存与恢复逻辑。 |
+| **高级文字工具** | ✅ | v0.7.4 实装对齐与样式支持。 |
+| **旋转与变换** | ✅ | 支持旋转、裁剪、调整画布。 |
+| **透明度支持** | 🔨 | **进行中**：颜色编辑器支持 Alpha 通道，界面显示优化。 |
+| **看图模式** | 📅 | **v0.8 目标**：看图/画图模式分离，沉浸式看图，支持 GIF。 |
+| **性能优化** | 📅 | **持续进行**：大图加载、内存回收及笔刷算法优化。 |
 
 ### 📜 最近更新 (Changelog)
 
-<details>
-<summary>点击展开 v0.7.x 更新日志</summary>
+<details open>
+<summary><b>v0.7.6 (Latest)</b></summary>
 
-**v0.7.2 Alpha (Current)**
-*   修复：修复右键 ImageBar 粘贴功能。
-*   修复：拖拽排序后序号更新逻辑。
-*   已知问题：Slider 滚轮滚动及末端显示 Bug。
-
-**v0.7.1**
-*   新增：`Ctrl+W` 快捷键关闭标签页。
-*   新增：`Ctrl+Shift+V` 粘贴为新标签页。
-*   新增：底部栏剪贴板监听开关。
-*   新增：ImageBar 缩略图右键菜单“打开所在文件夹”。
-*   新增：多文件拖入 Canvas 全部作为新标签页打开。
-*   优化：滤镜窗口 UI 美化。
-*   优化：设置页面/关于页面雏形。
-
-**v0.7.0**
-*   新增：形状工具（圆形、矩形）。
-*   新增：底部栏显示详细图片信息（鼠标悬浮）。
-*   新增：拖入 Toolbar/Menu 切换工作区逻辑。
+*   **修复**：全屏模式下拖拽标题栏无法恢复窗口大小的问题。
+*   **修复**：旋转裁剪后缩略图更新滞后的问题。
+*   **优化**：Selection 工具拖拽手柄逻辑重构。
+*   **优化**：大幅改进 ImageBar 拖拽手感（动画效果优化）。
+*   **功能**：Opacity Bar 拖拽时实时显示透明度数值。
+*   **功能**：新增 `Ctrl+L` / `Ctrl+R` 快捷键旋转图片。
+*   **修复**：运行时删除缓存文件导致的退出崩溃问题。
 </details>
 
 <details>
-<summary>点击展开 v0.6.x 更新日志</summary>
+<summary>点击展开 v0.7.3 - v0.7.5 更新日志</summary>
 
-**v0.6.4**
-*   修复：中键关闭标签页体验优化。
-*   新增：未命名图片自动编号逻辑。
-*   优化：大量未保存图片的缓存与恢复逻辑。
+**v0.7.5**
+*   **UI 美化**：全面 Fluent UI 化，重绘 ColorWheel，优化 Slider 样式。
+*   **新增**：画笔不透明度 (Opacity) 调节支持。
+*   **新增**：Mica (云母) 窗口特效。
+*   **修复**：TextTool 生成半透明区域的 Bug。
+*   **修复**：ZoomSlider 非线性滑动体验优化。
 
-**v0.6.1 - v0.6.3**
-*   新增：画布边缘 8 向调整手柄。
-*   新增：左侧工具栏清空/保存/放弃所有编辑按钮。
+**v0.7.4**
+*   **新增**：Text 工具支持对齐（左/中/右）、删除线及背景填充。
+*   **新增**：底部栏显示文件体积。
+*   **修复**：旋转图片后出现透明图层的 Bug。
+*   **修复**：Shape 工具双重撤销及无法拖拽大小的问题。
+*   **优化**：笔刷粗细调节改为非线性，更易控制。
+
+**v0.7.3**
+*   **重构**：MainWindow 拆分为多个 UserControl，提升代码可维护性。
+*   **新增**：F11 全屏/还原模式。
+*   **新增**：自定义颜色编辑界面（Fluent 风格）。
+*   **优化**：画笔算法优化，减少低像素下的毛刺感。
 </details>
+
+### 🐛 已知问题
+*   **超大图支持**：16k+ 分辨率图片可能会触发内存警告，或导致选区工具轻微卡顿。
+*   **高分屏适配**：在非 100% 缩放比例下，部分选区边框可能存在像素级错位。
+*   **Gif 支持**：目前仅支持静态显示，动态播放将在 v0.8 中加入。
 
 ---
 
 ### 📥 Download / 下载
 Please check the [Releases](../../releases) page for the latest build.
 请前往 [Releases](../../releases) 页面下载最新构建版本。
-
-### 🛠️ Build from Source / 源码构建
-Environment:
-*   Visual Studio 2022
-*   .NET 6.0 / .NET 8.0 SDK (WPF Workload)
-
-```bash
-git clone https://github.com/YourUsername/TabPaint.git
-cd TabPaint
-dotnet build

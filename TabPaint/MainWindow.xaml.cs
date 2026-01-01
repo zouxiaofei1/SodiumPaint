@@ -289,7 +289,7 @@ namespace TabPaint
 
         private void FitToWindow(double addscale = 1)
         {
-            if (!SettingsManager.Instance.Current.IsFixedZoom&& _firstFittoWindowdone) return;
+            if (SettingsManager.Instance.Current.IsFixedZoom&& _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
                
