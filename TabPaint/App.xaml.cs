@@ -33,19 +33,22 @@ namespace TabPaint
                 }
             }
             else
-            {
+            { filePath = @"E:\dev\"; //10图片
 #if DEBUG
                 // 在这里取消注释你想要测试的路径，Release模式下这段代码会被自动忽略
-                 filePath = @"E:\dev\"; //10图片
+             //   
                //filePath = @"E:\dev\res\"; // 150+图片
                 //filePatg = @"E:\dev\res\camera\"; // 1000+4k照片
                 // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹
 #endif
             }
-            TimeRecorder t = new TimeRecorder(); t.Reset(); t.Toggle();
+
+            //TimeRecorder t = new TimeRecorder(); t.Reset(); t.Toggle(); 
+
             var window = new MainWindow(filePath);
             window.Show();
-            t.Toggle();
+           // t.Toggle();
+           
         }
 
     }

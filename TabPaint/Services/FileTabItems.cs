@@ -220,13 +220,27 @@ namespace TabPaint
 
         private void InitializeScrollPosition()
         {
-            MainImageBar.Scroller.UpdateLayout();
-            double hiddenWidth = MainImageBar.AddButton.ActualWidth + MainImageBar.AddButton.Margin.Left + MainImageBar.AddButton.Margin.Right;
-            if (MainImageBar.Scroller.HorizontalOffset == 0)
+            Dispatcher.InvokeAsync(() =>
             {
-                MainImageBar.Scroller.ScrollToHorizontalOffset(hiddenWidth);
-            }
+                if (MainImageBar == null || MainImageBar.AddButton == null) return;
+
+                // 此时布局已自然完成，ActualWidth 可以直接读取
+                double btnWidth = MainImageBar.AddButton.ActualWidth;
+
+                // 极限优化：如果按钮大小是固定的（比如 40），直接写死 double btnWidth = 40; 能省去所有计算开销
+                if (btnWidth == 0) btnWidth = 46; // 给个保底值
+
+                double hiddenWidth = btnWidth
+                                   + MainImageBar.AddButton.Margin.Left
+                                   + MainImageBar.AddButton.Margin.Right;
+
+                if (MainImageBar.Scroller.HorizontalOffset == 0)
+                {
+                    MainImageBar.Scroller.ScrollToHorizontalOffset(hiddenWidth);
+                }
+            }, System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
+
         private void MarkAsSaved()
         {//仅mark不负责保存!!
             if (_currentTabItem == null) return;

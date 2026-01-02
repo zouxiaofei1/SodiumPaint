@@ -23,28 +23,28 @@
                 <MenuItem Header="文件" Style="{StaticResource ModernMenuItemStyle}">
                     <MenuItem Header="新建" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource NewFile_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="打开" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+O" Click="OnOpenClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Open_Folder_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
                     <MenuItem Header="保存" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+S" Click="OnSaveClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Save_Normal_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="另存为" Style="{StaticResource SubMenuItemStyle}" Click="OnSaveAsClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Save_Button_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="退出" Style="{StaticResource SubMenuItemStyle}" Click="OnExitClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Exit_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
@@ -53,17 +53,17 @@
                 <MenuItem Header="编辑" Style="{StaticResource ModernMenuItemStyle}">
                     <MenuItem Header="复制" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+C" Click="OnCopyClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Copy_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="剪切" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Cut_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="粘贴" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Paste_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
@@ -73,23 +73,23 @@
                 <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
                     <MenuItem Header="亮度/对比度/曝光" Style="{StaticResource SubMenuItemStyle}" Click="OnBCEClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Brightness_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="色温/色调/饱和度" Style="{StaticResource SubMenuItemStyle}" Click="OnTTSClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Color_Temperature_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Color_Temperature_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="黑白" Style="{StaticResource SubMenuItemStyle}" Click="OnBlackWhiteClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Black_And_White_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Black_And_White_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
                     <MenuItem Header="调整大小" Style="{StaticResource SubMenuItemStyle}" Click="OnResizeCanvasClick">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource Resize_Image}" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Resize_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
@@ -98,21 +98,21 @@
             <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Margin="6,0" ToolTip="保存" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
-                    <Image Source="{StaticResource Save_Normal_Image}" Width="16" Height="16"/>
+                    <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                 </Button>
                 <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
 
                 <!-- 注意：Undo/Redo 按钮需要 x:Name 以便后台代码暴露属性 -->
                 <Button Margin="6,0" ToolTip="撤销" x:Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
-                    <Image x:Name="UndoIcon" Source="{StaticResource Undo_Image}" Width="16" Height="16"/>
+                    <Path x:Name="UndoIcon" Data="{DynamicResource Undo_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                 </Button>
                 <Button ToolTip="重做" x:Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
-                    <Image x:Name="RedoIcon" Source="{StaticResource Redo_Image}" Width="16" Height="16"/>
+                    <Path x:Name="RedoIcon" Data="{DynamicResource Redo_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                 </Button>
             </StackPanel>
 
             <Button DockPanel.Dock="Right" Margin="10,5" Padding="2" ToolTip="设置" Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Image Source="{StaticResource Settings_Image}" Width="18" Height="18"/>
+                <Path Data="{DynamicResource Settings_Image}" Stretch="Uniform" Fill="#333" Width="18" Height="18"/>
             </Button>
         </DockPanel>
     </Border>

@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -14,6 +15,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using TabPaint.Controls;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static TabPaint.MainWindow;
 
@@ -33,29 +35,93 @@ namespace TabPaint
         {
             _workingPath = path;
             _currentFilePath = path;
+        
 
-
-
-            // 
-            InitializeComponent();
+            InitializeComponent(); 
+            this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
-            InitDebounceTimer(); InitWheelLockTimer();
-            // 1. 统一绑定到一个 Loaded 处理函数，移除构造函数里的 lambda
+            InitDebounceTimer(); 
+            InitWheelLockTimer();
             Loaded += MainWindow_Loaded;
 
             InitializeAutoSave();
 
 
-            // ... 其他事件绑定保持不变 ...
+            this.Focusable = true; 
+        }
 
-            this.Focusable = true;
+     
+        private async void MainWindow_ContentRendered(object sender, EventArgs e)
+        {
+           InitializeLazyControls();
+            
+            
+            MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
+            {
+                if (_isInternalZoomUpdate)
+                {
+                    return;
+                }
+                double sliderVal = MyStatusBar.ZoomSliderControl.Value;
+
+                // 2. 通过算法算出真实的缩放倍率 (例如滑块50 -> 倍率1.26)
+                double targetScale = SliderToZoom(sliderVal);
+
+                // 3. 应用缩放 (注意：不要在这里直接设置 Slider.Value，SetZoom 会去做的)
+                SetZoom(targetScale);
+            };
+
+         
+            SetBrushStyle(BrushStyle.Round);
+            SetCropButtonState();   
+           _canvasResizer = new CanvasResizeManager(this);;
+            // 1. 先加载上次会话 (Tabs结构)
+            LoadSession();
+            if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
+            {
+                _currentFilePath = FindFirstImageInDirectory(_currentFilePath);
+            }
+            
+           
+            if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath)))
+            {
+                // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
+                OpenImageAndTabs(_currentFilePath, true);
+            }
+            else
+            {
+
+                {
+                    if (FileTabs.Count == 0)
+                        CreateNewTab(TabInsertPosition.AfterCurrent, true);
+                    else SwitchToTab(FileTabs[0]);
+                }
+            }
+            await Task.Run(() =>
+            {
+                // 注意：创建 ResourceDictionary 必须在 UI 线程，但我们可以通过 Dispatcher 插入低优先级任务
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var iconsDict = new ResourceDictionary();
+                    // 注意这里要用 pack URI 格式
+                    iconsDict.Source = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
+
+                    // 把图标合并到全局资源中
+                    Application.Current.Resources.MergedDictionaries.Add(iconsDict);
+                }, System.Windows.Threading.DispatcherPriority.Background);
+            });
+
+            RestoreAppState();
+            InitializeScrollPosition(); 
+
         }
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e); // 建议保留 base 调用
 
-            MicaAcrylicManager.ApplyEffect(this);
+            MicaAcrylicManager.ApplyEffect(this); 
             MicaEnabled = true;
+            //this.Show();
             InitializeClipboardMonitor();
 
             var src = (HwndSource)PresentationSource.FromVisual(this);
@@ -63,6 +129,7 @@ namespace TabPaint
             {
                 src.CompositionTarget.BackgroundColor = Colors.Transparent;
             }
+           
             // 初始化 Mica
 
         }
@@ -78,12 +145,11 @@ namespace TabPaint
         // 修改为 async void，以便使用 await
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            await Task.Yield();
-
+          
+            await Task.Yield();  
+            
             this.Focus();
 
-            // 应用特效
-            //MicaAcrylicManager.ApplyEffect(this);
 
             try
             {
@@ -102,20 +168,7 @@ namespace TabPaint
 
                 //   SourceInitialized += OnSourceInitialized;
 
-                MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
-                {
-                    if (_isInternalZoomUpdate)
-                    {
-                        return;
-                    }
-                    double sliderVal = MyStatusBar.ZoomSliderControl.Value;
 
-                    // 2. 通过算法算出真实的缩放倍率 (例如滑块50 -> 倍率1.26)
-                    double targetScale = SliderToZoom(sliderVal);
-
-                    // 3. 应用缩放 (注意：不要在这里直接设置 Slider.Value，SetZoom 会去做的)
-                    SetZoom(targetScale);
-                };
 
                 // Canvas 事件
                 CanvasWrapper.MouseDown += OnCanvasMouseDown;
@@ -137,33 +190,6 @@ namespace TabPaint
                     _router.OnPreviewKeyDown(s, e);
                 };
 
-                SetBrushStyle(BrushStyle.Round);
-                SetCropButtonState();
-
-                _canvasResizer = new CanvasResizeManager(this);
-                // 1. 先加载上次会话 (Tabs结构)
-                LoadSession();
-                if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
-                {
-                    _currentFilePath = FindFirstImageInDirectory(_currentFilePath);
-                }
-                if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath)))
-                {
-                    // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
-                    await OpenImageAndTabs(_currentFilePath, true);
-                }
-                else
-                {
-                   
-                    {
-                        if (FileTabs.Count == 0)
-                            CreateNewTab(TabInsertPosition.AfterCurrent, true);
-                        else SwitchToTab(FileTabs[0]);
-                    }
-                }
-                RestoreAppState();
-
-
             }
             catch (Exception ex)
             {
@@ -172,17 +198,14 @@ namespace TabPaint
             }
             finally
             {
+               
                 _isInitialLayoutComplete = true;
-
-                // 再次刷新滚动位置
-                InitializeScrollPosition();
-
-                // 如果有图片，触发一次滚动条同步，确保 Slider 位置正确
                 if (FileTabs.Count > 0)
                 {
                     // 模拟触发一次滚动检查
                     OnFileTabsScrollChanged(MainImageBar.Scroller, null);
                 }
+              //  TimeRecorder t = new TimeRecorder(); t.Reset(); t.Toggle(); t.Toggle();
             }
         }
         private string FindFirstImageInDirectory(string folderPath)
@@ -225,10 +248,6 @@ namespace TabPaint
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
-
-
-
-
 
         private async Task OpenFilesAsNewTabs(string[] files)
         {
@@ -365,14 +384,7 @@ namespace TabPaint
                 return;
             }
 
-            // 如果没有找到任何有效的图片文件，直接返回
             if (filesToProcess.Count == 0) return;
-
-            // ---------------------------------------------------------
-            // 核心插入逻辑 (逻辑复用自 OnImageBarDrop)
-            // ---------------------------------------------------------
-
-            // 1. 确定插入位置
             int insertIndex = _imageFiles.Count; // 默认插到最后
             int uiInsertIndex = FileTabs.Count;
 
@@ -477,14 +489,6 @@ namespace TabPaint
             BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
         }
 
-
-
-
-// 类成员变量
-private DispatcherTimer _toastTimer;
-    private const int ToastDuration = 1500; // 停留时间 ms
-
-    // 在构造函数或者 UserControl_Loaded 中初始化 Timer
     private void InitializeToastTimer()
     {
         _toastTimer = new DispatcherTimer();
@@ -494,31 +498,20 @@ private DispatcherTimer _toastTimer;
 
     private void ShowToast(string message)
     {
-        // 如果还没初始化，做个防御性编程（或者确保在构造函数里调用了 InitializeToastTimer）
         if (_toastTimer == null) InitializeToastTimer();
-
-        // 1. 立即停止之前的倒计时（关键：防止旧的计时器触发淡出）
         _toastTimer.Stop();
-
-        // 2. 更新文字
         InfoToastText.Text = message;
 
-        // 3. 判断当前状态，决定是否需要播放淡入动画
-        // 如果当前完全看不见，或者正在消失中，才需要播放“淡入”
         if (InfoToast.Opacity < 1.0)
         {
-            // 停止之前的淡出动画（防止冲突）
             InfoToast.BeginAnimation(OpacityProperty, null);
 
             DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
-            // 缓动效果会让动画更自然（可选）
             fadeIn.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
             InfoToast.BeginAnimation(OpacityProperty, fadeIn);
         }
         else
         {
-            // 如果已经是亮的（Opacity == 1），直接保持住，不需要动画，只要更新文字即可
-            // 此时因为上面 Stop() 了计时器，它会一直悬停
         }
 
         // 4. 重新开始倒计时（重置停留时间）
@@ -779,8 +772,6 @@ private DispatcherTimer _toastTimer;
             DragOverlayText.Text = mainText;
             DragOverlaySubText.Text = subText;
 
-            // 可选：根据不同操作改变图标 (这里简化处理，你可以根据需要扩展)
-            // if (iconData != null) DragOverlayIcon.Data = Geometry.Parse(iconData);
         }
 
         private void HideDragOverlay()
@@ -792,7 +783,5 @@ private DispatcherTimer _toastTimer;
         {
             if (!_programClosed) OnClosing();
         }
-
-
     }
 }

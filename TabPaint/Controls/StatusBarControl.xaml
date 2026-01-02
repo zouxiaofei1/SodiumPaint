@@ -18,12 +18,12 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <StatusBar Background="#44FFFFFF" Padding="0">
+    <StatusBar Background="#44FFFFFF" Padding="0" Cursor="">
         <!-- 鼠标位置 -->
         <StatusBarItem Width="130" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Image Source="{StaticResource Cursor_Image}" Style="{StaticResource StatusIconStyle}"/>
-                <TextBlock Text="{Binding MousePosition}" VerticalAlignment="Center" FontSize="11"/>
+                <Path Data="{DynamicResource Cursor_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#555"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                <TextBlock Margin="4,0,0,0" Text="{Binding MousePosition}" VerticalAlignment="Center" FontSize="11"/>
             </StackPanel>
         </StatusBarItem>
         <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
@@ -31,24 +31,25 @@
         <!-- 图片尺寸 -->
         <StatusBarItem Width="130" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Image Source="{StaticResource Picture_Image}" Style="{StaticResource StatusIconStyle}"/>
-                <TextBlock Text="{Binding ImageSize}" VerticalAlignment="Center" FontSize="11"/>
+                <Path Data="{DynamicResource Picture_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                <TextBlock Margin="4,0,0,0" Text="{Binding ImageSize}" VerticalAlignment="Center" FontSize="11"/>
             </StackPanel>
         </StatusBarItem>
         <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
 
+
         <!-- 选区尺寸 -->
         <StatusBarItem Width="130" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Image Source="{StaticResource Select_Image}" Style="{StaticResource StatusIconStyle}"/>
-                <TextBlock Text="{Binding SelectionSize}" VerticalAlignment="Center" FontSize="11"/>
+                <Path x:Name="SelectIcon" x:FieldModifier="public" Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#FF000000" Width="16" Height="16"/>
+                <TextBlock Margin="4,0,0,0" Text="{Binding SelectionSize}" VerticalAlignment="Center" FontSize="11"/>
             </StackPanel>
         </StatusBarItem>
         <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
         <StatusBarItem Width="110" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Image Source="{StaticResource Save_Button_Image}" Style="{StaticResource StatusIconStyle}"/>
-                <TextBlock Text="{Binding FileSize}" VerticalAlignment="Center" FontSize="11"/>
+                <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                <TextBlock Margin="4,0,0,0" Text="{Binding FileSize}" VerticalAlignment="Center" FontSize="11"/>
             </StackPanel>
         </StatusBarItem>
         <Separator Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
@@ -65,26 +66,23 @@
         <StatusBarItem HorizontalAlignment="Right">
             <StackPanel Orientation="Horizontal">
                 <ToggleButton x:Name="ClipboardMonitorToggle"
-							  Width="24" Height="24"
-							  Margin="4,0,6,0" Padding="0"
-							  ToolTip="监听剪切板 (Ctrl + Alt + P)"
-							  Style="{StaticResource RoundedMenuToggleButtonStyle}"
-              
-							  DataContext="{Binding Source={x:Static app:SettingsManager.Instance}, Path=Current}"
-							  IsChecked="{Binding EnableClipboardMonitor, Mode=TwoWay}"
-              
-							  Click="OnClipboardMonitorToggleClick">
-					<Grid>
-						<Image Source="{StaticResource ClipBoard_Image}" Width="16" Height="16" Opacity="0.8" RenderTransformOrigin="0.625,0.5"/>
-					</Grid>
-				</ToggleButton>
+                      Width="24" Height="24"
+                      Margin="4,0,6,0" Padding="0"
+                      ToolTip="监听剪切板 (Ctrl + Alt + P)"
+                      Style="{StaticResource RoundedMenuToggleButtonStyle}"
+                      DataContext="{Binding Source={x:Static app:SettingsManager.Instance}, Path=Current}"
+                      IsChecked="{Binding EnableClipboardMonitor, Mode=TwoWay}"
+                      Click="OnClipboardMonitorToggleClick">
+                    <Grid>
+                        <Path Data="{DynamicResource ClipBoard_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16" Opacity="0.8" RenderTransformOrigin="0.625,0.5"/>
+                    </Grid>
+                </ToggleButton>
 
-
-				<!-- 信息按钮 -->
+                <!-- 信息按钮 -->
                 <Button Width="24" Height="24" 
-                        Style="{StaticResource RoundedMenuButtonStyle}" 
-                        Padding="2,0" 
-                        Cursor="Help">
+                Style="{StaticResource RoundedMenuButtonStyle}" 
+                Padding="2,0" 
+                Cursor="Help">
                     <Button.ToolTip>
                         <ToolTip Background="#F3F3F3" BorderBrush="#CCCCCC" HasDropShadow="True">
                             <StackPanel Margin="5">
@@ -94,12 +92,13 @@
                             </StackPanel>
                         </ToolTip>
                     </Button.ToolTip>
-                    <Image Source="{StaticResource Info_Image}" Width="16" Height="16" Opacity="0.8"/>
+                    <Path Data="{DynamicResource Info_Image}"
+Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                 </Button>
 
                 <!-- 适应窗口按钮 -->
                 <Button Width="24" Height="24" ToolTip="适应窗口大小" Margin="6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
-                    <Image Source="{StaticResource FitToWindow_Image}" Width="16" Height="16"/>
+                    <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                 </Button>
 
                 <!-- 缩放下拉框 -->
@@ -118,7 +117,7 @@
 
                 <!-- 缩小按钮 -->
                 <Button Width="24" Height="24" ToolTip="缩小" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomOutClick" Margin="5,0,5,0" Padding="2,0">
-                    <Image Source="{StaticResource Zoom_Out_Image}" Width="16" Height="16"/>
+                    <Image Source="{DynamicResource Zoom_Out_Image}" Width="16" Height="16"/>
                 </Button> 
 
                 <!-- 缩放滑块 -->
@@ -130,7 +129,7 @@
         IsSnapToTickEnabled="False" />
                 <!-- 放大按钮 -->
                 <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Margin="5,0,5,0" Padding="2,0">
-                    <Image Source="{StaticResource Zoom_In_Image}" Width="16" Height="16"/>
+                    <Image Source="{DynamicResource Zoom_In_Image}" Width="16" Height="16"/>
                 </Button>
             </StackPanel>
         </StatusBarItem>

@@ -52,96 +52,27 @@
             <!-- #endregion -->
             
             <!-- #region 2. 菜单栏 (MenuBar) -->
-            <controls:MenuBarControl x:Name="MainMenu" DockPanel.Dock="Top"
-                                     Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
-                                     NewClick="OnNewClick"
-                                     OpenClick="OnOpenClick"
-                                     SaveClick="OnSaveClick"
-                                     SaveAsClick="OnSaveAsClick"
-                                     ExitClick="OnExitClick"
-                                     
-                                     CopyClick="OnCopyClick"
-                                     CutClick="OnCutClick"
-                                     PasteClick="OnPasteClick"
-                                     ResizeCanvasClick="OnResizeCanvasClick"
-                                     
-                                     BCEClick="OnBrightnessContrastExposureClick"
-                                     TTSClick="OnColorTempTintSaturationClick"
-                                     BlackWhiteClick="OnConvertToBlackAndWhiteClick"
-                                     
-                                     UndoClick="OnUndoClick"
-                                     RedoClick="OnRedoClick"
-                                     SettingsClick="OnSettingsClick"/>
-     
+            <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top"
+                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+
+
             <!-- #endregion -->
             <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"        Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             <!-- #region 3. 工具栏 (ToolBar) -->
-            <controls:ToolBarControl x:Name="MainToolBar"
-                                      Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
-                                     DockPanel.Dock="Top" 
-                                     PenClick="OnPenClick"
-                                     PickColorClick="OnPickColorClick"
-                                     EraserClick="OnEraserClick"
-                                     SelectClick="OnSelectClick"
-                                     FillClick="OnFillClick"
-                                     TextClick="OnTextClick"
-                                     
-                                     BrushStyleClick="OnBrushStyleClick"
-                                     ShapeStyleClick="OnShapeStyleClick"
-                                     
-                                     CropClick="CropMenuItem_Click"
-                                     RotateLeftClick="OnRotateLeftClick"
-                                     RotateRightClick="OnRotateRightClick"
-                                     Rotate180Click="OnRotate180Click"
-                                     FlipVerticalClick="OnFlipVerticalClick"
-                                     FlipHorizontalClick="OnFlipHorizontalClick"
-                                     
-                                     CustomColorClick="OnCustomColorClick"
-                                     ColorOneClick="OnColorOneClick"
-                                     ColorTwoClick="OnColorTwoClick"
-                                     ColorButtonClick="OnColorButtonClick"/>
+            <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top"
+                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+
             <!-- #endregion -->
 
             <!-- #region 4. 图片列表栏 (ImageBar) -->
-            <controls:ImageBarControl x:Name="MainImageBar"
-                                      IsViewMode="{Binding IsViewMode, ElementName=RootWindow}"
-                DockPanel.Dock="Top"
-                  SaveAllClick="OnSaveAllClick"
-                  ClearUneditedClick="OnClearUneditedClick"
-                  DiscardAllClick="OnDiscardAllClick"
-                  PrependTabClick="OnPrependTabClick"
-                  NewTabClick="OnNewTabClick"
-                  
-                  FileTabClick="OnFileTabClick"
-                  FileTabCloseClick="OnFileTabCloseClick"
-                  
-                  FileTabPreviewMouseDown="OnFileTabPreviewMouseDown"
-                  FileTabPreviewMouseMove="OnFileTabPreviewMouseMove"
-                  FileTabDrop="OnFileTabDrop"
-                  FileTabLeave ="OnFileTabLeave"
-                  FileTabReorderDragOver="OnFileTabReorderDragOver"
-                  
-                  FileTabsWheelScroll="OnFileTabsWheelScroll"
-                  FileTabsScrollChanged="OnFileTabsScrollChanged"
-                  PreviewSliderValueChanged="PreviewSlider_ValueChanged"
-                  SliderPreviewMouseWheel="Slider_PreviewMouseWheel"
-                  
-                  TabCopyClick="OnTabCopyClick"
-                  TabCutClick="OnTabCutClick"
-                  TabPasteClick="OnTabPasteClick"
-                  TabOpenFolderClick="OnTabOpenFolderClick"
-                  TabDeleteClick="OnTabDeleteClick"
-                  TabFileDeleteClick="OnTabFileDeleteClick"/>
+            <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top"
+                IsTabStop="False" Focusable="False"/>
             <!-- #endregion -->
             <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"  Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             
             <!-- #region 5. 底部状态栏 (StatusBar) -->
-            <controls:StatusBarControl x:Name="MyStatusBar" DockPanel.Dock="Bottom"
-                                       ClipboardMonitorClick="ClipboardMonitorToggle_Click"
-                                       FitToWindowClick="FitToWindow_Click"
-                                       ZoomOutClick="ZoomOut_Click"
-                                       ZoomInClick="ZoomIn_Click"
-                                       ZoomSelectionChanged="ZoomMenu_SelectionChanged"  Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+            <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
+                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             <!-- #endregion -->
             <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
             <!-- #region 6. 主画布区域 (Canvas) -->
@@ -254,7 +185,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <!-- 图标 -->
-                            <Image Grid.Row="0" Source="{StaticResource Stroke_Width_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
+                            <Image Grid.Row="0" Source="{DynamicResource Stroke_Width_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
 
                             <!-- Slider -->
                             <Slider Grid.Row="1" x:Name="ThicknessSlider" 
@@ -291,7 +222,7 @@
                             </Grid.RowDefinitions>
 
                             <!-- 图标 -->
-                            <Image Grid.Row="0" Source="{StaticResource Opacity_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
+                            <Image Grid.Row="0" Source="{DynamicResource Opacity_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
 
                             <Slider Grid.Row="1" x:Name="OpacitySlider" 
         Style="{StaticResource Win11VerticalSliderStyle}" 

@@ -70,15 +70,15 @@ namespace TabPaint.Controls
             if (ModeIconImage != null)
             {
                 // 从资源字典中查找 DrawingImage
-                var newImage = Application.Current.TryFindResource(resourceKey) as DrawingImage;
+                var newImage = Application.Current.TryFindResource(resourceKey) as Geometry;
 
                 // 如果在当前 Control 资源里找不到，就去全局找
                 if (newImage == null)
-                    newImage = this.TryFindResource(resourceKey) as DrawingImage;
+                    newImage = this.TryFindResource(resourceKey) as Geometry;
 
                 if (newImage != null)
                 {
-                    ModeIconImage.Source = newImage;
+                    ModeIconImage.Data = newImage;
                 }
 
                 // 更新提示文字

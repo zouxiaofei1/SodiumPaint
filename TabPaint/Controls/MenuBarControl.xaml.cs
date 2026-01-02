@@ -80,8 +80,8 @@ namespace TabPaint.Controls
         // 如果你的代码里需要直接访问 Button 对象 (例如做动画)，可以这样暴露：
         public Button BtnUndo => UndoButton;
         public Button BtnRedo => RedoButton;
-        public Image IconUndo => UndoIcon;
-        public Image IconRedo => RedoIcon;
+        public System.Windows.Shapes.Path IconUndo => UndoIcon;
+        public System.Windows.Shapes.Path IconRedo => RedoIcon;
         public MenuBarControl()
         {
             InitializeComponent();

@@ -87,19 +87,19 @@ namespace TabPaint
                     switch (type)
                     {
                         case ShapeTool.ShapeType.Rectangle:
-                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Rectangle");
+                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Rectangle");
                             break;
                         case ShapeTool.ShapeType.Ellipse:
-                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Ellipse");
+                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Ellipse");
                             break;
                         case ShapeTool.ShapeType.Line:
-                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Line");
+                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Line");
                             break;
                         case ShapeTool.ShapeType.Arrow:
-                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_Arrow");
+                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Arrow");
                             break;
                         case ShapeTool.ShapeType.RoundedRectangle:
-                            MainToolBar.CurrentShapeIcon.Source = (ImageSource)FindResource("Icon_Shape_RoundedRect");
+                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_RoundedRect");
                             break;
                     }
                 }

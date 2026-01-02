@@ -268,8 +268,8 @@ namespace TabPaint
 
         public void SetUndoRedoButtonState()
         {
-            UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
-            UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
+            //UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
+            //UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
 
         }
 
@@ -278,30 +278,31 @@ namespace TabPaint
             UpdateBrushAndButton(MainToolBar.CutImage, MainToolBar.CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility != Visibility.Collapsed);
         }
 
-        private void UpdateBrushAndButton(System.Windows.Controls.Button button, Image image, bool isEnabled)
+        private void UpdateBrushAndButton(System.Windows.Controls.Button button, System.Windows.Shapes.Path image, bool isEnabled)
         {
             button.IsEnabled = isEnabled;
 
 
-            var frozenDrawingImage = (DrawingImage)image.Source; // 获取当前 UI 使用的绘图对象
-            var modifiableDrawingImage = frozenDrawingImage.Clone();    // 克隆出可修改的副本
-            if (modifiableDrawingImage.Drawing is GeometryDrawing geoDrawing)  // DrawingImage.Drawing 可能是 DrawingGroup 或 GeometryDrawing
-            {
-                geoDrawing.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
-            }
-            else if (modifiableDrawingImage.Drawing is DrawingGroup group)
-            {
-                foreach (var child in group.Children)
-                {
-                    if (child is GeometryDrawing childGeo)
-                    {
-                        childGeo.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
-                    }
-                }
-            }
+            //var frozenDrawingImage = (DrawingImage)image.Data; // 获取当前 UI 使用的绘图对象
+            //if (frozenDrawingImage == null) return;
+            //var modifiableDrawingImage = frozenDrawingImage.Clone();    // 克隆出可修改的副本
+            //if (modifiableDrawingImage.Drawing is GeometryDrawing geoDrawing)  // DrawingImage.Drawing 可能是 DrawingGroup 或 GeometryDrawing
+            //{
+            //    geoDrawing.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
+            //}
+            //else if (modifiableDrawingImage.Drawing is DrawingGroup group)
+            //{
+            //    foreach (var child in group.Children)
+            //    {
+            //        if (child is GeometryDrawing childGeo)
+            //        {
+            //            childGeo.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
+            //        }
+            //    }
+            //}
 
-            // 替换 Image.Source，让 UI 用新的对象
-            image.Source = modifiableDrawingImage;
+            //// 替换 Image.Source，让 UI 用新的对象
+            //image.Data = modifiableDrawingImage;
         }
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
         {

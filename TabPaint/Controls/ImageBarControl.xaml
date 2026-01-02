@@ -103,17 +103,17 @@
             <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="#33999999" BorderThickness="0,0,1,0" Padding="0,0,2,0" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}">
                 <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
                     <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Image Source="{StaticResource Save_Edit_Image}" Width="16" Height="16"/>
+                        <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="关闭所有未编辑的图片" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Image Source="{StaticResource Clear_Unedited_Image}" Width="16" Height="16"/>
+                        <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="放弃所有更改" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Image Source="{StaticResource Reset_Image}" Width="16" Height="16"/>
+                        <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="#FFDD6666" Width="16" Height="16"/>
                     </Button>
                 </UniformGrid>
             </Border>
-            
+
             <!-- 2. 图片标签列表 -->
             <ScrollViewer FocusVisualStyle="{x:Null}" x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" 
                           PreviewMouseWheel="Internal_OnFileTabsWheelScroll" 

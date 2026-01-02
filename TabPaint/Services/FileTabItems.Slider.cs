@@ -48,6 +48,7 @@ namespace TabPaint
             {
                 if (_imageFiles == null || _imageFiles.Count == 0)
                 {
+                    if(MainImageBar==null) return;
                     // 以前是隐藏，现在改为禁用
                     MainImageBar.Slider.IsEnabled = false;
                     // 确保它是可见的（只是被禁用了）

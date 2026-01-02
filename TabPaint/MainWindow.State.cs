@@ -232,5 +232,12 @@ namespace TabPaint
             get { return (bool)GetValue(IsViewModeProperty); }
             set { SetValue(IsViewModeProperty, value); }
         }
+        public TabPaint.Controls.MenuBarControl MainMenu;
+        public TabPaint.Controls.ToolBarControl MainToolBar;
+        public TabPaint.Controls.ImageBarControl MainImageBar;
+        public TabPaint.Controls.StatusBarControl MyStatusBar;
+
+        private DispatcherTimer _toastTimer;
+        private const int ToastDuration = 1500;
     }
 }
