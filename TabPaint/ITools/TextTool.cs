@@ -30,7 +30,6 @@ namespace TabPaint
         {
             if (_router.CurrentTool is TextTool textTool)
             {
-               // s(1);
                 textTool.UpdateCurrentTextBoxAttributes();
             }
             
@@ -233,38 +232,63 @@ namespace TabPaint
                     // A. 处理调整大小 (Resizing)
                     if (_resizing)
                     {
+                        double rightEdge = _startX + _startW;
+                        double bottomEdge = _startY + _startH;
                         switch (_currentAnchor)
                         {
                             case ResizeAnchor.TopLeft:
-                                Canvas.SetLeft(_textBox, _startX + dx);
-                                Canvas.SetTop(_textBox, _startY + dy);
-                                _textBox.Width = Math.Max(1, _startW - dx);
-                                _textBox.Height = Math.Max(1, _startH - dy);
+                                {
+                                    double newW = Math.Max(1, _startW - dx);
+                                    _textBox.Width = newW;
+                                    Canvas.SetLeft(_textBox, rightEdge - newW);
+                                    double newH = Math.Max(1, _startH - dy);
+                                    _textBox.Height = newH;
+                                    Canvas.SetTop(_textBox, bottomEdge - newH);
+                                }
                                 break;
+
                             case ResizeAnchor.TopMiddle:
-                                Canvas.SetTop(_textBox, _startY + dy);
-                                _textBox.Height = Math.Max(1, _startH - dy);
+                                {
+                                    double newH = Math.Max(1, _startH - dy);
+                                    _textBox.Height = newH;
+                                    Canvas.SetTop(_textBox, bottomEdge - newH);
+                                }
                                 break;
+
                             case ResizeAnchor.TopRight:
-                                _textBox.Width = Math.Max(1, _startW + dx);
-                                Canvas.SetTop(_textBox, _startY + dy);
-                                _textBox.Height = Math.Max(1, _startH - dy);
+                                {
+                                    _textBox.Width = Math.Max(1, _startW + dx);
+                                    double newH = Math.Max(1, _startH - dy);
+                                    _textBox.Height = newH;
+                                    Canvas.SetTop(_textBox, bottomEdge - newH);
+                                }
                                 break;
+
                             case ResizeAnchor.LeftMiddle:
-                                Canvas.SetLeft(_textBox, _startX + dx);
-                                _textBox.Width = Math.Max(1, _startW - dx);
+                                {
+                                    double newW = Math.Max(1, _startW - dx);
+                                    _textBox.Width = newW;
+                                    Canvas.SetLeft(_textBox, rightEdge - newW);
+                                }
                                 break;
+
                             case ResizeAnchor.RightMiddle:
                                 _textBox.Width = Math.Max(1, _startW + dx);
                                 break;
+
                             case ResizeAnchor.BottomLeft:
-                                Canvas.SetLeft(_textBox, _startX + dx);
-                                _textBox.Width = Math.Max(1, _startW - dx);
-                                _textBox.Height = Math.Max(1, _startH + dy);
+                                {
+                                    double newW = Math.Max(1, _startW - dx);
+                                    _textBox.Width = newW;
+                                    Canvas.SetLeft(_textBox, rightEdge - newW);
+                                    _textBox.Height = Math.Max(1, _startH + dy);
+                                }
                                 break;
+
                             case ResizeAnchor.BottomMiddle:
                                 _textBox.Height = Math.Max(1, _startH + dy);
                                 break;
+
                             case ResizeAnchor.BottomRight:
                                 _textBox.Width = Math.Max(1, _startW + dx);
                                 _textBox.Height = Math.Max(1, _startH + dy);
@@ -272,7 +296,6 @@ namespace TabPaint
                         }
                         DrawTextboxOverlay(ctx); // 实时重绘边框
                     }
-                    // B. 处理拖拽移动 (Dragging) ✨✨✨ 这里是你缺失的部分
                     else if (_dragging)
                     {
                         // 移动 TextBox
@@ -438,7 +461,6 @@ namespace TabPaint
                             ctx.EditorOverlay.CaptureMouse();   // 【重要】捕获鼠标
                             e.Handled = true;                   // 防止事件传给 TextBox 导致光标闪烁
                         }
-                        // 3. 点击内部 -> 交给 TextBox 自己处理（输入文字）
                         else
                         {
                             OnPointerDown(ctx, pos);
@@ -488,6 +510,7 @@ namespace TabPaint
                     AcceptsReturn = true,
                     TextWrapping = TextWrapping.Wrap,
                     Foreground = new SolidColorBrush(ctx.PenColor),
+                    Opacity = TabPaint.SettingsManager.Instance.Current.PenOpacity,
                     // 初始透明
                     BorderBrush = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
@@ -499,24 +522,52 @@ namespace TabPaint
                 Canvas.SetTop(tb, y);
 
                 // 立即应用当前工具栏的设置
-                mw.ApplyTextSettings(tb);
+                ApplyTextSettings(tb);
 
                 return tb;
+            }
+         
+            // 核心方法：将 Toolbar 状态应用到 TextBox
+            public void ApplyTextSettings(System.Windows.Controls.TextBox tb)
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (tb == null) return;
+
+                // 1. 字体与大小
+                if (mw.FontFamilyBox.SelectedValue != null)
+                    tb.FontFamily = new FontFamily(mw.FontFamilyBox.SelectedValue.ToString());
+
+                if (double.TryParse(mw.FontSizeBox.Text, out double size))
+                    tb.FontSize = Math.Max(1, size);
+
+                // 2. 粗体/斜体
+                tb.FontWeight = (mw.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
+                tb.FontStyle = (mw.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
+
+                // 3. 装饰线 (下划线 + 删除线)
+                var decors = new TextDecorationCollection();
+                if (mw.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
+                if (mw.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
+                tb.TextDecorations = decors;
+
+                // 4. 对齐
+                if (mw.AlignLeftBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Left;
+                else if (mw.AlignCenterBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Center;
+                else if (mw.AlignRightBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Right;
+                tb.Foreground = mw.SelectedBrush;
+                if (mw.TextBackgroundBtn.IsChecked == true)
+                    tb.Background = mw.BackgroundBrush;
+                else
+                    tb.Background = Brushes.Transparent;
             }
             public void UpdateCurrentTextBoxAttributes()
             {
                 if (_textBox == null) return;
 
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                ApplyTextSettings(_textBox);
 
-                // 1. 应用新的字体、大小、颜色等设置
-                mw.ApplyTextSettings(_textBox);
-
-                // 2. 【核心修复】强制 WPF 立即更新布局
-                // 这样 _textBox.ActualWidth 和 ActualHeight 才会变成应用新字体后的数值
                 _textBox.UpdateLayout();
-
-                // 3. 使用更新后的尺寸重绘虚线框和手柄
                 DrawTextboxOverlay(mw._ctx);
             }
             private void CleanUpUI(ToolContext ctx)
@@ -531,23 +582,48 @@ namespace TabPaint
                 _textBox = null;
                 lag = 1;
             }
-            private unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx)
+            private unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx, double globalOpacity)
             {
+                int opacityScale = (int)(globalOpacity * 255);
+
+                if (opacityScale <= 0) return;
+
                 fixed (byte* pSrcBase = sourcePixels)
                 fixed (byte* pDstBase = destPixels)
                 {
                     for (int row = 0; row < height; row++)
                     {
-                        // 计算当前行的指针
                         byte* pSrcRow = pSrcBase + sourceStartIdx + (row * stride);
                         byte* pDstRow = pDstBase + (row * stride);
 
                         for (int col = 0; col < width; col++)
                         {
+                            byte rawSrcA = pSrcRow[3];
+                            if (rawSrcA == 0)
+                            {
+                                pSrcRow += 4;
+                                pDstRow += 4;
+                                continue;
+                            }
 
-                            byte srcA = pSrcRow[3];
+                            int srcA, srcR, srcG, srcB;
 
-                            // 优化：如果源像素完全透明，跳过（保留背景）
+                            if (opacityScale == 255)
+                            {
+                                // 满不透明度，直接读取
+                                srcB = pSrcRow[0];
+                                srcG = pSrcRow[1];
+                                srcR = pSrcRow[2];
+                                srcA = rawSrcA;
+                            }
+                            else
+                            {
+                                srcB = (pSrcRow[0] * opacityScale) / 255;
+                                srcG = (pSrcRow[1] * opacityScale) / 255;
+                                srcR = (pSrcRow[2] * opacityScale) / 255;
+                                srcA = (rawSrcA * opacityScale) / 255;
+                            }
+
                             if (srcA == 0)
                             {
                                 pSrcRow += 4;
@@ -555,22 +631,23 @@ namespace TabPaint
                                 continue;
                             }
 
-                            // 优化：如果源像素完全不透明，直接覆盖
                             if (srcA == 255)
                             {
-                                *(int*)pDstRow = *(int*)pSrcRow; // 直接拷贝 4 字节
-                                pSrcRow += 4;
-                                pDstRow += 4;
-                                continue;
+                                pDstRow[0] = (byte)srcB;
+                                pDstRow[1] = (byte)srcG;
+                                pDstRow[2] = (byte)srcR;
+                                pDstRow[3] = 255; // 目标 alpha 变成 255
                             }
+                            else
+                            {
+                                // Alpha 混合: Out = Src + Dst * (1 - SrcA)
+                                int invAlpha = 255 - srcA;
 
-                            // Alpha 混合计算 (使用整数运算优化)
-                            int alphaFactor = 255 - srcA;
-
-                            pDstRow[0] = (byte)(pSrcRow[0] + (pDstRow[0] * alphaFactor) / 255); // B
-                            pDstRow[1] = (byte)(pSrcRow[1] + (pDstRow[1] * alphaFactor) / 255); // G
-                            pDstRow[2] = (byte)(pSrcRow[2] + (pDstRow[2] * alphaFactor) / 255); // R
-                            pDstRow[3] = (byte)(pSrcRow[3] + (pDstRow[3] * alphaFactor) / 255); // A (背景的 Alpha 也要被覆盖)
+                                pDstRow[0] = (byte)(srcB + (pDstRow[0] * invAlpha) / 255); // B
+                                pDstRow[1] = (byte)(srcG + (pDstRow[1] * invAlpha) / 255); // G
+                                pDstRow[2] = (byte)(srcR + (pDstRow[2] * invAlpha) / 255); // R
+                                pDstRow[3] = (byte)(srcA + (pDstRow[3] * invAlpha) / 255); // A
+                            }
 
                             pSrcRow += 4;
                             pDstRow += 4;
@@ -578,6 +655,7 @@ namespace TabPaint
                     }
                 }
             }
+
             public void CommitText(ToolContext ctx)
             {
                 if (_textBox == null) return;
@@ -677,8 +755,9 @@ namespace TabPaint
                 int sourceOffsetX = safeX - x;
                 int sourceOffsetY = safeY - y;
                 int sourceStartIndex = sourceOffsetY * stride + sourceOffsetX * 4;
-
-                AlphaBlendBatch(sourcePixels, destPixels, safeW, safeH, stride, sourceStartIndex);
+                
+                double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                AlphaBlendBatch(sourcePixels, destPixels, safeW, safeH, stride, sourceStartIndex, globalOpacityFactor);
 
                 // 8. 写回混合后的结果
                 ctx.Undo.BeginStroke();
@@ -690,8 +769,6 @@ namespace TabPaint
                 // UI 清理
                 CleanUpUI(ctx);
             }
-
         }
-
     }
 }

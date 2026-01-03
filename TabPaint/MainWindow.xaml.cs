@@ -35,8 +35,8 @@ namespace TabPaint
         {
             _workingPath = path;
             _currentFilePath = path;
-        
 
+            PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent(); 
             this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
@@ -244,12 +244,12 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff" };
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff",".gif" ,".heic", ".tif" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
 
-        private async Task OpenFilesAsNewTabs(string[] files)
+        public async Task OpenFilesAsNewTabs(string[] files)
         {
             if (files == null || files.Length == 0) return;
 
@@ -380,7 +380,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"读取剪切板数据失败: {ex.Message}");
+                ShowToast($"读取剪切板数据失败: {ex.Message}");
                 return;
             }
 
@@ -533,54 +533,7 @@ namespace TabPaint
     // 在 MainWindow 类中添加
 
     // 统一处理文字对齐点击
-    private void TextAlign_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleButton btn && btn.Tag is string align)
-            {
-                // 实现互斥
-                AlignLeftBtn.IsChecked = (align == "Left");
-                AlignCenterBtn.IsChecked = (align == "Center");
-                AlignRightBtn.IsChecked = (align == "Right");
-
-                FontSettingChanged(sender, null);
-            }
-        }
-
-        // 核心方法：将 Toolbar 状态应用到 TextBox
-        public void ApplyTextSettings(System.Windows.Controls.TextBox tb)
-        {
-            if (tb == null) return;
-
-            // 1. 字体与大小
-            if (FontFamilyBox.SelectedValue != null)
-                tb.FontFamily = new FontFamily(FontFamilyBox.SelectedValue.ToString());
-
-            if (double.TryParse(FontSizeBox.Text, out double size))
-                tb.FontSize = Math.Max(1, size);
-
-            // 2. 粗体/斜体
-            tb.FontWeight = (BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
-            tb.FontStyle = (ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
-
-            // 3. 装饰线 (下划线 + 删除线)
-            var decors = new TextDecorationCollection();
-            if (UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
-            if (StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
-            tb.TextDecorations = decors;
-
-            // 4. 对齐
-            if (AlignLeftBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Left;
-            else if (AlignCenterBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Center;
-            else if (AlignRightBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Right;
-            tb.Foreground = SelectedBrush;
-            a.s("createtextboix");
-            // 5. 背景填充
-            // 这里使用白色作为填充色，如果你的App有SecondaryColor，可以换成那个颜色
-            if (TextBackgroundBtn.IsChecked == true)
-                tb.Background = BackgroundBrush;
-            else
-                tb.Background = Brushes.Transparent;
-        }
+  
 
         // 修改原有的 FontSettingChanged，让它调用 TextTool 的更新
         private string FormatFileSize(long bytes)
@@ -762,22 +715,10 @@ namespace TabPaint
                 Mouse.OverrideCursor = null; // 恢复光标
             }
         }
-        private void ShowDragOverlay(string mainText, string subText, string iconData = null)
-        {
-            if (DragOverlay.Visibility != Visibility.Visible)
-            {
-                DragOverlay.Visibility = Visibility.Visible;
-            }
+        private bool _isDragOverlayVisible = false;
 
-            DragOverlayText.Text = mainText;
-            DragOverlaySubText.Text = subText;
+        // 更新显示方法
 
-        }
-
-        private void HideDragOverlay()
-        {
-            DragOverlay.Visibility = Visibility.Collapsed;
-        }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {

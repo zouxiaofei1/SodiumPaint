@@ -63,7 +63,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        public string ProgramVersion { get; set; } = "v0.8 alpha";
+        public string ProgramVersion { get; set; } = "v0.8.1 alpha";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -159,7 +159,7 @@ namespace TabPaint
         private Stack<UndoAction> _undoStack = new Stack<UndoAction>();
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
-        String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp";
+        String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.ico;*.heic";
         ITool LastTool;
         private bool useSecondColor = false;//是否使用备用颜色
         private bool _maximized = false;
@@ -223,6 +223,7 @@ namespace TabPaint
         private string _workingPath;
         public const string InternalClipboardFormat = "TabPaint_Internal_Copy_Marker";
         public bool _firstFittoWindowdone = false;
+        public int PerformanceScore;
         public static readonly DependencyProperty IsViewModeProperty =
      DependencyProperty.Register("IsViewMode", typeof(bool), typeof(MainWindow),
          new PropertyMetadata(false, OnIsViewModeChanged));

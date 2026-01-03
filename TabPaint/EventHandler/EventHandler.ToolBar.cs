@@ -230,7 +230,7 @@ namespace TabPaint
                 _ctx.PenStyle = style;
 
                 UpdateToolSelectionHighlight();
-                SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
+                AutoSetFloatBarVisibility();
 
                 // 关闭 UserControl 里的 ToggleButton
                 MainToolBar.BrushToggle.IsChecked = false;

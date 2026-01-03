@@ -57,10 +57,10 @@ namespace TabPaint
         private void OnModeChanged(bool isView)
         {
             ShowToast(isView ? "进入看图模式" : "进入画图模式");
-
+            AutoSetFloatBarVisibility();
             if (isView)
             {
-              SetPenResizeBarVisibility(false);
+              
                 _router.CleanUpSelectionandShape();
                 if(_router.CurrentTool is TextTool textTool)
                 {
@@ -74,7 +74,7 @@ namespace TabPaint
             }
             else
             {
-                SetPenResizeBarVisibility((_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Pencil) || _router.CurrentTool is ShapeTool);
+                
                 MainImageBar.MainContainer.Height = 100;
             }
             AppTitleBar.UpdateModeIcon(IsViewMode);

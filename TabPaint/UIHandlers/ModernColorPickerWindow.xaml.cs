@@ -29,7 +29,13 @@ namespace TabPaint
             OriginalColorRect.Fill = new SolidColorBrush(initialColor);
             RenderHueGradient();
             SetColorFromRgb(initialColor.R, initialColor.G, initialColor.B);
-
+            this.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Escape)
+                {
+                    this.Close();
+                }
+            };
             // 确保第一次显示时UI位置正确
             Loaded += (s, e) => UpdateUI();
         }

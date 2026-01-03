@@ -75,7 +75,7 @@ namespace TabPaint
             _ctx.PenStyle = style;
             UpdateToolSelectionHighlight();
 
-            SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
+            AutoSetFloatBarVisibility();
         }
 
         private void SetThicknessSlider_Pos(double sliderProgressValue)
@@ -260,16 +260,65 @@ namespace TabPaint
         }
 
   
-        private void SetPenResizeBarVisibility(bool vis)
+        private void AutoSetFloatBarVisibility()
         {
-            ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
-            ((MainWindow)System.Windows.Application.Current.MainWindow).OpacityPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
+            var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+            if (mw.ToolPanelGrid == null) return;
+
+            // 1. 判断显示逻辑
+            bool showThickness = (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Pencil) || _router.CurrentTool is ShapeTool;
+            showThickness = showThickness && !IsViewMode;
+
+            bool showOpacity = _router.CurrentTool is PenTool || _router.CurrentTool is TextTool/* || _router.CurrentTool is ShapeTool*/;
+            showOpacity = showOpacity && !IsViewMode;
+
+            mw.ThicknessPanel.Visibility = showThickness ? Visibility.Visible : Visibility.Collapsed;
+            mw.OpacityPanel.Visibility = showOpacity ? Visibility.Visible : Visibility.Collapsed;
+
+            var rows = mw.ToolPanelGrid.RowDefinitions;
+
+            // === 重置基础状态 ===
+            // 先把 Opacity 放回它原来的位置 (Row 3)，防止状态残留
+            Grid.SetRow(mw.OpacityPanel, 3);
+
+            // 重置所有行高为默认配置
+            rows[1].Height = new GridLength(10000, GridUnitType.Star); // 上槽位
+            rows[2].Height = new GridLength(15);                     // 间距
+            rows[3].Height = new GridLength(10000, GridUnitType.Star); // 下槽位
+
+            // === 根据情况调整 ===
+            if (showThickness && showOpacity)
+            {
+                // 两个都显示：保持默认状态即可 (上槽位给Thickness, 下槽位给Opacity)
+            }
+            else if (showThickness && !showOpacity)
+            {
+                // 只显示粗细：隐藏下半部分
+                rows[2].Height = new GridLength(0); // 隐藏间距
+                rows[3].Height = new GridLength(0); // 隐藏下槽位
+            }
+            else if (!showThickness && showOpacity)
+            {
+                Grid.SetRow(mw.OpacityPanel, 1);
+
+                // 2. 隐藏下面的行
+                rows[2].Height = new GridLength(0); // 隐藏间距
+                rows[3].Height = new GridLength(0); // 隐藏原来的下槽位
+            }
+            else
+            {
+                // 都不显示
+                rows[1].Height = new GridLength(0);
+                rows[2].Height = new GridLength(0);
+                rows[3].Height = new GridLength(0);
+            }
         }
+
 
         public void SetUndoRedoButtonState()
         {
-            //UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
-            //UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
+            UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
+            UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
 
         }
 
@@ -281,28 +330,7 @@ namespace TabPaint
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, System.Windows.Shapes.Path image, bool isEnabled)
         {
             button.IsEnabled = isEnabled;
-
-
-            //var frozenDrawingImage = (DrawingImage)image.Data; // 获取当前 UI 使用的绘图对象
-            //if (frozenDrawingImage == null) return;
-            //var modifiableDrawingImage = frozenDrawingImage.Clone();    // 克隆出可修改的副本
-            //if (modifiableDrawingImage.Drawing is GeometryDrawing geoDrawing)  // DrawingImage.Drawing 可能是 DrawingGroup 或 GeometryDrawing
-            //{
-            //    geoDrawing.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
-            //}
-            //else if (modifiableDrawingImage.Drawing is DrawingGroup group)
-            //{
-            //    foreach (var child in group.Children)
-            //    {
-            //        if (child is GeometryDrawing childGeo)
-            //        {
-            //            childGeo.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
-            //        }
-            //    }
-            //}
-
-            //// 替换 Image.Source，让 UI 用新的对象
-            //image.Data = modifiableDrawingImage;
+            image.Fill = isEnabled ? Brushes.Black : Brushes.Gray;
         }
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
         {
@@ -325,15 +353,35 @@ namespace TabPaint
             int width = _bitmap.PixelWidth;
             int height = _bitmap.PixelHeight;
             int stride = width * 4;
+
             byte[] pixels = new byte[height * stride];
-            _bitmap.CopyPixels(pixels, stride, 0);
+
+            try
+            {
+                // 现在 stride 是根据 bitmap 自身的宽度计算的，绝对不会报错
+                _bitmap.CopyPixels(pixels, stride, 0);
+            }
+            catch (System.ArgumentOutOfRangeException)
+            {
+                // 防御性编程：如果 _bitmap 还是旧的引用，或者 BackBufferStride 特殊
+                // 尝试直接使用 WriteableBitmap 的 BackBufferStride (如果 _bitmap 是 WriteableBitmap)
+                if (_bitmap is WriteableBitmap wb)
+                {
+                    stride = wb.BackBufferStride;
+                    pixels = new byte[height * stride]; // 重新分配数组大小以匹配 stride
+                    wb.CopyPixels(pixels, stride, 0);
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             // 2. 创建用于保存的 BitmapSource，并恢复原始 DPI
-            // 这样用看图软件打开时，尺寸信息（英寸/厘米）才是对的
             var saveSource = BitmapSource.Create(
                 width, height,
-                _originalDpiX, // <--- 恢复原始 X DPI
-                _originalDpiY, // <--- 恢复原始 Y DPI
+                _originalDpiX,
+                _originalDpiY,
                 PixelFormats.Bgra32,
                 null,
                 pixels,
@@ -377,42 +425,7 @@ namespace TabPaint
         }
 
 
-        private Color GetPixelColor(int x, int y)
-        {
-            if (x < 0 || y < 0 || x >= _bmpWidth || y >= _bmpHeight) return Colors.Transparent;
-
-            _bitmap.Lock();
-            unsafe
-            {
-                IntPtr pBackBuffer = _bitmap.BackBuffer;
-                int stride = _bitmap.BackBufferStride;
-                byte* p = (byte*)pBackBuffer + y * stride + x * 4;
-                byte b = p[0];
-                byte g = p[1];
-                byte r = p[2];
-                byte a = p[3];
-                _bitmap.Unlock();
-                return Color.FromArgb(a, r, g, b);
-            }
-        }
-        private void DrawPixel(int x, int y, Color color)
-        {
-            if (x < 0 || y < 0 || x >= _bmpWidth || y >= _bmpHeight) return;
-
-            _bitmap.Lock();
-            unsafe
-            {
-                IntPtr pBackBuffer = _bitmap.BackBuffer;
-                int stride = _bitmap.BackBufferStride;
-                byte* p = (byte*)pBackBuffer + y * stride + x * 4;
-                p[0] = color.B;
-                p[1] = color.G;
-                p[2] = color.R;
-                p[3] = color.A;
-            }
-            _bitmap.AddDirtyRect(new Int32Rect(x, y, 1, 1));
-            _bitmap.Unlock();
-        }
+       
         private void UpdateSliderBarValue(double newScale)
         {
            

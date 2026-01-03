@@ -43,7 +43,7 @@ namespace TabPaint
 
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
-              
+
                 double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
@@ -158,20 +158,23 @@ namespace TabPaint
 
             private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
             {
-                // 1. 获取缩放比例（像素到 UI 单位的转换）
-                double scaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
-                double scaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
+                ctx.SelectionPreview.UseLayoutRounding = false;
+                var bitmap = ctx.Surface.Bitmap;
+                ctx.SelectionPreview.Stretch = System.Windows.Media.Stretch.Fill;
+
+                double scaleX = 96.0 / bitmap.DpiX;
+                double scaleY = 96.0 / bitmap.DpiY;
 
                 ctx.SelectionPreview.Width = _selectionRect.Width * scaleX;
                 ctx.SelectionPreview.Height = _selectionRect.Height * scaleY;
 
+                // 计算位移
                 double localX = pixelX * scaleX;
                 double localY = pixelY * scaleY;
 
-                ctx.SelectionPreview.RenderTransform = new TranslateTransform(
-                    Math.Round(localX, 0),
-                    Math.Round(localY, 0)
-                );
+                ctx.SelectionPreview.RenderTransform = new TranslateTransform(localX, localY);
+
+
             }
 
             private void StartDragDropOperation(ToolContext ctx)
@@ -207,8 +210,16 @@ namespace TabPaint
                     }
 
                     var dataObject = new System.Windows.DataObject();
-                    dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
 
+                    dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
+                    dataObject.SetData("TabPaintSelectionDrag", true);
+                    if (_hasLifted)
+                    {
+                        // LiftSelectionFromCanvas 方法提交了一次 CommitStroke，
+                        // 这里调用 Undo 就可以完美把那个洞填回去，恢复成拖拽前的样子。
+                        ctx.Undo.Undo();
+                        _hasLifted = false;
+                    }
                     HidePreview(ctx);
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
 

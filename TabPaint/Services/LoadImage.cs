@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 //
@@ -25,6 +27,7 @@ namespace TabPaint
         // 标志位：表示图像加载“引擎”是否正在工作中
         private bool _isProcessingQueue = false;
         private CancellationTokenSource _loadImageCts;
+        private CancellationTokenSource _progressCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false)
         {
             _isLoadingImage = true;
@@ -33,10 +36,9 @@ namespace TabPaint
             {
                 if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
-                    ScanFolderImages(filePath);
+                   await ScanFolderImagesAsync(filePath);
                 }
               
-                // 触发当前图的备份
                 TriggerBackgroundBackup();
 
                 // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
@@ -44,7 +46,10 @@ namespace TabPaint
                 {
                     _imageFiles.Add(filePath);
                 }
-
+                if (File.Exists(filePath))
+                {
+                    SettingsManager.Instance.AddRecentFile(filePath);
+                }
                 int newIndex = _imageFiles.IndexOf(filePath);
                 _currentImageIndex = newIndex;
                 RefreshTabPageAsync(_currentImageIndex, refresh);
@@ -152,44 +157,63 @@ namespace TabPaint
                 Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
             }
         }
-        private void ScanFolderImages(string filePath)
+        // 1. 在类级别定义支持的扩展名（静态只读，利用HashSet的哈希查找，极快）
+        private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    ".png", ".jpg", ".jpeg", ".tif", ".tiff",
+    ".gif", ".webp", ".bmp", ".ico", ".heic"
+};
+
+        // 2. 改为异步方法
+        private async Task ScanFolderImagesAsync(string filePath)
         {
             try
             {
-                // 如果是虚拟路径，不执行磁盘扫描（除非你想扫描上次打开的文件夹）
-                if (IsVirtualPath(filePath)) return;
-                if (string.IsNullOrEmpty(filePath)) return;
+                if (IsVirtualPath(filePath) || string.IsNullOrEmpty(filePath)) return;
+
                 string folder = System.IO.Path.GetDirectoryName(filePath)!;
 
-                // 1. 获取磁盘上的物理文件
-                var diskFiles = Directory.GetFiles(folder, "*.*")
-                    .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
-                                f.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                // 放到后台线程处理，彻底解放 UI 线程
+                var sortedFiles = await Task.Run(() =>
+                {
+                    // 使用 EnumerateFiles，虽然还是要遍历，但配合 LINQ 内存开销略小
+                    // 关键优化：只提取扩展名进 HashSet 查找，比 10 次 EndsWith 快得多
+                    return Directory.EnumerateFiles(folder)
+                        .Where(f => {
+                            var ext = System.IO.Path.GetExtension(f);
+                            return ext != null && AllowedExtensions.Contains(ext);
+                        })
+                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) // 既然是看图，自然排序可能更好(WinAPI StrCmpLogicalW)，这里先保持 Ordinal
+                        .ToList();
+                });
 
-                // 2. 获取当前已存在于 FileTabs 中的所有虚拟路径 (::TABPAINT_NEW::...)
-                // 这样可以保证即使切换了文件夹，之前新建的未保存标签依然在列表中
+                // --- 回到 UI 线程更新数据 ---
+
+                // 获取虚拟路径 (内存操作，很快)
                 var virtualPaths = FileTabs.Where(t => IsVirtualPath(t.FilePath))
                                            .Select(t => t.FilePath)
                                            .ToList();
 
-                // 3. 整合：虚拟路径在前，磁盘文件在后（或者根据你的喜好排序）
-                var combinedFiles = new List<string>();
+                // 使用 Capacity 预分配内存，避免 List 扩容
+                var combinedFiles = new List<string>(virtualPaths.Count + sortedFiles.Count);
                 combinedFiles.AddRange(virtualPaths);
-                combinedFiles.AddRange(diskFiles);
+                combinedFiles.AddRange(sortedFiles);
 
                 _imageFiles = combinedFiles;
+
+                // 重新定位索引
                 _currentImageIndex = _imageFiles.IndexOf(filePath);
+
+                // 可以在这里触发一个更新 UI 的事件或方法
+                // UpdateImageNavigationUI(); 
             }
-            catch (Exception ex) { }
+            catch (Exception ex)
+            {
+                // 建议记录日志，防止静默失败
+                System.Diagnostics.Debug.WriteLine($"Scan Error: {ex.Message}");
+            }
         }
+
 
 
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
@@ -274,6 +298,12 @@ namespace TabPaint
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
+            if (_progressCts != null)
+            {
+                _progressCts.Cancel();
+                _progressCts.Dispose();
+                _progressCts = null;
+            }
             string fileToRead = sourcePath ?? filePath;
             if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath))
             {// 新建空白图像逻辑，不加载
@@ -336,9 +366,11 @@ namespace TabPaint
             if (!File.Exists(fileToRead))
             {
                 // 只有非虚拟路径不存在时才报错
-                s($"找不到图片文件: {fileToRead}");
+                ShowToast($"找不到图片文件: {fileToRead}");
                 return;
             }
+            CancellationTokenSource progressCts = null;
+            Task progressTask = null;
 
             try
             {
@@ -352,6 +384,39 @@ namespace TabPaint
 
                 var (originalWidth, originalHeight) = await GetImageDimensionsAsync(imageBytes);
                 if (token.IsCancellationRequested) return;
+
+                long totalPixels = (long)originalWidth * originalHeight;
+                bool showProgress = totalPixels > 8000000;
+                if (showProgress)
+                {
+                    // 创建新的进度条控制源
+                    _progressCts = new CancellationTokenSource();
+                    var progressToken = _progressCts.Token; // 捕获当前Token
+
+                    // 启动模拟任务（不 await）
+                    _ = SimulateProgressAsync(progressToken, totalPixels, (msg) =>
+                    {
+                        // 【双重保险】在更新 UI 前，再次检查当前任务是否已被取消
+                        // 如果用户已经切到下一张图，progressToken.IsCancellationRequested 会变成 true
+                        if (progressToken.IsCancellationRequested) return;
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (!_isLoadingImage) return;
+
+                            _imageSize = msg;
+                            OnPropertyChanged(nameof(ImageSize));
+                        });
+                    });
+                }
+                else
+                {
+                    // 小图直接显示尺寸
+                    await Dispatcher.InvokeAsync(() => {
+                        _imageSize = $"{originalWidth}×{originalHeight}像素";
+                        OnPropertyChanged(nameof(ImageSize));
+                    });
+                }
 
                 // 步骤 2: 并行启动中等预览图和完整图的解码任务
                 Task<BitmapImage> previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
@@ -417,6 +482,12 @@ namespace TabPaint
 
                 // --- 阶段 2: 等待完整图并最终更新 ---
                 var fullResBitmap = await fullResTask;
+                if (_progressCts != null)
+                {
+                    _progressCts.Cancel(); // 停止循环
+                    _progressCts.Dispose();
+                    _progressCts = null;
+                }
                 if (token.IsCancellationRequested || fullResBitmap == null) return;
 
                 // 获取元数据 (保持不变)
@@ -514,6 +585,54 @@ namespace TabPaint
             catch (Exception ex)
             {
                 Dispatcher.Invoke(() => s($"加载图片失败: {ex.Message}"));
+            }
+            finally
+            {
+                // 清理进度条资源
+                progressCts?.Dispose();
+            }
+        }
+
+        private async Task SimulateProgressAsync(CancellationToken token, long totalPixels, Action<string> progressCallback)
+        {
+            // 1. 初始进度 (假设元数据和缩略图已完成)
+            double currentProgress = 30.0;
+            progressCallback($"正在加载 {currentProgress:0}%");
+            int performanceScore = PerformanceScore; // 假设这是之前定义的全局静态变量
+            if (performanceScore <= 0) performanceScore = 5; // 默认值
+
+            double scoreFactor = 0.5 + (performanceScore * 0.25);
+            double estimatedMs = (totalPixels / 40000.0) / scoreFactor;
+
+            // 限制最小和最大模拟时间，避免太快看不见或太慢像死机
+            if (estimatedMs < 500) estimatedMs = 500;
+            if (estimatedMs > 10000) estimatedMs = 10000;
+
+            // 3. 计算步长 (假设每 50ms 更新一次)
+            int interval = 50;
+            double steps = estimatedMs / interval;
+            // 目标只跑到 95%，留 5% 给最后完成的一瞬间
+            double incrementPerStep = (95.0 - currentProgress) / steps;
+
+            try
+            {
+                while (!token.IsCancellationRequested && currentProgress < 95.0)
+                {
+                    await Task.Delay(interval, token);
+
+                    // 增加进度，为了视觉效果，可以在后期减速 (这里使用简单线性)
+                    currentProgress += incrementPerStep;
+
+                    // 确保不溢出
+                    if (currentProgress > 99) currentProgress = 99;
+
+                    // 回调更新 UI
+                    progressCallback($"正在加载 {(int)currentProgress}%");
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // 正常取消，不做处理
             }
         }
 
