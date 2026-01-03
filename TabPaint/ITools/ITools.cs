@@ -203,7 +203,8 @@ namespace TabPaint
                 _ctx.ViewElement.Cursor = tool.Cursor;
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetPenResizeBarVisibility((tool is PenTool && _ctx.PenStyle != BrushStyle.Pencil)|| tool is ShapeTool);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).AutoSetFloatBarVisibility();
+
                 ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateToolSelectionHighlight();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)

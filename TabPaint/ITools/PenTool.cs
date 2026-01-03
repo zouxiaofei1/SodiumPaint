@@ -375,10 +375,14 @@ namespace TabPaint
                 int x0 = (int)p1.X; int y0 = (int)p1.Y;
                 int x1 = (int)p2.X; int y1 = (int)p2.Y;
                 Color c = ctx.PenColor;
+
+                // 获取当前透明度
                 byte finalAlpha = GetCurrentAlpha(c.A);
                 if (finalAlpha == 0) return;
+
                 byte cb = c.B, cg = c.G, cr = c.R, ca = finalAlpha;
 
+                // Bresenham 算法初始化
                 int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
                 int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
                 int err = dx + dy, e2;
@@ -387,29 +391,47 @@ namespace TabPaint
                 {
                     if (x0 >= 0 && x0 < w && y0 >= 0 && y0 < h)
                     {
-                        byte* p = basePtr + y0 * stride + x0 * 4;
+                        // 1. 计算当前像素的一维索引
+                        int pixelIndex = y0 * w + x0;
 
-                        // 同样加入混合逻辑
-                        if (ca == 255)
+                        // 2. 检查掩码：如果当前笔画还没画过这个点，才进行绘制
+                        if (!_currentStrokeMask[pixelIndex])
                         {
-                            p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
-                        }
-                        else
-                        {
-                            float alphaNorm = ca / 255.0f;
-                            float invAlpha = 1.0f - alphaNorm;
-                            p[0] = (byte)(cb * alphaNorm + p[0] * invAlpha);
-                            p[1] = (byte)(cg * alphaNorm + p[1] * invAlpha);
-                            p[2] = (byte)(cr * alphaNorm + p[2] * invAlpha);
-                            p[3] = 255;
+                            // 3. 标记掩码，防止同一次 stroke 重复绘制
+                            _currentStrokeMask[pixelIndex] = true;
+
+                            byte* p = basePtr + y0 * stride + x0 * 4;
+
+                            if (ca == 255)
+                            {
+                                // 不透明直接覆盖
+                                p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
+                            }
+                            else
+                            {
+                                // 半透明混合算法
+                                float alphaNorm = ca / 255.0f;
+                                float invAlpha = 1.0f - alphaNorm;
+
+                                p[0] = (byte)(cb * alphaNorm + p[0] * invAlpha);
+                                p[1] = (byte)(cg * alphaNorm + p[1] * invAlpha);
+                                p[2] = (byte)(cr * alphaNorm + p[2] * invAlpha);
+
+                                // 修复建议：原代码这里是 p[3]=255，这会导致透明绘图时Alpha通道错误
+                                // 改为和 RoundStroke 一样的 Alpha 累加逻辑
+                                p[3] = (byte)Math.Min(255, p[3] + ca);
+                            }
                         }
                     }
+
+                    // 4. 无论是否绘制，算法都必须继续推进坐标
                     if (x0 == x1 && y0 == y1) break;
                     e2 = 2 * err;
                     if (e2 >= dy) { err += dy; x0 += sx; }
                     if (e2 <= dx) { err += dx; y0 += sy; }
                 }
             }
+
 
             private unsafe void DrawSquareStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h, bool isEraser)
             {

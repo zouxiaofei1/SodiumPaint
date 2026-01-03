@@ -46,7 +46,7 @@ namespace TabPaint
             {
                 _overlay.Children.Clear();
              
-                
+                if(((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source==null) return;
                 // 获取当前画布尺寸
                 double w = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source.Width;
                 double h = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source.Height;
@@ -149,26 +149,72 @@ namespace TabPaint
                 double dx = currentMouse.X - _startDragPoint.X;
                 double dy = currentMouse.Y - _startDragPoint.Y;
 
-                double x = 0, y = 0, w = _startRect.Width, h = _startRect.Height;
+                // 原始尺寸（起始坐标视为 0,0）
+                double startW = _startRect.Width;
+                double startH = _startRect.Height;
 
-                // 根据锚点计算
-                // 注意：向左/上拉时，x/y 会变成负数，这是相对于原始 (0,0) 的坐标
+                // 固定的右边界和下边界 (相对于起始原点)
+                double rightEdge = startW;   // 因为起始X是0，所以右边界就是Width
+                double bottomEdge = startH;  // 因为起始Y是0，所以下边界就是Height
+
+                // 初始化为无变化状态
+                double newX = 0;
+                double newY = 0;
+                double newW = startW;
+                double newH = startH;
+
                 switch (_currentAnchor)
                 {
-                    case ResizeAnchor.RightMiddle: w += dx; break;
-                    case ResizeAnchor.BottomMiddle: h += dy; break;
-                    case ResizeAnchor.BottomRight: w += dx; h += dy; break;
+                    case ResizeAnchor.TopLeft:
+                        newW = Math.Max(1, startW - dx);
+                        newX = rightEdge - newW; // 核心：根据固定右边反推X
 
-                    case ResizeAnchor.LeftMiddle: x += dx; w -= dx; break;
-                    case ResizeAnchor.TopMiddle: y += dy; h -= dy; break;
+                        newH = Math.Max(1, startH - dy);
+                        newY = bottomEdge - newH; // 核心：根据固定下边反推Y
+                        break;
 
-                    case ResizeAnchor.TopLeft: x += dx; y += dy; w -= dx; h -= dy; break;
-                    case ResizeAnchor.TopRight: y += dy; w += dx; h -= dy; break;
-                    case ResizeAnchor.BottomLeft: x += dx; w -= dx; h += dy; break;
+                    case ResizeAnchor.TopMiddle:
+                        newH = Math.Max(1, startH - dy);
+                        newY = bottomEdge - newH;
+                        break;
+
+                    case ResizeAnchor.TopRight:
+                        newW = Math.Max(1, startW + dx);
+                        // X 保持 0
+
+                        newH = Math.Max(1, startH - dy);
+                        newY = bottomEdge - newH;
+                        break;
+
+                    case ResizeAnchor.LeftMiddle:
+                        newW = Math.Max(1, startW - dx);
+                        newX = rightEdge - newW;
+                        break;
+
+                    case ResizeAnchor.RightMiddle:
+                        newW = Math.Max(1, startW + dx);
+                        break;
+
+                    case ResizeAnchor.BottomLeft:
+                        newW = Math.Max(1, startW - dx);
+                        newX = rightEdge - newW;
+
+                        newH = Math.Max(1, startH + dy);
+                        break;
+
+                    case ResizeAnchor.BottomMiddle:
+                        newH = Math.Max(1, startH + dy);
+                        break;
+
+                    case ResizeAnchor.BottomRight:
+                        newW = Math.Max(1, startW + dx);
+                        newH = Math.Max(1, startH + dy);
+                        break;
                 }
 
-                return new Rect(x, y, Math.Max(1, w), Math.Max(1, h));
+                return new Rect(newX, newY, newW, newH);
             }
+
 
             private void CreatePreviewBorder()
             {

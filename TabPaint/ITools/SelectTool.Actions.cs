@@ -22,8 +22,6 @@ namespace TabPaint
             {
                 if (_selectionData == null) return;
 
-                // 情况 A: 选区还在原位没动过 (只是画了个框就按 Delete)
-                // 此时需要把画布对应位置“抠掉”并记录 Undo
                 if (!_hasLifted)
                 {
                     ctx.Undo.BeginStroke();
@@ -497,35 +495,42 @@ namespace TabPaint
                     if (!_hasLifted) LiftSelectionFromCanvas(ctx);
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
-
+                    double rightEdge = _startX + _startW;
+                    double bottomEdge = _startY + _startH;
                     // 更新选区矩形
                     switch (_currentAnchor)
                     {
                         case ResizeAnchor.TopLeft:
-                            _selectionRect.X = (int)(_startX + dx);
-                            _selectionRect.Y = (int)(_startY + dy);
-                            _selectionRect.Width = (int)Math.Max(1, _startW - dx);
-                            _selectionRect.Height = (int)Math.Max(1, _startH - dy);
+                            int newW_TL = (int)Math.Max(1, _startW - dx);
+                            _selectionRect.Width = newW_TL;
+                            _selectionRect.X = (int)(rightEdge - newW_TL);
+                            int newH_TL = (int)Math.Max(1, _startH - dy);
+                            _selectionRect.Height = newH_TL;
+                            _selectionRect.Y = (int)(bottomEdge - newH_TL);
                             break;
                         case ResizeAnchor.TopMiddle:
-                            _selectionRect.Y = (int)(_startY + dy);
-                            _selectionRect.Height = (int)Math.Max(1, _startH - dy);
+                            int newH_TM = (int)Math.Max(1, _startH - dy);
+                            _selectionRect.Height = newH_TM;
+                            _selectionRect.Y = (int)(bottomEdge - newH_TM);
                             break;
                         case ResizeAnchor.TopRight:
-                            _selectionRect.Y = (int)(_startY + dy);
+                            int newH_TR = (int)Math.Max(1, _startH - dy);
+                            _selectionRect.Height = newH_TR;
+                            _selectionRect.Y = (int)(bottomEdge - newH_TR);
                             _selectionRect.Width = (int)Math.Max(1, _startW + dx);
-                            _selectionRect.Height = (int)Math.Max(1, _startH - dy);
                             break;
                         case ResizeAnchor.LeftMiddle:
-                            _selectionRect.X = (int)(_startX + dx);
-                            _selectionRect.Width = (int)Math.Max(1, _startW - dx);
+                            int newW_LM = (int)Math.Max(1, _startW - dx);
+                            _selectionRect.Width = newW_LM;
+                            _selectionRect.X = (int)(rightEdge - newW_LM);
                             break;
                         case ResizeAnchor.RightMiddle:
                             _selectionRect.Width = (int)Math.Max(1, _startW + dx);
                             break;
                         case ResizeAnchor.BottomLeft:
-                            _selectionRect.X = (int)(_startX + dx);
-                            _selectionRect.Width = (int)Math.Max(1, _startW - dx);
+                            int newW_BL = (int)Math.Max(1, _startW - dx);
+                            _selectionRect.Width = newW_BL;
+                            _selectionRect.X = (int)(rightEdge - newW_BL);
                             _selectionRect.Height = (int)Math.Max(1, _startH + dy);
                             break;
                         case ResizeAnchor.BottomMiddle:
@@ -852,8 +857,6 @@ namespace TabPaint
                         Cleanup(ctx);
                     }
                 }
-
-
                 else if (_draggingSelection)
                 {
                     _draggingSelection = false;

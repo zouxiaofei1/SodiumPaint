@@ -122,9 +122,12 @@ namespace TabPaint
             public void Undo()
             {
                 if (!CanUndo || _surface?.Bitmap == null) return;
-
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 var action = _undo.Pop();
-
+                if (mw._router.CurrentTool is SelectTool selTool)
+                {
+                    selTool.Cleanup(mw._ctx);
+                }
                 if (action.ActionType == UndoActionType.Transform)
                 {
                     var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);

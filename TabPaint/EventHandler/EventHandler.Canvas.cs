@@ -18,7 +18,20 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
- 
+        private void TextAlign_Click(object sender, RoutedEventArgs e)
+        {
+            var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+            if (sender is ToggleButton btn && btn.Tag is string align)
+            {
+                // 实现互斥
+                mw.AlignLeftBtn.IsChecked = (align == "Left");
+                mw.AlignCenterBtn.IsChecked = (align == "Center");
+                mw.AlignRightBtn.IsChecked = (align == "Right");
+
+                mw.FontSettingChanged(sender, null);
+            }
+        }
+
         private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (_isLoadingImage) return;

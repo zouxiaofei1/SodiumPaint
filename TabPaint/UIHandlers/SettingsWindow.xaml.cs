@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 namespace TabPaint
@@ -11,6 +12,13 @@ namespace TabPaint
         {
             InitializeComponent();
             this.DataContext = this;
+            this.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Escape)
+                {
+                    this.Close();
+                }
+            };
             this.Loaded += (s, e) => SetHighResIcon();
         }
         private void SetHighResIcon()

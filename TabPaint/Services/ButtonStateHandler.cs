@@ -75,7 +75,7 @@ namespace TabPaint
             _ctx.PenStyle = style;
             UpdateToolSelectionHighlight();
 
-            SetPenResizeBarVisibility(_ctx.PenStyle != BrushStyle.Pencil);
+            AutoSetFloatBarVisibility();
         }
 
         private void SetThicknessSlider_Pos(double sliderProgressValue)
@@ -260,16 +260,65 @@ namespace TabPaint
         }
 
   
-        private void SetPenResizeBarVisibility(bool vis)
+        private void AutoSetFloatBarVisibility()
         {
-            ((MainWindow)System.Windows.Application.Current.MainWindow).ThicknessPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
-            ((MainWindow)System.Windows.Application.Current.MainWindow).OpacityPanel.Visibility = vis ? Visibility.Visible : Visibility.Collapsed;
+            var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+            if (mw.ToolPanelGrid == null) return;
+
+            // 1. 判断显示逻辑
+            bool showThickness = (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Pencil) || _router.CurrentTool is ShapeTool;
+            showThickness = showThickness && !IsViewMode;
+
+            bool showOpacity = _router.CurrentTool is PenTool || _router.CurrentTool is TextTool/* || _router.CurrentTool is ShapeTool*/;
+            showOpacity = showOpacity && !IsViewMode;
+
+            mw.ThicknessPanel.Visibility = showThickness ? Visibility.Visible : Visibility.Collapsed;
+            mw.OpacityPanel.Visibility = showOpacity ? Visibility.Visible : Visibility.Collapsed;
+
+            var rows = mw.ToolPanelGrid.RowDefinitions;
+
+            // === 重置基础状态 ===
+            // 先把 Opacity 放回它原来的位置 (Row 3)，防止状态残留
+            Grid.SetRow(mw.OpacityPanel, 3);
+
+            // 重置所有行高为默认配置
+            rows[1].Height = new GridLength(10000, GridUnitType.Star); // 上槽位
+            rows[2].Height = new GridLength(15);                     // 间距
+            rows[3].Height = new GridLength(10000, GridUnitType.Star); // 下槽位
+
+            // === 根据情况调整 ===
+            if (showThickness && showOpacity)
+            {
+                // 两个都显示：保持默认状态即可 (上槽位给Thickness, 下槽位给Opacity)
+            }
+            else if (showThickness && !showOpacity)
+            {
+                // 只显示粗细：隐藏下半部分
+                rows[2].Height = new GridLength(0); // 隐藏间距
+                rows[3].Height = new GridLength(0); // 隐藏下槽位
+            }
+            else if (!showThickness && showOpacity)
+            {
+                Grid.SetRow(mw.OpacityPanel, 1);
+
+                // 2. 隐藏下面的行
+                rows[2].Height = new GridLength(0); // 隐藏间距
+                rows[3].Height = new GridLength(0); // 隐藏原来的下槽位
+            }
+            else
+            {
+                // 都不显示
+                rows[1].Height = new GridLength(0);
+                rows[2].Height = new GridLength(0);
+                rows[3].Height = new GridLength(0);
+            }
         }
+
 
         public void SetUndoRedoButtonState()
         {
-            //UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
-            //UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
+            UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
+            UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
 
         }
 
@@ -281,28 +330,7 @@ namespace TabPaint
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, System.Windows.Shapes.Path image, bool isEnabled)
         {
             button.IsEnabled = isEnabled;
-
-
-            //var frozenDrawingImage = (DrawingImage)image.Data; // 获取当前 UI 使用的绘图对象
-            //if (frozenDrawingImage == null) return;
-            //var modifiableDrawingImage = frozenDrawingImage.Clone();    // 克隆出可修改的副本
-            //if (modifiableDrawingImage.Drawing is GeometryDrawing geoDrawing)  // DrawingImage.Drawing 可能是 DrawingGroup 或 GeometryDrawing
-            //{
-            //    geoDrawing.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
-            //}
-            //else if (modifiableDrawingImage.Drawing is DrawingGroup group)
-            //{
-            //    foreach (var child in group.Children)
-            //    {
-            //        if (child is GeometryDrawing childGeo)
-            //        {
-            //            childGeo.Brush = isEnabled ? Brushes.Black : Brushes.Gray;
-            //        }
-            //    }
-            //}
-
-            //// 替换 Image.Source，让 UI 用新的对象
-            //image.Data = modifiableDrawingImage;
+            image.Fill = isEnabled ? Brushes.Black : Brushes.Gray;
         }
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
         {

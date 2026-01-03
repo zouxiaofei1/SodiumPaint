@@ -18,6 +18,13 @@ namespace TabPaint
     {
         private void OnGlobalDragOver(object sender, DragEventArgs e)
         {
+            if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
+            {
+                HideDragOverlay();
+                e.Effects = DragDropEffects.None; // 此时在窗口内显示禁止符号，或者改为 Move/Copy 也可以，只要不弹窗
+                e.Handled = true;
+                return;
+            }
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
