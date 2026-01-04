@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -17,6 +18,25 @@ using System.Windows.Forms;
 
 namespace TabPaint
 {
+    public class NaturalStringComparer : IComparer<string>
+    {
+        // 单例模式，避免重复创建对象
+        public static readonly NaturalStringComparer Default = new NaturalStringComparer();
+
+        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        [SuppressUnmanagedCodeSecurity] // 稍微提升一点性能
+        private static extern int StrCmpLogicalW(string psz1, string psz2);
+
+        public int Compare(string? x, string? y)
+        {
+            // 处理 null 情况
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
+            return StrCmpLogicalW(x, y);
+        }
+    }
     public static class QuickBenchmark
     {
         [DllImport("kernel32.dll")]

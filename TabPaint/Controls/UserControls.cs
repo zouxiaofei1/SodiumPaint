@@ -75,6 +75,7 @@ namespace TabPaint
             // 事件订阅
             MainMenu.NewClick += OnNewClick;
             MainMenu.OpenClick += OnOpenClick;
+            MainMenu.OpenWorkspaceClick += OnOpenWorkspaceClick;
             MainMenu.SaveClick += OnSaveClick;
             MainMenu.SaveAsClick += OnSaveAsClick;
             MainMenu.ExitClick += OnExitClick;
@@ -89,6 +90,8 @@ namespace TabPaint
             MainMenu.BCEClick += OnBrightnessContrastExposureClick;
             MainMenu.TTSClick += OnColorTempTintSaturationClick;
             MainMenu.BlackWhiteClick += OnConvertToBlackAndWhiteClick;
+            MainMenu.InvertClick += OnInvertColorsClick;
+            MainMenu.AutoLevelsClick += OnAutoLevelsClick;
 
             MainMenu.UndoClick += OnUndoClick;
             MainMenu.RedoClick += OnRedoClick;

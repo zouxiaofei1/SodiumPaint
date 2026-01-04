@@ -243,38 +243,70 @@ namespace TabPaint
         private void ResizeCanvas(int newWidth, int newHeight)
         {
             var oldBitmap = _surface.Bitmap;
-            if (oldBitmap == null) return; // 如果尺寸没有变化，则不执行任何操作
+            if (oldBitmap == null) return;
             if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight) return;
 
-            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);  // --- 1. 捕获变换前的完整状态 (for UNDO) ---
+            // --- 1. 捕获变换前的完整状态 (Undo) ---
+            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
             var undoPixels = new byte[oldBitmap.PixelHeight * oldBitmap.BackBufferStride];
-            // 从旧位图复制像素
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
 
-            var transform = new ScaleTransform(// --- 2. 创建新的、缩放后的位图 ---
-                (double)newWidth / oldBitmap.PixelWidth, // 创建一个变换，指定缩放比例
+            // --- 2. 准备变换 ---
+            var transform = new ScaleTransform(
+                (double)newWidth / oldBitmap.PixelWidth,
                 (double)newHeight / oldBitmap.PixelHeight
             );
 
-            var transformedBitmap = new TransformedBitmap(oldBitmap, transform);    // 应用变换
-            RenderOptions.SetBitmapScalingMode(transformedBitmap, BitmapScalingMode.NearestNeighbor);
+            var transformedBitmap = new TransformedBitmap(oldBitmap, transform);
 
-            // 将结果转换为一个新的 WriteableBitmap
-            var newFormatedBitmap = new FormatConvertedBitmap(transformedBitmap, PixelFormats.Bgra32, null, 0);
+            System.Windows.Media.BitmapScalingMode wpfScalingMode;
+
+            // 获取当前设置
+            var appMode = SettingsManager.Instance.Current.ResamplingMode;
+
+            switch (appMode)
+            {
+                case AppResamplingMode.Bilinear:
+                    wpfScalingMode = BitmapScalingMode.Linear; // WPF中Linear即双线性
+                    break;
+                case AppResamplingMode.Fant:
+                    wpfScalingMode = BitmapScalingMode.Fant;   // 高质量幻像插值
+                    break;
+                case AppResamplingMode.HighQuality:
+                    wpfScalingMode = BitmapScalingMode.HighQuality; // 一般高质量
+                    break;
+                case AppResamplingMode.Auto:
+                default:
+                    wpfScalingMode = BitmapScalingMode.HighQuality;
+                    break;
+            }
+
+            // 将计算出的模式应用到 transformedBitmap 上
+            RenderOptions.SetBitmapScalingMode(transformedBitmap, wpfScalingMode);
+            var newFormatedBitmap = new FormatConvertedBitmap(transformedBitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
             var newBitmap = new WriteableBitmap(newFormatedBitmap);
 
-            var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);    // --- 3. 捕获变换后的完整状态 (for REDO) ---
+            // --- 3. 捕获变换后的完整状态 (Redo) ---
+            var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
             var redoPixels = new byte[newBitmap.PixelHeight * newBitmap.BackBufferStride];
-            // 从新创建的位图复制像素
             newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
-            _surface.ReplaceBitmap(newBitmap);  // --- 4. 执行变换：用新的位图替换旧的画布 ---
-            _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. 将完整的变换信息压入 Undo 栈 ---
+
+            // --- 4. 替换画布 ---
+            _surface.ReplaceBitmap(newBitmap);
+
+            // --- 5. 记录 Undo ---
+            _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
+
             NotifyCanvasSizeChanged(newWidth, newHeight);
             NotifyCanvasChanged();
             _bitmap = newBitmap;
             SetUndoRedoButtonState();
-            _canvasResizer.UpdateUI();
+
+            // 如果有 canvasResizer 控件，也更新它
+            if (_canvasResizer != null)
+                _canvasResizer.UpdateUI();
         }
+
         private void ConvertToBlackAndWhite(WriteableBitmap bmp)
         {
             bmp.Lock();
@@ -284,7 +316,7 @@ namespace TabPaint
                 int stride = bmp.BackBufferStride;
                 int height = bmp.PixelHeight;
                 int width = bmp.PixelWidth;
-                Parallel.For(0, height, y =>// 使用并行处理来加速计算，每个CPU核心处理一部分行
+                Parallel.For(0, height, y =>
                 {
                     byte* row = basePtr + y * stride;
                     // 像素格式为 BGRA (4 bytes per pixel)
@@ -294,13 +326,10 @@ namespace TabPaint
                         byte b = row[x * 4];
                         byte g = row[x * 4 + 1];
                         byte r = row[x * 4 + 2];
-                        // 使用亮度公式计算灰度值
-                        // 这个公式比简单的 (R+G+B)/3 效果更符合人眼感知
-                        byte gray = (byte)(r * 0.2126 + g * 0.7152 + b * 0.0722); // 将计算出的灰度值写回所有三个颜色通道
+                        byte gray = (byte)(r * 0.2126 + g * 0.7152 + b * 0.0722); 
                         row[x * 4] = gray; // Blue
                         row[x * 4 + 1] = gray; // Green
-                        row[x * 4 + 2] = gray; // Red
-                                               // Alpha 通道 (row[x * 4 + 3]) 保持不变
+                        row[x * 4 + 2] = gray; 
                     }
                 });
             }
@@ -416,36 +445,53 @@ namespace TabPaint
             ApplyAutoCrop(cropRect);
         }
 
-        // 专门用于裁剪的辅助方法，支持 Undo
+        // 辅助方法：将带透明度的图片合成到白色背景上
+        private BitmapSource ConvertToWhiteBackground(BitmapSource source)
+        {
+            if (source == null) return null;
+
+            // 1. 创建视觉对象
+            var drawingVisual = new DrawingVisual();
+            using (var context = drawingVisual.RenderOpen())
+            {
+                // 2. 填充白色背景
+                var rect = new Rect(0, 0, source.PixelWidth, source.PixelHeight);
+                context.DrawRectangle(Brushes.White, null, rect);
+
+                // 3. 在上层绘制原图
+                context.DrawImage(source, rect);
+            }
+
+            // 4. 渲染为新的位图
+            var rtb = new RenderTargetBitmap(
+                source.PixelWidth,
+                source.PixelHeight,
+                source.DpiX,
+                source.DpiY,
+                PixelFormats.Pbgra32);
+
+            rtb.Render(drawingVisual);
+            rtb.Freeze(); // 冻结以提升性能
+
+            return rtb;
+        }
+
         private void ApplyAutoCrop(Int32Rect cropRect)
         {
             var oldBitmap = _surface.Bitmap;
-
-            // --- 1. 捕获当前整图状态 (Undo) ---
             var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
             var undoPixels = _surface.ExtractRegion(undoRect);
-
-            // --- 2. 提取裁剪区域作为新图 ---
             var newPixels = _surface.ExtractRegion(cropRect);
 
             // 创建新位图
             var newBitmap = new WriteableBitmap(cropRect.Width, cropRect.Height, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
             newBitmap.WritePixels(new Int32Rect(0, 0, cropRect.Width, cropRect.Height), newPixels, newBitmap.BackBufferStride, 0);
-
-            // --- 3. 准备 Redo 数据 ---
             var redoRect = new Int32Rect(0, 0, cropRect.Width, cropRect.Height);
-
-            // --- 4. 替换画布 ---
             _surface.ReplaceBitmap(newBitmap);
             _bitmap = newBitmap;
             BackgroundImage.Source = _bitmap;
 
-            // --- 5. 推入撤销栈 (利用 Transform 类型，因为它处理尺寸变化) ---
-            // 这里要注意：Redo 时不仅仅是贴像素，画布尺寸也变了，所以需要 UndoActionType.Transform 或 CanvasResize 逻辑
-            // 你现有的 PushTransformAction 逻辑非常适合这里
             _undo.PushTransformAction(undoRect, undoPixels, redoRect, newPixels);
-
-            // 更新 UI
             NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
             NotifyCanvasChanged();
             _canvasResizer.UpdateUI();

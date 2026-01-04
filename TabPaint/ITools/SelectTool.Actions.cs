@@ -436,18 +436,7 @@ namespace TabPaint
                 if (lag > 0) { lag--; return; }
                 if (ctx.Surface.Bitmap == null) return;
                 var px = ctx.ToPixel(viewPos);
-
-                // 在选区外点击 → 提交并清除
-                //if (_selectionData != null && !IsPointInSelection(px))
-                //{
-                //    if (HitTestHandle(px, _selectionRect) == ResizeAnchor.None)
-                //    {
-                //        CommitSelection(ctx);
-                //        ClearSelections(ctx);
-                //        return;
-                //    }
-                //}
-
+            
                 if (_selectionData != null)
                 {
                     // 判定点击位置是句柄还是框内
@@ -489,12 +478,10 @@ namespace TabPaint
                 _selectionRect = new Int32Rect((int)px.X, (int)px.Y, 0, 0);
                 HidePreview(ctx);
                 ctx.ViewElement.CaptureMouse();
-                //if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
-                //   DrawOverlay(ctx, _selectionRect);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
 
-            private bool _hasLifted = false;
+            public bool _hasLifted = false;
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
                 //s(_selectionData.Length);
@@ -644,7 +631,6 @@ namespace TabPaint
                     if (mainWindow != null)
                     {
                         Point posInWindow = ctx.ViewElement.TranslatePoint(viewPos, mainWindow);
-
                         double margin = -5;
                         bool isOutside = posInWindow.X < margin ||
                                          posInWindow.Y < margin ||
@@ -652,12 +638,8 @@ namespace TabPaint
                                          posInWindow.Y > mainWindow.ActualHeight - margin;
                         if (isOutside)
                         {
-                            // 释放捕获，否则系统拖放引擎无法接管鼠标
                             ctx.ViewElement.ReleaseMouseCapture();
-
-                            // 启动拖放
                             StartDragDropOperation(ctx);
-
                             _draggingSelection = false;
                             return;
                         }
@@ -683,9 +665,7 @@ namespace TabPaint
                     }
 
 
-                    ctx.SelectionPreview.Clip = new RectangleGeometry(
-                        new Rect(0, 0, 1000, 1000)
-                    );
+                    ctx.SelectionPreview.Clip = null;
 
                     Int32Rect tmprc = new Int32Rect(newX, newY, _selectionRect.Width, _selectionRect.Height);
 
@@ -704,27 +684,38 @@ namespace TabPaint
                     double visibleY = (int)Math.Max(0, -offsetY / ratioY);
 
 
-                    double visibleW = (int)Math.Min(tmprc.Width / ratioX, (canvasW - offsetX) / ratioX);
-                    double visibleH = (int)Math.Min(tmprc.Height / ratioY, (canvasH - offsetY) / ratioY);
+                    double visibleW = Math.Max(0, Math.Min(tmprc.Width / ratioX, (canvasW - offsetX) / ratioX));
+                    double visibleH = Math.Max(0, Math.Min(tmprc.Height / ratioY, (canvasH - offsetY) / ratioY));
 
                     Int32Rect intRect = ClampRect(new Int32Rect((int)visibleX, (int)visibleY, (int)visibleW, (int)visibleH), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
                     Rect rect = new Rect(intRect.X, intRect.Y, intRect.Width, intRect.Height);
                     Geometry visibleRect = new RectangleGeometry(rect);
                     if (visibleW > 0 && visibleH > 0)
                     {
-                        ctx.SelectionPreview.Clip = visibleRect;
+                        // 确保 X 和 Y 也是合法的（虽然通常 offsetX 逻辑不会错，但为了保险）
+                        double validX = Math.Max(0, visibleX);
+                        double validY = Math.Max(0, visibleY);
+
+                        ctx.SelectionPreview.Clip = new RectangleGeometry(new Rect(validX, validY, visibleW, visibleH));
+
+                        // 确保可见
+                        if (ctx.SelectionPreview.Visibility != Visibility.Visible)
+                            ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
                     else
                     {
-                        // 超出画布完全不可见时可以隐藏掉
-                        ctx.SelectionPreview.Clip = null;
-                        ctx.SelectionPreview.Visibility = Visibility.Collapsed;
+                        // 完全移出画面时，隐藏或者是清空 Clip（视你的需求而定，建议清空 Clip 并依赖 Viewport 裁剪）
+                        ctx.SelectionPreview.Clip = Geometry.Empty;
                     }
+
                     DrawOverlay(ctx, tmprc);// 画布的尺寸
 
                 }
 
-
+                UpdateStatusBarSelectionSize();
+            }
+        private void UpdateStatusBarSelectionSize()
+            {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {// 状态栏更新
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SelectionSize =
@@ -946,6 +937,7 @@ namespace TabPaint
 
                         SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
+                        UpdateStatusBarSelectionSize();
                     }
                     else
                     {

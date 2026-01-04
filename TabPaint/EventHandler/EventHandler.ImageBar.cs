@@ -310,6 +310,7 @@ namespace TabPaint
         }
         private string PrepareDragFilePath(FileTabItem tab)
         {
+          
             if (!tab.IsDirty && !tab.IsNew && !IsVirtualPath(tab.FilePath))
             {
                 return tab.FilePath;
@@ -342,18 +343,30 @@ namespace TabPaint
 
                     string fileName = tab.FileName;
 
+                    // 确保有后缀名，如果没有默认给png
                     if (!fileName.Contains(".")) fileName += ".png";
 
                     string tempFilePath = System.IO.Path.Combine(tempFolder, fileName);
 
-                    // 保存文件
+                    // --- 关键修改开始 ---
+
+                    bool isJpeg = fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                  fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
+
+                    // 如果是 JPEG，必须把透明背景变成白色，否则会变黑
+                    if (isJpeg)
+                    {
+                        bitmapToSave = ConvertToWhiteBackground(bitmapToSave);
+                    }
+
                     using (var fs = new FileStream(tempFilePath, FileMode.Create))
                     {
                         BitmapEncoder encoder;
-                        if (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                            fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                        if (isJpeg)
                         {
-                            encoder = new JpegBitmapEncoder();
+                            var jpgEncoder = new JpegBitmapEncoder();
+                            jpgEncoder.QualityLevel = 90; // 建议设置高质量
+                            encoder = jpgEncoder;
                         }
                         else
                         {
@@ -363,6 +376,7 @@ namespace TabPaint
                         encoder.Frames.Add(BitmapFrame.Create(bitmapToSave));
                         encoder.Save(fs);
                     }
+                    // --- 关键修改结束 ---
 
                     return tempFilePath;
                 }

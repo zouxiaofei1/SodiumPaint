@@ -39,7 +39,7 @@ namespace TabPaint
             public UndoActionType ActionType { get; }
             public UndoAction(Int32Rect rect, byte[] pixels, UndoActionType actionType = UndoActionType.Draw)
             {
-                ActionType =actionType;
+                ActionType = actionType;
                 Rect = rect;
                 Pixels = pixels;
             }
@@ -55,8 +55,8 @@ namespace TabPaint
         public class UndoRedoManager
         {
             private readonly CanvasSurface _surface;
-            private readonly Stack<UndoAction> _undo = new();
-            private readonly Stack<UndoAction> _redo = new();
+            public readonly Stack<UndoAction> _undo = new();
+            public readonly Stack<UndoAction> _redo = new();
             private byte[]? _preStrokeSnapshot;
             private readonly List<Int32Rect> _strokeRects = new();
             public int UndoCount => _undo.Count;
@@ -65,7 +65,7 @@ namespace TabPaint
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 mw.SetUndoRedoButtonState(); // 更新按钮可用性
                 mw.CheckDirtyState();        // 更新红点状态
-               mw.UpdateWindowTitle();
+                mw.UpdateWindowTitle();
             }
             public UndoRedoManager(CanvasSurface surface) { _surface = surface; }
 
@@ -93,21 +93,21 @@ namespace TabPaint
 
             public void AddDirtyRect(Int32Rect rect) => _strokeRects.Add(rect);
 
-            public void CommitStroke(UndoActionType undoActionType= UndoActionType.Draw)//一般绘画
+            public void CommitStroke(UndoActionType undoActionType = UndoActionType.Draw)//一般绘画
             {
+               
                 if (_preStrokeSnapshot == null || _strokeRects.Count == 0 || _surface?.Bitmap == null)
                 {
                     _preStrokeSnapshot = null;
                     return;
                 }
-               // a.s(undoActionType);
                 var combined = ClampRect(CombineRects(_strokeRects), ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
 
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
                 _undo.Push(new UndoAction(combined, region, undoActionType));
                 UpdateUI();
                 _preStrokeSnapshot = null;
-                
+
                 ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
 
@@ -121,13 +121,20 @@ namespace TabPaint
             // ---------- 撤销 / 重做 ----------
             public void Undo()
             {
-                if (!CanUndo || _surface?.Bitmap == null) return;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                var action = _undo.Pop();
-                if (mw._router.CurrentTool is SelectTool selTool)
+                if (mw._router.CurrentTool is SelectTool sselTool && sselTool.HasActiveSelection)
                 {
-                    selTool.Cleanup(mw._ctx);
+                    if (!sselTool._hasLifted)
+                    {
+                        sselTool.Cleanup(mw._ctx);
+                        mw.SetCropButtonState();
+                        return;
+                    }
                 }
+                if (!CanUndo || _surface?.Bitmap == null) return;
+
+                var action = _undo.Pop();
+                if (mw._router.CurrentTool is SelectTool selTool) selTool.Cleanup(mw._ctx);
                 if (action.ActionType == UndoActionType.Transform)
                 {
                     var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
@@ -140,7 +147,6 @@ namespace TabPaint
                         action.RedoPixels
                     ));
 
-                    // 2. 执行 Undo 操作 (恢复到变换前的状态)
                     var wb = new WriteableBitmap(action.UndoRect.Width, action.UndoRect.Height,
                             ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiX, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
@@ -152,19 +158,15 @@ namespace TabPaint
                 else // Draw Action
                 {
                     internalUndoAction(action);
-                    // 3. 核心修复：如果是 Selection 类型，且栈里还有动作，说明还有一个配对的 "剪切原图" 动作需要撤销
                     if (action.ActionType == UndoActionType.Selection && _undo.Count > 0)
                     {
-                       
+
                         var pairedAction = _undo.Pop(); // 取出配对的 "剪切" 动作
-                        internalUndoAction(pairedAction); // 立即执行撤销
+                        internalUndoAction(pairedAction); 
                     }
-
-
                 }
                 UpdateUI();
-                            // 触发UI更新，如居中等
-                            ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
+                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
 
             public void Redo()

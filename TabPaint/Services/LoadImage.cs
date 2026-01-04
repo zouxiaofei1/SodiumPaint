@@ -173,43 +173,36 @@ namespace TabPaint
 
                 string folder = System.IO.Path.GetDirectoryName(filePath)!;
 
-                // 放到后台线程处理，彻底解放 UI 线程
+                // 放到后台线程处理
                 var sortedFiles = await Task.Run(() =>
                 {
-                    // 使用 EnumerateFiles，虽然还是要遍历，但配合 LINQ 内存开销略小
-                    // 关键优化：只提取扩展名进 HashSet 查找，比 10 次 EndsWith 快得多
                     return Directory.EnumerateFiles(folder)
                         .Where(f => {
                             var ext = System.IO.Path.GetExtension(f);
                             return ext != null && AllowedExtensions.Contains(ext);
                         })
-                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) // 既然是看图，自然排序可能更好(WinAPI StrCmpLogicalW)，这里先保持 Ordinal
+                        .OrderBy(f => f, NaturalStringComparer.Default)
+                        // --- 修改结束 ---
                         .ToList();
                 });
 
-                // --- 回到 UI 线程更新数据 ---
-
-                // 获取虚拟路径 (内存操作，很快)
                 var virtualPaths = FileTabs.Where(t => IsVirtualPath(t.FilePath))
-                                           .Select(t => t.FilePath)
-                                           .ToList();
+                                            .Select(t => t.FilePath)
+                                            .ToList();
 
-                // 使用 Capacity 预分配内存，避免 List 扩容
+                // 预分配内存
                 var combinedFiles = new List<string>(virtualPaths.Count + sortedFiles.Count);
                 combinedFiles.AddRange(virtualPaths);
                 combinedFiles.AddRange(sortedFiles);
 
                 _imageFiles = combinedFiles;
 
-                // 重新定位索引
                 _currentImageIndex = _imageFiles.IndexOf(filePath);
 
-                // 可以在这里触发一个更新 UI 的事件或方法
                 // UpdateImageNavigationUI(); 
             }
             catch (Exception ex)
             {
-                // 建议记录日志，防止静默失败
                 System.Diagnostics.Debug.WriteLine($"Scan Error: {ex.Message}");
             }
         }
@@ -386,7 +379,7 @@ namespace TabPaint
                 if (token.IsCancellationRequested) return;
 
                 long totalPixels = (long)originalWidth * originalHeight;
-                bool showProgress = totalPixels > 8000000;
+                bool showProgress = totalPixels > 2000000* PerformanceScore;
                 if (showProgress)
                 {
                     // 创建新的进度条控制源
@@ -596,17 +589,17 @@ namespace TabPaint
         private async Task SimulateProgressAsync(CancellationToken token, long totalPixels, Action<string> progressCallback)
         {
             // 1. 初始进度 (假设元数据和缩略图已完成)
-            double currentProgress = 30.0;
+            double currentProgress = 5.0;
             progressCallback($"正在加载 {currentProgress:0}%");
             int performanceScore = PerformanceScore; // 假设这是之前定义的全局静态变量
             if (performanceScore <= 0) performanceScore = 5; // 默认值
 
             double scoreFactor = 0.5 + (performanceScore * 0.25);
-            double estimatedMs = (totalPixels / 40000.0) / scoreFactor;
+            double estimatedMs = (totalPixels / 60000.0) / scoreFactor;
 
             // 限制最小和最大模拟时间，避免太快看不见或太慢像死机
-            if (estimatedMs < 500) estimatedMs = 500;
-            if (estimatedMs > 10000) estimatedMs = 10000;
+            if (estimatedMs < 300) estimatedMs = 300;
+           // if (estimatedMs > 10000) estimatedMs = 10000;
 
             // 3. 计算步长 (假设每 50ms 更新一次)
             int interval = 50;

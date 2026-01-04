@@ -345,7 +345,6 @@ namespace TabPaint
             if (_isUpdatingUiFromScroll) return;
             int index = (int)Math.Round(MainImageBar.Slider.Value);
 
-            a.s(index);
 
             _sliderDebounceTimer?.Stop();
             _sliderDebounceTimer?.Start();

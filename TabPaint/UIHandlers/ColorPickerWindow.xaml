@@ -6,30 +6,63 @@
         ResizeMode="NoResize" 
         Topmost="True" 
         ShowInTaskbar="False"
-        Cursor="Cross"
+        Cursor="Cross" 
         WindowState="Maximized"
         Background="Transparent"
         AllowsTransparency="True"
         KeyDown="Window_KeyDown"
         MouseDown="Window_MouseDown"
-        MouseMove="Window_MouseMove">
-    <Grid>
-        <!-- 显示截图作为背景 -->
-        <Image Name="ScreenShotImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        MouseMove="Window_MouseMove"
+        Loaded="ColorPickerWindow_Loaded">
+    <!-- Cursor="None" 隐藏系统鼠标，我们自己画十字或者靠放大镜中间的十字 -->
 
-        <!-- 放大镜预览（可选，增强体验） -->
-        <Border Name="Magnifier" Width="100" Height="100" BorderBrush="White" BorderThickness="2" CornerRadius="50" IsHitTestVisible="False" Visibility="Collapsed">
-            <Border.Background>
-                <SolidColorBrush x:Name="MagnifierBrush" Color="Black"/>
-            </Border.Background>
-            <Grid>
-                <Ellipse Width="4" Height="4" Fill="Red" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <TextBlock Name="ColorText" Text="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20" Foreground="White" FontWeight="Bold" FontSize="10">
-                    <TextBlock.Effect>
-                        <DropShadowEffect ShadowDepth="0" BlurRadius="2"/>
-                    </TextBlock.Effect>
-                </TextBlock>
-            </Grid>
-        </Border>
+    <Grid>
+        <!-- 1. 底层全屏截图 -->
+        <!-- 注意：给他一个名字，以便 VisualBrush 引用 -->
+        <Image Name="ScreenShotImage" Stretch="Fill" />
+
+        <!-- 2. 放大镜容器 (使用 Canvas 绝对定位) -->
+        <Canvas Name="OverlayCanvas">
+            <Border Name="Magnifier" Width="120" Height="120" 
+                    BorderBrush="#FF007ACC" BorderThickness="2" 
+                    CornerRadius="60" 
+                    Visibility="Collapsed">
+
+                <!-- 阴影让它浮起来 -->
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                </Border.Effect>
+
+                <Grid ClipToBounds="True">
+                    <Grid.Clip>
+                        <EllipseGeometry Center="60,60" RadiusX="60" RadiusY="60"/>
+                    </Grid.Clip>
+
+                    <!-- A. 放大显示的区域 -->
+                    <!-- 关键：BitmapScalingMode="NearestNeighbor" 保证看到清晰的像素格 -->
+                    <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor">
+                        <Rectangle.Fill>
+                            <!-- 绑定到全屏截图 -->
+                            <VisualBrush Visual="{Binding ElementName=ScreenShotImage}" 
+                                         x:Name="ZoomBrush"
+                                         ViewboxUnits="Absolute"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- B. 像素网格装饰 (可选，半透明覆盖层，画个中心框) -->
+                    <!-- 中心选中像素的高亮框 -->
+                    <Rectangle Width="12" Height="12" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Stroke="#FFFF00" StrokeThickness="1" SnapsToDevicePixels="True"/>
+
+                    <!-- C. 底部文字信息 -->
+                    <Border VerticalAlignment="Bottom" Background="#AA000000" Height="24">
+                        <TextBlock Name="ColorText" Text="#FFFFFF" 
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                   Foreground="White" FontWeight="Bold" FontFamily="Consolas" FontSize="11"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </Canvas>
     </Grid>
 </Window>

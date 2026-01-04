@@ -50,18 +50,12 @@ namespace TabPaint.Controls
 
         // ================== 公开属性 (为了让 MainWindow 能控制撤销重做状态) ==================
 
-        /// <summary>
-        /// 获取或设置是否允许撤销
-        /// </summary>
         public bool IsUndoEnabled
         {
             get { return UndoButton.IsEnabled; }
             set { UndoButton.IsEnabled = value; }
         }
 
-        /// <summary>
-        /// 获取或设置是否允许重做
-        /// </summary>
         public bool IsRedoEnabled
         {
             get { return RedoButton.IsEnabled; }
@@ -77,7 +71,6 @@ namespace TabPaint.Controls
                 catch{ }
             }
         }
-        // 如果你的代码里需要直接访问 Button 对象 (例如做动画)，可以这样暴露：
         public Button BtnUndo => UndoButton;
         public Button BtnRedo => RedoButton;
         public System.Windows.Shapes.Path IconUndo => UndoIcon;
@@ -86,8 +79,6 @@ namespace TabPaint.Controls
         {
             InitializeComponent();
         }
-
-        // ================== 内部触发器 ==================
         private void OnNewClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(NewClickEvent));
         private void OnOpenClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenClickEvent));
         private void OnSaveClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SaveClickEvent));
@@ -103,6 +94,16 @@ namespace TabPaint.Controls
         private void OnUndoClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(UndoClickEvent));
         private void OnRedoClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(RedoClickEvent));
         private void OnSettingsClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SettingsClickEvent));
+        public static readonly RoutedEvent InvertClickEvent = EventManager.RegisterRoutedEvent("InvertClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent AutoLevelsClickEvent = EventManager.RegisterRoutedEvent("AutoLevelsClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public event RoutedEventHandler InvertClick { add { AddHandler(InvertClickEvent, value); } remove { RemoveHandler(InvertClickEvent, value); } }
+        public event RoutedEventHandler AutoLevelsClick { add { AddHandler(AutoLevelsClickEvent, value); } remove { RemoveHandler(AutoLevelsClickEvent, value); } }
+        private void OnInvertClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(InvertClickEvent));
+        private void OnAutoLevelsClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(AutoLevelsClickEvent));
+
+
+
+
         public event EventHandler<string> RecentFileClick;
         public event EventHandler ClearRecentFilesClick;
         private void OnFileMenuOpened(object sender, RoutedEventArgs e)
@@ -161,5 +162,21 @@ namespace TabPaint.Controls
                 RecentFileClick?.Invoke(this, path);
             }
         }
+        public static readonly RoutedEvent OpenWorkspaceClickEvent = EventManager.RegisterRoutedEvent(
+    "OpenWorkspaceClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+
+        // 2. 提供事件包装器
+        public event RoutedEventHandler OpenWorkspaceClick
+        {
+            add { AddHandler(OpenWorkspaceClickEvent, value); }
+            remove { RemoveHandler(OpenWorkspaceClickEvent, value); }
+        }
+
+        // 3. 实现点击回调，触发事件
+        private void OnOpenWorkspaceClick(object sender, RoutedEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(OpenWorkspaceClickEvent));
+        }
+
     }
 }

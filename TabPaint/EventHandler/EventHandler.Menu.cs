@@ -19,6 +19,169 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void OnInvertColorsClick(object sender, RoutedEventArgs e)
+        {
+            if (_surface?.Bitmap == null) return;
+
+            // 1. 记录 Undo (整图操作推荐 PushFullImageUndo)
+            _undo.PushFullImageUndo();
+
+            var bmp = _surface.Bitmap;
+            bmp.Lock();
+            try
+            {
+                unsafe
+                {
+                    byte* basePtr = (byte*)bmp.BackBuffer;
+                    int stride = bmp.BackBufferStride;
+                    int height = bmp.PixelHeight;
+                    int width = bmp.PixelWidth;
+
+                    // 并行处理反色
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* row = basePtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            // 反色公式：255 - 原值
+                            // 注意：通常不反转 Alpha 通道 (pixel[3])
+                            row[x * 4] = (byte)(255 - row[x * 4]);     // B
+                            row[x * 4 + 1] = (byte)(255 - row[x * 4 + 1]); // G
+                            row[x * 4 + 2] = (byte)(255 - row[x * 4 + 2]); // R
+                        }
+                    });
+                }
+                bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
+            }
+            finally
+            {
+                bmp.Unlock();
+            }
+
+            // 更新状态
+            NotifyCanvasChanged();
+            SetUndoRedoButtonState();
+            ShowToast("已应用反色");
+        }
+
+        private void OnAutoLevelsClick(object sender, RoutedEventArgs e)
+        {
+            if (_surface?.Bitmap == null) return;
+
+            // 1. 记录 Undo
+            _undo.PushFullImageUndo();
+
+            var bmp = _surface.Bitmap;
+            bmp.Lock();
+            try
+            {
+                unsafe
+                {
+                    byte* basePtr = (byte*)bmp.BackBuffer;
+                    int stride = bmp.BackBufferStride;
+                    int height = bmp.PixelHeight;
+                    int width = bmp.PixelWidth;
+                    long totalPixels = width * height;
+
+                    // --- 第一步：统计直方图 ---
+                    // 为了简化，这里计算 RGB 的综合亮度直方图，或者分别计算 R,G,B 通道
+                    // 自动色阶通常是针对 R, G, B 三个通道分别拉伸，这样可以修正色偏
+
+                    int[] histR = new int[256];
+                    int[] histG = new int[256];
+                    int[] histB = new int[256];
+
+                    // 采样统计 (为了性能，如果是超大图可以考虑跳跃采样，这里做全采样)
+                    for (int y = 0; y < height; y++)
+                    {
+                        byte* row = basePtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            histB[row[x * 4]]++;
+                            histG[row[x * 4 + 1]]++;
+                            histR[row[x * 4 + 2]]++;
+                        }
+                    }
+
+                    // --- 第二步：寻找切入点 (Min/Max) ---
+                    // 通常忽略两端 0.5% 的极值像素，避免噪点影响
+                    float clipPercent = 0.005f;
+                    int threshold = (int)(totalPixels * clipPercent);
+
+                    void GetMinMax(int[] hist, out byte min, out byte max)
+                    {
+                        min = 0; max = 255;
+                        int count = 0;
+                        // 找 min
+                        for (int i = 0; i < 256; i++)
+                        {
+                            count += hist[i];
+                            if (count > threshold) { min = (byte)i; break; }
+                        }
+                        // 找 max
+                        count = 0;
+                        for (int i = 255; i >= 0; i--)
+                        {
+                            count += hist[i];
+                            if (count > threshold) { max = (byte)i; break; }
+                        }
+                    }
+
+                    GetMinMax(histB, out byte minB, out byte maxB);
+                    GetMinMax(histG, out byte minG, out byte maxG);
+                    GetMinMax(histR, out byte minR, out byte maxR);
+
+                    // --- 第三步：生成查找表 (LUT) 优化性能 ---
+                    byte[] lutR = BuildLevelLut(minR, maxR);
+                    byte[] lutG = BuildLevelLut(minG, maxG);
+                    byte[] lutB = BuildLevelLut(minB, maxB);
+
+                    // --- 第四步：应用映射 ---
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* row = basePtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            row[x * 4] = lutB[row[x * 4]];     // B
+                            row[x * 4 + 1] = lutG[row[x * 4 + 1]]; // G
+                            row[x * 4 + 2] = lutR[row[x * 4 + 2]]; // R
+                        }
+                    });
+                }
+                bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
+            }
+            finally
+            {
+                bmp.Unlock();
+            }
+
+            NotifyCanvasChanged();
+            SetUndoRedoButtonState();
+            ShowToast("已自动调整色阶");
+        }
+
+        // 辅助方法：构建色阶映射表
+        private byte[] BuildLevelLut(byte min, byte max)
+        {
+            byte[] lut = new byte[256];
+            if (max <= min) // 避免除以零或异常情况
+            {
+                for (int i = 0; i < 256; i++) lut[i] = (byte)i;
+                return lut;
+            }
+
+            float scale = 255.0f / (max - min);
+            for (int i = 0; i < 256; i++)
+            {
+                if (i <= min) lut[i] = 0;
+                else if (i >= max) lut[i] = 255;
+                else
+                {
+                    lut[i] = (byte)((i - min) * scale);
+                }
+            }
+            return lut;
+        }
         private void OnRecentFileClick(object sender, string filePath)
         {
             if (File.Exists(filePath))
@@ -245,6 +408,27 @@ namespace TabPaint
             ThicknessTipText.Text = $"{(int)realSize} 像素";
             SetThicknessSlider_Pos(e.NewValue);
             ThicknessTip.Visibility = Visibility.Visible;
+        }
+        private async void OnOpenWorkspaceClick(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "选择图片以建立新工作区 (将清空当前画布)",
+                Filter = PicFilterString, // 使用你现有的图片过滤器
+                Multiselect = false       // 工作区切换通常基于单张图片或单文件夹
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                string file = dlg.FileName;
+
+                // 加入最近文件列表
+                SettingsManager.Instance.AddRecentFile(file);
+
+                // 调用你已有的切换工作区逻辑 (与拖拽到标题栏的逻辑一致)
+                // 注意：SwitchWorkspaceToNewFile 应该是 async 的
+                await SwitchWorkspaceToNewFile(file);
+            }
         }
 
 

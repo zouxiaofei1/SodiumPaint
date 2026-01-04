@@ -320,24 +320,15 @@ namespace TabPaint
                     int targetW = targetBmp.PixelWidth;
                     int targetH = targetBmp.PixelHeight;
 
-                    // 1. 计算【实际绘制区域】（裁剪逻辑：取 目标画布 和 贴图区域 的交集）
-                    // 左上角坐标（如果小于0，则截断为0）
                     int drawX = Math.Max(0, x);
                     int drawY = Math.Max(0, y);
-
-                    // 右下角坐标 (限制在画布宽高雄内，同时不能超过图片本身的右边界 x+w)
                     int right = Math.Min(targetW, x + w);
                     int bottom = Math.Min(targetH, y + h);
-
-                    // 实际需要绘制的宽高
                     int drawW = right - drawX;
                     int drawH = bottom - drawY;
 
-                    // 2. 如果宽高无效（完全在画布外），直接退出，防止崩溃
                     if (drawW <= 0 || drawH <= 0) return;
 
-                    // 3. 计算源数据的起始偏移量
-                    // 关键修复点：如果 x < 0，说明图片左侧被裁掉了，源数据读取时要跳过左边 -x 个像素
                     int srcOffsetX = drawX - x;
                     int srcOffsetY = drawY - y;
 
@@ -348,34 +339,26 @@ namespace TabPaint
 
                         for (int r = 0; r < drawH; r++)
                         {
-                            // 计算源像素行索引：
-                            // (起始Y偏移 + 当前行 r) * stride + (起始X偏移 * 4)
-                            // 这里的 srcOffsetX 已经包含了因 x<0 而产生的偏移，确保不会读取到之前的像素
                             long srcRowIndex = (long)(srcOffsetY + r) * sourceStride + (long)srcOffsetX * 4;
-
-                            // 目标像素指针：
-                            // Base + (绘制Y + r) * stride + 绘制X * 4
                             byte* pTargetRow = pTargetBase + (drawY + r) * targetStride + drawX * 4;
 
                             for (int c = 0; c < drawW; c++)
                             {
-                                // 安全检查：防止极端情况下数组越界 (防御性)
                                 if (srcRowIndex + c * 4 + 3 >= sourcePixels.Length) break;
 
-                                // 获取源像素 Bgra
                                 byte srcB = sourcePixels[srcRowIndex + c * 4 + 0];
                                 byte srcG = sourcePixels[srcRowIndex + c * 4 + 1];
                                 byte srcR = sourcePixels[srcRowIndex + c * 4 + 2];
                                 byte srcA = sourcePixels[srcRowIndex + c * 4 + 3];
 
-                                // 优化：全透明跳过
+                                // 优化：源像素全透明，无需操作，保留背景原样
                                 if (srcA == 0)
                                 {
                                     pTargetRow += 4;
                                     continue;
                                 }
 
-                                // 优化：全不透明直接覆盖
+                                // 优化：源像素全不透明，直接覆盖
                                 if (srcA == 255)
                                 {
                                     pTargetRow[0] = srcB;
@@ -385,32 +368,43 @@ namespace TabPaint
                                 }
                                 else
                                 {
-                                    // Alpha Blending
+                                    // 【修复关键】：标准的 Source-Over Alpha Blending 算法
+                                    // 以前的算法强制 pTargetRow[3] = 255，导致半透明叠加在透明背景上变黑/不透明
+
                                     byte dstB = pTargetRow[0];
                                     byte dstG = pTargetRow[1];
                                     byte dstR = pTargetRow[2];
+                                    byte dstA = pTargetRow[3];
 
-                                    // 使用浮点运算混合
-                                    double alpha = srcA / 255.0;
-                                    double invAlpha = 1.0 - alpha;
+                                    // 归一化 Alpha (0.0 - 1.0)
+                                    float sa = srcA / 255.0f;
+                                    float da = dstA / 255.0f;
 
-                                    pTargetRow[0] = (byte)(srcB * alpha + dstB * invAlpha);
-                                    pTargetRow[1] = (byte)(srcG * alpha + dstG * invAlpha);
-                                    pTargetRow[2] = (byte)(srcR * alpha + dstR * invAlpha);
-                                    pTargetRow[3] = 255;
+                                    // 计算最终 Alpha: a_out = as + ad * (1 - as)
+                                    float outA = sa + da * (1.0f - sa);
+
+                                    // 如果最终透明度为0（理论上不会进这里因为 srcA>0），直接跳过
+                                    if (outA > 0)
+                                    {
+                                        // 计算最终颜色: C_out = (Cs * as + Cd * ad * (1 - as)) / a_out
+                                        // 这里的颜色分量已经不是预乘的，所以直接混合
+
+                                        float factorDest = da * (1.0f - sa);
+
+                                        pTargetRow[0] = (byte)((srcB * sa + dstB * factorDest) / outA);
+                                        pTargetRow[1] = (byte)((srcG * sa + dstG * factorDest) / outA);
+                                        pTargetRow[2] = (byte)((srcR * sa + dstR * factorDest) / outA);
+                                        pTargetRow[3] = (byte)(outA * 255.0f);
+                                    }
                                 }
-
                                 pTargetRow += 4;
                             }
                         }
                     }
-
-                    // 标记脏区域刷新显示
                     targetBmp.AddDirtyRect(new Int32Rect(drawX, drawY, drawW, drawH));
                 }
                 catch (Exception ex)
                 {
-                    // 捕获异常防止崩溃，仅在调试输出
                     System.Diagnostics.Debug.WriteLine("BlendPixels Error: " + ex.Message);
                 }
                 finally
@@ -457,7 +451,7 @@ namespace TabPaint
                             rowPtr[0] = color.B;
                             rowPtr[1] = color.G;
                             rowPtr[2] = color.R;
-                            rowPtr[3] = color.A;
+                          //  rowPtr[3] = color.A;
                             rowPtr += 4;
                         }
                     }

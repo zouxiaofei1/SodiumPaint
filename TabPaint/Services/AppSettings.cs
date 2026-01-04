@@ -1,11 +1,40 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using System.Windows.Input;
 using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
-    public partial class MainWindow 
+    public enum AppResamplingMode
+    {
+        Auto,
+        Bilinear,    // 双线性
+        Fant,        // 高质量幻像 (WPF HighQualityBicubic 类似)
+        HighQuality  // 通用高质量
+    }
+    public class ShortcutItem
+    {
+        public Key Key { get; set; } = Key.None;
+        public ModifierKeys Modifiers { get; set; } = ModifierKeys.None;
+
+        [JsonIgnore] // 不需要保存到文件，仅用于UI显示
+        public string DisplayText
+        {
+            get
+            {
+                if (Key == Key.None) return "无";
+                var str = "";
+                if (Modifiers.HasFlag(ModifierKeys.Control)) str += "Ctrl + ";
+                if (Modifiers.HasFlag(ModifierKeys.Shift)) str += "Shift + ";
+                if (Modifiers.HasFlag(ModifierKeys.Alt)) str += "Alt + ";
+                if (Modifiers.HasFlag(ModifierKeys.Windows)) str += "Win + ";
+                str += Key.ToString();
+                return str;
+            }
+        }
+    }
+    public partial class MainWindow
     {
         private void SaveAppState()
         {
@@ -28,45 +57,45 @@ namespace TabPaint
         private void RestoreAppState()
         {
             try
-            { 
-
-            var settings = TabPaint.SettingsManager.Instance.Current;
-
-            // 1. 恢复笔刷大小
-            if (_ctx != null)
             {
-                _ctx.PenThickness = settings.PenThickness;
-            }
 
-            // 2. 恢复工具和样式
-            ITool targetTool = null; // 默认
-            BrushStyle targetStyle = settings.LastBrushStyle;
+                var settings = TabPaint.SettingsManager.Instance.Current;
 
-            switch (settings.LastToolName)
-            {
-                case "EyedropperTool": targetTool = _tools.Eyedropper; break;
-                case "FillTool": targetTool = _tools.Fill; break;
-                case "SelectTool": targetTool = _tools.Select; break;
-                case "TextTool": targetTool = _tools.Text; break;
-                case "ShapeTool": targetTool = _tools.Shape; break;
-                case "PenTool":
-                default:
-                    targetTool = _tools.Pen;
-                    break;
-            }
+                // 1. 恢复笔刷大小
+                if (_ctx != null)
+                {
+                    _ctx.PenThickness = settings.PenThickness;
+                }
 
-            if (_ctx != null)
-            {
-                _ctx.PenStyle = targetStyle;
-            }
+                // 2. 恢复工具和样式
+                ITool targetTool = null; // 默认
+                BrushStyle targetStyle = settings.LastBrushStyle;
 
-            // 3. 应用工具切换
-            // 注意：这里需要确保界面元素(MainToolBar)已经加载完毕，否则高亮更新可能会空引用
-            Dispatcher.InvokeAsync(() =>
-            {
-                _router.SetTool(targetTool);
+                switch (settings.LastToolName)
+                {
+                    case "EyedropperTool": targetTool = _tools.Eyedropper; break;
+                    case "FillTool": targetTool = _tools.Fill; break;
+                    case "SelectTool": targetTool = _tools.Select; break;
+                    case "TextTool": targetTool = _tools.Text; break;
+                    case "ShapeTool": targetTool = _tools.Shape; break;
+                    case "PenTool":
+                    default:
+                        targetTool = _tools.Pen;
+                        break;
+                }
 
-            }, System.Windows.Threading.DispatcherPriority.Loaded);
+                if (_ctx != null)
+                {
+                    _ctx.PenStyle = targetStyle;
+                }
+
+                // 3. 应用工具切换
+                // 注意：这里需要确保界面元素(MainToolBar)已经加载完毕，否则高亮更新可能会空引用
+                Dispatcher.InvokeAsync(() =>
+                {
+                    _router.SetTool(targetTool);
+
+                }, System.Windows.Threading.DispatcherPriority.Loaded);
             }
             finally
             {
@@ -164,6 +193,118 @@ namespace TabPaint
                     OnPropertyChanged();
                 }
             }
+        }
+
+        private Dictionary<string, ShortcutItem> _shortcuts;
+
+        [JsonPropertyName("shortcuts")]
+        public Dictionary<string, ShortcutItem> Shortcuts
+        {
+            get
+            {
+                if (_shortcuts == null) _shortcuts = GetDefaultShortcuts();
+                return _shortcuts;
+            }
+            set
+            {
+                _shortcuts = value;
+                OnPropertyChanged();
+            }
+        }
+        private AppResamplingMode _resamplingMode = AppResamplingMode.Auto;
+        [JsonPropertyName("resampling_mode")]
+        public AppResamplingMode ResamplingMode
+        {
+            get => _resamplingMode;
+            set
+            {
+                if (_resamplingMode != value)
+                {
+                    _resamplingMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private double _viewInterpolationThreshold = 70.0; 
+        [JsonPropertyName("view_interpolation_threshold")]
+        public double ViewInterpolationThreshold
+        {
+            get => _viewInterpolationThreshold;
+            set
+            {
+                if (Math.Abs(_viewInterpolationThreshold - value) > 0.1)
+                {
+                    _viewInterpolationThreshold = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private double _paintInterpolationThreshold = 80.0; 
+        [JsonPropertyName("paint_interpolation_threshold")]
+        public double PaintInterpolationThreshold
+        {
+            get => _paintInterpolationThreshold;
+            set
+            {
+                if (Math.Abs(_paintInterpolationThreshold - value) > 0.1)
+                {
+                    _paintInterpolationThreshold = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
+        {
+            var defaults = new Dictionary<string, ShortcutItem>
+    {
+        // === 核心功能 (建议在UI上不显示，或显示但不可编辑，这里先列出来) ===
+        // "Edit.Copy"   -> Ctrl + C (硬编码锁定)
+        // "Edit.Cut"    -> Ctrl + X (硬编码锁定)
+        // "Edit.Paste"  -> Ctrl + V (硬编码锁定)
+        // "Edit.Undo"   -> Ctrl + Z (硬编码锁定)
+        // "Edit.Redo"   -> Ctrl + Y (硬编码锁定)
+        // "File.Save"   -> Ctrl + S (硬编码锁定)
+        // "File.New"    -> Ctrl + N (硬编码锁定)
+        // "File.Open"   -> Ctrl + O (硬编码锁定)
+        // "File.CloseTab" -> Ctrl + W (硬编码锁定)
+        // "Select.All"  -> Ctrl + A (硬编码锁定)
+        // "Edit.Delete" -> Delete   (硬编码锁定)
+
+        // === 允许用户更改的功能 ===
+        
+        // 1. 全局/视图功能
+        { "View.PrevImage",      new ShortcutItem { Key = Key.Left, Modifiers = ModifierKeys.None } },
+        { "View.NextImage",      new ShortcutItem { Key = Key.Right, Modifiers = ModifierKeys.None } },
+        { "View.RotateLeft",     new ShortcutItem { Key = Key.L, Modifiers = ModifierKeys.Control } },
+        { "View.RotateRight",    new ShortcutItem { Key = Key.R, Modifiers = ModifierKeys.Control } },
+        { "View.ToggleMode",     new ShortcutItem { Key = Key.Tab, Modifiers = ModifierKeys.None } }, // 切换模式
+        { "View.FullScreen",     new ShortcutItem { Key = Key.F11, Modifiers = ModifierKeys.None } },
+        
+        // 2. 高级工具 (Ctrl + Alt 系列)
+        { "Tool.ClipMonitor",    new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 剪贴板监听开关
+        { "Tool.RemoveBg",       new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 抠图
+        { "Tool.ChromaKey",      new ShortcutItem { Key = Key.D2, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.OCR",            new ShortcutItem { Key = Key.D3, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.ScreenPicker",   new ShortcutItem { Key = Key.D4, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 屏幕取色
+        { "Tool.CopyColorCode",  new ShortcutItem { Key = Key.D5, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.AutoCrop",       new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.AddBorder",      new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+
+        // 3. 特殊操作 (Ctrl + Shift 系列)
+        { "File.OpenWorkspace",  new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 打开工作区
+        { "File.PasteNewTab",    new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 粘贴为新标签
+    };
+            return defaults;
+        }
+        public void ResetShortcutsToDefault()
+        {
+            // 重新获取默认值
+            var defaults = GetDefaultShortcuts();
+
+            // 赋值给属性以触发通知
+            Shortcuts = defaults;
         }
     }
 }

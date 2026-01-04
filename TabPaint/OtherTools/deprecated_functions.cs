@@ -260,26 +260,96 @@
 //    </ DrawingImage.Drawing >
 //</ DrawingImage >
 
- //< DrawingImage x: Key = "Brush_Round_Image" >
- //       < DrawingImage.Drawing >
- //           < DrawingGroup >
- //               < DrawingGroup.Children >
- //                   < GeometryDrawing Brush = "#FF000000" >
- //                       < GeometryDrawing.Geometry >
- //                           < PathGeometry FillRule = "Nonzero" Figures = "M229.806,376.797L171.64100000000002,335.821 170.51300000000003,335.709C143.62400000000002,332.968 117.26600000000003,344.957 101.72300000000003,367.019 86.98000000000003,387.947 81.62200000000003,410.762 76.44100000000003,432.831 72.91300000000003,447.89500000000004 69.26000000000003,463.471 62.63600000000003,478.444 57.153000000000034,490.826 53.48000000000003,495.24600000000004 53.46700000000003,495.266L49.68300000000003,499.54900000000004 54.83100000000003,502.028C78.78900000000003,513.57 111.14100000000003,515.171 143.59700000000004,506.422 177.68700000000004,497.24 206.23600000000005,478.31300000000005 223.96900000000005,453.14200000000005 239.51200000000006,431.08000000000004 241.93200000000004,402.22300000000007 230.29100000000005,377.826L229.806,376.797z M208.721,442.4C204.55,448.315 199.573,453.883 193.92600000000002,459.005 193.03400000000002,459.602 192.116,460.264 191.15200000000002,461.012 180.495,469.394 166.604,465.787 175.05100000000002,448.788 183.49800000000002,431.776 168.61100000000002,426.332 156.51700000000002,437.502 141.342,451.524 134.21900000000002,440.32800000000003 137.026,432.589 139.82600000000002,424.851 149.907,414.298 141.472,407.478 136.39600000000002,403.366 129.844,409.373 119.39000000000001,417.519 113.40200000000002,422.181 99.61700000000002,420.66700000000003 105.20400000000001,399.969 108.227,392.276 111.97200000000001,384.859 116.97000000000001,377.763 127.81700000000001,362.351 146.214,353.301 165.07500000000002,354.022L214.88500000000002,389.109C221.923,406.631,219.575,426.988,208.721,442.4z" />
- //                       </ GeometryDrawing.Geometry >
- //                   </ GeometryDrawing >
- //                   < GeometryDrawing Brush = "#FF000000" >
- //                       < GeometryDrawing.Geometry >
- //                           < PathGeometry FillRule = "Nonzero" Figures = "M191.519,277.032C185.281,284.97499999999997 182.58,295.12699999999995 184.035,305.12199999999996 185.505,315.116 191.007,324.068 199.264,329.88599999999997L226.094,348.78599999999994C234.351,354.60299999999995 244.641,356.77399999999994 254.54399999999998,354.79299999999995 264.447,352.79999999999995 273.09799999999996,346.83099999999996 278.48199999999997,338.29299999999995L302.83899999999994,299.55899999999997 219.79199999999994,241.05299999999997 191.519,277.032z" />
- //                       </ GeometryDrawing.Geometry >
- //                   </ GeometryDrawing >
- //                   < GeometryDrawing Brush = "#FF000000" >
- //                       < GeometryDrawing.Geometry >
- //                           < PathGeometry FillRule = "Nonzero" Figures = "M447.22,6.635L447.016,6.497C431.53200000000004,-4.41,410.22400000000005,-1.2809999999999997,398.524,13.606L229.839,228.265 311.497,285.788 456.847,54.687C466.934,38.658,462.697,17.541,447.22,6.635z" />
- //                       </ GeometryDrawing.Geometry >
- //                   </ GeometryDrawing >
- //               </ DrawingGroup.Children >
- //           </ DrawingGroup >
- //       </ DrawingImage.Drawing >
- //   </ DrawingImage >
+//< DrawingImage x: Key = "Brush_Round_Image" >
+//       < DrawingImage.Drawing >
+//           < DrawingGroup >
+//               < DrawingGroup.Children >
+//                   < GeometryDrawing Brush = "#FF000000" >
+//                       < GeometryDrawing.Geometry >
+//                           < PathGeometry FillRule = "Nonzero" Figures = "M229.806,376.797L171.64100000000002,335.821 170.51300000000003,335.709C143.62400000000002,332.968 117.26600000000003,344.957 101.72300000000003,367.019 86.98000000000003,387.947 81.62200000000003,410.762 76.44100000000003,432.831 72.91300000000003,447.89500000000004 69.26000000000003,463.471 62.63600000000003,478.444 57.153000000000034,490.826 53.48000000000003,495.24600000000004 53.46700000000003,495.266L49.68300000000003,499.54900000000004 54.83100000000003,502.028C78.78900000000003,513.57 111.14100000000003,515.171 143.59700000000004,506.422 177.68700000000004,497.24 206.23600000000005,478.31300000000005 223.96900000000005,453.14200000000005 239.51200000000006,431.08000000000004 241.93200000000004,402.22300000000007 230.29100000000005,377.826L229.806,376.797z M208.721,442.4C204.55,448.315 199.573,453.883 193.92600000000002,459.005 193.03400000000002,459.602 192.116,460.264 191.15200000000002,461.012 180.495,469.394 166.604,465.787 175.05100000000002,448.788 183.49800000000002,431.776 168.61100000000002,426.332 156.51700000000002,437.502 141.342,451.524 134.21900000000002,440.32800000000003 137.026,432.589 139.82600000000002,424.851 149.907,414.298 141.472,407.478 136.39600000000002,403.366 129.844,409.373 119.39000000000001,417.519 113.40200000000002,422.181 99.61700000000002,420.66700000000003 105.20400000000001,399.969 108.227,392.276 111.97200000000001,384.859 116.97000000000001,377.763 127.81700000000001,362.351 146.214,353.301 165.07500000000002,354.022L214.88500000000002,389.109C221.923,406.631,219.575,426.988,208.721,442.4z" />
+//                       </ GeometryDrawing.Geometry >
+//                   </ GeometryDrawing >
+//                   < GeometryDrawing Brush = "#FF000000" >
+//                       < GeometryDrawing.Geometry >
+//                           < PathGeometry FillRule = "Nonzero" Figures = "M191.519,277.032C185.281,284.97499999999997 182.58,295.12699999999995 184.035,305.12199999999996 185.505,315.116 191.007,324.068 199.264,329.88599999999997L226.094,348.78599999999994C234.351,354.60299999999995 244.641,356.77399999999994 254.54399999999998,354.79299999999995 264.447,352.79999999999995 273.09799999999996,346.83099999999996 278.48199999999997,338.29299999999995L302.83899999999994,299.55899999999997 219.79199999999994,241.05299999999997 191.519,277.032z" />
+//                       </ GeometryDrawing.Geometry >
+//                   </ GeometryDrawing >
+//                   < GeometryDrawing Brush = "#FF000000" >
+//                       < GeometryDrawing.Geometry >
+//                           < PathGeometry FillRule = "Nonzero" Figures = "M447.22,6.635L447.016,6.497C431.53200000000004,-4.41,410.22400000000005,-1.2809999999999997,398.524,13.606L229.839,228.265 311.497,285.788 456.847,54.687C466.934,38.658,462.697,17.541,447.22,6.635z" />
+//                       </ GeometryDrawing.Geometry >
+//                   </ GeometryDrawing >
+//               </ DrawingGroup.Children >
+//           </ DrawingGroup >
+//       </ DrawingImage.Drawing >
+//   </ DrawingImage >
+
+
+//using System.Windows;
+//using System.Windows.Media;
+//using System.Windows.Media.Imaging;
+//using static ShapeTool;
+
+//private BitmapSource RenderShapeToBitmap(Point globalStart, Point globalEnd, Int32Rect rect, Color color, double thickness, double padding, double dpiX, double dpiY)
+//{
+//    // 位图的总像素尺寸 = 形状宽 + 左边距 + 右边距
+//    int pixelWidth = rect.Width + (int)Math.Ceiling(padding * 2);
+//    int pixelHeight = rect.Height + (int)Math.Ceiling(padding * 2);
+
+//    // 确保尺寸有效
+//    if (pixelWidth <= 0) pixelWidth = 1;
+//    if (pixelHeight <= 0) pixelHeight = 1;
+
+//    Point localStart = new Point(globalStart.X - rect.X + padding, globalStart.Y - rect.Y + padding);
+//    Point localEnd = new Point(globalEnd.X - rect.X + padding, globalEnd.Y - rect.Y + padding);
+
+//    DrawingVisual drawingVisual = new DrawingVisual();
+//    using (DrawingContext dc = drawingVisual.RenderOpen())
+//    {
+//        Pen pen = new Pen(new SolidColorBrush(color), thickness);
+//        // 设置线帽，防止直角线端点看起来也是切掉的
+//        if (_currentShapeType == ShapeType.Rectangle)
+//        {
+//            // 矩形需要尖角
+//            pen.LineJoin = PenLineJoin.Miter;
+//            pen.StartLineCap = PenLineCap.Square;
+//            pen.EndLineCap = PenLineCap.Square;
+//        }
+//        else
+//        {
+//            pen.LineJoin = PenLineJoin.Round;
+//            pen.StartLineCap = PenLineCap.Round;
+//            pen.EndLineCap = PenLineCap.Round;
+//        }
+//        pen.Freeze();
+//        Rect drawRect = new Rect(padding, padding, rect.Width, rect.Height);
+
+//        switch (_currentShapeType)
+//        {
+//            case ShapeType.Rectangle:
+//                dc.DrawRectangle(null, pen, drawRect);
+//                break;
+//            case ShapeType.RoundedRectangle:
+//                dc.DrawRoundedRectangle(null, pen, drawRect, 20, 20);
+//                break;
+//            case ShapeType.Ellipse:
+//                // 椭圆圆心
+//                dc.DrawEllipse(null, pen,
+//                    new Point(padding + rect.Width / 2.0, padding + rect.Height / 2.0),
+//                    rect.Width / 2.0, rect.Height / 2.0);
+//                break;
+//            case ShapeType.Line:
+//                dc.DrawLine(pen, localStart, localEnd);
+//                break;
+//            case ShapeType.Arrow:
+//                var arrowGeo = BuildArrowGeometry(localStart, localEnd, thickness * 3);
+//                dc.DrawGeometry(null, pen, arrowGeo);
+//                break;
+//        }
+//    }
+
+//    RenderTargetBitmap bmp = new RenderTargetBitmap(pixelWidth, pixelHeight, dpiX, dpiY, PixelFormats.Pbgra32);
+//    bmp.Render(drawingVisual);
+//    bmp.Freeze();
+//    return bmp;
+//}

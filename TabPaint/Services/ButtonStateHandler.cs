@@ -324,7 +324,17 @@ namespace TabPaint
 
         public void SetCropButtonState()
         {
-            UpdateBrushAndButton(MainToolBar.CutImage, MainToolBar.CutImageIcon, _tools.Select is SelectTool st && _ctx.SelectionOverlay.Visibility != Visibility.Collapsed);
+            bool hasSelection = _tools.Select is SelectTool st &&
+                     _ctx.SelectionOverlay.Visibility != Visibility.Collapsed;
+
+            // 2. 获取当前激活的工具 (假设你的 MainWindow 有一个变量存储当前工具，通常叫 _currentTool 或 CurrentTool)
+            // 如果没有公开的 CurrentTool，可以通过对比 _tools 中的实例来判断
+            bool isShapeToolActive = _router.CurrentTool is ShapeTool;
+
+            // 3. 最终判断：有选区 且 当前不是形状工具
+            bool canCrop = hasSelection && !isShapeToolActive;
+
+            UpdateBrushAndButton(MainToolBar.CutImage, MainToolBar.CutImageIcon, canCrop);
         }
 
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, System.Windows.Shapes.Path image, bool isEnabled)
@@ -349,7 +359,6 @@ namespace TabPaint
         private void SaveBitmap(string path)
         {
             // 1. 获取当前编辑的像素数据
-            // _bitmap 是 96 DPI 的，我们只取它的像素内容
             int width = _bitmap.PixelWidth;
             int height = _bitmap.PixelHeight;
             int stride = width * 4;
@@ -358,17 +367,14 @@ namespace TabPaint
 
             try
             {
-                // 现在 stride 是根据 bitmap 自身的宽度计算的，绝对不会报错
                 _bitmap.CopyPixels(pixels, stride, 0);
             }
             catch (System.ArgumentOutOfRangeException)
             {
-                // 防御性编程：如果 _bitmap 还是旧的引用，或者 BackBufferStride 特殊
-                // 尝试直接使用 WriteableBitmap 的 BackBufferStride (如果 _bitmap 是 WriteableBitmap)
                 if (_bitmap is WriteableBitmap wb)
                 {
                     stride = wb.BackBufferStride;
-                    pixels = new byte[height * stride]; // 重新分配数组大小以匹配 stride
+                    pixels = new byte[height * stride];
                     wb.CopyPixels(pixels, stride, 0);
                 }
                 else
@@ -378,7 +384,7 @@ namespace TabPaint
             }
 
             // 2. 创建用于保存的 BitmapSource，并恢复原始 DPI
-            var saveSource = BitmapSource.Create(
+            BitmapSource saveSource = BitmapSource.Create(
                 width, height,
                 _originalDpiX,
                 _originalDpiY,
@@ -392,20 +398,23 @@ namespace TabPaint
             BitmapEncoder encoder;
             string ext = System.IO.Path.GetExtension(path).ToLower();
 
-            // 这里简单判断，你可以根据 PicFilterString 里的逻辑扩展
             if (ext == ".jpg" || ext == ".jpeg")
             {
-                encoder = new JpegBitmapEncoder { QualityLevel = 90 }; // JPG 质量
+                // 【核心修复】JPG 不支持透明，需要合成白底，否则透明区域变黑
+                saveSource = ConvertToWhiteBackground(saveSource);
+                encoder = new JpegBitmapEncoder { QualityLevel = 90 };
             }
             else if (ext == ".bmp")
             {
+                // BMP 同样通常不支持透明通道（除了特定格式），为了兼容性最好也加白底
+                saveSource = ConvertToWhiteBackground(saveSource);
                 encoder = new BmpBitmapEncoder();
             }
             else if (ext == ".tiff" || ext == ".tif")
             {
                 encoder = new TiffBitmapEncoder();
             }
-            else // 默认 PNG
+            else // 默认 PNG (支持透明，无需处理)
             {
                 encoder = new PngBitmapEncoder();
             }
@@ -420,12 +429,13 @@ namespace TabPaint
 
             MarkAsSaved();
 
-            // 5. 新增：更新对应标签页的缩略图
+            // 5. 更新对应标签页的缩略图
             UpdateTabThumbnail(path);
         }
 
+        
 
-       
+
         private void UpdateSliderBarValue(double newScale)
         {
            

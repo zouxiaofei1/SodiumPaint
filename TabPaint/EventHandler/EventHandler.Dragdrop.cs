@@ -32,7 +32,7 @@ namespace TabPaint
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 Point pos = e.GetPosition(this);
-                if (pos.Y < 210)
+                if (pos.Y < 210&&pos.Y>100)
                 {
                     HideDragOverlay();
                     e.Effects = DragDropEffects.None;

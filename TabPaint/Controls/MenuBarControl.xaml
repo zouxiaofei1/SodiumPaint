@@ -31,6 +31,11 @@
                             <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="打开新文件夹" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Shift+O" Click="OnOpenWorkspaceClick">
+                        <MenuItem.Icon>
+                            <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <MenuItem Header="最近打开" x:Name="RecentFilesMenuItem" Style="{StaticResource Win11MenuItemStyle}">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Reset_Image}"  Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
@@ -90,6 +95,18 @@
                     <MenuItem Header="黑白" Style="{StaticResource SubMenuItemStyle}" Click="OnBlackWhiteClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Black_And_White_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="反色" Style="{StaticResource SubMenuItemStyle}" Click="OnInvertClick">
+                        <MenuItem.Icon>
+                            <!-- 半黑半白的圆形图标 -->
+                            <Path Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20V4Z" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="自动色阶" Style="{StaticResource SubMenuItemStyle}" Click="OnAutoLevelsClick">
+                        <MenuItem.Icon>
+                            <!-- 类似直方图或魔法棒的图标 -->
+                            <Path Data="M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>

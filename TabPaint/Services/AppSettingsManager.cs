@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using System.Windows.Forms;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
@@ -138,6 +139,6 @@ namespace TabPaint
             Save();
         }
 
-
+       
     }
 }

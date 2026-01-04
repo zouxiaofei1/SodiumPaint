@@ -18,15 +18,113 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void OnAddBorderClick(object sender, RoutedEventArgs e)
+        {
+            // 1. 检查画布是否存在
+            if (_surface?.Bitmap == null) return;
+
+            var bmp = _surface.Bitmap;
+            int w = bmp.PixelWidth;
+            int h = bmp.PixelHeight;
+            int borderSize = 2; // 边框厚度
+
+            // 如果图片太小，不足以画边框，直接返回
+            if (w <= borderSize * 2 || h <= borderSize * 2)
+            {
+                ShowToast("图片尺寸过小，无法添加边框");
+                return;
+            }
+
+            // 2. 准备撤销 (记录当前状态)
+            _undo.BeginStroke();
+
+            // 3. 锁定位图进行绘制
+            bmp.Lock();
+            try
+            {
+                // 获取当前前景色 (B, G, R, A)
+                Color c = ForegroundColor;
+
+                unsafe
+                {
+                    byte* basePtr = (byte*)bmp.BackBuffer;
+                    int stride = bmp.BackBufferStride;
+
+                    // 定义一个局部函数来快速填充矩形区域
+                    void FillRect(int rectX, int rectY, int rectW, int rectH)
+                    {
+                        for (int y = rectY; y < rectY + rectH; y++)
+                        {
+                            byte* rowPtr = basePtr + (y * stride) + (rectX * 4);
+                            for (int x = 0; x < rectW; x++)
+                            {
+                                rowPtr[0] = c.B;
+                                rowPtr[1] = c.G;
+                                rowPtr[2] = c.R;
+                                rowPtr[3] = c.A;
+                                rowPtr += 4; // 移动到下一个像素
+                            }
+                        }
+                    }
+
+                    // --- 绘制四条边 ---
+
+                    // 1. 上边框 (全宽)
+                    FillRect(0, 0, w, borderSize);
+
+                    // 2. 下边框 (全宽)
+                    FillRect(0, h - borderSize, w, borderSize);
+
+                    // 3. 左边框 (中间部分，避免与上下重叠绘制，虽然重叠也没事)
+                    FillRect(0, borderSize, borderSize, h - 2 * borderSize);
+
+                    // 4. 右边框 (中间部分)
+                    FillRect(w - borderSize, borderSize, borderSize, h - 2 * borderSize);
+                }
+
+                // 上
+                var rTop = new Int32Rect(0, 0, w, borderSize);
+                bmp.AddDirtyRect(rTop);
+                _undo.AddDirtyRect(rTop);
+
+                // 下
+                var rBottom = new Int32Rect(0, h - borderSize, w, borderSize);
+                bmp.AddDirtyRect(rBottom);
+                _undo.AddDirtyRect(rBottom);
+
+                // 左
+                var rLeft = new Int32Rect(0, 0, borderSize, h);
+                bmp.AddDirtyRect(rLeft);
+                _undo.AddDirtyRect(rLeft);
+
+                // 右
+                var rRight = new Int32Rect(w - borderSize, 0, borderSize, h);
+                bmp.AddDirtyRect(rRight);
+                _undo.AddDirtyRect(rRight);
+            }
+            finally
+            {
+                bmp.Unlock();
+            }
+
+            // 5. 提交撤销 (计算差异并推入栈)
+            _undo.CommitStroke();
+
+            // 6. 标记文件已修改
+            _isEdited = true;
+            _ctx.IsDirty = true;
+
+            // 7. 刷新界面状态
+            NotifyCanvasChanged();
+            ShowToast($"已添加 2px 边框");
+        }
+
         private Point _lastRightClickPosition; // 记录右键点击时的相对坐标
         private void OnAutoCropClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                // 确保不在加载中
                 if (_isLoadingImage) return;
-
-                // 如果当前有选区工具处于活动状态，先提交或清理选区
                 if (_router.CurrentTool is SelectTool st && st.HasActiveSelection)
                 {
                     st.CommitSelection(_ctx);
@@ -46,34 +144,25 @@ namespace TabPaint
 
             try
             {
-                // 1. 坐标映射：将 UI 坐标转换为位图实际像素坐标
-                // BackgroundImage.ActualWidth 可能不等于 _bitmap.PixelWidth (因为缩放显示)
                 double scaleX = _bitmap.PixelWidth / BackgroundImage.ActualWidth;
                 double scaleY = _bitmap.PixelHeight / BackgroundImage.ActualHeight;
 
                 int x = (int)(_lastRightClickPosition.X * scaleX);
                 int y = (int)(_lastRightClickPosition.Y * scaleY);
 
-                // 2. 边界检查
                 if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
                 {
                     ShowToast("未选中图片区域"); // 假设你有ShowToast方法
                     return;
                 }
-
-                // 3. 读取像素颜色
                 Color color = GetPixelColor(x, y);
-
-                // 4. 格式化为 HEX 字符串 (#RRGGBB)
-                // 如果需要包含透明度，可以使用: $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}"
                 string hexCode = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
                 // 5. 复制到剪贴板
                 System.Windows.Clipboard.SetText(hexCode);
 
                 // 6. 提示用户
-                ShowToast($"已复制颜色: {hexCode}"); // 你的 Toast 提示方法
-                                                // 或者 MyStatusBar.Message = $"已复制颜色: {hexCode}";
+                ShowToast($"已复制颜色: {hexCode}");
             }
             catch (Exception ex)
             {
@@ -83,14 +172,13 @@ namespace TabPaint
         }
         private void OnScreenColorPickerClick(object sender, RoutedEventArgs e)
         {
-            System.Threading.Thread.Sleep(200);
+            //miniTools.IsSubmenuOpen = false;
+            //System.Threading.Thread.Sleep(200);
 
             // 2. 打开遮罩窗口
             var picker = new ColorPickerWindow();
             bool? result = picker.ShowDialog();
 
-            // 3. 恢复主窗口（如果之前最小化了）
-            // this.WindowState = WindowState.Normal;
 
             if (result == true && picker.IsColorPicked)
             {
@@ -103,38 +191,28 @@ namespace TabPaint
 
         private void ApplyPickedColor(Color c)
         {
-            // 更新前景色 (Foreground)
-            this.ForegroundColor = c;
-            this.ForegroundBrush = new SolidColorBrush(c);
-            this.SelectedBrush = this.ForegroundBrush; // 假设UI绑定的是 SelectedBrush
-
-            // 如果有笔刷工具上下文，也要更新
-            if (_ctx != null)
+            if (!useSecondColor)
             {
-                // 注意：ToolContext 里面具体的颜色设置逻辑可能需要根据你的架构微调
-                // 比如: _ctx.BrushColor = c; 
+                this.ForegroundColor = c;
+                this.ForegroundBrush = new SolidColorBrush(c);
             }
-
-            // 如果你想把颜色加入到最近使用的颜色列表 ColorItems 中
-            if (!ColorItems.Any(x => x.Color == c))
+            else
             {
-                ColorItems.Insert(0, new SolidColorBrush(c));
-                // 保持列表不过长
-                if (ColorItems.Count > 20) ColorItems.RemoveAt(ColorItems.Count - 1);
+                this.BackgroundColor = c;
+                this.BackgroundBrush = new SolidColorBrush(c);
             }
+              
 
             // 通知UI更新
             OnPropertyChanged(nameof(SelectedBrush));
             OnPropertyChanged(nameof(ForegroundBrush));
-
+            OnPropertyChanged(nameof(BackgroundBrush));
             // 简单的提示
             ShowToast($"已吸取颜色: #{c.R:X2}{c.G:X2}{c.B:X2}");
         }
         private void OnScrollContainerContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
-            // 获取鼠标相对于 BackgroundImage 的位置
-            // 因为 Image 使用了 Stretch="None" 且在 LayoutTransform 下缩放，
-            // GetPosition 会自动处理 ScaleTransform 带来的坐标转换，返回逻辑像素坐标。
+            //
             _lastRightClickPosition = Mouse.GetPosition(BackgroundImage);
         }
 
@@ -155,7 +233,6 @@ namespace TabPaint
 
             // 2. 获取该点的颜色作为目标色
             Color targetColor = GetPixelColor(x, y);
-            a.s(x, y, targetColor);
             // 3. 执行抠图（容差 45 左右通常效果较好）
             ApplyColorKey(targetColor, 45);
         }
@@ -273,6 +350,7 @@ namespace TabPaint
                 this.Cursor = System.Windows.Input.Cursors.Arrow;
             }
         }
+        // 定义一个独立的方法，不依赖 RoutedEventArgs
 
         private async void OnRemoveBackgroundClick(object sender, RoutedEventArgs e)
         {
@@ -318,7 +396,7 @@ namespace TabPaint
                 this.IsEnabled = true;
                 _imageSize = statusText; // 恢复状态栏
                 OnPropertyChanged(nameof(ImageSize));
-                NotifyCanvasChanged();
+                NotifyCanvasChanged(); this.Focus();
             }
         }
 

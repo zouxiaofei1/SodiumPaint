@@ -114,43 +114,48 @@
                             <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
 
                             <!-- 二级菜单：小工具 -->
-                            <MenuItem Header="小工具" Style="{StaticResource Win11MenuItemStyle}">
+                            <MenuItem x:Name="miniTools" Header="小工具" Style="{StaticResource Win11MenuItemStyle}">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                                 </MenuItem.Icon>
 
-                                <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" Click="OnRemoveBackgroundClick">
+                                <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
                                     <MenuItem.Icon>
                                         <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
 
-                                <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" Click="OnChromaKeyClick">
+                                <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
                                     <MenuItem.Icon>
                                         <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
 
-                                <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" Click="OnOcrClick">
+                                <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
                                     <MenuItem.Icon>
                                         <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" />
                                     </MenuItem.Icon>
                                 </MenuItem>
 
-                                <MenuItem Header="屏幕取色器" Style="{StaticResource Win11MenuItemStyle}" Click="OnScreenColorPickerClick">
+                                <MenuItem Header="屏幕取色器" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Click="OnScreenColorPickerClick">
                                     <MenuItem.Icon>
                                         <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
 
-                                <MenuItem Header="复制颜色代码 (#HEX)" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyColorCodeClick">
+                                <MenuItem Header="复制颜色代码 (#HEX)" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"  Click="OnCopyColorCodeClick">
                                     <MenuItem.Icon>
                                         <TextBlock Text="🎨" FontFamily="Segoe UI Emoji"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="智能裁切空白" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoCropClick">
+                                <MenuItem Header="智能裁切空白" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"  Click="OnAutoCropClick">
                                     <MenuItem.Icon>
                                         <TextBlock Text="✂" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="一键加边框 (2px)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
+                                    <MenuItem.Icon>
+                                        <Border BorderBrush="#333" BorderThickness="2" Width="14" Height="14" CornerRadius="1"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
                             </MenuItem>
@@ -203,7 +208,7 @@
                         <!-- 1. 基础图片 -->
                         <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
                         <!-- 2. 调整大小层 -->
-                        <Canvas Name="CanvasResizeOverlay" Visibility="Visible" IsHitTestVisible="True" Background="Transparent"/>
+                        <Canvas Name="CanvasResizeOverlay"  Visibility="Visible" IsHitTestVisible="True" Background="Transparent"/>
                         <!-- 3. 选区预览层 -->
                         <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
                         <!-- 4. 选区UI层 -->
@@ -413,7 +418,7 @@
         <!-- #endregion -->
         
         <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
-        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#77111111" RenderTransformOrigin="0.5,0.5">
+        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#55111111" RenderTransformOrigin="0.5,0.5">
             <Grid.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>
