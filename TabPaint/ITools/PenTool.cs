@@ -308,11 +308,14 @@ namespace TabPaint
             private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
                 int r = (int)ctx.PenThickness;
-                Color c = ctx.PenColor;
-                byte finalAlpha = GetCurrentAlpha(c.A);
-                // 如果完全透明，直接不画，节省性能
-                if (finalAlpha == 0) return;
-                byte cb = c.B, cg = c.G, cr = c.R, ca = finalAlpha;
+                Color targetColor = ctx.PenColor; // 目标颜色 (R,G,B,A)
+
+                // 获取全局力度 (0.0 - 1.0)
+                // 这里的 Opacity 不再直接乘到 Alpha 上，而是作为插值因子
+                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+
+                // 如果力度为0，完全不画
+                if (globalOpacity <= 0.005f) return;
 
                 double dx = p2.X - p1.X;
                 double dy = p2.Y - p1.Y;
@@ -328,13 +331,24 @@ namespace TabPaint
 
                 int rSq = r * r;
 
+                // 预计算目标分量，避免循环内重复转换
+                float targetB = targetColor.B;
+                float targetG = targetColor.G;
+                float targetR = targetColor.R;
+                float targetA = targetColor.A;
+
                 for (int y = ymin; y <= ymax; y++)
                 {
-                    byte* rowPtr = basePtr + y * stride; int rowIdx = y * w;
+                    byte* rowPtr = basePtr + y * stride;
+                    int rowIdx = y * w; // 用来计算Mask索引
+
                     for (int x = xmin; x <= xmax; x++)
                     {
+                        // 1. 检查 Mask：防止同一次 Stroke 内重复叠加导致颜色过深
                         int pixelIndex = rowIdx + x;
                         if (_currentStrokeMask[pixelIndex]) continue;
+
+                        // 2. 几何计算：点到线段的距离
                         double t = 0;
                         if (lenSq > 0)
                         {
@@ -347,42 +361,50 @@ namespace TabPaint
 
                         if (distSq <= rSq)
                         {
+                            // 标记该像素本次已绘制
                             _currentStrokeMask[pixelIndex] = true;
-                            byte* p = rowPtr + x * 4; 
-                            if (ca == 255)
-                            {
-                                // 不透明优化：直接覆盖
-                                p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
-                            }
-                            else
-                            {
-                                float alphaNorm = ca / 255.0f;
-                                float invAlpha = 1.0f - alphaNorm;
 
-                                p[0] = (byte)(cb * alphaNorm + p[0] * invAlpha);
-                                p[1] = (byte)(cg * alphaNorm + p[1] * invAlpha);
-                                p[2] = (byte)(cr * alphaNorm + p[2] * invAlpha);
-                                p[3] = (byte)Math.Min(255, p[3] + ca);
-                            }
-                            
+                            byte* p = rowPtr + x * 4;
+
+                            // --- 核心修改：线性插值 (Lerp) 算法 ---
+
+                            // 蓝色 B
+                            // 公式：新值 = 旧值 + (目标值 - 旧值) * 力度
+                            p[0] = (byte)(p[0] + (targetB - p[0]) * globalOpacity);
+
+                            // 绿色 G
+                            p[1] = (byte)(p[1] + (targetG - p[1]) * globalOpacity);
+
+                            // 红色 R
+                            p[2] = (byte)(p[2] + (targetR - p[2]) * globalOpacity);
+
+                            // Alpha 通道 - 这里是实现“透明绘图”的关键
+                            // 如果 targetA 是 0 (透明)，且 opacity 是 1，则 p[3] 变为 0
+                            p[3] = (byte)(p[3] + (targetA - p[3]) * globalOpacity);
                         }
                     }
                 }
             }
 
+
+
+            // ---------------- 铅笔 (Bresenham + Lerp) ----------------
             private unsafe void DrawPencilLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
                 int x0 = (int)p1.X; int y0 = (int)p1.Y;
                 int x1 = (int)p2.X; int y1 = (int)p2.Y;
-                Color c = ctx.PenColor;
 
-                // 获取当前透明度
-                byte finalAlpha = GetCurrentAlpha(c.A);
-                if (finalAlpha == 0) return;
+                Color targetColor = ctx.PenColor;
+                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
 
-                byte cb = c.B, cg = c.G, cr = c.R, ca = finalAlpha;
+                // 铅笔如果力度太小可能看不见，但为了统一逻辑还是允许微弱绘制
+                if (globalOpacity <= 0.005f) return;
 
-                // Bresenham 算法初始化
+                float tB = targetColor.B;
+                float tG = targetColor.G;
+                float tR = targetColor.R;
+                float tA = targetColor.A;
+
                 int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
                 int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
                 int err = dx + dy, e2;
@@ -391,40 +413,20 @@ namespace TabPaint
                 {
                     if (x0 >= 0 && x0 < w && y0 >= 0 && y0 < h)
                     {
-                        // 1. 计算当前像素的一维索引
                         int pixelIndex = y0 * w + x0;
-
-                        // 2. 检查掩码：如果当前笔画还没画过这个点，才进行绘制
                         if (!_currentStrokeMask[pixelIndex])
                         {
-                            // 3. 标记掩码，防止同一次 stroke 重复绘制
                             _currentStrokeMask[pixelIndex] = true;
-
                             byte* p = basePtr + y0 * stride + x0 * 4;
 
-                            if (ca == 255)
-                            {
-                                // 不透明直接覆盖
-                                p[0] = cb; p[1] = cg; p[2] = cr; p[3] = 255;
-                            }
-                            else
-                            {
-                                // 半透明混合算法
-                                float alphaNorm = ca / 255.0f;
-                                float invAlpha = 1.0f - alphaNorm;
-
-                                p[0] = (byte)(cb * alphaNorm + p[0] * invAlpha);
-                                p[1] = (byte)(cg * alphaNorm + p[1] * invAlpha);
-                                p[2] = (byte)(cr * alphaNorm + p[2] * invAlpha);
-
-                                // 修复建议：原代码这里是 p[3]=255，这会导致透明绘图时Alpha通道错误
-                                // 改为和 RoundStroke 一样的 Alpha 累加逻辑
-                                p[3] = (byte)Math.Min(255, p[3] + ca);
-                            }
+                            // Lerp 插值
+                            p[0] = (byte)(p[0] + (tB - p[0]) * globalOpacity);
+                            p[1] = (byte)(p[1] + (tG - p[1]) * globalOpacity);
+                            p[2] = (byte)(p[2] + (tR - p[2]) * globalOpacity);
+                            p[3] = (byte)(p[3] + (tA - p[3]) * globalOpacity);
                         }
                     }
 
-                    // 4. 无论是否绘制，算法都必须继续推进坐标
                     if (x0 == x1 && y0 == y1) break;
                     e2 = 2 * err;
                     if (e2 >= dy) { err += dy; x0 += sx; }
@@ -440,11 +442,18 @@ namespace TabPaint
                 int x = (int)p.X - half;
                 int y = (int)p.Y - half;
 
-                Color c = isEraser ? ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundColor : ctx.PenColor;
-                byte finalAlpha = GetCurrentAlpha(c.A); float alphaNorm = finalAlpha / 255.0f; float invAlpha = 1.0f - alphaNorm;
-                // 如果完全透明，直接不画，节省性能
-                if (finalAlpha == 0) return;
-                byte cb = c.B, cg = c.G, cr = c.R, ca = isEraser ? c.A : finalAlpha;
+                // 核心逻辑变化：
+                // 如果是橡皮擦，目标颜色是【全透明】。
+                // 如果是普通方块笔，目标颜色是画笔颜色。
+                Color targetColor = isEraser ? Color.FromArgb(255, 255,255, 255) : ctx.PenColor;
+
+                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                if (globalOpacity <= 0.005f) return;
+
+                float tB = targetColor.B;
+                float tG = targetColor.G;
+                float tR = targetColor.R;
+                float tA = targetColor.A;
 
                 int xend = Math.Min(w, x + size);
                 int yend = Math.Min(h, y + size);
@@ -453,29 +462,22 @@ namespace TabPaint
 
                 for (int yy = ystart; yy < yend; yy++)
                 {
-                    byte* row = basePtr + yy * stride; int rowIdx = yy * w;
+                    byte* row = basePtr + yy * stride;
+                    int rowIdx = yy * w;
                     for (int xx = xstart; xx < xend; xx++)
                     {
                         int pixelIndex = rowIdx + xx;
-                        byte* ptr = row + xx * 4;
-                        if (!isEraser && _currentStrokeMask[pixelIndex]) continue;
+                        // 只有非橡皮擦才检查 Mask (橡皮擦通常允许重复擦除以加强效果，或者也为了均匀擦除检查Mask)
+                        // 为了逻辑统一，建议这里也检查Mask，防止单次Draw内重叠导致的擦除不均匀
+                        if (_currentStrokeMask[pixelIndex]) continue;
+                        _currentStrokeMask[pixelIndex] = true;
 
-                        // 标记该像素已处理
-                        if (!isEraser) _currentStrokeMask[pixelIndex] = true;
-                        if (isEraser && finalAlpha == 255)
-                        {
-                            // 橡皮擦且不透明时，直接覆盖以提高性能
-                            ptr[0] = cb; ptr[1] = cg; ptr[2] = cr; ptr[3] = 255;
-                        }
-                        else
-                        {
-                            // --- 核心修复：混合模式 ---
-                            ptr[0] = (byte)(cb * alphaNorm + ptr[0] * invAlpha);
-                            ptr[1] = (byte)(cg * alphaNorm + ptr[1] * invAlpha);
-                            ptr[2] = (byte)(cr * alphaNorm + ptr[2] * invAlpha);
-                            // 保持完全不透明，除非你想画出半透明图层
-                            ptr[3] = 255;
-                        }
+                        byte* p2 = row + xx * 4;
+
+                        p2[0] = (byte)(p2[0] + (tB - p2[0]) * globalOpacity);
+                        p2[1] = (byte)(p2[1] + (tG - p2[1]) * globalOpacity);
+                        p2[2] = (byte)(p2[2] + (tR - p2[2]) * globalOpacity);
+                        p2[3] = (byte)(p2[3] + (tA - p2[3]) * globalOpacity);
                     }
                 }
             }
@@ -501,30 +503,34 @@ namespace TabPaint
             {
                 if (_sprayPatterns == null) InitializeSprayPatterns();
                 int radius = (int)ctx.PenThickness * 2;
-                int count = 80; // 粒子数量
+                int count = 80;
                 var pattern = _sprayPatterns[_patternIndex];
                 _patternIndex = (_patternIndex + 1) % _sprayPatterns.Count;
 
-                Color c = ctx.PenColor;
-                // --- 核心修复：获取调节后的透明度 ---
-                byte finalAlpha = GetCurrentAlpha(c.A);
-                if (finalAlpha == 0) return;
+                Color targetColor = ctx.PenColor;
+                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                if (globalOpacity <= 0.005f) return;
 
-                float alphaNorm = finalAlpha / 255.0f;
-                float invAlpha = 1.0f - alphaNorm;
+                float tB = targetColor.B;
+                float tG = targetColor.G;
+                float tR = targetColor.R;
+                float tA = targetColor.A;
 
                 for (int i = 0; i < count && i < pattern.Length; i++)
                 {
                     int xx = (int)(p.X + pattern[i].X * radius);
                     int yy = (int)(p.Y + pattern[i].Y * radius);
+
                     if (xx >= 0 && xx < w && yy >= 0 && yy < h)
                     {
-                        byte* ptr = basePtr + yy * stride + xx * 4;
-                        // --- 核心修复：混合 ---
-                        ptr[0] = (byte)(c.B * alphaNorm + ptr[0] * invAlpha);
-                        ptr[1] = (byte)(c.G * alphaNorm + ptr[1] * invAlpha);
-                        ptr[2] = (byte)(c.R * alphaNorm + ptr[2] * invAlpha);
-                        ptr[3] = (byte)Math.Min(255, ptr[3] + finalAlpha);
+                        byte* pPx = basePtr + yy * stride + xx * 4;
+                        // 喷枪是随机打点，通常不使用 StrokeMask，允许粒子重叠以产生更浓密的效果
+                        // 但这也意味着如果 Opacity 很高，重叠处会瞬间变成目标色
+
+                        pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * globalOpacity);
+                        pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * globalOpacity);
+                        pPx[2] = (byte)(pPx[2] + (tR - pPx[2]) * globalOpacity);
+                        pPx[3] = (byte)(pPx[3] + (tA - pPx[3]) * globalOpacity);
                     }
                 }
             }
@@ -567,13 +573,18 @@ namespace TabPaint
             private unsafe void DrawWatercolorStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
                 int radius = (int)ctx.PenThickness;
-                Color baseColor = ctx.PenColor;
+                Color targetColor = ctx.PenColor;
+                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
 
-                // --- 核心修复：获取全局透明度比例 (0.0 - 1.0) ---
-                double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                if (globalOpacity <= 0.005f) return;
 
-                // 基础 Alpha 很低，为了模拟水彩层层叠加的效果
-                byte baseAlpha = 15;
+                // 水彩通常比较淡，我们在全局力度基础上再乘一个系数，防止一下涂太死
+                float baseOpacity = globalOpacity * 0.5f;
+
+                float tB = targetColor.B;
+                float tG = targetColor.G;
+                float tR = targetColor.R;
+                float tA = targetColor.A;
 
                 double irregularRadius = radius * (0.9 + _rnd.NextDouble() * 0.2);
                 int x_start = (int)Math.Max(0, p.X - radius);
@@ -589,22 +600,20 @@ namespace TabPaint
                         double dist = Math.Sqrt((x - p.X) * (x - p.X) + (y - p.Y) * (y - p.Y));
                         if (dist < irregularRadius)
                         {
+                            // 边缘衰减
                             double falloff = 1.0 - (dist / irregularRadius);
+                            // 核心修改：衰减值影响的是【混合力度 (Opacity)】，而不是目标颜色的 Alpha
+                            float localOpacity = baseOpacity * (float)(falloff * falloff);
 
-                            // --- 核心修复：将全局透明度因子乘入最终计算 ---
-                            byte finalAlpha = (byte)(baseAlpha * falloff * falloff * globalOpacityFactor);
-
-                            if (finalAlpha > 0)
+                            if (localOpacity > 0.001f)
                             {
-                                float alphaNorm = finalAlpha / 255.0f;
-                                float invAlpha = 1.0f - alphaNorm;
+                                byte* pPx = rowPtr + x * 4;
+                                // 水彩也不使用 Mask，允许笔触内部叠加产生自然的深浅不一
 
-                                byte* pixelPtr = rowPtr + x * 4;
-
-                                pixelPtr[0] = (byte)(baseColor.B * alphaNorm + pixelPtr[0] * invAlpha);
-                                pixelPtr[1] = (byte)(baseColor.G * alphaNorm + pixelPtr[1] * invAlpha);
-                                pixelPtr[2] = (byte)(baseColor.R * alphaNorm + pixelPtr[2] * invAlpha);
-                                pixelPtr[3] = 255;
+                                pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * localOpacity);
+                                pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * localOpacity);
+                                pPx[2] = (byte)(pPx[2] + (tR - pPx[2]) * localOpacity);
+                                pPx[3] = (byte)(pPx[3] + (tA - pPx[3]) * localOpacity);
                             }
                         }
                     }
@@ -769,14 +778,7 @@ namespace TabPaint
                 int height = Math.Max(0, bottom - top);
                 return new Int32Rect(left, top, width, height);
             }
-            private byte GetCurrentAlpha(byte originalAlpha)
-            {
-                // 获取全局设置
-                var globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                // 计算最终 Alpha (0-255)
-                return (byte)(originalAlpha * globalOpacity);
-            }
-
+        
             private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)
             {
                 int expand = penRadius + 2;

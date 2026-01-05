@@ -738,6 +738,7 @@ namespace TabPaint
 
             public override void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e)
             {
+                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 if (Keyboard.Modifiers == ModifierKeys.Control)
                 {
                     switch (e.Key)

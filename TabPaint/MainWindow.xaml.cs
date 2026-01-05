@@ -37,7 +37,13 @@ namespace TabPaint
             _currentFilePath = path;
 
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
-            InitializeComponent(); 
+            InitializeComponent();
+            if (SettingsManager.Instance.Current.StartInViewMode)
+            {
+                IsViewMode = true;
+                ThicknessPanel.Visibility =  Visibility.Collapsed;
+                OpacityPanel.Visibility =Visibility.Collapsed;
+            }
             this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
             InitDebounceTimer(); 
@@ -46,7 +52,6 @@ namespace TabPaint
 
             InitializeAutoSave();
 
-
             this.Focusable = true; 
         }
 
@@ -54,8 +59,8 @@ namespace TabPaint
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
            InitializeLazyControls();
-            
-            
+      if(IsViewMode) OnModeChanged(true, isSilent: true);
+
             MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
             {
                 if (_isInternalZoomUpdate)
@@ -93,7 +98,11 @@ namespace TabPaint
 
                 {
                     if (FileTabs.Count == 0)
+                    {
+                        BlanketMode = true;
                         CreateNewTab(TabInsertPosition.AfterCurrent, true);
+                        
+                    }
                     else SwitchToTab(FileTabs[0]);
                 }
             }
@@ -112,7 +121,8 @@ namespace TabPaint
             });
 
             RestoreAppState();
-            InitializeScrollPosition(); 
+            InitializeScrollPosition();
+            if (BlanketMode) FitToWindow(); _startupFinished = true;
 
         }
         protected override void OnSourceInitialized(EventArgs e)
@@ -149,8 +159,6 @@ namespace TabPaint
             await Task.Yield();  
             
             this.Focus();
-
-
             try
             {
                 StateChanged += MainWindow_StateChanged;
@@ -165,9 +173,6 @@ namespace TabPaint
                 ItalicBtn.Unchecked += FontSettingChanged;
                 UnderlineBtn.Checked += FontSettingChanged;
                 UnderlineBtn.Unchecked += FontSettingChanged;
-
-                //   SourceInitialized += OnSourceInitialized;
-
 
 
                 // Canvas 事件
@@ -205,7 +210,6 @@ namespace TabPaint
                     // 模拟触发一次滚动检查
                     OnFileTabsScrollChanged(MainImageBar.Scroller, null);
                 }
-              //  TimeRecorder t = new TimeRecorder(); t.Reset(); t.Toggle(); t.Toggle();
             }
         }
         private string FindFirstImageInDirectory(string folderPath)
@@ -293,7 +297,7 @@ namespace TabPaint
             {
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
-
+                _router.CleanUpSelectionandShape();
                 if (firstNewTab != null)
                 {
                     if (_currentTabItem != null) _currentTabItem.IsSelected = false;
@@ -301,6 +305,7 @@ namespace TabPaint
                     _currentTabItem = firstNewTab;
                     await OpenImageAndTabs(firstNewTab.FilePath);
                     MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
+
                 }
             }
         }
@@ -311,8 +316,7 @@ namespace TabPaint
             if (SettingsManager.Instance.Current.IsFixedZoom&& _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
-               
-                //  s(1);
+             //   s(1);
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
                 //s(ScrollContainer.ViewportWidth);
@@ -324,7 +328,6 @@ namespace TabPaint
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale * 0.98;
-                // s(fitScale);
 
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
@@ -530,12 +533,20 @@ namespace TabPaint
         InfoToast.BeginAnimation(OpacityProperty, fadeOut);
     }
 
-    // 在 MainWindow 类中添加
+        private DateTime _navKeyPressStartTime = DateTime.MinValue;
+        // 标记是否正在进行连续导航
+        private bool _isNavigating = false;
+        private int CalculateNavigationGap()
+        {
+            if (_navKeyPressStartTime == DateTime.MinValue) return 1;
 
-    // 统一处理文字对齐点击
-  
+            var duration = (DateTime.Now - _navKeyPressStartTime).TotalMilliseconds;
 
-        // 修改原有的 FontSettingChanged，让它调用 TextTool 的更新
+            if (duration < 5000) return 1;
+            return 2;
+        }
+
+
         private string FormatFileSize(long bytes)
         {
             if (bytes < 1024) return $"大小: {bytes} B";
@@ -545,37 +556,53 @@ namespace TabPaint
 
         private void ShowNextImage()
         {
-            if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-            _router.CleanUpSelectionandShape();
-            _currentImageIndex++;
-            if (_currentImageIndex >= _imageFiles.Count)
-            {
-                _currentImageIndex = 0; // 循环到第一张
-                ShowToast("已回到第一张图片"); // 提示逻辑
-            }
-
-            RequestImageLoad(_imageFiles[_currentImageIndex]);
+            MoveImageIndex(1);
         }
 
         private void ShowPrevImage()
         {
+            MoveImageIndex(-1);
+        }
+        private void MoveImageIndex(int direction) // direction: 1 or -1
+        {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
+
+            // 清理和保存逻辑 (保持原有逻辑)
             _router.CleanUpSelectionandShape();
-            // 自动保存已编辑图片
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
+                // 注意：在大跨度跳跃时，可能不需要每张都存，视需求而定。
+                // 这里保留逻辑，防止丢失修改。
                 SaveBitmap(_currentFilePath);
                 _isEdited = false;
             }
-            _currentImageIndex--;
-            if (_currentImageIndex < 0)
+
+            // --- 核心修改：获取动态步长 ---
+            int gap = CalculateNavigationGap();
+            int actualStep = gap * direction;
+
+            // 计算新索引
+            int newIndex = _currentImageIndex + actualStep;
+
+            // 处理循环逻辑 (使用取模运算更简洁，但也可用 if/else)
+            if (newIndex >= _imageFiles.Count)
             {
-                _currentImageIndex = _imageFiles.Count - 1; // 循环到最后一张
-                ShowToast("这是最后一张图片");
+                newIndex = newIndex % _imageFiles.Count; // 循环回到开头附近
+                if (gap == 1) ShowToast("已回到第一张图片");
             }
+            else if (newIndex < 0)
+            {
+                // 处理负数取模 (C# % 操作符对负数结果为负)
+                newIndex = (_imageFiles.Count + (newIndex % _imageFiles.Count)) % _imageFiles.Count;
+                if (gap == 1) ShowToast("这是最后一张图片");
+            }
+
+            _currentImageIndex = newIndex;
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
         }
+
+
         private string SaveClipboardImageToCache(BitmapSource source)
         {
             try
@@ -716,6 +743,26 @@ namespace TabPaint
                 }
             }
             return null;
+        }
+        private void RefreshBitmapScalingMode()
+        {
+            if (BackgroundImage == null) return; // 防止空引用
+
+            var settings = TabPaint.SettingsManager.Instance.Current;
+            // 注意：设置里是 0-100，这里除以 100 转为倍率
+            double threshold = (IsViewMode ? settings.ViewInterpolationThreshold : settings.PaintInterpolationThreshold) / 100.0;
+
+            // 核心逻辑：只要当前缩放 >= 阈值，就用邻近插值（像素风），否则用线性插值（模糊平滑）
+            if (zoomscale >= threshold)
+            {
+                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.NearestNeighbor)RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
+                
+            }
+            else
+            {
+                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.Linear)RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
+                
+            }
         }
 
         private void OnScrollContainerMouseMove(object sender, MouseEventArgs e)

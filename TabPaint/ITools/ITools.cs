@@ -121,6 +121,7 @@ namespace TabPaint
             public Point ToPixel(Point viewPos)
             {
                 var bmp = Surface.Bitmap;
+                if(bmp==null)return new Point(0,0);
                 double sx = bmp.PixelWidth / ViewElement.ActualWidth;
                 double sy = bmp.PixelHeight / ViewElement.ActualHeight;
                 return new Point(viewPos.X * sx, viewPos.Y * sy);

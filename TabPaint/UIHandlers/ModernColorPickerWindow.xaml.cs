@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,12 +14,14 @@ namespace TabPaint
         private enum ColorMode { RGB, HSV }
         private ColorMode _currentMode = ColorMode.RGB;
         private bool _isDraggingSpectrum = false;
+        private bool _isDraggingAlpha = false; // 新增
         private bool _isDraggingHue = false;
         private bool _isUpdatingInputs = false;
 
         private double _currentHue = 0;
         private double _currentSat = 1;
         private double _currentVal = 1;
+        private double _currentAlpha = 255; // 新增：0-255
 
         public ModernColorPickerWindow(Color initialColor)
         {
@@ -30,16 +33,16 @@ namespace TabPaint
             RenderHueGradient();
             SetColorFromRgb(initialColor.R, initialColor.G, initialColor.B);
             LoadCustomColorsFromSettings();
-            this.KeyDown += (s, e) =>
+            this.MouseDown += (s, e) =>
             {
-                if (e.Key == Key.Escape)
-                {
-                    this.Close();
-                }
+                //System.Windows.MessageBox.Show("456789");
+                Keyboard.ClearFocus();
+             //   this.Focus();
             };
-            // 确保第一次显示时UI位置正确
+            this.KeyDown += (s, e) => { if (e.Key == Key.Escape) { this.Close(); } };
             Loaded += (s, e) => UpdateUI();
         }
+     
         private void LoadCustomColorsFromSettings()
         {
             var savedHexColors = SettingsManager.Instance.Current.CustomColors;
@@ -58,7 +61,6 @@ namespace TabPaint
                     }
                     catch
                     {
-                        // 忽略解析错误的颜色
                     }
                 }
             }
@@ -80,6 +82,7 @@ namespace TabPaint
             if (sender is Button btn && btn.Background is SolidColorBrush brush)
             {
                 var c = brush.Color;
+                _currentAlpha = c.A; // 获取颜色的 Alpha
                 SetColorFromRgb(c.R, c.G, c.B);
                 UpdateUI();
             }
@@ -90,7 +93,13 @@ namespace TabPaint
         {
             var hueColor = ColorFromHsv(_currentHue, 1, 1);
             SpectrumBaseColor.Fill = new SolidColorBrush(hueColor);
+
+            // 同时更新 Alpha 滑块的顶端颜色（不带透明度）
+            var pureColor = GetRgbFromHsv(false); // false = 不带 alpha，纯色
+            if (AlphaGradientStop != null)
+                AlphaGradientStop.Color = pureColor;
         }
+
 
         private void SetColorFromRgb(byte r, byte g, byte b)
         {
@@ -107,9 +116,10 @@ namespace TabPaint
             UpdateHueColorVisual();
         }
 
-        private Color GetRgbFromHsv()
+        private Color GetRgbFromHsv(bool includeAlpha = true)
         {
-            return ColorFromHsv(_currentHue, _currentSat, _currentVal);
+            var c = ColorFromHsv(_currentHue, _currentSat, _currentVal);
+            return includeAlpha ? Color.FromArgb((byte)_currentAlpha, c.R, c.G, c.B) : c;
         }
 
         private void UpdateUI()
@@ -119,56 +129,62 @@ namespace TabPaint
 
             try
             {
-                var c = GetRgbFromHsv();
+                var c = GetRgbFromHsv(true); // 获取带 Alpha 的颜色
                 SelectedColor = c;
 
-                // 确保 NewColorRect 不为空 (防止初始化时的 null 引用)
                 if (NewColorRect != null)
                     NewColorRect.Fill = new SolidColorBrush(c);
 
+                // HEX 显示 8 位：#AARRGGBB
                 if (HexInput != null)
-                    HexInput.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+                    HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
 
-                // --- 修改开始：根据模式更新输入框数值 ---
-                if (Input1 != null && Input2 != null && Input3 != null)
+                // 更新数值输入框
+                if (Input1 != null && Input2 != null && Input3 != null && InputAlpha != null)
                 {
+                    InputAlpha.Text = ((int)_currentAlpha).ToString(); // Alpha 始终显示 0-255
+
                     if (_currentMode == ColorMode.RGB)
                     {
                         Input1.Text = c.R.ToString();
                         Input2.Text = c.G.ToString();
                         Input3.Text = c.B.ToString();
                     }
-                    else // HSV 模式
+                    else
                     {
-                        // Hue: 0-360, Sat: 0-100, Val: 0-100
                         Input1.Text = Math.Round(_currentHue).ToString();
                         Input2.Text = Math.Round(_currentSat * 100).ToString();
                         Input3.Text = Math.Round(_currentVal * 100).ToString();
                     }
                 }
-                // --- 修改结束 ---
 
-                // ... 原有的 Hue 滑块和 Spectrum 光标更新代码保持不变 ...
-                // 更新 Hue 滑块 (Vertical)
+                // 1. 更新 Hue 滑块位置
                 if (HueSliderGrid.ActualHeight > 0)
                 {
-                    // ... (保持原样)
                     double h = HueSliderGrid.ActualHeight;
                     double hueY = (1 - (_currentHue / 360.0)) * h;
                     Canvas.SetTop(HueCursor, Math.Clamp(hueY, 0, h));
-                    double centerX = (HueSliderGrid.ActualWidth - HueCursor.Width) / 2;
-                    Canvas.SetLeft(HueCursor, centerX);
                 }
 
+                // 2. 更新 Spectrum 光标位置
                 if (SpectrumBaseColor.ActualWidth > 0)
                 {
-                    // ... (保持原样)
                     double w = SpectrumBaseColor.ActualWidth;
                     double h = SpectrumBaseColor.ActualHeight;
-                    double specX = _currentSat * w;
-                    double specY = (1 - _currentVal) * h;
-                    Canvas.SetLeft(ColorCursor, specX);
-                    Canvas.SetTop(ColorCursor, specY);
+                    Canvas.SetLeft(ColorCursor, _currentSat * w);
+                    Canvas.SetTop(ColorCursor, (1 - _currentVal) * h);
+                }
+
+                // 3. 【新增】更新 Alpha 滑块位置
+                if (AlphaSliderGrid.ActualHeight > 0)
+                {
+                    double h = AlphaSliderGrid.ActualHeight;
+                    // Alpha 255 在顶部(0)，0 在底部(h)
+                    double alphaY = (1 - (_currentAlpha / 255.0)) * h;
+                    Canvas.SetTop(AlphaCursor, Math.Clamp(alphaY, 0, h));
+
+                    // 动态更新滑块渐变色
+                    UpdateHueColorVisual();
                 }
             }
             finally
@@ -226,7 +242,7 @@ namespace TabPaint
         #region Interaction - Spectrum
         private void Spectrum_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            // 关键：阻止事件冒泡，防止被父级捕获
+            Keyboard.ClearFocus();
             e.Handled = true;
             _isDraggingSpectrum = true;
 
@@ -268,6 +284,7 @@ namespace TabPaint
         #region Interaction - Hue Slider
         private void Hue_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            Keyboard.ClearFocus();
             e.Handled = true;
             _isDraggingHue = true;
 
@@ -313,26 +330,113 @@ namespace TabPaint
 
         #endregion
 
+        #region Interaction - Alpha Slider
+
+        private void Alpha_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+          
+            e.Handled = true;  //System.Windows.MessageBox.Show("Alpha_MouseDown");
+            _isDraggingAlpha = true;
+
+            // 直接使用成员变量 AlphaSliderGrid，而不是 sender，防止转型错误
+            AlphaSliderGrid.CaptureMouse();
+            UpdateAlphaFromMouse(e.GetPosition(AlphaSliderGrid), AlphaSliderGrid.ActualHeight);
+        }
+        private void Alpha_Thumb_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Keyboard.ClearFocus();
+            e.Handled = true; // 阻止事件冒泡，防止触发两次
+            _isDraggingAlpha = true;
+            AlphaSliderGrid.CaptureMouse();
+            UpdateAlphaFromMouse(e.GetPosition(AlphaSliderGrid), AlphaSliderGrid.ActualHeight);
+        }
+        private void Hue_Thumb_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Keyboard.ClearFocus();
+            e.Handled = true;
+            _isDraggingHue = true;
+
+            // 同样，让 HueSliderGrid 接管
+            HueSliderGrid.CaptureMouse();
+            UpdateHueFromMouse(e.GetPosition(HueSliderGrid), HueSliderGrid.ActualHeight);
+        }
+
+        private void Alpha_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isDraggingAlpha)
+            {
+                var grid = sender as Grid;
+                if (grid != null)
+                    UpdateAlphaFromMouse(e.GetPosition(grid), grid.ActualHeight);
+            }
+        }
+
+        private void Alpha_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            _isDraggingAlpha = false;
+            var grid = sender as Grid;
+            grid?.ReleaseMouseCapture();
+        }
+
+        private void UpdateAlphaFromMouse(Point p, double h)
+        {
+            if (h <= 0) return;
+            double y = Math.Clamp(p.Y, 0, h);
+
+            // y=0 -> Alpha=255, y=h -> Alpha=0
+            _currentAlpha = 255 - (y / h * 255);
+            _currentAlpha = Math.Clamp(_currentAlpha, 0, 255);
+
+            UpdateUI();
+        }
+
+        #endregion
+
         #region Text Input Handling
         private void HexInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // 修复：确保所有相关控件都已初始化，防止空引用崩溃
             if (HexInput == null || NewColorRect == null) return;
             if (_isUpdatingInputs) return;
 
             string hex = HexInput.Text.Trim('#');
+
+            // 支持 6位 (RRGGBB) 和 8位 (AARRGGBB)
             if (hex.Length == 6)
             {
                 try
                 {
+                    _currentAlpha = 255; // 默认不透明
                     byte r = Convert.ToByte(hex.Substring(0, 2), 16);
                     byte g = Convert.ToByte(hex.Substring(2, 2), 16);
                     byte b = Convert.ToByte(hex.Substring(4, 2), 16);
                     SetColorFromRgb(r, g, b);
-
-                    var c = GetRgbFromHsv();
+                    // UpdateUI 会被 SetColorFromRgb 间接触发吗？不会，Set只改状态
+                    // 手动刷新预览
+                    var c = GetRgbFromHsv(true);
                     NewColorRect.Fill = new SolidColorBrush(c);
                     SelectedColor = c;
+                    // 更新 Alpha 输入框
+                    if (InputAlpha != null) InputAlpha.Text = "255";
+                }
+                catch { }
+            }
+            else if (hex.Length == 8)
+            {
+                try
+                {
+                    byte a = Convert.ToByte(hex.Substring(0, 2), 16);
+                    byte r = Convert.ToByte(hex.Substring(2, 2), 16);
+                    byte g = Convert.ToByte(hex.Substring(4, 2), 16);
+                    byte b = Convert.ToByte(hex.Substring(6, 2), 16);
+
+                    _currentAlpha = a;
+                    SetColorFromRgb(r, g, b);
+
+                    var c = GetRgbFromHsv(true);
+                    NewColorRect.Fill = new SolidColorBrush(c);
+                    SelectedColor = c;
+
+                    if (InputAlpha != null) InputAlpha.Text = a.ToString();
                 }
                 catch { }
             }
@@ -342,64 +446,60 @@ namespace TabPaint
         private void NumericInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_isUpdatingInputs) return;
-            if (Input1 == null || Input2 == null || Input3 == null || NewColorRect == null) return;
+            if (Input1 == null || Input2 == null || Input3 == null || InputAlpha == null) return;
 
-            // 尝试解析三个输入框的值
             if (double.TryParse(Input1.Text, out double v1) &&
                 double.TryParse(Input2.Text, out double v2) &&
-                double.TryParse(Input3.Text, out double v3))
+                double.TryParse(Input3.Text, out double v3) &&
+                double.TryParse(InputAlpha.Text, out double vAlpha)) // 读取 Alpha
             {
+                // 更新 Alpha
+                _currentAlpha = Math.Clamp(vAlpha, 0, 255);
+
                 if (_currentMode == ColorMode.RGB)
                 {
-                    // RGB 模式：限制在 0-255
                     byte r = (byte)Math.Clamp(v1, 0, 255);
                     byte g = (byte)Math.Clamp(v2, 0, 255);
                     byte b = (byte)Math.Clamp(v3, 0, 255);
-
-                    SetColorFromRgb(r, g, b); // 这会反算 H,S,V 并更新 UI (UpdateUI)
+                    SetColorFromRgb(r, g, b);
                 }
                 else
                 {
-                    // HSV 模式
-                    // v1 (Hue): 0-360
-                    // v2 (Sat): 0-100
-                    // v3 (Val): 0-100
-
                     _currentHue = Math.Clamp(v1, 0, 360);
                     _currentSat = Math.Clamp(v2, 0, 100) / 100.0;
                     _currentVal = Math.Clamp(v3, 0, 100) / 100.0;
-
-                    UpdateHueColorVisual(); // 更新色谱底色
-
-                    // 手动触发 UI 更新 (但不更新输入框本身，以免打断输入，这里需要特殊处理)
-                    // 简单起见，我们调用 UpdateUI，但为了防止光标跳动，可以在 UpdateUI 里加判断
-                    // 或者直接在这里更新 SelectedColor 和 Hex
-
-                    var c = GetRgbFromHsv();
-                    SelectedColor = c;
-                    NewColorRect.Fill = new SolidColorBrush(c);
-
-                    // 只更新 Hex 和 Canvas 光标，不回写 Input 框，防止用户输到一半被重置
-                    _isUpdatingInputs = true;
-                    HexInput.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-
-                    // 更新光标位置
-                    if (SpectrumBaseColor.ActualWidth > 0)
-                    {
-                        double w = SpectrumBaseColor.ActualWidth;
-                        double h = SpectrumBaseColor.ActualHeight;
-                        Canvas.SetLeft(ColorCursor, _currentSat * w);
-                        Canvas.SetTop(ColorCursor, (1 - _currentVal) * h);
-                    }
-                    if (HueSliderGrid.ActualHeight > 0)
-                    {
-                        double hGrid = HueSliderGrid.ActualHeight;
-                        Canvas.SetTop(HueCursor, (1 - (_currentHue / 360.0)) * hGrid);
-                    }
-
-                    _isUpdatingInputs = false;
+                    UpdateHueColorVisual();
                 }
+
+                // 刷新预览
+                var c = GetRgbFromHsv(true);
+                SelectedColor = c;
+                NewColorRect.Fill = new SolidColorBrush(c);
+
+                _isUpdatingInputs = true;
+                HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+
+
+                if (AlphaSliderGrid.ActualHeight > 0)
+                    Canvas.SetTop(AlphaCursor, (1 - (_currentAlpha / 255.0)) * AlphaSliderGrid.ActualHeight);
+
+                // 更新光标位置
+                if (SpectrumBaseColor.ActualWidth > 0)
+                {
+                    double w = SpectrumBaseColor.ActualWidth;
+                    double h = SpectrumBaseColor.ActualHeight;
+                    Canvas.SetLeft(ColorCursor, _currentSat * w);
+                    Canvas.SetTop(ColorCursor, (1 - _currentVal) * h);
+                }
+                if (HueSliderGrid.ActualHeight > 0)
+                {
+                    double hGrid = HueSliderGrid.ActualHeight;
+                    Canvas.SetTop(HueCursor, (1 - (_currentHue / 360.0)) * hGrid);
+                }
+
+                _isUpdatingInputs = false;
             }
+
         }
         private void ColorModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -499,10 +599,6 @@ namespace TabPaint
                 }
             }
         }
-
-
-
-
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;

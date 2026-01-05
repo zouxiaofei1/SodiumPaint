@@ -136,14 +136,23 @@ namespace TabPaint
             MyStatusBar.FitToWindowClick += FitToWindow_Click;
             MyStatusBar.ZoomOutClick += ZoomOut_Click;
             MyStatusBar.ZoomInClick += ZoomIn_Click;
-            MyStatusBar.ZoomSelectionChanged += ZoomMenu_SelectionChanged;
+            MyStatusBar.ZoomChanged += OnStatusBarZoomChanged;
 
+
+
+            AppTitleBar.NewClick += OnNewClick;
+            AppTitleBar.OpenClick += OnOpenClick;
+            AppTitleBar.OpenWorkspaceClick += OnOpenWorkspaceClick;
+            AppTitleBar.SaveClick += OnSaveClick;
+            AppTitleBar.SaveAsClick += OnSaveAsClick;
+            AppTitleBar.ExitClick += OnExitClick;
             // 注入到界面
             StatusBarHolder.Content = MyStatusBar;
 
             _dragWatchdog = new DispatcherTimer();
             _dragWatchdog.Interval = TimeSpan.FromMilliseconds(200); // 200ms 检查一次，性能消耗可忽略
             _dragWatchdog.Tick += DragWatchdog_Tick;
+    
         }
     }
 }

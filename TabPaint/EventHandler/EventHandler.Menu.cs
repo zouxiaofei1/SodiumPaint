@@ -207,6 +207,20 @@ namespace TabPaint
             // 打开设置窗口
             
             var settingsWindow = new SettingsWindow();
+            TabPaint.SettingsManager.Instance.Current.PropertyChanged += (s, e) =>
+            {
+                // 当这两个阈值属性发生变化时，强制刷新渲染模式
+                if (e.PropertyName == "ViewInterpolationThreshold" ||
+                    e.PropertyName == "PaintInterpolationThreshold")
+                {
+                    // 确保在 UI 线程执行
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        RefreshBitmapScalingMode();
+                    });
+                }
+            };
+
             settingsWindow.ProgramVersion = this.ProgramVersion;
             settingsWindow.Owner = this; // 设置主窗口为父窗口，实现模态
             settingsWindow.ShowDialog();

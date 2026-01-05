@@ -13,6 +13,11 @@ namespace TabPaint
         Fant,        // 高质量幻像 (WPF HighQualityBicubic 类似)
         HighQuality  // 通用高质量
     }
+    public enum MouseWheelMode
+    {
+        Zoom,          // 缩放 (默认)
+        SwitchImage    // 切图
+    }
     public class ShortcutItem
     {
         public Key Key { get; set; } = Key.None;
@@ -105,6 +110,37 @@ namespace TabPaint
     }
     public class AppSettings : INotifyPropertyChanged
     {
+        private bool _startInViewMode = false; // 默认关闭，即启动为画图模式
+
+        [JsonPropertyName("start_in_view_mode")]
+        public bool StartInViewMode
+        {
+            get => _startInViewMode;
+            set
+            {
+                if (_startInViewMode != value)
+                {
+                    _startInViewMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private MouseWheelMode _viewMouseWheelMode = MouseWheelMode.Zoom;
+
+        [JsonPropertyName("view_mouse_wheel_mode")]
+        public MouseWheelMode ViewMouseWheelMode
+        {
+            get => _viewMouseWheelMode;
+            set
+            {
+                if (_viewMouseWheelMode != value)
+                {
+                    _viewMouseWheelMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private double _penThickness = 5.0; // 默认值
 
         [JsonPropertyName("pen_thickness")]
@@ -269,6 +305,22 @@ namespace TabPaint
                 }
             }
         }
+        private bool _autoLoadFolderImages = true; // 默认值为 true，保持原有行为
+
+        [JsonPropertyName("auto_load_folder_images")]
+        public bool AutoLoadFolderImages
+        {
+            get => _autoLoadFolderImages;
+            set
+            {
+                if (_autoLoadFolderImages != value)
+                {
+                    _autoLoadFolderImages = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
             var defaults = new Dictionary<string, ShortcutItem>

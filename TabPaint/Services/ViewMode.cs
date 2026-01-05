@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TabPaint.Controls;
 using static TabPaint.MainWindow;
+using XamlAnimatedGif; // 添加这一行
 
 //
 //看图模式
@@ -54,31 +55,44 @@ namespace TabPaint
             OnModeChanged(IsViewMode);
         }
 
-        private void OnModeChanged(bool isView)
+        private void OnModeChanged(bool isView, bool isSilent = false)
         {
-            ShowToast(isView ? "进入看图模式" : "进入画图模式");
+            if (!isSilent) ShowToast(isView ? "进入看图模式" : "进入画图模式");
             AutoSetFloatBarVisibility();
             if (isView)
             {
-              
+                if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = true;
                 _router.CleanUpSelectionandShape();
-                if(_router.CurrentTool is TextTool textTool)
-                {
-                    textTool.Cleanup(_ctx);
-                }
-                if (_router.CurrentTool is PenTool penTool)
-                {
-                    penTool.StopDrawing(_ctx);
-                }
+                if (_router.CurrentTool is TextTool textTool) textTool.Cleanup(_ctx);
+                if (_router.CurrentTool is PenTool penTool) penTool.StopDrawing(_ctx);
                 MainImageBar.MainContainer.Height = 5;
+                if (_isCurrentFileGif)
+                { 
+                    BackgroundImage.Visibility = Visibility.Collapsed; // 隐藏静态图
+                    GifPlayerImage.Visibility = Visibility.Visible;    // 显示动态图
+                    var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
+                    controller?.Play();
+                }
+                CanvasResizeOverlay.Visibility = Visibility.Collapsed;
             }
             else
             {
-                
+                if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = false;
                 MainImageBar.MainContainer.Height = 100;
+                if (_isCurrentFileGif)
+                {
+                    var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
+                    controller?.Pause();
+
+                    GifPlayerImage.Visibility = Visibility.Collapsed; // 隐藏动态图
+                    BackgroundImage.Visibility = Visibility.Visible;  // 显示静态图 (WriteableBitmap)
+                }
+
+                CanvasResizeOverlay.Visibility = Visibility.Visible;
             }
-            AppTitleBar.UpdateModeIcon(IsViewMode);
-            _canvasResizer.UpdateUI();
+            if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);
+            if (_canvasResizer != null) _canvasResizer.UpdateUI();
+            
         }
         private void OnTitleBarModeSwitch(object sender, RoutedEventArgs e)
         {
@@ -90,10 +104,6 @@ namespace TabPaint
         {
             var window = (MainWindow)d;
             bool isView = (bool)e.NewValue;
-            // 这里可以处理模式切换时的额外逻辑，例如：
-            // 1. 清除当前的选区
-            // 2. 强制设焦点
-            // 3. 记录日志
             if (isView)
             {
                 // 比如: window.CancelCurrentOperation();

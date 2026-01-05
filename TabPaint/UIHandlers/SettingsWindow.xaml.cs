@@ -64,13 +64,6 @@ namespace TabPaint
 
                 // 获取当前程序的可执行文件路径，用于重启
                 string currentExe = Process.GetCurrentProcess().MainModule.FileName;
-
-                // 3. 构建一个临时的批处理命令
-                // 逻辑：
-                // (1) 等待 1 秒让主程序完全退出
-                // (2) 强制删除 TabPaint 文件夹
-                // (3) 重新启动主程序
-                // (4) 删除脚本自己
                 string tempBatPath = Path.Combine(Path.GetTempPath(), "tabpaint_reset.bat");
 
                 string batContent = $@"
@@ -151,11 +144,6 @@ del ""%~f0""
                 // 底部列表只有一个“关于”项，索引永远是 0
                 AboutPanel.Visibility = Visibility.Visible;
             }
-
-            // 5. 体验优化：切换页面后将滚动条回顶（可选）
-            // 如果你在 XAML 中给 ScrollViewer 起了名字，比如 x:Name="MainScrollViewer"
-            // MainScrollViewer?.ScrollToTop();
-
             _isInternalChange = false;
         }
         private void TextBox_LostFocus(object sender, RoutedEventArgs e)

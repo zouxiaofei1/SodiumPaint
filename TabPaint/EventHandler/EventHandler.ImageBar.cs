@@ -754,51 +754,108 @@ namespace TabPaint
         private void CopyTabToClipboard(FileTabItem tab)
         {
             var dataObject = new DataObject();
-            bool hasContent = false;
             BitmapSource heavyBitmap = null;
 
             try
             {
-                if (!string.IsNullOrEmpty(tab.FilePath) && File.Exists(tab.FilePath) && !tab.IsDirty)
+                // --- 1. 准备位图数据 (供画图、Word、QQ等粘贴图像使用) ---
+                // 即使是纯文件，也尽量读取出Bitmap放进去，增强兼容性
+                if (tab.IsDirty || tab.IsNew)
                 {
-                    var fileList = new System.Collections.Specialized.StringCollection();
-                    fileList.Add(tab.FilePath);
-                    dataObject.SetFileDropList(fileList);
-                    hasContent = true;
-
+                    // 如果是脏文件，从画布或缓存获取最新状态
+                    heavyBitmap = GetCurrentCanvasSnapshotSafe(); // 假设这是你获取当前画布截图的方法
+                    if (heavyBitmap == null && !string.IsNullOrEmpty(tab.BackupPath))
+                    {
+                        heavyBitmap = LoadBitmapFromFile(tab.BackupPath);
+                    }
                 }
                 else
                 {
-                    heavyBitmap = GetHighResImageForTab(tab);
-                    if (heavyBitmap != null)
+                    // 如果是干净文件，尝试读取（如果是超大图可能会略过此步以优化性能）
+                    // 这里为了演示，假设我们总是尝试提供位图
+                    if (!IsVirtualPath(tab.FilePath))
                     {
-                        dataObject.SetImage(heavyBitmap);
-                        hasContent = true;
+                        // 注意：这里为了不阻塞UI，如果是大图可以考虑不放Bitmap，只放FileDrop
+                        // 但为了体验一致性，通常还是放
+                        heavyBitmap = LoadBitmapFromFile(tab.FilePath);
                     }
                 }
 
-                if (hasContent)
+                if (heavyBitmap != null)
                 {
-                    Clipboard.SetDataObject(dataObject, true);
+                    dataObject.SetImage(heavyBitmap);
                 }
+
+                // --- 2. 准备文件路径数据 (供 Windows 资源管理器粘贴文件使用) ---
+                string pathForClipboard = null;
+
+                if (!tab.IsDirty && !tab.IsNew && !string.IsNullOrEmpty(tab.FilePath) && File.Exists(tab.FilePath))
+                {
+                    // CASE A: 原文件存在且未修改 -> 直接使用原路径
+                    pathForClipboard = tab.FilePath;
+                }
+                else if (heavyBitmap != null)
+                {
+                    string clipDir = System.IO.Path.Combine(_cacheDir, "ClipboardTemp");
+                    if (!Directory.Exists(clipDir)) Directory.CreateDirectory(clipDir);
+
+                    // 确定文件名
+                    string fileName = tab.FileName;
+                    // 确保有扩展名
+                    if (string.IsNullOrEmpty(System.IO.Path.GetExtension(fileName)))
+                    {
+                        fileName += ".png";
+                    }
+
+                    string tempPath = System.IO.Path.Combine(clipDir, fileName);
+
+                    // 保存临时文件
+                    using (var fs = new FileStream(tempPath, FileMode.Create))
+                    {
+                        BitmapEncoder encoder;
+                        string ext = System.IO.Path.GetExtension(fileName).ToLower();
+
+                        if (ext == ".jpg" || ext == ".jpeg")
+                        {
+                            encoder = new JpegBitmapEncoder { QualityLevel = 90 };
+                        }
+                        else
+                        {
+                            encoder = new PngBitmapEncoder();
+                        }
+
+                        encoder.Frames.Add(BitmapFrame.Create(heavyBitmap));
+                        encoder.Save(fs);
+                    }
+                    pathForClipboard = tempPath;
+                }
+
+                // 将路径放入剪贴板
+                if (pathForClipboard != null)
+                {
+                    var fileList = new System.Collections.Specialized.StringCollection();
+                    fileList.Add(pathForClipboard);
+                    dataObject.SetFileDropList(fileList);
+                }
+
+                // --- 3. 提交到剪贴板 ---
+                Clipboard.SetDataObject(dataObject, true);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
+                ShowToast("复制失败");
             }
             finally
             {
-                dataObject = null;
-                heavyBitmap = null;
-
-                if (tab.IsDirty || tab.IsNew)
+                if (heavyBitmap != null && (tab.IsDirty || tab.IsNew))
                 {
+                    heavyBitmap = null;
                     GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    GC.Collect(); // 再次调用以确保完全释放
                 }
             }
         }
+
 
         // #endregion
     }

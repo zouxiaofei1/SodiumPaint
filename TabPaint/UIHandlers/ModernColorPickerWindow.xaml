@@ -1,7 +1,7 @@
 ﻿<Window x:Class="TabPaint.ModernColorPickerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="编辑颜色" Height="630" Width="680"
+        Title="编辑颜色" Height="660" Width="720"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="Transparent"
@@ -13,7 +13,25 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- 浅色系颜色定义 -->
+        <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="White">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,10,10"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#CCC">
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <RectangleGeometry Rect="0,0,5,5"/>
+                                <RectangleGeometry Rect="5,5,5,5"/>
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
         <SolidColorBrush x:Key="WindowBackground" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="HeaderBackground" Color="#F3F3F3"/>
         <SolidColorBrush x:Key="TextPrimary" Color="#333333"/>
@@ -303,10 +321,11 @@
             </Border>
 
             <!-- 2. Main Picker Area -->
-            <Grid Grid.Row="1" Height="300" Margin="24,0">
+            <Grid Grid.Row="1" Height="330" Margin="24,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="280"/>
-                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="45"/>
+                    <ColumnDefinition Width="30"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
@@ -357,26 +376,53 @@
 
                     <!-- 2. 原有的 Image 控件：隐藏它，但保留它以兼容后台代码 -->
                     <Image x:Name="HueSliderImage" Visibility="Collapsed" Stretch="Fill" />
-                    <Canvas x:Name="HueCursorCanvas" Width="28" HorizontalAlignment="Center" IsHitTestVisible="False" VerticalAlignment="Stretch">
-
-                        <!-- 滑块本体：尺寸加大到 28x28 -->
-                        <!-- Margin Top 为 -14 (即高度的一半)，是为了让滑块中心对准鼠标位置 -->
-                        <Grid x:Name="HueCursor" Width="28" Height="28" Margin="-11,-14,0,0">
-                            <!-- 外圈白色，加粗边框 -->
+                    <!-- Hue Slider 部分 -->
+                    <Canvas x:Name="HueCursorCanvas" Width="28" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+                        <!-- 【修改点】Margin 改为 "0,-14,0,0" -->
+                        <Grid x:Name="HueCursor" Width="28" Height="28" Margin="0,-14,0,0"  MouseLeftButtonDown="Hue_Thumb_MouseDown">
                             <Ellipse Width="28" Height="28"  Fill="White" Stroke="#F0F0F0" StrokeThickness="4">
                                 <Ellipse.Effect>
-                                    <!-- 增加投影让它浮起来，看起来更容易捏住 -->
                                     <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.3" Color="Black"/>
                                 </Ellipse.Effect>
                             </Ellipse>
-                            <!-- 可选：中间加个小灰点装饰，增加精致感 -->
-                            <Ellipse Width="8" Height="8" Fill="#CCC"/>
+                        </Grid>
+                    </Canvas>
+
+                </Grid>
+                <Grid Grid.Column="2" Margin="10,0,0,0" Background="Transparent"
+                      MouseLeftButtonDown="Alpha_MouseDown"
+                      MouseMove="Alpha_MouseMove"
+                      MouseLeftButtonUp="Alpha_MouseUp"
+                      Cursor="Hand" x:Name="AlphaSliderGrid">
+
+                    <!-- 背景：灰白格子 -->
+                    <Rectangle Width="20" RadiusX="10" RadiusY="10" 
+                               HorizontalAlignment="Center" Fill="{StaticResource CheckerboardBrush}"/>
+
+                    <!-- 前景：线性渐变 (透明 -> 当前色) -->
+                    <Rectangle Width="20" RadiusX="10" RadiusY="10" HorizontalAlignment="Center">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,1" EndPoint="0,0" x:Name="AlphaGradientBrush">
+                                <GradientStop Color="Transparent" Offset="0"/>
+                                <GradientStop Color="Red" Offset="1" x:Name="AlphaGradientStop"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- Alpha 滑块游标 -->
+                    <Canvas x:Name="AlphaCursorCanvas" Width="28" HorizontalAlignment="Center"  VerticalAlignment="Stretch">
+                        <Grid x:Name="AlphaCursor" Width="28" Height="28" Margin="0,-14,0,0" MouseLeftButtonDown="Alpha_Thumb_MouseDown">
+                            <Ellipse Width="28" Height="28"  Fill="White" Stroke="#F0F0F0" StrokeThickness="4">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.3" Color="Black"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
+                            <TextBlock Text="A" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="#AAA"/>
                         </Grid>
                     </Canvas>
                 </Grid>
-
                 <!-- Inputs & Preview -->
-                <StackPanel Grid.Column="2" Margin="10,0,0,0">
+               <StackPanel Grid.Column="3" Margin="20,0,0,0"  >
                     <!-- 1. 预览区域 (保持不变) -->
                     <Grid Height="60" Margin="0,0,0,15">
                         <Grid.ColumnDefinitions>
@@ -388,16 +434,24 @@
                                 <DropShadowEffect BlurRadius="5" ShadowDepth="1" Opacity="0.1"/>
                             </Border.Effect>
                         </Border>
-                        <Border Background="{Binding Fill, ElementName=OriginalColorRect}" CornerRadius="4,0,0,4" BorderBrush="#DDD" BorderThickness="1"/>
-                        <Rectangle x:Name="OriginalColorRect" Fill="Gray" Visibility="Hidden"/>
-                        <Border Grid.Column="1" Background="{Binding Fill, ElementName=NewColorRect}" CornerRadius="0,4,4,0" BorderBrush="#DDD" BorderThickness="1"/>
+                        <Border Grid.ColumnSpan="2" Background="{StaticResource CheckerboardBrush}" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1"/>
+                        <Rectangle x:Name="OriginalColorRect" Fill="Gray" RadiusX="4" RadiusY="4" Margin="0,0,0,0">
+                            <Rectangle.Clip>
+                                <RectangleGeometry Rect="0,0,100,60"/>
+                                <!-- 简单裁剪左半边，或者用 Grid Column 限制 -->
+                            </Rectangle.Clip>
+                        </Rectangle>
+                        <!-- 修正：让 Rectangle 占满格子，利用 Grid.Column -->
+                        <Border Grid.Column="0" Background="{Binding Fill, ElementName=OriginalColorRect}" CornerRadius="4,0,0,4"/>
+
+                        <!-- 右边：新颜色 -->
+                        <Border Grid.Column="1" Background="{Binding Fill, ElementName=NewColorRect}" CornerRadius="0,4,4,0"/>
                         <Rectangle x:Name="NewColorRect" Fill="Red" Visibility="Hidden"/>
-                        <TextBlock Text="预览" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12">
-                            <TextBlock.Effect>
-                                <DropShadowEffect ShadowDepth="0" BlurRadius="4" Color="Black" Opacity="0.8"/>
-                            </TextBlock.Effect>
-                        </TextBlock>
-                    </Grid> 
+                        <!-- 隐藏源，仅用于绑定 -->
+
+                        <TextBlock Text="预览" Foreground="#88000000" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12" FontWeight="Bold"/>
+                    </Grid>
+
 
                     <!-- 2. 模式切换下拉框 (新增) -->
                     <ComboBox Style="{StaticResource FluentComboBoxStyle}"  x:Name="ColorModeCombo" Margin="0,0,0,10" SelectionChanged="ColorModeCombo_SelectionChanged" SelectedIndex="0" Padding="6,4">
@@ -406,14 +460,15 @@
                     </ComboBox>
 
                     <!-- 3. Hex 输入 (保持不变，无论模式如何都显示) -->
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="0,0,0,10" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="HexInput" Style="{StaticResource FluentTextBox}" Text="#FF0000" TextChanged="HexInput_TextChanged"/>
-                        <TextBlock Text="HEX" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBox x:Name="HexInput" Style="{StaticResource FluentTextBox}" Text="#FFFF0000" TextChanged="HexInput_TextChanged"/>
+                        <TextBlock Text="HEX (8位)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource TextSecondary}" FontSize="10"/>
                     </Grid>
+
 
                     <Separator Background="#EEE" Margin="0,0,0,10"/>
 
@@ -440,7 +495,7 @@
                         <TextBlock x:Name="Label2" Text="绿 (G)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
                     </Grid>
 
-                    <Grid>
+                    <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -449,6 +504,16 @@
                         <TextBox x:Name="Input3" Style="{StaticResource FluentTextBox}" Text="0" TextChanged="NumericInput_TextChanged"/>
                         <!-- 标签3 -->
                         <TextBlock x:Name="Label3" Text="蓝 (B)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- 输入框 Alpha -->
+                        <TextBox x:Name="InputAlpha" Style="{StaticResource FluentTextBox}" Text="255" TextChanged="NumericInput_TextChanged"/>
+                        <TextBlock Text="Alpha" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
                     </Grid>
                 </StackPanel>
 

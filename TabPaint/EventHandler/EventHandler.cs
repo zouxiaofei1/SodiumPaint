@@ -38,15 +38,21 @@ namespace TabPaint
                 e.Handled = true;
                 return true;
             }
-            if (IsShortcut("View.PrevImage", e))
+            bool isNext = IsShortcut("View.NextImage", e);
+            bool isPrev = IsShortcut("View.PrevImage", e);
+
+            if (isNext || isPrev)
             {
-                ShowPrevImage();
-                e.Handled = true;
-                return true;
-            }
-            if (IsShortcut("View.NextImage", e))
-            {
-                ShowNextImage();
+                // 如果是第一次按下（而不是按住不放触发的重复事件），初始化时间
+                if (!_isNavigating)
+                {
+                    _isNavigating = true;
+                    _navKeyPressStartTime = DateTime.Now;
+                }
+
+                if (isNext) ShowNextImage();
+                if (isPrev) ShowPrevImage();
+
                 e.Handled = true;
                 return true;
             }
@@ -64,7 +70,23 @@ namespace TabPaint
 
         private void HandleViewModeShortcuts(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.C:
+                        if (_currentTabItem != null)
+                        {
+                            // 复用已有的复制逻辑
+                            CopyTabToClipboard(_currentTabItem);
+                            ShowToast("已复制");
+                        }
+                        e.Handled = true;
+                        break;
+                }
+            }
         }
+
         private void HandlePaintModeShortcuts(object sender, KeyEventArgs e)
         {
             if (IsShortcut("Tool.SwitchToPen", e))
@@ -136,7 +158,6 @@ namespace TabPaint
 
 
             // === B. 然后处理 锁定快捷键 (硬编码，不允许更改) ===
-            // 这里使用传统的 switch 判断，因为它们不从 Settings 读取
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
@@ -157,7 +178,6 @@ namespace TabPaint
                         bool isMultiFilePaste = false;
                         if (System.Windows.Clipboard.ContainsFileDropList())
                         {
-                            // ... 原有逻辑 ...
                         }
                         if (!isMultiFilePaste)
                         {
@@ -504,6 +524,20 @@ namespace TabPaint
             }
 
         }
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            bool isNext = IsShortcut("View.NextImage", e);
+            bool isPrev = IsShortcut("View.PrevImage", e);
+
+            if (isNext || isPrev ) // 根据你的实际快捷键添加
+            {
+                // 重置状态
+                _isNavigating = false;
+                _navKeyPressStartTime = DateTime.MinValue;
+            }
+        }
+
+
         private void Control_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -524,14 +558,11 @@ namespace TabPaint
         }
         private void UpdateUIStatus(double realScale)
         {
-            // 更新文本显示
             MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
             ZoomLevel = realScale.ToString("P0"); // 如果你有绑定的属性
 
             // 更新滑块位置 (反向计算)
             double targetSliderVal = ZoomToSlider(realScale);
-
-            // 【重要】设置标志位，告诉 Slider_ValueChanged 事件：“这是我改的，别触发缩放逻辑”
             _isInternalZoomUpdate = true;
             MyStatusBar.ZoomSliderControl.Value = targetSliderVal;
             _isInternalZoomUpdate = false;
@@ -540,55 +571,41 @@ namespace TabPaint
         {
             UpdateImageBarSliderState();
         }
-        private void SetZoom(double targetScale, Point? center = null)
+        // 修改方法签名，增加 isIntermediate 参数，默认为 false
+        private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false)
         {
+         
             double oldScale = zoomscale;
-
-            // 1. 计算最小缩放比例限制 (原有逻辑: 自适应图片大小)
+            // 1. 计算最小缩放比例限制
             double minrate = 1.0;
             if (_bitmap != null)
             {
-                // 确保除数不为0
                 double maxDim = Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
                 if (maxDim > 0)
                     minrate = 1500.0 / maxDim;
             }
 
-            // 2. 限制缩放范围
             double newScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
 
-            // 如果缩放比例没有变化（例如已经到了极限），直接返回，避免不必要的UI刷新
-            if (Math.Abs(newScale - oldScale) < 0.0001) return;
-
-            // 3. 确定缩放锚点（鼠标位置 或 视图中心）
+            // 3. 确定缩放锚点
             Point anchorPoint;
-
             if (center.HasValue)
             {
                 anchorPoint = center.Value;
             }
             else
             {
-                // 如果没有指定点（比如通过按钮缩放），则以当前 ScrollViewer 可视区域的中心为锚点
                 anchorPoint = new Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
             }
 
             // 4. 更新数据
-            zoomscale = newScale;
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
+            zoomscale = newScale; 
             UpdateUIStatus(zoomscale);
-            var settings = TabPaint.SettingsManager.Instance.Current;
-            double threshold = (IsViewMode ? settings.ViewInterpolationThreshold : settings.PaintInterpolationThreshold)/100 ;
-           
-            if (zoomscale < threshold)
-            {
-                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
-            }
-            else
-            {
-                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
-            }
-            // 5. 计算并应用滚动条偏移量 (维持锚点相对位置不变的平移公式)
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
+
+            RefreshBitmapScalingMode();
+
+            // 5. 计算并应用滚动条偏移量 (核心锚点逻辑)
             double offsetX = ScrollContainer.HorizontalOffset;
             double offsetY = ScrollContainer.VerticalOffset;
 
@@ -597,18 +614,110 @@ namespace TabPaint
 
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
+         
+            if (!isIntermediate)
+            {
+                
+                if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+                if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+                _canvasResizer.UpdateUI();
+                UpdateRulerPositions(); 
+                if (IsViewMode&& _startupFinished) { ShowToast(newScale.ToString("P0")); }
+            }
+        }
 
-            // 6. 刷新工具图层 (原有逻辑)
-            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
-            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-            _canvasResizer.UpdateUI(); UpdateRulerPositions();
-            if (IsViewMode) { ShowToast(newScale.ToString("P0")); }
+        // 动画相关字段
+        private double _targetZoomScale; // 动画最终要达到的缩放比例
+        private Point _zoomCenter;       // 缩放中心（鼠标位置）
+        private bool _isZoomAnimating = false;
+        private double _virtualScrollH;
+        private double _virtualScrollV;
+        private const double ZoomLerpFactor = 1; // 插值系数 (0.1-0.5)，越小越平滑，越大越跟手
+        private const double ZoomSnapThreshold = 0.001; // 停止动画的阈值
+        private void StartSmoothZoom(double targetScale, Point center)
+        {
+            double minrate = 1.0;
+            if (_bitmap != null)
+            {
+                double maxDim = Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
+                if (maxDim > 0) minrate = 1500.0 / maxDim;
+            }
+
+            _targetZoomScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
+            if (Math.Abs(_targetZoomScale - zoomscale) < 0.0001) return;
+
+            _zoomCenter = center;
+
+            if (!_isZoomAnimating)
+            {
+                // 动画开始前，先以当前 UI 的真实位置作为起点
+                _virtualScrollH = ScrollContainer.HorizontalOffset;
+                _virtualScrollV = ScrollContainer.VerticalOffset;
+
+                _isZoomAnimating = true;
+                CompositionTarget.Rendering += OnZoomRendering;
+            }
+        }
+
+
+        private void OnZoomRendering(object sender, EventArgs e)
+        {
+            double delta = _targetZoomScale - zoomscale;
+            bool isEnding = false;
+            double nextScale;
+
+            if (Math.Abs(delta) < ZoomSnapThreshold || Math.Abs(delta) < 0.00001)
+            {
+                nextScale = _targetZoomScale;
+                isEnding = true;
+            }
+            else
+            {
+                nextScale = zoomscale + delta * ZoomLerpFactor/PerformanceScore;
+            }
+
+            double oldScale = zoomscale;
+
+            // 2. 更新缩放 (View Model / UI)
+            zoomscale = nextScale;
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = nextScale;
+
+            double scaleRatio = nextScale / oldScale;
+
+            _virtualScrollH = (_virtualScrollH + _zoomCenter.X) * scaleRatio - _zoomCenter.X;
+            _virtualScrollV = (_virtualScrollV + _zoomCenter.Y) * scaleRatio - _zoomCenter.Y;
+
+            ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
+            ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
+            UpdateUIStatus(zoomscale);
+            RefreshBitmapScalingMode();
+
+
+            // 动画结束清理
+            if (isEnding)
+            {
+                SetZoom(nextScale, _zoomCenter, isIntermediate: false);
+                StopSmoothZoom();
+            }
+            else
+            {
+            }
+        }
+
+
+        private void StopSmoothZoom()
+        {
+            if (_isZoomAnimating)
+            {
+                _isZoomAnimating = false;
+                CompositionTarget.Rendering -= OnZoomRendering;
+            }
         }
 
 
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
-            // 1. 处理 Shift + 滚轮 (水平滚动)
+            // 1. 处理 Shift + 滚轮 (水平滚动) - 优先级最高，保持不变
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
                 e.Handled = true;
@@ -617,20 +726,38 @@ namespace TabPaint
                 return;
             }
 
-            // 2. 处理 Ctrl + 滚轮 (缩放)
-            if ((Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control) return;
+            // 获取当前按键状态和设置
+            bool isCtrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+            var wheelMode = SettingsManager.Instance.Current.ViewMouseWheelMode;
 
-            e.Handled = true; // 阻止默认滚动行为，防止画面抖动
+            bool isViewMode = IsViewMode;
 
-            // 计算目标倍率
-            double deltaFactor = e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes;
-            double targetScale = zoomscale * deltaFactor;
+            if (isViewMode && !isCtrl && wheelMode == MouseWheelMode.SwitchImage)
+            {
+                e.Handled = true;
+                // 滚轮向下(Delta < 0) -> 下一张; 滚轮向上(Delta > 0) -> 上一张
+                if (e.Delta < 0) ShowNextImage();
+                else ShowPrevImage();
+                return;
+            }
 
-            // 获取鼠标在 ScrollContainer 中的位置作为缩放中心
-            Point mousePos = e.GetPosition(ScrollContainer);
+            if (isCtrl || (isViewMode && wheelMode == MouseWheelMode.Zoom))
+            {
+                e.Handled = true;
 
-            // 调用抽象出的方法
-            SetZoom(targetScale, mousePos);
+                // 获取鼠标在 ScrollContainer 中的位置作为缩放中心
+                Point mousePos = e.GetPosition(ScrollContainer);
+                double currentBase = _isZoomAnimating ? _targetZoomScale : zoomscale;
+
+                // 计算缩放系数
+                double deltaFactor = e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes;
+                double targetScale = currentBase * deltaFactor;
+
+                // 启动平滑缩放
+                StartSmoothZoom(targetScale, mousePos);
+            }
         }
+
+
     }
 }

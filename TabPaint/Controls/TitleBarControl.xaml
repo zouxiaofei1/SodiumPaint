@@ -18,7 +18,95 @@
     <Border Height="28" Background="#50FFFFFF" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown" AllowDrop="True">
         <DockPanel LastChildFill="True">
             <!-- Icon -->
-            <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"/>
+            <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0" MouseLeftButtonDown="OnAppIconMouseDown">
+                <Image.ContextMenu>
+                    <!-- 这里的样式建议使用和主菜单一致的 ModernMenuItemStyle -->
+                    <ContextMenu x:Name="LogoContextMenu" Style="{StaticResource Win11ContextMenuStyle}" Background="White">
+                        <!-- === 这里复制 MenuBarControl 的文件菜单内容 === -->
+
+                        <MenuItem Header="新建" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+N" Click="OnNewClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="打开" Style="{StaticResource Win11MenuItemStyle}"   InputGestureText="Ctrl+O" Click="OnOpenClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="打开新文件夹"  Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Shift+O" Click="OnOpenWorkspaceClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator Style="{StaticResource MenuSeparator}"/>
+                        <MenuItem Header="图片Exif信息" Style="{StaticResource Win11MenuItemStyle}">
+                            <!-- 1. 绑定 IsEnabled：如果没有信息，则禁用该菜单 -->
+                            <MenuItem.IsEnabled>
+                                <Binding Path="PlacementTarget.DataContext.CurrentImageFullInfo" 
+                 RelativeSource="{RelativeSource AncestorType=ContextMenu}" 
+                 />
+                                <!-- 如果你没有这个Converter，可以直接去掉这个IsEnabled绑定，或者稍后在代码中加一个 -->
+                            </MenuItem.IsEnabled>
+
+                            <!-- 2. 图标 -->
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Info_Image}" 
+              Stretch="Uniform" Fill="Transparent" Stroke="#333" StrokeThickness="1.5" 
+              Width="16" Height="16"/>
+                            </MenuItem.Icon>
+
+                            <!-- 3. 子菜单内容：作为一个“面板”显示 -->
+                            <!-- 这里放置一个不作为按钮响应的 MenuItem，只作为容器 -->
+                            <MenuItem StaysOpenOnClick="True">
+                                <MenuItem.Template>
+                                    <ControlTemplate TargetType="MenuItem">
+                                        <Border Background="#F9F9F9" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="4" Padding="8" MaxWidth="350">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                </Grid.RowDefinitions>
+
+                                                <!-- 标题 -->
+                                                <TextBlock Text="详细信息" FontWeight="Bold" Margin="0,0,0,6" Foreground="#333"/>
+                                                <Separator Grid.Row="0" VerticalAlignment="Bottom" Background="#DDD"/>
+
+                                                <!-- 滚动文本区域 -->
+                                                <ScrollViewer Grid.Row="1" MaxHeight="400" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0">
+                                                    <TextBlock Text="{Binding Path=PlacementTarget.DataContext.CurrentImageFullInfo, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                                       FontFamily="Consolas" 
+                                       FontSize="11" 
+                                       TextWrapping="Wrap"
+                                       Foreground="#555"/>
+                                                </ScrollViewer>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </MenuItem.Template>
+                            </MenuItem>
+                        </MenuItem>
+
+                        <Separator Style="{StaticResource MenuSeparator}"/>
+
+                        <MenuItem Style="{StaticResource Win11MenuItemStyle}"   Header="保存" InputGestureText="Ctrl+S" Click="OnSaveClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="另存为" Click="OnSaveAsClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="退出" Click="OnExitClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" Stroke="#333" StrokeThickness="1.5" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </Image.ContextMenu>
+            </Image>
             <!-- Title -->
             <TextBlock x:Name="TitleTextBlock" Text="TabPaint" VerticalAlignment="Center" FontSize="12" Style="{StaticResource TitleTextStyle}"/>
             <!-- Window Buttons -->

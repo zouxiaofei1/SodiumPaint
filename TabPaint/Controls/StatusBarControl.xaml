@@ -18,7 +18,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <StatusBar Background="#44FFFFFF" Padding="0" Cursor="">
+    <StatusBar Background="#44FFFFFF" Padding="0" Cursor=""   Focusable="True"   MouseDown="OnStatusBarMouseDown">
         <!-- 鼠标位置 -->
         <StatusBarItem Width="130" Margin="8,0">
             <StackPanel Orientation="Horizontal">
@@ -102,7 +102,9 @@ Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1" StrokeL
                 </Button>
 
                 <!-- 缩放下拉框 -->
-                <ComboBox  Style="{StaticResource FluentComboBoxStyle}" x:Name="ZoomMenu" Margin="0,0,6,0" MaxHeight="26" Width="80" SelectionChanged="OnZoomMenuSelectionChanged" IsEditable="True">
+                <ComboBox  Style="{StaticResource FluentComboBoxStyle}" x:Name="ZoomMenu" Margin="0,0,6,0" MaxHeight="26" Width="80" SelectionChanged="OnZoomMenuSelectionChanged" PreviewKeyDown="OnZoomMenuPreviewKeyDown" 
+          LostFocus="OnZoomMenuLostFocus" IsEditable="True">
+                    <ComboBoxItem Content="12%" Tag="0.12"/>
                     <ComboBoxItem Content="25%" Tag="0.25"/>
                     <ComboBoxItem Content="50%" Tag="0.5"/>
                     <ComboBoxItem Content="75%" Tag="0.75"/>

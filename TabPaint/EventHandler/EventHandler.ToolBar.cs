@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using TabPaint.Controls;
 
 //
 //TabPaint事件处理cs
@@ -115,18 +116,22 @@ namespace TabPaint
 
         private void ZoomOut_Click(object sender, RoutedEventArgs e)
         {
-            double newScale = zoomscale / ZoomTimes;
-            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-            UpdateSliderBarValue(zoomscale);
+            double targetScale = zoomscale / ZoomTimes;
+
+            System.Windows.Point centerPoint = new System.Windows.Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
+
+            StartSmoothZoom(targetScale, centerPoint);
         }
 
         private void ZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            double newScale = zoomscale * ZoomTimes;
-            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-            UpdateSliderBarValue(zoomscale);
+            double targetScale = zoomscale * ZoomTimes;
+
+            // 2. 获取屏幕中心点
+            System.Windows.Point centerPoint = new System.Windows.Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
+
+            // 3. 启动平滑动画
+            StartSmoothZoom(targetScale, centerPoint);
         }
         private void OnRotateLeftClick(object sender, RoutedEventArgs e)
         {
@@ -206,15 +211,26 @@ namespace TabPaint
             {
                 var color = dlg.SelectedColor;
                 var brush = new SolidColorBrush(color);
-
-                // 你的原有逻辑
+                //a.s(color.R,color.G,color.B, color.A);
                 SelectedBrush = brush;
-                // HighlightSelectedButton(null);
 
-                // 同步到绘图上下文
                 _ctx.PenColor = color;
                 UpdateCurrentColor(_ctx.PenColor, useSecondColor);
             }
+        }
+        private void OnStatusBarZoomChanged(object sender, ZoomRoutedEventArgs e)
+        {
+            // 获取传递过来的 double 值
+            double newScale = e.NewZoom;
+
+            // 限制范围 (MinZoom, MaxZoom 需要是你类中定义的常量或变量)
+            zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
+
+            // 应用缩放
+            ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+
+            UpdateSliderBarValue(zoomscale);
+
         }
 
         private void OnBrushStyleClick(object sender, RoutedEventArgs e)

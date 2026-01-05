@@ -172,7 +172,7 @@ namespace TabPaint
             public string LastViewedFile { get; set; } // 上次正在看的文件
             public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>();
         }
-
+        public bool _startupFinished = false;
 
         public class SessionTabInfo
         {
@@ -254,5 +254,7 @@ namespace TabPaint
 
         private DispatcherTimer _toastTimer;
         private const int ToastDuration = 1500;
+        public bool BlanketMode = false;
+        private bool _isCurrentFileGif = false; // 标记当前文件是否为GIF
     }
 }

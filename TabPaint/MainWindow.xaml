@@ -5,6 +5,7 @@
         xmlns:controls="clr-namespace:TabPaint.Controls"
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
         Title="TabPaint"
         Height="900" Width="1250"
         MinHeight="400" MinWidth="600"
@@ -15,6 +16,7 @@
         Closing="Window_Closing"
         WindowStyle="None"
         SizeChanged="Window_SizeChanged" 
+        PreviewKeyUp="Window_KeyUp"
         x:Name="RootWindow">
     
     <WindowChrome.WindowChrome>
@@ -243,7 +245,16 @@
                      RenderOptions.BitmapScalingMode="Linear"/>
                         <!-- 1. 基础图片 -->
                         <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                        <!-- 2. 调整大小层 -->
+
+                            <Image Name="GifPlayerImage"
+       Stretch="None"
+       HorizontalAlignment="Left"
+       VerticalAlignment="Top"
+       SnapsToDevicePixels="True"
+       Visibility="Collapsed"
+       gif:AnimationBehavior.AutoStart="True"
+       gif:AnimationBehavior.RepeatBehavior="Forever" />
+                            <!-- 2. 调整大小层 -->
                         <Canvas Name="CanvasResizeOverlay"  Visibility="Visible" IsHitTestVisible="True" Background="Transparent"/>
                         <!-- 3. 选区预览层 -->
                         <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>

@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using XamlAnimatedGif; // 添加这一行
 
 //
 //图片加载队列机制
@@ -33,14 +34,18 @@ namespace TabPaint
             OnPropertyChanged("IsLoadingImage");
             try
             {
-                if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
+                bool autoLoad = SettingsManager.Instance.Current.AutoLoadFolderImages;
+                if (autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
                     await ScanFolderImagesAsync(filePath);
+                }
+                else if (!autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
+                {
+                    _imageFiles = new List<string> { filePath };
                 }
 
                 TriggerBackgroundBackup();
 
-                // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
                 if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
                 {
                     _imageFiles.Add(filePath);
@@ -246,6 +251,7 @@ namespace TabPaint
         private BitmapImage DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
+           
 
             using var ms = new System.IO.MemoryStream(imageBytes);
 
@@ -290,7 +296,8 @@ namespace TabPaint
         private readonly object _lockObj = new object();
         private async Task LoadImage(string filePath, string? sourcePath = null,bool lazyload= false)
         {
-
+            _isCurrentFileGif = false;
+            GifPlayerImage.Visibility = Visibility.Collapsed;
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
@@ -598,6 +605,27 @@ namespace TabPaint
                     CenterImage();
                     _canvasResizer.UpdateUI();
 
+                    string ext = System.IO.Path.GetExtension(fileToRead)?.ToLower();
+                    _isCurrentFileGif = (ext == ".gif");
+
+                    if (_isCurrentFileGif)
+                    {
+                        AnimationBehavior.SetSourceUri(GifPlayerImage, new Uri(fileToRead));
+                        if (SettingsManager.Instance.Current.StartInViewMode)GifPlayerImage.Visibility = Visibility.Visible;   
+                        var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
+                        if (controller != null)
+                        {
+                            controller.Play();
+                        }
+                    }
+                    else
+                    {
+                        // 如果不是 GIF，清空播放器资源
+                        AnimationBehavior.SetSourceUri(GifPlayerImage, null);
+                        GifPlayerImage.Visibility = Visibility.Collapsed;
+                        BackgroundImage.Visibility = Visibility.Visible;
+                    }
+
                 }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); // 稍微降低优先级，确保UI先响应
             }
             catch (OperationCanceledException)
@@ -625,15 +653,9 @@ namespace TabPaint
 
             double scoreFactor = 0.5 + (performanceScore * 0.25);
             double estimatedMs = (totalPixels / 60000.0) / scoreFactor;
-
-            // 限制最小和最大模拟时间，避免太快看不见或太慢像死机
             if (estimatedMs < 300) estimatedMs = 300;
-            // if (estimatedMs > 10000) estimatedMs = 10000;
-
-            // 3. 计算步长 (假设每 50ms 更新一次)
             int interval = 50;
             double steps = estimatedMs / interval;
-            // 目标只跑到 95%，留 5% 给最后完成的一瞬间
             double incrementPerStep = (95.0 - currentProgress) / steps;
 
             try
@@ -641,11 +663,7 @@ namespace TabPaint
                 while (!token.IsCancellationRequested && currentProgress < 95.0)
                 {
                     await Task.Delay(interval, token);
-
-                    // 增加进度，为了视觉效果，可以在后期减速 (这里使用简单线性)
                     currentProgress += incrementPerStep;
-
-                    // 确保不溢出
                     if (currentProgress > 99) currentProgress = 99;
 
                     // 回调更新 UI
@@ -654,7 +672,6 @@ namespace TabPaint
             }
             catch (TaskCanceledException)
             {
-                // 正常取消，不做处理
             }
         }
 

@@ -353,3 +353,72 @@
 //    bmp.Freeze();
 //    return bmp;
 //}
+
+//private byte GetCurrentAlpha(byte colorAlpha)
+//{
+//    double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+//    // 保护：如果 globalOpacity 是 0-100 的整数，请先除以 100.0
+//    // 假设 globalOpacity 已经是 0.0 - 1.0
+
+//    double result = colorAlpha * globalOpacity;
+//    return (byte)Math.Clamp(result, 0, 255);
+//}
+
+//private unsafe void BlendPixel(byte* pDest, Color color, double opacity, bool isEraser = false)
+//{
+//    // 1. 获取目标像素原始值
+//    byte dB = pDest[0];
+//    byte dG = pDest[1];
+//    byte dR = pDest[2];
+//    byte dA = pDest[3];
+
+//    if (isEraser || (color.A == 0 && opacity > 0))
+//    {
+
+//        double eraseStrength = isEraser ? opacity : opacity;
+
+//        // 简单的线性擦除：
+//        int newAlpha = dA - (int)(255 * eraseStrength);
+//        pDest[3] = (byte)Math.Max(0, newAlpha);
+
+//        return;
+//    }
+
+//    double srcAlpha = (color.A / 255.0) * opacity;
+
+//    // 性能优化：如果不透明度极小，忽略
+//    if (srcAlpha <= 0.005) return;
+//    if (srcAlpha >= 0.995)
+//    {
+//        pDest[0] = color.B;
+//        pDest[1] = color.G;
+//        pDest[2] = color.R;
+//        pDest[3] = 255;
+//        return;
+//    }
+
+//    double invSrcAlpha = 1.0 - srcAlpha;
+
+//    double destAlpha = dA / 255.0;
+
+//    double outAlpha = srcAlpha + destAlpha * invSrcAlpha;
+
+//    if (outAlpha <= 0)
+//    {
+//        pDest[3] = 0;
+//        return;
+//    }
+
+//    double sR = color.R;
+//    double sG = color.G;
+//    double sB = color.B;
+
+//    double r = (sR * srcAlpha + dR * destAlpha * invSrcAlpha) / outAlpha;
+//    double g = (sG * srcAlpha + dG * destAlpha * invSrcAlpha) / outAlpha;
+//    double b = (sB * srcAlpha + dB * destAlpha * invSrcAlpha) / outAlpha;
+
+//    pDest[0] = (byte)Math.Min(255, b);
+//    pDest[1] = (byte)Math.Min(255, g);
+//    pDest[2] = (byte)Math.Min(255, r);
+//    pDest[3] = (byte)Math.Min(255, outAlpha * 255);
+//}

@@ -85,7 +85,40 @@ namespace TabPaint.Controls
                 ModeSwitchButton.ToolTip = isViewMode ? "切换到画图模式 (Tab)" : "切换到看图模式 (Tab)";
             }
         }
+        public event RoutedEventHandler NewClick;
+        public event RoutedEventHandler OpenClick;
+        public event RoutedEventHandler OpenWorkspaceClick;
+        public event RoutedEventHandler SaveClick;
+        public event RoutedEventHandler SaveAsClick;
+        public event RoutedEventHandler ExitClick;
 
-    
+        // === 新增：是否允许点击Logo打开菜单 (由 MainWindow 控制) ===
+        public bool IsLogoMenuEnabled { get; set; } = false;
+
+        // === 新增：Logo 点击处理 ===
+        private void OnAppIconMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 如果启用了Logo菜单（看图模式），则打开菜单并阻止窗口拖动
+            if (IsLogoMenuEnabled)
+            {
+                if (AppIcon.ContextMenu != null)
+                {
+                    AppIcon.ContextMenu.PlacementTarget = AppIcon;
+                    AppIcon.ContextMenu.IsOpen = true;
+                }
+                e.Handled = true; // 重要：阻止事件冒泡到 TitleBar 的拖拽逻辑
+            }
+            // 否则，什么都不做，让事件冒泡，允许拖拽窗口
+        }
+
+        private void OnNewClick(object sender, RoutedEventArgs e) => NewClick?.Invoke(this, e);
+        private void OnOpenClick(object sender, RoutedEventArgs e) => OpenClick?.Invoke(this, e);
+        private void OnOpenWorkspaceClick(object sender, RoutedEventArgs e) => OpenWorkspaceClick?.Invoke(this, e);
+        private void OnSaveClick(object sender, RoutedEventArgs e) => SaveClick?.Invoke(this, e);
+        private void OnSaveAsClick(object sender, RoutedEventArgs e) => SaveAsClick?.Invoke(this, e);
+        private void OnExitClick(object sender, RoutedEventArgs e) => ExitClick?.Invoke(this, e);
+
+
+
     }
 }

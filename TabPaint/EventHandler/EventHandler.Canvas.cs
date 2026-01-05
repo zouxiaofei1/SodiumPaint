@@ -172,22 +172,23 @@ namespace TabPaint
         }
         private void OnScreenColorPickerClick(object sender, RoutedEventArgs e)
         {
-            //miniTools.IsSubmenuOpen = false;
-            //System.Threading.Thread.Sleep(200);
-
-            // 2. 打开遮罩窗口
-            var picker = new ColorPickerWindow();
-            bool? result = picker.ShowDialog();
-
-
-            if (result == true && picker.IsColorPicked)
+            // 获取当前的 Dispatcher
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
-                Color c = picker.PickedColor;
+                var picker = new ColorPickerWindow();
 
-                // 4. 应用颜色逻辑
-                ApplyPickedColor(c);
-            }
+                // 2. 打开遮罩窗口 (此时菜单已经不可见)
+                bool? result = picker.ShowDialog();
+
+                if (result == true && picker.IsColorPicked)
+                {
+                    Color c = picker.PickedColor;
+                    // 4. 应用颜色逻辑
+                    ApplyPickedColor(c);
+                }
+            }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
+
 
         private void ApplyPickedColor(Color c)
         {
