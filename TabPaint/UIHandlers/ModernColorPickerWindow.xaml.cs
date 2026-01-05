@@ -29,6 +29,7 @@ namespace TabPaint
             OriginalColorRect.Fill = new SolidColorBrush(initialColor);
             RenderHueGradient();
             SetColorFromRgb(initialColor.R, initialColor.G, initialColor.B);
+            LoadCustomColorsFromSettings();
             this.KeyDown += (s, e) =>
             {
                 if (e.Key == Key.Escape)
@@ -38,6 +39,32 @@ namespace TabPaint
             };
             // 确保第一次显示时UI位置正确
             Loaded += (s, e) => UpdateUI();
+        }
+        private void LoadCustomColorsFromSettings()
+        {
+            var savedHexColors = SettingsManager.Instance.Current.CustomColors;
+
+            _customColors.Clear();
+
+            if (savedHexColors != null)
+            {
+                foreach (var hex in savedHexColors)
+                {
+                    try
+                    {
+                        // 将 Hex 字符串 (#AARRGGBB) 转回 Color 对象
+                        var color = (Color)ColorConverter.ConvertFromString(hex);
+                        _customColors.Add(color);
+                    }
+                    catch
+                    {
+                        // 忽略解析错误的颜色
+                    }
+                }
+            }
+
+            // 立即渲染加载出来的颜色
+            RenderCustomColors();
         }
 
         // 新增：无边框窗口拖动支持
@@ -417,6 +444,22 @@ namespace TabPaint
 
             // 刷新 UI
             RenderCustomColors();
+            SaveCustomColorsToSettings();
+        }
+        private void SaveCustomColorsToSettings()
+        {
+            var hexList = new List<string>();
+
+            foreach (var color in _customColors)
+            {
+                // Color.ToString() 默认返回 #AARRGGBB 格式
+                hexList.Add(color.ToString());
+            }
+
+            // 更新设置对象
+            SettingsManager.Instance.Current.CustomColors = hexList;
+            // 写入文件
+            SettingsManager.Instance.Save();
         }
 
         private void RenderCustomColors()

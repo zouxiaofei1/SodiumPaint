@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -28,7 +27,7 @@ namespace TabPaint
         private bool _isProcessingQueue = false;
         private CancellationTokenSource _loadImageCts;
         private CancellationTokenSource _progressCts;
-        public async Task OpenImageAndTabs(string filePath, bool refresh = false)
+        public async Task OpenImageAndTabs(string filePath, bool refresh = false,bool lazyload = false)
         {
             _isLoadingImage = true;
             OnPropertyChanged("IsLoadingImage");
@@ -36,9 +35,9 @@ namespace TabPaint
             {
                 if (_currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
-                   await ScanFolderImagesAsync(filePath);
+                    await ScanFolderImagesAsync(filePath);
                 }
-              
+
                 TriggerBackgroundBackup();
 
                 // 2. [适配] 确保 _imageFiles 里有这个虚拟路径 (通常 CreateNewTab 已经加进去了，但为了保险)
@@ -82,7 +81,7 @@ namespace TabPaint
                         actualSourcePath = current.BackupPath;
                     }
                 }
-                await LoadImage(fileToLoad,actualSourcePath);
+                await LoadImage(fileToLoad, actualSourcePath,lazyload);
 
                 ResetDirtyTracker();
 
@@ -104,6 +103,7 @@ namespace TabPaint
         {
             lock (_queueLock)
             {
+               
                 _pendingFilePath = filePath;
                 if (!_isProcessingQueue)
                 {
@@ -112,6 +112,7 @@ namespace TabPaint
                 }
             }
         }
+        private bool _lazyLoad = false;   
         private async Task ProcessImageLoadQueueAsync()
         {
             _isLoadingImage = true;
@@ -120,22 +121,24 @@ namespace TabPaint
             try
             {
                 while (true)
-            {
-                string filePathToLoad;
-
-                // 进入临界区，检查并获取下一个任务
-                lock (_queueLock)
                 {
-                    // 1. 检查是否还有待办事项
-                    if (_pendingFilePath == null)
+                    string filePathToLoad;
+
+                    // 进入临界区，检查并获取下一个任务
+                    lock (_queueLock)
                     {
-                        _isProcessingQueue = false;
-                        break; // 退出循环
+                        // 1. 检查是否还有待办事项
+                        if (_pendingFilePath == null)
+                        {
+                            _isProcessingQueue = false;
+                            break; // 退出循环
+                        }
+                        filePathToLoad = _pendingFilePath;
+                        _pendingFilePath = null;
                     }
-                    filePathToLoad = _pendingFilePath;
-                    _pendingFilePath = null;
-                }
-                await LoadAndDisplayImageInternalAsync(filePathToLoad);
+                 //   _lazyLoad = true;
+                    await LoadAndDisplayImageInternalAsync(filePathToLoad);
+                  //  _lazyLoad = false;
                 }
             }
             finally
@@ -148,8 +151,8 @@ namespace TabPaint
         {
             try
             {
-                OpenImageAndTabs(filePath);
-  
+                OpenImageAndTabs(filePath,lazyload:true);
+
             }
             catch (Exception ex)
             {
@@ -285,9 +288,9 @@ namespace TabPaint
 
 
         private readonly object _lockObj = new object();
-        private async Task LoadImage(string filePath, string? sourcePath = null)
+        private async Task LoadImage(string filePath, string? sourcePath = null,bool lazyload= false)
         {
-          
+
             _loadImageCts?.Cancel();
             _loadImageCts = new CancellationTokenSource();
             var token = _loadImageCts.Token;
@@ -325,7 +328,7 @@ namespace TabPaint
                     _originalDpiX = 96.0;
                     _originalDpiY = 96.0;
                     BackgroundImage.Source = _bitmap;
-               
+
 
                     // 查找 Tab 以获取正确的显示名 (如 "未命名 1")
                     var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
@@ -347,7 +350,7 @@ namespace TabPaint
                     OnPropertyChanged(nameof(ImageSize));
                     UpdateWindowTitle();
 
-                  FitToWindow(1); // 默认 100% 或 适应窗口
+                    FitToWindow(1); // 默认 100% 或 适应窗口
                     CenterImage();
                     _canvasResizer.UpdateUI();
                     SetPreviewSlider();
@@ -379,7 +382,7 @@ namespace TabPaint
                 if (token.IsCancellationRequested) return;
 
                 long totalPixels = (long)originalWidth * originalHeight;
-                bool showProgress = totalPixels > 2000000* PerformanceScore;
+                bool showProgress = totalPixels > 2000000 * PerformanceScore;
                 if (showProgress)
                 {
                     // 创建新的进度条控制源
@@ -410,6 +413,19 @@ namespace TabPaint
                         OnPropertyChanged(nameof(ImageSize));
                     });
                 }
+                long _totalPixels = (long)originalWidth * originalHeight;
+                bool isHugeImage = _totalPixels > 10_000_000*PerformanceScore; // 阈值：5000万像素 (约8K分辨率以上)
+                if (isHugeImage)
+                {
+                    try
+                    {
+                        await Task.Delay(100, token);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        return; 
+                    }
+                }
 
                 // 步骤 2: 并行启动中等预览图和完整图的解码任务
                 Task<BitmapImage> previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
@@ -426,7 +442,7 @@ namespace TabPaint
                     await Dispatcher.InvokeAsync(() =>
                     {
                         if (token.IsCancellationRequested) return;
-     
+
 
                         // 2. 将采样模式改为线性 (Linear)，避免马赛克锯齿
                         RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
@@ -449,6 +465,8 @@ namespace TabPaint
 
                     });
                 }
+              
+
 
                 // --- 阶段 1: 等待 480p 预览图并更新 ---
                 var previewBitmap = await previewTask;
@@ -481,6 +499,17 @@ namespace TabPaint
                     _progressCts.Dispose();
                     _progressCts = null;
                 }
+                if (lazyload)
+                {
+                    try
+                    {
+                        await Task.Delay(50, token); 
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        return; 
+                    }
+                }
                 if (token.IsCancellationRequested || fullResBitmap == null) return;
 
                 // 获取元数据 (保持不变)
@@ -489,7 +518,11 @@ namespace TabPaint
                 await Dispatcher.InvokeAsync(() =>
                 {
                     if (token.IsCancellationRequested) return;
-
+                    long currentMem = Process.GetCurrentProcess().PrivateMemorySize64;
+                    if (currentMem > 1024 * 1024 * 1024)
+                    {
+                        GC.Collect(2, GCCollectionMode.Forced, true);
+                    }
                     // 1. 记录原始 DPI
                     _originalDpiX = fullResBitmap.DpiX;
                     _originalDpiY = fullResBitmap.DpiY;
@@ -565,10 +598,6 @@ namespace TabPaint
                     CenterImage();
                     _canvasResizer.UpdateUI();
 
-                    // 6. 强制执行垃圾回收 (LOH 压缩)
-                    // 对于画图软件，加载大图后的瞬间卡顿是可以接受的，换取的是内存不崩溃
-                    //GC.Collect(2, GCCollectionMode.Forced, true);
-                    //GC.WaitForPendingFinalizers();
                 }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); // 稍微降低优先级，确保UI先响应
             }
             catch (OperationCanceledException)
@@ -599,7 +628,7 @@ namespace TabPaint
 
             // 限制最小和最大模拟时间，避免太快看不见或太慢像死机
             if (estimatedMs < 300) estimatedMs = 300;
-           // if (estimatedMs > 10000) estimatedMs = 10000;
+            // if (estimatedMs > 10000) estimatedMs = 10000;
 
             // 3. 计算步长 (假设每 50ms 更新一次)
             int interval = 50;

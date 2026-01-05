@@ -371,21 +371,19 @@ namespace TabPaint
 
                 // 检查是否进行过缩放
                 if (_originalRect.Width > 0 && _originalRect.Height > 0 &&
-                    (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height))
+      (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height))
                 {
                     var src = BitmapSource.Create(
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
                         PixelFormats.Bgra32, null, _selectionData, _originalRect.Width * 4);
 
-                    var transform = new TransformedBitmap(src, new ScaleTransform(
-                        (double)finalWidth / _originalRect.Width,
-                        (double)finalHeight / _originalRect.Height));
+                    // 【替换旧逻辑】
+                    var resizedBitmap = ((MainWindow)System.Windows.Application.Current.MainWindow).ResampleBitmap(src, finalWidth, finalHeight);
 
-                    var resized = new WriteableBitmap(transform);
-                    finalStride = resized.BackBufferStride;
+                    finalStride = resizedBitmap.PixelWidth * 4;
                     finalSelectionData = new byte[finalHeight * finalStride];
-                    resized.CopyPixels(finalSelectionData, finalStride, 0);
+                    resizedBitmap.CopyPixels(finalSelectionData, finalStride, 0);
                 }
                 else
                 {
@@ -608,7 +606,7 @@ namespace TabPaint
 
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
-
+                    UpdateStatusBarSelectionSize();
                     DrawOverlay(ctx, _selectionRect);
                     return;
                 }

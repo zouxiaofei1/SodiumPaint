@@ -263,8 +263,6 @@ namespace TabPaint
 
                 // 1. 准备撤销记录
                 ctx.Undo.BeginStroke();
-                // 注意：这里需要记录的是最终写入区域的脏矩形，不仅仅是 selectionRect
-                // 但为了简单，我们先标记这个区域。更严谨的做法是记录混合前的背景图。
                 ctx.Undo.AddDirtyRect(_selectionRect);
 
                 // 2. 准备源数据 (处理缩放)
@@ -272,27 +270,26 @@ namespace TabPaint
                 int finalWidth = _selectionRect.Width;
                 int finalHeight = _selectionRect.Height;
                 int finalStride = finalWidth * 4;
-
-                // 如果选区被缩放过，需要重新采样
                 if (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height)
                 {
                     if (_originalRect.Width <= 0 || _originalRect.Height <= 0) return;
 
                     int expectedStride = _originalRect.Width * 4;
                     int actualStride = _selectionData.Length / _originalRect.Height;
-                    int dataStride = Math.Min(expectedStride, actualStride); // 容错处理
+                    int dataStride = Math.Min(expectedStride, actualStride);
 
+                    // 创建原始 BitmapSource
                     var src = BitmapSource.Create(
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
                         PixelFormats.Bgra32, null, _selectionData, dataStride);
 
-                    var transform = new TransformedBitmap(src, new ScaleTransform(
-                        (double)_selectionRect.Width / _originalRect.Width,
-                        (double)_selectionRect.Height / _originalRect.Height));
+                    // 【替换旧的 TransformedBitmap 逻辑】
+                    // 使用支持 ResamplingMode 的方法进行重采样
+                    var resized = ((MainWindow)System.Windows.Application.Current.MainWindow).ResampleBitmap(src, finalWidth, finalHeight);
 
-                    var resized = new WriteableBitmap(transform);
-                    finalStride = resized.BackBufferStride;
+                    // 提取像素数据
+                    finalStride = resized.PixelWidth * 4;
                     finalData = new byte[finalHeight * finalStride];
                     resized.CopyPixels(finalData, finalStride, 0);
                 }

@@ -30,7 +30,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         </ResourceDictionary>
     </Window.Resources>
@@ -82,7 +82,35 @@
                     <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                 </Grid.Resources>
 
-                <ScrollViewer   ContextMenuOpening="OnScrollContainerContextMenuOpening"  Style="{StaticResource FluentScrollViewer}"  Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 左侧标尺 -->
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- 顶部标尺 -->
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 顶部标尺 -->
+                    <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" 
+                                 Orientation="Horizontal" 
+                                 Visibility="{Binding ShowRulers, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
+
+                    <!-- 左侧标尺 -->
+                    <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" 
+                                 Orientation="Vertical"
+                                 Visibility="{Binding ShowRulers, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
+
+                    <!-- 左上角的小方块 (标尺交汇处) -->
+                    <Border Grid.Row="0" Grid.Column="0" Background="#F0F0F0" 
+                            Visibility="{Binding ElementName=RulerTop, Path=Visibility}"/>
+
+
+
+                    <ScrollViewer  Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  Style="{StaticResource FluentScrollViewer}"  Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
                     <ScrollViewer.ContextMenu>
                         <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
                             <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
@@ -111,6 +139,13 @@
                                     <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
+                                <MenuItem Header="显示标尺" IsCheckable="True" 
+                                          IsChecked="{Binding ShowRulers, Mode=TwoWay}"
+                                          Style="{StaticResource Win11MenuItemStyle}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text="📏" FontFamily="Segoe UI Emoji"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
 
                             <!-- 二级菜单：小工具 -->
@@ -162,6 +197,7 @@
                         </ContextMenu>
                     </ScrollViewer.ContextMenu>
 
+                    
                     <Grid Name="CanvasWrapper" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
                         <Grid.Background>
                             <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
@@ -217,7 +253,7 @@
                         <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
                     </Grid>
                 </ScrollViewer>
-
+                </Grid>
                 <!-- 粗细预览圆 -->
                 <Rectangle x:Name="ThicknessPreview" 
             IsHitTestVisible="False" 

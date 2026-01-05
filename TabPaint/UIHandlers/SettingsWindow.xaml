@@ -8,43 +8,15 @@
         Background="#F9F9F9">
 
     <Window.Resources>
-        <!-- Win11 风格主要按钮样式 -->
-        <Style x:Key="Win11PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#0067C0"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
-                                Background="{TemplateBinding Background}" 
-                                CornerRadius="4" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              RecognizesAccessKey="True"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#1975C5"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#005A9E"/>
-                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
-                                <Setter Property="Foreground" Value="#666666"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+     
+        
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <local:NonLinearConverter x:Key="NonLinearConverter"/>
+        </ResourceDictionary>
+      
     </Window.Resources>
 
     <Grid>
@@ -61,95 +33,91 @@
 
         <!-- 左侧导航 -->
         <Border Grid.Row="0" Grid.Column="0" Background="#F0F0F0" BorderBrush="#E5E5E5" BorderThickness="0,0,1,0">
-            <StackPanel Margin="0,10">
-                <ListBox x:Name="NavListBox" SelectionChanged="NavListBox_SelectionChanged" Background="Transparent" BorderThickness="0">
-                    <ListBox.Resources>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="15,10"/>
-                            <Setter Property="FontSize" Value="14"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Cursor" Value="Hand"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border Name="Border" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
-                                            <ContentPresenter />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Border" Property="Background" Value="White"/>
-                                                <Setter TargetName="Border" Property="BorderBrush" Value="#0067C0"/>
-                                                <Setter TargetName="Border" Property="BorderThickness" Value="4,0,0,0"/>
-                                                <Setter Property="Foreground" Value="Black"/>
-                                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                            </Trigger>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Border" Property="Background" Value="#EAEAEA"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.Resources>
-
-                    <!-- 新的菜单结构 -->
-                    <ListBoxItem IsSelected="True">通用</ListBoxItem>
-                    <ListBoxItem>画图设置</ListBoxItem>
-                    <ListBoxItem>看图设置</ListBoxItem>
-                    <ListBoxItem>快捷键设置</ListBoxItem>
-                    <ListBoxItem>高级</ListBoxItem>
-                    <ListBoxItem Margin="0,10,0,0">关于</ListBoxItem>
-                    <!-- 给关于加一点上间距做区分 -->
-                </ListBox>
-            </StackPanel>
-        </Border>
-
-        <!-- 右侧内容区 -->
-        <Border Grid.Row="0" Grid.Column="1" Padding="24" Background="White">
             <Grid>
-                <!-- 1. 通用 (原 SettingsPanel) -->
-                <StackPanel x:Name="GeneralPanel" Visibility="Visible">
-                    <TextBlock Text="通用" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <!-- 上部分：主菜单 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 下部分：关于 -->
+                </Grid.RowDefinitions>
 
-                    <TextBlock Text="启动" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
-                    <CheckBox Content="画布上滚轮放大缩小" Margin="0,10" IsChecked="True" FontSize="14"/>
-                    
-                </StackPanel>
+                <ListBox x:Name="NavListBox" 
+                         Grid.Row="0"
+                         SelectionChanged="NavListBox_SelectionChanged" 
+                         Background="Transparent" 
+                         BorderThickness="0"
+                         Margin="0,10,0,0"
+                         ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
 
-                <!-- 2. 画图设置 -->
-                <StackPanel x:Name="PaintPanel" Visibility="Collapsed">
-                    <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
-                    <TextBlock Text="此处将包含画笔、形状等相关设置" Foreground="Gray"/>
-                </StackPanel>
+                    <ListBoxItem Tag="General" IsSelected="True">通用</ListBoxItem>
+                    <ListBoxItem Tag="Paint">画图设置</ListBoxItem>
+                    <ListBoxItem Tag="View">看图设置</ListBoxItem>
+                    <ListBoxItem Tag="Shortcuts">快捷键设置</ListBoxItem>
+                    <ListBoxItem Tag="Advanced">高级</ListBoxItem>
+                </ListBox>
+                <ListBox x:Name="BottomListBox" 
+                         Grid.Row="1"
+                         SelectionChanged="NavListBox_SelectionChanged"
+                         Background="Transparent" 
+                         BorderThickness="0" 
+                         Margin="0,0,0,10"
+                         ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
+                    <ListBoxItem Tag="About">关于</ListBoxItem>
+                </ListBox>
+    </Grid>
+    </Border>
 
-                <!-- 3. 看图设置 -->
-                <StackPanel x:Name="ViewPanel" Visibility="Collapsed">
-                    <TextBlock Text="看图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+    <!-- 右侧内容区 -->
+        <Border Grid.Row="0" Grid.Column="1" Padding="24" Background="White">
 
-         
-      
-                </StackPanel>
+            <ScrollViewer  Style="{StaticResource FluentScrollViewer}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="Both">
+                <Grid>
+                    <!-- 1. 通用 (原 SettingsPanel) -->
+                    <StackPanel x:Name="GeneralPanel" Visibility="Visible">
+                        <TextBlock Text="通用" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
 
-                <!-- 4. 快捷键设置 -->
-                <!-- SettingsWindow.xaml 中的 ShortcutPanel 部分 -->
-                <Grid x:Name="ShortcutPanel" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <!-- 标题 -->
-                        <RowDefinition Height="*"/>
-                        <!-- 滚动区域 (自适应剩余空间) -->
-                        <RowDefinition Height="Auto"/>
-                        <!-- 底部按钮 -->
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0">
-                        <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <TextBlock Text="注: 核心快捷键(Ctrl+C/V/Z/S等)已被锁定。" Foreground="Gray" FontSize="12" Margin="0,0,0,10"/>
+                        <TextBlock Text="启动" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <!-- 重采样算法 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="鼠标滚轮操作"/>
+                                <TextBlock Text="滑动鼠标滚轮时程序的响应" Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- 绑定到 Enum，这里使用 Tag 配合 SelectedValuePath 实现简单的 Enum 绑定 -->
+                            <ComboBox Grid.Column="1" 
+                                 Style="{StaticResource FluentComboBoxStyle}"
+                                  SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                  SelectedValuePath="Tag"
+                                  Height="30" VerticalContentAlignment="Center">
+                                <ComboBoxItem Content="自动" Tag="Auto"/>
+                                <ComboBoxItem Content="上下滚动图片" Tag="Up"/>
+                                <ComboBoxItem Content="切换图片" Tag="Switch"/>
+                            </ComboBox>
+                        </Grid>
+
                     </StackPanel>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,10,10">
-                        <StackPanel>
 
-                            <!-- 第一组：视图与导航 -->
+                    <!-- 2. 画图设置 -->
+                    <StackPanel x:Name="PaintPanel" Visibility="Collapsed">
+                        <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                   
+                    </StackPanel>
+
+                    <!-- 3. 看图设置 -->
+                    <StackPanel x:Name="ViewPanel" Visibility="Collapsed">
+                        <TextBlock Text="看图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                    </StackPanel>
+
+
+                    <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed">
+                        <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <StackPanel Margin="0,0,10,10">
+
                             <TextBlock Text="视图与导航" FontWeight="Bold" Margin="0,10,0,5"/>
 
                             <Grid Margin="0,5">
@@ -200,7 +168,80 @@
                                 <TextBlock Text="向右旋转" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.RotateRight], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
+                            <!-- 第 1.5 组：基础绘图工具 -->
+                            <TextBlock Text="基础绘图工具" FontWeight="Bold" Margin="0,15,0,5"/>
 
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="铅笔" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToPen], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="取色器" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToPick], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="橡皮擦" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToEraser], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="选择工具" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToSelect], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="填充工具" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToFill], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="文字工具" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToText], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="画刷" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToBrush], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="形状" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToShape], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
                             <!-- 第二组：高级工具 -->
                             <TextBlock Text="高级工具" FontWeight="Bold" Margin="0,15,0,5"/>
 
@@ -256,10 +297,9 @@
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.PasteNewTab], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
-                            <TextBlock Text="修改后请点击“确定”保存设置。" Foreground="#0067C0" Margin="0,20,0,0"/>
                         </StackPanel>
-                    </ScrollViewer>
-                    <Button Grid.Row="2" 
+
+                        <Button Grid.Row="2" 
             Content="恢复默认快捷键" 
             HorizontalAlignment="Left" 
             Foreground="Red" 
@@ -268,122 +308,157 @@
             Click="ResetShortcuts_Click"
             Cursor="Hand"
             Margin="0,0,0,5"/>
-                </Grid>
+                    </StackPanel>
 
 
-                <!-- 5. 高级 -->
-                <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed">
-                    <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                    <!-- 5. 高级 -->
+                    <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed">
+                        <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
 
-                    <!-- 渲染设置区块 -->
-                    <TextBlock Text="渲染与性能" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <!-- 渲染设置区块 -->
+                        <TextBlock Text="渲染与性能" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
 
-                    <!-- 重采样算法 -->
-                    <Grid Margin="0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="220"/>
-                            <ColumnDefinition Width="200"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="重采样算法"/>
-                            <TextBlock Text="用于图片保存或调整大小时" Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
-                        </StackPanel>
+                        <!-- 重采样算法 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="重采样算法"/>
+                                <TextBlock Text="用于图片保存或调整大小时" Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
 
-                        <!-- 绑定到 Enum，这里使用 Tag 配合 SelectedValuePath 实现简单的 Enum 绑定 -->
-                        <ComboBox Grid.Column="1" 
+                            <!-- 绑定到 Enum，这里使用 Tag 配合 SelectedValuePath 实现简单的 Enum 绑定 -->
+                            <ComboBox Grid.Column="1" 
+                                 Style="{StaticResource FluentComboBoxStyle}"
                                   SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                   SelectedValuePath="Tag"
                                   Height="30" VerticalContentAlignment="Center">
-                            <ComboBoxItem Content="自动 (Auto)" Tag="Auto"/>
-                            <ComboBoxItem Content="双线性 (Bilinear)" Tag="Bilinear"/>
-                            <ComboBoxItem Content="Fant (高质量)" Tag="Fant"/>
-                            <ComboBoxItem Content="HighQuality" Tag="HighQuality"/>
-                        </ComboBox>
-                    </Grid>
+                                <ComboBoxItem Content="自动 (Auto)" Tag="Auto"/>
+                                <ComboBoxItem Content="双线性 (Bilinear)" Tag="Bilinear"/>
+                                <ComboBoxItem Content="Fant (高质量)" Tag="Fant"/>
+                                <ComboBoxItem Content="HighQuality" Tag="HighQuality"/>
+                            </ComboBox>
+                        </Grid>
 
-                    <Separator Margin="0,15" Background="#EEEEEE"/>
+                        <Separator Margin="0,15" Background="#EEEEEE"/>
 
-                    <!-- 插值阈值设置 -->
-                    <TextBlock Text="像素化阈值设置" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5"/>
-                    <TextBlock Text="当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)" 
+                        <!-- 插值阈值设置 -->
+                        <TextBlock Text="像素化阈值设置" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5"/>
+                        <TextBlock Text="当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)" 
                                Foreground="Gray" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
-                    <!-- 看图模式阈值 -->
-                    <Grid Margin="0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="60"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="看图模式" VerticalAlignment="Center"/>
-                        <Slider Grid.Column="1" 
-                                Minimum="0" Maximum="5000" SmallChange="100" LargeChange="500" TickFrequency="500" IsSnapToTickEnabled="False"
-                                Value="{Binding Path=Current.ViewInterpolationThreshold, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                                VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" 
-                                   Text="{Binding Path=Current.ViewInterpolationThreshold, StringFormat={}{0:0}%, Source={x:Static local:SettingsManager.Instance}}" 
-                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                    </Grid>
+                        <!-- 看图模式阈值 -->
+                        <Grid Margin="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="70"/>
+                                <!-- 加宽一点给输入框 -->
+                            </Grid.ColumnDefinitions>
 
-                    <!-- 画图模式阈值 -->
-                    <Grid Margin="0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="60"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="画图模式" VerticalAlignment="Center"/>
-                        <Slider Grid.Column="1" 
-                                Minimum="0" Maximum="5000" SmallChange="100" LargeChange="500"
-                                Value="{Binding Path=Current.PaintInterpolationThreshold, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                                VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" 
-                                   Text="{Binding Path=Current.PaintInterpolationThreshold, StringFormat={}{0:0}%, Source={x:Static local:SettingsManager.Instance}}" 
-                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                    </Grid>
+                            <TextBlock Text="看图模式" VerticalAlignment="Center"/>
 
-                    <Separator Margin="0,15" Background="#EEEEEE"/>
+                            <Slider Grid.Column="1" 
+                Minimum="0" Maximum="100" 
+                SmallChange="1" LargeChange="10"
+                IsSnapToTickEnabled="False"
+                VerticalAlignment="Center"
+                Value="{Binding Path=Current.ViewInterpolationThreshold, 
+                                Converter={StaticResource NonLinearConverter}, 
+                                Mode=TwoWay, 
+                                Source={x:Static local:SettingsManager.Instance}}"/>
 
-                    <!-- 缓存管理 (原有的功能) -->
-                    <TextBlock Text="系统维护" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Content="恢复出厂设置" Width="120" Height="32" 
+                            <!-- TextBox: 直接绑定原始数值，支持输入 -->
+                            <TextBox Grid.Column="2" 
+                 Text="{Binding Path=Current.ViewInterpolationThreshold, 
+                                Mode=TwoWay, 
+                                UpdateSourceTrigger=PropertyChanged, 
+                                StringFormat={}{0:0},
+                                Source={x:Static local:SettingsManager.Instance}}"
+                                      LostFocus="TextBox_LostFocus"
+                 PreviewTextInput="NumberValidationTextBox"
+                 HorizontalContentAlignment="Right" 
+                 VerticalAlignment="Center"
+                 Height="24" Padding="0,2,4,0"/>
+                        </Grid>
+
+                        <!-- 画图模式阈值 -->
+                        <Grid Margin="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="70"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="画图模式" VerticalAlignment="Center"/>
+
+                            <Slider Grid.Column="1" 
+                Minimum="0" Maximum="100" 
+                SmallChange="1" LargeChange="10"
+                VerticalAlignment="Center"
+                Value="{Binding Path=Current.PaintInterpolationThreshold, 
+                                Converter={StaticResource NonLinearConverter}, 
+                                Mode=TwoWay, 
+                                Source={x:Static local:SettingsManager.Instance}}"/>
+
+                            <TextBox Grid.Column="2" 
+                 Text="{Binding Path=Current.PaintInterpolationThreshold, 
+                                Mode=TwoWay, 
+                                UpdateSourceTrigger=PropertyChanged,
+                                StringFormat={}{0:0},
+                                Source={x:Static local:SettingsManager.Instance}}"
+                 PreviewTextInput="NumberValidationTextBox"
+                                      LostFocus="TextBox_LostFocus"
+                 HorizontalContentAlignment="Right" 
+                 VerticalAlignment="Center"
+                 Height="24" Padding="0,2,4,0"/>
+                        </Grid>
+
+                        <Separator Margin="0,15" Background="#EEEEEE"/>
+
+                        <!-- 缓存管理 (原有的功能) -->
+                        <TextBlock Text="系统维护" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Content="恢复出厂设置" Width="120" Height="32" 
                                 HorizontalAlignment="Left" Click="FactoryReset_Click"
                                 Background="#FFF4F4" Foreground="#D13438" BorderBrush="#E0B4B4"/>
-                        <TextBlock Grid.Column="1" Text="清除所有缓存和设置" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="Gray"/>
-                    </Grid>
+                            <TextBlock Grid.Column="1" Text="清除所有缓存和设置" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="Gray"/>
+                        </Grid>
 
-                </StackPanel>
+                    </StackPanel>
 
-                <!-- 6. 关于页 -->
-                <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
-                    <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24"/>
+                    <!-- 6. 关于页 -->
+                    <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
+                        <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24"/>
 
-                    <Image x:Name="AppIcon" 
+                        <Image x:Name="AppIcon" 
                            Source="pack://application:,,,/Resources/TabPaint.ico" 
                            Width="64" Height="64" 
                            HorizontalAlignment="Left" 
                            RenderOptions.BitmapScalingMode="HighQuality"
                            Margin="0,0,0,16"/>
 
-                    <TextBlock Text="TabPaint" FontSize="18" FontWeight="SemiBold"/>
-                    <TextBlock Text="轻量级绘画与看图工具" Foreground="Gray" FontSize="14" Margin="0,4,0,24"/>
+                        <TextBlock Text="TabPaint" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock Text="轻量级绘画与看图工具" Foreground="Gray" FontSize="14" Margin="0,4,0,24"/>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,4">
-                        <TextBlock Text="开发者: " Foreground="Gray"/>
-                        <TextBlock Text="zouxiaofei1"/>
-                    </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <TextBlock Text="开发者: " Foreground="Gray"/>
+                            <TextBlock Text="zouxiaofei1"/>
+                        </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,4">
-                        <TextBlock Text="技术栈: " Foreground="Gray"/>
-                        <TextBlock Text=".NET WPF, Win32 API"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <TextBlock Text="技术栈: " Foreground="Gray"/>
+                            <TextBlock Text=".NET WPF, Win32 API"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Grid>
+                </Grid>
+            </ScrollViewer>
         </Border>
 
         <!-- 底部栏 -->

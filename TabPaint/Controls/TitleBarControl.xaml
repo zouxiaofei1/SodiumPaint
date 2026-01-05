@@ -44,7 +44,9 @@
                 </Button>
                 <Button Width="48" Height="30" ToolTip="退出" Click="OnCloseClick" Style="{StaticResource CloseButtonStyle}">
                     <Viewbox Width="10" Height="10">
-                        <Path Stroke="Black" StrokeThickness="1" Data="M0,0 L12,12 M12,0 L0,12"/>
+                        <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+              StrokeThickness="1.5" 
+              Data="M0,0 L12,12 M12,0 L0,12"/>
                     </Viewbox>
                 </Button>
             </StackPanel>

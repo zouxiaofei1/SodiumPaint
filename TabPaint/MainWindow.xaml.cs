@@ -668,6 +668,33 @@ namespace TabPaint
                 }
             }
         }
+        private void ScrollContainer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            UpdateRulerPositions();
+        }
+        private void UpdateRulerPositions()
+        {
+            if (!ShowRulers || BackgroundImage == null) return;
+
+            // 计算 BackgroundImage 相对于 ScrollContainer (视口) 的位置
+            // 因为 CanvasWrapper 是 Center 布局，当图片小于视口时，会有自动偏移
+            // 当图片大于视口时，Offset 为负数 (即 ScrollViewer 的偏移)
+
+            // 获取 CanvasWrapper 相对于 ScrollContainer 的位置
+            Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
+
+            // 获取 ZoomTransform 的当前缩放
+            double currentZoom = ZoomTransform.ScaleX;
+
+            // 更新标尺
+            RulerTop.OriginOffset = relativePoint.X;
+            RulerTop.ZoomFactor = currentZoom;
+            RulerTop.InvalidateVisual(); // 触发重绘
+
+            RulerLeft.OriginOffset = relativePoint.Y;
+            RulerLeft.ZoomFactor = currentZoom;
+            RulerLeft.InvalidateVisual();
+        }
         public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject    // 这是一个通用的辅助方法，用于在可视化树中查找特定类型的子控件
         {
             if (parent == null) return null;
@@ -705,6 +732,17 @@ namespace TabPaint
                 ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + deltaY);
                 _lastMousePosition = currentPos;
             }
+            if (ShowRulers)
+            {
+                Point pos = e.GetPosition(ScrollContainer);
+                RulerTop.MouseMarker = pos.X;
+                RulerLeft.MouseMarker = pos.Y;
+            }
+        }
+        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+        {
+            base.OnRenderSizeChanged(sizeInfo);
+            UpdateRulerPositions();
         }
         private void OnScrollContainerMouseUp(object sender, MouseButtonEventArgs e)
         {

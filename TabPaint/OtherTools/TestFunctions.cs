@@ -18,6 +18,39 @@ using System.Windows.Forms;
 
 namespace TabPaint
 {
+    public class NonLinearConverter : IValueConverter
+    {
+        // 设定的最大阈值，对应 XAML 中的 Maximum="5000"
+        private const double MaxDataValue = 5000.0;
+        private const double MaxSliderValue = 100.0;
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            // 数据 -> Slider 位置 (开根号，为了让大数值被压缩)
+            if (value is double dVal)
+            {
+                // 公式：Slider = 100 * Sqrt(Data / 5000)
+                return MaxSliderValue * Math.Sqrt(dVal / MaxDataValue);
+            }
+            if (value is int iVal)
+            {
+                return MaxSliderValue * Math.Sqrt((double)iVal / MaxDataValue);
+            }
+            return 0.0;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            // Slider 位置 -> 数据 (平方，恢复数据)
+            if (value is double sVal)
+            {
+                // 公式：Data = 5000 * (Slider / 100)^2
+                double ratio = sVal / MaxSliderValue;
+                return Math.Round(MaxDataValue * ratio * ratio); // 取整，避免小数点
+            }
+            return 0.0;
+        }
+    }
     public class NaturalStringComparer : IComparer<string>
     {
         // 单例模式，避免重复创建对象
@@ -54,9 +87,6 @@ namespace TabPaint
 
             try
             {
-                // ==========================================
-                // 1. CPU 核心数 (权重: 2.5分) - 考察多图并发能力
-                // ==========================================
                 int coreCount = Environment.ProcessorCount;
                 if (coreCount >= 20) score += 2.5;       // i7-13700K, i9, R9 等
                 else if (coreCount >= 12) score += 2.0;  // 现代标压 i5/i7, R7
@@ -64,9 +94,6 @@ namespace TabPaint
                 else if (coreCount >= 4) score += 0.5;   // 入门级/老旧双核
                 // 4核以下 0分
 
-                // ==========================================
-                // 2. 内存大小 (权重: 1.5分) - 考察大图缓存能力
-                // ==========================================
                 long memKb = 0;
                 if (GetPhysicallyInstalledSystemMemory(out memKb))
                 {
@@ -86,16 +113,11 @@ namespace TabPaint
                 else if (cpuTicks < 9000) score += 1.0;   // 老旧机器
                 // > 9000 ticks: 0分
 
-                // ==========================================
-                // 4. 惩罚项：高分辨率低能惩罚
-                // ==========================================
                 double screenWidth = SystemParameters.PrimaryScreenWidth;
                 double screenHeight = SystemParameters.PrimaryScreenHeight;
                 // 大于 2K 分辨率 (约360万像素)
                 if (screenWidth * screenHeight > 3600000)
                 {
-                    // 如果刚才的 CPU 跑分低于 3.0 (即 ticks > 4500)，说明 CPU 较弱
-                    // 弱 U 带高分屏，WPF 渲染压力极大，扣分
                     if (cpuTicks > 4500)
                     {
                         score -= 1.5;
@@ -124,10 +146,6 @@ namespace TabPaint
         {
             var sw = Stopwatch.StartNew();
             int result = 0;
-            // 15万次循环
-            // 引入乘法 (* 3) 和 取模 (% 7) 以及 异或 (^)
-            // 这种混合运算难以被 CPU 分支预测完全吞掉，且取模指令相对耗时
-            // 在 4GHz CPU 上耗时约 0.1ms - 0.2ms
             for (int i = 1; i < 150000; i++)
             {
                 result += (i * 3) ^ (i % 7);
@@ -228,10 +246,6 @@ namespace TabPaint
         }
         #endregion
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////临时测试代码段
-        /// <summary>
-        /// 
-        /// </summary>
         private const double MinZoomReal = 0.1;  // 10%
         private const double MaxZoomReal = 16.0; // 1600%
         private double ZoomToSlider(double realZoom)
@@ -283,15 +297,6 @@ namespace TabPaint
                 _stopwatch = null;
             }
         }
-
-
-
-
-
-
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     }
 }

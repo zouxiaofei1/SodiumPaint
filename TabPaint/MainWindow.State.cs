@@ -63,7 +63,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        public string ProgramVersion { get; set; } = "v0.8.2 alpha";
+        public string ProgramVersion { get; set; } = "v0.8.3 alpha";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -227,7 +227,21 @@ namespace TabPaint
         public static readonly DependencyProperty IsViewModeProperty =
      DependencyProperty.Register("IsViewMode", typeof(bool), typeof(MainWindow),
          new PropertyMetadata(false, OnIsViewModeChanged));
-
+        private bool _showRulers = false; // 默认为 false 或从配置读取
+        public bool ShowRulers
+        {
+            get => _showRulers;
+            set
+            {
+                if (_showRulers != value)
+                {
+                    _showRulers = value;
+                    OnPropertyChanged(nameof(ShowRulers));
+                    // 切换显示时强制刷新一次位置
+                    if (value) UpdateRulerPositions();
+                }
+            }
+        }
         public bool IsViewMode
         {
             get { return (bool)GetValue(IsViewModeProperty); }

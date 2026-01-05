@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using System.IO;
 
 namespace TabPaint
 {
@@ -99,13 +100,33 @@ del ""%~f0""
                 System.Windows.MessageBox.Show($"重置失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private bool _isInternalChange = false; // 防止两个 ListBox 互相清空时触发死循环
+
         private void NavListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // 确保控件都已加载（避免初始化时的空引用）
+            // 1. 确保控件都已加载（避免初始化时的空引用）
             if (GeneralPanel == null || PaintPanel == null || ViewPanel == null ||
                 ShortcutPanel == null || AdvancedPanel == null || AboutPanel == null) return;
 
-            // 1. 先隐藏所有面板
+            if (_isInternalChange) return;
+
+            // 确定是哪个 ListBox 触发的
+            System.Windows.Controls.ListBox source = sender as System.Windows.Controls.ListBox;
+            if (source.SelectedIndex == -1) return; // 如果是由于代码清空导致的触发，不执行逻辑
+
+            _isInternalChange = true;
+
+            // 2. 互斥逻辑：点主菜单则清空底部，点底部则清空主菜单
+            if (source == NavListBox)
+            {
+                BottomListBox.SelectedIndex = -1;
+            }
+            else
+            {
+                NavListBox.SelectedIndex = -1;
+            }
+
+            // 3. 先隐藏所有面板
             GeneralPanel.Visibility = Visibility.Collapsed;
             PaintPanel.Visibility = Visibility.Collapsed;
             ViewPanel.Visibility = Visibility.Collapsed;
@@ -113,16 +134,48 @@ del ""%~f0""
             AdvancedPanel.Visibility = Visibility.Collapsed;
             AboutPanel.Visibility = Visibility.Collapsed;
 
-            // 2. 根据索引显示对应面板
-            int index = NavListBox.SelectedIndex;
-            switch (index)
+            // 4. 根据来源和索引显示面板
+            if (source == NavListBox)
             {
-                case 0: GeneralPanel.Visibility = Visibility.Visible; break;  // 通用
-                case 1: PaintPanel.Visibility = Visibility.Visible; break;    // 画图设置
-                case 2: ViewPanel.Visibility = Visibility.Visible; break;     // 看图设置
-                case 3: ShortcutPanel.Visibility = Visibility.Visible; break; // 快捷键
-                case 4: AdvancedPanel.Visibility = Visibility.Visible; break; // 高级
-                case 5: AboutPanel.Visibility = Visibility.Visible; break;    // 关于
+                switch (NavListBox.SelectedIndex)
+                {
+                    case 0: GeneralPanel.Visibility = Visibility.Visible; break;  // 通用
+                    case 1: PaintPanel.Visibility = Visibility.Visible; break;    // 画图设置
+                    case 2: ViewPanel.Visibility = Visibility.Visible; break;     // 看图设置
+                    case 3: ShortcutPanel.Visibility = Visibility.Visible; break; // 快捷键
+                    case 4: AdvancedPanel.Visibility = Visibility.Visible; break; // 高级
+                }
+            }
+            else if (source == BottomListBox)
+            {
+                // 底部列表只有一个“关于”项，索引永远是 0
+                AboutPanel.Visibility = Visibility.Visible;
+            }
+
+            // 5. 体验优化：切换页面后将滚动条回顶（可选）
+            // 如果你在 XAML 中给 ScrollViewer 起了名字，比如 x:Name="MainScrollViewer"
+            // MainScrollViewer?.ScrollToTop();
+
+            _isInternalChange = false;
+        }
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.TextBox textBox)
+            {
+                if (double.TryParse(textBox.Text, out double value))
+                {
+                    if (value < 0) value = 0;
+                    if (value > 5000) value = 5000;
+                    textBox.Text = value.ToString("0"); // 修正文本框显示
+
+                    // 手动触发一次绑定更新，确保后端数据也被修正
+                    var binding = textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty);
+                    binding?.UpdateSource();
+                }
+                else
+                {
+                    textBox.Text = "0"; // 如果输入非法（比如全是空格），重置为0
+                }
             }
         }
 
@@ -131,7 +184,12 @@ del ""%~f0""
             this.DialogResult = true;
             this.Close();
         }
-
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        {
+            // 正则表达式：只允许数字
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
         private void ResetShortcuts_Click(object sender, RoutedEventArgs e)
         {
             var result = System.Windows.MessageBox.Show("确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。",
@@ -142,11 +200,8 @@ del ""%~f0""
             if (result == MessageBoxResult.Yes)
             {
                 SettingsManager.Instance.Current.ResetShortcutsToDefault();
-
-                // 强制刷新 UI (如果 Binding 没有自动更新，可能需要手动刷新一下 ShortcutPanel)
-                // 通常如果 AppSettings 实现了 INotifyPropertyChanged，UI 会自动变。
-                // 如果 UI 没变，可以尝试重新设置 DataContext 或让 ScrollViewer 重新布局。
             }
         }
+
     }
 }

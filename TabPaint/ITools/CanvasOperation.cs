@@ -475,6 +475,49 @@ namespace TabPaint
 
             return rtb;
         }
+        private BitmapScalingMode GetWpfScalingMode()
+        {
+            var appMode = SettingsManager.Instance.Current.ResamplingMode;
+            switch (appMode)
+            {
+                case AppResamplingMode.Bilinear:
+                    return BitmapScalingMode.Linear;
+                case AppResamplingMode.Fant:
+                case AppResamplingMode.HighQuality:
+                    return BitmapScalingMode.HighQuality; // Fant 其实就是 HighQuality
+                case AppResamplingMode.Auto:
+                default:
+                    return BitmapScalingMode.Unspecified;
+            }
+        }
+
+        // 核心重采样方法
+        private BitmapSource ResampleBitmap(BitmapSource source, int width, int height)
+        {
+            // 1. 设置绘图视觉对象
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                // 关键：应用设置中的插值算法
+                RenderOptions.SetBitmapScalingMode(visual, GetWpfScalingMode());
+
+                // 绘制图像到新的尺寸
+                dc.DrawImage(source, new Rect(0, 0, width, height));
+            }
+
+            double dpiX = source.DpiX;
+            double dpiY = source.DpiY;
+
+            var rtb = new RenderTargetBitmap(width, height, dpiX, dpiY, PixelFormats.Pbgra32);
+            rtb.Render(visual);
+
+            // 3. 格式转换 (RenderTargetBitmap 是 Pbgra32，我们需要 Bgra32 以便后续字节处理)
+            if (rtb.Format != PixelFormats.Bgra32)
+            {
+                return new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0);
+            }
+            return rtb;
+        }
 
         private void ApplyAutoCrop(Int32Rect cropRect)
         {

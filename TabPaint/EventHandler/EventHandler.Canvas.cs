@@ -212,7 +212,11 @@ namespace TabPaint
         }
         private void OnScrollContainerContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
-            //
+            if (IsViewMode)
+            {
+                e.Handled = true;
+                return;
+            }
             _lastRightClickPosition = Mouse.GetPosition(BackgroundImage);
         }
 

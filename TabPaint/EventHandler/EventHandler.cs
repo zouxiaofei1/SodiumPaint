@@ -67,9 +67,55 @@ namespace TabPaint
         }
         private void HandlePaintModeShortcuts(object sender, KeyEventArgs e)
         {
-            // === A. 首先处理 自定义快捷键 (优先级高，允许用户改键) ===
+            if (IsShortcut("Tool.SwitchToPen", e))
+            {
+                SetBrushStyle(BrushStyle.Pencil);
+                e.Handled = true; return;
+            }
 
-            // 工具箱
+            if (IsShortcut("Tool.SwitchToPick", e))
+            {
+                _router.SetTool(_tools.Eyedropper);
+                e.Handled = true; return;
+            }
+
+            if (IsShortcut("Tool.SwitchToEraser", e))
+            {
+                SetBrushStyle(BrushStyle.Eraser);
+
+                e.Handled = true; return;
+            }
+
+            if (IsShortcut("Tool.SwitchToSelect", e))
+            {
+                _router.SetTool(_tools.Select);
+                e.Handled = true; return;
+            }
+
+            if (IsShortcut("Tool.SwitchToFill", e))
+            {
+                _router.SetTool(_tools.Fill);
+                e.Handled = true; return;
+            }
+
+            if (IsShortcut("Tool.SwitchToText", e))
+            {
+                _router.SetTool(_tools.Text);
+                e.Handled = true; return;
+            }
+
+            if (IsShortcut("Tool.SwitchToBrush", e))
+            {
+                SetBrushStyle(BrushStyle.Round);
+                e.Handled = true; return;
+            }
+
+            if (IsShortcut("Tool.SwitchToShape", e))
+            {
+                // 形状默认选中 "Rectangle" 
+                _router.SetTool(_tools.Shape);
+                e.Handled = true; return;
+            }
             if (IsShortcut("Tool.ClipMonitor", e))
             {
                 var settings = SettingsManager.Instance.Current;
@@ -555,9 +601,11 @@ namespace TabPaint
             // 6. 刷新工具图层 (原有逻辑)
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-            _canvasResizer.UpdateUI();
+            _canvasResizer.UpdateUI(); UpdateRulerPositions();
             if (IsViewMode) { ShowToast(newScale.ToString("P0")); }
         }
+
+
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
             // 1. 处理 Shift + 滚轮 (水平滚动)

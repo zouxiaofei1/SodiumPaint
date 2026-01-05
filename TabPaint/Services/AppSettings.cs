@@ -240,7 +240,21 @@ namespace TabPaint
                 }
             }
         }
+        private List<string> _customColors = new List<string>();
 
+        [JsonPropertyName("custom_colors")]
+        public List<string> CustomColors
+        {
+            get => _customColors;
+            set
+            {
+                if (_customColors != value)
+                {
+                    _customColors = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private double _paintInterpolationThreshold = 80.0; 
         [JsonPropertyName("paint_interpolation_threshold")]
         public double PaintInterpolationThreshold
@@ -259,21 +273,6 @@ namespace TabPaint
         {
             var defaults = new Dictionary<string, ShortcutItem>
     {
-        // === 核心功能 (建议在UI上不显示，或显示但不可编辑，这里先列出来) ===
-        // "Edit.Copy"   -> Ctrl + C (硬编码锁定)
-        // "Edit.Cut"    -> Ctrl + X (硬编码锁定)
-        // "Edit.Paste"  -> Ctrl + V (硬编码锁定)
-        // "Edit.Undo"   -> Ctrl + Z (硬编码锁定)
-        // "Edit.Redo"   -> Ctrl + Y (硬编码锁定)
-        // "File.Save"   -> Ctrl + S (硬编码锁定)
-        // "File.New"    -> Ctrl + N (硬编码锁定)
-        // "File.Open"   -> Ctrl + O (硬编码锁定)
-        // "File.CloseTab" -> Ctrl + W (硬编码锁定)
-        // "Select.All"  -> Ctrl + A (硬编码锁定)
-        // "Edit.Delete" -> Delete   (硬编码锁定)
-
-        // === 允许用户更改的功能 ===
-        
         // 1. 全局/视图功能
         { "View.PrevImage",      new ShortcutItem { Key = Key.Left, Modifiers = ModifierKeys.None } },
         { "View.NextImage",      new ShortcutItem { Key = Key.Right, Modifiers = ModifierKeys.None } },
@@ -281,7 +280,6 @@ namespace TabPaint
         { "View.RotateRight",    new ShortcutItem { Key = Key.R, Modifiers = ModifierKeys.Control } },
         { "View.ToggleMode",     new ShortcutItem { Key = Key.Tab, Modifiers = ModifierKeys.None } }, // 切换模式
         { "View.FullScreen",     new ShortcutItem { Key = Key.F11, Modifiers = ModifierKeys.None } },
-        
         // 2. 高级工具 (Ctrl + Alt 系列)
         { "Tool.ClipMonitor",    new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 剪贴板监听开关
         { "Tool.RemoveBg",       new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 抠图
@@ -291,19 +289,24 @@ namespace TabPaint
         { "Tool.CopyColorCode",  new ShortcutItem { Key = Key.D5, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
         { "Tool.AutoCrop",       new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
         { "Tool.AddBorder",      new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
-
         // 3. 特殊操作 (Ctrl + Shift 系列)
         { "File.OpenWorkspace",  new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 打开工作区
         { "File.PasteNewTab",    new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 粘贴为新标签
+          // === 3. 基础绘图工具 (新增) ===
+        { "Tool.SwitchToPen",    new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control } }, // 铅笔/画笔
+        { "Tool.SwitchToPick",   new ShortcutItem { Key = Key.D2, Modifiers = ModifierKeys.Control } }, // 取色
+        { "Tool.SwitchToEraser", new ShortcutItem { Key = Key.D3, Modifiers = ModifierKeys.Control } }, // 橡皮
+        { "Tool.SwitchToSelect", new ShortcutItem { Key = Key.D4, Modifiers = ModifierKeys.Control } }, // 选择
+        { "Tool.SwitchToFill",   new ShortcutItem { Key = Key.D5, Modifiers = ModifierKeys.Control } }, // 填充
+        { "Tool.SwitchToText",   new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control } }, // 文字
+        { "Tool.SwitchToBrush",  new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control } }, // 画刷菜单(通常只切到默认画刷)
+        { "Tool.SwitchToShape",  new ShortcutItem { Key = Key.D8, Modifiers = ModifierKeys.Control } }, // 形状菜单(通常切到默认形状)
     };
             return defaults;
         }
         public void ResetShortcutsToDefault()
         {
-            // 重新获取默认值
             var defaults = GetDefaultShortcuts();
-
-            // 赋值给属性以触发通知
             Shortcuts = defaults;
         }
     }

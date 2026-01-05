@@ -99,8 +99,7 @@
                     </MenuItem>
                     <MenuItem Header="反色" Style="{StaticResource SubMenuItemStyle}" Click="OnInvertClick">
                         <MenuItem.Icon>
-                            <!-- 半黑半白的圆形图标 -->
-                            <Path Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20V4Z" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Invert_Color_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="自动色阶" Style="{StaticResource SubMenuItemStyle}" Click="OnAutoLevelsClick">
