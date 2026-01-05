@@ -45,6 +45,7 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
+                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 var px = ctx.ToPixel(viewPos);
                 // 添加边界检查，防止点击画布外崩溃
                 if (px.X >= 0 && px.Y >= 0 && px.X < ctx.Surface.Bitmap.PixelWidth && px.Y < ctx.Surface.Bitmap.PixelHeight)

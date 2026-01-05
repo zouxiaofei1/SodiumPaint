@@ -113,10 +113,10 @@ namespace TabPaint
         {
             Draw,         // 普通绘图
             Transform,    // 旋转/翻转
-            CanvasResize, // 画布拉伸或缩放
-            ReplaceImage,  // 整图替换（打开新图）
-            Selection
+            Selection,
+            FileDelete
         }
+        private UndoAction _pendingDeleteUndo = null;
         public SelectTool Select;
         public SolidColorBrush ForegroundBrush { get; set; } = new SolidColorBrush(Colors.Black);
         public SolidColorBrush BackgroundBrush { get; set; } = new SolidColorBrush(Colors.White);
@@ -256,5 +256,12 @@ namespace TabPaint
         private const int ToastDuration = 1500;
         public bool BlanketMode = false;
         private bool _isCurrentFileGif = false; // 标记当前文件是否为GIF
+        private System.Windows.Threading.DispatcherTimer _deleteCommitTimer;
+        private List<FileTabItem> _pendingDeletionTabs = new List<FileTabItem>(); // 待删除列表
+        private FileTabItem _lastDeletedTabForUndo = null; // 专门用于 Ctrl+Z 的引用
+        private int _lastDeletedTabIndex = -1;
+        private bool _isDraggingBirdEye = false;
+        private Brush _originalGridBrush; // 用于存储启动时 XAML 里定义的那个格子画刷
+        private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333"));
     }
 }

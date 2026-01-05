@@ -23,12 +23,6 @@ namespace TabPaint
 
         private void InitBestEngine()
         {
-            // 策略优化：
-            // 1. 优先尝试使用用户配置的首选语言（通常是系统显示语言）
-            // 2. 如果失败，尝试使用当前输入法语言
-            // 3. 最后尝试使用 OCR 引擎支持的第一个可用语言
-            
-            // Windows截图工具通常默认使用 UserProfileLanguages
             _ocrEngine = OcrEngine.TryCreateFromUserProfileLanguages();
 
             if (_ocrEngine == null)

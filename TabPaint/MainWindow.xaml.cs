@@ -161,6 +161,9 @@ namespace TabPaint
             this.Focus();
             try
             {
+                _deleteCommitTimer = new System.Windows.Threading.DispatcherTimer();
+                _deleteCommitTimer.Interval = TimeSpan.FromSeconds(2); // 2秒
+                _deleteCommitTimer.Tick += (s, e) => CommitPendingDeletions();
                 StateChanged += MainWindow_StateChanged;
                 Select = new SelectTool();
                 this.Deactivated += MainWindow_Deactivated;
@@ -188,7 +191,9 @@ namespace TabPaint
                 _tools = new ToolRegistry();
                 _ctx.ViewElement.Cursor = _tools.Pen.Cursor;
                 _router = new InputRouter(_ctx, _tools.Pen);
-
+                _originalGridBrush = CanvasWrapper.Background;
+                SettingsManager.Instance.Current.PropertyChanged += OnSettingsPropertyChanged;
+                UpdateCanvasVisuals();
                 this.PreviewKeyDown += (s, e) =>
                 {
                     MainWindow_PreviewKeyDown(s, e);
@@ -212,6 +217,54 @@ namespace TabPaint
                 }
             }
         }
+        private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(TabPaint.SettingsManager.Instance.Current.ViewUseDarkCanvasBackground) ||
+                e.PropertyName == nameof(TabPaint.SettingsManager.Instance.Current.ViewShowTransparentGrid))
+            {
+                UpdateCanvasVisuals();
+            }
+        }
+
+        // 3. 核心逻辑：根据模式和设置更新背景
+        private void UpdateCanvasVisuals()
+        {
+            var settings = SettingsManager.Instance.Current;
+
+            if (IsViewMode)
+            {
+                // --- 逻辑 A: Canvas 外部背景 (ScrollContainer) ---
+                // 如果开启深色背景，使用 #1A1A1A，否则透明(跟随窗口背景)
+                if (settings.ViewUseDarkCanvasBackground)
+                {
+                    ScrollContainer.Background = _darkBackgroundBrush;
+                }
+                else
+                {
+                    ScrollContainer.Background = Brushes.Transparent;
+                }
+
+                // --- 逻辑 B: Canvas 内部背景 (图片下方的底色) ---
+                // 如果开启显示透明格子，还原原始画刷；否则显示纯白底
+                if (settings.ViewShowTransparentGrid)
+                {
+                    CanvasWrapper.Background = _originalGridBrush;
+                }
+                else
+                {
+                    CanvasWrapper.Background = Brushes.White;
+                }
+            }
+            else
+            {
+                // --- 画图模式 (Paint Mode) ---
+                // 强制恢复默认状态：外部透明，内部显示格子
+                ScrollContainer.Background = Brushes.Transparent;
+                CanvasWrapper.Background = _originalGridBrush;
+            }
+        }
+
+
         private string FindFirstImageInDirectory(string folderPath)
         {
             try
@@ -697,6 +750,8 @@ namespace TabPaint
         }
         private void ScrollContainer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            CheckBirdEyeVisibility();
+            UpdateBirdEyeView();
             UpdateRulerPositions();
         }
         private void UpdateRulerPositions()
@@ -722,7 +777,7 @@ namespace TabPaint
             RulerLeft.ZoomFactor = currentZoom;
             RulerLeft.InvalidateVisual();
         }
-        public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject    // 这是一个通用的辅助方法，用于在可视化树中查找特定类型的子控件
+        public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             if (parent == null) return null;
 
@@ -803,7 +858,6 @@ namespace TabPaint
         private bool _isDragOverlayVisible = false;
 
         // 更新显示方法
-
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {

@@ -173,7 +173,47 @@
                         </Grid>
 
                         <Separator Margin="0,15" Background="#EEEEEE"/>
-                        
+                        <TextBlock Text="显示" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+
+                        <!-- 1. 画布背景设置 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="使用深色背景"/>
+                                <TextBlock Text="在图片周围显示深灰色背景" 
+                                           Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <CheckBox Grid.Column="2" 
+                                      IsChecked="{Binding Path=Current.ViewUseDarkCanvasBackground, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- 2. 透明网格设置 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="显示透明度网格"/>
+                                <TextBlock Text="开启后透明区域显示灰白格子，关闭则显示纯白背景" 
+                                           Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <CheckBox Grid.Column="2" 
+                                      IsChecked="{Binding Path=Current.ViewShowTransparentGrid, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Separator Margin="0,15" Background="#EEEEEE"/>
                     </StackPanel>
 
 

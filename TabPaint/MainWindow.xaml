@@ -364,7 +364,46 @@
                     </Border>
 
                 </Grid>
+                <Border x:Name="BirdEyePanel" 
+        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+        Margin="0,0,20,40"
+        Width="220" Height="160"
+        Background="White"
+        BorderBrush="#CCC" BorderThickness="1"
+        CornerRadius="4"
+        Visibility="Collapsed">
+                    <!-- 默认隐藏，仅在看图+大图时显示 -->
 
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" Opacity="0.2" ShadowDepth="2"/>
+                    </Border.Effect>
+
+                    <Grid Margin="5">
+                        <!-- 1. 缩略图底图 -->
+                        <Image x:Name="BirdEyeImage" Stretch="Uniform" 
+               Source="{Binding ElementName=BackgroundImage, Path=Source}"
+               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                        <!-- 2. 交互层 Canvas -->
+                        <Canvas x:Name="BirdEyeCanvas" 
+                Background="Transparent"
+                Width="{Binding ElementName=BirdEyeImage, Path=ActualWidth}"
+                Height="{Binding ElementName=BirdEyeImage, Path=ActualHeight}"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                MouseDown="BirdEyeCanvas_MouseDown"
+                MouseMove="BirdEyeCanvas_MouseMove"
+                MouseUp="BirdEyeCanvas_MouseUp">
+
+                            <!-- 3. 视野框 (Viewport Rect) -->
+                            <Border x:Name="BirdEyeViewport" 
+                    BorderBrush="#FF0078D7" 
+                    BorderThickness="2" 
+                    Background="#200078D7"
+                    IsHitTestVisible="False"/>
+                            <!-- 让鼠标事件穿透给 Canvas 处理 -->
+                        </Canvas>
+                    </Grid>
+                </Border>
             </Grid>
             <!-- #endregion -->
         </DockPanel>

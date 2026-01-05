@@ -183,15 +183,21 @@ namespace TabPaint
 
             public void CleanUpSelectionandShape()
             {
+               // s(1);
                 var mw = (MainWindow)Application.Current.MainWindow;
-                if (CurrentTool is SelectTool selTool && selTool._selectionData != null)
+                if (CurrentTool is SelectTool selTool)
                 {
-                    selTool.GiveUpSelection(_ctx);
+                    if (selTool._selectionData != null)
+                        selTool.GiveUpSelection(_ctx);
+                    selTool.Cleanup(_ctx);
+
                 }
-                if (mw._router.CurrentTool is ShapeTool shapetool && GetSelectTool()?._selectionData != null)
+                if (mw._router.CurrentTool is ShapeTool shapetool)
                 {
                     shapetool.GiveUpSelection(_ctx);
-                }
+                    GetSelectTool()?.Cleanup(_ctx);
+                } 
+                
             }
 
             public void SetTool(ITool tool)

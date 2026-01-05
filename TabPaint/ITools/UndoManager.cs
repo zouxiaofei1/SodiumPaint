@@ -37,6 +37,16 @@ namespace TabPaint
             public Int32Rect RedoRect { get; }      // 重做时恢复的尺寸
             public byte[] RedoPixels { get; }       // 重做时恢复的像素
             public UndoActionType ActionType { get; }
+            public string DeletedFilePath { get; }
+            public FileTabItem DeletedTab { get; }
+            public int DeletedTabIndex { get; }
+            public UndoAction(string filePath, FileTabItem tab, int index)
+            {
+                ActionType = UndoActionType.FileDelete;
+                DeletedFilePath = filePath;
+                DeletedTab = tab;
+                DeletedTabIndex = index;
+            }
             public UndoAction(Int32Rect rect, byte[] pixels, UndoActionType actionType = UndoActionType.Draw)
             {
                 ActionType = actionType;
@@ -122,6 +132,26 @@ namespace TabPaint
             public void Undo()
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (mw._deleteCommitTimer.IsEnabled && mw._pendingDeletionTabs.Count > 0)
+                {
+                    mw.RestoreLastDeletedTab();
+                    return; // 拦截成功，不再执行画布撤销
+                }
+                // ------------------------------------
+
+                // 下面是原有的画布撤销逻辑
+                if (_undo != null) // 确保 UndoManager 存在
+                {
+                    ImageUndo();
+                }
+            }
+            public void ImageUndo()
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+
+    
+
+                // === 原有逻辑：处理选区清理 ===
                 if (mw._router.CurrentTool is SelectTool sselTool && sselTool.HasActiveSelection)
                 {
                     if (!sselTool._hasLifted)
@@ -131,43 +161,48 @@ namespace TabPaint
                         return;
                     }
                 }
+
                 if (!CanUndo || _surface?.Bitmap == null) return;
 
+                // === 原有逻辑：从栈中取出动作 ===
                 var action = _undo.Pop();
+
+                // 如果 action 是 FileDelete 类型（如果你选择将其入栈）
+                if (action.ActionType == UndoActionType.FileDelete)
+                {
+                    // 这里可以执行恢复逻辑，但建议使用下面提到的 Timer 方案更稳定
+                }
+
                 if (mw._router.CurrentTool is SelectTool selTool) selTool.Cleanup(mw._ctx);
+
                 if (action.ActionType == UndoActionType.Transform)
                 {
+                    // ... (保持你原有的 Transform 逻辑不变) ...
                     var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
                     var currentPixels = _surface.ExtractRegion(currentRect);
-                    // 创建一个反向的 Transform Action
-                    _redo.Push(new UndoAction(
-                        currentRect,       // 撤销这个 Redo 会回到当前状态
-                        currentPixels,
-                        action.RedoRect,   // 执行这个 Redo 会回到裁剪后的状态
-                        action.RedoPixels
-                    ));
+                    _redo.Push(new UndoAction(currentRect, currentPixels, action.RedoRect, action.RedoPixels));
 
                     var wb = new WriteableBitmap(action.UndoRect.Width, action.UndoRect.Height,
-                            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiX, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
+                            mw._ctx.Surface.Bitmap.DpiX, mw._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
                     wb.WritePixels(action.UndoRect, action.UndoPixels, wb.BackBufferStride, 0);
-                    // 替换主位图
-                    _surface.ReplaceBitmap(wb); // 假设你有这个方法
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(action.UndoRect.Width, action.UndoRect.Height);
+                    _surface.ReplaceBitmap(wb);
+                    mw.NotifyCanvasSizeChanged(action.UndoRect.Width, action.UndoRect.Height);
                 }
                 else // Draw Action
                 {
                     internalUndoAction(action);
                     if (action.ActionType == UndoActionType.Selection && _undo.Count > 0)
                     {
-
-                        var pairedAction = _undo.Pop(); // 取出配对的 "剪切" 动作
-                        internalUndoAction(pairedAction); 
+                        var pairedAction = _undo.Pop();
+                        internalUndoAction(pairedAction);
                     }
                 }
+
                 UpdateUI();
-                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
+                mw.NotifyCanvasChanged();
             }
+
 
             public void Redo()
             {

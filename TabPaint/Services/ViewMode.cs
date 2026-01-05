@@ -59,6 +59,7 @@ namespace TabPaint
         {
             if (!isSilent) ShowToast(isView ? "进入看图模式" : "进入画图模式");
             AutoSetFloatBarVisibility();
+            CheckBirdEyeVisibility();
             if (isView)
             {
                 if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = true;
@@ -90,6 +91,7 @@ namespace TabPaint
 
                 CanvasResizeOverlay.Visibility = Visibility.Visible;
             }
+            UpdateCanvasVisuals();
             if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);
             if (_canvasResizer != null) _canvasResizer.UpdateUI();
             

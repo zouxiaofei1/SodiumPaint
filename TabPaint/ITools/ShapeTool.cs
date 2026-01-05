@@ -34,6 +34,7 @@ public class ShapeTool : ToolBase
 
     public override void OnPointerDown(ToolContext ctx, Point viewPos)
     {
+        if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
         var selectTool = GetSelectTool();
         var px = ctx.ToPixel(viewPos);
 

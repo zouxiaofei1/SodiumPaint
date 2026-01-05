@@ -46,7 +46,7 @@ namespace TabPaint
                 LeftMiddle, RightMiddle,
                 BottomLeft, BottomMiddle, BottomRight
             }
-
+            public DateTime LastSelectionDeleteTime { get; private set; } = DateTime.MinValue;
         }
 
     }

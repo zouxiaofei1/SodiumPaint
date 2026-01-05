@@ -499,9 +499,8 @@ namespace TabPaint
                 _surface.Bitmap.PixelHeight
             );
             dialog.Owner = this; // 设置所有者，使对话框显示在主窗口中央
-            if (dialog.ShowDialog() == true)  // 2. 显示对话框，并检查用户是否点击了“确定”
+            if (dialog.ShowDialog() == true)
             {
-                // 3. 如果用户点击了“确定”，获取新尺寸并调用缩放方法
                 int newWidth = dialog.ImageWidth;
                 int newHeight = dialog.ImageHeight;
 

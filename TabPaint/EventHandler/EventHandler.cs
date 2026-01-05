@@ -198,13 +198,21 @@ namespace TabPaint
                 switch (e.Key)
                 {
                     case Key.Delete:
-                        if (_tools.Select is SelectTool st && st.HasActiveSelection)
+                        if (_tools.Select is SelectTool st)
                         {
-                            st.DeleteSelection(_ctx);
-                        }
-                        else
-                        {
-                            HandleDeleteFileAction();
+                            if (st.HasActiveSelection)
+                            {
+                                st.DeleteSelection(_ctx);
+                            }
+                            else if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < 2.0)
+                            {
+                                st.ResetLastDeleteTime();
+                                ShowToast("再次按下 Delete 删除文件");
+                            }
+                            else
+                            {
+                                HandleDeleteFileAction();
+                            }
                         }
                         e.Handled = true;
                         break;
@@ -224,8 +232,6 @@ namespace TabPaint
             {
                 HandlePaintModeShortcuts(sender, e);
             }
-
-
         }
 
 
@@ -251,42 +257,7 @@ namespace TabPaint
         }
 
 
-        private void HandleDeleteFileAction()
-        {
-            // 2. 处理物理文件删除
-            var currentTab = FileTabs?.FirstOrDefault(t => t.IsSelected);
-            if (currentTab == null || string.IsNullOrEmpty(currentTab.FilePath)) return;
 
-            // 检查文件是否存在（防止 0.7.2 中的 Undo null 异常或路径错误）
-            if (!System.IO.File.Exists(currentTab.FilePath)) return;
-
-            var result = System.Windows.MessageBox.Show(
-                $"确定要将图片移至回收站吗？\n{currentTab.FileName}",
-                "删除文件",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                string pathToDelete = currentTab.FilePath;
-
-                try
-                {
-                    CloseTab(currentTab);
-
-                    // 5. 调用系统接口移至回收站
-                    // 这样用户万一删错了还能在回收站找回来，比 File.Delete 安全得多
-                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
-                        pathToDelete,
-                        UIOption.OnlyErrorDialogs,
-                        RecycleOption.SendToRecycleBin);
-                }
-                catch (Exception ex)
-                {
-                    ShowToast($"删除失败: {ex.Message}");
-                }
-            }
-        }
         private void EmptyClick(object sender, RoutedEventArgs e)
         {
             MainToolBar.RotateFlipMenuToggle.IsChecked = false;
@@ -614,7 +585,7 @@ namespace TabPaint
 
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
-         
+            if (IsViewMode) CheckBirdEyeVisibility();
             if (!isIntermediate)
             {
                 
@@ -692,7 +663,7 @@ namespace TabPaint
             UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
 
-
+            if (IsViewMode) CheckBirdEyeVisibility();
             // 动画结束清理
             if (isEnding)
             {

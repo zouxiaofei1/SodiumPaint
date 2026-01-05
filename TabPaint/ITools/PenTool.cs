@@ -48,7 +48,7 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-            //  s(TabPaint.SettingsManager.Instance.Current.PenOpacity);
+                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
 
                 // --- 荧光笔遮罩初始化 ---

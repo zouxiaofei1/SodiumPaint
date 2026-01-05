@@ -399,8 +399,6 @@ namespace TabPaint
                     // 启动模拟任务（不 await）
                     _ = SimulateProgressAsync(progressToken, totalPixels, (msg) =>
                     {
-                        // 【双重保险】在更新 UI 前，再次检查当前任务是否已被取消
-                        // 如果用户已经切到下一张图，progressToken.IsCancellationRequested 会变成 true
                         if (progressToken.IsCancellationRequested) return;
 
                         Dispatcher.Invoke(() =>
@@ -450,8 +448,6 @@ namespace TabPaint
                     {
                         if (token.IsCancellationRequested) return;
 
-
-                        // 2. 将采样模式改为线性 (Linear)，避免马赛克锯齿
                         RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
                         BackgroundImage.Source = tabItem.Thumbnail;
 
@@ -538,8 +534,6 @@ namespace TabPaint
                     int width = fullResBitmap.PixelWidth;
                     int height = fullResBitmap.PixelHeight;
 
-                    // 2. 准备源数据：确保格式为 BGRA32
-                    // 使用 FormatConvertedBitmap 只是为了确保格式，它通常不会立即深拷贝，直到读取像素
                     BitmapSource source = fullResBitmap;
                     if (source.Format != PixelFormats.Bgra32)
                     {
@@ -551,12 +545,8 @@ namespace TabPaint
                         source = formatted;
                     }
 
-                    // 3. 创建 WriteableBitmap (分配 760MB BackBuffer)
-                    // 强制 96 DPI 以匹配你的逻辑
                     _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
 
-                    // 4. 【核心优化】直接内存拷贝 (Direct Memory Copy)
-                    // 避免创建 var pixels = new byte[...]，直接写显存/非托管内存
                     _bitmap.Lock();
                     try
                     {
@@ -611,7 +601,7 @@ namespace TabPaint
                     if (_isCurrentFileGif)
                     {
                         AnimationBehavior.SetSourceUri(GifPlayerImage, new Uri(fileToRead));
-                        if (SettingsManager.Instance.Current.StartInViewMode)GifPlayerImage.Visibility = Visibility.Visible;   
+                        GifPlayerImage.Visibility = Visibility.Visible;   //if (SettingsManager.Instance.Current.StartInViewMode)
                         var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
                         if (controller != null)
                         {

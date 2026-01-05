@@ -320,7 +320,37 @@ namespace TabPaint
                 }
             }
         }
+        private bool _viewShowTransparentGrid = false; // 默认隐藏透明灰白格子(即显示白底)
 
+        [JsonPropertyName("view_show_transparent_grid")]
+        public bool ViewShowTransparentGrid
+        {
+            get => _viewShowTransparentGrid;
+            set
+            {
+                if (_viewShowTransparentGrid != value)
+                {
+                    _viewShowTransparentGrid = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _viewUseDarkCanvasBackground = true; // 默认开启深灰色背景(#1A1A1A)
+
+        [JsonPropertyName("view_use_dark_canvas_background")]
+        public bool ViewUseDarkCanvasBackground
+        {
+            get => _viewUseDarkCanvasBackground;
+            set
+            {
+                if (_viewUseDarkCanvasBackground != value)
+                {
+                    _viewUseDarkCanvasBackground = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
             var defaults = new Dictionary<string, ShortcutItem>

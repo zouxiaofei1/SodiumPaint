@@ -58,6 +58,11 @@ namespace TabPaint
                 mw.SetCropButtonState();
                 mw.SelectionSize = "0×0像素";
                 mw.SetUndoRedoButtonState();
+                LastSelectionDeleteTime = DateTime.Now;
+            }
+            public void ResetLastDeleteTime()
+            {
+                LastSelectionDeleteTime = DateTime.MinValue;
             }
 
             private void CopyToSystemClipboard(ToolContext ctx)
@@ -431,6 +436,8 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
+
+                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 if (lag > 0) { lag--; return; }
                 if (ctx.Surface.Bitmap == null) return;
                 var px = ctx.ToPixel(viewPos);

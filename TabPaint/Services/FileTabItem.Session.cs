@@ -210,8 +210,10 @@ namespace TabPaint
         public void NotifyCanvasChanged()
         {
             if (_currentTabItem == null) return;
+            _pendingDeleteUndo = null;
             if (Mouse.LeftButton == MouseButtonState.Pressed) return;
-          
+           
+
             _currentCanvasVersion++;
             _autoSaveTimer.Stop();
             double delayMs = 2000; // 基础延迟 2秒
@@ -379,6 +381,7 @@ namespace TabPaint
                 this.Hide();
                 SingleInstance.Release();
                 SaveAppState();
+                CommitPendingDeletions();
                 // 立即保存当前的
                 if (_currentTabItem != null && _currentTabItem.IsDirty && !_isSavingFile)
                 {
