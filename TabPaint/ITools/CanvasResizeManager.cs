@@ -21,7 +21,7 @@ namespace TabPaint
             BottomLeft, BottomMiddle, BottomRight
         }
 
-
+        private const double MaxCanvasSize = 16384.0;
         public class CanvasResizeManager
         {
             private readonly MainWindow _mainWindow;
@@ -154,8 +154,8 @@ namespace TabPaint
                 double startH = _startRect.Height;
 
                 // 固定的右边界和下边界 (相对于起始原点)
-                double rightEdge = startW;   // 因为起始X是0，所以右边界就是Width
-                double bottomEdge = startH;  // 因为起始Y是0，所以下边界就是Height
+                double rightEdge = startW;
+                double bottomEdge = startH;
 
                 // 初始化为无变化状态
                 double newX = 0;
@@ -166,54 +166,57 @@ namespace TabPaint
                 switch (_currentAnchor)
                 {
                     case ResizeAnchor.TopLeft:
-                        newW = Math.Max(1, startW - dx);
-                        newX = rightEdge - newW; // 核心：根据固定右边反推X
+                        // 1. 计算宽度，限制最小值1，限制最大值 MaxCanvasSize
+                        newW = Math.Min(MaxCanvasSize, Math.Max(1, startW - dx));
+                        // 2. 核心：根据【固定右边】和【限制后的新宽度】反推 X
+                        newX = rightEdge - newW;
 
-                        newH = Math.Max(1, startH - dy);
-                        newY = bottomEdge - newH; // 核心：根据固定下边反推Y
+                        newH = Math.Min(MaxCanvasSize, Math.Max(1, startH - dy));
+                        newY = bottomEdge - newH;
                         break;
 
                     case ResizeAnchor.TopMiddle:
-                        newH = Math.Max(1, startH - dy);
+                        newH = Math.Min(MaxCanvasSize, Math.Max(1, startH - dy));
                         newY = bottomEdge - newH;
                         break;
 
                     case ResizeAnchor.TopRight:
-                        newW = Math.Max(1, startW + dx);
-                        // X 保持 0
+                        // 向右拉伸，X保持为0，只限制宽度
+                        newW = Math.Min(MaxCanvasSize, Math.Max(1, startW + dx));
 
-                        newH = Math.Max(1, startH - dy);
+                        newH = Math.Min(MaxCanvasSize, Math.Max(1, startH - dy));
                         newY = bottomEdge - newH;
                         break;
 
                     case ResizeAnchor.LeftMiddle:
-                        newW = Math.Max(1, startW - dx);
+                        newW = Math.Min(MaxCanvasSize, Math.Max(1, startW - dx));
                         newX = rightEdge - newW;
                         break;
 
                     case ResizeAnchor.RightMiddle:
-                        newW = Math.Max(1, startW + dx);
+                        newW = Math.Min(MaxCanvasSize, Math.Max(1, startW + dx));
                         break;
 
                     case ResizeAnchor.BottomLeft:
-                        newW = Math.Max(1, startW - dx);
+                        newW = Math.Min(MaxCanvasSize, Math.Max(1, startW - dx));
                         newX = rightEdge - newW;
 
-                        newH = Math.Max(1, startH + dy);
+                        newH = Math.Min(MaxCanvasSize, Math.Max(1, startH + dy));
                         break;
 
                     case ResizeAnchor.BottomMiddle:
-                        newH = Math.Max(1, startH + dy);
+                        newH = Math.Min(MaxCanvasSize, Math.Max(1, startH + dy));
                         break;
 
                     case ResizeAnchor.BottomRight:
-                        newW = Math.Max(1, startW + dx);
-                        newH = Math.Max(1, startH + dy);
+                        newW = Math.Min(MaxCanvasSize, Math.Max(1, startW + dx));
+                        newH = Math.Min(MaxCanvasSize, Math.Max(1, startH + dy));
                         break;
                 }
 
                 return new Rect(newX, newY, newW, newH);
             }
+
 
 
             private void CreatePreviewBorder()
@@ -232,8 +235,8 @@ namespace TabPaint
             private void ApplyResize(Rect newBounds)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                int newW = (int)newBounds.Width;
-                int newH = (int)newBounds.Height;
+                int newW = Math.Min(16384, (int)newBounds.Width);
+                int newH = Math.Min(16384, (int)newBounds.Height);
                 int offsetX = -(int)newBounds.X;
                 int offsetY = -(int)newBounds.Y;
 
@@ -348,6 +351,14 @@ namespace TabPaint
                 { ResizeAnchor.BottomMiddle, new Point(w/2, h) },
                 { ResizeAnchor.BottomRight, new Point(w, h) },
             };
+            }
+            public void SetHandleVisibility(bool visible)
+            {
+                _overlay.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                if (visible && ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source == null)
+                {
+                    _overlay.Visibility = Visibility.Collapsed;
+                }
             }
 
             private Cursor GetCursor(ResizeAnchor anchor)

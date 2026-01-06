@@ -20,10 +20,15 @@ namespace TabPaint
                 HidePreview(ctx);
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (mw._canvasResizer != null)
+                {
+                    mw._canvasResizer.SetHandleVisibility(true);
+                }
                 // 清空状态
                 _originalRect = new Int32Rect();
                 _selectionRect = new Int32Rect();
-                _selecting = false;
+                _selecting = false; IsPasted = false;
                 _draggingSelection = false;
                 _resizing = false;
                 _currentAnchor = ResizeAnchor.None;
@@ -43,8 +48,12 @@ namespace TabPaint
 
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
-
-                double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (mw._canvasResizer != null)
+                {
+                    mw._canvasResizer.SetHandleVisibility(false);
+                }
+                double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
 
@@ -176,7 +185,6 @@ namespace TabPaint
                 // 计算位移
                 double localX = pixelX * scaleX+diff*0.75 ;
                 double localY = pixelY * scaleY;
-                a.s(localX, localY);
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(localX, localY);
 
 
@@ -296,7 +304,6 @@ namespace TabPaint
             public void CommitSelection(ToolContext ctx, bool shape = false)
             {
                 if (_selectionData == null) return;
-
                 // 1. 准备撤销记录
                 ctx.Undo.BeginStroke();
                 ctx.Undo.AddDirtyRect(_selectionRect);
@@ -309,7 +316,6 @@ namespace TabPaint
                 if (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height)
                 {
                     if (_originalRect.Width <= 0 || _originalRect.Height <= 0) return;
-
                     int expectedStride = _originalRect.Width * 4;
                     int actualStride = _selectionData.Length / _originalRect.Height;
                     int dataStride = Math.Min(expectedStride, actualStride);
@@ -319,9 +325,6 @@ namespace TabPaint
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
                         PixelFormats.Bgra32, null, _selectionData, dataStride);
-
-                    // 【替换旧的 TransformedBitmap 逻辑】
-                    // 使用支持 ResamplingMode 的方法进行重采样
                     var resized = ((MainWindow)System.Windows.Application.Current.MainWindow).ResampleBitmap(src, finalWidth, finalHeight);
 
                     // 提取像素数据
@@ -329,14 +332,13 @@ namespace TabPaint
                     finalData = new byte[finalHeight * finalStride];
                     resized.CopyPixels(finalData, finalStride, 0);
                 }
-
                 // 3. 执行透明度混合写入 (Alpha Blending)
                 BlendPixels(ctx.Surface.Bitmap, _selectionRect.X, _selectionRect.Y, finalWidth, finalHeight, finalData, finalStride);
 
                 // 4. 清理现场
 
                 ctx.Undo.CommitStroke(shape ? UndoActionType.Draw : UndoActionType.Selection);
-                HidePreview(ctx);
+                HidePreview(ctx); IsPasted = false;
                 _selectionData = null;
                 ctx.IsDirty = true;
                 lag = 1;
@@ -344,6 +346,7 @@ namespace TabPaint
                 _originalRect = new Int32Rect();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
                 ResetPreviewState(ctx);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
             private void BlendPixels(WriteableBitmap targetBmp, int x, int y, int w, int h, byte[] sourcePixels, int sourceStride)
             {
@@ -449,6 +452,11 @@ namespace TabPaint
 
             private void HidePreview(ToolContext ctx)
             {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (mw._canvasResizer != null)
+                {
+                    mw._canvasResizer.SetHandleVisibility(true);
+                }
                 ctx.SelectionPreview.Visibility = Visibility.Collapsed;
             }
 
@@ -471,27 +479,80 @@ namespace TabPaint
 
             private void ClearRect(ToolContext ctx, Int32Rect rect, Color color)
             {
+                // 获取当前设置
+                var clearMode = SettingsManager.Instance.Current.SelectionClearMode;
+
                 ctx.Surface.Bitmap.Lock();
                 unsafe
                 {
                     byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
                     int stride = ctx.Surface.Bitmap.BackBufferStride;
+
+                    // 预先计算好要写入的值，避免在循环中判断
+                    byte targetB = 0, targetG = 0, targetR = 0, targetA = 0;
+                    bool writeAlpha = true;
+
+                    switch (clearMode)
+                    {
+                        case SelectionClearMode.Transparent:
+                            // 全0
+                            targetB = 0; targetG = 0; targetR = 0; targetA = 0;
+                            writeAlpha = true;
+                            break;
+                        case SelectionClearMode.White:
+                            // 全255
+                            targetB = 255; targetG = 255; targetR = 255; targetA = 255;
+                            writeAlpha = true;
+                            break;
+                        case SelectionClearMode.PreserveAlpha:
+                            // 使用传入的 color (通常是背景色) 的RGB，但不改写 A
+                            targetB = color.B; targetG = color.G; targetR = color.R;
+                            writeAlpha = false;
+                            break;
+                    }
+
+                    // 针对不同模式优化循环
                     for (int y = rect.Y; y < rect.Y + rect.Height; y++)
                     {
                         byte* rowPtr = basePtr + y * stride + rect.X * 4;
-                        for (int x = 0; x < rect.Width; x++)
+
+                        if (writeAlpha)
                         {
-                            rowPtr[0] = color.B;
-                            rowPtr[1] = color.G;
-                            rowPtr[2] = color.R;
-                          //  rowPtr[3] = color.A;
-                            rowPtr += 4;
+                            // 模式：透明 或 白色 (写入RGBA)
+                            // 这种情况下，如果我们要写全0或全255，其实可以用 int* 赋值来进一步加速(一次写4字节)
+                            // 但为了代码可读性，先保持 byte 操作，编译器优化通常足够好
+                            for (int x = 0; x < rect.Width; x++)
+                            {
+                                rowPtr[0] = targetB;
+                                rowPtr[1] = targetG;
+                                rowPtr[2] = targetR;
+                                rowPtr[3] = targetA;
+                                rowPtr += 4;
+                            }
+                        }
+                        else
+                        {
+                            // 模式：保留Alpha (只写RGB)
+                            for (int x = 0; x < rect.Width; x++)
+                            {
+                                rowPtr[0] = targetB;
+                                rowPtr[1] = targetG;
+                                rowPtr[2] = targetR;
+                                // rowPtr[3] = ... // 跳过 Alpha
+                                rowPtr += 4;
+                            }
                         }
                     }
                 }
-                ctx.Surface.Bitmap.AddDirtyRect(ClampRect(rect, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight));
+
+                // 标记脏区域以更新 UI
+                var pixelWidth = ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth;
+                var pixelHeight = ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight;
+                ctx.Surface.Bitmap.AddDirtyRect(ClampRect(rect, pixelWidth, pixelHeight));
+
                 ctx.Surface.Bitmap.Unlock();
             }
+
         }
     }
 }

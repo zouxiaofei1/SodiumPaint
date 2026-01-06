@@ -1,12 +1,15 @@
 ﻿
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
 //
@@ -19,38 +22,31 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         public bool _isSavingFile = false;
-        private System.Collections.Concurrent.ConcurrentDictionary<string, Task> _activeSaveTasks
-    = new System.Collections.Concurrent.ConcurrentDictionary<string, Task>();
+        // 用于追踪每个 Tab ID 对应的正在进行的保存任务
+        private Dictionary<string, Task> _activeSaveTasks = new Dictionary<string, Task>();
+
         private CancellationTokenSource _saveCts;
 
         private void TriggerBackgroundBackup()
         {
+      
             if (_currentTabItem == null) return;
             // 假设你的画布是 _surface.Bitmap (WriteableBitmap)
             if (_surface?.Bitmap == null) return;
-
+            a.s(_currentCanvasVersion, _lastBackedUpVersion, _currentTabItem.IsDirty, _currentTabItem.IsNew);
             // 1. 基础检查
             if (_currentTabItem.IsDirty == false && !_currentTabItem.IsNew) return;
             if (_currentCanvasVersion == _lastBackedUpVersion &&
                 !string.IsNullOrEmpty(_currentTabItem.BackupPath) &&
-                File.Exists(_currentTabItem.BackupPath))
-            {
-                return;
-            }
-
-            // 2. 取消上一次还没完成的保存任务 (防止大图连续保存导致IO和CPU爆炸)
+                File.Exists(_currentTabItem.BackupPath)) return;
+            a.s("TriggerBackgroundBackup");
             if (_saveCts != null)
             {
                 _saveCts.Cancel();
                 _saveCts.Dispose();
             }
-            _saveCts = new CancellationTokenSource();
-            var token = _saveCts.Token;
-
-            // --- 【关键优化开始】 ---
-
-            // 3. 在 UI 线程只做最轻量的操作：复制元数据和原始像素
-            // 不要 Clone，不要 Freeze，只要数据。
+            var myCts = new CancellationTokenSource();
+            var token = myCts.Token;
             long versionToRecord = _currentCanvasVersion;
             string fileId = _currentTabItem.Id;
             string cacheDir = _cacheDir; // 避免闭包捕获
@@ -66,75 +62,84 @@ namespace TabPaint
             int stride = (w * format.BitsPerPixel + 7) / 8;
             // 分配内存 (8K图约130MB，如果内存压力大后续可以用 ArrayPool 优化)
             byte[] rawPixels = new byte[h * stride];
-
-            // 4. 执行内存拷贝 (这是 UI 线程唯一的耗时操作，通常 < 30ms)
-            try
-            {
-                _surface.Bitmap.CopyPixels(new Int32Rect(0, 0, w, h), rawPixels, stride, 0);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"CopyPixels failed: {ex.Message}");
-                return;
-            }
-
-            // --- 【关键优化结束】 --- UI 线程释放，不再卡顿
-
+            try { _surface.Bitmap.CopyPixels(new Int32Rect(0, 0, w, h), rawPixels, stride, 0); }
+            catch (Exception ex) { Debug.WriteLine($"CopyPixels failed: {ex.Message}"); return; }
             _lastBackedUpVersion = versionToRecord;
             _isSavingFile = true;
 
-            // 5. 启动后台任务
-            Task.Run(() =>
+            Task saveTask = Task.Run(() =>
             {
-                // 检查是否被取消
-                if (token.IsCancellationRequested) return;
-
                 try
                 {
+                    if (token.IsCancellationRequested) return;
+
                     string fileName = $"{fileId}.png";
                     string fullPath = Path.Combine(cacheDir, fileName);
 
                     if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
 
-                    // 在后台线程重新组装 BitmapSource
-                    // 注意：BitmapSource.Create 可以在任何线程调用，只要数据源不是来自其他线程的 UI 对象
                     var frame = BitmapSource.Create(w, h, dpiX, dpiY, format, palette, rawPixels, stride);
 
-                    // 再次检查取消
-                    if (token.IsCancellationRequested) return;
+                    // 使用临时文件写入，避免文件锁冲突或写入一半被读取
+                    string tempPath = fullPath + ".tmp";
 
-                    using (var fileStream = new FileStream(fullPath, FileMode.Create))
+                    using (var fileStream = new FileStream(tempPath, FileMode.Create))
                     {
                         BitmapEncoder encoder = new PngBitmapEncoder();
-                        // PngBitmapEncoder 设置为快速压缩 (可选优化，默认即可)
                         encoder.Frames.Add(BitmapFrame.Create(frame));
                         encoder.Save(fileStream);
                     }
 
-                    if (token.IsCancellationRequested) return;
+                    if (token.IsCancellationRequested)
+                    {
+                        File.Delete(tempPath);
+                        return;
+                    }
 
-                    // 更新 UI (Tab 信息)
+                    // 原子操作替换文件
+                    System.IO.File.Move(tempPath, fullPath, true);
+
+                    // 更新 UI 模型
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        // 再次检查 ID，防止 Tab 已经关了或者切走了
+                        // 查找对应的 Tab 对象（因为 _currentTabItem 可能已经变了）
                         var targetTab = FileTabs.FirstOrDefault(t => t.Id == fileId);
                         if (targetTab != null)
                         {
                             targetTab.BackupPath = fullPath;
                             targetTab.LastBackupTime = DateTime.Now;
+                            // Debug.WriteLine($"Backup finished for {fileId}");
                         }
-                    }, System.Windows.Threading.DispatcherPriority.Background);
+                    }, DispatcherPriority.Background);
                 }
-                catch (OperationCanceledException) { /* 忽略取消 */ }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
+                    Debug.WriteLine($"AutoBackup Failed: {ex.Message}");
                 }
                 finally
                 {
-                    _isSavingFile = false;
+                    // 任务结束，从字典中移除自己
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (_activeSaveTasks.ContainsKey(fileId) && _activeSaveTasks[fileId].Id == Task.CurrentId)
+                        {
+                            _activeSaveTasks.Remove(fileId);
+                        }
+                        _isSavingFile = false; // 只有当这是最后一个任务时才设为 false (简单处理)
+                    });
+                    myCts.Dispose();
                 }
             }, token);
+
+            // 【关键】：注册任务
+            if (_activeSaveTasks.ContainsKey(fileId))
+            {
+                _activeSaveTasks[fileId] = saveTask;
+            }
+            else
+            {
+                _activeSaveTasks.Add(fileId, saveTask);
+            }
 
             SaveSession();
         }
@@ -211,10 +216,9 @@ namespace TabPaint
         {
             if (_currentTabItem == null) return;
             _pendingDeleteUndo = null;
-            if (Mouse.LeftButton == MouseButtonState.Pressed) return;
-           
-
             _currentCanvasVersion++;
+            if (Mouse.LeftButton == MouseButtonState.Pressed) return;
+
             _autoSaveTimer.Stop();
             double delayMs = 2000; // 基础延迟 2秒
             if (BackgroundImage.Source is BitmapSource source)

@@ -16,6 +16,7 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
+            public bool IsPasted = false;
             public override string Name => "Select";
             public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Cross;
 

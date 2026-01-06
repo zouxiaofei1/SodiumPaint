@@ -1,62 +1,283 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace TabPaint
 {
     public partial class ResizeCanvasDialog : Window
     {
-        // 用于向外传递结果的公共属性
+        private const int MaxPixelSize = 16384;
         public int ImageWidth { get; private set; }
         public int ImageHeight { get; private set; }
+        public bool IsCanvasResizeMode { get; private set; } // True=Canvas, False=Resample
+
+        // 原始尺寸
+        private readonly int _originalWidth;
+        private readonly int _originalHeight;
+        private readonly double _originalRatio;
+
+        // 防止事件递归标志
+        private bool _isUpdating = false;
 
         public ResizeCanvasDialog(int currentWidth, int currentHeight)
         {
             InitializeComponent();
-            this.ImageWidth = currentWidth;
-            this.ImageHeight = currentHeight;
-        }
-        private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
-            {
-                this.DragMove();
-            }
+            _originalWidth = currentWidth;
+            _originalHeight = currentHeight;
+            _originalRatio = (double)currentWidth / currentHeight;
+
+            ImageWidth = currentWidth;
+            ImageHeight = currentHeight;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // 窗口加载时，用当前尺寸填充文本框
-            WidthTextBox.Text = ImageWidth.ToString();
-            HeightTextBox.Text = ImageHeight.ToString();
+            // 初始化 UI
+            _isUpdating = true;
+            WidthTextBox.Text = _originalWidth.ToString();
+            HeightTextBox.Text = _originalHeight.ToString();
+
+            // Slider 默认在中间 (0 = 1.0x)
+            WidthSlider.Value = 0;
+            HeightSlider.Value = 0;
+
+            _isUpdating = false;
+
             WidthTextBox.Focus();
             WidthTextBox.SelectAll();
         }
 
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed) this.DragMove();
+        }
+
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        // --- 核心逻辑 ---
+
+        // 滑块 -> 数值 (非线性映射: -1~1 => 0.1x~10x)
+        // 0点对应1倍。
+        private double SliderToScale(double sliderValue)
+        {
+            return Math.Pow(10, sliderValue);
+        }
+
+        // 数值 -> 滑块
+        private double ScaleToSlider(double scale)
+        {
+            if (scale <= 0) return -1;
+            return Math.Log10(scale);
+        }
+
+        private void UpdateInfoText()
+        {
+            if (ImageWidth == 0) return;
+            double scale = (double)ImageWidth / _originalWidth;
+
+            // 检查是否触顶
+            bool isLimitReached = (ImageWidth >= MaxPixelSize || ImageHeight >= MaxPixelSize);
+
+            if (isLimitReached)
+            {
+                InfoTextBlock.Text = $"⚠️ 已达到最大尺寸限制 ({MaxPixelSize}px)";
+                InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 50, 50)); // 红色警告
+            }
+            else
+            {
+                InfoTextBlock.Text = IsCanvasResizeMode
+                    ? $"画布模式：{ImageWidth} x {ImageHeight}"
+                    : $"缩放: {scale:P0}  |  原始: {_originalWidth} x {_originalHeight}";
+
+                InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136)); // 恢复灰色 #888888
+            }
+        }
+
+
+        // 统一处理宽度变更
+        private void OnWidthChanged(int newWidth, bool fromSlider)
+        {
+            if (_isUpdating) return;
+            _isUpdating = true;
+
+            // 1. 基础钳制：宽度不能超过最大值
+            if (newWidth > MaxPixelSize) newWidth = MaxPixelSize;
+
+            // 2. 长宽比联动检查
+            if (AspectRatioToggle.IsChecked == true)
+            {
+                int calculatedHeight = (int)Math.Round(newWidth / _originalRatio);
+
+                // 3. 【关键】如果算出的高度超标，需要以高度为限制反推宽度
+                if (calculatedHeight > MaxPixelSize)
+                {
+                    calculatedHeight = MaxPixelSize;
+                    newWidth = (int)Math.Round(calculatedHeight * _originalRatio);
+                }
+
+                ImageHeight = calculatedHeight;
+                HeightTextBox.Text = calculatedHeight.ToString();
+                HeightSlider.Value = ScaleToSlider((double)calculatedHeight / _originalHeight);
+            }
+
+            // 4. 更新宽度相关 UI
+            ImageWidth = newWidth;
+            double scale = (double)newWidth / _originalWidth;
+
+            if (!fromSlider)
+            {
+                WidthSlider.Value = ScaleToSlider(scale);
+            }
+
+            // 如果是用户输入的数字超标被钳制了，这里会把 TextBox 里的字变回 16384
+            // fromSlider 时也要更新 Text，防止 Slider 拖到顶显示 20000 但实际是 16384
+            WidthTextBox.Text = newWidth.ToString();
+
+            UpdateInfoText();
+            _isUpdating = false;
+        }
+
+        // 统一处理高度变更
+        private void OnHeightChanged(int newHeight, bool fromSlider)
+        {
+            if (_isUpdating) return;
+            _isUpdating = true;
+
+            // 1. 基础钳制
+            if (newHeight > MaxPixelSize) newHeight = MaxPixelSize;
+
+            // 2. 长宽比联动
+            if (AspectRatioToggle.IsChecked == true)
+            {
+                int calculatedWidth = (int)Math.Round(newHeight * _originalRatio);
+
+                // 3. 【关键】如果算出的宽度超标，以宽度为限反推高度
+                if (calculatedWidth > MaxPixelSize)
+                {
+                    calculatedWidth = MaxPixelSize;
+                    newHeight = (int)Math.Round(calculatedWidth / _originalRatio);
+                }
+
+                ImageWidth = calculatedWidth;
+                WidthTextBox.Text = calculatedWidth.ToString();
+                WidthSlider.Value = ScaleToSlider((double)calculatedWidth / _originalWidth);
+            }
+
+            // 4. 更新高度相关 UI
+            ImageHeight = newHeight;
+            double scale = (double)newHeight / _originalHeight;
+
+            if (!fromSlider)
+            {
+                HeightSlider.Value = ScaleToSlider(scale);
+            }
+
+            HeightTextBox.Text = newHeight.ToString();
+
+            UpdateInfoText();
+            _isUpdating = false;
+        }
+
+        // --- 事件处理 ---
+
+        private void WidthSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isUpdating) return;
+            double scale = SliderToScale(WidthSlider.Value);
+            int newWidth = (int)Math.Round(_originalWidth * scale);
+            // 限制最小 1px
+            newWidth = Math.Max(1, newWidth);
+            OnWidthChanged(newWidth, true);
+        }
+
+        private void HeightSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isUpdating) return;
+            double scale = SliderToScale(HeightSlider.Value);
+            int newHeight = (int)Math.Round(_originalHeight * scale);
+            newHeight = Math.Max(1, newHeight);
+            OnHeightChanged(newHeight, true);
+        }
+
+        private void WidthTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_isUpdating) return;
+            if (int.TryParse(WidthTextBox.Text, out int w) && w > 0)
+            {
+                OnWidthChanged(w, false);
+            }
+        }
+
+        private void HeightTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_isUpdating) return;
+            if (int.TryParse(HeightTextBox.Text, out int h) && h > 0)
+            {
+                OnHeightChanged(h, false);
+            }
+        }
+
+        private void AspectRatioToggle_Click(object sender, RoutedEventArgs e)
+        {
+            // 点击锁链时，立即根据当前宽度重新计算高度以对齐
+            if (AspectRatioToggle.IsChecked == true)
+            {
+                if (int.TryParse(WidthTextBox.Text, out int w))
+                {
+                    OnWidthChanged(w, false); // 强制触发一次同步
+                }
+            }
+        }
+
+        private void ModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return; // 防止初始化触发
+
+            IsCanvasResizeMode = ModeComboBox.SelectedIndex == 1;
+
+            if (IsCanvasResizeMode)
+            {
+                InfoTextBlock.Text = "画布模式：仅改变画布大小，不拉伸图像";
+            }
+            else
+            {
+                // AspectRatioToggle.IsChecked = true;
+                InfoTextBlock.Text = "缩放模式：拉伸/压缩图像内容";
+            }
+        }
+
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // 验证输入
-            if (!int.TryParse(WidthTextBox.Text, out int newWidth) || newWidth <= 0)
+            // 最终校验
+            if (ImageWidth > MaxPixelSize || ImageHeight > MaxPixelSize)
             {
-                MessageBox.Show("请输入有效的正整数宽度。", "输入无效", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"图片尺寸不能超过 {MaxPixelSize}像素。", "尺寸过大", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                // 强制修正回来
+                if (ImageWidth > MaxPixelSize) OnWidthChanged(MaxPixelSize, false);
+                else if (ImageHeight > MaxPixelSize) OnHeightChanged(MaxPixelSize, false);
                 return;
             }
 
-            if (!int.TryParse(HeightTextBox.Text, out int newHeight) || newHeight <= 0)
+            if (ImageWidth > 0 && ImageHeight > 0)
             {
-                MessageBox.Show("请输入有效的正整数高度。", "输入无效", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                DialogResult = true;
             }
+            else
+            {
+                MessageBox.Show("尺寸必须大于0", "错误");
+            }
+        }
 
-            // 将验证后的值存入公共属性
-            ImageWidth = newWidth;
-            ImageHeight = newHeight;
-
-            // 设置 DialogResult 为 true，这会自动关闭窗口并向调用者表示成功
-            this.DialogResult = true;
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

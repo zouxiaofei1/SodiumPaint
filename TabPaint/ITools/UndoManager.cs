@@ -154,6 +154,12 @@ namespace TabPaint
                 // === 原有逻辑：处理选区清理 ===
                 if (mw._router.CurrentTool is SelectTool sselTool && sselTool.HasActiveSelection)
                 {
+                    if (sselTool.IsPasted)
+                    {
+                        sselTool.Cleanup(mw._ctx);
+                        mw.SetCropButtonState();
+                        return; // 直接返回，不执行下面的 Stack Pop
+                    }
                     if (!sselTool._hasLifted)
                     {
                         sselTool.Cleanup(mw._ctx);

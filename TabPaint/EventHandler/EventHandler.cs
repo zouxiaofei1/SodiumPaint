@@ -109,6 +109,7 @@ namespace TabPaint
 
             if (IsShortcut("Tool.SwitchToPick", e))
             {
+                LastTool = _router.CurrentTool;
                 _router.SetTool(_tools.Eyedropper);
                 e.Handled = true; return;
             }
@@ -216,7 +217,7 @@ namespace TabPaint
                         break;
                     case Key.A:
                         _router.SetTool(_tools.Select);
-                        if (_tools.Select is SelectTool stSelectAll) stSelectAll.SelectAll(_ctx);
+                        if (_tools.Select is SelectTool stSelectAll) stSelectAll.SelectAll(_ctx,false);
                         e.Handled = true;
                         break;
                 }

@@ -211,7 +211,6 @@ namespace TabPaint
             {
                 var color = dlg.SelectedColor;
                 var brush = new SolidColorBrush(color);
-                //a.s(color.R,color.G,color.B, color.A);
                 SelectedBrush = brush;
 
                 _ctx.PenColor = color;

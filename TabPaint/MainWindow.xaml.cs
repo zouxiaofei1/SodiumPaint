@@ -382,7 +382,7 @@ namespace TabPaint
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale * 0.98;
               
-                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale; a.s(fitScale,zoomscale);
+                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
               
                 _canvasResizer.UpdateUI();
@@ -625,8 +625,7 @@ namespace TabPaint
             _router.CleanUpSelectionandShape();
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
-                // 注意：在大跨度跳跃时，可能不需要每张都存，视需求而定。
-                // 这里保留逻辑，防止丢失修改。
+          
                 SaveBitmap(_currentFilePath);
                 _isEdited = false;
             }

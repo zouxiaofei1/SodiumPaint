@@ -22,6 +22,93 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void ResizeCanvasDimensions(int newWidth, int newHeight)
+        {
+            var oldBitmap = _surface.Bitmap;
+            if (oldBitmap == null) return;
+            if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight) return;
+
+            int oldW = oldBitmap.PixelWidth;
+            int oldH = oldBitmap.PixelHeight;
+
+            // --- 1. 捕获 Undo 数据 (旧图全貌) ---
+            var undoRect = new Int32Rect(0, 0, oldW, oldH);
+            // 使用你现有的 ExtractRegion 方法或 CopyPixels
+            byte[] undoPixels = new byte[oldH * oldBitmap.BackBufferStride];
+            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
+
+            // --- 2. 创建新位图 ---
+            var newBitmap = new WriteableBitmap(newWidth, newHeight, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
+
+            // --- 3. 填充背景色 (白色) ---
+            // 如果不填充，WriteableBitmap 默认为透明。根据你的应用习惯填充白色。
+            int newStride = newBitmap.BackBufferStride;
+            byte[] whiteBg = new byte[newHeight * newStride];
+            for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = 255; // 简单的全白填充
+            newBitmap.WritePixels(new Int32Rect(0, 0, newWidth, newHeight), whiteBg, newStride, 0);
+
+            // --- 4. 计算居中位置 ---
+            // 计算旧图在新图中的左上角坐标
+            int destX = (newWidth - oldW) / 2;
+            int destY = (newHeight - oldH) / 2;
+
+            // --- 5. 计算有效的复制区域 (Intersection) ---
+            // 只有当旧图和新图重叠的部分才需要复制
+            int srcX = 0;
+            int srcY = 0;
+            int copyW = oldW;
+            int copyH = oldH;
+
+            // 如果新图比旧图小（裁剪），需要调整源起始点和复制大小
+            if (destX < 0)
+            {
+                srcX = -destX;      // 源图左边被裁掉的部分
+                copyW = newWidth;   // 复制宽度等于新图宽度
+                destX = 0;          // 在新图中从 0 开始贴
+            }
+            if (destY < 0)
+            {
+                srcY = -destY;
+                copyH = newHeight;
+                destY = 0;
+            }
+
+            // 确保不越界
+            copyW = Math.Min(copyW, oldW - srcX);
+            copyH = Math.Min(copyH, oldH - srcY);
+
+            if (copyW > 0 && copyH > 0)
+            {
+                // 提取旧图中需要保留的部分
+                var srcRect = new Int32Rect(srcX, srcY, copyW, copyH);
+                byte[] sourcePixels = new byte[copyH * oldBitmap.BackBufferStride]; // 这里的 Stride 还是旧图的
+                oldBitmap.CopyPixels(srcRect, sourcePixels, oldBitmap.BackBufferStride, 0);
+
+                // 写入新图的指定位置
+                var destRect = new Int32Rect(destX, destY, copyW, copyH);
+                newBitmap.WritePixels(destRect, sourcePixels, oldBitmap.BackBufferStride, 0);
+            }
+
+            // --- 6. 捕获 Redo 数据 (新图全貌) ---
+            var redoRect = new Int32Rect(0, 0, newWidth, newHeight);
+            byte[] redoPixels = new byte[newHeight * newBitmap.BackBufferStride];
+            newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
+
+            // --- 7. 更新 UI 和状态 ---
+            _surface.ReplaceBitmap(newBitmap);
+            _bitmap = newBitmap;
+
+            // 记录到撤销栈
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
+
+            NotifyCanvasSizeChanged(newWidth, newHeight);
+            NotifyCanvasChanged();
+            SetUndoRedoButtonState();
+
+            // 自动适应窗口或更新滚动条位置
+            // EnsureEdgeVisible(new Rect(0, 0, newWidth, newHeight)); // 可选
+        }
+
         private void ApplyTransform(System.Windows.Media.Transform transform)
         {
             if (BackgroundImage.Source is not BitmapSource src || _surface?.Bitmap == null)

@@ -140,6 +140,7 @@ namespace TabPaint
                 if (_selectionData != null) CommitSelection(ctx);
 
                 if (sourceBitmap == null) return;
+                IsPasted = true;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
 
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
@@ -170,8 +171,6 @@ namespace TabPaint
                         rawPixels,
                         stride);
                 }
-                // --- FIX END ---
-
                 int imgW = sourceBitmap.PixelWidth;
                 int imgH = sourceBitmap.PixelHeight;
                 int canvasW = ctx.Surface.Bitmap.PixelWidth;
@@ -195,6 +194,7 @@ namespace TabPaint
                         byte* p = (byte*)newBmp.BackBuffer;
                         int totalBytes = newBmp.BackBufferStride * newBmp.PixelHeight;
                         for (int i = 0; i < totalBytes; i++) p[i] = 255;
+                        newBmp.AddDirtyRect(new Int32Rect(0, 0, newW, newH));
                     }
                     newBmp.Unlock();
 
@@ -205,6 +205,7 @@ namespace TabPaint
                     mw.UpdateSelectionScalingMode();
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
                     mw.NotifyCanvasSizeChanged(newW, newH);
+                   // mw._canvasResizer.UpdateUI();
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
                 }
@@ -316,24 +317,46 @@ namespace TabPaint
             }
 
 
+            // 替换 SelectTool 类中的 SelectAll 方法
             public void SelectAll(ToolContext ctx, bool cut = true)
             {
                 if (ctx.Surface?.Bitmap == null) return;
+                IsPasted = false;
+                // 1. 彻底重置预览控件的状态 (修复全白/错位的核心)
+                ctx.SelectionPreview.Clip = null;             // 清除残留的裁剪
+                ctx.SelectionPreview.RenderTransform = null;  // 清除残留的位移/缩放
+                Canvas.SetLeft(ctx.SelectionPreview, 0);      // 归位布局坐标
+                Canvas.SetTop(ctx.SelectionPreview, 0);       // 归位布局坐标
 
                 _selectionRect = new Int32Rect(0, 0,
-            ctx.Surface.Bitmap.PixelWidth,
-            ctx.Surface.Bitmap.PixelHeight);
+                    ctx.Surface.Bitmap.PixelWidth,
+                    ctx.Surface.Bitmap.PixelHeight);
                 _originalRect = _selectionRect;
 
                 // 提取整幅像素
                 _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
+
+                // 如果提取失败或为空，直接返回
                 if (_selectionData == null || _selectionData.Length < _selectionRect.Width * _selectionRect.Height * 4)
                     return;
+
+                // Undo 记录逻辑
                 ctx.Undo.BeginStroke();
                 ctx.Undo.AddDirtyRect(_selectionRect);
-                ctx.Undo.CommitStroke(); // 保存这部分像素到栈
+                ctx.Undo.CommitStroke();
 
-                if (cut) ClearRect(ctx, _selectionRect, ctx.EraserColor);
+                // 只有在 cut=true 时才擦除原画板 (注意：通常 Ctrl+A 不应该立即擦除，除非你设计如此)
+                // 建议调用端 Ctrl+A 时传入 false，只有移动时才擦除，但这里保留你的逻辑
+                if (cut)
+                {
+                    ClearRect(ctx, _selectionRect, ctx.EraserColor);
+                    _hasLifted = true; // 标记已经提起来了
+                }
+                else
+                {
+                    _hasLifted = false;
+                }
+
                 // 创建预览位图
                 var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
                     ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
@@ -345,14 +368,16 @@ namespace TabPaint
                 ctx.SelectionPreview.Source = previewBmp;
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
 
-                // 放在画布左上角
-                Canvas.SetLeft(ctx.SelectionPreview, 0);
-                Canvas.SetTop(ctx.SelectionPreview, 0);
+                // 初始化变换状态
+                ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
+                _transformStep = 0;
 
                 // 绘制虚线框
                 DrawOverlay(ctx, _selectionRect);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
+
+
             public void CropToSelection(ToolContext ctx)
             {
                 if (_selectionData == null || _selectionRect.Width <= 0 || _selectionRect.Height <= 0) return;

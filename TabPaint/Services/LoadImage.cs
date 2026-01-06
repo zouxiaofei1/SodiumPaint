@@ -71,19 +71,29 @@ namespace TabPaint
                 string fileToLoad = filePath;
                 bool isFileLoadedFromCache = false;
                 string actualSourcePath = null; // 新增变量
-                // 检查是否有缓存
-                // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
-                if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
+                                                // 检查是否有缓存
+                                                // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
+                if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                 {
-                    if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
+                    // 显示一个小的加载状态或日志
+                    // Debug.WriteLine("Waiting for background save to finish...");
+                    try
                     {
                         await pendingSave;
                     }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("Wait save failed: " + ex.Message);
+                    }
+                }
 
+                // 等待结束后，重新检查 BackupPath，因为它刚刚被后台线程更新了！
+                if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
+                {
                     if (File.Exists(current.BackupPath))
                     {
-                        // 不要修改 filePath，而是记录实际来源
                         actualSourcePath = current.BackupPath;
+                        // Debug.WriteLine($"Restoring from backup: {actualSourcePath}");
                     }
                 }
                 await LoadImage(fileToLoad, actualSourcePath,lazyload);

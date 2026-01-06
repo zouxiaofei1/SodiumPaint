@@ -491,20 +491,37 @@ namespace TabPaint
         private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;
-            var dialog = new ResizeCanvasDialog(// 1. 创建并配置对话框
+
+            // 1. 创建并配置对话框
+            var dialog = new ResizeCanvasDialog(
                 _surface.Bitmap.PixelWidth,
                 _surface.Bitmap.PixelHeight
             );
-            dialog.Owner = this; // 设置所有者，使对话框显示在主窗口中央
+            dialog.Owner = this; // 设置所有者
+
             if (dialog.ShowDialog() == true)
             {
                 int newWidth = dialog.ImageWidth;
                 int newHeight = dialog.ImageHeight;
 
-                ResizeCanvas(newWidth, newHeight);
+                // 2. 根据模式分流逻辑
+                if (dialog.IsCanvasResizeMode)
+                {
+                    ResizeCanvasDimensions(newWidth, newHeight);
+                }
+                else
+                {
+                    // 模式 B：缩放图像 (拉伸像素，你原有的 ResizeCanvas 方法)
+                    ResizeCanvas(newWidth, newHeight);
+                }
+
                 CheckDirtyState();
+
+                // 确保 UI 组件（如 ResizeOverlay）更新
+                if (_canvasResizer != null) _canvasResizer.UpdateUI();
             }
         }
+
 
         private void OnNewClick(object sender, RoutedEventArgs e)
         {

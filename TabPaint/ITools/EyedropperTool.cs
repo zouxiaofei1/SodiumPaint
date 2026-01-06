@@ -45,16 +45,18 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
+                MainWindow  mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (mw.IsViewMode) return;
                 var px = ctx.ToPixel(viewPos);
                 // 添加边界检查，防止点击画布外崩溃
                 if (px.X >= 0 && px.Y >= 0 && px.X < ctx.Surface.Bitmap.PixelWidth && px.Y < ctx.Surface.Bitmap.PixelHeight)
                 {
                     ctx.PenColor = ctx.Surface.GetPixel((int)px.X, (int)px.Y);
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateCurrentColor(ctx.PenColor, ((MainWindow)System.Windows.Application.Current.MainWindow).useSecondColor);
+                   mw.UpdateCurrentColor(ctx.PenColor, mw.useSecondColor);
 
                     // 取色后自动切回上一个工具
-                    ((MainWindow)System.Windows.Application.Current.MainWindow)._router.SetTool(((MainWindow)System.Windows.Application.Current.MainWindow).LastTool);
+                    if(mw.LastTool!=null)
+                        mw._router.SetTool(mw.LastTool);
                 }
             }
         }

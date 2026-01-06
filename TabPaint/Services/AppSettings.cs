@@ -13,6 +13,12 @@ namespace TabPaint
         Fant,        // 高质量幻像 (WPF HighQualityBicubic 类似)
         HighQuality  // 通用高质量
     }
+    public enum SelectionClearMode
+    {
+        Transparent,    // 透明底 (RGBA: 0,0,0,0)
+        White,          // 白底 (RGBA: 255,255,255,255)
+        PreserveAlpha   // 不改变Alpha (只修改RGB，保留原透明度)
+    }
     public enum MouseWheelMode
     {
         Zoom,          // 缩放 (默认)
@@ -110,6 +116,21 @@ namespace TabPaint
     }
     public class AppSettings : INotifyPropertyChanged
     {
+        private SelectionClearMode _selectionClearMode = SelectionClearMode.White; // 默认白底
+
+        [JsonPropertyName("selection_clear_mode")]
+        public SelectionClearMode SelectionClearMode
+        {
+            get => _selectionClearMode;
+            set
+            {
+                if (_selectionClearMode != value)
+                {
+                    _selectionClearMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private bool _startInViewMode = false; // 默认关闭，即启动为画图模式
 
         [JsonPropertyName("start_in_view_mode")]
