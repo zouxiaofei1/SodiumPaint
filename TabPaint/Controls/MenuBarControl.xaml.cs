@@ -114,7 +114,14 @@ namespace TabPaint.Controls
         
             UpdateRecentFilesMenu();
         }
+        public event RoutedEventHandler NewTabClick;
 
+
+
+        private void OnNewTabClick(object sender, RoutedEventArgs e)
+        {
+            NewTabClick?.Invoke(this, e);
+        }
         private void UpdateRecentFilesMenu()
         {
             RecentFilesMenuItem.Items.Clear();

@@ -215,6 +215,7 @@ namespace TabPaint
             }
             UpdateImageBarSliderState();
             UpdateWindowTitle();
+            UpdateImageBarVisibilityState();
         }
 
 

@@ -131,6 +131,11 @@
                 <Button ToolTip="重做" x:Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path x:Name="RedoIcon" Data="{DynamicResource Redo_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
                 </Button>
+                <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="6,4"/>
+
+                <Button Margin="0,0,6,0" ToolTip="新建标签页" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                    <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Stretch="Uniform" Fill="#333" Width="12" Height="12"/>
+                </Button>
             </StackPanel>
 
             <Button DockPanel.Dock="Right" Margin="10,5" Padding="2" ToolTip="设置" Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">

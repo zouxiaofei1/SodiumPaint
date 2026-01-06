@@ -36,30 +36,33 @@ namespace TabPaint
             _workingPath = path;
             _currentFilePath = path;
 
+            // s(_currentImageIndex);
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent();
             if (SettingsManager.Instance.Current.StartInViewMode)
             {
                 IsViewMode = true;
-                ThicknessPanel.Visibility =  Visibility.Collapsed;
-                OpacityPanel.Visibility =Visibility.Collapsed;
+                ThicknessPanel.Visibility = Visibility.Collapsed;
+                OpacityPanel.Visibility = Visibility.Collapsed;
             }
             this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
-            InitDebounceTimer(); 
+            InitDebounceTimer();
             InitWheelLockTimer();
             Loaded += MainWindow_Loaded;
 
             InitializeAutoSave();
 
-            this.Focusable = true; 
+            this.Focusable = true;
         }
 
-     
+
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
-           InitializeLazyControls();
-      if(IsViewMode) OnModeChanged(true, isSilent: true);
+            InitializeLazyControls();
+
+         
+            if (IsViewMode) OnModeChanged(true, isSilent: true);
 
             MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
             {
@@ -76,18 +79,18 @@ namespace TabPaint
                 SetZoom(targetScale);
             };
 
-         
+
             SetBrushStyle(BrushStyle.Round);
-            SetCropButtonState();   
-           _canvasResizer = new CanvasResizeManager(this);;
+            SetCropButtonState();
+            _canvasResizer = new CanvasResizeManager(this); ;
             // 1. 先加载上次会话 (Tabs结构)
             LoadSession();
             if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
             {
                 _currentFilePath = FindFirstImageInDirectory(_currentFilePath);
             }
-            
-           
+
+
             if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath)))
             {
                 // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
@@ -101,7 +104,7 @@ namespace TabPaint
                     {
                         BlanketMode = true;
                         CreateNewTab(TabInsertPosition.AfterCurrent, true);
-                        
+
                     }
                     else SwitchToTab(FileTabs[0]);
                 }
@@ -129,7 +132,7 @@ namespace TabPaint
         {
             base.OnSourceInitialized(e); // 建议保留 base 调用
 
-            MicaAcrylicManager.ApplyEffect(this); 
+            MicaAcrylicManager.ApplyEffect(this);
             MicaEnabled = true;
             //this.Show();
             InitializeClipboardMonitor();
@@ -139,7 +142,7 @@ namespace TabPaint
             {
                 src.CompositionTarget.BackgroundColor = Colors.Transparent;
             }
-           
+
             // 初始化 Mica
 
         }
@@ -155,12 +158,13 @@ namespace TabPaint
         // 修改为 async void，以便使用 await
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-          
-            await Task.Yield();  
-            
+
+            await Task.Yield();
+
             this.Focus();
             try
             {
+
                 _deleteCommitTimer = new System.Windows.Threading.DispatcherTimer();
                 _deleteCommitTimer.Interval = TimeSpan.FromSeconds(2); // 2秒
                 _deleteCommitTimer.Tick += (s, e) => CommitPendingDeletions();
@@ -208,7 +212,7 @@ namespace TabPaint
             }
             finally
             {
-               
+
                 _isInitialLayoutComplete = true;
                 if (FileTabs.Count > 0)
                 {
@@ -301,7 +305,7 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff",".gif" ,".heic", ".tif" ,".jfif"};
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
@@ -366,10 +370,10 @@ namespace TabPaint
 
         private void FitToWindow(double addscale = 1)
         {
-            if (SettingsManager.Instance.Current.IsFixedZoom&& _firstFittoWindowdone) return;
+            if (SettingsManager.Instance.Current.IsFixedZoom && _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
-           
+
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
                 //s(ScrollContainer.ViewportWidth);
@@ -381,12 +385,12 @@ namespace TabPaint
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale * 0.98;
-              
+
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
-              
+
                 _canvasResizer.UpdateUI();
-                _firstFittoWindowdone=true;
+                _firstFittoWindowdone = true;
             }
         }
         private async void PasteClipboardAsNewTab()
@@ -546,46 +550,46 @@ namespace TabPaint
             BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
         }
 
-    private void InitializeToastTimer()
-    {
-        _toastTimer = new DispatcherTimer();
-        _toastTimer.Interval = TimeSpan.FromMilliseconds(ToastDuration);
-        _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
-    }
-
-    private void ShowToast(string message)
-    {
-        if (_toastTimer == null) InitializeToastTimer();
-        _toastTimer.Stop();
-        InfoToastText.Text = message;
-
-        if (InfoToast.Opacity < 1.0)
+        private void InitializeToastTimer()
         {
-            InfoToast.BeginAnimation(OpacityProperty, null);
-
-            DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
-            fadeIn.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
-            InfoToast.BeginAnimation(OpacityProperty, fadeIn);
-        }
-        else
-        {
+            _toastTimer = new DispatcherTimer();
+            _toastTimer.Interval = TimeSpan.FromMilliseconds(ToastDuration);
+            _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
         }
 
-        // 4. 重新开始倒计时（重置停留时间）
-        _toastTimer.Start();
-    }
+        private void ShowToast(string message)
+        {
+            if (_toastTimer == null) InitializeToastTimer();
+            _toastTimer.Stop();
+            InfoToastText.Text = message;
 
-    // 独立的淡出方法
-    private void HideToast()
-    {
-        _toastTimer.Stop(); // 停止计时器
+            if (InfoToast.Opacity < 1.0)
+            {
+                InfoToast.BeginAnimation(OpacityProperty, null);
 
-        DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
-        // 缓动效果（可选）
-        fadeOut.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn };
+                DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
+                fadeIn.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+                InfoToast.BeginAnimation(OpacityProperty, fadeIn);
+            }
+            else
+            {
+            }
 
-        InfoToast.BeginAnimation(OpacityProperty, fadeOut);
-    }
+            // 4. 重新开始倒计时（重置停留时间）
+            _toastTimer.Start();
+        }
+
+        // 独立的淡出方法
+        private void HideToast()
+        {
+            _toastTimer.Stop(); // 停止计时器
+
+            DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
+            // 缓动效果（可选）
+            fadeOut.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn };
+
+            InfoToast.BeginAnimation(OpacityProperty, fadeOut);
+        }
 
         private DateTime _navKeyPressStartTime = DateTime.MinValue;
         // 标记是否正在进行连续导航
@@ -625,7 +629,7 @@ namespace TabPaint
             _router.CleanUpSelectionandShape();
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
-          
+
                 SaveBitmap(_currentFilePath);
                 _isEdited = false;
             }
@@ -810,13 +814,13 @@ namespace TabPaint
             // 核心逻辑：只要当前缩放 >= 阈值，就用邻近插值（像素风），否则用线性插值（模糊平滑）
             if (zoomscale >= threshold)
             {
-                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.NearestNeighbor)RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
-                
+                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.NearestNeighbor) RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
+
             }
             else
             {
-                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.Linear)RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
-                
+                if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.Linear) RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
+
             }
         }
 
@@ -859,7 +863,7 @@ namespace TabPaint
 
         public void UpdateSelectionScalingMode()
         {
-            
+
             if (SelectionPreview == null) return;
 
             double currentZoomPercent = ZoomTransform.ScaleX * 100.0;
@@ -881,5 +885,62 @@ namespace TabPaint
         {
             if (!_programClosed) OnClosing();
         }
+        public bool IsTransferringSelection { get; private set; } = false;
+
+        // 暂存传输的选区数据
+        private byte[] _transferSelectionData;
+        private int _transferWidth;
+        private int _transferHeight;
+
+        public async void TransferSelectionToTab(FileTabItem targetTab, byte[] selectionData, int width, int height)
+        {
+            if (targetTab == null || targetTab == _currentTabItem) return;
+
+            // 1. 暂存数据
+            IsTransferringSelection = true;
+            _transferSelectionData = selectionData;
+            _transferWidth = width;
+            _transferHeight = height;
+
+            try
+            {
+                SwitchToTab(targetTab);
+            }
+            finally
+            {
+            }
+        }
+        public void RestoreTransferredSelection()
+        {
+            if (IsTransferringSelection && _transferSelectionData != null && _surface != null)
+            {
+                // 构造 BitmapSource
+                var bmp = BitmapSource.Create(_transferWidth, _transferHeight,
+                    _surface.Bitmap.DpiX, _surface.Bitmap.DpiY,
+                    PixelFormats.Bgra32, null, _transferSelectionData, _transferWidth * 4);
+
+                SelectTool st = _router.GetSelectTool();
+                st.ForceDragState();
+
+                // 清理标志
+                IsTransferringSelection = false;
+                _transferSelectionData = null;
+            }
+        }
+        private void UpdateImageBarVisibilityState()
+        {
+            if (MainImageBar == null || FileTabs == null) return;
+
+
+            bool isSingle = FileTabs.Count <= 1;
+
+            // 只有当状态真正改变时才赋值，避免重复触发动画
+            if (MainImageBar.IsSingleTabMode != isSingle)
+            {
+
+                MainImageBar.IsSingleTabMode = isSingle;
+            }
+        }
+
     }
 }

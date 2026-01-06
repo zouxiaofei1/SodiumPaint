@@ -15,30 +15,30 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="40" Background="#90FFFFFF" AllowDrop="True">
-        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,4,1,0">
+    <Border Height="50" Background="#90FFFFFF" AllowDrop="True">
+        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,7">
             <!-- 基础工具 -->
             <Button Margin="6,0,1,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔" Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="PenIcon" x:FieldModifier="public" Data="{DynamicResource Pencil_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16" Cursor=""/>
             </Button>
 
-            <Button Margin="1,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色" Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色" Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="PickColorIcon" x:FieldModifier="public" Data="{DynamicResource Pick_Colour_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
             </Button>
 
-            <Button Margin="1,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="EraserIcon" x:FieldModifier="public" Data="{DynamicResource Eraser_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
             </Button>
 
-            <Button Margin="1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="4,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="SelectIcon" x:FieldModifier="public" Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
             </Button>
 
-            <Button Margin="1,0" Name="FillButton" x:FieldModifier="public" ToolTip="填充" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="填充" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="FillIcon" x:FieldModifier="public" Data="{DynamicResource Fill_Bucket_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
             </Button>
 
-            <Button Margin="1,0" Name="TextButton" x:FieldModifier="public" ToolTip="文字" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="文字" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="TextIcon" x:FieldModifier="public" Data="{DynamicResource Text_Image}" Stretch="Uniform" StrokeThickness="2"      StrokeStartLineCap="Round"  StrokeEndLineCap="Round"  StrokeLineJoin="Round"       Stroke="#333"   Fill="Transparent" Width="16" Height="16"/>
             </Button>
 
@@ -98,7 +98,7 @@
             </Grid>
 
             <!-- 形状菜单 -->
-            <Grid Margin="0,0,0,0">
+            <Grid Margin="4,0,4,0">
                 <ToggleButton x:Name="ShapeToggle" x:FieldModifier="public" ToolTip="形状" Style="{StaticResource DropDownButtonStyle}">
                     <!-- 主图标转为 Path -->
                     <Path x:Name="CurrentShapeIcon" x:FieldModifier="public" Data="{DynamicResource Shapes_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
@@ -316,7 +316,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Width="24" Height="24" Margin="2,0,1,0" 
+                        <Button Width="24" Height="24" Margin="2.5,0,1,0" 
                     Click="OnColorButtonClick_Forward" 
                     Background="{Binding}"
                     Cursor="Hand">

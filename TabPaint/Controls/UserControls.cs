@@ -33,7 +33,7 @@ namespace TabPaint
         private void InitializeLazyControls()
         {
             MainImageBar = new ImageBarControl();
-
+        
             var viewModeBinding = new Binding("IsViewMode") { Source = this, Mode = BindingMode.OneWay };
             BindingOperations.SetBinding(MainImageBar, ImageBarControl.IsViewModeProperty, viewModeBinding);
 
@@ -96,6 +96,7 @@ namespace TabPaint
             MainMenu.UndoClick += OnUndoClick;
             MainMenu.RedoClick += OnRedoClick;
             MainMenu.SettingsClick += OnSettingsClick;
+            MainMenu.NewTabClick += OnNewTabClick;
 
             // 注入到界面
             MenuBarHolder.Content = MainMenu;

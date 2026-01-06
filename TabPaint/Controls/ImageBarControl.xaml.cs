@@ -4,6 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Interop; // 用于 HwndSource
+using System.Runtime.InteropServices; // 用于处理底层消息
 using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
@@ -31,11 +33,62 @@ namespace TabPaint.Controls
     }
     public partial class ImageBarControl : UserControl
     {
+        private const int WM_MOUSEHWHEEL = 0x020E;
         public ImageBarControl()
         {
             InitializeComponent();
+            this.Loaded += ImageBarControl_Loaded;
+            this.Unloaded += ImageBarControl_Unloaded;
+        }
+        private void ImageBarControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 获取当前窗口的句柄源
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
+                source?.AddHook(WndProc);
+            }
         }
 
+        private void ImageBarControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // 清理钩子，防止内存泄漏
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
+                source?.RemoveHook(WndProc);
+            }
+        }
+
+        // 核心：消息处理函数
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // 只有当鼠标指针在这个控件上方时才处理，避免干扰其他区域
+            if (msg == WM_MOUSEHWHEEL && IsMouseOverControl(FileTabsScroller))
+            {
+                // 获取滚动的 Delta 值 (高位字)
+                int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+                FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + delta);
+
+                handled = true; // 标记消息已处理
+            }
+
+            return IntPtr.Zero;
+        }
+
+        // 辅助方法：判断鼠标是否在 ScrollViewer 区域内
+        private bool IsMouseOverControl(UIElement control)
+        {
+            if (control == null || !control.IsVisible) return false;
+
+            var mousePos = Mouse.GetPosition(control);
+            var bounds = new Rect(0, 0, control.RenderSize.Width, control.RenderSize.Height);
+
+            // 稍微放宽一点判定，或者严格判定
+            return bounds.Contains(mousePos);
+        }
         // ==========================================
         // 1. 暴露内部控件给 MainWindow (修复 "当前上下文中不存在名称" 的错误)
         // ==========================================
@@ -67,10 +120,7 @@ namespace TabPaint.Controls
         public event RoutedEventHandler NewTabClick { add { AddHandler(NewTabClickEvent, value); } remove { RemoveHandler(NewTabClickEvent, value); } }
         private void Internal_OnNewTabClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(NewTabClickEvent, sender));
 
-        // ==========================================
-        // 3. 标签与右键菜单事件
-        // ==========================================
-        // 注意：这里使用通用的路由事件转发
+
         public static readonly RoutedEvent FileTabClickEvent = EventManager.RegisterRoutedEvent("FileTabClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ImageBarControl));
         public event RoutedEventHandler FileTabClick { add { AddHandler(FileTabClickEvent, value); } remove { RemoveHandler(FileTabClickEvent, value); } }
         private void Internal_OnFileTabClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(FileTabClickEvent, e.OriginalSource)); // 保持 OriginalSource
@@ -112,7 +162,19 @@ namespace TabPaint.Controls
 
         // 滚动条与滑块
         public event MouseWheelEventHandler FileTabsWheelScroll;
-        private void Internal_OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e) => FileTabsWheelScroll?.Invoke(sender, e);
+        private void Internal_OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
+        {
+            var scroller = sender as ScrollViewer;
+            if (scroller == null) return;
+            a.s(e);
+            if (e.Delta != 0)
+            {
+                scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - e.Delta);
+
+                // 标记事件已处理，防止事件冒泡导致父容器(比如画布)也跟着滚动或缩放
+                e.Handled = true;
+            }
+        }
 
         public event ScrollChangedEventHandler FileTabsScrollChanged;
         private void Internal_OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e) => FileTabsScrollChanged?.Invoke(sender, e);
@@ -141,8 +203,44 @@ namespace TabPaint.Controls
         {
             e.Handled = true;
         }
+        public FileTabItem GetTabFromPoint(Point pointRelativeToWindow)
+        {
+            // 1. 坐标系转换：获取相对于 FileTabList（ItemsControl）的坐标
+            // 使用这种方式可以避开窗口装饰器导致的坐标偏移
+            Point pointInList = this.FileTabList.PointFromScreen(this.PointToScreen(new Point(0, 0)));
+            Point mousePosInList = this.FileTabList.PointFromScreen(this.PointToScreen(pointRelativeToWindow));
+            if (pointRelativeToWindow.Y > 220) return null;
+            // 2. 遍历当前可见的 Tab 容器
+            for (int i = 0; i < FileTabList.Items.Count; i++)
+            {
+                // 获取 UI 容器 (即 DataTemplate 里的那个 Grid/Button)
+                var container = FileTabList.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
+                if (container == null) continue;
+
+                // 获取该 Tab 相对于 FileTabList 的位置
+                Point relativePos = container.TranslatePoint(new Point(0, 0), FileTabList);
+                Rect bounds = new Rect(relativePos.X, relativePos.Y+110, container.ActualWidth, container.ActualHeight);
+
+                // 3. 判定鼠标坐标是否在这个 Tab 的矩形范围内
+                if (bounds.Contains(mousePosInList))
+                {
+                    return FileTabList.Items[i] as FileTabItem;
+                }
+            }
+
+            return null;
+        }
 
 
+
+        public static readonly DependencyProperty IsSingleTabModeProperty =
+    DependencyProperty.Register("IsSingleTabMode", typeof(bool), typeof(ImageBarControl), new PropertyMetadata(false));
+
+        public bool IsSingleTabMode
+        {
+            get { return (bool)GetValue(IsSingleTabModeProperty); }
+            set { SetValue(IsSingleTabModeProperty, value); }
+        }
         public event DragEventHandler FileTabLeave;
         // 1. DragOver: 计算位置并显示竖线
            private void Internal_OnFileTabDragLeave(object sender, DragEventArgs e) => FileTabLeave?.Invoke(sender, e);

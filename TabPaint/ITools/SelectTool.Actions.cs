@@ -131,8 +131,22 @@ namespace TabPaint
                 DeleteSelection(ctx);
 
             }
-
-            // 在 SelectTool 类中添加
+            private DateTime _hoverStartTime;
+            private FileTabItem _lastHoveredTab;
+            private bool _isHoveringForSwitch = false;
+            public void ForceDragState()
+            {
+                if (_selectionData != null)
+                {
+                    _hasLifted = true; // 视为已经浮起
+                    _draggingSelection = true; 
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                        var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                        _clickOffset = new Point(_selectionRect.Width / 2, _selectionRect.Height / 2);
+                        Mouse.Capture(mw.CanvasWrapper);
+                    });
+                }
+            }
             public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true)
             {
                
@@ -507,18 +521,52 @@ namespace TabPaint
                 ctx.ViewElement.CaptureMouse();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
-
+            
             public bool _hasLifted = false;
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
+                ctxForTimer = ctx; // 缓存 Context 供 Timer 使用
+                EnsureTimer();
                 if ((_selecting || _draggingSelection || _resizing) &&
         Mouse.LeftButton == MouseButtonState.Released)
                 {
+                    ResetSwitchTimer();
                     OnPointerUp(ctx, viewPos);
                     return;
                 }
                 var px = ctx.ToPixel(viewPos);
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (_draggingSelection && _selectionData != null)
+                {
+                    // 1. 坐标转换
+                    Point windowPos = ctx.ViewElement.TranslatePoint(viewPos, mw);
 
+                    // 2. 获取 Tab
+                    var targetTab = mw.MainImageBar.GetTabFromPoint(windowPos);
+
+                    if (targetTab != null && targetTab != mw._currentTabItem)
+                    {
+                        // 如果鼠标移动到了一个新的 Tab 上
+                        if (_pendingTab != targetTab)
+                        {
+                            _pendingTab = targetTab;
+                            _hoverStartTime = DateTime.Now;
+                            _tabSwitchTimer.Start(); // 启动定时器！
+                        }
+                    }
+                    else
+                    {
+                        if (_pendingTab != null)
+                        {
+                            ResetSwitchTimer(); 
+                        }
+                    }
+                }
+                else
+                {
+                    // 如果没在拖拽，确保 Timer 是关掉的
+                    if (_pendingTab != null) ResetSwitchTimer();
+                }
                 // 光标样式
                 if (_selectionData != null)
                 {

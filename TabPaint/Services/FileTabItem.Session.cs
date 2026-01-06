@@ -647,6 +647,7 @@ namespace TabPaint
                         }
                     }
                 }
+                UpdateImageBarVisibilityState();
             }
             catch (Exception ex)
             {
@@ -728,7 +729,7 @@ namespace TabPaint
             {
                 SwitchToTab(newTab); // 建议封装一下切换逻辑
             }
-
+            UpdateImageBarVisibilityState();
             UpdateImageBarSliderState();
         }
 
@@ -747,7 +748,10 @@ namespace TabPaint
                     UpdateTabThumbnail(_currentTabItem);
                 }
             }
-            _router.CleanUpSelectionandShape();
+            if (!IsTransferringSelection)
+            {
+                _router.CleanUpSelectionandShape();
+            }
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
 
@@ -765,6 +769,12 @@ namespace TabPaint
             ResetDirtyTracker();
             _currentTabItem = tab;//删除会导致创建未命名→不绘画→切回原图失败bug
             UpdateWindowTitle();
+            if (IsTransferringSelection)
+            {
+                // 等待一下 UI 布局更新（可选）
+                await Task.Delay(50);
+                RestoreTransferredSelection();
+            }
         }
 
         // 放在 MainWindow 内部

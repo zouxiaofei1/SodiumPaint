@@ -66,7 +66,7 @@ namespace TabPaint
                     current.IsSelected = true;
                     _currentTabItem = current;
                 }
-
+                UpdateImageBarVisibilityState();
                 // --- 智能加载逻辑 ---
                 string fileToLoad = filePath;
                 bool isFileLoadedFromCache = false;
@@ -190,7 +190,7 @@ namespace TabPaint
                 if (IsVirtualPath(filePath) || string.IsNullOrEmpty(filePath)) return;
 
                 string folder = System.IO.Path.GetDirectoryName(filePath)!;
-
+                if (!File.Exists(_currentFilePath) && !Directory.Exists(_currentFilePath)) { MainImageBar.IsSingleTabMode = true; }
                 // 放到后台线程处理
                 var sortedFiles = await Task.Run(() =>
                 {
@@ -217,7 +217,6 @@ namespace TabPaint
 
                 _currentImageIndex = _imageFiles.IndexOf(filePath);
 
-                // UpdateImageNavigationUI(); 
             }
             catch (Exception ex)
             {

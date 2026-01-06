@@ -17,18 +17,46 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border x:Name="MainContainer" Background="#90FFFFFF" VerticalAlignment="Top" ClipToBounds="True">
+    <Border x:Name="MainContainer" Background="#90FFFFFF" VerticalAlignment="Top" ClipToBounds="True" Margin="0,0,0,0">
         <Border.Style>
             <Style TargetType="Border">
-                <Setter Property="Height" Value="100"/>
+                <Setter Property="Height" Value="5"/>
                 <Setter Property="Opacity" Value="1"/>
 
                 <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="True">
+                        <DataTrigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="0" Duration="0:0:0.3">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseInOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </DataTrigger.EnterActions>
+                        <DataTrigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <!-- 恢复时稍微慢一点 -->
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" Duration="0:0:0.3">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.3"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </DataTrigger.ExitActions>
+                    </DataTrigger>
 
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True"/>
                             <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
+                            <Condition Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="False"/>
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Opacity" Value="0.01"/>
                         <Setter Property="Height" Value="5"/>
@@ -43,6 +71,7 @@
                             <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
                             <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True"/>
                             <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
+                            <Condition Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="False"/>
                         </MultiDataTrigger.Conditions>
 
                         <MultiDataTrigger.EnterActions>
@@ -71,6 +100,7 @@
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="False"/>
+                            <Condition Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="False"/>
                         </MultiDataTrigger.Conditions>
 
                         <!-- 使用 EnterActions 里的 0秒动画 来强制覆盖掉上面 Trigger 的 ExitActions -->
@@ -92,7 +122,7 @@
             </Style>
         </Border.Style>
 
-        <Grid Background="Transparent" AllowDrop="True">
+        <Grid Background="Transparent" AllowDrop="True" Margin="0,-5,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
