@@ -40,7 +40,7 @@ namespace TabPaint
             public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.IBeam;
 
             private Int32Rect _textRect;
-            private System.Windows.Controls.TextBox _textBox;
+            public System.Windows.Controls.TextBox _textBox;
             private Point _startPos;
             private bool _dragging = false;
 
@@ -85,6 +85,17 @@ namespace TabPaint
                 lag = 0;
 
                 Mouse.OverrideCursor = null;
+            }
+            public void GiveUpText(ToolContext ctx)
+            {
+                bool hastext = (_textBox != null && !string.IsNullOrWhiteSpace(_textBox.Text));
+                Cleanup(ctx);
+                if (hastext)
+                {
+                    ctx.Undo.Undo();
+                    ctx.Undo._redo.Pop();
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                }
             }
 
             private List<Point> GetHandlePositions(Int32Rect rect)

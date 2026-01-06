@@ -301,9 +301,12 @@
 
 
 
-            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}"/>
-			<Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}"/>
-           
+            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
+
+            </Button>
+            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
+                
+            </Button>
             <ItemsControl ItemsSource="{Binding ColorItems}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

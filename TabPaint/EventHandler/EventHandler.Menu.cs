@@ -427,20 +427,16 @@ namespace TabPaint
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "选择图片以建立新工作区 (将清空当前画布)",
-                Filter = PicFilterString, // 使用你现有的图片过滤器
-                Multiselect = false       // 工作区切换通常基于单张图片或单文件夹
+                Title = "选择图片以建立新工作区",
+                Filter = PicFilterString,
+                Multiselect = false     
             };
 
             if (dlg.ShowDialog() == true)
             {
                 string file = dlg.FileName;
-
-                // 加入最近文件列表
                 SettingsManager.Instance.AddRecentFile(file);
 
-                // 调用你已有的切换工作区逻辑 (与拖拽到标题栏的逻辑一致)
-                // 注意：SwitchWorkspaceToNewFile 应该是 async 的
                 await SwitchWorkspaceToNewFile(file);
             }
         }
@@ -490,6 +486,7 @@ namespace TabPaint
             ConvertToBlackAndWhite(_bitmap);
             CheckDirtyState();
             SetUndoRedoButtonState();
+            ShowToast("已应用黑白");
         }
         private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
         {

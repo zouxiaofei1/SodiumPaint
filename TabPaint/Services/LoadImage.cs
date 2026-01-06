@@ -28,13 +28,13 @@ namespace TabPaint
         private bool _isProcessingQueue = false;
         private CancellationTokenSource _loadImageCts;
         private CancellationTokenSource _progressCts;
-        public async Task OpenImageAndTabs(string filePath, bool refresh = false,bool lazyload = false)
+        public async Task OpenImageAndTabs(string filePath, bool refresh = false,bool lazyload = false, bool forceFolderScan = false)
         {
             _isLoadingImage = true;
             OnPropertyChanged("IsLoadingImage");
             try
             {
-                bool autoLoad = SettingsManager.Instance.Current.AutoLoadFolderImages;
+                bool autoLoad = SettingsManager.Instance.Current.AutoLoadFolderImages || forceFolderScan;
                 if (autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
                 {
                     await ScanFolderImagesAsync(filePath);
@@ -169,7 +169,7 @@ namespace TabPaint
         private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 {
     ".png", ".jpg", ".jpeg", ".tif", ".tiff",
-    ".gif", ".webp", ".bmp", ".ico", ".heic"
+    ".gif", ".webp", ".bmp", ".ico", ".heic",".jfif"
 };
 
         // 2. 改为异步方法
@@ -308,62 +308,7 @@ namespace TabPaint
                 _progressCts = null;
             }
             string fileToRead = sourcePath ?? filePath;
-            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath))
-            {// 新建空白图像逻辑，不加载
-
-                await Dispatcher.InvokeAsync(() =>
-                {
-                    if (token.IsCancellationRequested) return;
-
-                    // 1. 创建默认白色画布 (1200x900)
-                    int width = 1200;
-                    int height = 900;
-                    _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
-
-                    // 填充白色
-                    byte[] pixels = new byte[width * height * 4];
-                    for (int i = 0; i < pixels.Length; i += 4)
-                    {
-                        pixels[i] = 255;     // B
-                        pixels[i + 1] = 255; // G
-                        pixels[i + 2] = 255; // R
-                        pixels[i + 3] = 255; // A
-                    }
-                    _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
-
-                    // 2. 设置状态
-                    _originalDpiX = 96.0;
-                    _originalDpiY = 96.0;
-                    BackgroundImage.Source = _bitmap;
-
-
-                    // 查找 Tab 以获取正确的显示名 (如 "未命名 1")
-                    var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-                    _currentFileName = tab?.FileName ?? "未命名";
-                    _currentFilePath = filePath; // 保持虚拟路径
-
-                    this.CurrentImageFullInfo = "[新建图像] 内存文件";
-
-                    this.FileSize = "未保存";
-
-                    if (_surface == null) _surface = new CanvasSurface(_bitmap);
-                    else _surface.Attach(_bitmap);
-
-                    _undo?.ClearUndo();
-                    _undo?.ClearRedo();
-                    _isEdited = false;
-
-                    _imageSize = $"{width}×{height}像素";
-                    OnPropertyChanged(nameof(ImageSize));
-                    UpdateWindowTitle();
-
-                    FitToWindow(1); // 默认 100% 或 适应窗口
-                    CenterImage();
-                    _canvasResizer.UpdateUI();
-                    SetPreviewSlider();
-                });
-                return;
-            }
+            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath)){ await LoadBlankCanvasAsync(filePath);  return; }
 
 
             if (!File.Exists(fileToRead))
@@ -372,6 +317,22 @@ namespace TabPaint
                 ShowToast($"找不到图片文件: {fileToRead}");
                 return;
             }
+
+            try
+            {
+                var fileInfo = new FileInfo(fileToRead);
+                if (fileInfo.Length == 0)
+                {
+                    await LoadBlankCanvasAsync(filePath, "文件为空，已创建空白画布");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                // 获取文件信息失败（可能是权限问题），记录日志并尝试继续，或者直接降级
+                Debug.WriteLine($"FileInfo check failed: {ex.Message}");
+            }
+
             CancellationTokenSource progressCts = null;
             Task progressTask = null;
 
@@ -457,9 +418,7 @@ namespace TabPaint
            : System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
-
-                        // 立即适配并居中
-                        FitToWindow(1);
+ FitToWindow(1);
                         CenterImage(); // 或者你更新后的 UpdateImagePosition()
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -479,14 +438,13 @@ namespace TabPaint
                 {
                     if (token.IsCancellationRequested) return;
                     RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
-
-                    if (!isInitialLayoutSet)
+         
                     {
                         BackgroundImage.Source = previewBitmap;
                         _currentFileName = System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
-                        FitToWindow();
+                         FitToWindow();
                         CenterImage();
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -550,8 +508,6 @@ namespace TabPaint
                     _bitmap.Lock();
                     try
                     {
-                        // 使用 CopyPixels 直接写入 BackBuffer
-                        // 注意：BackBufferStride 是 WriteableBitmap 计算出的步长，通常等于 width * 4
                         source.CopyPixels(
                             new Int32Rect(0, 0, width, height),
                             _bitmap.BackBuffer, // 目标指针
@@ -565,7 +521,6 @@ namespace TabPaint
                     catch (Exception copyEx)
                     {
                         Debug.WriteLine("内存拷贝失败: " + copyEx.Message);
-                        // 兜底策略：如果直接拷贝失败（极少见），再尝试旧方法
                     }
                     finally
                     {
@@ -598,7 +553,7 @@ namespace TabPaint
                     string ext = System.IO.Path.GetExtension(fileToRead)?.ToLower();
                     _isCurrentFileGif = (ext == ".gif");
 
-                    if (_isCurrentFileGif)
+                    if (_isCurrentFileGif&&IsViewMode)
                     {
                         AnimationBehavior.SetSourceUri(GifPlayerImage, new Uri(fileToRead));
                         GifPlayerImage.Visibility = Visibility.Visible;   //if (SettingsManager.Instance.Current.StartInViewMode)
@@ -615,6 +570,7 @@ namespace TabPaint
                         GifPlayerImage.Visibility = Visibility.Collapsed;
                         BackgroundImage.Visibility = Visibility.Visible;
                     }
+             
 
                 }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); // 稍微降低优先级，确保UI先响应
             }
@@ -624,10 +580,15 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() => s($"加载图片失败: {ex.Message}"));
+                Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
+
+                // 取消可能的进度条
+                _progressCts?.Cancel();
+                await LoadBlankCanvasAsync(filePath, "文件损坏或格式不支持，已创建空白画布");
             }
             finally
             {
+ 
                 // 清理进度条资源
                 progressCts?.Dispose();
             }
@@ -663,6 +624,80 @@ namespace TabPaint
             catch (TaskCanceledException)
             {
             }
+        }
+
+        private async Task LoadBlankCanvasAsync(string filePath, string reason = null)
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                // 1. 创建默认白色画布 (1200x900)
+                int width = 1200;
+                int height = 900;
+                _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
+
+                // 填充白色
+                byte[] pixels = new byte[width * height * 4];
+                for (int i = 0; i < pixels.Length; i += 4)
+                {
+                    pixels[i] = 255;     // B
+                    pixels[i + 1] = 255; // G
+                    pixels[i + 2] = 255; // R
+                    pixels[i + 3] = 255; // A
+                }
+                _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
+
+                // 2. 设置状态
+                _originalDpiX = 96.0;
+                _originalDpiY = 96.0;
+
+                RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
+                BackgroundImage.Source = _bitmap;
+
+                // 3. 确定显示名称
+                // 如果是虚拟路径，尝试从 Tab 获取名字；如果是真实文件，获取文件名
+                if (IsVirtualPath(filePath))
+                {
+                    var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                    _currentFileName = tab?.FileName ?? "未命名";
+                }
+                else
+                {
+                    _currentFileName = System.IO.Path.GetFileName(filePath);
+                }
+
+                _currentFilePath = filePath;
+
+                // 设置底部栏信息
+                this.CurrentImageFullInfo = reason ?? "[新建图像] 内存文件";
+                this.FileSize = "未保存";
+
+                // 初始化 Surface 和 Canvas
+                if (_surface == null) _surface = new CanvasSurface(_bitmap);
+                else _surface.Attach(_bitmap);
+
+                _undo?.ClearUndo();
+                _undo?.ClearRedo();
+                _isEdited = false; // 刚打开的空文件不算被编辑过，或者是空文件视为原状
+
+                _imageSize = $"{width}×{height}像素";
+                OnPropertyChanged(nameof(ImageSize));
+                UpdateWindowTitle();
+
+                // 隐藏 GIF 播放器
+                AnimationBehavior.SetSourceUri(GifPlayerImage, null);
+                GifPlayerImage.Visibility = Visibility.Collapsed;
+                BackgroundImage.Visibility = Visibility.Visible;
+                FitToWindow(1);
+                CenterImage();
+                _canvasResizer.UpdateUI();
+                SetPreviewSlider();
+
+                // 可选：提示用户
+                if (!string.IsNullOrEmpty(reason))
+                {
+                    ShowToast(reason); 
+                }
+            });
         }
 
     }

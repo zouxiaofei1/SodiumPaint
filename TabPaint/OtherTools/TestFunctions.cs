@@ -18,6 +18,64 @@ using System.Windows.Forms;
 
 namespace TabPaint
 {
+    public class ZoomToInverseValueConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double scale && scale > 0)
+            {
+                // 获取基础数值 (参数传入，默认为1)
+                double baseSize = 1.0;
+                if (parameter != null && double.TryParse(parameter.ToString(), out double p))
+                {
+                    baseSize = p;
+                }
+
+                // 计算反向值： 基础值 / 缩放倍率
+                double result = baseSize / scale ;
+
+                // 如果目标是 Thickness (用于 BorderThickness 或 Margin)
+                if (targetType == typeof(Thickness))
+                {
+                    return new Thickness(result);
+                }
+
+                // 如果目标是 double (用于 Shadow BlurRadius)
+                return result;
+            }
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public class PixelSnapper : Decorator
+    {
+        public PixelSnapper()
+        {
+            this.SnapsToDevicePixels = true;
+            this.UseLayoutRounding = true;
+        }
+
+        protected override Size MeasureOverride(Size constraint)
+        {
+           
+            // 获取子元素想要的尺寸
+            var size = base.MeasureOverride(constraint);
+            // 向上取整 (Ceiling)，避免内容被切掉
+            return new Size(Math.Ceiling(size.Width), Math.Ceiling(size.Height));
+        }
+
+        protected override Size ArrangeOverride(Size arrangeSize)
+        {
+            // 强制将分配给子元素的区域取整
+            var snappedSize = new Size(Math.Ceiling(arrangeSize.Width), Math.Ceiling(arrangeSize.Height));
+            base.ArrangeOverride(snappedSize);
+            return snappedSize;
+        }
+    }
     public class NonLinearConverter : IValueConverter
     {
         // 设定的最大阈值，对应 XAML 中的 Maximum="5000"

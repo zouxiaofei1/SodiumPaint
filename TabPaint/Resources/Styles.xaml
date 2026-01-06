@@ -623,26 +623,42 @@
             </Setter.Value>
         </Setter>
     </Style>
-
+    <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <!-- 浅灰底色 -->
+                <GeometryDrawing Brush="#FFF0F0F0">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,20,20"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- 深灰格子 -->
+                <GeometryDrawing Brush="#FFD0D0D0">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="0,0,10,10"/>
+                            <RectangleGeometry Rect="10,10,10,10"/>
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <Style x:Key="ColorCircleButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Width" Value="34"/>
-        <!-- 稍微加宽一点，给外圈留空间 -->
         <Setter Property="Height" Value="34"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <!-- Grid 用于叠加内外两个圆 -->
                     <Grid>
-                        <!-- 1. 外层：高亮边框圆 (默认透明) -->
                         <Ellipse x:Name="OuterRing" 
                              Stroke="Transparent" 
                              StrokeThickness="1" 
                              HorizontalAlignment="Stretch" 
                              VerticalAlignment="Stretch"/>
-
-                        <!-- 2. 内层：实际的颜色圆 -->
-                        <!-- Margin="4" 就是你想要的间距 -->
+                        <Ellipse Fill="{StaticResource CheckerboardBrush}" 
+                             Margin="4"/>
                         <Ellipse x:Name="InnerCircle" 
                              Fill="{TemplateBinding Background}"
                              Stroke="#CCCCCC" 
@@ -652,13 +668,14 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <!-- 当 Tag 为 True (选中) 时 -->
+                        <!-- 选中状态：显示外圈紫色 -->
                         <Trigger Property="Tag" Value="True">
-                            <!-- 显示外层紫色边框 -->
                             <Setter TargetName="OuterRing" Property="Stroke" Value="#D6BFFE"/>
+                            <!-- 选中时稍微加粗外圈可能视觉效果更好，可选 -->
+                            <Setter TargetName="OuterRing" Property="StrokeThickness" Value="2"/>
                         </Trigger>
 
-                        <!-- 鼠标悬停时，内圈边框加深 -->
+                        <!-- 鼠标悬停：内圈边框变深 -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="InnerCircle" Property="Stroke" Value="#888888"/>
                         </Trigger>
@@ -667,6 +684,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
 
 
 
@@ -1141,27 +1159,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
-        <DrawingBrush.Drawing>
-            <DrawingGroup>
-                <!-- 浅灰底色 -->
-                <GeometryDrawing Brush="#FFF0F0F0">
-                    <GeometryDrawing.Geometry>
-                        <RectangleGeometry Rect="0,0,20,20"/>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-                <!-- 深灰格子 -->
-                <GeometryDrawing Brush="#FFD0D0D0">
-                    <GeometryDrawing.Geometry>
-                        <GeometryGroup>
-                            <RectangleGeometry Rect="0,0,10,10"/>
-                            <RectangleGeometry Rect="10,10,10,10"/>
-                        </GeometryGroup>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingGroup>
-        </DrawingBrush.Drawing>
-    </DrawingBrush>
+  
 
     <SolidColorBrush x:Key="ScrollBarThumbIdle" Color="#888888" Opacity="0.8"/>
     <SolidColorBrush x:Key="ScrollBarThumbHover" Color="#666666" Opacity="0.8"/>

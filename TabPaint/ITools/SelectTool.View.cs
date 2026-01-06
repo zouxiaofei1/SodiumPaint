@@ -59,7 +59,9 @@ namespace TabPaint
                 };
                 RenderOptions.SetEdgeMode(outline, EdgeMode.Unspecified);  // 开抗锯齿混合
                 outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
-                Canvas.SetLeft(outline, rect.X);
+                double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width - (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
+
+                Canvas.SetLeft(outline, rect.X+ diff*0.75);
                 Canvas.SetTop(outline, rect.Y);
                 overlay.Children.Add(outline);
 
@@ -76,10 +78,11 @@ namespace TabPaint
                     };
                     RenderOptions.SetEdgeMode(handle, EdgeMode.Unspecified);  // 开抗锯齿混合
                     outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
-                    Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2);
+                    Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2 + diff * 0.75);
                     Canvas.SetTop(handle, p.Y - HandleSize * invScale / 2);
                     overlay.Children.Add(handle);
                 }
+                ((MainWindow)Application.Current.MainWindow).UpdateSelectionScalingMode();
                 ctx.SelectionOverlay.IsHitTestVisible = false;
                 ctx.SelectionOverlay.Visibility = Visibility.Visible;
             }
@@ -168,10 +171,12 @@ namespace TabPaint
                 ctx.SelectionPreview.Width = _selectionRect.Width * scaleX;
                 ctx.SelectionPreview.Height = _selectionRect.Height * scaleY;
 
-                // 计算位移
-                double localX = pixelX * scaleX;
-                double localY = pixelY * scaleY;
 
+              double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width - (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
+                // 计算位移
+                double localX = pixelX * scaleX+diff*0.75 ;
+                double localY = pixelY * scaleY;
+                a.s(localX, localY);
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(localX, localY);
 
 
@@ -199,7 +204,7 @@ namespace TabPaint
                     System.IO.Path.GetTempPath(),
                     $"selection_{Guid.NewGuid()}.png"
                 );
-
+               // s(tempFilePath);
                 try
                 {
                     using (var fileStream = new System.IO.FileStream(tempFilePath, System.IO.FileMode.Create))
@@ -215,8 +220,6 @@ namespace TabPaint
                     dataObject.SetData("TabPaintSelectionDrag", true);
                     if (_hasLifted)
                     {
-                        // LiftSelectionFromCanvas 方法提交了一次 CommitStroke，
-                        // 这里调用 Undo 就可以完美把那个洞填回去，恢复成拖拽前的样子。
                         ctx.Undo.Undo();
                         _hasLifted = false;
                     }
@@ -235,9 +238,42 @@ namespace TabPaint
                 }
                 finally
                 {
-                    if (System.IO.File.Exists(tempFilePath)) System.IO.File.Delete(tempFilePath);
+                    if (System.IO.File.Exists(tempFilePath))
+                    {
+                        // 建议延迟 5秒 (5000ms)，给接收方足够的时间读取文件
+                        DeleteFileWithDelay(tempFilePath, 5000);
+                    }
 
                 }
+            }
+            private void DeleteFileWithDelay(string filePath, int delayMilliseconds)
+            {
+                // 使用 Task.Run 启动一个后台线程，不阻塞 UI
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        // 1. 等待指定时间
+                        await Task.Delay(delayMilliseconds);
+
+                        // 2. 尝试删除
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            System.IO.File.Delete(filePath);
+                            System.Diagnostics.Debug.WriteLine($"Temp file deleted: {filePath}");
+                        }
+                    }
+                    catch (System.IO.IOException)
+                    {
+                        // 如果文件被接收方程序锁定了（比如Word正在读取），
+                        // 这里可能会抛出异常。我们可以选择忽略，或者再试一次。
+                        System.Diagnostics.Debug.WriteLine($"File locked, could not delete: {filePath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error cleaning up temp file: {ex.Message}");
+                    }
+                });
             }
             private void ResetPreviewState(ToolContext ctx)
             {

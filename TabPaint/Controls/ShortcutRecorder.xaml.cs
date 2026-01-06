@@ -77,8 +77,20 @@ namespace TabPaint.Controls
         }
         private void UserControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-         
+          //  System.Windows.MessageBox.Show("UserControl_PreviewMouseDown");
             this.Focus();
+            if (e.OriginalSource is DependencyObject source)
+            {
+                // 向上查找看是不是点到了 Button
+                var parent = System.Windows.Media.VisualTreeHelper.GetParent(source);
+                while (parent != null && parent != this)
+                {
+                    if (parent is Button) return; // 如果是按钮，直接返回，不做额外处理
+                    parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+                }
+            }
+
+            e.Handled = true;
 
         }
 

@@ -38,6 +38,18 @@ namespace TabPaint
                 e.Handled = true;
                 return true;
             }
+            if (IsShortcut("View.VerticalFlip", e))
+            {
+                OnFlipVerticalClick(sender, e);
+                e.Handled = true;
+                return true;
+            }
+            if (IsShortcut("View.HorizontalFlip", e))
+            {
+                OnFlipHorizontalClick(sender, e);
+                e.Handled = true;
+                return true;
+            }
             bool isNext = IsShortcut("View.NextImage", e);
             bool isPrev = IsShortcut("View.PrevImage", e);
 
@@ -156,6 +168,12 @@ namespace TabPaint
             if (IsShortcut("File.OpenWorkspace", e)) { OnOpenWorkspaceClick(sender, e); e.Handled = true; return; }
             if (IsShortcut("File.PasteNewTab", e)) { PasteClipboardAsNewTab(); e.Handled = true; return; }
 
+            if (IsShortcut("Effect.Brightness", e)) { OnBrightnessContrastExposureClick(sender,e); e.Handled = true; return; } // Ctrl+Alt+Q
+            if (IsShortcut("Effect.Temperature", e)) { OnColorTempTintSaturationClick(sender,e); e.Handled = true; return; } // Ctrl+Alt+W
+            if (IsShortcut("Effect.Grayscale", e)) { OnConvertToBlackAndWhiteClick(sender,e); e.Handled = true; return; }   // Ctrl+Alt+E
+            if (IsShortcut("Effect.Invert", e)) { OnInvertColorsClick(sender,e); e.Handled = true; return; }      // Ctrl+Alt+R
+            if (IsShortcut("Effect.AutoLevels", e)) { OnAutoLevelsClick(sender,e); e.Handled = true; return; }  // Ctrl+Alt+T
+            if (IsShortcut("Effect.Resize", e)) { OnResizeCanvasClick(sender,e); e.Handled = true; return; }      // Ctrl+Alt+Y
 
             // === B. 然后处理 锁定快捷键 (硬编码，不允许更改) ===
 
@@ -163,7 +181,18 @@ namespace TabPaint
             {
                 switch (e.Key)
                 {
-                    case Key.Z: Undo(); e.Handled = true; break;
+                    case Key.Z:
+                        if (_router.CurrentTool is TextTool textTool && textTool._textBox != null)
+                        {
+                            textTool.GiveUpText(_ctx); // 只取消文本框，不撤销画布
+                        }
+                        else
+                        {
+                            Undo(); // 正常撤销画布操作
+                        }
+                        e.Handled = true;
+                        break;
+
                     case Key.Y: Redo(); e.Handled = true; break;
                     case Key.S: OnSaveClick(sender, e); e.Handled = true; break;
                     case Key.N: OnNewClick(sender, e); e.Handled = true; break;
@@ -173,8 +202,7 @@ namespace TabPaint
                         if (currentTab != null) CloseTab(currentTab);
                         e.Handled = true;
                         break;
-                    case Key.V: // 普通粘贴逻辑
-                                // ... (保留你原来的粘贴代码) ...
+                    case Key.V: 
                         bool isMultiFilePaste = false;
                         if (System.Windows.Clipboard.ContainsFileDropList())
                         {
@@ -551,11 +579,10 @@ namespace TabPaint
             double minrate = 1.0;
             if (_bitmap != null)
             {
-                double maxDim = Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
+                double maxDim = Math.Max(Math.Max(BackgroundImage.Width,_bitmap.PixelWidth), Math.Max(BackgroundImage.Height,_bitmap.PixelHeight));
                 if (maxDim > 0)
                     minrate = 1500.0 / maxDim;
             }
-
             double newScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
 
             // 3. 确定缩放锚点
@@ -586,12 +613,15 @@ namespace TabPaint
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
             if (IsViewMode) CheckBirdEyeVisibility();
+            if(!IsViewMode) UpdateSelectionScalingMode();
+            _canvasResizer.UpdateUI();
+            
             if (!isIntermediate)
             {
                 
                 if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
                 if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-                _canvasResizer.UpdateUI();
+                
                 UpdateRulerPositions(); 
                 if (IsViewMode&& _startupFinished) { ShowToast(newScale.ToString("P0")); }
             }
@@ -607,26 +637,33 @@ namespace TabPaint
         private const double ZoomSnapThreshold = 0.001; // 停止动画的阈值
         private void StartSmoothZoom(double targetScale, Point center)
         {
-            double minrate = 1.0;
-            if (_bitmap != null)
+            try
             {
-                double maxDim = Math.Max(_bitmap.PixelWidth, _bitmap.PixelHeight);
-                if (maxDim > 0) minrate = 1500.0 / maxDim;
+                double minrate = 1.0;
+                if (_bitmap != null)
+                {
+                    double maxDim = Math.Max(Math.Max(BackgroundImage.Width, _bitmap.PixelWidth), Math.Max(BackgroundImage.Height, _bitmap.PixelHeight));
+                    if (maxDim > 0)
+                        minrate = 1500.0 / maxDim;
+                }
+
+                _targetZoomScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
+                if (Math.Abs(_targetZoomScale - zoomscale) < 0.0001) return;
+
+                _zoomCenter = center;
+
+                if (!_isZoomAnimating)
+                {
+                    // 动画开始前，先以当前 UI 的真实位置作为起点
+                    _virtualScrollH = ScrollContainer.HorizontalOffset;
+                    _virtualScrollV = ScrollContainer.VerticalOffset;
+
+                    _isZoomAnimating = true;
+                    CompositionTarget.Rendering += OnZoomRendering;
+                }
             }
-
-            _targetZoomScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
-            if (Math.Abs(_targetZoomScale - zoomscale) < 0.0001) return;
-
-            _zoomCenter = center;
-
-            if (!_isZoomAnimating)
+            catch (Exception ex)
             {
-                // 动画开始前，先以当前 UI 的真实位置作为起点
-                _virtualScrollH = ScrollContainer.HorizontalOffset;
-                _virtualScrollV = ScrollContainer.VerticalOffset;
-
-                _isZoomAnimating = true;
-                CompositionTarget.Rendering += OnZoomRendering;
             }
         }
 
@@ -662,8 +699,9 @@ namespace TabPaint
             ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
             UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
-
+            _canvasResizer.UpdateUI();
             if (IsViewMode) CheckBirdEyeVisibility();
+            if (!IsViewMode) UpdateSelectionScalingMode();
             // 动画结束清理
             if (isEnding)
             {

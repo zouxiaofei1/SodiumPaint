@@ -33,12 +33,7 @@ namespace TabPaint
             RenderHueGradient();
             SetColorFromRgb(initialColor.R, initialColor.G, initialColor.B);
             LoadCustomColorsFromSettings();
-            this.MouseDown += (s, e) =>
-            {
-                //System.Windows.MessageBox.Show("456789");
-                Keyboard.ClearFocus();
-             //   this.Focus();
-            };
+            this.MouseDown += (s, e) => {Keyboard.ClearFocus();};
             this.KeyDown += (s, e) => { if (e.Key == Key.Escape) { this.Close(); } };
             Loaded += (s, e) => UpdateUI();
         }
@@ -138,7 +133,10 @@ namespace TabPaint
                 // HEX 显示 8 位：#AARRGGBB
                 if (HexInput != null)
                     HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
-
+                if (SpectrumLayerGroup != null)
+                {
+                    SpectrumLayerGroup.Opacity = _currentAlpha / 255.0;
+                }
                 // 更新数值输入框
                 if (Input1 != null && Input2 != null && Input3 != null && InputAlpha != null)
                 {
@@ -335,10 +333,9 @@ namespace TabPaint
         private void Alpha_MouseDown(object sender, MouseButtonEventArgs e)
         {
           
-            e.Handled = true;  //System.Windows.MessageBox.Show("Alpha_MouseDown");
+            e.Handled = true;  
             _isDraggingAlpha = true;
 
-            // 直接使用成员变量 AlphaSliderGrid，而不是 sender，防止转型错误
             AlphaSliderGrid.CaptureMouse();
             UpdateAlphaFromMouse(e.GetPosition(AlphaSliderGrid), AlphaSliderGrid.ActualHeight);
         }

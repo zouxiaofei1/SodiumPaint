@@ -301,7 +301,7 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff",".gif" ,".heic", ".tif" };
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff",".gif" ,".heic", ".tif" ,".jfif"};
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
@@ -369,7 +369,7 @@ namespace TabPaint
             if (SettingsManager.Instance.Current.IsFixedZoom&& _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
-             //   s(1);
+           
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
                 //s(ScrollContainer.ViewportWidth);
@@ -381,9 +381,10 @@ namespace TabPaint
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale * 0.98;
-
-                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+              
+                ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale; a.s(fitScale,zoomscale);
                 UpdateSliderBarValue(zoomscale);
+              
                 _canvasResizer.UpdateUI();
                 _firstFittoWindowdone=true;
             }
@@ -857,7 +858,25 @@ namespace TabPaint
         }
         private bool _isDragOverlayVisible = false;
 
-        // 更新显示方法
+        public void UpdateSelectionScalingMode()
+        {
+            
+            if (SelectionPreview == null) return;
+
+            double currentZoomPercent = ZoomTransform.ScaleX * 100.0;
+
+            // 2. 获取设置阈值
+            double threshold = SettingsManager.Instance.Current.PaintInterpolationThreshold;
+
+            var mode = (currentZoomPercent >= threshold)
+                ? BitmapScalingMode.NearestNeighbor
+                : BitmapScalingMode.Linear;
+
+            if (RenderOptions.GetBitmapScalingMode(SelectionPreview) != mode)
+            {
+                RenderOptions.SetBitmapScalingMode(SelectionPreview, mode);
+            }
+        }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {

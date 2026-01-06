@@ -84,7 +84,7 @@
                 <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
                     <MenuItem Header="亮度/对比度/曝光" Style="{StaticResource SubMenuItemStyle}" Click="OnBCEClick">
                         <MenuItem.Icon>
-                            <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                            <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform"       Stroke="#333"  StrokeThickness="1.5"  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"  Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="色温/色调/饱和度" Style="{StaticResource SubMenuItemStyle}" Click="OnTTSClick">

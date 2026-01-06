@@ -40,7 +40,7 @@ namespace TabPaint
                 _undo?.ClearRedo();
                 ResetDirtyTracker();
                 _workingPath = filePath;
-                await OpenImageAndTabs(filePath, true);
+                await OpenImageAndTabs(filePath, refresh: true, lazyload: false, forceFolderScan: true);
             }
             catch (Exception ex)
             {
@@ -272,18 +272,88 @@ namespace TabPaint
         {
             _router.SetTool(_tools.Text);
         }
+        private bool _isTextBarDragging = false;
+        private System.Windows.Point _textBarLastPoint;
+        private const double DragSafetyMargin = 50.0;
+
         private void TextEditBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            // 如果点击的是工具栏背景本身，而不是子控件
             if (e.OriginalSource is Border || e.OriginalSource is StackPanel)
             {
-                if (_activeTextBox != null)
+                if (e.ChangedButton == MouseButton.Left)
                 {
-                    _activeTextBox.Focus();
+                    _isTextBarDragging = true;
+                    _textBarLastPoint = e.GetPosition(this); // 获取相对于窗口的坐标
+                    TextEditBar.CaptureMouse(); 
+                    if (_tools?.Text is TextTool tt && tt._textBox != null)
+                    {
+                        tt._textBox.Focus();
+                    }
                 }
-                e.Handled = true;
             }
         }
+        private void TextEditBar_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_isTextBarDragging)
+            {
+                System.Windows.Point currentPoint = e.GetPosition(this);
+
+                // 1. 计算鼠标位移
+                double offsetX = currentPoint.X - _textBarLastPoint.X;
+                double offsetY = currentPoint.Y - _textBarLastPoint.Y;
+
+                // 2. 预测新的 Transform 值
+                double proposedTransformX = TextBarDragTransform.X + offsetX;
+                double proposedTransformY = TextBarDragTransform.Y + offsetY;
+                double windowWidth = this.ActualWidth;
+                double windowHeight = this.ActualHeight;
+                double barWidth = TextEditBar.ActualWidth;
+                double barHeight = TextEditBar.ActualHeight;
+
+                double initialLeft = (windowWidth - barWidth) / 2;
+                double initialTop = TextEditBar.Margin.Top;
+
+                // 计算移动后的绝对位置 (Left, Top)
+                double absoluteLeft = initialLeft + proposedTransformX;
+                double absoluteTop = initialTop + proposedTransformY;
+
+                if (absoluteLeft + barWidth < DragSafetyMargin)
+                {
+                    proposedTransformX = DragSafetyMargin - barWidth - initialLeft;
+                }
+                else if (absoluteLeft > windowWidth - DragSafetyMargin)
+                {
+                    // 修正 X
+                    proposedTransformX = windowWidth - DragSafetyMargin - initialLeft;
+                }
+
+                if (absoluteTop < 0)
+                {
+                    proposedTransformY = -initialTop; // 刚好顶到窗口上边缘
+                }
+                else if (absoluteTop > windowHeight - DragSafetyMargin)
+                {
+                    proposedTransformY = windowHeight - DragSafetyMargin - initialTop;
+                }
+
+                // --- 应用修正后的值 ---
+                TextBarDragTransform.X = proposedTransformX;
+                TextBarDragTransform.Y = proposedTransformY;
+                _textBarLastPoint = currentPoint;
+            }
+        }
+
+
+        // 新增 MouseUp
+        private void TextEditBar_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isTextBarDragging)
+            {
+                _isTextBarDragging = false;
+                TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
+            }
+        }
+
 
         private void FontSizeBox_LostFocus(object sender, RoutedEventArgs e)
         {

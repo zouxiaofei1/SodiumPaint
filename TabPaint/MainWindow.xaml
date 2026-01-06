@@ -34,6 +34,7 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
+            <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -80,7 +81,6 @@
             <!-- #region 6. 主画布区域 (Canvas) -->
             <Grid ClipToBounds="True" Background="Transparent">
                 <Grid.Resources>
-                    <!-- 引入转换器 (假设命名空间别名为 local) -->
                     <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                 </Grid.Resources>
 
@@ -199,42 +199,48 @@
                         </ContextMenu>
                     </ScrollViewer.ContextMenu>
 
-                    
-                    <Grid Name="CanvasWrapper" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
-                        <Grid.Background>
-                            <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
-                                <!-- 核心修复：Viewport 绑定缩放倍数，参数 20 是你原本的基础大小 -->
-                                <DrawingBrush.Viewport>
-                                    <Binding ElementName="ZoomTransform" Path="ScaleX" 
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" 
+          ClipToBounds="False">
+                            <Grid Name="CanvasWrapper"   ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                                <Grid.Background>
+                                    <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
+                                        <!-- 核心修复：Viewport 绑定缩放倍数，参数 20 是你原本的基础大小 -->
+                                        <DrawingBrush.Viewport>
+                                            <Binding ElementName="ZoomTransform" Path="ScaleX" 
                                     Converter="{StaticResource ScaleToTileRectConverter}" 
                                     ConverterParameter="20"/>
-                                </DrawingBrush.Viewport>
-                                <DrawingBrush.Drawing>
-                                    <DrawingGroup>
-                                        <!-- 浅灰底色 -->
-                                        <GeometryDrawing Brush="#FFF0F0F0">
-                                            <GeometryDrawing.Geometry>
-                                                <RectangleGeometry Rect="0,0,20,20"/>
-                                            </GeometryDrawing.Geometry>
-                                        </GeometryDrawing>
-                                        <!-- 深灰格子 -->
-                                        <GeometryDrawing Brush="#FFD0D0D0">
-                                            <GeometryDrawing.Geometry>
-                                                <GeometryGroup>
-                                                    <RectangleGeometry Rect="0,0,10,10"/>
-                                                    <RectangleGeometry Rect="10,10,10,10"/>
-                                                </GeometryGroup>
-                                            </GeometryDrawing.Geometry>
-                                        </GeometryDrawing>
-                                    </DrawingGroup>
-                                </DrawingBrush.Drawing>
-                            </DrawingBrush>
-                        </Grid.Background>
+                                        </DrawingBrush.Viewport>
+                                        <DrawingBrush.Drawing>
+                                            <DrawingGroup>
+                                                <!-- 浅灰底色 -->
+                                                <GeometryDrawing Brush="#FFF0F0F0">
+                                                    <GeometryDrawing.Geometry>
+                                                        <RectangleGeometry Rect="0,0,20,20"/>
+                                                    </GeometryDrawing.Geometry>
+                                                </GeometryDrawing>
+                                                <!-- 深灰格子 -->
+                                                <GeometryDrawing Brush="#FFD0D0D0">
+                                                    <GeometryDrawing.Geometry>
+                                                        <GeometryGroup>
+                                                            <RectangleGeometry Rect="0,0,10,10"/>
+                                                            <RectangleGeometry Rect="10,10,10,10"/>
+                                                        </GeometryGroup>
+                                                    </GeometryDrawing.Geometry>
+                                                </GeometryDrawing>
+                                            </DrawingGroup>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </Grid.Background>
 
-                        <Grid.LayoutTransform>
-                            <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
-                        </Grid.LayoutTransform>
-                        <Image Name="PreviewImage" 
+                                <Grid.LayoutTransform>
+                                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                                </Grid.LayoutTransform>
+                           
+
+                                <!-- 2. 只有边框的层 -->
+
+
+                                <Image Name="PreviewImage" 
                      Stretch="Fill" 
                      Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
                      Height="{Binding ElementName=BackgroundImage, Path=ActualHeight}"
@@ -243,10 +249,10 @@
                      IsHitTestVisible="False" 
                      Visibility="Collapsed"
                      RenderOptions.BitmapScalingMode="Linear"/>
-                        <!-- 1. 基础图片 -->
-                        <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                <!-- 1. 基础图片 -->
+                                <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
-                            <Image Name="GifPlayerImage"
+                                <Image Name="GifPlayerImage"
        Stretch="None"
        HorizontalAlignment="Left"
        VerticalAlignment="Top"
@@ -254,16 +260,43 @@
        Visibility="Collapsed"
        gif:AnimationBehavior.AutoStart="True"
        gif:AnimationBehavior.RepeatBehavior="Forever" />
-                            <!-- 2. 调整大小层 -->
-                        <Canvas Name="CanvasResizeOverlay"  Visibility="Visible" IsHitTestVisible="True" Background="Transparent"/>
-                        <!-- 3. 选区预览层 -->
-                        <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
-                        <!-- 4. 选区UI层 -->
-                        <Canvas Name="SelectionOverlayCanvas" Visibility="Collapsed" IsHitTestVisible="False" Background="Transparent" UseLayoutRounding="False" SnapsToDevicePixels="False"/>
-                        <!-- 5. 编辑器层 -->
-                        <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
-                    </Grid>
-                </ScrollViewer>
+                                <!-- 2. 调整大小层 -->
+                                <!--<Canvas Name="CanvasResizeOverlay"  Visibility="Visible" IsHitTestVisible="True" Background="Transparent"  UseLayoutRounding="False" />-->
+                                <!-- 3. 选区预览层 -->
+                                <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
+                                <!-- 4. 选区UI层 -->
+                                <Canvas Name="SelectionOverlayCanvas" Visibility="Collapsed" IsHitTestVisible="False" Background="Transparent" UseLayoutRounding="False" SnapsToDevicePixels="False"/>
+                                <!-- 5. 编辑器层 -->
+                                <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
+                            </Grid>
+                            <Border Name="StaticCanvasBorder"
+                IsHitTestVisible="False"
+                SnapsToDevicePixels="True"
+                UseLayoutRounding="True"
+                HorizontalAlignment="Stretch" 
+                VerticalAlignment="Stretch"
+                BorderBrush="#EBEBEB" 
+                BorderThickness="1">
+                                <Border.Margin>
+                                    <Thickness Left="-1" Top="-1" Right="-1" Bottom="-1"/>
+                                </Border.Margin>
+                            </Border>
+                            <Canvas Name="CanvasResizeOverlay" 
+                Visibility="Visible" 
+                IsHitTestVisible="True" 
+                Background="{x:Null}"  
+                UseLayoutRounding="False"
+                SnapsToDevicePixels="False"
+                ClipToBounds="False">
+
+                                <Canvas.LayoutTransform>
+                                    <Binding ElementName="CanvasWrapper" Path="LayoutTransform"/>
+                                </Canvas.LayoutTransform>
+                           
+                            </Canvas>
+                        </Grid>
+
+                    </ScrollViewer>
                 </Grid>
                 <!-- 粗细预览圆 -->
                 <Rectangle x:Name="ThicknessPreview" 
@@ -410,7 +443,11 @@
 
         <!-- #region 7. 悬浮面板 (Floating UI) -->
 
-        <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Background="#FAFAFA" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="6">
+        <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" MouseMove="TextEditBar_MouseMove"
+        MouseUp="TextEditBar_MouseUp" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Background="#FAFAFA" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="6">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="TextBarDragTransform" X="0" Y="0"/>
+            </Border.RenderTransform>
             <Border.Effect>
                 <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="#20000000" Opacity="0.4"/>
             </Border.Effect>

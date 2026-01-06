@@ -68,12 +68,12 @@
     </Border>
 
     <!-- 右侧内容区 -->
-        <Border Grid.Row="0" Grid.Column="1" Padding="24" Background="White">
+        <Border Grid.Row="0" Grid.Column="1"  Background="White">
 
-            <ScrollViewer  Style="{StaticResource FluentScrollViewer}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="Both">
+            <ScrollViewer  Style="{StaticResource FluentScrollViewer}" Padding="0" Margin="0" VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" PanningMode="None">
                 <Grid>
                     <!-- 1. 通用 (原 SettingsPanel) -->
-                    <StackPanel x:Name="GeneralPanel" Visibility="Visible">
+                    <StackPanel x:Name="GeneralPanel" Visibility="Visible" Margin="24">
                         <TextBlock Text="通用" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
 
                         <TextBlock Text="启动" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
@@ -92,7 +92,7 @@
                        Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2" 
+                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
                   IsChecked="{Binding Path=Current.AutoLoadFolderImages, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                   VerticalAlignment="Center"/>
                         </Grid>
@@ -109,7 +109,7 @@
                        Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2" 
+                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
                   IsChecked="{Binding Path=Current.StartInViewMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                   VerticalAlignment="Center"/>
                         </Grid>
@@ -140,13 +140,13 @@
                     </StackPanel>
 
                     <!-- 2. 画图设置 -->
-                    <StackPanel x:Name="PaintPanel" Visibility="Collapsed">
+                    <StackPanel x:Name="PaintPanel" Visibility="Collapsed" Margin="24">
                         <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
                    
                     </StackPanel>
 
                     <!-- 3. 看图设置 -->
-                    <StackPanel x:Name="ViewPanel" Visibility="Collapsed">
+                    <StackPanel x:Name="ViewPanel" Visibility="Collapsed" Margin="24">
                         <TextBlock Text="看图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
                         <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
 
@@ -189,7 +189,7 @@
                                            Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2" 
+                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
                                       IsChecked="{Binding Path=Current.ViewUseDarkCanvasBackground, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       VerticalAlignment="Center"/>
                         </Grid>
@@ -208,7 +208,7 @@
                                            Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2" 
+                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
                                       IsChecked="{Binding Path=Current.ViewShowTransparentGrid, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       VerticalAlignment="Center"/>
                         </Grid>
@@ -217,7 +217,7 @@
                     </StackPanel>
 
 
-                    <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed">
+                    <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed" Margin="24">
                         <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
                         <StackPanel Margin="0,0,10,10">
 
@@ -270,6 +270,22 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="向右旋转" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.RotateRight], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="垂直翻转" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.VerticalFlip], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="水平翻转" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.HorizontalFlip], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <!-- 第 1.5 组：基础绘图工具 -->
                             <TextBlock Text="基础绘图工具" FontWeight="Bold" Margin="0,15,0,5"/>
@@ -399,7 +415,56 @@
                                 <TextBlock Text="粘贴为新标签页" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.PasteNewTab], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
-
+                            <!-- 第四组：图像效果 -->
+                            <TextBlock Text="图像效果" FontWeight="Bold" Margin="0,15,0,5"/>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="亮度/对比度/曝光" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Brightness], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="色温/色调/饱和度" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Temperature], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="黑白" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Grayscale], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="反色" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Invert], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="自动色阶" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.AutoLevels], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="调整大小" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Resize], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
                         </StackPanel>
 
                         <Button Grid.Row="2" 
@@ -415,7 +480,7 @@
 
 
                     <!-- 5. 高级 -->
-                    <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed">
+                    <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed" Margin="24">
                         <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
 
                         <!-- 渲染设置区块 -->
@@ -463,7 +528,7 @@
 
                             <TextBlock Text="看图模式" VerticalAlignment="Center"/>
 
-                            <Slider Grid.Column="1" 
+                            <Slider Grid.Column="1"  Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
                 Minimum="0" Maximum="100" 
                 SmallChange="1" LargeChange="10"
                 IsSnapToTickEnabled="False"
@@ -497,7 +562,7 @@
 
                             <TextBlock Text="画图模式" VerticalAlignment="Center"/>
 
-                            <Slider Grid.Column="1" 
+                            <Slider Grid.Column="1" Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
                 Minimum="0" Maximum="100" 
                 SmallChange="1" LargeChange="10"
                 VerticalAlignment="Center"
@@ -537,7 +602,7 @@
                     </StackPanel>
 
                     <!-- 6. 关于页 -->
-                    <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
+                    <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24">
                         <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24"/>
 
                         <Image x:Name="AppIcon" 

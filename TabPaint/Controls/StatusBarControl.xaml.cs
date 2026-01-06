@@ -126,7 +126,6 @@ namespace TabPaint.Controls
         // C. 失去焦点时 (比如点到了画布上)
         private void OnZoomMenuLostFocus(object sender, RoutedEventArgs e)
         {
-           // System.Windows.MessageBox.Show("23OnZoomMenuLostFocus45");
             TryApplyZoomText();
         }
         private void OnStatusBarMouseDown(object sender, MouseButtonEventArgs e)

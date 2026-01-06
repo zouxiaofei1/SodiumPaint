@@ -135,22 +135,18 @@ namespace TabPaint
             // 在 SelectTool 类中添加
             public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true)
             {
+               
                 // 1. 提交当前的选区（如果有）
                 if (_selectionData != null) CommitSelection(ctx);
 
                 if (sourceBitmap == null) return;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
 
-                // --- FIX START: DPI 归一化与格式转换 ---
-
-                // 1. 确保格式是 Bgra32
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
                 {
                     sourceBitmap = new FormatConvertedBitmap(sourceBitmap, PixelFormats.Bgra32, null, 0);
                 }
 
-                // 2. 检查 DPI 是否匹配，如果不匹配，重建一个具有画布 DPI 的 BitmapSource
-                // 这一步是修复 Preview 大小错位的关键
                 double canvasDpiX = ctx.Surface.Bitmap.DpiX;
                 double canvasDpiY = ctx.Surface.Bitmap.DpiY;
 
@@ -183,10 +179,8 @@ namespace TabPaint
 
                 bool _canvasChanged = false;
 
-                // ... (中间扩充画布的逻辑保持不变) ...
                 if (expandCanvas && (imgW > canvasW || imgH > canvasH))
                 {
-                    // ... (此处是你原有的画布扩充代码，无需改动) ...
                     _canvasChanged = true;
                     int newW = Math.Max(imgW, canvasW);
                     int newH = Math.Max(imgH, canvasH);
@@ -208,13 +202,13 @@ namespace TabPaint
                     ctx.Surface.ReplaceBitmap(newBmp);
                     Int32Rect redoRect = new Int32Rect(0, 0, newW, newH);
                     byte[] redoPixels = ctx.Surface.ExtractRegion(redoRect);
+                    mw.UpdateSelectionScalingMode();
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
                     mw.NotifyCanvasSizeChanged(newW, newH);
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
                 }
 
-                // --- 接下来的部分继续使用归一化后的 sourceBitmap ---
 
                 int strideFinal = imgW * 4;
                 var newData = new byte[imgH * strideFinal];
@@ -248,6 +242,7 @@ namespace TabPaint
 
             public void PasteSelection(ToolContext ctx, bool ins)
             {
+                
                 if (_selectionData != null) CommitSelection(ctx);
 
                 BitmapSource? sourceBitmap = null;
@@ -470,6 +465,8 @@ namespace TabPaint
                         }
                         _transformStep++;
                         _draggingSelection = true;
+                        double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width - (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
+
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
                         ctx.ViewElement.CaptureMouse();
                         return;
@@ -489,7 +486,12 @@ namespace TabPaint
             public bool _hasLifted = false;
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
-                //s(_selectionData.Length);
+                if ((_selecting || _draggingSelection || _resizing) &&
+        Mouse.LeftButton == MouseButtonState.Released)
+                {
+                    OnPointerUp(ctx, viewPos);
+                    return;
+                }
                 var px = ctx.ToPixel(viewPos);
 
                 // 光标样式
@@ -759,10 +761,10 @@ namespace TabPaint
                             e.Handled = true;
                             CopySelection(ctx);
                             break;
-                        case Key.V:
-                            PasteSelection(ctx, false);
-                            e.Handled = true;
-                            break;
+                        //case Key.V:
+                        //    PasteSelection(ctx, false);
+                        //    e.Handled = true;
+                        //    break;
                     }
                 }
                 else
@@ -942,6 +944,7 @@ namespace TabPaint
                         ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
 
                         SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
+                        ((MainWindow)Application.Current.MainWindow).UpdateSelectionScalingMode();
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
                         UpdateStatusBarSelectionSize();
                     }
