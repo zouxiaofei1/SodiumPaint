@@ -68,7 +68,8 @@ namespace TabPaint
                     ResetSwitchTimer();
                     return;
                 }
-
+                bool isCleanSelection = ctxForTimer.Undo.UndoCount <= 1 && ctxForTimer.Undo._redo.Count == 0;
+                double targetDelay = isCleanSelection ? 500 : 1000;
                 double elapsed = (DateTime.Now - _hoverStartTime).TotalMilliseconds;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
 
@@ -79,19 +80,21 @@ namespace TabPaint
                     Mouse.OverrideCursor = Cursors.AppStarting;
 
                     // 2. 状态栏文字倒计时
-                    double remaining = (1000 - elapsed) / 1000.0;
-                    mw.SelectionSize = $"跳转至: {_pendingTab.FileName} ({remaining:F1}s)";
+                    double remaining = (targetDelay - elapsed) / 1000.0;
+                    string cleanStateText = isCleanSelection ? "(快速)" : "";
+                    mw.SelectionSize = $"跳转至: {_pendingTab.FileName} {cleanStateText} ({remaining:F1}s)";
+
 
                     if (ctxForTimer != null)
                     {
-                        double scaleFactor = 1.0 - (elapsed / 2000.0); // 稍微变小一点点
+                        double scaleFactor = 1.0 - (elapsed / (targetDelay * 2));
                         if (scaleFactor < 0.8) scaleFactor = 0.8;
                         ctxForTimer.SelectionPreview.Opacity = 0.5 + (Math.Sin(elapsed / 100.0) * 0.2);
                     }
                 }
 
                 // --- 触发切换 ---
-                if (elapsed > 1000)
+                if (elapsed > targetDelay)
                 {
                   
                     if (ctxForTimer != null) ctxForTimer.SelectionPreview.Opacity = 0.7; // 恢复默认拖拽透明度
@@ -102,8 +105,17 @@ namespace TabPaint
                     // 准备数据
                     int w = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
                     int h = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
-                    mw.TransferSelectionToTab(_pendingTab, _selectionData, w, h);
-                    ResetSwitchTimer(); // 停止计时
+                    byte[] dataClone = null;
+                    if (_selectionData != null)
+                    {
+                        dataClone = new byte[_selectionData.Length];
+                        Array.Copy(_selectionData, dataClone, _selectionData.Length);
+                    }
+
+                    // 调用主窗口传输方法
+                    mw.TransferSelectionToTab(_pendingTab, dataClone, w, h);
+
+                    ResetSwitchTimer();
                 }
             }
 

@@ -307,7 +307,9 @@ namespace TabPaint
 
             private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
-                int r = (int)ctx.PenThickness;
+                int r = (int)(ctx.PenThickness / 2.0);
+                if (r < 1) r = 1;
+
                 Color targetColor = ctx.PenColor; // 目标颜色 (R,G,B,A)
 
                 // 获取全局力度 (0.0 - 1.0)
@@ -502,7 +504,9 @@ namespace TabPaint
             private unsafe void DrawSprayStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
                 if (_sprayPatterns == null) InitializeSprayPatterns();
-                int radius = (int)ctx.PenThickness * 2;
+                int radius = (int)(ctx.PenThickness / 2.0);
+                if (radius < 1) radius = 1;
+
                 int count = 80;
                 var pattern = _sprayPatterns[_patternIndex];
                 _patternIndex = (_patternIndex + 1) % _sprayPatterns.Count;
@@ -538,7 +542,8 @@ namespace TabPaint
 
             private unsafe void DrawMosaicStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
-                int radius = (int)ctx.PenThickness;
+                int radius = (int)(ctx.PenThickness / 2.0);
+                if (radius < 1) radius = 1;
                 int blockSize = 12;
 
                 int x_start = (int)Math.Max(0, p.X - radius);
@@ -572,7 +577,8 @@ namespace TabPaint
 
             private unsafe void DrawWatercolorStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
-                int radius = (int)ctx.PenThickness;
+                int radius = (int)(ctx.PenThickness / 2.0);
+                if (radius < 1) radius = 1;
                 Color targetColor = ctx.PenColor;
                 float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
 
@@ -627,8 +633,8 @@ namespace TabPaint
                 byte alpha = (byte)((0.2 * 255 / Math.Max(1, Math.Pow(ctx.PenThickness, 0.5))) * globalOpacity);
 
                 if (alpha == 0) return;
-               
-                int radius = (int)ctx.PenThickness;
+
+                int radius = (int)(ctx.PenThickness / 2.0);
                 if (radius < 1) radius = 1;
                 Color baseColor = ctx.PenColor;
                 int x_center = (int)p.X;
@@ -680,7 +686,8 @@ namespace TabPaint
 
             private unsafe void DrawHighlighterLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
-                int r = (int)ctx.PenThickness; 
+                int r = (int)(ctx.PenThickness / 2.0);
+                if (r < 1) r = 1;
                 double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
                 byte baseAlpha = 30;
                 Color c = Color.FromArgb((byte)(baseAlpha * globalOpacity), 255, 255, 0);

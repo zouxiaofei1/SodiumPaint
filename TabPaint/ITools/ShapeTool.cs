@@ -20,6 +20,8 @@ public class ShapeTool : ToolBase
     private bool _isDrawing;
     private bool _isManipulating = false;
     private System.Windows.Shapes.Shape _previewShape;
+    private int lag = 0;
+    
 
     public void SetShapeType(ShapeType type)
     {
@@ -63,12 +65,18 @@ public class ShapeTool : ToolBase
                 selectTool.Cleanup(ctx);
                 selectTool.lag = 0;
                 _isManipulating = false;
+                lag = 0;
              
             }
         }
 
     DrawingLogic:
-        // --- 逻辑分支 B: 绘制新图形 ---
+      
+        if(lag> 0)
+        {
+            lag--;
+            return;
+        }
         _startPoint = ctx.ToPixel(viewPos);
         _isDrawing = true;
         ctx.CapturePointer();
@@ -105,6 +113,7 @@ public class ShapeTool : ToolBase
         }
 
         ctx.EditorOverlay.Children.Add(_previewShape);
+        lag = 2;
     }
 
     public void GiveUpSelection(ToolContext ctx)
@@ -125,11 +134,21 @@ public class ShapeTool : ToolBase
             return;
         }
 
+        // 2. 如果正在画新图形
         if (!_isDrawing || _previewShape == null) return;
 
         var current = ctx.ToPixel(viewPos);
         UpdatePreviewShape(_startPoint, current, ctx.PenThickness);
+
+        int w = (int)Math.Abs(current.X - _startPoint.X);
+        int h = (int)Math.Abs(current.Y - _startPoint.Y);
+
+        // 直接设置主窗口的属性
+        var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+        // 可以在这里加上 Shape 的线宽补偿，或者只显示内容大小，这里显示几何大小
+        mw.SelectionSize = $"{w}×{h}像素";
     }
+
     private BitmapSource RenderShapeToBitmapClipped(Point globalStart, Point globalEnd, Rect validBounds, Color color, double thickness, double dpiX, double dpiY)
     {
         // 位图的尺寸 = 交集矩形的尺寸 (保证不超过画布)
@@ -287,7 +306,7 @@ public class ShapeTool : ToolBase
             selectTool.RefreshOverlay(ctx);
 
             // 进入操控模式
-            _isManipulating = true;
+            _isManipulating = true; selectTool.UpdateStatusBarSelectionSize();
         }
     }
 

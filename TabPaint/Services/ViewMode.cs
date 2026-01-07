@@ -68,13 +68,22 @@ namespace TabPaint
                 if (_router.CurrentTool is PenTool penTool) penTool.StopDrawing(_ctx);
                 MainImageBar.MainContainer.Height = 5;
                 if (_isCurrentFileGif)
-                { 
+                {
                     BackgroundImage.Visibility = Visibility.Collapsed; // 隐藏静态图
                     GifPlayerImage.Visibility = Visibility.Visible;    // 显示动态图
+
+                    if (!string.IsNullOrEmpty(_currentFilePath))
+                    {
+                        AnimationBehavior.SetSourceUri(GifPlayerImage, new Uri(_currentFilePath));
+                    }
+
                     var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
                     controller?.Play();
                 }
+                RootWindow.MinHeight= 150;
+                RootWindow.MinWidth = 200;
                 CanvasResizeOverlay.Visibility = Visibility.Collapsed;
+               
             }
             else
             {
@@ -90,11 +99,22 @@ namespace TabPaint
                 }
 
                 CanvasResizeOverlay.Visibility = Visibility.Visible;
+                RootWindow.MinHeight = 400;
+                RootWindow.MinWidth = 600;
             }
             UpdateCanvasVisuals();
             if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);
-            if (_canvasResizer != null) _canvasResizer.UpdateUI();
-            
+          
+     
+                if (_canvasResizer != null) _canvasResizer.UpdateUI();
+            if (!_hasUserManuallyZoomed && _bitmap != null)
+            {
+                Dispatcher.InvokeAsync(() =>
+                {
+                    FitToWindow();
+                }, DispatcherPriority.Loaded);
+            }
+
         }
         private void OnTitleBarModeSwitch(object sender, RoutedEventArgs e)
         {

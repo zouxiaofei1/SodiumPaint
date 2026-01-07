@@ -3,7 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
 //
 //SelectTool类的渲染实现
@@ -55,24 +57,46 @@ namespace TabPaint
                 }
                 double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
+                overlay.ClipToBounds = false;
                 overlay.Children.Clear();
+               
+                var geometry = new RectangleGeometry(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
 
                 // 虚线框
-                var outline = new System.Windows.Shapes.Rectangle
+                var outlinePath = new System.Windows.Shapes.Path
                 {
-                    Stroke = Brushes.Black,
-                    StrokeDashArray = new DoubleCollection { 8, 4 },
-                    StrokeThickness = invScale * 1.5,
-                    Width = rect.Width,
-                    Height = rect.Height
+                    Stroke = mw._darkBackgroundBrush, // 之后改成黑白相间
+                    StrokeThickness = invScale * 1.5, // 保持细线
+                    Data = geometry,
+                    SnapsToDevicePixels = false // 避免缩放时的像素对齐抖动
                 };
-                RenderOptions.SetEdgeMode(outline, EdgeMode.Unspecified);  // 开抗锯齿混合
-                outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
                 double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width - (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
 
-                Canvas.SetLeft(outline, rect.X+ diff*0.75);
-                Canvas.SetTop(outline, rect.Y);
-                overlay.Children.Add(outline);
+                var whiteBase = new System.Windows.Shapes.Path
+                {
+                    Stroke = Brushes.White,
+                    StrokeThickness = invScale * 1.5,
+                    Data = geometry,
+                    SnapsToDevicePixels = false,
+                    Opacity = 0.8
+                };
+                overlay.Children.Add(whiteBase);
+
+                // 2. 顶层黑色虚线
+                outlinePath.StrokeDashArray = new DoubleCollection { 4, 4 }; // 4实4空
+
+                // 【美化专题 1】: 蚂蚁线动画
+                // 添加一个永远运行的动画让 DashOffset 动起来
+                DoubleAnimation animation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = 8, // 必须是 DashArray 总和 (4+4) 的倍数
+                    Duration = new Duration(TimeSpan.FromSeconds(1)), // 1秒转一圈
+                    RepeatBehavior = RepeatBehavior.Forever
+                };
+                outlinePath.BeginAnimation(System.Windows.Shapes.Shape.StrokeDashOffsetProperty, animation);
+
+                overlay.Children.Add(outlinePath);
 
                 // 8个句柄
                 foreach (var p in GetHandlePositions(rect))
@@ -82,11 +106,11 @@ namespace TabPaint
                         Width = HandleSize * invScale,
                         Height = HandleSize * invScale,
                         Fill = Brushes.White,
-                        Stroke = Brushes.Black,
+                        Stroke = mw._darkBackgroundBrush,
                         StrokeThickness = invScale
                     };
                     RenderOptions.SetEdgeMode(handle, EdgeMode.Unspecified);  // 开抗锯齿混合
-                    outline.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
+                    outlinePath.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
                     Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2 + diff * 0.75);
                     Canvas.SetTop(handle, p.Y - HandleSize * invScale / 2);
                     overlay.Children.Add(handle);
@@ -453,10 +477,7 @@ namespace TabPaint
             private void HidePreview(ToolContext ctx)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                if (mw._canvasResizer != null)
-                {
-                    mw._canvasResizer.SetHandleVisibility(true);
-                }
+                if (mw._canvasResizer != null)mw._canvasResizer.SetHandleVisibility(true);
                 ctx.SelectionPreview.Visibility = Visibility.Collapsed;
             }
 

@@ -79,12 +79,12 @@
             <!-- #endregion -->
             <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
             <!-- #region 6. 主画布区域 (Canvas) -->
-            <Grid ClipToBounds="True" Background="Transparent">
+            <Grid ClipToBounds="False" Background="Transparent">
                 <Grid.Resources>
                     <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
                 </Grid.Resources>
 
-                <Grid>
+                <Grid ClipToBounds="False">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <!-- 左侧标尺 -->
@@ -107,7 +107,7 @@
                                  Visibility="{Binding ShowRulers, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
 
                     <!-- 左上角的小方块 (标尺交汇处) -->
-                    <Border Grid.Row="0" Grid.Column="0" Background="#F0F0F0" 
+                    <Border Grid.Row="0" Grid.Column="0" Background="#20F0F0F0" 
                             Visibility="{Binding ElementName=RulerTop, Path=Visibility}"/>
 
 
@@ -202,6 +202,8 @@
                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" 
           ClipToBounds="False">
                             <Grid Name="CanvasWrapper"   ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                              
+
                                 <Grid.Background>
                                     <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
                                         <!-- 核心修复：Viewport 绑定缩放倍数，参数 20 是你原本的基础大小 -->
@@ -265,11 +267,30 @@
                                 <!-- 3. 选区预览层 -->
                                 <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
                                 <!-- 4. 选区UI层 -->
-                                <Canvas Name="SelectionOverlayCanvas" Visibility="Collapsed" IsHitTestVisible="False" Background="Transparent" UseLayoutRounding="False" SnapsToDevicePixels="False"/>
-                                <!-- 5. 编辑器层 -->
+                                 <!-- 5. 编辑器层 -->
                                 <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
                             </Grid>
+                            <Canvas Name="SelectionOverlayCanvas" 
+            Panel.ZIndex="100" 
+            Visibility="Collapsed" 
+            IsHitTestVisible="False" 
+            Background="Transparent" 
+            UseLayoutRounding="False" 
+            SnapsToDevicePixels="False">
+
+                                <Canvas.LayoutTransform>
+                                    <Binding ElementName="CanvasWrapper" Path="LayoutTransform"/>
+                                </Canvas.LayoutTransform>
+                                <Canvas.Width>
+                                    <Binding ElementName="BackgroundImage" Path="ActualWidth"/>
+                                </Canvas.Width>
+                                <Canvas.Height>
+                                    <Binding ElementName="BackgroundImage" Path="ActualHeight"/>
+                                </Canvas.Height>
+                            </Canvas>
+
                             <Border Name="StaticCanvasBorder"
+                                       Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
                 IsHitTestVisible="False"
                 SnapsToDevicePixels="True"
                 UseLayoutRounding="True"
@@ -280,6 +301,25 @@
                                 <Border.Margin>
                                     <Thickness Left="-1" Top="-1" Right="-1" Bottom="-1"/>
                                 </Border.Margin>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Effect" Value="{x:Null}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False">
+                                                <Setter Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect Color="Black" 
+                                    Direction="270" 
+                                    ShadowDepth="0" 
+                                    BlurRadius="20" 
+                                    Opacity="0.25" 
+                                    RenderingBias="Performance"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                             </Border>
                             <Canvas Name="CanvasResizeOverlay" 
                 Visibility="Visible" 

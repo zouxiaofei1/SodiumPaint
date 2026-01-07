@@ -1,25 +1,15 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.ObjectModel;
+﻿
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Forms;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 
 //
-//TabPaint主程序
+//TEXTtool
 //
 
 namespace TabPaint
@@ -32,7 +22,7 @@ namespace TabPaint
             {
                 textTool.UpdateCurrentTextBoxAttributes();
             }
-            
+
         }
         public class TextTool : ToolBase
         {
@@ -63,6 +53,7 @@ namespace TabPaint
             }
             public override void Cleanup(ToolContext ctx)
             {
+                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (_textBox != null && !string.IsNullOrWhiteSpace(_textBox.Text)) CommitText(ctx);
 
                 if (_textBox != null && ctx.EditorOverlay.Children.Contains(_textBox))
@@ -75,7 +66,7 @@ namespace TabPaint
                     ctx.SelectionOverlay.Children.Clear();
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 }
-               ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
+                mw.HideTextToolbar();
 
                 // 5️⃣ 重置工具状态
                 _dragging = false;
@@ -85,6 +76,7 @@ namespace TabPaint
                 lag = 0;
 
                 Mouse.OverrideCursor = null;
+                if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
             }
             public void GiveUpText(ToolContext ctx)
             {
@@ -122,9 +114,10 @@ namespace TabPaint
 
             public void DrawTextboxOverlay(ToolContext ctx)
             {
+                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (_textBox == null) return;
 
-                double invScale = 1 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
 
@@ -165,6 +158,7 @@ namespace TabPaint
 
                 overlay.IsHitTestVisible = false;
                 overlay.Visibility = Visibility.Visible;
+                if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
 
             // 判断是否点击到句柄
@@ -193,6 +187,18 @@ namespace TabPaint
 
             public override void OnPointerMove(ToolContext ctx, Point viewPos)
             {
+                if ((_dragging || _resizing) && Mouse.LeftButton == MouseButtonState.Released)
+                {
+                    _dragging = false;
+                    _resizing = false;
+                    _currentAnchor = ResizeAnchor.None;
+                    if (ctx.EditorOverlay.IsMouseCaptured)
+                    {
+                        ctx.EditorOverlay.ReleaseMouseCapture();
+                    }
+                    Mouse.OverrideCursor = null;
+                    return; // 直接退出，不执行后面的移动逻辑
+                }
                 var px = ctx.ToPixel(viewPos);
 
                 // 1️⃣ 光标状态更新逻辑 (增加移动光标检测)
@@ -380,7 +386,7 @@ namespace TabPaint
                 // 必须在外矩形内 && 不在内矩形内 → 才是边框区域
                 return inOuter && !inInner;
             }
-            
+
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
 
@@ -402,6 +408,7 @@ namespace TabPaint
 
                     if (lag > 0)
                     {
+                        a.s("lagging");
                         lag -= 1;
                         return;
                     }
@@ -537,7 +544,7 @@ namespace TabPaint
 
                 return tb;
             }
-         
+
             // 核心方法：将 Toolbar 状态应用到 TextBox
             public void ApplyTextSettings(System.Windows.Controls.TextBox tb)
             {
@@ -583,15 +590,17 @@ namespace TabPaint
             }
             private void CleanUpUI(ToolContext ctx)
             {
-                ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
+                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                mw.HideTextToolbar();
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 if (ctx.EditorOverlay.Children.Contains(_textBox))
                     ctx.EditorOverlay.Children.Remove(_textBox);
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                mw.SetUndoRedoButtonState();
                 _textBox = null;
-                lag = 1;
+                lag = 2;
+                if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
             private unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx, double globalOpacity)
             {
@@ -666,6 +675,137 @@ namespace TabPaint
                     }
                 }
             }
+            // 1. 新增：将事件绑定逻辑提取为独立方法，避免重复代码
+            private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.TextBox tb)
+            {
+                // 绘制虚线框和句柄
+                tb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
+
+                // 绑定 Overlay 的交互事件 (移动、缩放)
+                // 注意：这里需要确保只绑定一次，或者依赖 ctx.EditorOverlay 的现有绑定
+                // 在原本的逻辑中，你是在 OnPointerUp 里给 ctx.EditorOverlay 绑定的事件。
+                // 如果是粘贴生成的，Overlay 需要同样的事件响应。
+
+                // 重新绑定 Overlay 事件以防万一 (在 Cleanup 中通常会清空 Children 但 Overlay 实例还在)
+                // 建议：将 Overlay 的事件绑定移到 Tool 激活时(OnActivated)或保持原样
+                // 这里我们假设 Overlay 的 PreviewMouseDown 等是在创建 TextBox 时动态挂载的逻辑
+
+                // 为这个特定的 TextBox 绑定删除键
+                tb.PreviewKeyDown += (s, e) =>
+                {
+                    if (e.Key == Key.Delete)
+                    {
+                        CommitText(ctx);
+                        ctx.EditorOverlay.Children.Remove(tb);
+                        _textBox = null;
+                        ctx.EditorOverlay.IsHitTestVisible = false;
+                        e.Handled = true;
+                    }
+                };
+
+                tb.Focusable = true;
+                tb.Loaded += (s, e) => tb.Focus();
+            }
+
+            // 2. 新增：公共接口，用于外部调用（粘贴/拖拽）
+            public void SpawnTextBox(ToolContext ctx, Point viewPos, string text)
+            {
+                _dragging = false;
+                _resizing = false;
+                if (ctx.EditorOverlay.IsMouseCaptured) ctx.EditorOverlay.ReleaseMouseCapture();
+
+                if (_textBox != null) CommitText(ctx);
+
+                // 转换坐标
+                Point px = ctx.ToPixel(viewPos);
+
+                // 创建 TextBox
+                _textBox = CreateTextBox(ctx, px.X, px.Y);
+                _textBox.Text = text; // 填入文字
+
+                // 设置一些初始约束，防止太长
+                _textBox.MaxWidth = 1000;
+                _textBox.Width = Double.NaN; // 让宽度自适应内容
+                _textBox.Height = Double.NaN;
+
+                // 显示 UI
+                ctx.EditorOverlay.Visibility = Visibility.Visible;
+                ctx.EditorOverlay.IsHitTestVisible = true;
+                Canvas.SetZIndex(ctx.EditorOverlay, 999);
+                ctx.EditorOverlay.Children.Add(_textBox);
+
+                ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_textBox);
+
+                // 绑定关键事件（原本写在 OnPointerUp 里的那一大段）
+                SetupTextBoxEvents(ctx, _textBox);
+
+                // 这一点至关重要：粘贴生成的框，需要手动挂载 Overlay 的交互事件
+                // 因为原本这些事件是在鼠标拖拽结束时挂载的
+                ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp; // 防止重复订阅
+                ctx.EditorOverlay.PreviewMouseUp += Overlay_PreviewMouseUp;
+
+                ctx.EditorOverlay.PreviewMouseMove -= Overlay_PreviewMouseMove;
+                ctx.EditorOverlay.PreviewMouseMove += Overlay_PreviewMouseMove;
+
+                ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
+                ctx.EditorOverlay.PreviewMouseDown += Overlay_PreviewMouseDown;
+
+                // 触发一次布局更新以正确显示边框
+                _textBox.UpdateLayout();
+                DrawTextboxOverlay(ctx);
+            }
+
+            // 3. 辅助：将原本匿名函数转为具名函数，方便 += 和 -=
+            private void Overlay_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                Point pos = e.GetPosition(mw._ctx.EditorOverlay);
+                OnPointerUp(mw._ctx, pos);
+            }
+
+            private void Overlay_PreviewMouseMove(object sender, MouseEventArgs e)
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                Point pos = e.GetPosition(mw._ctx.EditorOverlay);
+                OnPointerMove(mw._ctx, pos);
+            }
+
+            private void Overlay_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var ctx = mw._ctx;
+
+                Point pos = e.GetPosition(ctx.EditorOverlay);
+                Point pixelPos = ctx.ToPixel(pos);
+
+                var anchor = HitTestTextboxHandle(pixelPos);
+
+                if (anchor != ResizeAnchor.None)
+                {
+                    _resizing = true;
+                    _currentAnchor = anchor;
+                    _startMouse = pixelPos;
+                    _startW = _textBox.ActualWidth;
+                    _startH = _textBox.ActualHeight;
+                    _startX = Canvas.GetLeft(_textBox);
+                    _startY = Canvas.GetTop(_textBox);
+                    ctx.EditorOverlay.CaptureMouse();
+                    e.Handled = true;
+                }
+                else if (IsInsideBorder(pixelPos))
+                {
+                    _dragging = true;
+                    _startMouse = pixelPos;
+                    _startX = Canvas.GetLeft(_textBox);
+                    _startY = Canvas.GetTop(_textBox);
+                    ctx.EditorOverlay.CaptureMouse();
+                    e.Handled = true;
+                }
+                else
+                {
+                    OnPointerDown(ctx, pos);
+                }
+            }
 
             public void CommitText(ToolContext ctx)
             {
@@ -678,7 +818,7 @@ namespace TabPaint
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                     if (ctx.EditorOverlay.Children.Contains(_textBox))
                         ctx.EditorOverlay.Children.Remove(_textBox);
-                    lag = 1;
+                    lag = 2;
                     return;
                 }
                 double tweakX = 2.0;
@@ -741,7 +881,7 @@ namespace TabPaint
                 int x = (int)tbLeft;
                 int y = (int)tbTop;
 
-                var writeableBitmap = ctx.Surface.Bitmap; // 假设 Surface 就是 WriteableBitmap，如果不是请获取它
+                var writeableBitmap = ctx.Surface.Bitmap; 
                 int canvasWidth = writeableBitmap.PixelWidth;
                 int canvasHeight = writeableBitmap.PixelHeight;
 
@@ -759,14 +899,14 @@ namespace TabPaint
                     CleanUpUI(ctx);
                     return;
                 }
-                byte[] destPixels = new byte[safeH * stride]; 
+                byte[] destPixels = new byte[safeH * stride];
                 Int32Rect dirtyRect = new Int32Rect(safeX, safeY, safeW, safeH);
                 writeableBitmap.CopyPixels(dirtyRect, destPixels, stride, 0);
 
                 int sourceOffsetX = safeX - x;
                 int sourceOffsetY = safeY - y;
                 int sourceStartIndex = sourceOffsetY * stride + sourceOffsetX * 4;
-                
+
                 double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
                 AlphaBlendBatch(sourcePixels, destPixels, safeW, safeH, stride, sourceStartIndex, globalOpacityFactor);
 
@@ -779,6 +919,7 @@ namespace TabPaint
 
                 // UI 清理
                 CleanUpUI(ctx);
+                lag = 2;
             }
         }
     }

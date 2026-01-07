@@ -63,7 +63,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        public string ProgramVersion { get; set; } = "v0.8.4 alpha";
+        public string ProgramVersion { get; set; } = "v0.8.5 alpha";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -263,5 +263,7 @@ namespace TabPaint
         private bool _isDraggingBirdEye = false;
         private Brush _originalGridBrush; // 用于存储启动时 XAML 里定义的那个格子画刷
         private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333"));
+        private bool _currentFileExists = true; // 标记当前文件是否存在于磁盘
+        private bool _hasUserManuallyZoomed = false;
     }
 }

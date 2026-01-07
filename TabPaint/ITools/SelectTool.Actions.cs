@@ -382,7 +382,14 @@ namespace TabPaint
                 ctx.SelectionPreview.Source = previewBmp;
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
 
-                // 初始化变换状态
+                double dpiScaleX = 96.0 / ctx.Surface.Bitmap.DpiX;
+                double dpiScaleY = 96.0 / ctx.Surface.Bitmap.DpiY;
+
+                ctx.SelectionPreview.Width = _selectionRect.Width * dpiScaleX;
+                ctx.SelectionPreview.Height = _selectionRect.Height * dpiScaleY;
+
+                // 确保它填充空间
+                ctx.SelectionPreview.Stretch = System.Windows.Media.Stretch.Fill;
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
                 _transformStep = 0;
 
@@ -596,65 +603,126 @@ namespace TabPaint
                 }
 
                 // 缩放逻辑
+                // 缩放逻辑
                 if (_resizing)
                 {
                     if (!_hasLifted) LiftSelectionFromCanvas(ctx);
+
+                    // 1. 确定“不动点” (Pivot Edges)
+                    // 当我们拖动左边时，RightEdge 是不动的；拖动上边时，BottomEdge 是不动的。
+                    double fixedRight = _startX + _startW;
+                    double fixedBottom = _startY + _startH;
+
+                    bool isShiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
-                    double rightEdge = _startX + _startW;
-                    double bottomEdge = _startY + _startH;
-                    // 更新选区矩形
+
+                    // 2. 预计算建议的宽高 (尚未Clamping)
+                    double proposedW = _startW;
+                    double proposedH = _startH;
+
                     switch (_currentAnchor)
                     {
                         case ResizeAnchor.TopLeft:
-                            int newW_TL = (int)Math.Max(1, _startW - dx);
-                            _selectionRect.Width = newW_TL;
-                            _selectionRect.X = (int)(rightEdge - newW_TL);
-                            int newH_TL = (int)Math.Max(1, _startH - dy);
-                            _selectionRect.Height = newH_TL;
-                            _selectionRect.Y = (int)(bottomEdge - newH_TL);
+                            proposedW = _startW - dx;
+                            proposedH = _startH - dy;
                             break;
                         case ResizeAnchor.TopMiddle:
-                            int newH_TM = (int)Math.Max(1, _startH - dy);
-                            _selectionRect.Height = newH_TM;
-                            _selectionRect.Y = (int)(bottomEdge - newH_TM);
+                            proposedH = _startH - dy;
                             break;
                         case ResizeAnchor.TopRight:
-                            int newH_TR = (int)Math.Max(1, _startH - dy);
-                            _selectionRect.Height = newH_TR;
-                            _selectionRect.Y = (int)(bottomEdge - newH_TR);
-                            _selectionRect.Width = (int)Math.Max(1, _startW + dx);
+                            proposedW = _startW + dx;
+                            proposedH = _startH - dy;
                             break;
                         case ResizeAnchor.LeftMiddle:
-                            int newW_LM = (int)Math.Max(1, _startW - dx);
-                            _selectionRect.Width = newW_LM;
-                            _selectionRect.X = (int)(rightEdge - newW_LM);
+                            proposedW = _startW - dx;
                             break;
                         case ResizeAnchor.RightMiddle:
-                            _selectionRect.Width = (int)Math.Max(1, _startW + dx);
+                            proposedW = _startW + dx;
                             break;
                         case ResizeAnchor.BottomLeft:
-                            int newW_BL = (int)Math.Max(1, _startW - dx);
-                            _selectionRect.Width = newW_BL;
-                            _selectionRect.X = (int)(rightEdge - newW_BL);
-                            _selectionRect.Height = (int)Math.Max(1, _startH + dy);
+                            proposedW = _startW - dx;
+                            proposedH = _startH + dy;
                             break;
                         case ResizeAnchor.BottomMiddle:
-                            _selectionRect.Height = (int)Math.Max(1, _startH + dy);
+                            proposedH = _startH + dy;
                             break;
                         case ResizeAnchor.BottomRight:
-                            _selectionRect.Width = (int)Math.Max(1, _startW + dx);
-                            _selectionRect.Height = (int)Math.Max(1, _startH + dy);
+                            proposedW = _startW + dx;
+                            proposedH = _startH + dy;
                             break;
                     }
 
-                    // 计算缩放比例
+                    // 3. Shift 等比例修正 (仅针对四个角，边中点缩放通常不支持Shift或者是中心缩放逻辑较复杂)
+                    if (isShiftDown && (_startH != 0))
+                    {
+                        double aspectRatio = (double)_startW / _startH;
+
+                        if (_currentAnchor == ResizeAnchor.TopLeft || _currentAnchor == ResizeAnchor.TopRight ||
+                            _currentAnchor == ResizeAnchor.BottomLeft || _currentAnchor == ResizeAnchor.BottomRight)
+                        {
+                            // 取变化幅度较大的一边作为主导
+                            if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH))
+                            {
+                                proposedH = proposedW / aspectRatio;
+                            }
+                            else
+                            {
+                                proposedW = proposedH * aspectRatio;
+                            }
+                        }
+                    }
+
+                    // 4. 边界检查 (Clamping) - 修复“无限拖拽”的关键
+                    // 即使鼠标移到了另一侧，宽高也被锁死在 1
+                    if (proposedW < 1) proposedW = 1;
+                    if (proposedH < 1) proposedH = 1;
+
+                    // 5. 坐标重算 (Re-calculate Position)
+                    // 这一步至关重要：根据“固定边”和“最终宽”算出 X/Y
+                    // 这样可以保证矩形永远吸附在固定边上，而不会乱跑
+                    double finalX = _startX;
+                    double finalY = _startY;
+
+                    // 如果锚点在左侧，X 必须由 右边界 - 宽度 算出
+                    if (_currentAnchor == ResizeAnchor.TopLeft ||
+                        _currentAnchor == ResizeAnchor.LeftMiddle ||
+                        _currentAnchor == ResizeAnchor.BottomLeft)
+                    {
+                        finalX = fixedRight - proposedW;
+                    }
+                    else
+                    {
+                        // 如果锚点在右侧或中间，X 其实就是起始 X (LeftEdge)
+                        // 注意：对于 RightMiddle, TopRight 等，LeftEdge 是不动的，也就是 _startX
+                        finalX = _startX;
+                    }
+
+                    // 如果锚点在上方，Y 必须由 下边界 - 高度 算出
+                    if (_currentAnchor == ResizeAnchor.TopLeft ||
+                        _currentAnchor == ResizeAnchor.TopMiddle ||
+                        _currentAnchor == ResizeAnchor.TopRight)
+                    {
+                        finalY = fixedBottom - proposedH;
+                    }
+                    else
+                    {
+                        finalY = _startY;
+                    }
+
+                    // 6. 应用结果
+                    _selectionRect.Width = (int)proposedW;
+                    _selectionRect.Height = (int)proposedH;
+                    _selectionRect.X = (int)finalX;
+                    _selectionRect.Y = (int)finalY;
+
+
+                    // ---------------- 渲染部分 (Transform逻辑保持不变) ----------------
                     if (_originalRect.Width > 0 && _originalRect.Height > 0)
                     {
                         double scaleX = (double)_selectionRect.Width / _originalRect.Width;
                         double scaleY = (double)_selectionRect.Height / _originalRect.Height;
 
-                        // 获取或创建 TransformGroup
                         var tg = ctx.SelectionPreview.RenderTransform as TransformGroup;
                         if (tg == null)
                         {
@@ -669,10 +737,8 @@ namespace TabPaint
                             if (s == null)
                             {
                                 s = new ScaleTransform(1, 1);
-                                tg.Children.Insert(0, s); // 插在最前面
+                                tg.Children.Insert(0, s);
                             }
-
-                            // 现在安全地设置属性
                             s.ScaleX = scaleX;
                             s.ScaleY = scaleY;
 
@@ -685,13 +751,13 @@ namespace TabPaint
                             t.X = _selectionRect.X;
                             t.Y = _selectionRect.Y;
                         }
-
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
                     UpdateStatusBarSelectionSize();
                     DrawOverlay(ctx, _selectionRect);
                     return;
                 }
+
 
                 if (_selecting)// 框选逻辑
                 {
@@ -794,7 +860,7 @@ namespace TabPaint
 
                 UpdateStatusBarSelectionSize();
             }
-        private void UpdateStatusBarSelectionSize()
+        public void UpdateStatusBarSelectionSize()
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {// 状态栏更新

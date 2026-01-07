@@ -209,8 +209,9 @@ namespace TabPaint
                 CurrentTool = tool;
                 _ctx.ViewElement.Cursor = tool.Cursor;
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
-
+               
                 ((MainWindow)System.Windows.Application.Current.MainWindow).AutoSetFloatBarVisibility();
+                ((MainWindow)System.Windows.Application.Current.MainWindow)._router.GetSelectTool().UpdateStatusBarSelectionSize();
 
                 ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateToolSelectionHighlight();
             }

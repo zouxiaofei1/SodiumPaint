@@ -554,7 +554,7 @@ namespace TabPaint
                     SetPreviewSlider();
                     _imageSize = $"{_surface.Width}×{_surface.Height}像素";
                     OnPropertyChanged(nameof(ImageSize));
-
+                    _hasUserManuallyZoomed = false;
                     FitToWindow();
                     CenterImage();
                     _canvasResizer.UpdateUI();

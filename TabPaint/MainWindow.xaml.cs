@@ -39,7 +39,8 @@ namespace TabPaint
             // s(_currentImageIndex);
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent();
-            if (SettingsManager.Instance.Current.StartInViewMode)
+            CheckFilePathAvailibility(_currentFilePath);
+            if (SettingsManager.Instance.Current.StartInViewMode&& _currentFileExists)
             {
                 IsViewMode = true;
                 ThicknessPanel.Visibility = Visibility.Collapsed;
@@ -933,8 +934,6 @@ namespace TabPaint
 
 
             bool isSingle = FileTabs.Count <= 1;
-
-            // 只有当状态真正改变时才赋值，避免重复触发动画
             if (MainImageBar.IsSingleTabMode != isSingle)
             {
 

@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 //
 //TabPaint事件处理cs
@@ -55,6 +56,7 @@ namespace TabPaint
 
             if (isNext || isPrev)
             {
+                if (_router.CurrentTool is TextTool tx && tx._textBox != null) return false;
                 // 如果是第一次按下（而不是按住不放触发的重复事件），初始化时间
                 if (!_isNavigating)
                 {
@@ -169,12 +171,12 @@ namespace TabPaint
             if (IsShortcut("File.OpenWorkspace", e)) { OnOpenWorkspaceClick(sender, e); e.Handled = true; return; }
             if (IsShortcut("File.PasteNewTab", e)) { PasteClipboardAsNewTab(); e.Handled = true; return; }
 
-            if (IsShortcut("Effect.Brightness", e)) { OnBrightnessContrastExposureClick(sender,e); e.Handled = true; return; } // Ctrl+Alt+Q
-            if (IsShortcut("Effect.Temperature", e)) { OnColorTempTintSaturationClick(sender,e); e.Handled = true; return; } // Ctrl+Alt+W
-            if (IsShortcut("Effect.Grayscale", e)) { OnConvertToBlackAndWhiteClick(sender,e); e.Handled = true; return; }   // Ctrl+Alt+E
-            if (IsShortcut("Effect.Invert", e)) { OnInvertColorsClick(sender,e); e.Handled = true; return; }      // Ctrl+Alt+R
-            if (IsShortcut("Effect.AutoLevels", e)) { OnAutoLevelsClick(sender,e); e.Handled = true; return; }  // Ctrl+Alt+T
-            if (IsShortcut("Effect.Resize", e)) { OnResizeCanvasClick(sender,e); e.Handled = true; return; }      // Ctrl+Alt+Y
+            if (IsShortcut("Effect.Brightness", e)) { OnBrightnessContrastExposureClick(sender, e); e.Handled = true; return; } // Ctrl+Alt+Q
+            if (IsShortcut("Effect.Temperature", e)) { OnColorTempTintSaturationClick(sender, e); e.Handled = true; return; } // Ctrl+Alt+W
+            if (IsShortcut("Effect.Grayscale", e)) { OnConvertToBlackAndWhiteClick(sender, e); e.Handled = true; return; }   // Ctrl+Alt+E
+            if (IsShortcut("Effect.Invert", e)) { OnInvertColorsClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+R
+            if (IsShortcut("Effect.AutoLevels", e)) { OnAutoLevelsClick(sender, e); e.Handled = true; return; }  // Ctrl+Alt+T
+            if (IsShortcut("Effect.Resize", e)) { OnResizeCanvasClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+Y
 
             // === B. 然后处理 锁定快捷键 (硬编码，不允许更改) ===
 
@@ -203,7 +205,33 @@ namespace TabPaint
                         if (currentTab != null) CloseTab(currentTab);
                         e.Handled = true;
                         break;
-                    case Key.V: 
+                    case Key.V:
+                        if (Clipboard.ContainsText())
+                        {
+                            string text = Clipboard.GetText();
+                            if (!string.IsNullOrWhiteSpace(text))
+                            {
+                                // 1. 确保当前是 TextTool，如果不是则切换
+                                if (!(_router.CurrentTool is TextTool))
+                                {
+                                    // 假设你有一个方法切换工具，或者直接赋值
+                                    // SwitchTool(ToolEnum.Text); 
+                                    _router.SetTool(_tools.Text); // 举例
+                                }
+
+                                // 2. 计算粘贴位置（屏幕中心 或者 鼠标位置）
+                                // 这里使用视图中心
+                                Point center = new Point(ActualWidth / 2, ActualHeight / 2);
+
+                                // 3. 调用 TextTool 生成文本框
+                                if (_router.CurrentTool is TextTool texttool)
+                                {
+                                    texttool.SpawnTextBox(_ctx, center, text);
+                                    e.Handled = true;
+                                    break;
+                                }
+                            }
+                        }
                         bool isMultiFilePaste = false;
                         if (System.Windows.Clipboard.ContainsFileDropList())
                         {
@@ -216,8 +244,12 @@ namespace TabPaint
                         e.Handled = true;
                         break;
                     case Key.A:
+                        if (_router.CurrentTool is TextTool tx && tx._textBox != null) break;
                         _router.SetTool(_tools.Select);
-                        if (_tools.Select is SelectTool stSelectAll) stSelectAll.SelectAll(_ctx,false);
+                        SelectTool stSelectAll = _router.GetSelectTool();
+                        if (stSelectAll.HasActiveSelection) stSelectAll.CommitSelection(_ctx);
+                        stSelectAll.Cleanup(_ctx);
+                        stSelectAll.SelectAll(_ctx, false);
                         e.Handled = true;
                         break;
                 }
@@ -265,13 +297,13 @@ namespace TabPaint
 
 
         private bool IsShortcut(string actionName, KeyEventArgs e)
-        {  
+        {
             var settings = SettingsManager.Instance.Current;
             if (settings.Shortcuts == null || !settings.Shortcuts.ContainsKey(actionName))
             {
-                return false; 
-                
-            
+                return false;
+
+
             }
 
             var item = settings.Shortcuts[actionName];
@@ -281,7 +313,7 @@ namespace TabPaint
 
             // 宽松匹配：如果设置了 Key.None，则视为禁用该快捷键
             // if (item.Key == Key.None) return false;
-         
+
             return (key == item.Key && Keyboard.Modifiers == item.Modifiers);
         }
 
@@ -529,7 +561,7 @@ namespace TabPaint
             bool isNext = IsShortcut("View.NextImage", e);
             bool isPrev = IsShortcut("View.PrevImage", e);
 
-            if (isNext || isPrev ) // 根据你的实际快捷键添加
+            if (isNext || isPrev) // 根据你的实际快捷键添加
             {
                 // 重置状态
                 _isNavigating = false;
@@ -558,7 +590,8 @@ namespace TabPaint
         }
         private void UpdateUIStatus(double realScale)
         {
-            MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
+            if (MyStatusBar == null) return;
+                MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
             ZoomLevel = realScale.ToString("P0"); // 如果你有绑定的属性
 
             // 更新滑块位置 (反向计算)
@@ -570,17 +603,25 @@ namespace TabPaint
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             UpdateImageBarSliderState();
+            if (IsViewMode && !_hasUserManuallyZoomed && _bitmap != null && _startupFinished)
+            {
+                // 使用 Dispatcher 稍作延迟，等待 ScrollViewer 的 Viewport 更新
+                Dispatcher.InvokeAsync(() =>
+                {
+                    FitToWindow();
+                }, DispatcherPriority.Loaded);
+            }
         }
         // 修改方法签名，增加 isIntermediate 参数，默认为 false
         private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false)
         {
-         
+
             double oldScale = zoomscale;
             // 1. 计算最小缩放比例限制
             double minrate = 1.0;
             if (_bitmap != null)
             {
-                double maxDim = Math.Max(Math.Max(BackgroundImage.Width,_bitmap.PixelWidth), Math.Max(BackgroundImage.Height,_bitmap.PixelHeight));
+                double maxDim = Math.Max(Math.Max(BackgroundImage.Width, _bitmap.PixelWidth), Math.Max(BackgroundImage.Height, _bitmap.PixelHeight));
                 if (maxDim > 0)
                     minrate = 1500.0 / maxDim;
             }
@@ -598,7 +639,7 @@ namespace TabPaint
             }
 
             // 4. 更新数据
-            zoomscale = newScale; 
+            zoomscale = newScale;
             UpdateUIStatus(zoomscale);
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
 
@@ -614,17 +655,17 @@ namespace TabPaint
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
             if (IsViewMode) CheckBirdEyeVisibility();
-            if(!IsViewMode) UpdateSelectionScalingMode();
+            if (!IsViewMode) UpdateSelectionScalingMode();
             _canvasResizer.UpdateUI();
-            
+            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
             if (!isIntermediate)
             {
-                
-                if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
-                if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-                
-                UpdateRulerPositions(); 
-                if (IsViewMode&& _startupFinished) { ShowToast(newScale.ToString("P0")); }
+
+
+
+                UpdateRulerPositions();
+                if (IsViewMode && _startupFinished) { ShowToast(newScale.ToString("P0")); }
             }
         }
 
@@ -682,7 +723,7 @@ namespace TabPaint
             }
             else
             {
-                nextScale = zoomscale + delta * ZoomLerpFactor/PerformanceScore;
+                nextScale = zoomscale + delta * ZoomLerpFactor / PerformanceScore;
             }
 
             double oldScale = zoomscale;
@@ -703,6 +744,8 @@ namespace TabPaint
             _canvasResizer.UpdateUI();
             if (IsViewMode) CheckBirdEyeVisibility();
             if (!IsViewMode) UpdateSelectionScalingMode();
+            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
             // 动画结束清理
             if (isEnding)
             {
@@ -753,8 +796,8 @@ namespace TabPaint
 
             if (isCtrl || (isViewMode && wheelMode == MouseWheelMode.Zoom))
             {
-                e.Handled = true;
-
+                e.Handled = true; 
+                _hasUserManuallyZoomed = true;
                 // 获取鼠标在 ScrollContainer 中的位置作为缩放中心
                 Point mousePos = e.GetPosition(ScrollContainer);
                 double currentBase = _isZoomAnimating ? _targetZoomScale : zoomscale;

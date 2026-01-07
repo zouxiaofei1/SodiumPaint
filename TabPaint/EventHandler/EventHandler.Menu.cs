@@ -22,7 +22,7 @@ namespace TabPaint
         private void OnInvertColorsClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;
-
+            _router.CleanUpSelectionandShape();
             // 1. 记录 Undo (整图操作推荐 PushFullImageUndo)
             _undo.PushFullImageUndo();
 
@@ -67,7 +67,7 @@ namespace TabPaint
         private void OnAutoLevelsClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;
-
+            _router.CleanUpSelectionandShape();
             // 1. 记录 Undo
             _undo.PushFullImageUndo();
 
@@ -333,6 +333,7 @@ namespace TabPaint
         private void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
         {
             if (_bitmap == null) return;// 1. (为Undo做准备) 保存当前图像的完整快照
+            _router.CleanUpSelectionandShape();
             var fullRect = new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight);
             _undo.PushFullImageUndo(); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
             var dialog = new AdjustBCEWindow(_bitmap, BackgroundImage);   // 3. 显示对话框并根据结果操作
@@ -461,6 +462,7 @@ namespace TabPaint
         private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)
         {
             if (_bitmap == null) return;
+            _router.CleanUpSelectionandShape();
             _undo.PushFullImageUndo();// 1. (为Undo做准备) 保存当前图像的完整快照
             var dialog = new AdjustTTSWindow(_bitmap); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
                                                        // 注意：这里我们传入的是 _bitmap 本身，因为 AdjustTTSWindow 内部会自己克隆一个原始副本
@@ -482,6 +484,7 @@ namespace TabPaint
         {
 
             if (_bitmap == null) return;  // 1. 检查图像是否存在
+            _router.CleanUpSelectionandShape();
             _undo.PushFullImageUndo();
             ConvertToBlackAndWhite(_bitmap);
             CheckDirtyState();
@@ -491,7 +494,7 @@ namespace TabPaint
         private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;
-
+            _router.CleanUpSelectionandShape();
             // 1. 创建并配置对话框
             var dialog = new ResizeCanvasDialog(
                 _surface.Bitmap.PixelWidth,

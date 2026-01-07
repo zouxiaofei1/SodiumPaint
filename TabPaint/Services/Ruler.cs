@@ -64,7 +64,7 @@ namespace TabPaint
             base.OnRender(drawingContext);
 
             // 1. 绘制背景
-            drawingContext.DrawRectangle(new SolidColorBrush(Color.FromRgb(245, 245, 245)), null, new Rect(0, 0, ActualWidth, ActualHeight));
+            drawingContext.DrawRectangle(new SolidColorBrush(Color.FromArgb(20, 245, 245, 245)), null, new Rect(0, 0, ActualWidth, ActualHeight));
 
             // 2. 绘制边缘分割线
             Pen borderPen = new Pen(Brushes.Gray, 1);
@@ -76,13 +76,6 @@ namespace TabPaint
 
             double zoom = ZoomFactor;
             if (zoom <= 0.0001) zoom = 0.0001; // 防止除以零
-
-            // ==========================================
-            // 核心修复：动态计算步长 (Step)
-            // ==========================================
-            // 目标：我们希望屏幕上每隔约 50-100 像素出现一个主要刻度数字
-            // pixelStep = logicalStep * zoom
-            // 所以 logicalStep = desiredPixelStep / zoom
 
             double desiredPixelSpacing = 80.0; // 屏幕上每隔多少像素画一个大刻度才舒服？
             double rawStep = desiredPixelSpacing / zoom;
@@ -185,7 +178,7 @@ namespace TabPaint
 
 
                             double xBase = ActualWidth - text.Height - 2;
-                            double yBase = screenPos + (text.Width / 2);
+                            double yBase = screenPos + (text.Width / 2)+10;
 
                             drawingContext.PushTransform(new RotateTransform(-90, xBase, yBase));
                             drawingContext.DrawText(text, new Point(xBase, yBase));

@@ -98,6 +98,11 @@ namespace TabPaint
         }
         private void CheckBirdEyeVisibility()
         {
+            if(RootWindow.Width<300||RootWindow.Height<200)
+            {
+                BirdEyePanel.Visibility = Visibility.Collapsed;
+                return;
+            }
             if (!IsViewMode)
             {
                 BirdEyePanel.Visibility = Visibility.Collapsed;

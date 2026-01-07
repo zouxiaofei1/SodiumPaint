@@ -22,7 +22,7 @@ namespace TabPaint
         {
             // 1. 检查画布是否存在
             if (_surface?.Bitmap == null) return;
-
+            _router.CleanUpSelectionandShape();
             var bmp = _surface.Bitmap;
             int w = bmp.PixelWidth;
             int h = bmp.PixelHeight;
@@ -224,7 +224,7 @@ namespace TabPaint
         private void OnChromaKeyClick(object sender, RoutedEventArgs e)
         {
             if (_bitmap == null) return;
-
+            _router.CleanUpSelectionandShape();
             // 1. 验证坐标是否在图片范围内
             int x = (int)_lastRightClickPosition.X;
             int y = (int)_lastRightClickPosition.Y;
@@ -360,7 +360,7 @@ namespace TabPaint
         private async void OnRemoveBackgroundClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;
-
+            _router.CleanUpSelectionandShape();
             // 1. 简单的加载状态提示 (可以用你的 imagebar 进度条或者状态栏)
             var statusText = _imageSize; // 暂存状态栏
             _imageSize = "正在准备 AI 模型...";

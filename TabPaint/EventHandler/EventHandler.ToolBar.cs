@@ -119,7 +119,7 @@ namespace TabPaint
             double targetScale = zoomscale / ZoomTimes;
 
             System.Windows.Point centerPoint = new System.Windows.Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
-
+            _hasUserManuallyZoomed = true;
             StartSmoothZoom(targetScale, centerPoint);
         }
 
@@ -129,7 +129,7 @@ namespace TabPaint
 
             // 2. 获取屏幕中心点
             System.Windows.Point centerPoint = new System.Windows.Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
-
+            _hasUserManuallyZoomed = true;
             // 3. 启动平滑动画
             StartSmoothZoom(targetScale, centerPoint);
         }
@@ -227,7 +227,6 @@ namespace TabPaint
 
             // 应用缩放
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
-
             UpdateSliderBarValue(zoomscale);
 
         }

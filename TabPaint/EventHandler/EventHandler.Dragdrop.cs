@@ -88,6 +88,11 @@ namespace TabPaint
                     HideDragOverlay();
                 }
             }
+            else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                e.Effects = DragDropEffects.Copy;
+                ShowDragOverlay("插入文字", "松开鼠标创建文本框");
+            }
             else
             {
                 e.Effects = DragDropEffects.None;
@@ -151,6 +156,33 @@ namespace TabPaint
                 }
                 e.Handled = true;
             }
+            else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                string text = null;
+
+                // 1. 优先尝试获取 Unicode 文本 (最安全，支持中文/Emoji/多语言)
+                if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+                {
+                    text = (string)e.Data.GetData(DataFormats.UnicodeText);
+                }
+
+                // 2. 如果没有 Unicode，再退而求其次尝试 ANSI 文本
+                // (有些老旧软件可能只提供 Text 格式)
+                if (string.IsNullOrEmpty(text) && e.Data.GetDataPresent(DataFormats.Text))
+                {
+                    text = (string)e.Data.GetData(DataFormats.Text);
+                }
+
+                // 3. 还有一种特殊情况：HTML 格式拖拽（有时候浏览器拖拽只带 HTML）
+                // 如果需要更高级的支持，可以解析 DataFormats.Html，但通常 UnicodeText 足够了。
+
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    Point dropPos = e.GetPosition(CanvasWrapper);
+                    InsertTextToCanvas(dropPos, text);
+                }
+                e.Handled = true;
+            }
         }
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -161,6 +193,18 @@ namespace TabPaint
         {
             public int X;
             public int Y;
+        }
+        private void InsertTextToCanvas(Point viewPos, string text)
+        {
+            // 1. 切换工具
+            _router.SetTool(_tools.Text);
+
+            // 2. 调用上一轮我们在 TextTool 里写的 SpawnTextBox 方法
+            if (_router.CurrentTool is TextTool textTool)
+            {
+                // 确保 SpawnTextBox 方法已在 TextTool 中定义
+                textTool.SpawnTextBox(_ctx, viewPos, text);
+            }
         }
         private DispatcherTimer _dragWatchdog;
         private void DragWatchdog_Tick(object sender, EventArgs e)
