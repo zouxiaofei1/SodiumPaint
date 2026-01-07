@@ -65,8 +65,8 @@ public class ShapeTool : ToolBase
                 selectTool.Cleanup(ctx);
                 selectTool.lag = 0;
                 _isManipulating = false;
-                lag = 0;
-             
+                lag = 1;
+
             }
         }
 
@@ -113,7 +113,7 @@ public class ShapeTool : ToolBase
         }
 
         ctx.EditorOverlay.Children.Add(_previewShape);
-        lag = 2;
+
     }
 
     public void GiveUpSelection(ToolContext ctx)

@@ -33,13 +33,12 @@ namespace TabPaint
             if (_currentTabItem == null) return;
             // 假设你的画布是 _surface.Bitmap (WriteableBitmap)
             if (_surface?.Bitmap == null) return;
-            a.s(_currentCanvasVersion, _lastBackedUpVersion, _currentTabItem.IsDirty, _currentTabItem.IsNew);
+         
             // 1. 基础检查
             if (_currentTabItem.IsDirty == false && !_currentTabItem.IsNew) return;
             if (_currentCanvasVersion == _lastBackedUpVersion &&
                 !string.IsNullOrEmpty(_currentTabItem.BackupPath) &&
                 File.Exists(_currentTabItem.BackupPath)) return;
-            a.s("TriggerBackgroundBackup");
             if (_saveCts != null)
             {
                 _saveCts.Cancel();
@@ -620,8 +619,8 @@ namespace TabPaint
 
                             if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
 
-                            if (string.Compare(tabDir, startupDir, StringComparison.OrdinalIgnoreCase) != 0)
-                            {
+                            if (string.Compare(tabDir, startupDir, StringComparison.OrdinalIgnoreCase) != 0&&!info.IsNew)
+                            {// 目录不匹配且不是新建文件，跳过
                                 continue;
                             }
                         }
@@ -693,13 +692,15 @@ namespace TabPaint
             {
                 IsNew = true,
                 UntitledNumber = availableNumber, // 关键：记录这个编号
-                IsDirty = false
+                IsDirty = false,
+                   Id = $"Virtual_{availableNumber}"
             };
 
             newTab.Thumbnail = GenerateBlankThumbnail();
 
             // 3. 确定插入位置 (保持之前的逻辑)
             int listInsertIndex = _imageFiles.Count;
+           
             if (_currentTabItem != null)
             {
                 int currentListIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);

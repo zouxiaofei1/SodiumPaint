@@ -166,7 +166,6 @@ namespace TabPaint.Controls
         {
             var scroller = sender as ScrollViewer;
             if (scroller == null) return;
-            a.s(e);
             if (e.Delta != 0)
             {
                 scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - e.Delta);

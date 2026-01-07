@@ -206,24 +206,42 @@ namespace TabPaint
                         e.Handled = true;
                         break;
                     case Key.V:
+                        if (Clipboard.ContainsData(DataFormats.Rtf))
+                        {
+                            try
+                            {
+                                string rtfData = Clipboard.GetData(DataFormats.Rtf) as string;
+                                var styleInfo = TextFormatHelper.ParseRtf(rtfData);
+
+                                if (styleInfo != null && !string.IsNullOrWhiteSpace(styleInfo.Text))
+                                {
+                                    // A. 切换工具
+                                    if (!(_router.CurrentTool is TextTool)) _router.SetTool(_tools.Text);
+
+                                    // B. 【核心】应用样式到 UI 工具栏
+                                    ApplyDetectedTextStyle(styleInfo);
+
+                                    // C. 生成文本框 (TextTool 会自动读取刚刚更新的 UI 设置)
+                                    Point center = new Point(ActualWidth / 2, ActualHeight / 2);
+                                    if (_router.CurrentTool is TextTool tt)
+                                    {
+                                        tt.SpawnTextBox(_ctx, center, styleInfo.Text);
+                                        e.Handled = true;
+                                        return; // 成功处理，退出
+                                    }
+                                }
+                            }
+                            catch { /* 解析失败则回退到纯文本 */ }
+                        }
+
+                        // 2. 原有的纯文本逻辑 (作为回退)
                         if (Clipboard.ContainsText())
                         {
                             string text = Clipboard.GetText();
                             if (!string.IsNullOrWhiteSpace(text))
                             {
-                                // 1. 确保当前是 TextTool，如果不是则切换
-                                if (!(_router.CurrentTool is TextTool))
-                                {
-                                    // 假设你有一个方法切换工具，或者直接赋值
-                                    // SwitchTool(ToolEnum.Text); 
-                                    _router.SetTool(_tools.Text); // 举例
-                                }
-
-                                // 2. 计算粘贴位置（屏幕中心 或者 鼠标位置）
-                                // 这里使用视图中心
+                                if (!(_router.CurrentTool is TextTool)) _router.SetTool(_tools.Text);
                                 Point center = new Point(ActualWidth / 2, ActualHeight / 2);
-
-                                // 3. 调用 TextTool 生成文本框
                                 if (_router.CurrentTool is TextTool texttool)
                                 {
                                     texttool.SpawnTextBox(_ctx, center, text);

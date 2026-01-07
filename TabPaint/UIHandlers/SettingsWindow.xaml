@@ -611,7 +611,27 @@
                         </Grid>
 
                         <Separator Margin="0,15" Background="#EEEEEE"/>
+                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,15,0,10"/>
 
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="重置工作区时不弹窗提示"/>
+                                <TextBlock Text="清空所有标签页或重置工作区时跳过二次确认弹窗" 
+                   Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+              IsChecked="{Binding Path=Current.SkipResetConfirmation, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+              VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Separator Margin="0,15" Background="#EEEEEE"/>
                         <!-- 缓存管理 (原有的功能) -->
                         <TextBlock Text="系统维护" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
                         <Grid>

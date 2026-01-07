@@ -92,9 +92,9 @@ namespace TabPaint
                         dirty = DrawBrushAtUnsafe(ctx, px, backBuffer, stride, width, height);
                     }
                 }
-
                 if (dirty.HasValue)
                 {
+                    a.s("hasvalue");
                     var finalRect = ClampRect(dirty.Value, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
                     if (finalRect.Width > 0 && finalRect.Height > 0)
                     {
@@ -102,7 +102,7 @@ namespace TabPaint
                         ctx.Undo.AddDirtyRect(finalRect);           // 修复：通知 Undo 系统
                     }
                 }
-                ctx.Surface.Bitmap.Unlock();
+                ctx.Surface.Bitmap.Unlock(); 
             }
 
             public override void OnPointerMove(ToolContext ctx, Point viewPos)

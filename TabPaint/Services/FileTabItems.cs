@@ -50,18 +50,7 @@ namespace TabPaint
                 if (existingTab == null)
                 {
 
-                    var newTab = new FileTabItem(path);
-
-                    if (IsVirtualPath(path))
-                    {
-                        newTab.IsNew = true;
-                        newTab.Thumbnail = GenerateBlankThumbnail();
-                    }
-                    else
-                    {
-                        newTab.IsLoading = true;
-                        _ = newTab.LoadThumbnailAsync(100, 60);
-                    }
+                    var newTab = CreateTabFromPath(path);
 
                     // 插入排序逻辑
                     int insertIndex = 0;
@@ -126,7 +115,7 @@ namespace TabPaint
                 }
             });
         }
-        private void ScrollToTabCenter(FileTabItem targetTab)
+        public void ScrollToTabCenter(FileTabItem targetTab)
         {
             if (targetTab == null) return;
 
@@ -166,10 +155,10 @@ namespace TabPaint
             e.Handled = true;
         }
 
-        private async void CloseTab(FileTabItem item)
+        private async void CloseTab(FileTabItem item,bool slient=false)
         {
             // 1. 脏检查
-            if (item.IsDirty)
+            if (item.IsDirty&&!slient&& !SettingsManager.Instance.Current.SkipResetConfirmation)
             {
                 var result = System.Windows.MessageBox.Show(
                     $"图片 {item.DisplayName} 尚未保存，是否保存？",

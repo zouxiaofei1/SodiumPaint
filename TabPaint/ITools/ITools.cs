@@ -154,9 +154,9 @@ namespace TabPaint
                 _ctx = ctx;
                 CurrentTool = defaultTool;
 
-                _ctx.ViewElement.MouseDown += (s, e) => CurrentTool.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));
-                _ctx.ViewElement.MouseMove += ViewElement_MouseMove;
-                _ctx.ViewElement.MouseUp += (s, e) => CurrentTool.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement));
+          //      _ctx.ViewElement.MouseDown += (s, e) => CurrentTool.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));
+          //      _ctx.ViewElement.MouseMove += ViewElement_MouseMove;
+           //     _ctx.ViewElement.MouseUp += (s, e) => CurrentTool.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement));
             }
 
             public void ViewElement_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -196,8 +196,12 @@ namespace TabPaint
                 {
                     shapetool.GiveUpSelection(_ctx);
                     GetSelectTool()?.Cleanup(_ctx);
-                } 
-                
+                }
+                if (mw._router.CurrentTool is TextTool textTool)
+                {
+                    textTool.Cleanup(_ctx);
+                }
+
             }
 
             public void SetTool(ITool tool)

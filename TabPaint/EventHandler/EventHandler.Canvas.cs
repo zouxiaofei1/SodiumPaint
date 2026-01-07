@@ -225,22 +225,44 @@ namespace TabPaint
         {
             if (_bitmap == null) return;
             _router.CleanUpSelectionandShape();
-            // 1. 验证坐标是否在图片范围内
-            int x = (int)_lastRightClickPosition.X;
-            int y = (int)_lastRightClickPosition.Y;
 
+            // 默认坐标
+            Point targetPoint = new Point(0, 0);
+
+            // === 核心修改逻辑 ===
+            // 1. 判断触发源：是快捷键(InputBinding/Shortcut) 还是 菜单点击(MenuItem)
+            if (sender is MainWindow || e is System.Windows.Input.KeyEventArgs) // 快捷键触发通常 sender 是 Window 或者 e 是 KeyEventArgs
+            {
+                // 快捷键触发：主动获取鼠标在 Canvas 上的当前位置
+                // 注意：_mainCanvas 是你存放图片的控件名（可能是 InkCanvas 或 Image 的父容器）
+                targetPoint = Mouse.GetPosition(CanvasWrapper);
+            }
+            else
+            {
+                // 右键菜单触发：使用记录下的右键点击位置
+                targetPoint = _lastRightClickPosition;
+            }
+
+            int x = (int)targetPoint.X;
+            int y = (int)targetPoint.Y;
+
+            // 2. 验证坐标是否在图片范围内
+            // 如果点到了图片外面（灰白格子区域），默认取最近的边缘点或返回
             if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
             {
-                // 如果点到了图片外面（灰白格子区域），默认取 (0,0) 或者不执行
+                // 如果是快捷键悬停在外部，可能不想执行，或者取边缘色。
+                // 这里采用保留你原有的 Clamp 逻辑，防止越界崩溃
                 x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
                 y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
             }
 
-            // 2. 获取该点的颜色作为目标色
+            // 3. 获取该点的颜色作为目标色
             Color targetColor = GetPixelColor(x, y);
-            // 3. 执行抠图（容差 45 左右通常效果较好）
+
+            // 4. 执行抠图（容差 45 左右通常效果较好）
             ApplyColorKey(targetColor, 45);
         }
+
         private void ApplyColorKey(Color targetColor, int tolerance)
         {
             if (_surface?.Bitmap == null) return;

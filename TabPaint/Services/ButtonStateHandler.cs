@@ -1,7 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using SkiaSharp;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -185,25 +187,70 @@ namespace TabPaint
 
         private bool _fontsLoaded = false;
 
-        // 懒加载字体的核心方法
+        // 定义一个辅助类来存储显示名称和实际字体对象的映射（可选，但推荐，方便绑定）
+        public class FontDisplayItem
+        {
+            public string DisplayName { get; set; }
+            public FontFamily FontFamily { get; set; }
+
+            // 重写 ToString 让 ComboBox 默认显示 DisplayName
+            public override string ToString() => DisplayName;
+        }
+
         private void EnsureFontsLoaded()
         {
             if (_fontsLoaded) return;
 
-            // 可以在后台线程加载以防卡顿，但字体列表通常很快，这里用简单的 Task 包装
             System.Threading.Tasks.Task.Run(() =>
             {
-                // 获取系统字体
-                var fonts = Fonts.SystemFontFamilies.OrderBy(f => f.Source).ToList();
+                // 获取当前系统语言
+                var currentLang = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentUICulture.IetfLanguageTag);
+
+                var fontItems = new List<FontDisplayItem>();
+
+                foreach (var fontFamily in Fonts.SystemFontFamilies)
+                {
+                    string name;
+
+                    // 1. 尝试获取当前语言对应的名称 (中文系统下即获取中文名)
+                    if (fontFamily.FamilyNames.ContainsKey(currentLang))
+                    {
+                        name = fontFamily.FamilyNames[currentLang];
+                    }
+                    // 2. 如果没有当前语言，尝试获取英文名称
+                    else if (fontFamily.FamilyNames.ContainsKey(System.Windows.Markup.XmlLanguage.GetLanguage("en-us")))
+                    {
+                        name = fontFamily.FamilyNames[System.Windows.Markup.XmlLanguage.GetLanguage("en-us")];
+                    }
+                    // 3. 实在不行，就用 Source
+                    else
+                    {
+                        name = fontFamily.Source;
+                    }
+
+                    fontItems.Add(new FontDisplayItem { DisplayName = name, FontFamily = fontFamily });
+                }
+
+                // 排序：通常希望中文名在一起，英文名在一起，这里简单按名称排序
+                var sortedFonts = fontItems.OrderBy(f => f.DisplayName).ToList();
 
                 // 切回 UI 线程更新
                 Dispatcher.Invoke(() =>
                 {
-                    FontFamilyBox.ItemsSource = fonts;
-                    // 设置默认字体 (例如 Microsoft YaHei 或 Segoe UI)
-                    FontFamilyBox.SelectedItem = fonts.FirstOrDefault(f => f.Source.Contains("Microsoft YaHei"))
-                                              ?? fonts.FirstOrDefault(f => f.Source.Contains("Segoe UI"))
-                                              ?? fonts.FirstOrDefault();
+                    FontFamilyBox.ItemsSource = sortedFonts;
+
+                    // 设置显示路径（如果不用辅助类，直接绑定 List<FontFamily> 的话需要设置这个，用了辅助类则不需要或设为 DisplayName）
+                    FontFamilyBox.DisplayMemberPath = "DisplayName";
+                    FontFamilyBox.SelectedValuePath = "FontFamily"; // 选中后获取真正的 FontFamily 对象
+
+                    // 设置默认字体 (匹配中文名)
+                    var defaultFont = sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("微软雅黑"))
+                                   ?? sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("Microsoft YaHei"))
+                                   ?? sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("宋体"))
+                                   ?? sortedFonts.FirstOrDefault();
+
+                    FontFamilyBox.SelectedItem = defaultFont;
+
                     _fontsLoaded = true;
                 });
             });
@@ -356,6 +403,18 @@ namespace TabPaint
             bmp.Unlock();
             return region;
         }
+        private System.Drawing.Bitmap BitmapSourceToDrawingBitmap(BitmapSource source)
+        {
+            using (MemoryStream outStream = new MemoryStream())
+            {
+                // 使用 PNG 编码器作为中间桥梁，保留透明度
+                BitmapEncoder enc = new PngBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(source));
+                enc.Save(outStream);
+                return new System.Drawing.Bitmap(outStream);
+            }
+        }
+
         private void SaveBitmap(string path)
         {
             // 1. 获取当前编辑的像素数据
@@ -383,7 +442,46 @@ namespace TabPaint
                 }
             }
 
-            // 2. 创建用于保存的 BitmapSource，并恢复原始 DPI
+            string ext = System.IO.Path.GetExtension(path).ToLower();
+
+            if (ext == ".webp")
+            {
+                var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+
+                GCHandle handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr ptr = handle.AddrOfPinnedObject();
+
+                    // 创建 Pixmap 指向这块内存
+                    using (var pixmap = new SKPixmap(info, ptr, stride))
+                    {
+                        // 3. 编码并保存
+                        // 质量设为 90 (0-100)，或者你可以从设置里读取
+                        using (var data = pixmap.Encode(SKEncodedImageFormat.Webp, 90))
+                        {
+                            using (var fs = new FileStream(path, FileMode.Create))
+                            {
+                                data.SaveTo(fs);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    // 务必释放句柄
+                    handle.Free();
+                }
+
+                // WebP 保存完毕，执行后续收尾工作并直接返回
+                MarkAsSaved();
+                UpdateTabThumbnail(path);
+                return;
+            }
+            // ==========================================
+
+
+            // 2. (原逻辑) 创建用于保存的 BitmapSource
             BitmapSource saveSource = BitmapSource.Create(
                 width, height,
                 _originalDpiX,
@@ -394,19 +492,17 @@ namespace TabPaint
                 stride
             );
 
-            // 3. 根据扩展名选择编码器
+            // 3. (原逻辑) 根据扩展名选择编码器
             BitmapEncoder encoder;
-            string ext = System.IO.Path.GetExtension(path).ToLower();
 
             if (ext == ".jpg" || ext == ".jpeg")
             {
-                // 【核心修复】JPG 不支持透明，需要合成白底，否则透明区域变黑
+                // JPG 不支持透明，需要合成白底
                 saveSource = ConvertToWhiteBackground(saveSource);
                 encoder = new JpegBitmapEncoder { QualityLevel = 90 };
             }
             else if (ext == ".bmp")
             {
-                // BMP 同样通常不支持透明通道（除了特定格式），为了兼容性最好也加白底
                 saveSource = ConvertToWhiteBackground(saveSource);
                 encoder = new BmpBitmapEncoder();
             }
@@ -414,7 +510,7 @@ namespace TabPaint
             {
                 encoder = new TiffBitmapEncoder();
             }
-            else // 默认 PNG (支持透明，无需处理)
+            else // 默认 PNG
             {
                 encoder = new PngBitmapEncoder();
             }
@@ -433,7 +529,6 @@ namespace TabPaint
             UpdateTabThumbnail(path);
         }
 
-        
 
 
         private void UpdateSliderBarValue(double newScale)

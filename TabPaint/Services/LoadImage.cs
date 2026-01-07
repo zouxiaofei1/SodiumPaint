@@ -35,7 +35,7 @@ namespace TabPaint
             try
             {
                 bool autoLoad = SettingsManager.Instance.Current.AutoLoadFolderImages || forceFolderScan;
-                if (autoLoad && _currentImageIndex == -1 && !IsVirtualPath(filePath))
+                if (autoLoad && _currentImageIndex == -1 && _currentFileExists)
                 {
                     await ScanFolderImagesAsync(filePath);
                 }
@@ -72,7 +72,7 @@ namespace TabPaint
                 bool isFileLoadedFromCache = false;
                 string actualSourcePath = null; // 新增变量
                                                 // 检查是否有缓存
-                                                // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
+                  if(current!=null)                              // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
                 if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                 {
                     // 显示一个小的加载状态或日志

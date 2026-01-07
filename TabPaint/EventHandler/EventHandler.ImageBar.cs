@@ -25,11 +25,11 @@ namespace TabPaint
             }
         }
         private async void OnFileTabClick(object sender, RoutedEventArgs e)
-        { 
+        {
             if (e.OriginalSource is FrameworkElement element && element.DataContext is FileTabItem clickedItem)
-                {
-             
-                    SwitchToTab(clickedItem);
+            {
+
+                SwitchToTab(clickedItem);
             }
         }
 
@@ -47,8 +47,8 @@ namespace TabPaint
 
         private void OnPrependTabClick(object sender, RoutedEventArgs e)
         {
-          
-          CreateNewTab(TabInsertPosition.AtStart, false);
+
+            CreateNewTab(TabInsertPosition.AtStart, false);
         }
         private void SaveAll(bool isDoubleClick)
         {
@@ -59,8 +59,8 @@ namespace TabPaint
             foreach (var tab in dirtyTabs)
             {
                 // 跳过没有路径的新建文件 (避免弹出10个保存对话框)
-                if (IsVirtualPath(tab.FilePath)&&(!isDoubleClick)) continue;
-                if(SaveSingleTab(tab)) successCount++;
+                if (IsVirtualPath(tab.FilePath) && (!isDoubleClick)) continue;
+                if (SaveSingleTab(tab)) successCount++;
 
             }
             SaveSession();
@@ -132,37 +132,75 @@ namespace TabPaint
             }
 
             UpdateImageBarSliderState();
-             ShowToast($"已清理 {filesToRemove.Count} 张未编辑图片");
+            ShowToast($"已清理 {filesToRemove.Count} 张未编辑图片");
         }
 
 
 
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
-            CreateNewTab(TabInsertPosition.AtEnd,true);
+            CreateNewTab(TabInsertPosition.AtEnd, true);
         }
 
         // 3. 放弃所有编辑 (Discard All) - 终极清理版
         private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
         {
-            var result = System.Windows.MessageBox.Show(
-                "确定要重置当前工作区吗？\n" +
-                "· 所有“未命名”的新建画布将被删除\n" +
-                "· 所有打开的图片将还原至磁盘文件状态\n" +
-                "· 撤销记录、所有临时缓存文件及会话记录将被清空",
-                "放弃更改",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            if (!SettingsManager.Instance.Current.SkipResetConfirmation)
+            {
+                var result = System.Windows.MessageBox.Show(
+                    "确定要重置当前工作区吗？\n" +
+                    "· 所有“未命名”的新建画布将被删除\n" +
+                    "· 所有打开的图片将还原至磁盘文件状态\n" +
+                    "· 撤销记录、所有临时缓存文件及会话记录将被清空",
+                    "放弃更改",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
 
-            if (result != MessageBoxResult.Yes) return;
-         
+                if (result != MessageBoxResult.Yes) return;
+            }
 
             _autoSaveTimer.Stop();
+            _activeSaveTasks.Clear(); // 清空任务字典
 
+            // 2. 【核心】强制清空画布像素！
+            // 即使后续逻辑意外触发了 Backup，备份的也只会是白纸，而不是旧画
+            if (_surface != null && _surface.Bitmap != null)
+            {
+                try
+                {
+                    _surface.Bitmap.Lock();
+                    int w = _surface.Bitmap.PixelWidth;
+                    int h = _surface.Bitmap.PixelHeight;
+                    int stride = _surface.Bitmap.BackBufferStride;
+                    // 全白填充 (假设是 Bgra32)
+                    unsafe
+                    {
+                        byte* pPixels = (byte*)_surface.Bitmap.BackBuffer;
+                        int len = h * stride;
+                        for (int i = 0; i < len; i++)
+                        {
+                            pPixels[i] = 255;
+                        }
+                    }
+                    _surface.Bitmap.AddDirtyRect(new Int32Rect(0, 0, w, h));
+                    _surface.Bitmap.Unlock();
+                }
+                catch { }
+            }
+
+            // 3. 标记当前 Tab 为干净，防止 TriggerBackgroundBackup 再次尝试保存
+            if (_currentTabItem != null)
+            {
+                _currentTabItem.IsDirty = false;
+                _currentTabItem.IsNew = false;
+                _currentTabItem.BackupPath = null; // 切断缓存路径关联
+            }
+            CloseTab(_currentTabItem);
             // --- 核心新增：强制清理物理文件 (Cache & Session) ---
             try
             {
                 _router.CleanUpSelectionandShape();
+
                 // 1. 删除 Session.json
                 if (File.Exists(_sessionPath))
                 {
@@ -253,12 +291,13 @@ namespace TabPaint
 
             GC.Collect();
             UpdateImageBarSliderState();
-            if(File.Exists(_workingPath)) await SwitchWorkspaceToNewFile(_workingPath);
+            if (File.Exists(_workingPath)) await SwitchWorkspaceToNewFile(_workingPath);
             if (!string.IsNullOrEmpty(_workingPath) && Directory.Exists(_workingPath))
             {
                 _workingPath = FindFirstImageInDirectory(_workingPath); await SwitchWorkspaceToNewFile(_workingPath);
-                }
-         
+            }
+           
+
         }
         private void OnTabOpenFolderClick(object sender, RoutedEventArgs e)
         {
@@ -266,7 +305,7 @@ namespace TabPaint
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
             {
                 // 1. 检查路径是否有效（防止对 "未命名" 的新建文件操作）
-                if (string.IsNullOrEmpty(tab.FilePath))return;
+                if (string.IsNullOrEmpty(tab.FilePath)) return;
                 // 2. 再次确认文件是否存在（防止文件已被外部删除）
                 if (!System.IO.File.Exists(tab.FilePath))
                 {
@@ -310,7 +349,7 @@ namespace TabPaint
         }
         private string PrepareDragFilePath(FileTabItem tab)
         {
-          
+
             if (!tab.IsDirty && !tab.IsNew && !IsVirtualPath(tab.FilePath))
             {
                 return tab.FilePath;
@@ -402,7 +441,7 @@ namespace TabPaint
 
             Vector diff = _dragStartPoint - e.GetPosition(null);
 
-            if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold)return;
+            if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold) return;
             try
             {
                 // 2. 使用锁定的源数据创建数据包
@@ -450,11 +489,11 @@ namespace TabPaint
                     double width = grid.ActualWidth;
 
                     var insLine = FindVisualChild<Border>(grid, "InsertLine");
-                   // var rightLine = FindVisualChild<Border>(grid, "InsertLineRight");
+                    // var rightLine = FindVisualChild<Border>(grid, "InsertLineRight");
 
                     if (insLine == null) return;
                     insLine.Visibility = Visibility.Visible;
-                  //  // 判断是在左半边还是右半边
+                    //  // 判断是在左半边还是右半边
                 }
             }
             else
@@ -557,7 +596,7 @@ namespace TabPaint
                         {
                             _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
                         }
-                         UpdateWindowTitle(); // 如果需要
+                        UpdateWindowTitle(); // 如果需要
                     }
                 }
                 e.Effects = DragDropEffects.Move;
@@ -719,36 +758,36 @@ namespace TabPaint
                     CloseTab(tab); // 如果是没保存的新建画布，直接关掉
                     return;
                 }
-
-                var result = MessageBox.Show(
-                    $"确定要将文件 '{tab.FileName}' 放入回收站吗？\n此操作不可撤销（取决于系统设置）。",
-                    "删除文件",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
+                if (!SettingsManager.Instance.Current.SkipResetConfirmation)
                 {
-                    string path = tab.FilePath;
+                    var result = MessageBox.Show(
+                        $"确定要将文件 '{tab.FileName}' 放入回收站吗？\n此操作不可撤销（取决于系统设置）。",
+                        "删除文件",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (result != MessageBoxResult.Yes) return;
+                }
+                string path = tab.FilePath;
 
-                    // 1. 先从 TabPaint 关闭
-                    CloseTab(tab);
+                // 1. 先从 TabPaint 关闭
+                CloseTab(tab);
 
-                    // 2. 再执行物理删除
-                    try
+                // 2. 再执行物理删除
+                try
+                {
+                    if (File.Exists(path))
                     {
-                        if (File.Exists(path))
-                        {
-                            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
-                                path,
-                                Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                                Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ShowToast("删除失败: " + ex.Message);
+                        Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
+                            path,
+                            Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                            Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
                     }
                 }
+                catch (Exception ex)
+                {
+                    ShowToast("删除失败: " + ex.Message);
+                }
+
             }
         }
         private void CopyTabToClipboard(FileTabItem tab)

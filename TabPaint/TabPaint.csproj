@@ -65,6 +65,7 @@
   <ItemGroup>
     <PackageReference Include="MicaWPF" Version="6.3.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     <PackageReference Include="WriteableBitmapEx" Version="1.6.9" />
     <PackageReference Include="XamlAnimatedGif" Version="2.3.1" />

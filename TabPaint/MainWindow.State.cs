@@ -59,7 +59,7 @@ namespace TabPaint
         private int _bmpWidth, _bmpHeight;
         private Color _penColor = Colors.Black;
         private bool _isDrawing = false;
-        private List<string> _imageFiles = new List<string>();
+        public List<string> _imageFiles = new List<string>();
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
@@ -159,7 +159,14 @@ namespace TabPaint
         private Stack<UndoAction> _undoStack = new Stack<UndoAction>();
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
-        String PicFilterString = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.ico;*.heic;*.jfif";
+        String PicFilterString = "所有图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.ico;*.heic;*.jfif|" +
+    "PNG 图片 (*.png)|*.png|" +
+    "JPEG 图片 (*.jpg;*.jpeg)|*.jpg;*.jpeg|" +
+    "WebP 图片 (*.webp)|*.webp|" +
+    "BMP 位图 (*.bmp)|*.bmp|" +
+    "GIF 动图 (*.gif)|*.gif|" +
+    "TIFF 图片 (*.tif;*.tiff)|*.tif;*.tiff|" +
+    "ICO 图标 (*.ico)|*.ico";
         ITool LastTool;
         private bool useSecondColor = false;//是否使用备用颜色
         private bool _maximized = false;

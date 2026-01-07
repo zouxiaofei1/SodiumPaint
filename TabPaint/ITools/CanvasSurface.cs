@@ -58,6 +58,7 @@ namespace TabPaint
                 ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source = newBitmap;
                 ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Width = newBitmap.PixelWidth;
                 ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Height = newBitmap.PixelHeight;
+                ((MainWindow)System.Windows.Application.Current.MainWindow)._bitmap = newBitmap;
             }
             public void SetPixel(int x, int y, Color c)
             {

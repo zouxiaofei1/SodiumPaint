@@ -356,6 +356,23 @@ namespace TabPaint
                 }
             }
         }
+        // 在 AppSettings 类中添加以下代码（建议放在其他 bool 属性附近）
+
+        private bool _skipResetConfirmation = false; // 默认需要确认
+
+        [JsonPropertyName("skip_reset_confirmation")]
+        public bool SkipResetConfirmation
+        {
+            get => _skipResetConfirmation;
+            set
+            {
+                if (_skipResetConfirmation != value)
+                {
+                    _skipResetConfirmation = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         private bool _viewUseDarkCanvasBackground = true; // 默认开启深灰色背景(#1A1A1A)
 

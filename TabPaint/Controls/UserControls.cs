@@ -97,7 +97,7 @@ namespace TabPaint
             MainMenu.RedoClick += OnRedoClick;
             MainMenu.SettingsClick += OnSettingsClick;
             MainMenu.NewTabClick += OnNewTabClick;
-
+            MainMenu.DiscardAllClick += OnDiscardAllClick;
             // 注入到界面
             MenuBarHolder.Content = MainMenu;
 

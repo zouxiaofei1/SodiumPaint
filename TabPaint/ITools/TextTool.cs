@@ -16,41 +16,10 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private void FontSettingChanged(object sender, SelectionChangedEventArgs e)
+
+        public partial class TextTool : ToolBase
         {
-            if (_router.CurrentTool is TextTool textTool)
-            {
-                textTool.UpdateCurrentTextBoxAttributes();
-            }
-
-        }
-        public class TextTool : ToolBase
-        {
-            public override string Name => "Text";
-            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.IBeam;
-
-            private Int32Rect _textRect;
-            public System.Windows.Controls.TextBox _textBox;
-            private Point _startPos;
-            private bool _dragging = false;
-
-            private ResizeAnchor _currentAnchor = ResizeAnchor.None;
-            private bool _resizing = false;
-            private Point _startMouse;
-            private double _startW, _startH, _startX, _startY;
-
-            // 句柄尺寸
-            private const double HandleSize = 6;
-            private int lag = 0;
-            private bool _justDismissed = false; // 用于记录当前点击是否是为了销毁上一个文本框
-
-            public enum ResizeAnchor
-            {
-                None,
-                TopLeft, TopMiddle, TopRight,
-                LeftMiddle, RightMiddle,
-                BottomLeft, BottomMiddle, BottomRight
-            }
+          
             public override void Cleanup(ToolContext ctx)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -130,7 +99,7 @@ namespace TabPaint
 
                 var outline = new System.Windows.Shapes.Rectangle  // 虚线框
                 {
-                    Stroke = Brushes.Black,
+                    Stroke = mw._darkBackgroundBrush,
                     StrokeDashArray = new DoubleCollection { 8, 4 },
                     StrokeThickness = invScale * 1.5,
                     Width = rect.Width,
@@ -148,7 +117,7 @@ namespace TabPaint
                         Width = HandleSize * invScale,
                         Height = HandleSize * invScale,
                         Fill = Brushes.White,
-                        Stroke = Brushes.Black,
+                        Stroke = mw._darkBackgroundBrush,
                         StrokeThickness = invScale
                     };
                     Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2);
@@ -329,7 +298,8 @@ namespace TabPaint
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos)
             {
-                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
+                MainWindow mw = ((MainWindow)System.Windows.Application.Current.MainWindow);
+                if (mw.IsViewMode) return;
                 if (_textBox != null)
                 {
                     Point p = viewPos;
@@ -349,7 +319,7 @@ namespace TabPaint
                     else
                     {
                         CommitText(ctx);
-                        DeselectCurrentBox(ctx);
+                        DeselectCurrentBox(ctx); if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
                         ctx.EditorOverlay.IsHitTestVisible = false;
                         return;
                     }
@@ -389,8 +359,8 @@ namespace TabPaint
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos)
             {
-
-                if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Text) return;
+                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                if (mw._router.CurrentTool != mw._tools.Text) return;
                 if (_resizing || (_dragging && _textBox != null))
                 {
                     _resizing = false;
@@ -399,7 +369,7 @@ namespace TabPaint
 
                     // 释放鼠标捕获，这样下次点击才能正常工作
                     ctx.EditorOverlay.ReleaseMouseCapture();
-
+                  
                     // 既然是拖动结束，就不需要执行下面的创建逻辑了，直接返回
                     return;
                 }
@@ -408,7 +378,6 @@ namespace TabPaint
 
                     if (lag > 0)
                     {
-                        a.s("lagging");
                         lag -= 1;
                         return;
                     }
@@ -599,7 +568,7 @@ namespace TabPaint
 
                 mw.SetUndoRedoButtonState();
                 _textBox = null;
-                lag = 2;
+                lag = 1;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
             private unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx, double globalOpacity)
@@ -681,16 +650,6 @@ namespace TabPaint
                 // 绘制虚线框和句柄
                 tb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
 
-                // 绑定 Overlay 的交互事件 (移动、缩放)
-                // 注意：这里需要确保只绑定一次，或者依赖 ctx.EditorOverlay 的现有绑定
-                // 在原本的逻辑中，你是在 OnPointerUp 里给 ctx.EditorOverlay 绑定的事件。
-                // 如果是粘贴生成的，Overlay 需要同样的事件响应。
-
-                // 重新绑定 Overlay 事件以防万一 (在 Cleanup 中通常会清空 Children 但 Overlay 实例还在)
-                // 建议：将 Overlay 的事件绑定移到 Tool 激活时(OnActivated)或保持原样
-                // 这里我们假设 Overlay 的 PreviewMouseDown 等是在创建 TextBox 时动态挂载的逻辑
-
-                // 为这个特定的 TextBox 绑定删除键
                 tb.PreviewKeyDown += (s, e) =>
                 {
                     if (e.Key == Key.Delete)
@@ -715,15 +674,10 @@ namespace TabPaint
                 if (ctx.EditorOverlay.IsMouseCaptured) ctx.EditorOverlay.ReleaseMouseCapture();
 
                 if (_textBox != null) CommitText(ctx);
-
-                // 转换坐标
                 Point px = ctx.ToPixel(viewPos);
-
-                // 创建 TextBox
                 _textBox = CreateTextBox(ctx, px.X, px.Y);
                 _textBox.Text = text; // 填入文字
 
-                // 设置一些初始约束，防止太长
                 _textBox.MaxWidth = 1000;
                 _textBox.Width = Double.NaN; // 让宽度自适应内容
                 _textBox.Height = Double.NaN;
@@ -739,8 +693,6 @@ namespace TabPaint
                 // 绑定关键事件（原本写在 OnPointerUp 里的那一大段）
                 SetupTextBoxEvents(ctx, _textBox);
 
-                // 这一点至关重要：粘贴生成的框，需要手动挂载 Overlay 的交互事件
-                // 因为原本这些事件是在鼠标拖拽结束时挂载的
                 ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp; // 防止重复订阅
                 ctx.EditorOverlay.PreviewMouseUp += Overlay_PreviewMouseUp;
 
@@ -750,7 +702,6 @@ namespace TabPaint
                 ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
                 ctx.EditorOverlay.PreviewMouseDown += Overlay_PreviewMouseDown;
 
-                // 触发一次布局更新以正确显示边框
                 _textBox.UpdateLayout();
                 DrawTextboxOverlay(ctx);
             }
@@ -812,13 +763,12 @@ namespace TabPaint
                 if (_textBox == null) return;
                 if (string.IsNullOrWhiteSpace(_textBox.Text))
                 {
-                    // 清理逻辑保持不变
                     ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
                     ctx.SelectionOverlay.Children.Clear();
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                     if (ctx.EditorOverlay.Children.Contains(_textBox))
                         ctx.EditorOverlay.Children.Remove(_textBox);
-                    lag = 2;
+                    lag = 1;
                     return;
                 }
                 double tweakX = 2.0;
@@ -867,17 +817,12 @@ namespace TabPaint
                 int width = (int)Math.Ceiling(tbWidth);
                 int height = (int)Math.Ceiling(tbHeight);
                 if (width <= 0 || height <= 0) return;
-
-                // 4. 生成源像素 (文字层)
                 var rtb = new RenderTargetBitmap(width, height, 96d, 96d, PixelFormats.Pbgra32);
                 rtb.Render(visual);
 
                 int stride = width * 4;
                 byte[] sourcePixels = new byte[height * stride];
                 rtb.CopyPixels(sourcePixels, stride, 0);
-
-                // 5. 准备混合区域和目标像素 (画布层)
-                // 确保坐标为整数
                 int x = (int)tbLeft;
                 int y = (int)tbTop;
 
@@ -895,7 +840,6 @@ namespace TabPaint
 
                 if (safeW <= 0 || safeH <= 0)
                 {
-                    // 完全在画布外，不需要处理
                     CleanUpUI(ctx);
                     return;
                 }
@@ -919,8 +863,10 @@ namespace TabPaint
 
                 // UI 清理
                 CleanUpUI(ctx);
-                lag = 2;
+                lag = 1;
             }
+
+
         }
     }
 }

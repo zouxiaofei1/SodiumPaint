@@ -88,9 +88,22 @@ namespace TabPaint
                     HideDragOverlay();
                 }
             }
-            else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText))
+            else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText)|| e.Data.GetDataPresent(DataFormats.Rtf))
             {
-                e.Effects = DragDropEffects.Copy;
+                if ((e.AllowedEffects & DragDropEffects.Copy) == DragDropEffects.Copy)
+                {
+                    e.Effects = DragDropEffects.Copy;
+                }
+                // 如果不允许 Copy，检查是否允许 Move (比如从 Word 拖拽有时候是 Move)
+                else if ((e.AllowedEffects & DragDropEffects.Move) == DragDropEffects.Move)
+                {
+                    e.Effects = DragDropEffects.Move;
+                }
+                // 最后的保底，或者直接用 e.AllowedEffects
+                else
+                {
+                    e.Effects = e.AllowedEffects;
+                }
                 ShowDragOverlay("插入文字", "松开鼠标创建文本框");
             }
             else
@@ -158,30 +171,56 @@ namespace TabPaint
             }
             else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText))
             {
-                string text = null;
+                bool hasRtf = e.Data.GetDataPresent(DataFormats.Rtf);
+                bool hasText = e.Data.GetDataPresent(DataFormats.UnicodeText) || e.Data.GetDataPresent(DataFormats.Text);
 
-                // 1. 优先尝试获取 Unicode 文本 (最安全，支持中文/Emoji/多语言)
-                if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+                if (hasRtf || hasText)
                 {
-                    text = (string)e.Data.GetData(DataFormats.UnicodeText);
-                }
+                    string textToInsert = null;
+                    TextStyleInfo styleInfo = null;
 
-                // 2. 如果没有 Unicode，再退而求其次尝试 ANSI 文本
-                // (有些老旧软件可能只提供 Text 格式)
-                if (string.IsNullOrEmpty(text) && e.Data.GetDataPresent(DataFormats.Text))
-                {
-                    text = (string)e.Data.GetData(DataFormats.Text);
-                }
+                    // 1. 优先尝试 RTF
+                    if (hasRtf)
+                    {
+                        try
+                        {
+                            string rtfContent = e.Data.GetData(DataFormats.Rtf) as string;
+                            styleInfo = TextFormatHelper.ParseRtf(rtfContent);
+                            if (styleInfo != null)
+                            {
+                                textToInsert = styleInfo.Text;
+                            }
+                        }
+                        catch { }
+                    }
 
-                // 3. 还有一种特殊情况：HTML 格式拖拽（有时候浏览器拖拽只带 HTML）
-                // 如果需要更高级的支持，可以解析 DataFormats.Html，但通常 UnicodeText 足够了。
+                    // 2. 如果 RTF 失败或没有，回退到普通文本
+                    if (string.IsNullOrEmpty(textToInsert))
+                    {
+                        if (e.Data.GetDataPresent(DataFormats.UnicodeText))
+                            textToInsert = (string)e.Data.GetData(DataFormats.UnicodeText);
+                        else if (e.Data.GetDataPresent(DataFormats.Text))
+                            textToInsert = (string)e.Data.GetData(DataFormats.Text);
+                    }
 
-                if (!string.IsNullOrWhiteSpace(text))
-                {
-                    Point dropPos = e.GetPosition(CanvasWrapper);
-                    InsertTextToCanvas(dropPos, text);
+                    if (!string.IsNullOrWhiteSpace(textToInsert))
+                    {
+                        Point dropPos = e.GetPosition(CanvasWrapper);
+
+                        // 切换工具
+                        _router.SetTool(_tools.Text);
+
+                        // 如果有样式信息，先应用到 UI
+                        if (styleInfo != null)
+                        {
+                            ApplyDetectedTextStyle(styleInfo);
+                        }
+
+                        // 生成文本框
+                        InsertTextToCanvas(dropPos, textToInsert);
+                    }
+                    e.Handled = true;
                 }
-                e.Handled = true;
             }
         }
         [DllImport("user32.dll")]

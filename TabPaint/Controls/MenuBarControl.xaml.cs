@@ -161,6 +161,17 @@ namespace TabPaint.Controls
                 RecentFilesMenuItem.Items.Add(clearItem);
             }
         }
+        public static readonly RoutedEvent DiscardAllClickEvent = EventManager.RegisterRoutedEvent("DiscardAllClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+
+        // 2. 提供事件包装器
+        public event RoutedEventHandler DiscardAllClick
+        {
+            add { AddHandler(DiscardAllClickEvent, value); }
+            remove { RemoveHandler(DiscardAllClickEvent, value); }
+        }
+
+        // 3. 按钮点击回调
+        private void OnDiscardAllClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(DiscardAllClickEvent));
 
         private void OnRecentFileItemClick(object sender, RoutedEventArgs e)
         {

@@ -114,6 +114,50 @@ namespace TabPaint
 
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
+        private void CleanupOffScreenTabs(double itemWidth, double viewportWidth)
+        {
+            if (FileTabs.Count <= 40) return; // 阈值：保持一定数量的缓存，少于这个数不清理
+
+            // 获取当前 ScrollViewer 的偏移位置
+            double currentOffset = MainImageBar.Scroller.HorizontalOffset;
+
+            // 计算当前视野内的第一个 Item 的索引（相对于 FileTabs 集合）
+            int firstVisibleLocalIndex = (int)(currentOffset / itemWidth);
+
+            int bufferCount = 15;
+            int itemsToRemoveFromLeft = firstVisibleLocalIndex - bufferCount;
+
+            if (itemsToRemoveFromLeft > 0)
+            {
+                _isProgrammaticScroll = true;
+
+                // 批量移除左侧
+                for (int i = 0; i < itemsToRemoveFromLeft; i++)
+                {
+                    if (FileTabs.Count > 0)
+                    {
+                        FileTabs.RemoveAt(0);
+                    }
+                }
+                double offsetCorrection = itemsToRemoveFromLeft * itemWidth;
+                MainImageBar.Scroller.ScrollToHorizontalOffset(currentOffset - offsetCorrection);
+
+                _isProgrammaticScroll = false;
+            }
+
+            currentOffset = MainImageBar.Scroller.HorizontalOffset;
+            firstVisibleLocalIndex = (int)(currentOffset / itemWidth);
+            int visibleCount = (int)(viewportWidth / itemWidth) + 1;
+
+            // 保留视野右边约 15 个作为缓冲
+            int keepEndIndex = firstVisibleLocalIndex + visibleCount + bufferCount;
+
+            // 从后往前删，避免索引错乱
+            while (FileTabs.Count > keepEndIndex)
+            {
+                FileTabs.RemoveAt(FileTabs.Count - 1);
+            }
+        }
 
         private void OnFileTabsScrollChanged(object sender, ScrollChangedEventArgs e)
         {
@@ -121,7 +165,6 @@ namespace TabPaint
             if (_isProgrammaticScroll) return;   
             if (!_isInitialLayoutComplete) return;
             if (e == null) return;
-
             double itemWidth = 124; // 请确保这与 XAML 中 Tab 的实际宽度(包含Margin)一致
          
             // 1. 计算当前视图内可见的 Tab 范围（局部索引）
@@ -211,7 +254,7 @@ namespace TabPaint
                         // 增加黑名单检查：如果已经在Tab里，或者被手动关闭过，就跳过
                         if (!FileTabs.Any(t => t.FilePath == path) && !_explicitlyClosedFiles.Contains(path))
                         {
-                            FileTabs.Add(new FileTabItem(path));
+                            FileTabs.Add(CreateTabFromPath(path));
                         }
                         // --- [修改部分 END] ---
                     }
@@ -242,7 +285,7 @@ namespace TabPaint
                             // --- [修改部分 START] ---
                             if (!FileTabs.Any(t => t.FilePath == path) && !_explicitlyClosedFiles.Contains(path))
                             {
-                                FileTabs.Insert(0, new FileTabItem(path));
+                                FileTabs.Insert(0, CreateTabFromPath(path));
                                 insertCount++;
                             }
                             // --- [修改部分 END] ---
@@ -273,6 +316,7 @@ namespace TabPaint
                     }
                 }
             }
+            CleanupOffScreenTabs(itemWidth, MainImageBar.Scroller.ViewportWidth);
         }
         private void OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
         {
@@ -431,6 +475,50 @@ namespace TabPaint
          
             // 标记事件已处理，防止冒泡导致父容器(ScrollViewer)也跟着滚
             e.Handled = true;
+        }
+        private FileTabItem CreateTabFromPath(string path)
+        {
+            var newTab = new FileTabItem(path);
+
+            if (IsVirtualPath(path))
+            {
+                newTab.IsNew = true;
+
+                // 1. 恢复正确的 ID 和编号
+                string numPart = path.Replace(VirtualFilePrefix, "");
+                if (int.TryParse(numPart, out int num))
+                {
+                    newTab.UntitledNumber = num;
+                    newTab.Id = $"Virtual_{num}"; // 关键：恢复确定性 ID
+                }
+
+                // 2. 检查是否有缓存文件（恢复内容）
+                string potentialBackup = System.IO.Path.Combine(_cacheDir, $"{newTab.Id}.png");
+                if (System.IO.File.Exists(potentialBackup))
+                {
+                    newTab.BackupPath = potentialBackup;
+                    newTab.IsDirty = true; // 标记为脏，表示有未保存内容
+
+                    // 异步加载缓存作为缩略图
+                    newTab.IsLoading = true;
+                    _ = newTab.LoadThumbnailAsync(100, 60).ContinueWith(t =>
+                    {
+                        newTab.IsLoading = false;
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
+                }
+                else
+                {
+                    newTab.Thumbnail = GenerateBlankThumbnail();
+                }
+            }
+            else
+            {
+                // 普通文件逻辑
+                newTab.IsLoading = true;
+                _ = newTab.LoadThumbnailAsync(100, 60);
+            }
+
+            return newTab;
         }
 
         private void UpdateSliderValueFromPoint(Slider slider, Point position)

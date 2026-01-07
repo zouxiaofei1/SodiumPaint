@@ -602,7 +602,8 @@ namespace TabPaint
             var duration = (DateTime.Now - _navKeyPressStartTime).TotalMilliseconds;
 
             if (duration < 5000) return 1;
-            return 2;
+            if (duration < 10000) return 2;
+            if(PerformanceScore>8)  return 5; else return 3;
         }
 
 
@@ -658,6 +659,7 @@ namespace TabPaint
             _currentImageIndex = newIndex;
 
             RequestImageLoad(_imageFiles[_currentImageIndex]);
+            ScrollToTabCenter(_currentTabItem ?? FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[newIndex]));
         }
 
 
