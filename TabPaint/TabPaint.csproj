@@ -15,7 +15,7 @@
 	<TieredCompilation>true</TieredCompilation> 
 	<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
 	 <!-- <PublishSingleFile>true</PublishSingleFile>单文件 -->
-     <!--<SelfContained>true</SelfContained>       包含运行时 -->
+     <SelfContained>true</SelfContained>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
@@ -75,12 +75,6 @@
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     <PackageReference Include="WriteableBitmapEx" Version="1.6.9" />
     <PackageReference Include="XamlAnimatedGif" Version="2.3.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="System.Windows.Forms">
-      <HintPath>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Windows.Forms.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

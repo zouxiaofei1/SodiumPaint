@@ -76,7 +76,7 @@ namespace TabPaint
             });
             var currentSettings = SettingsManager.Instance.Current;
 
-            ThemeManager.ApplyTheme(currentSettings.ThemeMode);
+           // ThemeManager.ApplyTheme(currentSettings.ThemeMode);
             base.OnStartup(e);
 
             // --- 原有的启动逻辑 ---
@@ -101,7 +101,7 @@ namespace TabPaint
             }
 
             _mainWindow = new MainWindow(filePath);
-            ThemeManager.SetWindowImmersiveDarkMode(_mainWindow, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+           // ThemeManager.SetWindowImmersiveDarkMode(_mainWindow, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
             _mainWindow.Show();
         }
 

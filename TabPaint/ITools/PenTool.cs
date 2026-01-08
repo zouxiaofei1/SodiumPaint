@@ -61,7 +61,12 @@ namespace TabPaint
 
             public override void SetCursor(ToolContext ctx)
             {
-                ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+                System.Windows.Input.Mouse.OverrideCursor = null;
+
+                if (ctx.ViewElement != null)
+                {
+                    ctx.ViewElement.Cursor = this.Cursor;
+                }
             }
             // 判断是否是“连续线段”类型的笔刷（不需要插值打点，而是直接画线）
             private bool IsLineBasedBrush(BrushStyle style)

@@ -19,7 +19,7 @@ namespace TabPaint
         {
             InitializeComponent();
             this.DataContext = this;
-
+            this.SourceInitialized += SettingsWindow_SourceInitialized;
             this.KeyDown += (s, e) =>
             {
                 if (e.Key == Key.Escape) this.Close();
@@ -27,7 +27,13 @@ namespace TabPaint
 
             this.Loaded += (s, e) => SetHighResIcon();
         }
+        private void SettingsWindow_SourceInitialized(object sender, EventArgs e)
+        {
+            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
 
+
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+        }
         private void SetHighResIcon()
         {
             try

@@ -16,7 +16,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using TabPaint.Controls;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static TabPaint.MainWindow;
 
 //

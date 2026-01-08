@@ -23,7 +23,12 @@ public class ShapeTool : ToolBase
     private int lag = 0;
     public override void SetCursor(ToolContext ctx)
     {
-        ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+        System.Windows.Input.Mouse.OverrideCursor = null;
+
+        if (ctx.ViewElement != null)
+        {
+            ctx.ViewElement.Cursor = this.Cursor;
+        }
     }
 
     public void SetShapeType(ShapeType type)

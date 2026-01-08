@@ -21,7 +21,7 @@
     </UserControl.Resources>
 
     <!-- 1. 背景色替换: 原 #90FFFFFF -> GlassBackgroundHighBrush (保留一定的通透感) 或 ChromeLowBrush -->
-    <Border Height="50" Background="{DynamicResource GlassBackgroundHighBrush}" AllowDrop="True" SizeChanged="OnToolBarSizeChanged">
+    <Border Height="50" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" SizeChanged="OnToolBarSizeChanged">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,7">
             <!-- 基础工具 -->
 

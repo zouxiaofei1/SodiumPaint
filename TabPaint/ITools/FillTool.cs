@@ -35,8 +35,12 @@ namespace TabPaint
             }
             public override void SetCursor(ToolContext ctx)
             {
-                ctx.ViewElement.Cursor = Cursor;
-                System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+                System.Windows.Input.Mouse.OverrideCursor = null;
+
+                if (ctx.ViewElement != null)
+                {
+                    ctx.ViewElement.Cursor = this.Cursor;
+                }
             }
             private Int32Rect FloodFill(CanvasSurface s, int x, int y, Color from, Color to)
             { // 返回填充的包围矩形（用于差分撤销）

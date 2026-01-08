@@ -63,7 +63,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        public string ProgramVersion { get; set; } = "v0.8.6 alpha";
+        public string ProgramVersion { get; set; } = "v0.9";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -82,7 +82,7 @@ namespace TabPaint
             set { _imageSize = value; OnPropertyChanged(); }
         }
 
-        private string _selectionSize = "0×0";
+        private string _selectionSize = "0×0像素";
         public string SelectionSize
         {
             get => _selectionSize;

@@ -20,7 +20,7 @@
         原 Background="#50FFFFFF" 替换为 GlassBackgroundMediumBrush (Opacity 0.5) 
         如果需要更通透的效果可以使用 GlassBackgroundLowBrush
     -->
-    <Border Height="36" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" MouseLeftButtonDown="OnRootBorderMouseDown">
+    <Border Height="36" Background="{DynamicResource GlassBackgroundLowBrush}" AllowDrop="True" MouseLeftButtonDown="OnRootBorderMouseDown">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                 <!-- 文件菜单 -->

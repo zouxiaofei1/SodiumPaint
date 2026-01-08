@@ -60,7 +60,12 @@ namespace TabPaint
             }
             public override void SetCursor(ToolContext ctx)
             {
-                ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+                System.Windows.Input.Mouse.OverrideCursor = null;
+
+                if (ctx.ViewElement != null)
+                {
+                    ctx.ViewElement.Cursor = this.Cursor;
+                }
             }
             private List<Point> GetHandlePositions(Int32Rect rect)
             {
