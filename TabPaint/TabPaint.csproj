@@ -15,7 +15,7 @@
 	<TieredCompilation>true</TieredCompilation> 
 	<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
 	 <!-- <PublishSingleFile>true</PublishSingleFile>单文件 -->
-     <SelfContained>true</SelfContained>
+  
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
