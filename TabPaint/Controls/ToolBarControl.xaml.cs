@@ -124,7 +124,7 @@ namespace TabPaint.Controls
         }
         private void OnToolBarSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            double collapseThreshold = 780;
+            double collapseThreshold = 580;
 
             if (e.NewSize.Width < collapseThreshold)
             {

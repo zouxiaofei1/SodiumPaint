@@ -135,7 +135,8 @@ namespace TabPaint
 
             MicaAcrylicManager.ApplyEffect(this);
             MicaEnabled = true;
-            //this.Show();
+            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
             InitializeClipboardMonitor();
 
             var src = (HwndSource)PresentationSource.FromVisual(this);

@@ -19,8 +19,30 @@ namespace TabPaint
         {
             public bool IsPasted = false;
             public override string Name => "Select";
-            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Cross;
+            private System.Windows.Input.Cursor _cachedCursor;
+            public override System.Windows.Input.Cursor Cursor
+            {
+                get
+                {
+                    if (_cachedCursor == null)
+                    {
+                        // 仅在第一次访问时加载
+                        var resourceInfo = System.Windows.Application.GetResourceStream(
+                            new Uri("pack://application:,,,/Resources/Cursors/DashedCross.cur"));
 
+                        if (resourceInfo != null)
+                        {
+                            _cachedCursor = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                        }
+                        else
+                        {
+                            // 防止资源没找到导致后续空指针，回退到默认
+                            return System.Windows.Input.Cursors.Cross;
+                        }
+                    }
+                    return _cachedCursor;
+                }
+            }
             public bool _selecting = false;
             public bool _draggingSelection = false;
 
@@ -51,7 +73,10 @@ namespace TabPaint
                 BottomLeft, BottomMiddle, BottomRight
             }
             public DateTime LastSelectionDeleteTime { get; private set; } = DateTime.MinValue;
-
+            public override void SetCursor(ToolContext ctx)
+            {
+                ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+            }
             private void EnsureTimer()
             {
                 if (_tabSwitchTimer == null)

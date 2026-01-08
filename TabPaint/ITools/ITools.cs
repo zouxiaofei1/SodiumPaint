@@ -21,44 +21,194 @@ namespace TabPaint
 
         private void UpdateToolSelectionHighlight()
         {
-            var toolControls = new System.Windows.Controls.Control[] { MainToolBar.PickColorButton, MainToolBar.EraserButton, MainToolBar.SelectButton, MainToolBar.FillButton, MainToolBar.TextButton, MainToolBar.BrushToggle, MainToolBar.PenButton, MainToolBar.ShapeToggle };
-
-            System.Windows.Controls.Control target = _router.CurrentTool switch
+            if (_router == null) return;
+            // 1. 获取当前工具类型字符串，用于匹配 Tag
+            string currentToolTag = _router.CurrentTool switch
             {
-                EyedropperTool => MainToolBar.PickColorButton,
-                FillTool => MainToolBar.FillButton,
-                SelectTool => MainToolBar.SelectButton,
-                TextTool => MainToolBar.TextButton,
-                PenTool when _ctx.PenStyle == BrushStyle.Eraser => MainToolBar.EraserButton,
-                PenTool when _ctx.PenStyle == BrushStyle.Pencil => MainToolBar.PenButton,
-                PenTool => MainToolBar.BrushToggle,
-                ShapeTool => MainToolBar.ShapeToggle,
-                _ => null
+                SelectTool => "SelectTool",
+                PenTool when _ctx.PenStyle == BrushStyle.Eraser => "EraserTool", // 橡皮也是PenTool的一种变体
+                PenTool when _ctx.PenStyle == BrushStyle.Pencil => "PenTool",
+                EyedropperTool => "EyedropperTool",
+                FillTool => "FillTool",
+                TextTool => "TextTool",
+                _ => ""
             };
 
+            // 2. 检查是否处于折叠模式 (根据 CollapsedToolsPanel 的可见性)
+            bool isCollapsedMode = MainToolBar.CollapsedToolsPanel.Visibility == Visibility.Visible;
 
+            // 清除折叠按钮的高亮
+            MainToolBar.ToolsMenuToggle.ClearValue(Control.BackgroundProperty);
+            MainToolBar.ToolsMenuToggle.ClearValue(Control.BorderBrushProperty);
+
+            // ================= 处理展开模式下的常规按钮 =================
+            var toolControls = new Control[] {
+        MainToolBar.PickColorButton, MainToolBar.EraserButton, MainToolBar.SelectButton,
+        MainToolBar.FillButton, MainToolBar.TextButton, MainToolBar.PenButton
+    };
+
+            // 先清除所有展开按钮的高亮
             foreach (var ctrl in toolControls)
             {
+                ctrl.ClearValue(Control.BorderBrushProperty);
+                ctrl.ClearValue(Control.BackgroundProperty);
+            }
 
-                if (ctrl == null) continue;
-                bool isTarget = (ctrl == target);
-                ctrl.Tag = isTarget;
+            // 清除特殊按钮高亮 (Brush/Shape)
+            MainToolBar.BrushToggle.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
+            MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
+
+            // 3. 核心逻辑分支
+            bool isBasicTool = !string.IsNullOrEmpty(currentToolTag);
+
+            if (isBasicTool)
+            {
+                if (isCollapsedMode)
+                {
+                    // --- 折叠模式逻辑 ---
+
+                    // A. 高亮主折叠按钮
+                    MainToolBar.ToolsMenuToggle.BorderBrush = PurpleHighlightBrush;
+                    MainToolBar.ToolsMenuToggle.Background = PurpleBackgroundBrush;
+
+                    // B. 更新主折叠按钮的图标和 ToolTip
+                    UpdateCollapsedButtonIcon(currentToolTag);
+
+                    // C. 高亮下拉菜单内的对应项
+                    UpdateCollapsedMenuHighlight(currentToolTag);
+                }
+                else
+                {
+                    // --- 展开模式逻辑 ---
+                    Control target = _router.CurrentTool switch
+                    {
+                        EyedropperTool => MainToolBar.PickColorButton,
+                        FillTool => MainToolBar.FillButton,
+                        SelectTool => MainToolBar.SelectButton,
+                        TextTool => MainToolBar.TextButton,
+                        PenTool when _ctx.PenStyle == BrushStyle.Eraser => MainToolBar.EraserButton,
+                        PenTool when _ctx.PenStyle == BrushStyle.Pencil => MainToolBar.PenButton,
+                        _ => null
+                    };
+
+                    if (target != null)
+                    {
+                        target.BorderBrush = PurpleHighlightBrush;
+                        target.Background = PurpleBackgroundBrush;
+                    }
+                }
+            }
+            else
+            {
+                // 处理非基础工具 (画刷样式、形状等)，这些通常不折叠在第一个组里
                 if (_router.CurrentTool == _tools.Pen && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
                     MainToolBar.BrushToggle.BorderBrush = PurpleHighlightBrush;
                     MainToolBar.BrushToggle.Background = PurpleBackgroundBrush;
                 }
-
-                // 2. 关键：清除之前可能存在的本地颜色赋值，让 Style 重新接管控制权
-                ctrl.ClearValue(System.Windows.Controls.Control.BorderBrushProperty);
-                ctrl.ClearValue(System.Windows.Controls.Control.BackgroundProperty);
-            }
-            if (_router.CurrentTool == _tools.Shape)
-            {
-                MainToolBar.ShapeToggle.BorderBrush = PurpleHighlightBrush;
-                MainToolBar.ShapeToggle.Background = PurpleBackgroundBrush;
+                else if (_router.CurrentTool == _tools.Shape)
+                {
+                    MainToolBar.ShapeToggle.BorderBrush = PurpleHighlightBrush;
+                    MainToolBar.ShapeToggle.Background = PurpleBackgroundBrush;
+                }
             }
         }
+
+        // 辅助方法：更新折叠按钮的图标
+        private void UpdateCollapsedButtonIcon(string toolTag)
+        {
+            // 1. 初始化：全部隐藏
+            MainToolBar.CurrentToolIcon.Visibility = Visibility.Collapsed;
+
+            // 2. 准备变量
+            object resource = null;
+            string toolName = "";
+
+            try
+            {
+                // 3. 根据 Tag 匹配资源名称和显示名称
+                switch (toolTag)
+                {
+                    case "SelectTool":
+                        resource = FindResource("Select_Image"); // 它是 Geometry
+                        toolName = "选择区域";
+                        break;
+
+                    case "PenTool":
+                        resource = FindResource("Pencil_Image"); // 它是 ImageSource
+                        toolName = "铅笔";
+                        break;
+
+                    case "EyedropperTool":
+                        resource = FindResource("Pick_Colour_Image");
+                        toolName = "取色器";
+                        break;
+
+                    case "EraserTool":
+                        resource = FindResource("Eraser_Image");
+                        toolName = "橡皮擦";
+                        break;
+
+                    case "FillTool":
+                        resource = FindResource("Fill_Bucket_Image");
+                        toolName = "填充";
+                        break;
+
+                    case "TextTool":
+                        resource = FindResource("Text_Image"); // 它是 Geometry
+                        toolName = "文字";
+                        break;
+                }
+
+                // 4. 应用资源到 UI
+                if (resource is ImageSource imgSrc)
+                {
+                    // 如果是图片资源
+                    MainToolBar.CurrentToolIcon.Source = imgSrc;
+                    MainToolBar.CurrentToolIcon.Visibility = Visibility.Visible;
+                }
+
+                // 5. 更新提示文字
+                if (!string.IsNullOrEmpty(toolName))
+                {
+                    MainToolBar.ToolsMenuToggle.ToolTip = toolName;
+                }
+            }
+            catch (Exception ex)
+            {
+                // 防御性编程：如果资源找不到，避免崩溃
+                Console.WriteLine($"Error loading icon resource: {ex.Message}");
+            
+        }
+
+        }
+
+
+
+        // 辅助方法：高亮下拉菜单内的选中项
+        private void UpdateCollapsedMenuHighlight(string toolTag)
+        {
+            foreach (var item in MainToolBar.CollapsedMenuItems.Children)
+            {
+                if (item is MenuItem menuItem)
+                {
+                    if (menuItem.Tag?.ToString() == toolTag)
+                    {
+                        menuItem.Background = new SolidColorBrush(Color.FromRgb(231, 243, 255)); // 浅蓝色高亮
+                        menuItem.FontWeight = FontWeights.Bold;
+                    }
+                    else
+                    {
+                        menuItem.ClearValue(Control.BackgroundProperty);
+                        menuItem.ClearValue(Control.FontWeightProperty);
+                    }
+                }
+            }
+        }
+
+
 
 
 
@@ -74,6 +224,7 @@ namespace TabPaint
             void OnPointerMove(ToolContext ctx, Point viewPos);
             void OnPointerUp(ToolContext ctx, Point viewPos);
             void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e);
+            void SetCursor(ToolContext ctx);
         }
 
         public abstract class ToolBase : ITool
@@ -86,6 +237,7 @@ namespace TabPaint
             public virtual void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
             public virtual void Cleanup(ToolContext ctx) { }
             public virtual void StopAction(ToolContext ctx) { }
+            public virtual void SetCursor(ToolContext ctx) { }
         }
 
         public class ToolContext
@@ -211,9 +363,9 @@ namespace TabPaint
                 CleanUpSelectionandShape();
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
-                _ctx.ViewElement.Cursor = tool.Cursor;
+                tool.SetCursor(_ctx);
                 //var mainWindow = (MainWindow)Application.Current.MainWindow;
-               
+
                 ((MainWindow)System.Windows.Application.Current.MainWindow).AutoSetFloatBarVisibility();
                 ((MainWindow)System.Windows.Application.Current.MainWindow)._router.GetSelectTool().UpdateStatusBarSelectionSize();
 

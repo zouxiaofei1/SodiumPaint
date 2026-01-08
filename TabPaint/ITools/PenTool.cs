@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using static TabPaint.MainWindow;
 //
 //画笔工具
 //
@@ -14,8 +15,30 @@ namespace TabPaint
         public class PenTool : ToolBase
         {
             public override string Name => "Pen";
-            public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Pen;
+            private System.Windows.Input.Cursor _cachedCursor;
+            public override System.Windows.Input.Cursor Cursor
+            {
+                get
+                {
+                    if (_cachedCursor == null)
+                    {
+                        // 仅在第一次访问时加载
+                        var resourceInfo = System.Windows.Application.GetResourceStream(
+                            new Uri("pack://application:,,,/Resources/Cursors/DashedCross.cur"));
 
+                        if (resourceInfo != null)
+                        {
+                            _cachedCursor = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                        }
+                        else
+                        {
+                            // 防止资源没找到导致后续空指针，回退到默认
+                            return System.Windows.Input.Cursors.Cross;
+                        }
+                    }
+                    return _cachedCursor;
+                }
+            }
             private bool _drawing = false;
             private Point _lastPixel;
 
@@ -36,6 +59,10 @@ namespace TabPaint
                 StopDrawing(ctx);
             }
 
+            public override void SetCursor(ToolContext ctx)
+            {
+                ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+            }
             // 判断是否是“连续线段”类型的笔刷（不需要插值打点，而是直接画线）
             private bool IsLineBasedBrush(BrushStyle style)
             {
@@ -65,6 +92,8 @@ namespace TabPaint
                 }
 
                 ctx.CapturePointer();
+                System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+
                 var px = ctx.ToPixel(viewPos);
                 ctx.Undo.BeginStroke();
                 _drawing = true;

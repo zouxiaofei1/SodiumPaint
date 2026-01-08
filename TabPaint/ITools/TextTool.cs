@@ -58,7 +58,10 @@ namespace TabPaint
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
                 }
             }
-
+            public override void SetCursor(ToolContext ctx)
+            {
+                ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+            }
             private List<Point> GetHandlePositions(Int32Rect rect)
             {
                 var handles = new List<Point>();

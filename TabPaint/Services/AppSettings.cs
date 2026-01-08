@@ -25,6 +25,12 @@ namespace TabPaint
         Zoom,          // 缩放 (默认)
         SwitchImage    // 切图
     }
+    public enum AppTheme
+    {
+        Light,
+        Dark,
+        System // 跟随系统
+    }
     public class ShortcutItem
     {
         public Key Key { get; set; }
@@ -232,6 +238,23 @@ namespace TabPaint
                 {
                     _penOpacity = value;
                     OnPropertyChanged(nameof(PenOpacity));
+                }
+            }
+        }
+        private AppTheme _themeMode = AppTheme.System; // 默认跟随系统
+
+        [JsonPropertyName("theme_mode")]
+        public AppTheme ThemeMode
+        {
+            get => _themeMode;
+            set
+            {
+                if (_themeMode != value)
+                {
+                    _themeMode = value;
+                    OnPropertyChanged();
+                    // 设置变更时，通知 ThemeManager 应用主题 (在外部监听或这里直接调用)
+                    ThemeManager.ApplyTheme(value);
                 }
             }
         }

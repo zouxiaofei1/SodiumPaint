@@ -3,57 +3,104 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			xmlns:app="clr-namespace:TabPaint"
+             xmlns:app="clr-namespace:TabPaint"
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
              MaxHeight="36"
-              Height="36"
-             d:DesignHeight="30" d:DesignWidth="1000">
+             Height="36"
+             d:DesignHeight="36" d:DesignWidth="1000">
 
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
+                <!-- 确保这里能索引到 LightTheme 的 Key，通常 Styles.xaml 会包含 LightTheme -->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <StatusBar Background="#44FFFFFF" Padding="0" Cursor=""   Focusable="True"   MouseDown="OnStatusBarMouseDown" SizeChanged="OnStatusBarSizeChanged">
+    <!-- 背景色 #44FFFFFF 替换为 GlassBackgroundMediumBrush 或 自定义 StatusBarBackgroundBrush -->
+    <StatusBar Background="{DynamicResource GlassBackgroundMediumBrush}" 
+               Padding="0" 
+               Cursor=""   
+               Focusable="True"   
+               MouseDown="OnStatusBarMouseDown" 
+               SizeChanged="OnStatusBarSizeChanged">
+
         <!-- 鼠标位置 -->
         <StatusBarItem x:Name="StatusMousePos" Width="128" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Path Data="{DynamicResource Cursor_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#555"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
-                <TextBlock Margin="4,0,0,0" Text="{Binding MousePosition}" VerticalAlignment="Center" FontSize="11"/>
+                <!-- Stroke="#555" -> IconFillBrush -->
+                <Path Data="{DynamicResource Cursor_Image}" Stretch="Uniform" Fill="Transparent" 
+                      Stroke="{DynamicResource IconFillBrush}" 
+                      StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" 
+                      Width="16" Height="16"/>
+                <!-- 字体颜色通常由 StatusBar 继承，或者显式指定 TextControlBrush -->
+                <TextBlock Margin="4,0,0,0" Text="{Binding MousePosition}" 
+                           VerticalAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource TextControlBrush}"/>
             </StackPanel>
         </StatusBarItem>
-        <Separator x:Name="SepMousePos" Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
+
+        <!-- 分割线 #20000000 -> BorderLightBrush (或者使用 Opacity 调整) -->
+        <Separator x:Name="SepMousePos" Width="1" Height="14" Margin="2,0" 
+                   Background="{DynamicResource BorderBrush}" 
+                   Opacity="0.5"
+                   VerticalAlignment="Center"/>
 
         <!-- 图片尺寸 -->
         <StatusBarItem x:Name="StatusImageSize"  Width="128" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Path Data="{DynamicResource Picture_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                <TextBlock Margin="4,0,0,0" Text="{Binding ImageSize}" VerticalAlignment="Center" FontSize="11"/>
+                <!-- Fill="#333" -> IconFillBrush -->
+                <Path Data="{DynamicResource Picture_Image}" Stretch="Uniform" 
+                      Fill="{DynamicResource IconFillBrush}" 
+                      Width="16" Height="16"/>
+                <TextBlock Margin="4,0,0,0" Text="{Binding ImageSize}" 
+                           VerticalAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource TextControlBrush}"/>
             </StackPanel>
         </StatusBarItem>
-        <Separator x:Name="SepImageSize" Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
+
+        <Separator x:Name="SepImageSize" Width="1" Height="14" Margin="2,0" 
+                   Background="{DynamicResource BorderBrush}" 
+                   Opacity="0.5"
+                   VerticalAlignment="Center"/>
 
 
         <!-- 选区尺寸 -->
         <StatusBarItem x:Name="StatusSelectionSize" Width="128" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Path x:Name="SelectIcon" x:FieldModifier="public" Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#FF000000" Width="16" Height="16"/>
-                <TextBlock Margin="4,0,0,0" Text="{Binding SelectionSize}" VerticalAlignment="Center" FontSize="11"/>
+                <!-- Image Source 不受颜色影响，但如果是 Path 需要修改 Fill -->
+                <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
+                <TextBlock Margin="4,0,0,0" Text="{Binding SelectionSize}" 
+                           VerticalAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource TextControlBrush}"/>
             </StackPanel>
         </StatusBarItem>
-        <Separator  x:Name="SepSelectionSize"  Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
 
-        <StatusBarItem   x:Name="StatusFileSize" Width="110" Margin="8,0">
+        <Separator x:Name="SepSelectionSize"  Width="1" Height="14" Margin="2,0" 
+                   Background="{DynamicResource BorderBrush}"
+                   Opacity="0.5"
+                   VerticalAlignment="Center"/>
+
+        <!-- 文件大小 -->
+        <StatusBarItem x:Name="StatusFileSize" Width="110" Margin="8,0">
             <StackPanel Orientation="Horizontal">
-                <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                <TextBlock Margin="4,0,0,0" Text="{Binding FileSize}" VerticalAlignment="Center" FontSize="11"/>
+                <!-- Fill="#333" -> IconFillBrush -->
+                <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" 
+                      Fill="{DynamicResource IconFillBrush}" 
+                      Width="16" Height="16"/>
+                <TextBlock Margin="4,0,0,0" Text="{Binding FileSize}" 
+                           VerticalAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource TextControlBrush}"/>
             </StackPanel>
         </StatusBarItem>
-        <Separator x:Name="SepFileSize" Width="1" Height="14" Margin="2,0" Background="#20000000" VerticalAlignment="Center"/>
+
+        <Separator x:Name="SepFileSize" Width="1" Height="14" Margin="2,0" 
+                   Background="{DynamicResource BorderBrush}" 
+                   Opacity="0.5"
+                   VerticalAlignment="Center"/>
+
         <!-- 占位符 -->
         <StatusBarItem>
             <Grid>
@@ -75,36 +122,50 @@
                       IsChecked="{Binding EnableClipboardMonitor, Mode=TwoWay}"
                       Click="OnClipboardMonitorToggleClick">
                     <Grid>
-                        <Path Data="{DynamicResource ClipBoard_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16" Opacity="0.8" RenderTransformOrigin="0.625,0.5"/>
+                        <!-- Fill="#333" -> IconFillBrush -->
+                        <Path Data="{DynamicResource ClipBoard_Image}" Stretch="Uniform" 
+                              Fill="{DynamicResource IconFillBrush}" 
+                              Width="16" Height="16" Opacity="0.8" RenderTransformOrigin="0.625,0.5"/>
                     </Grid>
                 </ToggleButton>
 
                 <!-- 信息按钮 -->
                 <Button Width="24" Height="24" 
-                Style="{StaticResource RoundedMenuButtonStyle}" 
-                Padding="2,0" 
-                Cursor="Help">
+                        Style="{StaticResource RoundedMenuButtonStyle}" 
+                        Padding="2,0" 
+                        Cursor="Help">
                     <Button.ToolTip>
-                        <ToolTip Background="#F3F3F3" BorderBrush="#CCCCCC" HasDropShadow="True">
+                        <!-- ToolTip 背景色和边框 -->
+                        <ToolTip Background="{DynamicResource ChromeLowBrush}" 
+                                 BorderBrush="{DynamicResource BorderBrush}" 
+                                 HasDropShadow="True">
                             <StackPanel Margin="5">
-                                <TextBlock Text="图片详细信息" FontWeight="Bold" Margin="0,0,0,5"/>
-                                <Separator Background="#DDD"/>
-                                <TextBlock Text="{Binding CurrentImageFullInfo}" FontFamily="Consolas" FontSize="11"/>
+                                <TextBlock Text="图片详细信息" FontWeight="Bold" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <Separator Background="{DynamicResource BorderMediumBrush}"/>
+                                <TextBlock Text="{Binding CurrentImageFullInfo}" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
                             </StackPanel>
                         </ToolTip>
                     </Button.ToolTip>
+                    <!-- Stroke="#333" -> IconFillBrush -->
                     <Path Data="{DynamicResource Info_Image}"
-Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                          Stretch="Uniform" Fill="Transparent"  
+                          Stroke="{DynamicResource IconFillBrush}"  
+                          StrokeThickness="1" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" 
+                          Width="16" Height="16"/>
                 </Button>
 
                 <!-- 适应窗口按钮 -->
                 <Button Width="24" Height="24" ToolTip="适应窗口大小" Margin="6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
-                    <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                    <!-- Fill="#333" -> IconFillBrush -->
+                    <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" 
+                          Fill="{DynamicResource IconFillBrush}" 
+                          Width="16" Height="16"/>
                 </Button>
 
                 <!-- 缩放下拉框 -->
                 <ComboBox  Style="{StaticResource FluentComboBoxStyle}" x:Name="ZoomMenu" Margin="0,0,6,0" MaxHeight="26" Width="80" SelectionChanged="OnZoomMenuSelectionChanged" PreviewKeyDown="OnZoomMenuPreviewKeyDown" 
-          LostFocus="OnZoomMenuLostFocus" IsEditable="True">
+                           LostFocus="OnZoomMenuLostFocus" IsEditable="True"
+                           Foreground="{DynamicResource TextControlBrush}">
                     <ComboBoxItem Content="12%" Tag="0.12"/>
                     <ComboBoxItem Content="25%" Tag="0.25"/>
                     <ComboBoxItem Content="50%" Tag="0.5"/>
@@ -120,16 +181,18 @@ Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1" StrokeL
 
                 <!-- 缩小按钮 -->
                 <Button Width="24" Height="24" ToolTip="缩小" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomOutClick" Margin="5,0,5,0" Padding="2,0">
+                    <!-- Image Source 假设是位图，无法更改颜色。如果是 DrawingImage 且引用了 Brush 资源则会自动变色 -->
                     <Image Source="{DynamicResource Zoom_Out_Image}" Width="16" Height="16"/>
-                </Button> 
+                </Button>
 
                 <!-- 缩放滑块 -->
                 <Slider Style="{StaticResource Win11HorizontalSliderStyle}" 
-        Name="ZoomSlider" 
-        Minimum="0" 
-        Maximum="100" 
-        Width="120" 
-        IsSnapToTickEnabled="False" />
+                        Name="ZoomSlider" 
+                        Minimum="0" 
+                        Maximum="100" 
+                        Width="120" 
+                        IsSnapToTickEnabled="False" />
+
                 <!-- 放大按钮 -->
                 <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Margin="5,0,5,0" Padding="2,0">
                     <Image Source="{DynamicResource Zoom_In_Image}" Width="16" Height="16"/>

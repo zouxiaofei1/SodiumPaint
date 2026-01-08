@@ -24,8 +24,8 @@
     <Window.Resources>
         <!-- Fluent 风格按钮 -->
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#fbfbfb"/>
-            <Setter Property="BorderBrush" Value="#d1d1d1"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,4"/>
             <Setter Property="FontSize" Value="13"/>
@@ -41,11 +41,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#f6f6f6"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#eaeaea"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#bebebe"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderDarkBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -55,8 +55,8 @@
 
         <!-- 强调色按钮 -->
         <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="#0067C0"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -71,16 +71,16 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#0078D4"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SystemAccentHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#005A9E"/>
-                                <Setter Property="Foreground" Value="#E0E0E0"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SystemAccentPressedBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#CCCCCC"/>
-                                <Setter Property="Foreground" Value="#999999"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SystemAccentDisabledBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -97,15 +97,15 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Thumb}">
-                        <Ellipse x:Name="Ellipse" Fill="White" Stroke="#888888" StrokeThickness="1"/>
+                        <Ellipse x:Name="Ellipse" Fill="{DynamicResource TextInverseBrush}" Stroke="{DynamicResource SliderThumbStaticBrush}" StrokeThickness="1"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Ellipse" Property="Fill" Value="#f0f0f0"/>
-                                <Setter TargetName="Ellipse" Property="Stroke" Value="#0067C0"/>
+                                <Setter TargetName="Ellipse" Property="Fill" Value="{DynamicResource ChromeLowBrush}"/>
+                                <Setter TargetName="Ellipse" Property="Stroke" Value="{DynamicResource SliderThumbHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="Ellipse" Property="Fill" Value="#cccccc"/>
-                                <Setter TargetName="Ellipse" Property="Stroke" Value="#005A9E"/>
+                                <Setter TargetName="Ellipse" Property="Fill" Value="{DynamicResource ButtonBorderBrush}"/>
+                                <Setter TargetName="Ellipse" Property="Stroke" Value="{DynamicResource SystemAccentPressedBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -123,7 +123,7 @@
                         <Grid Background="Transparent" VerticalAlignment="Center">
                             <!-- 轨道 -->
                             <Border x:Name="TrackBackground" Height="4" CornerRadius="2" 
-                                    Background="#E0E0E0" VerticalAlignment="Center" Margin="5,0"/>
+                                    Background="{DynamicResource SliderTrackBackgroundBrush}" VerticalAlignment="Center" Margin="5,0"/>
                             <!-- 滑块 -->
                             <Track x:Name="PART_Track">
                                 <Track.Thumb>
@@ -138,14 +138,14 @@
 
         <Style TargetType="TextBlock" x:Key="LabelStyle">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
         <!-- 数字输入框样式 -->
         <Style TargetType="TextBox" x:Key="NumberInputStyle">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Width" Value="45"/>
@@ -153,7 +153,7 @@
             <Setter Property="TextAlignment" Value="Right"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -164,11 +164,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="#888888"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource TextTertiaryBrush}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="#0067C0"/>
-                                <Setter Property="Background" Value="#FAFAFA"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+                                <Setter Property="Background" Value="{DynamicResource ChromeLowBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -179,7 +179,7 @@
     </Window.Resources>
 
     <!-- 主体边框 -->
-    <Border Background="#F3F3F3" BorderBrush="#dcdcdc" BorderThickness="1">
+    <Border Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/>
@@ -210,11 +210,11 @@
                            VerticalAlignment="Center" 
                            HorizontalAlignment="Left"
                            FontSize="12" 
-                           Foreground="#666666"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}"/>
             </Grid>
 
             <!-- 内容区域 -->
-            <Border Grid.Row="1" Background="#FFFFFF" Margin="0,0,0,0" BorderThickness="0,1,0,0" BorderBrush="#E5E5E5">
+            <Border Grid.Row="1" Background="{DynamicResource WindowBackgroundBrush}" Margin="0,0,0,0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderLightBrush}">
                 <StackPanel Orientation="Vertical" Margin="24,15,24,15">
 
                     <!-- 色温 Temperature -->
@@ -283,7 +283,7 @@
             </Border>
 
             <!-- 底部按钮栏 -->
-            <Border Grid.Row="2" Background="#F3F3F3" Padding="15,12" BorderThickness="0,1,0,0" BorderBrush="#e5e5e5">
+            <Border Grid.Row="2" Background="{DynamicResource PanelBackgroundBrush}" Padding="15,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderLightBrush}">
                 <Grid>
                     <!-- 左侧：重置按钮 -->
                     <Button Content="重置" Width="80" HorizontalAlignment="Left" Click="Reset_Click"/>

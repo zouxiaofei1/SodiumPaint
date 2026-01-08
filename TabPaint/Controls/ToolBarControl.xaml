@@ -10,18 +10,24 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- 
+                   注意：为了使 DynamicResource 在设计器中生效，
+                   且运行时能动态切换，这里通常引用的是一个空的或基础的样式文件。
+                   真正的 Light/Dark 字典应在 App.xaml 中加载。
+                -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="50" Background="#90FFFFFF" AllowDrop="True" SizeChanged="OnToolBarSizeChanged">
+    <!-- 1. 背景色替换: 原 #90FFFFFF -> GlassBackgroundHighBrush (保留一定的通透感) 或 ChromeLowBrush -->
+    <Border Height="50" Background="{DynamicResource GlassBackgroundHighBrush}" AllowDrop="True" SizeChanged="OnToolBarSizeChanged">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,7">
             <!-- 基础工具 -->
 
             <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal">
                 <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                    <Path x:Name="SelectIcon" x:FieldModifier="public" Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                    <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                 </Button>
                 <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔" Padding="6,0" Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
 
@@ -37,96 +43,98 @@
                     <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
                 </Button>
                 <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="文字" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                    <Path x:Name="TextIcon" x:FieldModifier="public" Data="{DynamicResource Text_Image}" Stretch="Uniform" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Stroke="#333" Fill="Transparent" Width="16" Height="16"/>
+                    <Image Source="{DynamicResource Text_Image}" Width="16" Height="16" />
                 </Button>
             </StackPanel>
 
             <!-- 2. 折叠模式：工具集合菜单 (默认隐藏) -->
             <Grid x:Name="CollapsedToolsPanel" Visibility="Collapsed" Margin="6,0,6,0">
                 <ToggleButton x:Name="ToolsMenuToggle" ToolTip="绘图工具" Style="{StaticResource DropDownButtonStyle}">
-                    <!-- 这里可以用一个代表'工具箱'的图标，或者动态显示当前选中的工具图标 -->
-                    <Image Source="{DynamicResource ColorPickerPencil_Image}" Width="16" Height="16" />
+                    <Image x:Name="CurrentToolIcon" Source="{DynamicResource ColorPickerPencil_Image}" Width="16" Height="16" />
                 </ToggleButton>
 
                 <Popup IsOpen="{Binding IsChecked, ElementName=ToolsMenuToggle, Mode=TwoWay}"
-                       PlacementTarget="{Binding ElementName=ToolsMenuToggle}" 
-                       Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
-                       StaysOpen="{Binding IsMouseOver, ElementName=ToolsMenuToggle}">
-                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
-                        <StackPanel>
-                            <!-- 直接复用原有的点击事件 -->
-                            <MenuItem Header="选择区域" Style="{StaticResource SubMenuItemStyle}" Click="OnSelectClick_Forward">
+           PlacementTarget="{Binding ElementName=ToolsMenuToggle}" 
+           Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
+           StaysOpen="{Binding IsMouseOver, ElementName=ToolsMenuToggle}">
+                    <!-- 背景 White -> ControlBackgroundBrush, 边框 -> BorderBrush -->
+                    <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
+                        <StackPanel x:Name="CollapsedMenuItems">
+                            <MenuItem Header="选择区域" Tag="SelectTool" Style="{StaticResource SubMenuItemStyle}" Click="OnSelectClick_Forward">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="铅笔" Style="{StaticResource SubMenuItemStyle}" Click="OnPenClick_Forward">
+                            <MenuItem Header="铅笔" Tag="PenTool" Style="{StaticResource SubMenuItemStyle}" Click="OnPenClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="取色器" Style="{StaticResource SubMenuItemStyle}" Click="OnPickColorClick_Forward">
+                            <MenuItem Header="取色器" Tag="EyedropperTool" Style="{StaticResource SubMenuItemStyle}" Click="OnPickColorClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="橡皮擦" Style="{StaticResource SubMenuItemStyle}" Click="OnEraserClick_Forward">
+                            <MenuItem Header="橡皮擦" Tag="EraserTool" Style="{StaticResource SubMenuItemStyle}" Click="OnEraserClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="填充" Style="{StaticResource SubMenuItemStyle}" Click="OnFillClick_Forward">
+                            <MenuItem Header="填充" Tag="FillTool" Style="{StaticResource SubMenuItemStyle}" Click="OnFillClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="文字" Style="{StaticResource SubMenuItemStyle}" Click="OnTextClick_Forward">
+                            <MenuItem Header="文字" Tag="TextTool" Style="{StaticResource SubMenuItemStyle}" Click="OnTextClick_Forward">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Text_Image}" Stretch="Uniform" StrokeThickness="2" Stroke="#333" Fill="Transparent" Width="16" Height="16"/>
+                                    <Image Source="{DynamicResource Text_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
                         </StackPanel>
                     </Border>
                 </Popup>
             </Grid>
-            <!-- 画刷菜单 (Popup 逻辑保留在 XAML 内部) -->
+
+            <!-- 画刷菜单 -->
             <Grid>
                 <ToggleButton x:Name="BrushToggle" x:FieldModifier="public" ToolTip="画刷"  Style="{StaticResource DropDownButtonStyle}">
-					<Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
-				</ToggleButton>
+                    <Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
+                </ToggleButton>
                 <Popup x:Name="SubMenuPopupBrush" IsOpen="{Binding IsChecked, ElementName=BrushToggle, Mode=TwoWay}"
        PlacementTarget="{Binding ElementName=BrushToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
-                    <Border Name="SubmenuBorderBrush" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
+                    <!-- 背景与边框替换 -->
+                    <Border Name="SubmenuBorderBrush" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
+                            <!-- Path Fill #333 -> IconFillBrush -->
                             <MenuItem Header="圆形笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Round">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Brush_Normal_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Brush_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="方形笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Square">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Brush_Rect_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Brush_Rect_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="毛刷" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Brush">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Brush_Normal_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Brush_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="喷枪" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Spray">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Paint_Spray_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Paint_Spray_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <Separator Style="{StaticResource MenuSeparator}"/>
                             <MenuItem Header="蜡笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Crayon">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Crayon_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Crayon_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="水彩画笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Watercolor">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Watercolor_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Watercolor_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="荧光笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Highlighter">
@@ -136,7 +144,7 @@
                             </MenuItem>
                             <MenuItem Header="马赛克" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Mosaic">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Mosaic_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Mosaic_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </StackPanel>
@@ -147,42 +155,44 @@
             <!-- 形状菜单 -->
             <Grid Margin="4,0,4,0">
                 <ToggleButton x:Name="ShapeToggle" x:FieldModifier="public" ToolTip="形状" Style="{StaticResource DropDownButtonStyle}">
-                    <!-- 主图标转为 Path -->
-                    <Path x:Name="CurrentShapeIcon" x:FieldModifier="public" Data="{DynamicResource Shapes_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                    <!-- Stroke #333 -> IconFillBrush -->
+                    <Path x:Name="CurrentShapeIcon" x:FieldModifier="public" Data="{DynamicResource Shapes_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                 </ToggleButton>
 
                 <Popup x:Name="SubMenuPopupShape" IsOpen="{Binding IsChecked, ElementName=ShapeToggle, Mode=TwoWay}"
            PlacementTarget="{Binding ElementName=ShapeToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
            StaysOpen="{Binding IsMouseOver, ElementName=ShapeToggle}">
-                    <Border Name="SubmenuBorderShape" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
+                    <!-- 背景与边框替换 -->
+                    <Border Name="SubmenuBorderShape" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
+                            <!-- 所有形状的 Stroke #333 -> IconFillBrush -->
                             <MenuItem Header="矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Rectangle">
                                 <MenuItem.Icon>
-                                    <Path x:Name="RectIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Rectangle}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path x:Name="RectIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Rectangle}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="圆角矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="RoundedRectangle">
                                 <MenuItem.Icon>
-                                    <Path x:Name="RoundedRectIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_RoundedRect}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path x:Name="RoundedRectIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_RoundedRect}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="圆形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Ellipse">
                                 <MenuItem.Icon>
-                                    <Path x:Name="EllipseIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Ellipse}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path x:Name="EllipseIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Ellipse}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="直线" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Line">
                                 <MenuItem.Icon>
-                                    <Path x:Name="LineIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Line}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path x:Name="LineIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Line}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="箭头" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Arrow">
                                 <MenuItem.Icon>
-                                    <Path x:Name="ArrowIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Arrow}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path x:Name="ArrowIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Arrow}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </StackPanel>
@@ -190,41 +200,40 @@
                 </Popup>
             </Grid>
 
+            <!-- 分割线: #CCC -> BorderMediumBrush -->
+            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
 
-            <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+            <Button Margin="2,0,0,0" Name="CutImage" x:FieldModifier="public" ToolTip="裁剪选区" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <!-- Fill #333 -> IconFillBrush -->
+                <Path x:Name="CutImageIcon" x:FieldModifier="public" Data="{DynamicResource Cut_Selection_Image}"  Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+            </Button>
 
-			<Button Margin="2,0,0,0" Name="CutImage" x:FieldModifier="public" ToolTip="裁剪选区" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="CutImageIcon" x:FieldModifier="public" Data="{DynamicResource Cut_Selection_Image}"  Stretch="Uniform"  Fill="#333" Width="16" Height="16"/>
-			</Button>
-		
-
-
-			<!-- 旋转/翻转菜单 -->
+            <!-- 旋转/翻转菜单 -->
             <Grid>
                 <ToggleButton x:Name="RotateFlipMenuToggle" x:FieldModifier="public" ToolTip="旋转/翻转" Style="{StaticResource DropDownButtonStyle}">
-                    <!-- 旋转180保持不变 -->
                     <Image Source="{DynamicResource Spin180_Image}" Width="16" Height="16"/>
                 </ToggleButton>
 
                 <Popup x:Name="SubMenuPopup" IsOpen="{Binding IsChecked, ElementName=RotateFlipMenuToggle, Mode=TwoWay}"
            PlacementTarget="{Binding ElementName=RotateFlipMenuToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" StaysOpen="{Binding IsMouseOver, ElementName=RotateFlipMenuToggle}">
-                    <Border Name="SubmenuBorder" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
+                    <!-- 背景与边框替换 -->
+                    <Border Name="SubmenuBorder" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
+                            <!-- Path Fill #333 -> IconFillBrush -->
                             <MenuItem Header="向左旋转90°(Ctrl + L)" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick_Forward">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Rotate_Left_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Rotate_Left_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="向右旋转90°(Ctrl + R)" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick_Forward">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Rotate_Right_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Rotate_Right_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="旋转180°" Style="{StaticResource SubMenuItemStyle}" Click="OnRotate180Click_Forward">
                                 <MenuItem.Icon>
-                                    <!-- 旋转180保持不变 -->
                                     <Image Source="{DynamicResource Spin180_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
@@ -233,13 +242,15 @@
 
                             <MenuItem Header="垂直翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick_Forward">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Flip_Vertical_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <!-- Stroke #333 -> IconFillBrush -->
+                                    <Path Data="{DynamicResource Flip_Vertical_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="水平翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick_Forward">
                                 <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Flip_Horizontal_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="#333"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <!-- Stroke #333 -> IconFillBrush -->
+                                    <Path Data="{DynamicResource Flip_Horizontal_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </StackPanel>
@@ -247,7 +258,8 @@
                 </Popup>
             </Grid>
 
-            <Border DockPanel.Dock="Left" Width="1" Background="#CCC" Margin="2,4"/>
+            <!-- 分割线: #CCC -> BorderMediumBrush -->
+            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
 
             <Button ToolTip="自定义颜色" 
         Click="OnCustomColorClick_Forward" 
@@ -258,18 +270,14 @@
         VerticalAlignment="Top" 
         HorizontalContentAlignment="Left">
 
-                <!-- 使用 Viewbox 确保内部矢量图缩放到 28x28 -->
                 <Viewbox Width="36" Height="36">
                     <Grid Width="100" Height="100">
-                        <!-- 1. 色轮主体 -->
+                        <!-- 色轮颜色保持写死，因为这是物理颜色 -->
                         <Grid Margin="2,-7,0,0">
-                            <!-- 圆形裁剪，切掉模糊溢出的部分 -->
                             <Grid.Clip>
                                 <EllipseGeometry Center="45,55" RadiusX="38" RadiusY="38"/>
                             </Grid.Clip>
 
-                            <!-- 颜色扇区层：应用模糊效果 -->
-                            <!-- 修正：Grid使用 RenderTransform 进行位移 (45, 55) -->
                             <Grid>
                                 <Grid.RenderTransform>
                                     <MatrixTransform Matrix="1,0,0,1,45,55"/>
@@ -278,37 +286,31 @@
                                     <BlurEffect Radius="16" KernelType="Gaussian"/>
                                 </Grid.Effect>
 
-                                <!-- 红色 (-30度) -->
                                 <Path Fill="#FF0000" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
                                     <Path.RenderTransform>
                                         <RotateTransform Angle="-30"/>
                                     </Path.RenderTransform>
                                 </Path>
-                                <!-- 黄色 (30度) -->
                                 <Path Fill="#FFFF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
                                     <Path.RenderTransform>
                                         <RotateTransform Angle="30"/>
                                     </Path.RenderTransform>
                                 </Path>
-                                <!-- 绿色 (90度) -->
                                 <Path Fill="#00FF00" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
                                     <Path.RenderTransform>
                                         <RotateTransform Angle="90"/>
                                     </Path.RenderTransform>
                                 </Path>
-                                <!-- 青色 (150度) -->
                                 <Path Fill="#00FFFF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
                                     <Path.RenderTransform>
                                         <RotateTransform Angle="150"/>
                                     </Path.RenderTransform>
                                 </Path>
-                                <!-- 蓝色 (210度) -->
                                 <Path Fill="#0000FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
                                     <Path.RenderTransform>
                                         <RotateTransform Angle="210"/>
                                     </Path.RenderTransform>
                                 </Path>
-                                <!-- 洋红 (270度) -->
                                 <Path Fill="#FF00FF" Data="M0,0 L0,-50 A50,50 0 0,1 43.3,-25 Z">
                                     <Path.RenderTransform>
                                         <RotateTransform Angle="270"/>
@@ -316,12 +318,12 @@
                                 </Path>
                             </Grid>
 
-                            <!-- 中心高光：使用 Path+EllipseGeometry 以支持 Center 属性 -->
                             <Path IsHitTestVisible="False">
                                 <Path.Data>
                                     <EllipseGeometry Center="45,55" RadiusX="38" RadiusY="38"/>
                                 </Path.Data>
                                 <Path.Fill>
+                                    <!-- 高光渐变保持白色，因为是光照效果 -->
                                     <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
                                         <GradientStop Color="#FFFFFFFF" Offset="0" />
                                         <GradientStop Color="#80FFFFFF" Offset="0.4" />
@@ -331,33 +333,29 @@
                             </Path>
                         </Grid>
 
-                        <!-- 2. 右上角的加号图标 -->
+                        <!-- 右上角的加号图标 -->
                         <Grid>
-                            <!-- 白色背景圆底 + 灰色描边 -->
-                            <Path Fill="White" Stroke="#666666" StrokeThickness="2">
+                            <!-- 背景圆底: White -> ControlBackgroundBrush, 描边 #666 -> IconHoverBrush(深色主题下对比度更好) 或 BorderDarkBrush -->
+                            <Path Fill="{DynamicResource ControlBackgroundBrush}" Stroke="{DynamicResource BorderDarkBrush}" StrokeThickness="2">
                                 <Path.Data>
                                     <EllipseGeometry Center="72,28" RadiusX="14" RadiusY="14"/>
                                 </Path.Data>
                             </Path>
-                            <!-- 加号符号 -->
-                            <Path Data="M72,20 L72,36 M64,28 L80,28" Stroke="#666666" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <!-- 加号: #666 -> IconHoverBrush 或 TextSecondaryBrush -->
+                            <Path Data="M72,20 L72,36 M64,28 L80,28" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                         </Grid>
                     </Grid>
                 </Viewbox>
             </Button>
 
-
-
             <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
-
             </Button>
             <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
-                
             </Button>
+
             <ItemsControl  x:Name="ColorPaletteItems" ItemsSource="{Binding ColorItems}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <!-- 增加间距：StackPanel 保持水平 -->
                         <StackPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
@@ -370,37 +368,38 @@
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Grid>
+                                        <!-- 悬浮边框: #B8AAFF -> ToolAccentHoverBrush -->
                                         <Ellipse x:Name="hoverBorder" 
                                      Margin="-3" 
-                                     Stroke="#B8AAFF" 
+                                     Stroke="{DynamicResource ToolAccentHoverBrush}" 
                                      StrokeThickness="2" 
                                      Opacity="0"/>
 
-                                        <!-- 中层：白边层 (Item 22) -->
-                                        <!-- 使用 Effect 增加微弱投影让白边在浅色背景下也清晰 -->
-                                        <Ellipse x:Name="whiteEdge" Fill="White">
+                                        <!-- 中层：白边层 -->
+                                        <!-- 在深色模式下，纯白的白边可能太亮，但作为色块的边框，通常为了区分颜色，
+                                             可以用 ControlBackgroundBrush 或者纯白。这里暂时保持 White，或者用 BorderLightBrush -->
+                                        <Ellipse x:Name="whiteEdge" Fill="{DynamicResource ControlBackgroundBrush}">
                                             <Ellipse.Effect>
+                                                <!-- 投影颜色: Black -> TextPrimaryBrush (让投影随文字色变深) 虽然投影通常都是黑色，
+                                                     但这里为了稳妥，保持Black即可，或者用 ShadowBrush 如果有定义的话 -->
                                                 <DropShadowEffect BlurRadius="3" Color="Black" Opacity="0.1" ShadowDepth="0"/>
                                             </Ellipse.Effect>
                                         </Ellipse>
 
                                         <!-- 内层：颜色填充层 -->
-                                        <!-- Margin="2" 确保露出底层的白色边框 -->
                                         <Ellipse x:Name="colorCircle" 
                                      Fill="{TemplateBinding Background}" 
                                      Margin="2"/>
                                     </Grid>
 
                                     <ControlTemplate.Triggers>
-                                        <!-- 悬浮逻辑 -->
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter TargetName="hoverBorder" Property="Opacity" Value="1"/>
-                                            <!-- 悬浮时颜色稍微放大一点点，增加灵动感 -->
                                             <Setter TargetName="colorCircle" Property="Margin" Value="1.5"/>
                                         </Trigger>
-                                        <!-- 按下逻辑 -->
                                         <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="hoverBorder" Property="Stroke" Value="#8A7DFF"/>
+                                            <!-- 按下边框: #8A7DFF -> ToolAccentBrush -->
+                                            <Setter TargetName="hoverBorder" Property="Stroke" Value="{DynamicResource ToolAccentBrush}"/>
                                             <Setter TargetName="colorCircle" Property="Opacity" Value="0.8"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>

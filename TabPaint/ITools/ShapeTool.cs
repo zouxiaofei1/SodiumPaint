@@ -21,7 +21,10 @@ public class ShapeTool : ToolBase
     private bool _isManipulating = false;
     private System.Windows.Shapes.Shape _previewShape;
     private int lag = 0;
-    
+    public override void SetCursor(ToolContext ctx)
+    {
+        ctx.ViewElement.Cursor = Cursor; System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
+    }
 
     public void SetShapeType(ShapeType type)
     {

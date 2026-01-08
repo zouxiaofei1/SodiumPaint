@@ -54,6 +54,94 @@ namespace TabPaint
             IsViewMode = !IsViewMode;
             OnModeChanged(IsViewMode);
         }
+        private System.Windows.Input.Cursor _cachedCursoropen, _cachedCursorclose;
+        public  System.Windows.Input.Cursor CursorOpenhand
+        {
+            get
+            {
+                if (_cachedCursoropen == null)
+                {
+                    // 仅在第一次访问时加载
+                    var resourceInfo = System.Windows.Application.GetResourceStream(
+                        new Uri("pack://application:,,,/Resources/Cursors/Openhand.cur"));
+
+                    if (resourceInfo != null)
+                    {
+                        _cachedCursoropen = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                    }
+                    else
+                    {
+                        // 防止资源没找到导致后续空指针，回退到默认
+                        return System.Windows.Input.Cursors.Cross;
+                    }
+                }
+                return _cachedCursoropen;
+            }
+        }
+        public System.Windows.Input.Cursor CursorClosedhand
+        {
+            get
+            {
+                if (_cachedCursorclose == null)
+                {
+                    // 仅在第一次访问时加载
+                    var resourceInfo = System.Windows.Application.GetResourceStream(
+                        new Uri("pack://application:,,,/Resources/Cursors/Closedhand.cur"));
+
+                    if (resourceInfo != null)
+                    {
+                        _cachedCursorclose = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                    }
+                    else
+                    {
+                        // 防止资源没找到导致后续空指针，回退到默认
+                        return System.Windows.Input.Cursors.Cross;
+                    }
+                }
+                return _cachedCursorclose;
+            }
+        }
+        private void SetViewCursor(bool isPressed = false)
+        {
+            if (isPressed)
+            {
+                this.Cursor = CursorClosedhand; System.Windows.Input.Mouse.OverrideCursor = CursorClosedhand;
+            }
+            else
+            {
+                this.Cursor = CursorOpenhand; System.Windows.Input.Mouse.OverrideCursor = CursorOpenhand;
+            }
+        }
+        public void SetupMouseEvents()
+        {
+            // 这里以 MainCanvas 为例，也可以是 Window
+            RootWindow.PreviewMouseDown += (s, e) => {
+                if (IsViewMode) // 只有在看图模式或特定拖拽模式下执行
+                {
+                    SetViewCursor(true);
+                }
+            };
+
+            RootWindow.PreviewMouseUp += (s, e) => {
+                if (IsViewMode)
+                {
+                    SetViewCursor(false);
+                }
+            };
+
+            // 额外处理：防止鼠标在按下状态移出窗口后在外部松开，导致回到窗口时光标还是闭合状态
+            RootWindow.MouseEnter += (s, e) => {
+                if (IsViewMode)
+                {
+                    SetViewCursor(System.Windows.Input.Mouse.LeftButton == System.Windows.Input.MouseButtonState.Pressed);
+                }
+            };
+
+            // 离开区域恢复默认光标（可选）
+            RootWindow.MouseLeave += (s, e) => {
+                this.Cursor = System.Windows.Input.Cursors.Arrow;
+            };
+        }
 
         private void OnModeChanged(bool isView, bool isSilent = false)
         {
@@ -62,6 +150,7 @@ namespace TabPaint
             CheckBirdEyeVisibility();
             if (isView)
             {
+                SetupMouseEvents();
                 if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = true;
                 _router.CleanUpSelectionandShape();
                 if (_router.CurrentTool is TextTool textTool) textTool.Cleanup(_ctx);
@@ -80,10 +169,10 @@ namespace TabPaint
                     var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
                     controller?.Play();
                 }
-                RootWindow.MinHeight= 150;
-                RootWindow.MinWidth = 200;
+                RootWindow.MinHeight= 100;
+                RootWindow.MinWidth = 150;
                 CanvasResizeOverlay.Visibility = Visibility.Collapsed;
-               
+                SetViewCursor();
             }
             else
             {
@@ -99,8 +188,9 @@ namespace TabPaint
                 }
 
                 CanvasResizeOverlay.Visibility = Visibility.Visible;
-                RootWindow.MinHeight = 400;
-                RootWindow.MinWidth = 600;
+                RootWindow.MinHeight = 300;
+                RootWindow.MinWidth = 400;
+                _router.CurrentTool.SetCursor(_ctx);
             }
             UpdateCanvasVisuals();
             if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);

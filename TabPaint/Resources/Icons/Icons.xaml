@@ -116,9 +116,6 @@
     </StreamGeometry>
 
 
-    <StreamGeometry x:Key="Text_Image">M4,21 12,3 20,21 M7,15H17 M6,21H3 M18,21H21</StreamGeometry>
-
-
 
 
 
@@ -162,12 +159,13 @@
                             <PathGeometry Figures="M15.308,4.434 C16.22,3.523 16.118,1.939 15.079,0.9 C14.038,-0.139 12.455,-0.242 11.545,0.67 L10.364,1.853 L14.128,5.617 L15.308,4.434 Z" />
                         </GeometryDrawing.Geometry>
                     </GeometryDrawing>
-                    <GeometryDrawing Brush="#434343">
+                    <GeometryDrawing Brush="{DynamicResource IconFillBrush}">
                         <GeometryDrawing.Geometry>
                             <PathGeometry Figures="M5.468,14.276 L11.615,8.128 L12.387,8.9 L13.971,7.314 L8.662,2.005 L7.077,3.589 L7.85,4.362 L1.702,10.508 L0.02,15.201 L0.774,15.955 L5.468,14.276 Z M8.916,5.428 L10.551,7.064 L4.289,13.324 L1.695,14.284 L2.654,11.688 L8.916,5.428 Z" />
                         </GeometryDrawing.Geometry>
                     </GeometryDrawing>
                 </DrawingGroup>
+
                 <DrawingGroup>
                     <DrawingGroup.Transform>
                         <TransformGroup>
@@ -182,7 +180,7 @@
                     </GeometryDrawing>
                     <GeometryDrawing>
                         <GeometryDrawing.Pen>
-                            <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round"/>
+                            <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round"/>
                         </GeometryDrawing.Pen>
                         <GeometryDrawing.Geometry>
                             <PathGeometry Figures="M20.0651 7.39423L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L16.5517 3.86681C19.5632 1.34721 22.5747 4.87462 20.0651 7.39423Z" />
@@ -190,7 +188,7 @@
                     </GeometryDrawing>
                     <GeometryDrawing>
                         <GeometryDrawing.Pen>
-                            <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round"/>
+                            <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round"/>
                         </GeometryDrawing.Pen>
                         <GeometryDrawing.Geometry>
                             <PathGeometry Figures="M15.3096 5.30981L18.7273 8.72755" />
@@ -204,19 +202,19 @@
     <DrawingImage  x:Key="Fill_Bucket_Image">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V32 H32 V0 H0 Z">
-                <GeometryDrawing Brush="#333">
+                <GeometryDrawing Brush="{DynamicResource IconFillBrush}">
                     <GeometryDrawing.Geometry>
                         <PathGeometry Figures="M4,29.987l24,0c0.828,0 1.5,-0.672 1.5,-1.5c0,-0.827 -0.672,-1.5 -1.5,-1.5l-24,0c-0.828,0 -1.5,0.673 -1.5,1.5c0,0.828 0.672,1.5 1.5,1.5Z" FillRule="EvenOdd" />
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
-                <GeometryDrawing Brush="#333">
+                <GeometryDrawing Brush="{DynamicResource IconFillBrush}">
                     <GeometryDrawing.Geometry>
                         <PathGeometry Figures="M9.138,22.244c1.323,0.328 2.775,0.118 3.995,-0.702l9.873,-6.712c0.458,-0.308 0.58,-0.929 0.273,-1.388l-6.717,-10c-0.308,-0.458 -0.929,-0.58 -1.388,-0.272c0,-0 -6.027,4.048 -9.961,6.691c-2.293,1.539 -2.903,4.646 -1.363,6.938c0.725,1.08 1.53,2.279 2.256,3.359c0.738,1.099 1.836,1.812 3.032,2.086Zm11.448,-9.223l-15.418,0c0.207,-0.591 0.599,-1.124 1.16,-1.5c-0,-0 9.131,-6.133 9.131,-6.133l5.127,7.633Z" FillRule="EvenOdd" />
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
                 <GeometryDrawing Brush="#FF508FE1">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#333" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        <Pen Brush="{DynamicResource IconFillBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
                     </GeometryDrawing.Pen>
                     <GeometryDrawing.Geometry>
                         <PathGeometry Figures="M26.339,15.455c-0.185,-0.284 -0.5,-0.455 -0.839,-0.455c-0.339,-0 -0.654,0.171 -0.839,0.455c0,0 -1.274,1.965 -2.039,3.732c-0.379,0.876 -0.622,1.717 -0.622,2.313c-0,1.932 1.568,3.5 3.5,3.5c1.932,0 3.5,-1.568 3.5,-3.5c-0,-0.596 -0.243,-1.437 -0.622,-2.313c-0.765,-1.767 -2.039,-3.732 -2.039,-3.732Z" FillRule="EvenOdd" />
@@ -226,24 +224,92 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="Zoom_In_Image" >
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource SystemAccentBrush}" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M10,7L10,13 M7,10L13,10" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M17,10A7,7,0,1,1,10,3A7,7,0,0,1,17,10z M21,21L15,15" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
-    <StreamGeometry x:Key="Select_Image">
-        M26,26L28,26 28,28 26,28 26,26z M20,26L24,26 24,28 20,28 20,26z M14,26L18,26 18,28 14,28 14,26z M8,26L12,26 12,28 8,28 8,26z M4,26L6,26 6,28 4,28 4,26z M26,20L28,20 28,24 26,24 26,20z M4,20L6,20 6,24 4,24 4,20z M26,14L28,14 28,18 26,18 26,14z M4,14L6,14 6,18 4,18 4,14z M26,8L28,8 28,12 26,12 26,8z M4,8L6,8 6,12 4,12 4,8z M26,4L28,4 28,6 26,6 26,4z M20,4L24,4 24,6 20,6 20,4z M14,4L18,4 18,6 14,6 14,4z M8,4L12,4 12,6 8,6 8,4z M4,4L6,4 6,6 4,6 4,4z
-    </StreamGeometry>
+    <DrawingImage x:Key="Zoom_Out_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource SystemAccentBrush}" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <LineGeometry StartPoint="7,10" EndPoint="13,10" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M17,10A7,7,0,1,1,10,3A7,7,0,0,1,17,10z M21,21L15,15" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
+    <DrawingImage x:Key="Select_Image">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                <GeometryDrawing.Geometry>
+                    <PathGeometry FillRule="Nonzero" Figures="M26,26L28,26 28,28 26,28 26,26z M20,26L24,26 24,28 20,28 20,26z M14,26L18,26 18,28 14,28 14,26z M8,26L12,26 12,28 8,28 8,26z M4,26L6,26 6,28 4,28 4,26z M26,20L28,20 28,24 26,24 26,20z M4,20L6,20 6,24 4,24 4,20z M26,14L28,14 28,18 26,18 26,14z M4,14L6,14 6,18 4,18 4,14z M26,8L28,8 28,12 26,12 26,8z M4,8L6,8 6,12 4,12 4,8z M26,4L28,4 28,6 26,6 26,4z M20,4L24,4 24,6 20,6 20,4z M14,4L18,4 18,6 14,6 14,4z M8,4L12,4 12,6 8,6 8,4z M4,4L6,4 6,6 4,6 4,4z" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
-
+    <DrawingImage x:Key="Text_Image">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                <GeometryDrawing.Geometry>
+                    <PathGeometry FillRule="Nonzero" Figures="M11.5,4.46999979019165L7.789999961853027,14 15.210000038146973,14 11.5,4.46999979019165z M11,2L13,2C13.412293434143066,2.001217842102051,13.781576156616211,2.2553482055664062,13.930000305175781,2.640000104904175L20.68000030517578,20 21,20C21.552284240722656,20,22,20.447715759277344,22,21C22,21.552284240722656,21.552284240722656,22,21,22L17,22C16.447715759277344,22,16,21.552284240722656,16,21C16,20.447715759277344,16.447715759277344,20,17,20L17.559999465942383,20 16,16 7,16 5.460000038146973,20 6,20C6.5522847175598145,20,7,20.447715759277344,7,21C7,21.552284240722656,6.5522847175598145,22,6,22L3,22C2.4477152824401855,22,2,21.552284240722656,2,21C2,20.447715759277344,2.4477152824401855,20,3,20L3.3199996948242188,20 10.069999694824219,2.640000104904175C10.218423843383789,2.2553482055664062,10.587706565856934,2.001217842102051,11,2z" />
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
     <DrawingImage x:Key="Restore_Image" >
         <DrawingImage.Drawing>
             <DrawingGroup >
                 <DrawingGroup.Children>
-                    <GeometryDrawing Brush="#FF212121">
+                    <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
                         <GeometryDrawing.Geometry>
                             <PathGeometry FillRule="Nonzero" Figures="M5.08496,4C5.29088,3.4174,5.8465,3,6.49961,3L9.99961,3C11.6565,3,12.9996,4.34315,12.9996,6L12.9996,9.5C12.9996,10.1531,12.5822,10.7087,11.9996,10.9146L11.9996,6C11.9996,4.89543,11.1042,4,9.99961,4L5.08496,4z" />
                         </GeometryDrawing.Geometry>
                     </GeometryDrawing>
-                    <GeometryDrawing Brush="#FF212121">
+                    <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
                         <GeometryDrawing.Geometry>
                             <PathGeometry FillRule="Nonzero" Figures="M4.5,5L9.5,5C10.3284,5,11,5.67157,11,6.5L11,11.5C11,12.3284,10.3284,13,9.5,13L4.5,13C3.67157,13,3,12.3284,3,11.5L3,6.5C3,5.67157,3.67157,5,4.5,5z M4.5,6C4.22386,6,4,6.22386,4,6.5L4,11.5C4,11.7761,4.22386,12,4.5,12L9.5,12C9.77614,12,10,11.7761,10,11.5L10,6.5C10,6.22386,9.77614,6,9.5,6L4.5,6z" />
                         </GeometryDrawing.Geometry>
@@ -256,7 +322,303 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="Eraser_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V360 H360 V0 H0 Z">
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{DynamicResource IconFillBrush}" 
+                                Geometry="M348.994,102.946 L250.04,3.993 C244.717,-1.33 236.086,-1.331 230.763,3.993 L77.063,157.694 L195.293,275.924 L348.994,122.224 C354.317,116.902 354.317,108.271 348.994,102.946 Z" />
 
+                    <GeometryDrawing Brush="#F76A6A" 
+                                Geometry="M52.646,182.11 L11.006,223.75 C5.682,229.072 5.682,237.703 11.006,246.978 L109.96,345.935 C115.283,351.257 123.914,351.255 129.237,345.935 L170.876,304.294 L52.646,182.11 Z" />
+
+                    <GeometryDrawing Brush="{DynamicResource IconFillBrush}" 
+                                Geometry="M150.133,360 L341.767,360 L341.767,331.949 L182.806,331.949 Z" />
+
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Spin180_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <DrawingGroup Opacity="0.5">
+                        <DrawingGroup.Children>
+                            <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M18.1134,22L5.88616,22C4.18402,22 3.33295,22 3.05381,21.4576 2.77467,20.9152 3.26934,20.2226 4.2587,18.8375L5.38815,17.2563C5.82805,16.6404 6.048,16.3325 6.37105,16.1662 6.69411,16 7.07252,16 7.82936,16L16.1702,16C16.927,16 17.3055,16 17.6285,16.1662 17.9516,16.3325 18.1715,16.6404 18.6114,17.2563L19.7409,18.8375C20.7302,20.2226 21.2249,20.9152 20.9458,21.4576 20.6666,22 19.8156,22 18.1134,22z" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                            <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M18.1134,2L5.88616,2C4.18402,2 3.33294,2 3.05381,2.54242 2.77467,3.08484 3.26934,3.77738 4.25869,5.16247L5.38815,6.74372C5.82805,7.35957 6.048,7.6675 6.37105,7.83375 6.69411,8 7.07252,8 7.82936,8L16.1702,8C16.927,8 17.3055,8 17.6285,7.83375 17.9516,7.6675 18.1715,7.35957 18.6114,6.74372L19.7409,5.16248C20.7302,3.77738 21.2249,3.08484 20.9458,2.54242 20.6666,2 19.8156,2 18.1134,2z" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                        </DrawingGroup.Children>
+                    </DrawingGroup>
+                    <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                        <GeometryDrawing.Geometry>
+                            <StreamGeometry>M1.25,12C1.25,11.5858,1.58579,11.25,2,11.25L6,11.25C6.41421,11.25 6.75,11.5858 6.75,12 6.75,12.4142 6.41421,12.75 6,12.75L2,12.75C1.58579,12.75,1.25,12.4142,1.25,12z M9.25,12C9.25,11.5858,9.58579,11.25,10,11.25L14,11.25C14.4142,11.25 14.75,11.5858 14.75,12 14.75,12.4142 14.4142,12.75 14,12.75L10,12.75C9.58579,12.75,9.25,12.4142,9.25,12z M17.25,12C17.25,11.5858,17.5858,11.25,18,11.25L22,11.25C22.4142,11.25 22.75,11.5858 22.75,12 22.75,12.4142 22.4142,12.75 22,12.75L18,12.75C17.5858,12.75,17.25,12.4142,17.25,12z</StreamGeometry>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage  x:Key="Pencil_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#EECE82">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M18.556 8.90942L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L15.0647 5.35974C15.0742 5.4062 15.0969 5.45049 15.1329 5.48653L18.5506 8.90426C18.5524 8.90601 18.5542 8.90773 18.556 8.90942Z" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M20.0651 7.39423L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L16.5517 3.86681C19.5632 1.34721 22.5747 4.87462 20.0651 7.39423Z" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M15.3096 5.30981L18.7273 8.72755" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Opacity_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource BorderDarkBrush}" Thickness="1.5" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M11.2929,2.29289C11.6834,1.90237,12.3166,1.90237,12.7071,2.29289L12.87,2.455C12.87,2.455 19.5,9.5 19.5,15 19.5,19.1421 16.1421,22.5 12,22.5 7.85786,22.5 4.5,19.1421 4.5,15 4.5,9.5 11.2929,2.29289 11.2929,2.29289z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <DrawingGroup>
+                        <DrawingGroup.Children>
+                            <GeometryDrawing>
+                                <GeometryDrawing.Brush>
+                                    <DrawingBrush ViewportUnits="Absolute" ViewboxUnits="Absolute" Viewport="0,0,4,4" Viewbox="0,0,4,4" TileMode="Tile" Opacity="1">
+                                        <DrawingBrush.Drawing>
+                                            <DrawingGroup>
+                                                <DrawingGroup.Children>
+                                                    <DrawingGroup>
+                                                        <DrawingGroup.Children>
+                                                            <GeometryDrawing Brush="{DynamicResource CheckerboardLightBrush}">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="0,0,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                            <GeometryDrawing Brush="{DynamicResource CheckerboardLightBrush}">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="2,2,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                            <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="2,0,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                            <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="0,2,2,2" />
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                        </DrawingGroup.Children>
+                                                        <DrawingGroup.ClipGeometry>
+                                                            <RectangleGeometry Rect="0,0,4,4" />
+                                                        </DrawingGroup.ClipGeometry>
+                                                    </DrawingGroup>
+                                                </DrawingGroup.Children>
+                                            </DrawingGroup>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </GeometryDrawing.Brush>
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M12,2.5C12,2.5 5.5,9.5 5.5,15 5.5,15.5 5.55,16 5.65,16.5L18.35,16.5C18.45,16 18.5,15.5 18.5,15 18.5,9.5 12,2.5 12,2.5z" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                        </DrawingGroup.Children>
+                    </DrawingGroup>
+                    <GeometryDrawing Brush="{DynamicResource BorderDarkBrush}">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M4.65,16C4.9,18.8 7.05,21.3 10.3,21.9 10.8,22 11.4,22 12,22 16.1421,22 19.5,18.6421 19.5,14.5 19.5,14 19.45,13.5 19.35,13L4.65,13C4.55,13.5 4.5,14 4.5,14.5 4.5,15 4.55,15.5 4.65,16z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{DynamicResource BorderDarkBrush}">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M4.6,13.5C4.6,13.5 7,12.5 9.5,14 12,15.5 14.5,12.5 17,13.5 18.5,14.1 19.4,13.2 19.4,13.2" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Stroke_Width_Image" >
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource TextSecondaryBrush}" Thickness="1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M2,5.5C2,5.5 5,2.5 9,5.5 13,8.5 15,2.5 19,5.5 21,7 22,5.5 22,5.5" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource TextSecondaryBrush}" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M2,12C2,12 5,9 9,12 13,15 15,9 19,12 21,13.5 22,12 22,12" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource TextSecondaryBrush}" Thickness="3.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M2,18.5C2,18.5 5,15.5 9,18.5 13,21.5 15,15.5 19,18.5 21,20 22,18.5 22,18.5" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Brush_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup >
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{x:Null}">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M9.5,19.5L9.5,18 4.5,18C3.95,18 3.45,17.78 3.09,17.41 2.72,17.05 2.5,16.55 2.5,16 2.5,14.97 3.3,14.11 4.31,14.01 4.37,14 4.43,14 4.5,14L19.5,14C19.57,14 19.63,14 19.69,14.01 20.17,14.05 20.59,14.26 20.91,14.59 21.32,14.99 21.54,15.56 21.49,16.18 21.4,17.23 20.45,18 19.39,18L14.5,18 14.5,19.5C14.5,20.88 13.38,22 12,22 10.62,22 9.5,20.88 9.5,19.5z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <DrawingGroup Opacity="0.4000000059604645">
+                        <DrawingGroup.Children>
+                            <GeometryDrawing Brush="{x:Null}">
+                                <GeometryDrawing.Pen>
+                                    <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                                </GeometryDrawing.Pen>
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M20.1702,5.3L19.6902,14.01C19.6302,14,19.5702,14,19.5002,14L4.50016,14C4.43016,14,4.37016,14,4.31016,14.01L3.83016,5.3C3.65016,3.53,5.04016,2,6.81016,2L17.1902,2C18.9602,2,20.3502,3.53,20.1702,5.3z" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                            <GeometryDrawing Brush="{x:Null}">
+                                <GeometryDrawing.Pen>
+                                    <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                                </GeometryDrawing.Pen>
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M7.99023,2L7.99023,7" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                            <GeometryDrawing Brush="{x:Null}">
+                                <GeometryDrawing.Pen>
+                                    <Pen Brush="{DynamicResource TextPrimaryBrush}" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
+                                </GeometryDrawing.Pen>
+                                <GeometryDrawing.Geometry>
+                                    <PathGeometry FillRule="Nonzero" Figures="M12,2L12,4" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                        </DrawingGroup.Children>
+                    </DrawingGroup>
+                </DrawingGroup.Children>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="0,0,24,24" />
+                </DrawingGroup.ClipGeometry>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Pick_Colour_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Transform>
+                    <TranslateTransform X="1" Y="0"/>
+                </DrawingGroup.Transform>
+
+                <GeometryDrawing Brush="#508FE1">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M15.308,4.434 C16.22,3.523 16.118,1.939 15.079,0.9 C14.038,-0.139 12.455,-0.242 11.545,0.67 L10.364,1.853 L14.128,5.617 L15.308,4.434 L15.308,4.434 Z" FillRule="EvenOdd"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="{DynamicResource IconFillBrush}">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M5.468,14.276 L11.615,8.128 L12.387,8.9 L13.971,7.314 L8.662,2.005 L7.077,3.589 L7.85,4.362 L1.702,10.508 L0.02,15.201 L0.774,15.955 L5.468,14.276 L5.468,14.276 Z M8.916,5.428 L10.551,7.064 L4.289,13.324 L1.695,14.284 L2.654,11.688 L8.916,5.428 L8.916,5.428 Z" FillRule="EvenOdd"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="Highlighter_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="{DynamicResource BorderDarkBrush}">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M63.648,169.162L134.828,240.352 73.738,252.562C72.80799999999999,252.752,71.958,253.21200000000002,71.288,253.882L61.547999999999995,263.622 40.37799999999999,242.442 50.117999999999995,232.71200000000002C50.77799999999999,232.04200000000003,51.23799999999999,231.18200000000002,51.428,230.26200000000003L63.648,169.162z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{DynamicResource BorderDarkBrush}">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M230.278,81.592C233.088,84.402,233.088,88.972,230.278,91.782L157.088,164.982C154.278,167.792,149.708,167.792,146.898,164.982L139.278,157.362C136.468,154.552,136.468,149.982,139.278,147.172L212.468,73.972C213.828,72.612 215.63799999999998,71.862 217.56799999999998,71.862 219.48799999999997,71.862 221.29799999999997,72.612 222.658,73.972L230.278,81.592z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#FFFFCD02">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M53.918,271.242L53.918,271.242 45.428,279.732 13.668,269.152 32.748,250.072z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#FFFFCD02">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M283.918,54.022C288.32800000000003,58.432,288.628,65.602,284.598,70.362L144.258,236.222 67.778,159.73200000000003 233.628,19.392000000000024C238.38799999999998,15.372000000000025,245.56799999999998,15.662000000000024,249.968,20.072000000000024L283.918,54.022z M241.968,86.682C241.968,82.382,240.328,78.08200000000001,237.058,74.812L229.44799999999998,67.192C226.26799999999997,64.02199999999999 222.058,62.27199999999999 217.56799999999998,62.27199999999999 213.07799999999997,62.27199999999999 208.85799999999998,64.02199999999999 205.688,67.192L132.498,140.392C129.328,143.56199999999998 127.57799999999999,147.78199999999998 127.57799999999999,152.262 127.57799999999999,156.752 129.32799999999997,160.972 132.498,164.142L140.118,171.762C143.388,175.032 147.688,176.672 151.988,176.672 156.288,176.672 160.598,175.032 163.868,171.762L237.058,98.562C240.328,95.282,241.968,90.982,241.968,86.682z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M290.698,47.242C298.608,55.141999999999996 299.138,68.02199999999999 291.918,76.55199999999999 291.918,76.55199999999999 148.138,246.47199999999998 148.088,246.50199999999998 147.428,247.242 146.53799999999998,247.78199999999998 145.498,247.992L77.038,261.682 50.117999999999995,288.612C49.19799999999999,289.52200000000005 47.977999999999994,290.012 46.717999999999996,290.012 46.217999999999996,290.012 45.708,289.932 45.208,289.772L3.2779999999999987,275.792C1.6979999999999986,275.262 0.5079999999999987,273.962 0.12799999999999878,272.342 -0.2520000000000012,270.73199999999997 0.2279999999999988,269.032 1.4079999999999988,267.852L42.308,226.95199999999997 55.998,158.50199999999995C56.217999999999996,157.41199999999995 56.788,156.51199999999994 57.568,155.83199999999997 57.577999999999996,155.82199999999997 227.438,12.071999999999974 227.438,12.071999999999974 235.968,4.8519999999999746 248.84799999999998,5.381999999999974 256.748,13.291999999999975L290.698,47.242z M284.598,70.362C288.628,65.60199999999999,288.32800000000003,58.431999999999995,283.918,54.02199999999999L249.96800000000002,20.07199999999999C245.568,15.661999999999988,238.388,15.37199999999999,233.62800000000001,19.39199999999999L67.77800000000002,159.732 144.25800000000004,236.22199999999998 284.598,70.362z M134.828,240.352L63.647999999999996,169.162 51.428,230.262C51.238,231.182,50.778,232.042,50.117999999999995,232.712L40.37799999999999,242.44199999999998 61.547999999999995,263.62199999999996 71.288,253.88199999999995C71.958,253.21199999999996,72.80799999999999,252.75199999999995,73.738,252.56199999999995L134.828,240.352z M45.428,279.732L53.918,271.242 32.748,250.072 13.668,269.152 45.428,279.732z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="{DynamicResource TextPrimaryBrush}">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry FillRule="Nonzero" Figures="M237.058,74.812C240.328,78.082 241.968,82.382 241.968,86.682 241.968,90.982 240.328,95.282 237.058,98.562L163.868,171.762C160.59799999999998,175.032 156.28799999999998,176.672 151.988,176.672 147.68800000000002,176.672 143.388,175.032 140.118,171.762L132.498,164.142C129.328,160.972 127.57799999999999,156.752 127.57799999999999,152.262 127.57799999999999,147.782 129.32799999999997,143.562 132.498,140.392L205.688,67.192C208.85799999999998,64.02199999999999 213.07799999999997,62.27199999999999 217.56799999999998,62.27199999999999 222.058,62.27199999999999 226.26799999999997,64.02199999999999 229.44799999999998,67.192L237.058,74.812z M230.278,91.782C233.088,88.972,233.088,84.402,230.278,81.592L222.658,73.972C221.29799999999997,72.612 219.488,71.862 217.56799999999998,71.862 215.63799999999998,71.862 213.82799999999997,72.612 212.468,73.972L139.278,147.172C136.468,149.982,136.468,154.552,139.278,157.362L146.898,164.982C149.708,167.792,154.278,167.792,157.088,164.982L230.278,91.782z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
     <StreamGeometry x:Key="Open_Folder_Image">
         F1 M488,896 L168,1536 1536,1536 1877,896 488,896 z 
     M742.859,255.859 C740.62,255.786 738.333,255.833 736,256 L128,256 128,1329 373,839 C384.333,817 400,799.667 420,787 C440,774.333 462.667,768 488,768 L1664,768 1664,512 1088,512 C1046.667,512 1012,505.667 984,493 C956,480.333 931.667,464.667 911,446 C890.333,427.333 873.333,406.667 860,384 C846.667,361.333 833.667,341 821,323 C808.333,305 795.667,289 783,275 C771.917,262.75 758.536,256.37 742.859,255.859 z 
@@ -271,23 +633,7 @@
 
 
 
-    <DrawingImage x:Key="Eraser_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup ClipGeometry="M0,0 V360 H360 V0 H0 Z">
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="#333" 
-                                 Geometry="M348.994,102.946 L250.04,3.993 C244.717,-1.33 236.086,-1.331 230.763,3.993 L77.063,157.694 L195.293,275.924 L348.994,122.224 C354.317,116.902 354.317,108.271 348.994,102.946 Z" />
-
-                    <GeometryDrawing Brush="#F76A6A" 
-                                 Geometry="M52.646,182.11 L11.006,223.75 C5.682,229.072 5.682,237.703 11.006,246.978 L109.96,345.935 C115.283,351.257 123.914,351.255 129.237,345.935 L170.876,304.294 L52.646,182.11 Z" />
-
-                    <GeometryDrawing Brush="#333" 
-                                 Geometry="M150.133,360 L341.767,360 L341.767,331.949 L182.806,331.949 Z" />
-
-                </DrawingGroup.Children>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
+ 
     <StreamGeometry x:Key="Rotate_Left_Image">
         M1158.469,895.938 
     C1156.323,895.896 1154.167,895.917 1152,896 1134,896 1117.333,899.333 1102,906 1086.667,912.667 1073.333,921.667 1062,933 1050.667,944.333 1041.333,958 1034,974 1026.667,990 1023.333,1006.667 1024,1024 1024,1042 1027.333,1058.667 1034,1074 1040.667,1089.333 1049.667,1102.667 1061,1114 1072.333,1125.333 1086,1134.667 1102,1142 1118,1149.333 1134.667,1152.667 1152,1152 1170,1152 1186.667,1148.667 1202,1142 1217.333,1135.333 1230.667,1126.333 1242,1115 1253.333,1103.667 1262.667,1090 1270,1074 1277.333,1058 1280.667,1041.333 1280,1024 1280,1006 1276.667,989.333 1270,974 1263.333,958.667 1254.333,945.333 1243,934 1231.667,922.667 1218,913.333 1202,906 1188,899.583 1173.49,896.229 1158.469,895.938z 
@@ -302,89 +648,6 @@
     </StreamGeometry>
 
 
-
-    <DrawingImage x:Key="Spin180_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup>
-                <DrawingGroup.Children>
-                    <DrawingGroup Opacity="0.5">
-                        <DrawingGroup.Children>
-                            <GeometryDrawing Brush="#FF1C274C">
-                                <GeometryDrawing.Geometry>
-                                    <PathGeometry FillRule="Nonzero" Figures="M18.1134,22L5.88616,22C4.18402,22 3.33295,22 3.05381,21.4576 2.77467,20.9152 3.26934,20.2226 4.2587,18.8375L5.38815,17.2563C5.82805,16.6404 6.048,16.3325 6.37105,16.1662 6.69411,16 7.07252,16 7.82936,16L16.1702,16C16.927,16 17.3055,16 17.6285,16.1662 17.9516,16.3325 18.1715,16.6404 18.6114,17.2563L19.7409,18.8375C20.7302,20.2226 21.2249,20.9152 20.9458,21.4576 20.6666,22 19.8156,22 18.1134,22z" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
-                            <GeometryDrawing Brush="#FF1C274C">
-                                <GeometryDrawing.Geometry>
-                                    <PathGeometry FillRule="Nonzero" Figures="M18.1134,2L5.88616,2C4.18402,2 3.33294,2 3.05381,2.54242 2.77467,3.08484 3.26934,3.77738 4.25869,5.16247L5.38815,6.74372C5.82805,7.35957 6.048,7.6675 6.37105,7.83375 6.69411,8 7.07252,8 7.82936,8L16.1702,8C16.927,8 17.3055,8 17.6285,7.83375 17.9516,7.6675 18.1715,7.35957 18.6114,6.74372L19.7409,5.16248C20.7302,3.77738 21.2249,3.08484 20.9458,2.54242 20.6666,2 19.8156,2 18.1134,2z" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
-                        </DrawingGroup.Children>
-                    </DrawingGroup>
-                    <GeometryDrawing Brush="#FF1C274C">
-                        <GeometryDrawing.Geometry>
-                            <StreamGeometry>M1.25,12C1.25,11.5858,1.58579,11.25,2,11.25L6,11.25C6.41421,11.25 6.75,11.5858 6.75,12 6.75,12.4142 6.41421,12.75 6,12.75L2,12.75C1.58579,12.75,1.25,12.4142,1.25,12z M9.25,12C9.25,11.5858,9.58579,11.25,10,11.25L14,11.25C14.4142,11.25 14.75,11.5858 14.75,12 14.75,12.4142 14.4142,12.75 14,12.75L10,12.75C9.58579,12.75,9.25,12.4142,9.25,12z M17.25,12C17.25,11.5858,17.5858,11.25,18,11.25L22,11.25C22.4142,11.25 22.75,11.5858 22.75,12 22.75,12.4142 22.4142,12.75 22,12.75L18,12.75C17.5858,12.75,17.25,12.4142,17.25,12z</StreamGeometry>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup.Children>
-                <DrawingGroup.ClipGeometry>
-                    <RectangleGeometry Rect="0,0,24,24" />
-                </DrawingGroup.ClipGeometry>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
-    <DrawingImage  x:Key="Pencil_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup>
-                <GeometryDrawing Brush="#EECE82">
-                    <GeometryDrawing.Geometry>
-                        <PathGeometry Figures="M18.556 8.90942L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L15.0647 5.35974C15.0742 5.4062 15.0969 5.45049 15.1329 5.48653L18.5506 8.90426C18.5524 8.90601 18.5542 8.90773 18.556 8.90942Z" />
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-                <GeometryDrawing>
-                    <GeometryDrawing.Pen>
-                        <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
-                    </GeometryDrawing.Pen>
-                    <GeometryDrawing.Geometry>
-                        <PathGeometry Figures="M20.0651 7.39423L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L16.5517 3.86681C19.5632 1.34721 22.5747 4.87462 20.0651 7.39423Z" />
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-                <GeometryDrawing>
-                    <GeometryDrawing.Pen>
-                        <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
-                    </GeometryDrawing.Pen>
-                    <GeometryDrawing.Geometry>
-                        <PathGeometry Figures="M15.3096 5.30981L18.7273 8.72755" />
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
-
-   
-
-
-    <DrawingImage x:Key="Pick_Colour_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup>
-                <DrawingGroup.Transform>
-                    <TranslateTransform X="1" Y="0"/>
-                </DrawingGroup.Transform>
-
-                <GeometryDrawing Brush="#508FE1">
-                    <GeometryDrawing.Geometry>
-                        <PathGeometry Figures="M15.308,4.434 C16.22,3.523 16.118,1.939 15.079,0.9 C14.038,-0.139 12.455,-0.242 11.545,0.67 L10.364,1.853 L14.128,5.617 L15.308,4.434 L15.308,4.434 Z" FillRule="EvenOdd"/>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-                <GeometryDrawing Brush="#434343">
-                    <GeometryDrawing.Geometry>
-                        <PathGeometry Figures="M5.468,14.276 L11.615,8.128 L12.387,8.9 L13.971,7.314 L8.662,2.005 L7.077,3.589 L7.85,4.362 L1.702,10.508 L0.02,15.201 L0.774,15.955 L5.468,14.276 L5.468,14.276 Z M8.916,5.428 L10.551,7.064 L4.289,13.324 L1.695,14.284 L2.654,11.688 L8.916,5.428 L8.916,5.428 Z" FillRule="EvenOdd"/>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
 
     <StreamGeometry x:Key="Exit_Image">
         M15,4.001 L5,4.001 5,18.001 C5,19.106 5.895,20.001 7,20.001 L15,20.001 
@@ -415,53 +678,7 @@
 
 
 
-    <DrawingImage x:Key="Brush_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup >
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF292D32" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M9.5,19.5L9.5,18 4.5,18C3.95,18 3.45,17.78 3.09,17.41 2.72,17.05 2.5,16.55 2.5,16 2.5,14.97 3.3,14.11 4.31,14.01 4.37,14 4.43,14 4.5,14L19.5,14C19.57,14 19.63,14 19.69,14.01 20.17,14.05 20.59,14.26 20.91,14.59 21.32,14.99 21.54,15.56 21.49,16.18 21.4,17.23 20.45,18 19.39,18L14.5,18 14.5,19.5C14.5,20.88 13.38,22 12,22 10.62,22 9.5,20.88 9.5,19.5z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <DrawingGroup Opacity="0.4000000059604645">
-                        <DrawingGroup.Children>
-                            <GeometryDrawing Brush="{x:Null}">
-                                <GeometryDrawing.Pen>
-                                    <Pen Brush="#FF292D32" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                                </GeometryDrawing.Pen>
-                                <GeometryDrawing.Geometry>
-                                    <PathGeometry FillRule="Nonzero" Figures="M20.1702,5.3L19.6902,14.01C19.6302,14,19.5702,14,19.5002,14L4.50016,14C4.43016,14,4.37016,14,4.31016,14.01L3.83016,5.3C3.65016,3.53,5.04016,2,6.81016,2L17.1902,2C18.9602,2,20.3502,3.53,20.1702,5.3z" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
-                            <GeometryDrawing Brush="{x:Null}">
-                                <GeometryDrawing.Pen>
-                                    <Pen Brush="#FF292D32" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                                </GeometryDrawing.Pen>
-                                <GeometryDrawing.Geometry>
-                                    <PathGeometry FillRule="Nonzero" Figures="M7.99023,2L7.99023,7" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
-                            <GeometryDrawing Brush="{x:Null}">
-                                <GeometryDrawing.Pen>
-                                    <Pen Brush="#FF292D32" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                                </GeometryDrawing.Pen>
-                                <GeometryDrawing.Geometry>
-                                    <PathGeometry FillRule="Nonzero" Figures="M12,2L12,4" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
-                        </DrawingGroup.Children>
-                    </DrawingGroup>
-                </DrawingGroup.Children>
-                <DrawingGroup.ClipGeometry>
-                    <RectangleGeometry Rect="0,0,24,24" />
-                </DrawingGroup.ClipGeometry>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
+
     <StreamGeometry x:Key="Save_Normal_Image">
         M8.25,15.5 
     C7.836,15.5,7.5,15.836,7.5,16.25 
@@ -623,61 +840,6 @@
 
     <StreamGeometry x:Key="Black_And_White_Image">M4,14 C4,11.054 6.667,7.054 12,2 C17.333,7.054 20,11.054 20,14 C20,18.335 16.552,21.865 12.249,21.996 L12,22 C7.582,22 4,18.418 4,14 Z M12,4.793 L11.783,5.012 C7.898,8.958 6,12.029 6,14 C6,17.314 8.686,20 12,20 L12,4.793 Z</StreamGeometry>
 
-    <DrawingImage x:Key="Zoom_In_Image" >
-        <DrawingImage.Drawing>
-            <DrawingGroup >
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF2CA9BC" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M10,7L10,13 M7,10L13,10" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M17,10A7,7,0,1,1,10,3A7,7,0,0,1,17,10z M21,21L15,15" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup.Children>
-                <DrawingGroup.ClipGeometry>
-                    <RectangleGeometry Rect="0,0,24,24" />
-                </DrawingGroup.ClipGeometry>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
-
-    <DrawingImage x:Key="Zoom_Out_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup >
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF2CA9BC" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <LineGeometry StartPoint="7,10" EndPoint="13,10" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF000000" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M17,10A7,7,0,1,1,10,3A7,7,0,0,1,17,10z M21,21L15,15" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup.Children>
-                <DrawingGroup.ClipGeometry>
-                    <RectangleGeometry Rect="0,0,24,24" />
-                </DrawingGroup.ClipGeometry>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
 
     <StreamGeometry x:Key="FitToWindow_Image">
         M1764.32,1349.19 L1920,1349.19 1920,1686.49 C1920,1815.45 1815.45,1920 1686.49,1920 L1349.19,1920 1349.19,1764.32 1686.49,1764.32 C1729.48,1764.32 1764.32,1729.48 1764.32,1686.49 L1764.32,1349.19z 
@@ -700,44 +862,7 @@
     </StreamGeometry>
 
 
-    <DrawingImage x:Key="Highlighter_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup>
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="#FFBDC3C7">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M63.648,169.162L134.828,240.352 73.738,252.562C72.80799999999999,252.752,71.958,253.21200000000002,71.288,253.882L61.547999999999995,263.622 40.37799999999999,242.442 50.117999999999995,232.71200000000002C50.77799999999999,232.04200000000003,51.23799999999999,231.18200000000002,51.428,230.26200000000003L63.648,169.162z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FFBDC3C7">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M230.278,81.592C233.088,84.402,233.088,88.972,230.278,91.782L157.088,164.982C154.278,167.792,149.708,167.792,146.898,164.982L139.278,157.362C136.468,154.552,136.468,149.982,139.278,147.172L212.468,73.972C213.828,72.612 215.63799999999998,71.862 217.56799999999998,71.862 219.48799999999997,71.862 221.29799999999997,72.612 222.658,73.972L230.278,81.592z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FFFFCD02">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M53.918,271.242L53.918,271.242 45.428,279.732 13.668,269.152 32.748,250.072z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FFFFCD02">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M283.918,54.022C288.32800000000003,58.432,288.628,65.602,284.598,70.362L144.258,236.222 67.778,159.73200000000003 233.628,19.392000000000024C238.38799999999998,15.372000000000025,245.56799999999998,15.662000000000024,249.968,20.072000000000024L283.918,54.022z M241.968,86.682C241.968,82.382,240.328,78.08200000000001,237.058,74.812L229.44799999999998,67.192C226.26799999999997,64.02199999999999 222.058,62.27199999999999 217.56799999999998,62.27199999999999 213.07799999999997,62.27199999999999 208.85799999999998,64.02199999999999 205.688,67.192L132.498,140.392C129.328,143.56199999999998 127.57799999999999,147.78199999999998 127.57799999999999,152.262 127.57799999999999,156.752 129.32799999999997,160.972 132.498,164.142L140.118,171.762C143.388,175.032 147.688,176.672 151.988,176.672 156.288,176.672 160.598,175.032 163.868,171.762L237.058,98.562C240.328,95.282,241.968,90.982,241.968,86.682z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FF000000">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M290.698,47.242C298.608,55.141999999999996 299.138,68.02199999999999 291.918,76.55199999999999 291.918,76.55199999999999 148.138,246.47199999999998 148.088,246.50199999999998 147.428,247.242 146.53799999999998,247.78199999999998 145.498,247.992L77.038,261.682 50.117999999999995,288.612C49.19799999999999,289.52200000000005 47.977999999999994,290.012 46.717999999999996,290.012 46.217999999999996,290.012 45.708,289.932 45.208,289.772L3.2779999999999987,275.792C1.6979999999999986,275.262 0.5079999999999987,273.962 0.12799999999999878,272.342 -0.2520000000000012,270.73199999999997 0.2279999999999988,269.032 1.4079999999999988,267.852L42.308,226.95199999999997 55.998,158.50199999999995C56.217999999999996,157.41199999999995 56.788,156.51199999999994 57.568,155.83199999999997 57.577999999999996,155.82199999999997 227.438,12.071999999999974 227.438,12.071999999999974 235.968,4.8519999999999746 248.84799999999998,5.381999999999974 256.748,13.291999999999975L290.698,47.242z M284.598,70.362C288.628,65.60199999999999,288.32800000000003,58.431999999999995,283.918,54.02199999999999L249.96800000000002,20.07199999999999C245.568,15.661999999999988,238.388,15.37199999999999,233.62800000000001,19.39199999999999L67.77800000000002,159.732 144.25800000000004,236.22199999999998 284.598,70.362z M134.828,240.352L63.647999999999996,169.162 51.428,230.262C51.238,231.182,50.778,232.042,50.117999999999995,232.712L40.37799999999999,242.44199999999998 61.547999999999995,263.62199999999996 71.288,253.88199999999995C71.958,253.21199999999996,72.80799999999999,252.75199999999995,73.738,252.56199999999995L134.828,240.352z M45.428,279.732L53.918,271.242 32.748,250.072 13.668,269.152 45.428,279.732z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FF000000">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M237.058,74.812C240.328,78.082 241.968,82.382 241.968,86.682 241.968,90.982 240.328,95.282 237.058,98.562L163.868,171.762C160.59799999999998,175.032 156.28799999999998,176.672 151.988,176.672 147.68800000000002,176.672 143.388,175.032 140.118,171.762L132.498,164.142C129.328,160.972 127.57799999999999,156.752 127.57799999999999,152.262 127.57799999999999,147.782 129.32799999999997,143.562 132.498,140.392L205.688,67.192C208.85799999999998,64.02199999999999 213.07799999999997,62.27199999999999 217.56799999999998,62.27199999999999 222.058,62.27199999999999 226.26799999999997,64.02199999999999 229.44799999999998,67.192L237.058,74.812z M230.278,91.782C233.088,88.972,233.088,84.402,230.278,81.592L222.658,73.972C221.29799999999997,72.612 219.488,71.862 217.56799999999998,71.862 215.63799999999998,71.862 213.82799999999997,72.612 212.468,73.972L139.278,147.172C136.468,149.982,136.468,154.552,139.278,157.362L146.898,164.982C149.708,167.792,154.278,167.792,157.088,164.982L230.278,91.782z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup.Children>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
+
 
     <StreamGeometry x:Key="Mosaic_Image">
         M44,36 L36,36 36,44 44,44 44,36 z 
@@ -843,120 +968,7 @@
     <StreamGeometry x:Key="Clear_Unedited_Image">M1501,1411L1728,1638 1955,1411 2045,1502 1819,1728 2045,1955 1955,2045 1728,1819 1501,2046 1411,1955 1638,1728 1411,1501 1501,1411z M640,1024L1024,1024 1024,1152 640,1152 640,1024z M384,1024L512,1024 512,1152 384,1152 384,1024z M640,768L1024,768 1024,896 640,896 640,768z M384,768L512,768 512,896 384,896 384,768z M640,512L1024,512 1024,640 640,640 640,512z M384,512L512,512 512,640 384,640 384,512z M1280,219L1280,512 1573,512 1280,219z M128,0L1243,0 1792,549 1792,1280 1664,1280 1664,640 1152,640 1152,128 256,128 256,1920 1280,1920 1280,2048 128,2048 128,0z</StreamGeometry>
 
 
-    <DrawingImage x:Key="Opacity_Image">
-        <DrawingImage.Drawing>
-            <DrawingGroup >
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF8A8886" Thickness="1.5" StartLineCap="Flat" EndLineCap="Flat" LineJoin="Round" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M11.2929,2.29289C11.6834,1.90237,12.3166,1.90237,12.7071,2.29289L12.87,2.455C12.87,2.455 19.5,9.5 19.5,15 19.5,19.1421 16.1421,22.5 12,22.5 7.85786,22.5 4.5,19.1421 4.5,15 4.5,9.5 11.2929,2.29289 11.2929,2.29289z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <DrawingGroup>
-                        <DrawingGroup.Children>
-                            <GeometryDrawing>
-                                <GeometryDrawing.Brush>
-                                    <DrawingBrush ViewportUnits="Absolute" ViewboxUnits="Absolute" Viewport="0,0,4,4" Viewbox="0,0,4,4" TileMode="Tile" Opacity="1">
-                                        <DrawingBrush.Drawing>
-                                            <DrawingGroup>
-                                                <DrawingGroup.Children>
-                                                    <DrawingGroup>
-                                                        <DrawingGroup.Children>
-                                                            <GeometryDrawing Brush="#FFE0E0E0">
-                                                                <GeometryDrawing.Geometry>
-                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="0,0,2,2" />
-                                                                </GeometryDrawing.Geometry>
-                                                            </GeometryDrawing>
-                                                            <GeometryDrawing Brush="#FFE0E0E0">
-                                                                <GeometryDrawing.Geometry>
-                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="2,2,2,2" />
-                                                                </GeometryDrawing.Geometry>
-                                                            </GeometryDrawing>
-                                                            <GeometryDrawing Brush="#FFFFFFFF">
-                                                                <GeometryDrawing.Geometry>
-                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="2,0,2,2" />
-                                                                </GeometryDrawing.Geometry>
-                                                            </GeometryDrawing>
-                                                            <GeometryDrawing Brush="#FFFFFFFF">
-                                                                <GeometryDrawing.Geometry>
-                                                                    <RectangleGeometry RadiusX="0" RadiusY="0" Rect="0,2,2,2" />
-                                                                </GeometryDrawing.Geometry>
-                                                            </GeometryDrawing>
-                                                        </DrawingGroup.Children>
-                                                        <DrawingGroup.ClipGeometry>
-                                                            <RectangleGeometry Rect="0,0,4,4" />
-                                                        </DrawingGroup.ClipGeometry>
-                                                        <DrawingGroup.Transform>
-                                                            <TranslateTransform X="0" Y="0" />
-                                                        </DrawingGroup.Transform>
-                                                    </DrawingGroup>
-                                                </DrawingGroup.Children>
-                                            </DrawingGroup>
-                                        </DrawingBrush.Drawing>
-                                    </DrawingBrush>
-                                </GeometryDrawing.Brush>
-                                <GeometryDrawing.Geometry>
-                                    <PathGeometry FillRule="Nonzero" Figures="M12,2.5C12,2.5 5.5,9.5 5.5,15 5.5,15.5 5.55,16 5.65,16.5L18.35,16.5C18.45,16 18.5,15.5 18.5,15 18.5,9.5 12,2.5 12,2.5z" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
-                        </DrawingGroup.Children>
-                    </DrawingGroup>
-                    <GeometryDrawing Brush="#FF8A8886">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M4.65,16C4.9,18.8 7.05,21.3 10.3,21.9 10.8,22 11.4,22 12,22 16.1421,22 19.5,18.6421 19.5,14.5 19.5,14 19.45,13.5 19.35,13L4.65,13C4.55,13.5 4.5,14 4.5,14.5 4.5,15 4.55,15.5 4.65,16z" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#FF8A8886">
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M4.6,13.5C4.6,13.5 7,12.5 9.5,14 12,15.5 14.5,12.5 17,13.5 18.5,14.1 19.4,13.2 19.4,13.2" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup.Children>
-                <DrawingGroup.ClipGeometry>
-                    <RectangleGeometry Rect="0,0,24,24" />
-                </DrawingGroup.ClipGeometry>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
 
-    <DrawingImage x:Key="Stroke_Width_Image" >
-        <DrawingImage.Drawing>
-            <DrawingGroup >
-                <DrawingGroup.Children>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF616161" Thickness="1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M2,5.5C2,5.5 5,2.5 9,5.5 13,8.5 15,2.5 19,5.5 21,7 22,5.5 22,5.5" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF616161" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M2,12C2,12 5,9 9,12 13,15 15,9 19,12 21,13.5 22,12 22,12" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="{x:Null}">
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#FF616161" Thickness="3.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <PathGeometry FillRule="Nonzero" Figures="M2,18.5C2,18.5 5,15.5 9,18.5 13,21.5 15,15.5 19,18.5 21,20 22,18.5 22,18.5" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup.Children>
-                <DrawingGroup.ClipGeometry>
-                    <RectangleGeometry Rect="0,0,24,24" />
-                </DrawingGroup.ClipGeometry>
-            </DrawingGroup>
-        </DrawingImage.Drawing>
-    </DrawingImage>
     <StreamGeometry x:Key="Paint_Mode_Image">
         M20.715,12
     C21.3,12 21.885,12.223 22.332,12.67 

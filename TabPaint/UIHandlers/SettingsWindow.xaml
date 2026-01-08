@@ -1,30 +1,29 @@
 ﻿<Window x:Class="TabPaint.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:local="clr-namespace:TabPaint"
-         xmlns:controls="clr-namespace:TabPaint.Controls"
+        xmlns:local="clr-namespace:TabPaint"
+        xmlns:controls="clr-namespace:TabPaint.Controls"
         Title="TabPaint 设置" Height="500" Width="700"
         ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
-        Background="#F9F9F9">
+        Background="{DynamicResource ChromeLowBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}">
+    <!-- Background 和 Foreground 均已绑定资源 -->
 
     <Window.Resources>
-     
-        
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+                <!-- 确保 App.xaml 中已经合并了 LightTheme.xaml，否则这里可能需要单独引用，
+                     但通常由App全局管理，这里只需引用 SubWindowStyles -->
             </ResourceDictionary.MergedDictionaries>
             <local:NonLinearConverter x:Key="NonLinearConverter"/>
         </ResourceDictionary>
-      
     </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="180"/>
-            <!-- 左侧导航栏加宽一点 -->
             <ColumnDefinition Width="*"/>
-            <!-- 右侧内容区 -->
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -32,13 +31,16 @@
         </Grid.RowDefinitions>
 
         <!-- 左侧导航 -->
-        <Border Grid.Row="0" Grid.Column="0" Background="#F0F0F0" BorderBrush="#E5E5E5" BorderThickness="0,0,1,0">
+        <!-- Background: #F0F0F0 -> ChromeMediumBrush -->
+        <!-- BorderBrush: #E5E5E5 -> BorderBrush (稍微深一点点，但在深色模式下可见性更好) -->
+        <Border Grid.Row="0" Grid.Column="0" 
+                Background="{DynamicResource ChromeMediumBrush}" 
+                BorderBrush="{DynamicResource BorderBrush}" 
+                BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <!-- 上部分：主菜单 -->
                     <RowDefinition Height="Auto"/>
-                    <!-- 下部分：关于 -->
                 </Grid.RowDefinitions>
 
                 <ListBox x:Name="NavListBox" 
@@ -48,7 +50,6 @@
                          BorderThickness="0"
                          Margin="0,10,0,0"
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
-
                     <ListBoxItem Tag="General" IsSelected="True">通用</ListBoxItem>
                     <ListBoxItem Tag="Paint">画图设置</ListBoxItem>
                     <ListBoxItem Tag="View">看图设置</ListBoxItem>
@@ -64,37 +65,38 @@
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
                     <ListBoxItem Tag="About">关于</ListBoxItem>
                 </ListBox>
-    </Grid>
-    </Border>
+            </Grid>
+        </Border>
 
-    <!-- 右侧内容区 -->
-        <Border Grid.Row="0" Grid.Column="1"  Background="White">
+        <!-- 右侧内容区 -->
+        <!-- Background: White -> WindowBackgroundBrush -->
+        <Border Grid.Row="0" Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}">
 
-            <ScrollViewer  Style="{StaticResource FluentScrollViewer}" Padding="0" Margin="0" VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" PanningMode="None">
+            <ScrollViewer Style="{StaticResource FluentScrollViewer}" Padding="0" Margin="0" 
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="None">
                 <Grid>
-                    <!-- 1. 通用 (原 SettingsPanel) -->
+                    <!-- 1. 通用 -->
                     <StackPanel x:Name="GeneralPanel" Visibility="Visible" Margin="24">
-                        <TextBlock Text="通用" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                        <TextBlock Text="通用" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <TextBlock Text="启动" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <TextBlock Text="启动" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
-                                <!-- 文本区域自适应或固定 -->
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
-                                <!-- CheckBox 放在最右侧 -->
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="自动加载同文件夹图片"/>
+                                <!-- Foreground: Gray -> TextTertiaryBrush -->
                                 <TextBlock Text="打开单张图片时，自动扫描并加载同级目录下的其他图片" 
-                       Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
-                  IsChecked="{Binding Path=Current.AutoLoadFolderImages, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                  VerticalAlignment="Center"/>
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                                      IsChecked="{Binding Path=Current.AutoLoadFolderImages, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
                         </Grid>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -106,15 +108,17 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="默认进入看图模式"/>
                                 <TextBlock Text="程序启动时自动隐藏工具栏，适合作为默认看图软件使用" 
-                       Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
-                  IsChecked="{Binding Path=Current.StartInViewMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                  VerticalAlignment="Center"/>
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                                      IsChecked="{Binding Path=Current.StartInViewMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
                         </Grid>
-                        <!-- 分隔线 -->
-                        <Separator Margin="0,10,0,10" Background="#EEEEEE"/>
+
+                        <!-- 分隔线 Background: #EEEEEE -> BorderLightBrush -->
+                        <Separator Margin="0,10,0,10" Background="{DynamicResource BorderLightBrush}"/>
+
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
@@ -122,18 +126,40 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="鼠标滚轮操作"/>
-                                <TextBlock Text="滑动鼠标滚轮时程序的响应" Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                <TextBlock Text="滑动鼠标滚轮时程序的响应" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <!-- 绑定到 Enum，这里使用 Tag 配合 SelectedValuePath 实现简单的 Enum 绑定 -->
                             <ComboBox Grid.Column="1" 
-                                 Style="{StaticResource FluentComboBoxStyle}"
-                                  SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                                  SelectedValuePath="Tag"
-                                  Height="30" VerticalContentAlignment="Center">
+                                      Style="{StaticResource FluentComboBoxStyle}"
+                                      SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      SelectedValuePath="Tag"
+                                      Height="30" VerticalContentAlignment="Center">
                                 <ComboBoxItem Content="自动" Tag="Auto"/>
                                 <ComboBoxItem Content="上下滚动图片" Tag="Up"/>
                                 <ComboBoxItem Content="切换图片" Tag="Switch"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="外观主题"/>
+                                <TextBlock Text="切换明亮或黑暗模式" 
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <ComboBox Grid.Column="1" 
+                                      Style="{StaticResource FluentComboBoxStyle}"
+                                      SelectedValue="{Binding Path=Current.ThemeMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      SelectedValuePath="Tag"
+                                      Height="30" VerticalContentAlignment="Center">
+                                <ComboBoxItem Content="跟随系统" Tag="System"/>
+                                <ComboBoxItem Content="浅色 (Light)" Tag="Light"/>
+                                <ComboBoxItem Content="深色 (Dark)" Tag="Dark"/>
                             </ComboBox>
                         </Grid>
 
@@ -141,8 +167,8 @@
 
                     <!-- 2. 画图设置 -->
                     <StackPanel x:Name="PaintPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
-                        <TextBlock Text="编辑习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="编辑习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -153,15 +179,14 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="剪贴板图片自动弹出"/>
                                 <TextBlock Text="当后台监听检测到剪贴板有新图片时，自动激活并置顶窗口" 
-                       Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
-                  IsChecked="{Binding Path=Current.AutoPopupOnClipboardImage, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                  VerticalAlignment="Center"/>
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                                      IsChecked="{Binding Path=Current.AutoPopupOnClipboardImage, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- 选区清除模式设置 -->
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
@@ -171,27 +196,27 @@
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="选区删除背景"/>
                                 <TextBlock Text="使用Delete键或剪切选区时的填充方式" 
-                       Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <ComboBox Grid.Column="1" 
-                  Style="{StaticResource FluentComboBoxStyle}"
-                  SelectedValue="{Binding Path=Current.SelectionClearMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                  SelectedValuePath="Tag"
-                  Height="30" VerticalContentAlignment="Center">
+                                      Style="{StaticResource FluentComboBoxStyle}"
+                                      SelectedValue="{Binding Path=Current.SelectionClearMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      SelectedValuePath="Tag"
+                                      Height="30" VerticalContentAlignment="Center">
                                 <ComboBoxItem Content="透明 (Transparent)" Tag="Transparent"/>
                                 <ComboBoxItem Content="纯白 (White)" Tag="White"/>
                                 <ComboBoxItem Content="仅填充颜色 (保留Alpha)" Tag="PreserveAlpha"/>
                             </ComboBox>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="#EEEEEE"/>
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
                     </StackPanel>
 
                     <!-- 3. 看图设置 -->
                     <StackPanel x:Name="ViewPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="看图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
-                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <TextBlock Text="看图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -202,23 +227,22 @@
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="鼠标滚轮功能"/>
                                 <TextBlock Text="看图模式下，直接滚动滚轮时的操作" 
-                       Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <ComboBox Grid.Column="1" 
-                  Style="{StaticResource FluentComboBoxStyle}"
-                  SelectedValue="{Binding Path=Current.ViewMouseWheelMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                  SelectedValuePath="Tag"
-                  Height="30" VerticalContentAlignment="Center">
+                                      Style="{StaticResource FluentComboBoxStyle}"
+                                      SelectedValue="{Binding Path=Current.ViewMouseWheelMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      SelectedValuePath="Tag"
+                                      Height="30" VerticalContentAlignment="Center">
                                 <ComboBoxItem Content="缩放图片 (Zoom)" Tag="Zoom"/>
                                 <ComboBoxItem Content="切换图片 (Prev/Next)" Tag="SwitchImage"/>
                             </ComboBox>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="#EEEEEE"/>
-                        <TextBlock Text="显示" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+                        <TextBlock Text="显示" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <!-- 1. 画布背景设置 -->
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -229,15 +253,14 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="使用深色背景"/>
                                 <TextBlock Text="在图片周围显示深灰色背景" 
-                                           Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
                                       IsChecked="{Binding Path=Current.ViewUseDarkCanvasBackground, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- 2. 透明网格设置 -->
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -248,20 +271,20 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="显示透明度网格"/>
                                 <TextBlock Text="开启后透明区域显示灰白格子，关闭则显示纯白背景" 
-                                           Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
                                       IsChecked="{Binding Path=Current.ViewShowTransparentGrid, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       VerticalAlignment="Center"/>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="#EEEEEE"/>
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
                     </StackPanel>
 
-
+                    <!-- 4. 快捷键设置 -->
                     <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <StackPanel Margin="0,0,10,10">
 
                             <TextBlock Text="视图与导航" FontWeight="Bold" Margin="0,10,0,5"/>
@@ -556,26 +579,25 @@
                             </Grid>
                         </StackPanel>
 
-                        <Button Grid.Row="2" 
-            Content="恢复默认快捷键" 
-            HorizontalAlignment="Left" 
-            Foreground="Red" 
-            Background="Transparent" 
-            BorderThickness="0"
-            Click="ResetShortcuts_Click"
-            Cursor="Hand"
-            Margin="0,0,0,5"/>
-                    </StackPanel>
 
+                        <!-- 恢复默认快捷键按钮 -->
+                        <Button Grid.Row="2" 
+                                Content="恢复默认快捷键" 
+                                HorizontalAlignment="Left" 
+                                Foreground="{DynamicResource DangerBrush}" 
+                                Background="Transparent" 
+                                BorderThickness="0"
+                                Click="ResetShortcuts_Click"
+                                Cursor="Hand"
+                                Margin="0,0,0,5"/>
+                    </StackPanel>
 
                     <!-- 5. 高级 -->
                     <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                        <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <!-- 渲染设置区块 -->
-                        <TextBlock Text="渲染与性能" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <TextBlock Text="渲染与性能" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <!-- 重采样算法 -->
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
@@ -583,15 +605,14 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="重采样算法"/>
-                                <TextBlock Text="用于图片保存或调整大小时" Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                <TextBlock Text="用于图片保存或调整大小时" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <!-- 绑定到 Enum，这里使用 Tag 配合 SelectedValuePath 实现简单的 Enum 绑定 -->
                             <ComboBox Grid.Column="1" 
-                                 Style="{StaticResource FluentComboBoxStyle}"
-                                  SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                                  SelectedValuePath="Tag"
-                                  Height="30" VerticalContentAlignment="Center">
+                                      Style="{StaticResource FluentComboBoxStyle}"
+                                      SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      SelectedValuePath="Tag"
+                                      Height="30" VerticalContentAlignment="Center">
                                 <ComboBoxItem Content="自动 (Auto)" Tag="Auto"/>
                                 <ComboBoxItem Content="双线性 (Bilinear)" Tag="Bilinear"/>
                                 <ComboBoxItem Content="Fant (高质量)" Tag="Fant"/>
@@ -599,12 +620,11 @@
                             </ComboBox>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="#EEEEEE"/>
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
-                        <!-- 插值阈值设置 -->
-                        <TextBlock Text="像素化阈值设置" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5"/>
+                        <TextBlock Text="像素化阈值设置" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <TextBlock Text="当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)" 
-                               Foreground="Gray" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                         <!-- 看图模式阈值 -->
                         <Grid Margin="0,10">
@@ -612,33 +632,25 @@
                                 <ColumnDefinition Width="100"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="70"/>
-                                <!-- 加宽一点给输入框 -->
                             </Grid.ColumnDefinitions>
 
                             <TextBlock Text="看图模式" VerticalAlignment="Center"/>
 
-                            <Slider Grid.Column="1"  Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
-                Minimum="0" Maximum="100" 
-                SmallChange="1" LargeChange="10"
-                IsSnapToTickEnabled="False"
-                VerticalAlignment="Center"
-                Value="{Binding Path=Current.ViewInterpolationThreshold, 
-                                Converter={StaticResource NonLinearConverter}, 
-                                Mode=TwoWay, 
-                                Source={x:Static local:SettingsManager.Instance}}"/>
+                            <Slider Grid.Column="1" Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
+                                    Minimum="0" Maximum="100" 
+                                    SmallChange="1" LargeChange="10"
+                                    IsSnapToTickEnabled="False"
+                                    VerticalAlignment="Center"
+                                    Value="{Binding Path=Current.ViewInterpolationThreshold, Converter={StaticResource NonLinearConverter}, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
 
-                            <!-- TextBox: 直接绑定原始数值，支持输入 -->
+                            <!-- 输入框通常需要自定义Style，或者手动设置其颜色，这里假设有全局样式 -->
                             <TextBox Grid.Column="2" 
-                 Text="{Binding Path=Current.ViewInterpolationThreshold, 
-                                Mode=TwoWay, 
-                                UpdateSourceTrigger=PropertyChanged, 
-                                StringFormat={}{0:0},
-                                Source={x:Static local:SettingsManager.Instance}}"
-                                      LostFocus="TextBox_LostFocus"
-                 PreviewTextInput="NumberValidationTextBox"
-                 HorizontalContentAlignment="Right" 
-                 VerticalAlignment="Center"
-                 Height="24" Padding="0,2,4,0"/>
+                                     Text="{Binding Path=Current.ViewInterpolationThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0}, Source={x:Static local:SettingsManager.Instance}}"
+                                     LostFocus="TextBox_LostFocus"
+                                     PreviewTextInput="NumberValidationTextBox"
+                                     HorizontalContentAlignment="Right" 
+                                     VerticalAlignment="Center"
+                                     Height="24" Padding="0,2,4,0"/>
                         </Grid>
 
                         <!-- 画图模式阈值 -->
@@ -652,29 +664,22 @@
                             <TextBlock Text="画图模式" VerticalAlignment="Center"/>
 
                             <Slider Grid.Column="1" Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
-                Minimum="0" Maximum="100" 
-                SmallChange="1" LargeChange="10"
-                VerticalAlignment="Center"
-                Value="{Binding Path=Current.PaintInterpolationThreshold, 
-                                Converter={StaticResource NonLinearConverter}, 
-                                Mode=TwoWay, 
-                                Source={x:Static local:SettingsManager.Instance}}"/>
+                                    Minimum="0" Maximum="100" 
+                                    SmallChange="1" LargeChange="10"
+                                    VerticalAlignment="Center"
+                                    Value="{Binding Path=Current.PaintInterpolationThreshold, Converter={StaticResource NonLinearConverter}, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
 
                             <TextBox Grid.Column="2" 
-                 Text="{Binding Path=Current.PaintInterpolationThreshold, 
-                                Mode=TwoWay, 
-                                UpdateSourceTrigger=PropertyChanged,
-                                StringFormat={}{0:0},
-                                Source={x:Static local:SettingsManager.Instance}}"
-                 PreviewTextInput="NumberValidationTextBox"
-                                      LostFocus="TextBox_LostFocus"
-                 HorizontalContentAlignment="Right" 
-                 VerticalAlignment="Center"
-                 Height="24" Padding="0,2,4,0"/>
+                                     Text="{Binding Path=Current.PaintInterpolationThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0}, Source={x:Static local:SettingsManager.Instance}}"
+                                     PreviewTextInput="NumberValidationTextBox"
+                                     LostFocus="TextBox_LostFocus"
+                                     HorizontalContentAlignment="Right" 
+                                     VerticalAlignment="Center"
+                                     Height="24" Padding="0,2,4,0"/>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="#EEEEEE"/>
-                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,15,0,10"/>
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,15,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -686,52 +691,60 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="重置工作区时不弹窗提示"/>
                                 <TextBlock Text="清空所有标签页或重置工作区时跳过二次确认弹窗" 
-                   Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
-              IsChecked="{Binding Path=Current.SkipResetConfirmation, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-              VerticalAlignment="Center"/>
+                                      IsChecked="{Binding Path=Current.SkipResetConfirmation, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="#EEEEEE"/>
-                        <!-- 缓存管理 (原有的功能) -->
-                        <TextBlock Text="系统维护" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+
+                        <TextBlock Text="系统维护" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
+
+                            <!-- 恢复出厂设置按钮重构：去掉了硬编码的背景色，改为边框风格 -->
                             <Button Content="恢复出厂设置" Width="120" Height="32" 
-                                HorizontalAlignment="Left" Click="FactoryReset_Click"
-                                Background="#FFF4F4" Foreground="#D13438" BorderBrush="#E0B4B4"/>
-                            <TextBlock Grid.Column="1" Text="清除所有缓存和设置" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="Gray"/>
+                                    HorizontalAlignment="Left" Click="FactoryReset_Click"
+                                    Background="{DynamicResource ButtonBackgroundBrush}" 
+                                    Foreground="{DynamicResource DangerBrush}" 
+                                    BorderBrush="{DynamicResource DangerBrush}"
+                                    BorderThickness="1"/>
+
+                            <TextBlock Grid.Column="1" Text="清除所有缓存和设置" 
+                                       VerticalAlignment="Center" Margin="15,0,0,0" 
+                                       Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </Grid>
 
                     </StackPanel>
 
                     <!-- 6. 关于页 -->
                     <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24"/>
+                        <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Image x:Name="AppIcon" 
-                           Source="pack://application:,,,/Resources/TabPaint.ico" 
-                           Width="64" Height="64" 
-                           HorizontalAlignment="Left" 
-                           RenderOptions.BitmapScalingMode="HighQuality"
-                           Margin="0,0,0,16"/>
+                               Source="pack://application:,,,/Resources/TabPaint.ico" 
+                               Width="64" Height="64" 
+                               HorizontalAlignment="Left" 
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Margin="0,0,0,16"/>
 
-                        <TextBlock Text="TabPaint" FontSize="18" FontWeight="SemiBold"/>
-                        <TextBlock Text="轻量级绘画与看图工具" Foreground="Gray" FontSize="14" Margin="0,4,0,24"/>
+                        <TextBlock Text="TabPaint" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="轻量级绘画与看图工具" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,4,0,24"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4">
-                            <TextBlock Text="开发者: " Foreground="Gray"/>
-                            <TextBlock Text="zouxiaofei1"/>
+                            <TextBlock Text="开发者: " Foreground="{DynamicResource TextTertiaryBrush}"/>
+                            <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4">
-                            <TextBlock Text="技术栈: " Foreground="Gray"/>
-                            <TextBlock Text=".NET WPF, Win32 API"/>
+                            <TextBlock Text="技术栈: " Foreground="{DynamicResource TextTertiaryBrush}"/>
+                            <TextBlock Text=".NET WPF, Win32 API" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -739,9 +752,17 @@
         </Border>
 
         <!-- 底部栏 -->
-        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="#F3F3F3" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0">
+        <!-- Background: #F3F3F3 -> PanelBackgroundBrush -->
+        <!-- BorderBrush: #E5E5E5 -> BorderBrush -->
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                Background="{DynamicResource PanelBackgroundBrush}" 
+                BorderBrush="{DynamicResource BorderBrush}" 
+                BorderThickness="0,1,0,0">
             <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="24,0">
-                <TextBlock DockPanel.Dock="Left" Text="{Binding ProgramVersion}" Foreground="#888888" VerticalAlignment="Center" FontSize="12"/>
+                <!-- Foreground: #888888 -> TextTertiaryBrush -->
+                <TextBlock DockPanel.Dock="Left" Text="{Binding ProgramVersion}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" 
+                           VerticalAlignment="Center" FontSize="12"/>
 
                 <Button DockPanel.Dock="Right" 
                         Content="确定" 

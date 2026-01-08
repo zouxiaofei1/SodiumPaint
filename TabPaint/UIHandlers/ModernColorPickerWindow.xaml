@@ -13,15 +13,16 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
+        <!-- 棋盘格画刷：现在引用主题资源，支持黑白模式切换 -->
         <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
             <DrawingBrush.Drawing>
                 <DrawingGroup>
-                    <GeometryDrawing Brush="White">
+                    <GeometryDrawing Brush="{DynamicResource CheckerboardLightBrush}">
                         <GeometryDrawing.Geometry>
                             <RectangleGeometry Rect="0,0,10,10"/>
                         </GeometryDrawing.Geometry>
                     </GeometryDrawing>
-                    <GeometryDrawing Brush="#CCC">
+                    <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
                         <GeometryDrawing.Geometry>
                             <GeometryGroup>
                                 <RectangleGeometry Rect="0,0,5,5"/>
@@ -32,32 +33,24 @@
                 </DrawingGroup>
             </DrawingBrush.Drawing>
         </DrawingBrush>
-        <SolidColorBrush x:Key="WindowBackground" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="HeaderBackground" Color="#F3F3F3"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#333333"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#666666"/>
-        <SolidColorBrush x:Key="ControlBorder" Color="#E0E0E0"/>
-        <SolidColorBrush x:Key="AccentColor" Color="#0078D7"/>
-        <SolidColorBrush x:Key="AccentHover" Color="#1084E3"/>
+
+        <!-- 迷你色块样式 -->
         <Style x:Key="MiniColorSwatch" TargetType="Button">
             <Setter Property="Cursor" Value="Hand"/>
-            <!-- 去掉Margin，完全填充父容器 -->
             <Setter Property="Margin" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
                             <Ellipse Width="24" Height="24" Fill="{StaticResource CheckerboardBrush}"/>
-
                             <Ellipse x:Name="ColorCircle" 
                              Fill="{TemplateBinding Background}" 
-                             Stroke="#E0E0E0" 
+                             Stroke="{DynamicResource BorderBrush}" 
                              StrokeThickness="1"/>
                         </Grid>
                         <ControlTemplate.Triggers>
-                            <!-- 鼠标悬停变暗或改变边框 -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ColorCircle" Property="Stroke" Value="#999"/>
+                                <Setter TargetName="ColorCircle" Property="Stroke" Value="{DynamicResource BorderDarkBrush}"/>
                                 <Setter TargetName="ColorCircle" Property="StrokeThickness" Value="2"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -65,14 +58,16 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- 文本框样式 (浅色) -->
+
+        <!-- 文本框样式 -->
         <Style x:Key="FluentTextBox" TargetType="{x:Type TextBox}">
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource ControlBorder}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="Padding" Value="8,6"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TextBox}">
@@ -84,25 +79,24 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="true">
-                                <Setter Property="BorderBrush" TargetName="border" Value="#999"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource BorderDarkBrush}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="true">
-                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource AccentColor}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource SystemAccentBrush}"/>
                                 <Setter Property="BorderThickness" TargetName="border" Value="2"/>
-                                </Trigger>
-           
-            </ControlTemplate.Triggers>
-            </ControlTemplate>
-            </Setter.Value>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- 普通按钮样式 (浅色) -->
+        <!-- 普通按钮样式 -->
         <Style x:Key="FluentButton" TargetType="{x:Type Button}">
-            <Setter Property="Background" Value="#F0F0F0"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="15,6"/>
             <Setter Property="Template">
@@ -116,10 +110,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" TargetName="border" Value="#E0E0E0"/>
+                                <Setter Property="Background" TargetName="border" Value="{DynamicResource ButtonHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" TargetName="border" Value="#D0D0D0"/>
+                                <Setter Property="Background" TargetName="border" Value="{DynamicResource ButtonPressedBrush}"/>
                                 <Setter Property="RenderTransform">
                                     <Setter.Value>
                                         <ScaleTransform ScaleX="0.98" ScaleY="0.98" CenterX="50" CenterY="15"/>
@@ -132,10 +126,10 @@
             </Setter>
         </Style>
 
-        <!-- 强调色按钮 (蓝色) -->
+        <!-- 强调色按钮 -->
         <Style x:Key="FluentAccentButton" TargetType="{x:Type Button}" BasedOn="{StaticResource FluentButton}">
-            <Setter Property="Background" Value="{StaticResource AccentColor}"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Template">
@@ -146,16 +140,17 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" TargetName="border" Value="{StaticResource AccentHover}"/>
+                                <Setter Property="Background" TargetName="border" Value="{DynamicResource SystemAccentHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" TargetName="border" Value="#005A9E"/>
+                                <Setter Property="Background" TargetName="border" Value="{DynamicResource SystemAccentPressedBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
         <ControlTemplate x:Key="FluentComboBoxToggleButton" TargetType="ToggleButton">
             <Border x:Name="Border" 
           CornerRadius="6" 
@@ -168,28 +163,26 @@
                         <ColumnDefinition Width="24"/>
                     </Grid.ColumnDefinitions>
                     <!-- 下拉小箭头 -->
-                    <Path x:Name="Arrow" Grid.Column="1" Fill="#666" 
+                    <Path x:Name="Arrow" Grid.Column="1" Fill="{DynamicResource TextSecondaryBrush}" 
                 HorizontalAlignment="Center" VerticalAlignment="Center" 
-                Data="M0,0 L3.5,3.5 L7,0" Stroke="#666" StrokeThickness="1"/>
+                Data="M0,0 L3.5,3.5 L7,0" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1"/>
                 </Grid>
             </Border>
             <ControlTemplate.Triggers>
-                <!-- 悬停效果：仅改变背景色，边框稍微加深 -->
                 <Trigger Property="IsMouseOver" Value="true">
-                    <Setter TargetName="Border" Property="Background" Value="#F9F9F9"/>
-                    <Setter TargetName="Border" Property="BorderBrush" Value="#BDBDBD"/>
+                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderDarkBrush}"/>
                 </Trigger>
-                <!-- 展开时的效果 -->
                 <Trigger Property="IsChecked" Value="true">
-                    <Setter TargetName="Border" Property="Background" Value="#FFFFFF"/>
-                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
-        <!-- 2. Fluent 风格 ComboBox -->
+
+        <!-- Fluent ComboBox Template -->
         <ControlTemplate x:Key="FluentComboBoxTemplate" TargetType="ComboBox">
             <Grid>
-                <!-- 背景层 -->
                 <ToggleButton Name="ToggleButton" 
                     Template="{StaticResource FluentComboBoxToggleButton}" 
                     Focusable="false" 
@@ -199,32 +192,31 @@
                     IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" 
                     ClickMode="Press"/>
 
-                <!-- 内容显示区域 (非编辑状态) -->
                 <ContentPresenter Name="ContentSite" IsHitTestVisible="False" 
                         Content="{TemplateBinding SelectionBoxItem}"
                         ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                         ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
                         Margin="10,0,24,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
 
-                <!-- 关键修复：编辑框 (去掉默认边框、背景、阴影) -->
                 <TextBox x:Name="PART_EditableTextBox" 
                Style="{x:Null}" 
                BorderThickness="0" 
                Background="Transparent" 
+               Foreground="{DynamicResource TextControlBrush}"
                Padding="0"
                Margin="10,0,24,0"
                VerticalAlignment="Center" 
                VerticalContentAlignment="Center"
                Focusable="True" 
                HorizontalAlignment="Stretch"
-               CaretBrush="Black"/>
+               CaretBrush="{DynamicResource TextPrimaryBrush}"/>
 
                 <!-- 下拉弹窗 -->
                 <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
                     <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                        <Border x:Name="DropDownBorder" Background="White" BorderThickness="1" BorderBrush="#E0E0E0" CornerRadius="6" Margin="0,4,0,4">
+                        <Border x:Name="DropDownBorder" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="6" Margin="0,4,0,4">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.1" Direction="270"/>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.1" Direction="270" Color="Black"/>
                             </Border.Effect>
                             <ScrollViewer Margin="2" SnapsToDevicePixels="True">
                                 <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
@@ -234,12 +226,10 @@
                 </Popup>
             </Grid>
             <ControlTemplate.Triggers>
-                <!-- 当 ComboBox 不可编辑时，隐藏 TextBox -->
                 <Trigger Property="IsEditable" Value="false">
                     <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Collapsed"/>
                     <Setter TargetName="ContentSite" Property="Visibility" Value="Visible"/>
                 </Trigger>
-                <!-- 当 ComboBox 可编辑时，显示 TextBox，隐藏 ContentPresenter -->
                 <Trigger Property="IsEditable" Value="true">
                     <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
                     <Setter TargetName="ContentSite" Property="Visibility" Value="Collapsed"/>
@@ -251,14 +241,15 @@
             <Setter Property="Height" Value="32"/>
             <Setter Property="Template" Value="{StaticResource FluentComboBoxTemplate}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#DCDCDC"/>
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
-            <!-- 移除焦点虚线 -->
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         </Style>
+
         <!-- 颜色块样式 -->
         <Style x:Key="ColorSwatch" TargetType="Button">
             <Setter Property="Width" Value="32"/>
@@ -269,14 +260,12 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <!-- 选中/悬停时的外圈 -->
                             <Ellipse x:Name="Border" Stroke="Transparent" StrokeThickness="2" Width="32" Height="32"/>
-                            <!-- 颜色本体 -->
-                            <Ellipse x:Name="ColorCircle" Width="24" Height="24" Fill="{TemplateBinding Background}" Stroke="#E5E5E5" StrokeThickness="1"/>
+                            <Ellipse x:Name="ColorCircle" Width="24" Height="24" Fill="{TemplateBinding Background}" Stroke="{DynamicResource BorderLightBrush}" StrokeThickness="1"/>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Stroke" Value="#B0B0B0"/>
+                                <Setter TargetName="Border" Property="Stroke" Value="{DynamicResource BorderMediumBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -286,37 +275,36 @@
     </Window.Resources>
 
     <!-- 主窗口背景 -->
-    <Border Background="{StaticResource WindowBackground}" CornerRadius="8" BorderBrush="#CCC" BorderThickness="1">
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1">
         <Border.Effect>
+            <!-- 阴影颜色通常保持黑色，即便在暗色模式下，或由系统管理 -->
             <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.15" Color="Black"/>
         </Border.Effect>
 
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="64"/>
-                <!-- Header -->
                 <RowDefinition Height="Auto"/>
-                <!-- Main Picker -->
                 <RowDefinition Height="*"/>
-                <!-- Swatches -->
                 <RowDefinition Height="Auto"/>
-                <!-- Footer -->
             </Grid.RowDefinitions>
 
-            <!-- 1. Header (浅灰色背景) -->
-            <Border Grid.Row="0" Background="{StaticResource HeaderBackground}" CornerRadius="8,8,0,0"
+            <!-- 1. Header -->
+            <Border Grid.Row="0" Background="{DynamicResource PanelBackgroundBrush}" CornerRadius="8,8,0,0"
                     MouseLeftButtonDown="TitleBar_MouseDown" Margin="0,0,0,20">
                 <Grid Margin="10,4,14,4">
-                    <Image  HorizontalAlignment="Left"  x:Name="AppIcon" 
-       Grid.Column="0"
-       Source="pack://application:,,,/Resources/TabPaint.ico" 
-       Width="24" Height="24" 
-       Margin="4,0,12,0"
-       VerticalAlignment="Center"
-       RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Padding="36,0,0,0" Text="编辑颜色" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center"/>
+                    <Image HorizontalAlignment="Left" x:Name="AppIcon" 
+                           Grid.Column="0"
+                           Source="pack://application:,,,/Resources/TabPaint.ico" 
+                           Width="24" Height="24" 
+                           Margin="4,0,12,0"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Padding="36,0,0,0" Text="编辑颜色" FontSize="16" FontWeight="SemiBold" 
+                               Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     <Button HorizontalAlignment="Right" Content="✕" Width="32" Height="32"
-                           Style="{StaticResource FluentButton}" Background="Transparent" BorderThickness="0" Foreground="#888"
+                            Style="{StaticResource FluentButton}" Background="Transparent" BorderThickness="0" 
+                            Foreground="{DynamicResource TextSecondaryBrush}"
                             Click="CancelButton_Click"/>
                 </Grid>
             </Border>
@@ -338,22 +326,22 @@
                     <Rectangle Fill="{StaticResource CheckerboardBrush}" RadiusX="4" RadiusY="4"/>
                     <Grid x:Name="SpectrumLayerGroup">
                         <Rectangle x:Name="SpectrumBaseColor" Fill="Red" RadiusX="4" RadiusY="4"/>
-                    <Rectangle RadiusX="4" RadiusY="4">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="White" Offset="0"/>
-                                <GradientStop Color="#00FFFFFF" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                    <Rectangle RadiusX="4" RadiusY="4">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
-                                <GradientStop Color="Black" Offset="0"/>
-                                <GradientStop Color="#00000000" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
+                        <Rectangle RadiusX="4" RadiusY="4">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="White" Offset="0"/>
+                                    <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle RadiusX="4" RadiusY="4">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                                    <GradientStop Color="Black" Offset="0"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
                     </Grid>
                     <Canvas x:Name="CursorCanvas" IsHitTestVisible="False">
                         <Ellipse x:Name="ColorCursor" Width="16" Height="16" Stroke="White" StrokeThickness="2" Margin="-8,-8,0,0">
@@ -366,44 +354,36 @@
 
                 <!-- Hue Slider -->
                 <Grid Grid.Column="1" Margin="0,0" Background="Transparent"
-      MouseLeftButtonDown="Hue_MouseDown"
-      MouseMove="Hue_MouseMove"
-      MouseLeftButtonUp="Hue_MouseUp"
-      Cursor="Hand" x:Name="HueSliderGrid">
+                      MouseLeftButtonDown="Hue_MouseDown"
+                      MouseMove="Hue_MouseMove"
+                      MouseLeftButtonUp="Hue_MouseUp"
+                      Cursor="Hand" x:Name="HueSliderGrid">
                     <Rectangle Width="20" RadiusX="10" RadiusY="10" 
-               HorizontalAlignment="Center" IsHitTestVisible="False">
+                               HorizontalAlignment="Center" IsHitTestVisible="False">
                         <Rectangle.Fill>
-                            <!-- 关键点：使用 ImageBrush 绑定到下面隐藏的 Image 控件 -->
                             <ImageBrush ImageSource="{Binding Source, ElementName=HueSliderImage}"/>
                         </Rectangle.Fill>
                     </Rectangle>
-
-                    <!-- 2. 原有的 Image 控件：隐藏它，但保留它以兼容后台代码 -->
                     <Image x:Name="HueSliderImage" Visibility="Collapsed" Stretch="Fill" />
-                    <!-- Hue Slider 部分 -->
                     <Canvas x:Name="HueCursorCanvas" Width="28" HorizontalAlignment="Center" VerticalAlignment="Stretch">
-                        <!-- 【修改点】Margin 改为 "0,-14,0,0" -->
                         <Grid x:Name="HueCursor" Width="28" Height="28" Margin="0,-14,0,0"  MouseLeftButtonDown="Hue_Thumb_MouseDown">
-                            <Ellipse Width="28" Height="28"  Fill="White" Stroke="#F0F0F0" StrokeThickness="4">
+                            <Ellipse Width="28" Height="28" Fill="White" Stroke="{DynamicResource ChromeMediumBrush}" StrokeThickness="4">
                                 <Ellipse.Effect>
                                     <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.3" Color="Black"/>
                                 </Ellipse.Effect>
                             </Ellipse>
                         </Grid>
                     </Canvas>
-
                 </Grid>
+
+                <!-- Alpha Slider -->
                 <Grid Grid.Column="2" Margin="10,0,0,0" Background="Transparent"
                       MouseLeftButtonDown="Alpha_MouseDown"
                       MouseMove="Alpha_MouseMove"
                       MouseLeftButtonUp="Alpha_MouseUp"
                       Cursor="Hand" x:Name="AlphaSliderGrid">
-
-                    <!-- 背景：灰白格子 -->
                     <Rectangle Width="20" RadiusX="10" RadiusY="10" 
                                HorizontalAlignment="Center" Fill="{StaticResource CheckerboardBrush}"/>
-
-                    <!-- 前景：线性渐变 (透明 -> 当前色) -->
                     <Rectangle Width="20" RadiusX="10" RadiusY="10" HorizontalAlignment="Center">
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0,1" EndPoint="0,0" x:Name="AlphaGradientBrush">
@@ -412,11 +392,9 @@
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-
-                    <!-- Alpha 滑块游标 -->
                     <Canvas x:Name="AlphaCursorCanvas" Width="28" HorizontalAlignment="Center"  VerticalAlignment="Stretch">
                         <Grid x:Name="AlphaCursor" Width="28" Height="28" Margin="0,-14,0,0" MouseLeftButtonDown="Alpha_Thumb_MouseDown">
-                            <Ellipse Width="28" Height="28"  Fill="White" Stroke="#F0F0F0" StrokeThickness="4">
+                            <Ellipse Width="28" Height="28" Fill="White" Stroke="{DynamicResource ChromeMediumBrush}" StrokeThickness="4">
                                 <Ellipse.Effect>
                                     <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.3" Color="Black"/>
                                 </Ellipse.Effect>
@@ -425,67 +403,54 @@
                         </Grid>
                     </Canvas>
                 </Grid>
+
                 <!-- Inputs & Preview -->
-               <StackPanel Grid.Column="3" Margin="20,0,0,0"  >
-                    <!-- 1. 预览区域 (保持不变) -->
+                <StackPanel Grid.Column="3" Margin="20,0,0,0">
+                    <!-- Preview Area -->
                     <Grid Height="60" Margin="0,0,0,15">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Grid.ColumnSpan="2" Background="White" CornerRadius="4">
+                        <Border Grid.ColumnSpan="2" Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="4">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="5" ShadowDepth="1" Opacity="0.1"/>
                             </Border.Effect>
                         </Border>
-                        <Border Grid.ColumnSpan="2" Background="{StaticResource CheckerboardBrush}" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1"/>
-                        <Rectangle x:Name="OriginalColorRect" Fill="Gray" RadiusX="4" RadiusY="4" Margin="0,0,0,0">
-                            <Rectangle.Clip>
-                                <RectangleGeometry Rect="0,0,100,60"/>
-                                <!-- 简单裁剪左半边，或者用 Grid Column 限制 -->
-                            </Rectangle.Clip>
-                        </Rectangle>
-                        <!-- 修正：让 Rectangle 占满格子，利用 Grid.Column -->
+                        <Border Grid.ColumnSpan="2" Background="{StaticResource CheckerboardBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                        <Rectangle x:Name="OriginalColorRect" Fill="Gray" RadiusX="4" RadiusY="4" Visibility="Hidden"/>
                         <Border Grid.Column="0" Background="{Binding Fill, ElementName=OriginalColorRect}" CornerRadius="4,0,0,4"/>
-
-                        <!-- 右边：新颜色 -->
                         <Border Grid.Column="1" Background="{Binding Fill, ElementName=NewColorRect}" CornerRadius="0,4,4,0"/>
                         <Rectangle x:Name="NewColorRect" Fill="Red" Visibility="Hidden"/>
-                        <!-- 隐藏源，仅用于绑定 -->
 
-                        <TextBlock Text="预览" Foreground="#88000000" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12" FontWeight="Bold"/>
+                        <!-- 这里的文字需要反色或者描边，暂时用灰色 -->
+                        <TextBlock Text="预览" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12" FontWeight="Bold"/>
                     </Grid>
 
-
-                    <!-- 2. 模式切换下拉框 (新增) -->
-                    <ComboBox Style="{StaticResource FluentComboBoxStyle}"  x:Name="ColorModeCombo" Margin="0,0,0,10" SelectionChanged="ColorModeCombo_SelectionChanged" SelectedIndex="0" Padding="6,4">
+                    <ComboBox Style="{StaticResource FluentComboBoxStyle}" x:Name="ColorModeCombo" Margin="0,0,0,10" SelectionChanged="ColorModeCombo_SelectionChanged" SelectedIndex="0" Padding="6,4">
                         <ComboBoxItem Content="RGB"/>
                         <ComboBoxItem Content="HSV"/>
                     </ComboBox>
 
-                    <!-- 3. Hex 输入 (保持不变，无论模式如何都显示) -->
-                    <Grid Margin="0,0,0,10" >
+                    <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="HexInput" Style="{StaticResource FluentTextBox}" Text="#FFFF0000" TextChanged="HexInput_TextChanged"/>
-                        <TextBlock Text="HEX (8位)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource TextSecondary}" FontSize="10"/>
+                        <TextBlock Text="HEX (8位)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
                     </Grid>
 
+                    <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,10"/>
 
-                    <Separator Background="#EEE" Margin="0,0,0,10"/>
-
-                    <!-- 4. 数值输入区域 (共用这3个输入框，通过C#代码改变Label文字和逻辑) -->
+                    <!-- Numeric Inputs -->
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- 输入框1 -->
                         <TextBox x:Name="Input1" Style="{StaticResource FluentTextBox}" Text="255" TextChanged="NumericInput_TextChanged"/>
-                        <!-- 标签1 -->
-                        <TextBlock x:Name="Label1" Text="红 (R)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock x:Name="Label1" Text="红 (R)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <Grid Margin="0,0,0,8">
@@ -493,10 +458,8 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- 输入框2 -->
                         <TextBox x:Name="Input2" Style="{StaticResource FluentTextBox}" Text="0" TextChanged="NumericInput_TextChanged"/>
-                        <!-- 标签2 -->
-                        <TextBlock x:Name="Label2" Text="绿 (G)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock x:Name="Label2" Text="绿 (G)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <Grid Margin="0,0,0,8">
@@ -504,10 +467,8 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- 输入框3 -->
                         <TextBox x:Name="Input3" Style="{StaticResource FluentTextBox}" Text="0" TextChanged="NumericInput_TextChanged"/>
-                        <!-- 标签3 -->
-                        <TextBlock x:Name="Label3" Text="蓝 (B)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock x:Name="Label3" Text="蓝 (B)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <Grid Margin="0,0,0,8">
@@ -515,15 +476,13 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- 输入框 Alpha -->
                         <TextBox x:Name="InputAlpha" Style="{StaticResource FluentTextBox}" Text="255" TextChanged="NumericInput_TextChanged"/>
-                        <TextBlock Text="Alpha" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{StaticResource TextSecondary}"/>
+                        <TextBlock Text="Alpha" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
-
             </Grid>
 
-            <!-- 3. Color Swatches (扩展版) -->
+            <!-- 3. Color Swatches -->
             <Grid Grid.Row="2" Margin="24,15,24,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -532,7 +491,7 @@
 
                 <!-- Basic Colors -->
                 <StackPanel>
-                    <TextBlock Text="基本颜色" Foreground="{StaticResource TextSecondary}" FontSize="12" Margin="4,0,0,8"/>
+                    <TextBlock Text="基本颜色" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="4,0,0,8"/>
                     <UniformGrid Columns="10" HorizontalAlignment="Left" VerticalAlignment="Top" x:Name="BasicColorsGrid">
                         <!-- Row 1: 浅色/粉彩色系 (Pastel & Light) -->
                         <Button Style="{StaticResource ColorSwatch}" Background="#FFFFFF" Click="Swatch_Click" ToolTip="纯白"/>
@@ -582,15 +541,16 @@
                         <Button Style="{StaticResource ColorSwatch}" Background="#4B0082" Click="Swatch_Click" ToolTip="深紫蓝"/>
                         <Button Style="{StaticResource ColorSwatch}" Background="#3E2723" Click="Swatch_Click" ToolTip="咖啡色"/>
                     </UniformGrid>
-
                 </StackPanel>
 
                 <!-- Custom Colors -->
                 <StackPanel Grid.Column="1" Margin="20,-10,40,0">
                     <StackPanel Orientation="Horizontal" Margin="4,0,0,8">
-                        <TextBlock Text="自定义颜色" Foreground="{StaticResource TextSecondary}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="自定义颜色" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
                         <Button Content="+" Width="24" Height="24" Margin="10,0,0,0" Padding="0" 
-                                Background="#E0E0E0" Foreground="#555" BorderThickness="0" 
+                                Background="{DynamicResource ButtonBackgroundBrush}" 
+                                Foreground="{DynamicResource TextSecondaryBrush}" 
+                                BorderThickness="0" 
                                 ToolTip="添加当前颜色"
                                 Click="AddCustomColor_Click">
                             <Button.Template>
@@ -600,8 +560,8 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#D0D0D0"/>
-                                            <Setter Property="Foreground" Value="Black"/>
+                                            <Setter Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>

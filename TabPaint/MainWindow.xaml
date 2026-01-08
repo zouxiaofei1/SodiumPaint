@@ -11,16 +11,17 @@
         MinHeight="300" MinWidth="400"
         Top="100" Left="100"
         SizeToContent="Manual"
-      AllowsTransparency="False" 
-        Background="Transparent"
+        AllowsTransparency="False" 
+        Background="{DynamicResource WindowBackgroundBrush}"
         Closing="Window_Closing"
         WindowStyle="None"
         SizeChanged="Window_SizeChanged" 
         PreviewKeyUp="Window_KeyUp"
         x:Name="RootWindow">
-    
+    <!-- 注意：Window Background 设为 WindowBackgroundBrush，配合 Mica 可能需要在 C# 端设为 Transparent，
+         但为了 Theme 统一先设为资源。如果 Mica 生效，通常会忽略此背景或设为透明 -->
+
     <WindowChrome.WindowChrome>
-        
         <shell:WindowChrome 
             GlassFrameThickness="-1" 
             CaptionHeight="32"
@@ -30,6 +31,7 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- 确保 App.xaml 或此处正确加载了 LightTheme.xaml -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -38,6 +40,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
+    <!-- 主容器背景 -->
     <Grid Background="Transparent" PreviewDragOver="OnGlobalDragOver"
           PreviewDrop="OnGlobalDrop"
           PreviewDragLeave="OnGlobalDragLeave">
@@ -48,36 +51,40 @@
                           DockPanel.Dock="Top" 
                           MinimizeClick="Minimize_Click"
                           MaximizeRestoreClick="MaximizeRestore_Click"
-                                      
                           CloseClick="Close_Click"
-                                        TitleBarMouseDown="Border_MouseLeftButtonDown"
-                             ModeSwitchClick="OnTitleBarModeSwitch" />
+                          TitleBarMouseDown="Border_MouseLeftButtonDown"
+                          ModeSwitchClick="OnTitleBarModeSwitch" />
             <!-- #endregion -->
-            
+
             <!-- #region 2. 菜单栏 (MenuBar) -->
             <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top"
                 Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-
-
             <!-- #endregion -->
-            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"        Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+
+            <!-- 分割线 -->
+            <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"        
+                       Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+
             <!-- #region 3. 工具栏 (ToolBar) -->
             <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top"
                 Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-
             <!-- #endregion -->
 
             <!-- #region 4. 图片列表栏 (ImageBar) -->
             <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top"
                 IsTabStop="False" Focusable="False"/>
             <!-- #endregion -->
-            <Rectangle DockPanel.Dock="Top" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"  Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-            
+
+            <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"  
+                       Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+
             <!-- #region 5. 底部状态栏 (StatusBar) -->
             <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
                 Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             <!-- #endregion -->
-            <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="#EBEBEB" SnapsToDevicePixels="True"/>
+
+            <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"/>
+
             <!-- #region 6. 主画布区域 (Canvas) -->
             <Grid ClipToBounds="False" Background="Transparent">
                 <Grid.Resources>
@@ -87,12 +94,10 @@
                 <Grid ClipToBounds="False">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <!-- 左侧标尺 -->
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- 顶部标尺 -->
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -107,121 +112,123 @@
                                  Visibility="{Binding ShowRulers, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
 
                     <!-- 左上角的小方块 (标尺交汇处) -->
-                    <Border Grid.Row="0" Grid.Column="0" Background="#20F0F0F0" 
+                    <!-- 原色 #20F0F0F0，这里用 ChromeMediumBrush (#F0F0F0) 配合透明度 -->
+                    <Border Grid.Row="0" Grid.Column="0" 
+                            Background="{DynamicResource ChromeMediumBrush}" Opacity="0.12"
                             Visibility="{Binding ElementName=RulerTop, Path=Visibility}"/>
 
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  
+                                  Style="{StaticResource FluentScrollViewer}" Name="ScrollContainer" 
+                                  FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" 
+                                  PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" 
+                                  PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  
+                                  PreviewMouseUp="OnScrollContainerMouseUp" MouseDoubleClick="OnScrollContainerDoubleClick" 
+                                  AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
+                        <ScrollViewer.ContextMenu>
+                            <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
+                                <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="剪切" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
 
-
-                    <ScrollViewer  Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  Style="{StaticResource FluentScrollViewer}"  Name="ScrollContainer" FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  PreviewMouseUp="OnScrollContainerMouseUp"     MouseDoubleClick="OnScrollContainerDoubleClick" AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
-                    <ScrollViewer.ContextMenu>
-                        <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
-                            <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
-                                <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="剪切" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
-                                <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick">
-                                <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-              
-                            <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
-                            <MenuItem Header="固定缩放倍数" 
-                         IsCheckable="True" 
-                         Style="{StaticResource Win11MenuItemStyle}"
-                         DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-                         IsChecked="{Binding IsFixedZoom, Mode=TwoWay}">
-                                <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
+                                <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
+                                <MenuItem Header="固定缩放倍数" 
+                                          IsCheckable="True" 
+                                          Style="{StaticResource Win11MenuItemStyle}"
+                                          DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
+                                          IsChecked="{Binding IsFixedZoom, Mode=TwoWay}">
+                                    <MenuItem.Icon>
+                                        <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
                                 <MenuItem Header="显示标尺" IsCheckable="True" 
                                           IsChecked="{Binding ShowRulers, Mode=TwoWay}"
                                           Style="{StaticResource Win11MenuItemStyle}">
                                     <MenuItem.Icon>
-                                        <TextBlock Text="📏" FontFamily="Segoe UI Emoji"/>
+                                        <TextBlock Text="📏" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                            <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
+                                <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
 
-                            <!-- 二级菜单：小工具 -->
-                            <MenuItem x:Name="miniTools" Header="小工具" Style="{StaticResource Win11MenuItemStyle}">
-                                <MenuItem.Icon>
-                                    <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-                                </MenuItem.Icon>
-
-                                <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
+                                <!-- 二级菜单：小工具 -->
+                                <MenuItem x:Name="miniTools" Header="小工具" Style="{StaticResource Win11MenuItemStyle}">
                                     <MenuItem.Icon>
-                                        <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
+                                        <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
-                                </MenuItem>
 
-                                <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="🪄" FontFamily="Segoe UI Emoji"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
+                                    <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="🪄" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
 
-                                <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
+                                    <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="🪄" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
 
-                                <MenuItem Header="屏幕取色器" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Click="OnScreenColorPickerClick">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
+                                    <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
 
-                                <MenuItem Header="复制颜色代码 (#HEX)" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"  Click="OnCopyColorCodeClick">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="🎨" FontFamily="Segoe UI Emoji"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="智能裁切空白" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"  Click="OnAutoCropClick">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="✂" FontFamily="Segoe UI Emoji"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="一键加边框 (2px)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
-                                    <MenuItem.Icon>
-                                        <Border BorderBrush="#333" BorderThickness="2" Width="14" Height="14" CornerRadius="1"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                            </MenuItem>
-                        </ContextMenu>
-                    </ScrollViewer.ContextMenu>
+                                    <MenuItem Header="屏幕取色器" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Click="OnScreenColorPickerClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
 
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" 
-          ClipToBounds="False">
-                            <Grid Name="CanvasWrapper"   ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
-                              
+                                    <MenuItem Header="复制颜色代码 (#HEX)" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"  Click="OnCopyColorCodeClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="🎨" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="智能裁切空白" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"  Click="OnAutoCropClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="一键加边框 (2px)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
+                                        <MenuItem.Icon>
+                                            <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="2" Width="14" Height="14" CornerRadius="1"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </MenuItem>
+                            </ContextMenu>
+                        </ScrollViewer.ContextMenu>
 
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" ClipToBounds="False">
+                            <Grid Name="CanvasWrapper" ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
                                 <Grid.Background>
                                     <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
-                                        <!-- 核心修复：Viewport 绑定缩放倍数，参数 20 是你原本的基础大小 -->
                                         <DrawingBrush.Viewport>
                                             <Binding ElementName="ZoomTransform" Path="ScaleX" 
-                                    Converter="{StaticResource ScaleToTileRectConverter}" 
-                                    ConverterParameter="20"/>
+                                                     Converter="{StaticResource ScaleToTileRectConverter}" 
+                                                     ConverterParameter="20"/>
                                         </DrawingBrush.Viewport>
                                         <DrawingBrush.Drawing>
                                             <DrawingGroup>
-                                                <!-- 浅灰底色 -->
-                                                <GeometryDrawing Brush="#FFF0F0F0">
+                                                <!-- 浅灰底色 #FFF0F0F0 -> ChromeMediumBrush -->
+                                                <GeometryDrawing Brush="{DynamicResource ChromeMediumBrush}">
                                                     <GeometryDrawing.Geometry>
                                                         <RectangleGeometry Rect="0,0,20,20"/>
                                                     </GeometryDrawing.Geometry>
                                                 </GeometryDrawing>
-                                                <!-- 深灰格子 -->
-                                                <GeometryDrawing Brush="#FFD0D0D0">
+                                                <!-- 深灰格子 #FFD0D0D0 -> CheckerboardDarkBrush (or BorderMediumBrush) -->
+                                                <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
                                                     <GeometryDrawing.Geometry>
                                                         <GeometryGroup>
                                                             <RectangleGeometry Rect="0,0,10,10"/>
@@ -237,46 +244,42 @@
                                 <Grid.LayoutTransform>
                                     <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                                 </Grid.LayoutTransform>
-                           
 
                                 <!-- 2. 只有边框的层 -->
-
-
                                 <Image Name="PreviewImage" 
-                     Stretch="Fill" 
-                     Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
-                     Height="{Binding ElementName=BackgroundImage, Path=ActualHeight}"
-                     HorizontalAlignment="Left" 
-                     VerticalAlignment="Top" 
-                     IsHitTestVisible="False" 
-                     Visibility="Collapsed"
-                     RenderOptions.BitmapScalingMode="Linear"/>
+                                     Stretch="Fill" 
+                                     Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
+                                     Height="{Binding ElementName=BackgroundImage, Path=ActualHeight}"
+                                     HorizontalAlignment="Left" 
+                                     VerticalAlignment="Top" 
+                                     IsHitTestVisible="False" 
+                                     Visibility="Collapsed"
+                                     RenderOptions.BitmapScalingMode="Linear"/>
                                 <!-- 1. 基础图片 -->
                                 <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
                                 <Image Name="GifPlayerImage"
-       Stretch="None"
-       HorizontalAlignment="Left"
-       VerticalAlignment="Top"
-       SnapsToDevicePixels="True"
-       Visibility="Collapsed"
-       gif:AnimationBehavior.AutoStart="True"
-       gif:AnimationBehavior.RepeatBehavior="Forever" />
-                                <!-- 2. 调整大小层 -->
-                                <!--<Canvas Name="CanvasResizeOverlay"  Visibility="Visible" IsHitTestVisible="True" Background="Transparent"  UseLayoutRounding="False" />-->
+                                       Stretch="None"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Top"
+                                       SnapsToDevicePixels="True"
+                                       Visibility="Collapsed"
+                                       gif:AnimationBehavior.AutoStart="True"
+                                       gif:AnimationBehavior.RepeatBehavior="Forever" />
+
                                 <!-- 3. 选区预览层 -->
                                 <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
-                                <!-- 4. 选区UI层 -->
-                                 <!-- 5. 编辑器层 -->
+
+                                <!-- 5. 编辑器层 -->
                                 <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
                             </Grid>
                             <Canvas Name="SelectionOverlayCanvas" 
-            Panel.ZIndex="100" 
-            Visibility="Collapsed" 
-            IsHitTestVisible="False" 
-            Background="Transparent" 
-            UseLayoutRounding="False" 
-            SnapsToDevicePixels="False">
+                                    Panel.ZIndex="100" 
+                                    Visibility="Collapsed" 
+                                    IsHitTestVisible="False" 
+                                    Background="Transparent" 
+                                    UseLayoutRounding="False" 
+                                    SnapsToDevicePixels="False">
 
                                 <Canvas.LayoutTransform>
                                     <Binding ElementName="CanvasWrapper" Path="LayoutTransform"/>
@@ -290,14 +293,14 @@
                             </Canvas>
 
                             <Border Name="StaticCanvasBorder"
-                                       Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
-                IsHitTestVisible="False"
-                SnapsToDevicePixels="True"
-                UseLayoutRounding="True"
-                HorizontalAlignment="Stretch" 
-                VerticalAlignment="Stretch"
-                BorderBrush="#EBEBEB" 
-                BorderThickness="1">
+                                    Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
+                                    IsHitTestVisible="False"
+                                    SnapsToDevicePixels="True"
+                                    UseLayoutRounding="True"
+                                    HorizontalAlignment="Stretch" 
+                                    VerticalAlignment="Stretch"
+                                    BorderBrush="{DynamicResource BorderLightBrush}" 
+                                    BorderThickness="1">
                                 <Border.Margin>
                                     <Thickness Left="-1" Top="-1" Right="-1" Bottom="-1"/>
                                 </Border.Margin>
@@ -308,12 +311,13 @@
                                             <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False">
                                                 <Setter Property="Effect">
                                                     <Setter.Value>
+                                                        <!-- 阴影颜色保持黑色，通常不随主题变化 -->
                                                         <DropShadowEffect Color="Black" 
-                                    Direction="270" 
-                                    ShadowDepth="0" 
-                                    BlurRadius="20" 
-                                    Opacity="0.25" 
-                                    RenderingBias="Performance"/>
+                                                                          Direction="270" 
+                                                                          ShadowDepth="0" 
+                                                                          BlurRadius="20" 
+                                                                          Opacity="0.25" 
+                                                                          RenderingBias="Performance"/>
                                                     </Setter.Value>
                                                 </Setter>
                                             </DataTrigger>
@@ -322,34 +326,33 @@
                                 </Border.Style>
                             </Border>
                             <Canvas Name="CanvasResizeOverlay" 
-                Visibility="Visible" 
-                IsHitTestVisible="True" 
-                Background="{x:Null}"  
-                UseLayoutRounding="False"
-                SnapsToDevicePixels="False"
-                ClipToBounds="False">
-
+                                    Visibility="Visible" 
+                                    IsHitTestVisible="True" 
+                                    Background="{x:Null}"  
+                                    UseLayoutRounding="False"
+                                    SnapsToDevicePixels="False"
+                                    ClipToBounds="False">
                                 <Canvas.LayoutTransform>
                                     <Binding ElementName="CanvasWrapper" Path="LayoutTransform"/>
                                 </Canvas.LayoutTransform>
-                           
                             </Canvas>
                         </Grid>
-
                     </ScrollViewer>
                 </Grid>
-                <!-- 粗细预览圆 -->
+
+                <!-- 粗细预览圆 Stroke="Purple" -> ToolAccentBrush -->
                 <Rectangle x:Name="ThicknessPreview" 
-            IsHitTestVisible="False" 
-            Fill="Transparent" 
-            Stroke="Purple" 
-            StrokeThickness="2" 
-            Width="40" Height="40" 
-            Visibility="Collapsed" 
-            Opacity="0.6" 
-            StrokeDashArray="3 2" 
-            HorizontalAlignment="Center" 
-            VerticalAlignment="Center"/>
+                           IsHitTestVisible="False" 
+                           Fill="Transparent" 
+                           Stroke="{DynamicResource ToolAccentBrush}" 
+                           StrokeThickness="2" 
+                           Width="40" Height="40" 
+                           Visibility="Collapsed" 
+                           Opacity="0.6" 
+                           StrokeDashArray="3 2" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"/>
+
                 <Grid x:Name="ToolPanelGrid" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="15,20,0,5" Width="42" Panel.ZIndex="100">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="1*"/>
@@ -358,7 +361,12 @@
                         <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
                         <RowDefinition Height="1*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="1" x:Name="ThicknessPanel" CornerRadius="12" Background="#F3F3F3" BorderBrush="#D0D0D0" BorderThickness="1">
+
+                    <!-- 背景色和边框色统一 -->
+                    <Border Grid.Row="1" x:Name="ThicknessPanel" CornerRadius="12" 
+                            Background="{DynamicResource PanelBackgroundBrush}" 
+                            BorderBrush="{DynamicResource BorderMediumBrush}" 
+                            BorderThickness="1">
                         <Border.Resources>
                             <local:NonLinearRangeConverter x:Key="SizeConverter"/>
                         </Border.Resources>
@@ -373,21 +381,21 @@
                             <!-- 图标 -->
                             <Image Grid.Row="0" Source="{DynamicResource Stroke_Width_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
 
-                            <!-- Slider -->
+                            <!-- Slider Tooltip 颜色统一 -->
                             <Slider Grid.Row="1" x:Name="ThicknessSlider" 
-                    Style="{StaticResource Win11VerticalSliderStyle}" 
-                    Orientation="Vertical" 
-                    Minimum="0" Maximum="1"
-                    SmallChange="0.005" LargeChange="0.05"
-                    DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-                    Value="{Binding PenThickness, Mode=TwoWay, Converter={StaticResource SizeConverter}}" 
-                    IsSnapToTickEnabled="False"
-                    Margin="0,0,0,10"
-                    Thumb.DragStarted="ThicknessSlider_DragStarted" 
-                    Thumb.DragCompleted="ThicknessSlider_DragCompleted" 
-                    ValueChanged="ThicknessSlider_ValueChanged">
+                                    Style="{StaticResource Win11VerticalSliderStyle}" 
+                                    Orientation="Vertical" 
+                                    Minimum="0" Maximum="1"
+                                    SmallChange="0.005" LargeChange="0.05"
+                                    DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
+                                    Value="{Binding PenThickness, Mode=TwoWay, Converter={StaticResource SizeConverter}}" 
+                                    IsSnapToTickEnabled="False"
+                                    Margin="0,0,0,10"
+                                    Thumb.DragStarted="ThicknessSlider_DragStarted" 
+                                    Thumb.DragCompleted="ThicknessSlider_DragCompleted" 
+                                    ValueChanged="ThicknessSlider_ValueChanged">
                                 <Slider.ToolTip>
-                                    <ToolTip Background="Black" Foreground="White" BorderThickness="0" Padding="8,4">
+                                    <ToolTip Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding PenThickness, StringFormat={}{0:F0}}"/>
                                             <TextBlock Text=" 像素" Margin="2,0,0,0"/>
@@ -397,7 +405,11 @@
                             </Slider>
                         </Grid>
                     </Border>
-                    <Border Grid.Row="3" x:Name="OpacityPanel" CornerRadius="12" Background="#F3F3F3" BorderBrush="#D0D0D0" BorderThickness="1">
+
+                    <Border Grid.Row="3" x:Name="OpacityPanel" CornerRadius="12" 
+                            Background="{DynamicResource PanelBackgroundBrush}" 
+                            BorderBrush="{DynamicResource BorderMediumBrush}" 
+                            BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
                         </Border.Effect>
@@ -411,22 +423,21 @@
                             <Image Grid.Row="0" Source="{DynamicResource Opacity_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
 
                             <Slider Grid.Row="1" x:Name="OpacitySlider" 
-        Style="{StaticResource Win11VerticalSliderStyle}" 
-        Orientation="Vertical" 
-        Minimum="0" Maximum="1" 
-        SmallChange="0.05" LargeChange="0.1"
-        DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-        Value="{Binding PenOpacity, Mode=TwoWay}" 
-        Margin="0,0,0,10"
-        IsSnapToTickEnabled="False"
-                                      Loaded="OpacitySlider_Loaded"  
-        Thumb.DragStarted="OpacitySlider_DragStarted"
-        Thumb.DragCompleted="OpacitySlider_DragCompleted"
-        ValueChanged="OpacitySlider_ValueChanged">
+                                    Style="{StaticResource Win11VerticalSliderStyle}" 
+                                    Orientation="Vertical" 
+                                    Minimum="0" Maximum="1" 
+                                    SmallChange="0.05" LargeChange="0.1"
+                                    DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
+                                    Value="{Binding PenOpacity, Mode=TwoWay}" 
+                                    Margin="0,0,0,10"
+                                    IsSnapToTickEnabled="False"
+                                    Loaded="OpacitySlider_Loaded"  
+                                    Thumb.DragStarted="OpacitySlider_DragStarted"
+                                    Thumb.DragCompleted="OpacitySlider_DragCompleted"
+                                    ValueChanged="OpacitySlider_ValueChanged">
                                 <Slider.ToolTip>
-                                    <ToolTip x:Name="OpacityToolTip" Background="#333" Foreground="White" BorderThickness="0" Padding="8,4" Placement="Right" HorizontalOffset="10">
+                                    <ToolTip x:Name="OpacityToolTip" Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4" Placement="Right" HorizontalOffset="10">
                                         <StackPanel Orientation="Horizontal">
-                                            <!-- 注意：这里增加了 UpdateSourceTrigger 确保拖动时数字实时跳动 -->
                                             <TextBlock Text="{Binding PenOpacity, StringFormat={}{0:P0}, UpdateSourceTrigger=PropertyChanged}"/>
                                             <TextBlock Text="" Margin="2,0,0,0"/>
                                         </StackPanel>
@@ -437,15 +448,15 @@
                     </Border>
 
                 </Grid>
+
                 <Border x:Name="BirdEyePanel" 
-        HorizontalAlignment="Right" VerticalAlignment="Bottom"
-        Margin="0,0,20,40"
-        Width="220" Height="160"
-        Background="White"
-        BorderBrush="#CCC" BorderThickness="1"
-        CornerRadius="4"
-        Visibility="Collapsed">
-                    <!-- 默认隐藏，仅在看图+大图时显示 -->
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,20,40"
+                        Width="220" Height="160"
+                        Background="{DynamicResource ControlBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1"
+                        CornerRadius="4"
+                        Visibility="Collapsed">
 
                     <Border.Effect>
                         <DropShadowEffect BlurRadius="10" Opacity="0.2" ShadowDepth="2"/>
@@ -454,26 +465,27 @@
                     <Grid Margin="5">
                         <!-- 1. 缩略图底图 -->
                         <Image x:Name="BirdEyeImage" Stretch="Uniform" 
-               Source="{Binding ElementName=BackgroundImage, Path=Source}"
-               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                               Source="{Binding ElementName=BackgroundImage, Path=Source}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                         <!-- 2. 交互层 Canvas -->
                         <Canvas x:Name="BirdEyeCanvas" 
-                Background="Transparent"
-                Width="{Binding ElementName=BirdEyeImage, Path=ActualWidth}"
-                Height="{Binding ElementName=BirdEyeImage, Path=ActualHeight}"
-                HorizontalAlignment="Center" VerticalAlignment="Center"
-                MouseDown="BirdEyeCanvas_MouseDown"
-                MouseMove="BirdEyeCanvas_MouseMove"
-                MouseUp="BirdEyeCanvas_MouseUp">
+                                Background="Transparent"
+                                Width="{Binding ElementName=BirdEyeImage, Path=ActualWidth}"
+                                Height="{Binding ElementName=BirdEyeImage, Path=ActualHeight}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                MouseDown="BirdEyeCanvas_MouseDown"
+                                MouseMove="BirdEyeCanvas_MouseMove"
+                                MouseUp="BirdEyeCanvas_MouseUp">
 
                             <!-- 3. 视野框 (Viewport Rect) -->
+                            <!-- 背景色模拟透明蓝 #200078D7 -->
                             <Border x:Name="BirdEyeViewport" 
-                    BorderBrush="#FF0078D7" 
-                    BorderThickness="2" 
-                    Background="#200078D7"
-                    IsHitTestVisible="False"/>
-                            <!-- 让鼠标事件穿透给 Canvas 处理 -->
+                                    BorderBrush="{DynamicResource SystemAccentHoverBrush}" 
+                                    BorderThickness="2" 
+                                    Background="{DynamicResource SystemAccentHoverBrush}"
+                                    Opacity="0.2"
+                                    IsHitTestVisible="False"/>
                         </Canvas>
                     </Grid>
                 </Border>
@@ -482,30 +494,32 @@
         </DockPanel>
 
         <!-- #region 7. 悬浮面板 (Floating UI) -->
-
+        <!-- 文本编辑条 -->
         <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" MouseMove="TextEditBar_MouseMove"
-        MouseUp="TextEditBar_MouseUp" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Background="#FAFAFA" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="6">
+                MouseUp="TextEditBar_MouseUp" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" 
+                Background="{DynamicResource ChromeLowBrush}" 
+                BorderBrush="{DynamicResource BorderLightBrush}" 
+                BorderThickness="1" CornerRadius="8" Padding="6">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="TextBarDragTransform" X="0" Y="0"/>
             </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="#20000000" Opacity="0.4"/>
+                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.1"/>
             </Border.Effect>
             <StackPanel Orientation="Horizontal">
-                <!-- 字体选择: 初始为空，代码懒加载 -->
+                <!-- 字体选择 -->
                 <ComboBox x:Name="FontFamilyBox" 
-          Style="{StaticResource FluentComboBoxStyle}" 
-          Width="160" 
-          IsEditable="True" 
-          Background="White"
-          SelectionChanged="FontSettingChanged" 
-          TextBoxBase.TextChanged="FontSettingChanged">
+                          Style="{StaticResource FluentComboBoxStyle}" 
+                          Width="160" 
+                          IsEditable="True" 
+                          Background="{DynamicResource ControlBackgroundBrush}"
+                          SelectionChanged="FontSettingChanged" 
+                          TextBoxBase.TextChanged="FontSettingChanged">
                 </ComboBox>
                 <!-- 字号 -->
                 <ComboBox x:Name="FontSizeBox" Style="{StaticResource FluentComboBoxStyle}" Width="70" 
-                  IsEditable="True" Text="24"
-                  SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged">
-                    <!-- 常用字号 -->
+                          IsEditable="True" Text="24"
+                          SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged">
                     <System:Double>9</System:Double>
                     <System:Double>10</System:Double>
                     <System:Double>11</System:Double>
@@ -520,84 +534,84 @@
                     <System:Double>96</System:Double>
                 </ComboBox>
 
-                <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="4,0,8,0"/>
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="4,0,8,0"/>
 
                 <!-- 基础样式 -->
                 <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="加粗">
-                    <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16"/>
+                    <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </ToggleButton>
                 <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="斜体">
-                    <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16"/>
+                    <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </ToggleButton>
                 <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="下划线">
-                    <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16"/>
+                    <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </ToggleButton>
                 <ToggleButton x:Name="StrikeBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="删除线">
-                    <TextBlock Text="S" TextDecorations="Strikethrough" FontFamily="Segoe UI" FontSize="16"/>
+                    <TextBlock Text="S" TextDecorations="Strikethrough" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </ToggleButton>
 
-                <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="8,0,8,0"/>
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,8,0"/>
 
-                <!-- 对齐方式 (使用 Path 绘制图标) -->
+                <!-- 对齐方式 -->
                 <ToggleButton x:Name="AlignLeftBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Left" IsChecked="True" ToolTip="左对齐">
-                    <Path Data="M0,2 L14,2 M0,6 L10,6 M0,10 L14,10 M0,14 L10,14" Stroke="Black" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Path Data="M0,2 L14,2 M0,6 L10,6 M0,10 L14,10 M0,14 L10,14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </ToggleButton>
                 <ToggleButton x:Name="AlignCenterBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Center" ToolTip="居中">
-                    <Path Data="M0,2 L14,2 M2,6 L12,6 M0,10 L14,10 M2,14 L12,14" Stroke="Black" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Path Data="M0,2 L14,2 M2,6 L12,6 M0,10 L14,10 M2,14 L12,14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </ToggleButton>
                 <ToggleButton x:Name="AlignRightBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Right" ToolTip="右对齐">
-                    <Path Data="M0,2 L14,2 M4,6 L14,6 M0,10 L14,10 M4,14 L14,14" Stroke="Black" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Path Data="M0,2 L14,2 M4,6 L14,6 M0,10 L14,10 M4,14 L14,14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </ToggleButton>
 
-                <Rectangle Width="1" Height="20" Fill="#E0E0E0" Margin="8,0,8,0"/>
+                <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,8,0"/>
 
                 <!-- 背景填充 -->
                 <ToggleButton x:Name="TextBackgroundBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="不透明背景">
                     <Grid>
-                        <Rectangle Width="14" Height="14" Fill="White" Stroke="#333" StrokeThickness="1"/>
-                        <TextBlock Text="A" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <Rectangle Width="14" Height="14" Fill="{DynamicResource ControlBackgroundBrush}" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1"/>
+                        <TextBlock Text="A" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Grid>
                 </ToggleButton>
 
             </StackPanel>
         </Border>
 
-    
-
         <!-- 粗细提示 -->
-        <Border x:Name="ThicknessTip" Background="#333" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
-            <TextBlock x:Name="ThicknessTipText" Foreground="White" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>
+        <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="ThicknessTipText" Foreground="{DynamicResource TextInverseBrush}" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>
         </Border>
 
         <!-- 通知层 -->
+        <!-- Toast 背景模拟：#A0444444 -> TextControlBrush (#333) with Opacity -->
         <Grid x:Name="NotificationLayer" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,120" IsHitTestVisible="False">
-            <Border x:Name="InfoToast" Background="#A0444444" CornerRadius="20" Padding="20,8" Opacity="0">
+            <Border x:Name="InfoToast" Background="{DynamicResource TextControlBrush}" CornerRadius="20" Padding="20,8" Opacity="0">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
                 </Border.Effect>
-                <TextBlock x:Name="InfoToastText" Text="提示信息" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="InfoToastText" Text="提示信息" Foreground="{DynamicResource TextInverseBrush}" FontSize="14" VerticalAlignment="Center"/>
             </Border>
         </Grid>
         <!-- #endregion -->
-        
+
         <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
-        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#55111111" RenderTransformOrigin="0.5,0.5">
+        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#AA1A1A1A" RenderTransformOrigin="0.5,0.5">
+            <!-- 背景暂时保持硬编码或者使用 TextPrimaryBrush 配合透明度，这里为了遮罩效果使用半透明黑 -->
             <Grid.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>
-            <Rectangle Stroke="White" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
+            <Rectangle Stroke="{DynamicResource TextInverseBrush}" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
 
             <!-- 文字和图标内容 -->
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <!-- 图标 -->
-                <Path x:Name="DragOverlayIcon" Width="64" Height="64" Fill="White" Stretch="Uniform" Margin="0,0,0,20"
+                <Path x:Name="DragOverlayIcon" Width="64" Height="64" Fill="{DynamicResource TextInverseBrush}" Stretch="Uniform" Margin="0,0,0,20"
                       Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
 
                 <!-- 提示文字 -->
-                <TextBlock x:Name="DragOverlayText" Text="拖放以打开" Foreground="White" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
+                <TextBlock x:Name="DragOverlayText" Text="拖放以打开" Foreground="{DynamicResource TextInverseBrush}" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
 
                 <!-- 副标题 -->
-                <TextBlock x:Name="DragOverlaySubText" Text="释放鼠标以确认" Foreground="#CCC" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
+                <TextBlock x:Name="DragOverlaySubText" Text="释放鼠标以确认" Foreground="{DynamicResource BorderMediumBrush}" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
             </StackPanel>
         </Grid>
         <!-- #endregion -->

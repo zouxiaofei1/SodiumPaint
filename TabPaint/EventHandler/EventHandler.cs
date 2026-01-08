@@ -705,7 +705,7 @@ namespace TabPaint
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateImageBarSliderState();
+            UpdateImageBarSliderState(); UpdateToolSelectionHighlight();
             if (IsViewMode && !_hasUserManuallyZoomed && _bitmap != null && _startupFinished)
             {
                 // 使用 Dispatcher 稍作延迟，等待 ScrollViewer 的 Viewport 更新
