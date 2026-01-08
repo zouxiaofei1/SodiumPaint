@@ -2,6 +2,7 @@
 using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -503,11 +504,93 @@ namespace TabPaint
 
         }
 
-        // 4. 剪切板内容处理核心
+        [DllImport("gdi32.dll")]
+        public static extern bool DeleteObject(IntPtr hObject);
+
+        private BitmapSource GetBestImageFromClipboard()
+        {
+            var dataObj = System.Windows.Clipboard.GetDataObject();
+            if (dataObj == null) return null;
+
+            // 1. [最优先] 尝试读取 "System.Drawing.Bitmap"
+            // 既然你的格式列表里有这个，说明它是 .NET 对象，直接拿出来用 GDI+ 读取
+            // GDI+ 会忽略错误的 Alpha 通道，显示出图片
+            if (dataObj.GetDataPresent("System.Drawing.Bitmap"))
+            {
+                try
+                {
+                    var drawingBitmap = dataObj.GetData("System.Drawing.Bitmap") as System.Drawing.Bitmap;
+                    if (drawingBitmap != null)
+                    {
+                        return ConvertDrawingBitmapToWPF(drawingBitmap);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("GDI+ Read Failed: " + ex.Message);
+                }
+            }
+
+            // 2. [次优先] 尝试读取 "Bitmap" (标准 GDI 句柄)
+            if (dataObj.GetDataPresent("Bitmap"))
+            {
+                try
+                {
+                    var drawingBitmap = dataObj.GetData("Bitmap") as System.Drawing.Bitmap;
+                    if (drawingBitmap != null)
+                    {
+                        return ConvertDrawingBitmapToWPF(drawingBitmap);
+                    }
+                }
+                catch { }
+            }
+
+            // 3. [保底] WPF 原生读取 (如果上面都失败了，只能面对可能全透明的结果)
+            if (System.Windows.Clipboard.ContainsImage())
+            {
+                return System.Windows.Clipboard.GetImage();
+            }
+
+            return null;
+        }
+
+        // 转换方法：GDI+ Bitmap -> WPF BitmapSource
+        private BitmapSource ConvertDrawingBitmapToWPF(System.Drawing.Bitmap bitmap)
+        {
+            IntPtr hBitmap = IntPtr.Zero;
+            try
+            {
+                // 获取 GDI 句柄
+                hBitmap = bitmap.GetHbitmap();
+
+                // 利用 Interop 创建 WPF 位图
+                var wpfBitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                    hBitmap,
+                    IntPtr.Zero,
+                    System.Windows.Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+
+                // 关键：冻结对象，使其可以在不同线程使用（如果不冻结，异步写入文件可能会报错）
+                wpfBitmap.Freeze();
+
+                return wpfBitmap;
+            }
+            finally
+            {
+                // 极其重要：必须手动释放 GDI 句柄，否则会造成 GDI 句柄泄漏导致程序崩溃
+                if (hBitmap != IntPtr.Zero)
+                {
+                    DeleteObject(hBitmap);
+                }
+                // bitmap.Dispose(); // DataObject 取出的对象通常不需要手动 Dispose，交给 GC 即可
+            }
+        }
+
         private async void OnClipboardContentChanged()
         {
             try
             {
+                if (IsViewMode) return;
                 var dataObj = System.Windows.Clipboard.GetDataObject();
                 if (dataObj != null && dataObj.GetDataPresent(InternalClipboardFormat)) return;
 
@@ -522,7 +605,7 @@ namespace TabPaint
                 // 情况 B: 剪切板是位图数据 (截图)
                 else if (System.Windows.Clipboard.ContainsImage())
                 {
-                    var bitmapSource = System.Windows.Clipboard.GetImage();
+                    var bitmapSource = GetBestImageFromClipboard();
                     if (bitmapSource != null)
                     {
                         // TabPaint 架构依赖文件路径，所以我们需要保存为临时缓存文件
@@ -536,6 +619,8 @@ namespace TabPaint
                 if (filesToLoad.Count > 0)
                 {
                     await InsertImagesToTabs(filesToLoad.ToArray());
+                    var settings = SettingsManager.Instance.Current;
+                    if (settings.AutoPopupOnClipboardImage) RestoreWindow(this);
                 }
             }
             catch (Exception ex)

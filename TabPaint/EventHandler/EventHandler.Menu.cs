@@ -439,6 +439,7 @@ namespace TabPaint
                 SettingsManager.Instance.AddRecentFile(file);
 
                 await SwitchWorkspaceToNewFile(file);
+                UpdateImageBarSliderState();
             }
         }
 

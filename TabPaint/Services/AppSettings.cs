@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 using static TabPaint.MainWindow;
@@ -26,22 +27,65 @@ namespace TabPaint
     }
     public class ShortcutItem
     {
-        public Key Key { get; set; } = Key.None;
-        public ModifierKeys Modifiers { get; set; } = ModifierKeys.None;
+        public Key Key { get; set; }
+        public ModifierKeys Modifiers { get; set; }
 
-        [JsonIgnore] // 不需要保存到文件，仅用于UI显示
+        // 修改这个属性的 get 方法
         public string DisplayText
         {
             get
             {
                 if (Key == Key.None) return "无";
-                var str = "";
-                if (Modifiers.HasFlag(ModifierKeys.Control)) str += "Ctrl + ";
-                if (Modifiers.HasFlag(ModifierKeys.Shift)) str += "Shift + ";
-                if (Modifiers.HasFlag(ModifierKeys.Alt)) str += "Alt + ";
-                if (Modifiers.HasFlag(ModifierKeys.Windows)) str += "Win + ";
-                str += Key.ToString();
-                return str;
+
+                StringBuilder sb = new StringBuilder();
+
+                // 1. 处理修饰键 (Ctrl, Alt, Shift)
+                if ((Modifiers & ModifierKeys.Control) == ModifierKeys.Control) sb.Append("Ctrl + ");
+                if ((Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift) sb.Append("Shift + ");
+                if ((Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt) sb.Append("Alt + ");
+                if ((Modifiers & ModifierKeys.Windows) == ModifierKeys.Windows) sb.Append("Win + ");
+
+                // 2. 处理按键显示的转换逻辑
+                sb.Append(GetKeyDisplayName(Key));
+
+                return sb.ToString();
+            }
+        }
+
+        // === 核心修复逻辑 ===
+        private string GetKeyDisplayName(Key key)
+        {
+            // 处理主键盘区的数字键 D0 - D9
+            if (key >= Key.D0 && key <= Key.D9)
+            {
+                // Key.D0 的枚举值是 34，减去 34 即可得到数字 0
+                return ((int)key - (int)Key.D0).ToString();
+            }
+
+            // 处理小键盘区的数字键 NumPad0 - NumPad9
+            if (key >= Key.NumPad0 && key <= Key.NumPad9)
+            {
+                return "Num " + ((int)key - (int)Key.NumPad0).ToString();
+            }
+
+            // 处理其他常见特殊字符的友好显示 (可选)
+            switch (key)
+            {
+                case Key.OemPlus: return "+";
+                case Key.OemMinus: return "-";
+                case Key.OemComma: return ",";
+                case Key.OemPeriod: return ".";
+                case Key.OemQuestion: return "?";
+                case Key.OemOpenBrackets: return "[";
+                case Key.OemCloseBrackets: return "]";
+                case Key.OemPipe: return "|";
+                case Key.OemTilde: return "~";
+                case Key.Return: return "Enter";
+                case Key.Next: return "PageDown"; // WPF里 PageDown叫 Next
+                case Key.Capital: return "CapsLock";
+                case Key.Back: return "Backspace";
+                default:
+                    return key.ToString(); // 其他键保持默认
             }
         }
     }
@@ -369,6 +413,21 @@ namespace TabPaint
                 if (_skipResetConfirmation != value)
                 {
                     _skipResetConfirmation = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private bool _autoPopupOnClipboardImage = false; // 默认不弹出
+
+        [JsonPropertyName("auto_popup_on_clipboard_image")]
+        public bool AutoPopupOnClipboardImage
+        {
+            get => _autoPopupOnClipboardImage;
+            set
+            {
+                if (_autoPopupOnClipboardImage != value)
+                {
+                    _autoPopupOnClipboardImage = value;
                     OnPropertyChanged();
                 }
             }

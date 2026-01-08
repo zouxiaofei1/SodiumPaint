@@ -143,13 +143,88 @@
     M14,12 L10,12 M6,12 L2,12 M22,12 L18,12
     </StreamGeometry>
 
+    <DrawingImage x:Key="ColorPickerPencil_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Transform>
+                    <TranslateTransform X="2" Y="2"/>
+                </DrawingGroup.Transform>
+                <DrawingGroup>
+                    <DrawingGroup.Transform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
+                            <TranslateTransform X="3" Y="2"/>
+                            <TranslateTransform X="1" Y="0"/>
+                        </TransformGroup>
+                    </DrawingGroup.Transform>
+                    <GeometryDrawing Brush="#508FE1">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry Figures="M15.308,4.434 C16.22,3.523 16.118,1.939 15.079,0.9 C14.038,-0.139 12.455,-0.242 11.545,0.67 L10.364,1.853 L14.128,5.617 L15.308,4.434 Z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#434343">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry Figures="M5.468,14.276 L11.615,8.128 L12.387,8.9 L13.971,7.314 L8.662,2.005 L7.077,3.589 L7.85,4.362 L1.702,10.508 L0.02,15.201 L0.774,15.955 L5.468,14.276 Z M8.916,5.428 L10.551,7.064 L4.289,13.324 L1.695,14.284 L2.654,11.688 L8.916,5.428 Z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+                <DrawingGroup>
+                    <DrawingGroup.Transform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="-0.85" ScaleY="0.85"/>
+                            <TranslateTransform X="22" Y="1"/>
+                        </TransformGroup>
+                    </DrawingGroup.Transform>
+                    <GeometryDrawing Brush="#EECE82">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry Figures="M18.556 8.90942L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L15.0647 5.35974C15.0742 5.4062 15.0969 5.45049 15.1329 5.48653L18.5506 8.90426C18.5524 8.90601 18.5542 8.90773 18.556 8.90942Z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round"/>
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry Figures="M20.0651 7.39423L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L16.5517 3.86681C19.5632 1.34721 22.5747 4.87462 20.0651 7.39423Z" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round"/>
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry Figures="M15.3096 5.30981L18.7273 8.72755" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
-    <StreamGeometry x:Key="Fill_Bucket_Image">
-        M4,29.987 L28,29.987 C28.828,29.987 29.5,29.314999999999998 29.5,28.487 29.5,27.659999999999997 28.828,26.987 28,26.987 L4,26.987 C3.172,26.987 2.5,27.659999999999997 2.5,28.487 2.5,29.314999999999998 3.172,29.987 4,29.987z 
-    M9.138,22.244 C10.461,22.572,11.913,22.362,13.133,21.542 L23.006,14.830000000000002 C23.464,14.522000000000002,23.586,13.901000000000002,23.279,13.442000000000002 L16.562,3.442000000000002 C16.254,2.9840000000000018 15.633000000000001,2.862000000000002 15.174000000000001,3.1700000000000017 15.174000000000001,3.1700000000000017 9.147000000000002,7.218000000000002 5.213000000000001,9.861 2.920000000000001,11.4 2.310000000000001,14.507000000000001 3.850000000000001,16.799 4.575000000000001,17.878999999999998 5.380000000000001,19.078 6.106000000000001,20.158 6.844000000000001,21.257 7.942000000000001,21.970000000000002 9.138000000000002,22.244z 
-    M20.586,13.020999999999999 L5.167999999999999,13.020999999999999 C5.374999999999999,12.43 5.7669999999999995,11.896999999999998 6.327999999999999,11.520999999999999 6.327999999999999,11.520999999999999 15.459,5.387999999999999 15.459,5.387999999999999 L20.586,13.020999999999999z 
-    M26.339,15.455 C26.154,15.171 25.839,15 25.5,15 25.161,15 24.846,15.171 24.661,15.455 24.661,15.455 23.387,17.42 22.622,19.187 22.243,20.063000000000002 22,20.904 22,21.5 22,23.432 23.568,25 25.5,25 27.432,25 29,23.432 29,21.5 29,20.904 28.757,20.063 28.378,19.187 27.613,17.42 26.339,15.455000000000002 26.339,15.455000000000002z
-    </StreamGeometry>
+    <DrawingImage  x:Key="Fill_Bucket_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V32 H32 V0 H0 Z">
+                <GeometryDrawing Brush="#333">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M4,29.987l24,0c0.828,0 1.5,-0.672 1.5,-1.5c0,-0.827 -0.672,-1.5 -1.5,-1.5l-24,0c-0.828,0 -1.5,0.673 -1.5,1.5c0,0.828 0.672,1.5 1.5,1.5Z" FillRule="EvenOdd" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#333">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M9.138,22.244c1.323,0.328 2.775,0.118 3.995,-0.702l9.873,-6.712c0.458,-0.308 0.58,-0.929 0.273,-1.388l-6.717,-10c-0.308,-0.458 -0.929,-0.58 -1.388,-0.272c0,-0 -6.027,4.048 -9.961,6.691c-2.293,1.539 -2.903,4.646 -1.363,6.938c0.725,1.08 1.53,2.279 2.256,3.359c0.738,1.099 1.836,1.812 3.032,2.086Zm11.448,-9.223l-15.418,0c0.207,-0.591 0.599,-1.124 1.16,-1.5c-0,-0 9.131,-6.133 9.131,-6.133l5.127,7.633Z" FillRule="EvenOdd" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FF508FE1">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#333" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M26.339,15.455c-0.185,-0.284 -0.5,-0.455 -0.839,-0.455c-0.339,-0 -0.654,0.171 -0.839,0.455c0,0 -1.274,1.965 -2.039,3.732c-0.379,0.876 -0.622,1.717 -0.622,2.313c-0,1.932 1.568,3.5 3.5,3.5c1.932,0 3.5,-1.568 3.5,-3.5c-0,-0.596 -0.243,-1.437 -0.622,-2.313c-0.765,-1.767 -2.039,-3.732 -2.039,-3.732Z" FillRule="EvenOdd" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
 
     <StreamGeometry x:Key="Select_Image">
@@ -195,12 +270,24 @@
 
 
 
-    <StreamGeometry x:Key="Eraser_Image">
-            F1 M348.994,102.946L250.04,3.993C244.71699999999998,-1.3300000000000005,236.08599999999998,-1.331,230.76299999999998,3.993L77.06299999999999,157.694 195.293,275.924 348.994,122.22399999999999C354.317,116.902,354.317,108.271,348.994,102.946z 
-    M52.646,182.11L11.006,223.75C5.682,229.072,5.682,237.703,11.006,243.025L109.96,341.98199999999997C115.28299999999999,347.304,123.91399999999999,347.30199999999996,129.237,341.98199999999997L170.876,300.34099999999995 52.646,182.11z 
-    M150.133,360L150.133,360 341.767,360 341.767,331.949 182.806,331.949z
-        </StreamGeometry>
 
+    <DrawingImage x:Key="Eraser_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V360 H360 V0 H0 Z">
+                <DrawingGroup.Children>
+                    <GeometryDrawing Brush="#333" 
+                                 Geometry="M348.994,102.946 L250.04,3.993 C244.717,-1.33 236.086,-1.331 230.763,3.993 L77.063,157.694 L195.293,275.924 L348.994,122.224 C354.317,116.902 354.317,108.271 348.994,102.946 Z" />
+
+                    <GeometryDrawing Brush="#F76A6A" 
+                                 Geometry="M52.646,182.11 L11.006,223.75 C5.682,229.072 5.682,237.703 11.006,246.978 L109.96,345.935 C115.283,351.257 123.914,351.255 129.237,345.935 L170.876,304.294 L52.646,182.11 Z" />
+
+                    <GeometryDrawing Brush="#333" 
+                                 Geometry="M150.133,360 L341.767,360 L341.767,331.949 L182.806,331.949 Z" />
+
+                </DrawingGroup.Children>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
     <StreamGeometry x:Key="Rotate_Left_Image">
         M1158.469,895.938 
     C1156.323,895.896 1154.167,895.917 1152,896 1134,896 1117.333,899.333 1102,906 1086.667,912.667 1073.333,921.667 1062,933 1050.667,944.333 1041.333,958 1034,974 1026.667,990 1023.333,1006.667 1024,1024 1024,1042 1027.333,1058.667 1034,1074 1040.667,1089.333 1049.667,1102.667 1061,1114 1072.333,1125.333 1086,1134.667 1102,1142 1118,1149.333 1134.667,1152.667 1152,1152 1170,1152 1186.667,1148.667 1202,1142 1217.333,1135.333 1230.667,1126.333 1242,1115 1253.333,1103.667 1262.667,1090 1270,1074 1277.333,1058 1280.667,1041.333 1280,1024 1280,1006 1276.667,989.333 1270,974 1263.333,958.667 1254.333,945.333 1243,934 1231.667,922.667 1218,913.333 1202,906 1188,899.583 1173.49,896.229 1158.469,895.938z 
@@ -246,15 +333,58 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+    <DrawingImage  x:Key="Pencil_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#EECE82">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M18.556 8.90942L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L15.0647 5.35974C15.0742 5.4062 15.0969 5.45049 15.1329 5.48653L18.5506 8.90426C18.5524 8.90601 18.5542 8.90773 18.556 8.90942Z" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M20.0651 7.39423L7.09967 20.4114C6.72438 20.7882 6.21446 21 5.68265 21H4.00383C3.44943 21 3 20.5466 3 19.9922V18.2987C3 17.7696 3.20962 17.2621 3.58297 16.8873L16.5517 3.86681C19.5632 1.34721 22.5747 4.87462 20.0651 7.39423Z" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#323232" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M15.3096 5.30981L18.7273 8.72755" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+   
 
 
+    <DrawingImage x:Key="Pick_Colour_Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.Transform>
+                    <TranslateTransform X="1" Y="0"/>
+                </DrawingGroup.Transform>
 
-    <StreamGeometry x:Key="Pencil_Image">
-        M30.133 1.552c-1.090-1.044-2.291-1.573-3.574-1.573-2.006 0-3.47 1.296-3.87 1.693-0.564 0.558-19.786 19.788-19.786 19.788-0.126 0.126-0.217 0.284-0.264 0.456-0.433 1.602-2.605 8.71-2.627 8.782-0.112 0.364-0.012 0.761 0.256 1.029 0.193 0.192 0.45 0.295 0.713 0.295 0.104 0 0.208-0.016 0.31-0.049 0.073-0.024 7.41-2.395 8.618-2.756 0.159-0.048 0.305-0.134 0.423-0.251 0.763-0.754 18.691-18.483 19.881-19.712 1.231-1.268 1.843-2.59 1.819-3.925-0.025-1.319-0.664-2.589-1.901-3.776zM22.37 4.87c0.509 0.123 1.711 0.527 2.938 1.765 1.24 1.251 1.575 2.681 1.638 3.007-3.932 3.912-12.983 12.867-16.551 16.396-0.329-0.767-0.862-1.692-1.719-2.555-1.046-1.054-2.111-1.649-2.932-1.984 3.531-3.532 12.753-12.757 16.625-16.628zM4.387 23.186c0.55 0.146 1.691 0.57 2.854 1.742 0.896 0.904 1.319 1.9 1.509 2.508-1.39 0.447-4.434 1.497-6.367 2.121 0.573-1.886 1.541-4.822 2.004-6.371zM28.763 7.824c-0.041 0.042-0.109 0.11-0.19 0.192-0.316-0.814-0.87-1.86-1.831-2.828-0.981-0.989-1.976-1.572-2.773-1.917 0.068-0.067 0.12-0.12 0.141-0.14 0.114-0.113 1.153-1.106 2.447-1.106 0.745 0 1.477 0.34 2.175 1.010 0.828 0.795 1.256 1.579 1.27 2.331 0.014 0.768-0.404 1.595-1.24 2.458z
-    </StreamGeometry>
-    <StreamGeometry x:Key="Pick_Colour_Image">
-        F0 M16.308,4.434 C17.22,3.523 17.118,1.939 16.079,0.9 15.038,-0.139 13.455,-0.242 12.545,0.67 L11.364,1.853 15.128,5.617 16.308,4.434 16.308,4.434 Z M6.468,14.276 L12.615,8.128 13.387,8.9 14.971,7.314 9.662,2.005 8.077,3.589 8.85,4.362 2.702,10.508 1.02,15.201 1.774,15.955 6.468,14.276 6.468,14.276 Z M9.916,5.428 L11.551,7.064 5.289,13.324 2.695,14.284 3.654,11.688 9.916,5.428 9.916,5.428 Z
-    </StreamGeometry>
+                <GeometryDrawing Brush="#508FE1">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M15.308,4.434 C16.22,3.523 16.118,1.939 15.079,0.9 C14.038,-0.139 12.455,-0.242 11.545,0.67 L10.364,1.853 L14.128,5.617 L15.308,4.434 L15.308,4.434 Z" FillRule="EvenOdd"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#434343">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M5.468,14.276 L11.615,8.128 L12.387,8.9 L13.971,7.314 L8.662,2.005 L7.077,3.589 L7.85,4.362 L1.702,10.508 L0.02,15.201 L0.774,15.955 L5.468,14.276 L5.468,14.276 Z M8.916,5.428 L10.551,7.064 L4.289,13.324 L1.695,14.284 L2.654,11.688 L8.916,5.428 L8.916,5.428 Z" FillRule="EvenOdd"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
     <StreamGeometry x:Key="Exit_Image">
         M15,4.001 L5,4.001 5,18.001 C5,19.106 5.895,20.001 7,20.001 L15,20.001 

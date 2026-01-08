@@ -92,7 +92,7 @@ namespace TabPaint
 #if DEBUG
                 //   filePath = @"E:\dev\"; //10图片
        //         filePath = @"E:\dev\res\"; // 150+图片
-                //filePath = @"E:\dev\res\camera\"; // 1000+4k照片
+            //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
                 // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹
                
 #endif
@@ -102,22 +102,6 @@ namespace TabPaint
             _mainWindow.Show();
         }
 
-        private void RestoreWindow(Window window)
-        {
-            if (window.WindowState == WindowState.Minimized)
-            {
-                window.WindowState = WindowState.Normal;
-            }
-            window.Activate();
-            window.Topmost = true;  // 临时置顶
-            window.Topmost = false; // 取消置顶
-            window.Focus();
 
-            // 如果需要更激进的置顶，可以使用 SetForegroundWindow API
-             SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(window).Handle);
-        }
-
-        [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }

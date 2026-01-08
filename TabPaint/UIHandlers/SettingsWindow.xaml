@@ -143,6 +143,23 @@
                     <StackPanel x:Name="PaintPanel" Visibility="Collapsed" Margin="24">
                         <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
                         <TextBlock Text="编辑习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10"/>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="剪贴板图片自动弹出"/>
+                                <TextBlock Text="当后台监听检测到剪贴板有新图片时，自动激活并置顶窗口" 
+                       Foreground="Gray" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <CheckBox Grid.Column="2"  Style="{StaticResource FluentCheckBoxStyle}" 
+                  IsChecked="{Binding Path=Current.AutoPopupOnClipboardImage, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                  VerticalAlignment="Center"/>
+                        </Grid>
 
                         <!-- 选区清除模式设置 -->
                         <Grid Margin="0,5">
@@ -398,6 +415,8 @@
                                 <TextBlock Text="监听剪贴板开关" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ClipMonitor], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
+
+                            <!-- 1. AI 移除背景 -->
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
@@ -406,6 +425,18 @@
                                 <TextBlock Text="AI 移除背景" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.RemoveBg], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
+
+                            <!-- 2. AI 绿幕抠图 (新增) -->
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="色差抠图" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ChromaKey], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <!-- 3. OCR 文字识别 -->
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
@@ -414,6 +445,8 @@
                                 <TextBlock Text="OCR 文字识别" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.OCR], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
+
+                            <!-- 4. 屏幕取色器 -->
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
@@ -421,6 +454,36 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="屏幕取色器" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ScreenPicker], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <!-- 5. 复制 HEX 色值 (新增) -->
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="复制当前颜色 HEX" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.CopyColorCode], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <!-- 6. 智能裁切空白 (新增) -->
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="智能裁切空白边缘" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.AutoCrop], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
+                            <!-- 7. 图片加边框 (新增) -->
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="图片加边框" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.AddBorder], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
                             <!-- 第三组：文件操作 -->

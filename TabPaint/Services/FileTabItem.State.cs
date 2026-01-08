@@ -139,54 +139,122 @@ namespace TabPaint
             }
 
             // 在 MainWindow.cs -> FileTabItem 类内部
-
+            private CancellationTokenSource _loadCts;
             public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
             {
-                // 1. 确定要加载的路径：优先由 BackupPath (缓存)，其次是 FilePath (原图)
-                string targetPath = null;
+                // 0. 基础检查
+                if (Thumbnail != null) return;
 
-                if (!string.IsNullOrEmpty(BackupPath) && File.Exists(BackupPath))
+                // 确定 Key (通常用 FilePath，如果是未命名且有备份，用备份路径或ID)
+                string cacheKey = FilePath;
+                if (IsNew && !string.IsNullOrEmpty(BackupPath)) cacheKey = BackupPath;
+                if (string.IsNullOrEmpty(cacheKey)) return;
+
+                // 1. 【一级缓存检查】: 内存里有没有？有直接拿！
+                var cachedImage = MainWindow.GlobalThumbnailCache.Get(cacheKey);
+                if (cachedImage != null)
                 {
-                    targetPath = BackupPath;
+                    Thumbnail = cachedImage;
+                    IsLoading = false;
+                    return;
                 }
-                else if (!string.IsNullOrEmpty(FilePath) && File.Exists(FilePath))
+
+                // 2. 准备开始异步加载
+
+                // 取消上一次针对这个Tab的未完成请求（防止快速滚动时积压）
+                if (_loadCts != null)
                 {
-                    targetPath = FilePath;
+                    _loadCts.Cancel();
+                    _loadCts = null;
                 }
 
-                if (targetPath == null) return;
+                _loadCts = new CancellationTokenSource();
+                var token = _loadCts.Token;
 
-                var thumbnail = await Task.Run(() =>
+                IsLoading = true;
+
+                try
                 {
+                    // 防抖：给一点点缓冲时间，如果用户滑得飞快，这里还没过就被取消了
+                    await Task.Delay(50, token);
+
+                    // 3. 申请信号量：限制同时解码的线程数，防止显存爆炸
+                    await MainWindow._thumbnailSemaphore.WaitAsync(token);
+
+                    BitmapSource loadedBitmap = null;
+
                     try
                     {
-                        var bmp = new BitmapImage();
-                        bmp.BeginInit();
-                        bmp.UriSource = new Uri(targetPath);
+                        if (token.IsCancellationRequested) return;
 
-                        if (targetPath == FilePath)
+                        // 4. 开始读盘解码
+                        loadedBitmap = await Task.Run(() =>
                         {
-                            bmp.DecodePixelWidth = 100;
-                        }
+                            if (token.IsCancellationRequested) return null;
 
-                        bmp.CacheOption = BitmapCacheOption.OnLoad; // 关键：加载完立即释放文件锁
-                        bmp.EndInit();
-                        bmp.Freeze();
-                        return bmp;
+                            string targetPath = null;
+                            if (!string.IsNullOrEmpty(BackupPath) && File.Exists(BackupPath)) targetPath = BackupPath;
+                            else if (!string.IsNullOrEmpty(FilePath) && File.Exists(FilePath)) targetPath = FilePath;
+
+                            if (targetPath == null) return null;
+
+                            try
+                            {
+                                var bmp = new BitmapImage();
+                                bmp.BeginInit();
+                                bmp.UriSource = new Uri(targetPath);
+
+                                bmp.DecodePixelWidth = 100;
+
+                                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                                bmp.EndInit();
+                                bmp.Freeze(); // 冻结以跨线程
+                                return bmp;
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Thumb load error: {ex.Message}");
+                                return null;
+                            }
+                        }, token);
                     }
-                    catch
+                    finally
                     {
-                        return null;
+                        // 无论如何都要释放信号量
+                        MainWindow._thumbnailSemaphore.Release();
                     }
-                });
 
-                if (thumbnail != null)
+                    if (token.IsCancellationRequested) return;
+
+                    // 5. 存入缓存并更新 UI
+                    if (loadedBitmap != null)
+                    {
+                        MainWindow.GlobalThumbnailCache.Add(cacheKey, loadedBitmap);
+
+                        // 切换回 UI 线程更新属性
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            Thumbnail = loadedBitmap;
+                        });
+                    }
+                }
+                catch (OperationCanceledException)
                 {
-                    // 回到 UI 线程设置属性
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        Thumbnail = thumbnail;
-                    });
+                    // 正常取消，忽略
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Async load failed: {ex.Message}");
+                }
+                finally
+                {
+                    // 只有当任务完成或取消，且当前没有缩略图时，才把 Loading 设为 false
+                    // (防止刚设为 false 又被新的任务设为 true 的闪烁，虽然有了 CTS 这种情况很少)
+                    if (!token.IsCancellationRequested)
+                        IsLoading = false;
+
+                    _loadCts?.Dispose();
+                    _loadCts = null;
                 }
             }
             public event PropertyChangedEventHandler? PropertyChanged;

@@ -915,21 +915,56 @@ namespace TabPaint
         }
         public void RestoreTransferredSelection()
         {
-            if (IsTransferringSelection && _transferSelectionData != null && _surface != null)
+            if (!IsTransferringSelection || _transferSelectionData == null || _surface == null) return;
+
+            try
             {
-                // 构造 BitmapSource
+                // 1. 构造 BitmapSource
                 var bmp = BitmapSource.Create(_transferWidth, _transferHeight,
                     _surface.Bitmap.DpiX, _surface.Bitmap.DpiY,
                     PixelFormats.Bgra32, null, _transferSelectionData, _transferWidth * 4);
 
                 SelectTool st = _router.GetSelectTool();
+
+                // 确保切换到 Select 工具
+                if (_router.CurrentTool != st)
+                {
+                    _router.SetTool(st);
+                }
+
+                // ================== 【核心修复代码】 ==================
+                // 强制清除工具中残留的“上一张图”的选区数据
+                // 防止 InsertImageAsSelection 里的 CommitSelection 把旧数据印在画布上
+                st._selectionData = null;
+                st._selectionRect = new Int32Rect(0, 0, 0, 0);
+
+                // 同时也隐藏旧的预览框，防止闪烁
+                if (_ctx.SelectionPreview != null)
+                {
+                    _ctx.SelectionPreview.Visibility = Visibility.Collapsed;
+                    _ctx.SelectionPreview.Source = null;
+                }
+                // ======================================================
+
+                // 2. 插入新图片（带画布扩容）
+                st.InsertImageAsSelection(_ctx, bmp, expandCanvas: true);
+
+                // 3. 强制进入拖拽状态
                 st.ForceDragState();
 
-                // 清理标志
+                NotifyCanvasChanged();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Restore Selection Failed: {ex.Message}");
+            }
+            finally
+            {
                 IsTransferringSelection = false;
                 _transferSelectionData = null;
             }
         }
+
         private void UpdateImageBarVisibilityState()
         {
             if (MainImageBar == null || FileTabs == null) return;

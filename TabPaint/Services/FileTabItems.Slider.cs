@@ -233,9 +233,6 @@ namespace TabPaint
 
             bool needLoadThumbnail = false;
 
-            // 3. 【向后加载】逻辑优化 (Load Next)
-            // 只要看到最后 5 个以内，且还有更多文件，就加载
-            // 阈值调大到 5，防止滚动过快时出现空白
             if (FileTabs.Count > 0 &&
         firstLocalIndex + visibleCount >= FileTabs.Count - 5 &&
         FileTabs.Count < _imageFiles.Count)

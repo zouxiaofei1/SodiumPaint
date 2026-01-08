@@ -15,33 +15,80 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="50" Background="#90FFFFFF" AllowDrop="True">
+    <Border Height="50" Background="#90FFFFFF" AllowDrop="True" SizeChanged="OnToolBarSizeChanged">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,7">
             <!-- 基础工具 -->
-            <Button Margin="6,0,1,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔" Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="PenIcon" x:FieldModifier="public" Data="{DynamicResource Pencil_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16" Cursor=""/>
-            </Button>
 
-            <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色" Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="PickColorIcon" x:FieldModifier="public" Data="{DynamicResource Pick_Colour_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-            </Button>
+            <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal">
+                <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                    <Path x:Name="SelectIcon" x:FieldModifier="public" Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                </Button>
+                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔" Padding="6,0" Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
 
-            <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="EraserIcon" x:FieldModifier="public" Data="{DynamicResource Eraser_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-            </Button>
+                    <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
+                </Button>
+                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色"  Padding="6,0" Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                    <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
+                </Button>
+                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Padding="6,0" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                    <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
+                </Button>
+                <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="填充" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                    <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
+                </Button>
+                <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="文字" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                    <Path x:Name="TextIcon" x:FieldModifier="public" Data="{DynamicResource Text_Image}" Stretch="Uniform" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Stroke="#333" Fill="Transparent" Width="16" Height="16"/>
+                </Button>
+            </StackPanel>
 
-            <Button Margin="4,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="SelectIcon" x:FieldModifier="public" Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-            </Button>
+            <!-- 2. 折叠模式：工具集合菜单 (默认隐藏) -->
+            <Grid x:Name="CollapsedToolsPanel" Visibility="Collapsed" Margin="6,0,6,0">
+                <ToggleButton x:Name="ToolsMenuToggle" ToolTip="绘图工具" Style="{StaticResource DropDownButtonStyle}">
+                    <!-- 这里可以用一个代表'工具箱'的图标，或者动态显示当前选中的工具图标 -->
+                    <Image Source="{DynamicResource ColorPickerPencil_Image}" Width="16" Height="16" />
+                </ToggleButton>
 
-            <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="填充" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="FillIcon" x:FieldModifier="public" Data="{DynamicResource Fill_Bucket_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
-            </Button>
-
-            <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="文字" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
-                <Path x:Name="TextIcon" x:FieldModifier="public" Data="{DynamicResource Text_Image}" Stretch="Uniform" StrokeThickness="2"      StrokeStartLineCap="Round"  StrokeEndLineCap="Round"  StrokeLineJoin="Round"       Stroke="#333"   Fill="Transparent" Width="16" Height="16"/>
-            </Button>
-
+                <Popup IsOpen="{Binding IsChecked, ElementName=ToolsMenuToggle, Mode=TwoWay}"
+                       PlacementTarget="{Binding ElementName=ToolsMenuToggle}" 
+                       Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
+                       StaysOpen="{Binding IsMouseOver, ElementName=ToolsMenuToggle}">
+                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
+                        <StackPanel>
+                            <!-- 直接复用原有的点击事件 -->
+                            <MenuItem Header="选择区域" Style="{StaticResource SubMenuItemStyle}" Click="OnSelectClick_Forward">
+                                <MenuItem.Icon>
+                                    <Path Data="{DynamicResource Select_Image}" Stretch="Uniform" Fill="#333" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="铅笔" Style="{StaticResource SubMenuItemStyle}" Click="OnPenClick_Forward">
+                                <MenuItem.Icon>
+                                    <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="取色器" Style="{StaticResource SubMenuItemStyle}" Click="OnPickColorClick_Forward">
+                                <MenuItem.Icon>
+                                    <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="橡皮擦" Style="{StaticResource SubMenuItemStyle}" Click="OnEraserClick_Forward">
+                                <MenuItem.Icon>
+                                    <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="填充" Style="{StaticResource SubMenuItemStyle}" Click="OnFillClick_Forward">
+                                <MenuItem.Icon>
+                                    <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="文字" Style="{StaticResource SubMenuItemStyle}" Click="OnTextClick_Forward">
+                                <MenuItem.Icon>
+                                    <Path Data="{DynamicResource Text_Image}" Stretch="Uniform" StrokeThickness="2" Stroke="#333" Fill="Transparent" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+            </Grid>
             <!-- 画刷菜单 (Popup 逻辑保留在 XAML 内部) -->
             <Grid>
                 <ToggleButton x:Name="BrushToggle" x:FieldModifier="public" ToolTip="画刷"  Style="{StaticResource DropDownButtonStyle}">
@@ -307,7 +354,7 @@
             <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
                 
             </Button>
-            <ItemsControl ItemsSource="{Binding ColorItems}">
+            <ItemsControl  x:Name="ColorPaletteItems" ItemsSource="{Binding ColorItems}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <!-- 增加间距：StackPanel 保持水平 -->

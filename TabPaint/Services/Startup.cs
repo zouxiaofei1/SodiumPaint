@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,5 +39,22 @@ namespace TabPaint
                 _currentFileExists = false;
             }
         }
+        static public void RestoreWindow(System.Windows.Window window)
+        {
+            if (window.WindowState == WindowState.Minimized)
+            {
+                window.WindowState = WindowState.Normal;
+            }
+            window.Activate();
+            window.Topmost = true;  // 临时置顶
+            window.Topmost = false; // 取消置顶
+            window.Focus();
+
+            // 如果需要更激进的置顶，可以使用 SetForegroundWindow API
+            SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(window).Handle);
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }

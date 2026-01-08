@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 using static TabPaint.MainWindow;
 
 //
@@ -268,6 +269,13 @@ namespace TabPaint
 
             // 触发 UI 更新
             tab.Thumbnail = newThumb;
+            string key = tab.FilePath;
+            if (tab.IsNew && !string.IsNullOrEmpty(tab.BackupPath)) key = tab.BackupPath;
+
+            if (!string.IsNullOrEmpty(key))
+            {
+                MainWindow.GlobalThumbnailCache.Add(key, transformedBitmap);
+            }
         }
         private void UpdateTabThumbnail(FileTabItem tabItem)
         {//用当前canvas更新tabitem的thumbail
@@ -450,7 +458,17 @@ namespace TabPaint
                     }
                 }
             }
-
+            foreach (var pendingTab in _pendingDeletionTabs)
+            {
+                if (IsVirtualPath(pendingTab.FilePath))
+                {
+                    string numPart = pendingTab.FilePath.Replace(VirtualFilePrefix, "");
+                    if (int.TryParse(numPart, out int num))
+                    {
+                        usedNumbers.Add(num);
+                    }
+                }
+            }
             // 从 1 开始找，第一个不在 HashSet 里的数字就是我们要的
             int candidate = 1;
             while (usedNumbers.Contains(candidate))
@@ -693,7 +711,8 @@ namespace TabPaint
                 IsNew = true,
                 UntitledNumber = availableNumber, // 关键：记录这个编号
                 IsDirty = false,
-                   Id = $"Virtual_{availableNumber}"
+                   Id = $"Virtual_{availableNumber}",
+                    BackupPath = null
             };
 
             newTab.Thumbnail = GenerateBlankThumbnail();

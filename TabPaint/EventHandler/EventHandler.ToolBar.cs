@@ -28,10 +28,11 @@ namespace TabPaint
         {
             try
             {
+                a.s("切换工作区到新文件：", filePath);
                 // 1. 停止当前所有可能的加载任务
                 _loadImageCts?.Cancel();
                 lock (_queueLock) { _pendingFilePath = null; }
-                FileTabs.Clear();
+               // FileTabs.Clear();
                 _imageFiles.Clear(); // 清空之前的文件夹扫描缓存
                 _currentImageIndex = -1;
 

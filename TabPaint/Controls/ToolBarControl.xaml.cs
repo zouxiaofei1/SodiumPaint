@@ -122,5 +122,80 @@ namespace TabPaint.Controls
             // 列表中的颜色块，sender是Button，DataContext是颜色Brush
             RaiseEvent(new RoutedEventArgs(ColorButtonClickEvent, sender));
         }
+        private void OnToolBarSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            double collapseThreshold = 780;
+
+            if (e.NewSize.Width < collapseThreshold)
+            {
+                // 窗口变窄：隐藏展开面板，显示折叠菜单
+                if (ExpandedToolsPanel.Visibility == Visibility.Visible)
+                {
+                    ExpandedToolsPanel.Visibility = Visibility.Collapsed;
+                    CollapsedToolsPanel.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                // 窗口够宽：显示展开面板，隐藏折叠菜单
+                if (ExpandedToolsPanel.Visibility == Visibility.Collapsed)
+                {
+                    ExpandedToolsPanel.Visibility = Visibility.Visible;
+                    CollapsedToolsPanel.Visibility = Visibility.Collapsed;
+
+                    // 也可以在这里顺便关闭 Popup，防止菜单悬浮在空中
+                    ToolsMenuToggle.IsChecked = false;
+                }
+            }
+            UpdateColorPaletteVisibility();
+        }
+        private void UpdateColorPaletteVisibility()
+        {
+            if (ColorPaletteItems == null || ColorPaletteItems.Items.Count == 0) return;
+
+            double itemWidth = 28.0;
+
+            double leftUsedWidth = 620; // 保底默认值
+
+            try
+            {
+                // 获取 ColorPaletteItems 在 ToolBarControl 中的相对位置
+                Point relativePoint = ColorPaletteItems.TranslatePoint(new Point(0, 0), this);
+                // 如果 X > 0 说明布局已完成，使用真实坐标作为左侧已占用宽度
+                if (relativePoint.X > 0)
+                {
+                    leftUsedWidth = relativePoint.X;
+                }
+            }
+            catch { }
+
+            // 3. 计算留给颜色列表的剩余空间
+            // 总宽度 - 左侧占用 - 右侧留白(比如20px)
+            double availableWidth = this.ActualWidth - leftUsedWidth - 20;
+
+            if (availableWidth < 0) availableWidth = 0;
+
+            // 4. 计算能放下多少个按钮
+            int visibleCount = (int)(availableWidth / itemWidth);
+
+            // 5. 遍历容器设置可见性
+            var generator = ColorPaletteItems.ItemContainerGenerator;
+            for (int i = 0; i < ColorPaletteItems.Items.Count; i++)
+            {
+                // 获取第 i 个数据对应的 UI 元素 (ContentPresenter)
+                var container = generator.ContainerFromIndex(i) as UIElement;
+                if (container != null)
+                {
+                    // 如果索引小于允许显示的个数，则显示，否则折叠
+                    Visibility targetVisibility = (i < visibleCount) ? Visibility.Visible : Visibility.Collapsed;
+
+                    // 只有状态改变时才赋值，减少重绘开销
+                    if (container.Visibility != targetVisibility)
+                    {
+                        container.Visibility = targetVisibility;
+                    }
+                }
+            }
+        }
     }
 }

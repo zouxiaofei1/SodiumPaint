@@ -47,6 +47,7 @@ namespace TabPaint
             // 4. 切换焦点
             if (FileTabs.Count == 0)
             {
+                a.s("switch to new canvas");
                 ResetToNewCanvas();
             }
             else
@@ -100,29 +101,49 @@ namespace TabPaint
             if (_pendingDeletionTabs.Count == 0) return;
 
             // 取出最后一个删除的 Tab
-            var tab = _pendingDeletionTabs.Last();
-            _pendingDeletionTabs.Remove(tab);
-
+            var tabToRestore = _pendingDeletionTabs.Last();
+            _pendingDeletionTabs.Remove(tabToRestore);
+        
             // 停止计时器 (如果列表空了)
             if (_pendingDeletionTabs.Count == 0) _deleteCommitTimer.Stop();
+            //if (IsVirtualPath(tabToRestore.FilePath))
+            //{
+            //    var conflictTab = FileTabs.FirstOrDefault(t => t.FilePath == tabToRestore.FilePath);
 
+            //    if (conflictTab != null)
+            //    {
+            //        if (conflictTab.IsNew && !conflictTab.IsDirty)
+            //        {
+            //            FileTabs.Remove(conflictTab);
+            //            _imageFiles.Remove(conflictTab.FilePath);
+            //        }
+            //        else
+            //        {
+            //            int newNum = GetNextAvailableUntitledNumber();           //            string newPath = $"{VirtualFilePrefix}{newNum}";
+
+            //            tabToRestore.UntitledNumber = newNum;
+            //            tabToRestore.FilePath = newPath;
+            //            tabToRestore.Id = $"Virtual_{newNum}"; 
+            //        }
+            //    }
+            //}
             // 恢复到 UI 列表
             if (_lastDeletedTabIndex >= 0 && _lastDeletedTabIndex <= FileTabs.Count)
-                FileTabs.Insert(_lastDeletedTabIndex, tab);
+                FileTabs.Insert(_lastDeletedTabIndex, tabToRestore);
             else
-                FileTabs.Add(tab);
+                FileTabs.Add(tabToRestore);
 
             // 恢复到路径列表
-            if (!_imageFiles.Contains(tab.FilePath))
+            if (!_imageFiles.Contains(tabToRestore.FilePath))
             {
                 if (_lastDeletedTabIndex < _imageFiles.Count)
-                    _imageFiles.Insert(_lastDeletedTabIndex, tab.FilePath);
+                    _imageFiles.Insert(_lastDeletedTabIndex, tabToRestore.FilePath);
                 else
-                    _imageFiles.Add(tab.FilePath);
+                    _imageFiles.Add(tabToRestore.FilePath);
             }
 
             // 马上切回这个 Tab
-            SwitchToTab(tab);
+            SwitchToTab(tabToRestore);
 
             ShowToast("已撤销删除");
         }

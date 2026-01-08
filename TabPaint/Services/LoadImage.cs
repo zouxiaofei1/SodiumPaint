@@ -28,7 +28,7 @@ namespace TabPaint
         private bool _isProcessingQueue = false;
         private CancellationTokenSource _loadImageCts;
         private CancellationTokenSource _progressCts;
-        public async Task OpenImageAndTabs(string filePath, bool refresh = false,bool lazyload = false, bool forceFolderScan = false)
+        public async Task OpenImageAndTabs(string filePath, bool refresh = false,bool lazyload = false, bool forceFolderScan = false, bool nobackup = false)
         {
             _isLoadingImage = true;
             OnPropertyChanged("IsLoadingImage");
@@ -44,7 +44,7 @@ namespace TabPaint
                     _imageFiles = new List<string> { filePath };
                 }
 
-                TriggerBackgroundBackup();
+                if(!nobackup)TriggerBackgroundBackup();
 
                 if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
                 {

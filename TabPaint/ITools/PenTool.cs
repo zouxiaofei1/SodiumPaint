@@ -94,7 +94,7 @@ namespace TabPaint
                 }
                 if (dirty.HasValue)
                 {
-                    a.s("hasvalue");
+               //     a.s("hasvalue");
                     var finalRect = ClampRect(dirty.Value, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
                     if (finalRect.Width > 0 && finalRect.Height > 0)
                     {
