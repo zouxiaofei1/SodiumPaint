@@ -21,9 +21,6 @@ namespace TabPaint.Controls
         public ShortcutRecorder()
         {
             InitializeComponent();
-            // 失去焦点时恢复边框颜色
-            this.LostFocus += (s, e) => MainBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC));
-            this.GotFocus += (s, e) => MainBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x00, 0x67, 0xC0)); // Win11 蓝色
         }
 
         private static void OnCurrentItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

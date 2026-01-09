@@ -314,8 +314,6 @@ namespace TabPaint
                 {
                     _themeMode = value;
                     OnPropertyChanged();
-                    // 设置变更时，通知 ThemeManager 应用主题 (在外部监听或这里直接调用)
-                    ThemeManager.ApplyTheme(value);
                 }
             }
         }
@@ -548,6 +546,23 @@ namespace TabPaint
                 }
             }
         }
+        private string _themeAccentColor = "#0078D4"; // 默认蓝色
+
+        [JsonPropertyName("theme_accent_color")]
+        public string ThemeAccentColor
+        {
+            get => _themeAccentColor;
+            set
+            {
+                if (_themeAccentColor != value)
+                {
+                    _themeAccentColor = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
             var defaults = new Dictionary<string, ShortcutItem>

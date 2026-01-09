@@ -241,7 +241,7 @@ namespace TabPaint
                 // 绘制白色背景
                 context.DrawRectangle(Brushes.White, null, new Rect(0, 0, width, height));
                 // 可选：画一个浅灰色边框让它看得清楚
-                context.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromRgb(220, 220, 220)), 1), new Rect(0.5, 0.5, width - 1, height - 1));
+                context.DrawRectangle(null, new Pen(Application.Current.FindResource("ListItemPressedBrush") as Brush, 1), new Rect(0.5, 0.5, width - 1, height - 1));
             }
             bmp.Render(drawingVisual);
             bmp.Freeze();

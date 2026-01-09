@@ -239,7 +239,7 @@
                                     <!-- 悬浮关闭按钮 -->
                                     <!-- Background: 原 #CCFFFFFF 改为 GlassBackgroundHighBrush (高不透明度) -->
                                     <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" 
-                                            Background="{DynamicResource GlassBackgroundHighBrush}" BorderThickness="0" 
+                                            Background="{DynamicResource GlassBackgroundHighBrush}"   Style="{StaticResource CloseButtonStyle}" BorderThickness="0" 
                                             Click="Internal_OnFileTabCloseClick" Tag="{Binding}" Visibility="Hidden">
                                         <Button.Resources>
                                             <Style TargetType="Border">

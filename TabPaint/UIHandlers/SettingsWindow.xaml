@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:TabPaint"
         xmlns:controls="clr-namespace:TabPaint.Controls"
+     
         Title="TabPaint 设置" Height="500" Width="700"
         ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource ChromeLowBrush}"
@@ -17,6 +18,7 @@
                      但通常由App全局管理，这里只需引用 SubWindowStyles -->
             </ResourceDictionary.MergedDictionaries>
             <local:NonLinearConverter x:Key="NonLinearConverter"/>
+            <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -161,6 +163,90 @@
                                 <ComboBoxItem Content="浅色 (Light)" Tag="Light"/>
                                 <ComboBoxItem Content="深色 (Dark)" Tag="Dark"/>
                             </ComboBox>
+                        </Grid>
+                        <Grid Margin="0,15,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel VerticalAlignment="Top">
+                                <TextBlock Text="主题色"/>
+                                <TextBlock Text="界面强调颜色与工具图标颜色" 
+                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- 颜色选择区域 -->
+                            <ItemsControl Grid.Column="1">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.Resources>
+                                    <!-- 定义颜色块样式 -->
+                                    <Style TargetType="RadioButton" x:Key="ColorRadioStyle">
+                                        <Setter Property="Width" Value="32"/>
+                                        <Setter Property="Height" Value="32"/>
+                                        <Setter Property="Margin" Value="0,0,10,5"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="RadioButton">
+                                                    <Grid>
+                                                        <!-- 选中时的外圈 -->
+                                                        <Border x:Name="SelectionBorder" 
+                                        CornerRadius="16" 
+                                        BorderThickness="2" 
+                                        BorderBrush="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Opacity="0"
+                                        Width="32" Height="32"/>
+                                                        <!-- 颜色主体 -->
+                                                        <Border Width="22" Height="22" CornerRadius="11" 
+                                        Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <!-- 选中时的勾 -->
+                                                        <Path x:Name="CheckMark" Data="M2,6 L5,9 L10,3" Stroke="White" StrokeThickness="2" 
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Visibility="Collapsed"/>
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="SelectionBorder" Property="Opacity" Value="1"/>
+                                                            <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ItemsControl.Resources>
+                             
+                                <!-- 默认蓝 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
+                     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
+                     Command="{Binding SetColorCommand}" CommandParameter="#0078D4"/>
+                                <!-- 经典紫 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
+                     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
+                     Command="{Binding SetColorCommand}" CommandParameter="#9333EA"/>
+                                <!-- 翡翠绿 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
+                     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
+                     Command="{Binding SetColorCommand}" CommandParameter="#107C10"/>
+                                <!-- 活力橙 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
+                     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
+                     Command="{Binding SetColorCommand}" CommandParameter="#D13438"/>
+                                <!-- 少女粉 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
+                     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
+                     Command="{Binding SetColorCommand}" CommandParameter="#E3008C"/>
+                                <!-- 暗夜黑/灰 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
+                     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
+                     Command="{Binding SetColorCommand}" CommandParameter="#505050"/>
+                            </ItemsControl>
                         </Grid>
 
                     </StackPanel>

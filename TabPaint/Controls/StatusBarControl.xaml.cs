@@ -164,25 +164,20 @@ namespace TabPaint.Controls
         {
             double w = e.NewSize.Width;
 
-            // 1. 文件大小 (优先级最低)
-            Visibility fileVis = w > 600 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility fileVis = w > 950 ? Visibility.Visible : Visibility.Collapsed;
             StatusFileSize.Visibility = fileVis;
             SepFileSize.Visibility = fileVis;
-
-            // 2. 选区尺寸
-            Visibility selVis = w > 750 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility mouseVis = w > 800 ? Visibility.Visible : Visibility.Collapsed;
+            StatusMousePos.Visibility = mouseVis;
+            SepMousePos.Visibility = mouseVis;
+            Visibility selVis = w > 650 ? Visibility.Visible : Visibility.Collapsed;
             StatusSelectionSize.Visibility = selVis;
             SepSelectionSize.Visibility = selVis;
 
-            // 3. 图片尺寸
-            Visibility imgVis = w > 900 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility imgVis = w > 500 ? Visibility.Visible : Visibility.Collapsed;
             StatusImageSize.Visibility = imgVis;
             SepImageSize.Visibility = imgVis;
 
-            // 4. 鼠标位置 (优先级最高，最后消失)
-            Visibility mouseVis = w > 450 ? Visibility.Visible : Visibility.Collapsed;
-            StatusMousePos.Visibility = mouseVis;
-            SepMousePos.Visibility = mouseVis;
         }
     }
 }

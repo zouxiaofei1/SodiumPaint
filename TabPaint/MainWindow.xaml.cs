@@ -386,7 +386,7 @@ namespace TabPaint
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
-                zoomscale = fitScale * addscale * 0.98;
+                zoomscale = fitScale * addscale * 0.9;
 
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
@@ -975,8 +975,8 @@ namespace TabPaint
             bool isSingle = FileTabs.Count <= 1;
             if (MainImageBar.IsSingleTabMode != isSingle)
             {
-
                 MainImageBar.IsSingleTabMode = isSingle;
+                CheckFittoWindow();
             }
         }
 

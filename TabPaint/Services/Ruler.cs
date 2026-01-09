@@ -63,25 +63,50 @@ namespace TabPaint
         {
             base.OnRender(drawingContext);
 
-            // 1. 绘制背景
-            drawingContext.DrawRectangle(new SolidColorBrush(Color.FromArgb(20, 245, 245, 245)), null, new Rect(0, 0, ActualWidth, ActualHeight));
+            // ================== 【修改开始】 ==================
+            // 1. 动态获取主题资源中的颜色
+            // 使用 TryFindResource 防止设计器模式或资源未加载时崩溃，并提供默认值
 
-            // 2. 绘制边缘分割线
-            Pen borderPen = new Pen(Brushes.Gray, 1);
+            // 文字颜色：适配 TextPrimaryBrush (亮色模式黑，暗色模式白)
+            Brush textBrush = (Brush)TryFindResource("TextPrimaryBrush") ?? Brushes.Black;
+
+            // 刻度线颜色：适配 TextTertiaryBrush 或 BorderDarkBrush (灰色，看起来不那么刺眼)
+            Brush tickBrush = (Brush)TryFindResource("TextTertiaryBrush") ?? Brushes.Gray;
+
+            // 边框线颜色
+            Brush borderBrush = (Brush)TryFindResource("BorderMediumBrush") ?? Brushes.Gray;
+
+            // 背景色：保持你原有的逻辑，但建议加上判空
+            Brush bgBrush = (Brush)TryFindResource("GlassBackgroundMediumBrush") ?? Brushes.Transparent;
+
+            // 冻结画刷以提升性能 (OnRender会被频繁调用)
+            if (textBrush.CanFreeze) textBrush = textBrush.Clone(); // 确保是副本以便Freeze? 其实通常资源已经是Freezed的，但在代码中创建Pen最好Freeze Pen
+
+            // 2. 创建 Pen (画笔)
+            Pen borderPen = new Pen(borderBrush, 1);
             borderPen.Freeze();
+
+            Pen tickPen = new Pen(tickBrush, 1);
+            tickPen.Freeze();
+
+            Pen textPen = new Pen(textBrush, 1); // 如果需要文字轮廓才用这个，DrawText不需要Pen
+            textPen.Freeze();
+            // ================== 【修改结束】 ==================
+
+            // 1. 绘制背景 (使用动态获取的 bgBrush)
+            drawingContext.DrawRectangle(bgBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
+
+            // 2. 绘制边缘分割线 (使用 borderPen)
             if (Orientation == RulerOrientation.Horizontal)
                 drawingContext.DrawLine(borderPen, new Point(0, ActualHeight), new Point(ActualWidth, ActualHeight));
             else
                 drawingContext.DrawLine(borderPen, new Point(ActualWidth, 0), new Point(ActualWidth, ActualHeight));
 
             double zoom = ZoomFactor;
-            if (zoom <= 0.0001) zoom = 0.0001; // 防止除以零
+            if (zoom <= 0.0001) zoom = 0.0001;
 
-            double desiredPixelSpacing = 80.0; // 屏幕上每隔多少像素画一个大刻度才舒服？
+            double desiredPixelSpacing = 80.0;
             double rawStep = desiredPixelSpacing / zoom;
-
-            // 找一个最接近的整洁数字 (1, 2, 5, 10, 20, 50, 100, 200...)
-            // 计算数量级
             double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
             double residual = rawStep / magnitude;
 
@@ -91,47 +116,35 @@ namespace TabPaint
             else if (residual > 1) logicalStep = 2 * magnitude;
             else logicalStep = magnitude;
 
-            // 中刻度步长 (大刻度的一半)
             double midStep = logicalStep / 2.0;
-            // 小刻度步长 (大刻度的十分之一，如果太密就不画)
             double smallStep = logicalStep / 10.0;
-
-            // 屏幕上小刻度的间距，如果小于 4 像素，就不画小刻度了，太密看不清
             bool drawSmallTicks = (smallStep * zoom) > 4.0;
-
-            // ==========================================
-
             double maxVal = (Orientation == RulerOrientation.Horizontal ? ActualWidth : ActualHeight);
 
-            // 字体设置
+            // ================== 【修改字体颜色】 ==================
             Typeface typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-            Pen tickPen = new Pen(Brushes.DarkGray, 1);
-            Pen textPen = new Pen(Brushes.Black, 1);
-            tickPen.Freeze();
-            textPen.Freeze();
 
-            // 计算起始点
+            // 注意：这里不需要 textPen，因为 DrawText 不需要 Pen
+            // 关键点：FormattedText 的颜色参数使用上面获取的 textBrush
+
+            // ... (中间的计算逻辑保持不变) ...
+
             double startValue = -OriginOffset / zoom;
-            // 从稍早一点的地方开始画，避免边缘闪烁
             double startStepIndex = Math.Floor(startValue / smallStep);
             double currentVal = startStepIndex * smallStep;
-
-            // 为了性能，最多画 2000 个刻度 (防止死循环或极端情况)
             int safetyCount = 0;
 
             while (safetyCount++ < 2000)
             {
                 double screenPos = (currentVal * zoom) + OriginOffset;
 
-                if (screenPos > maxVal) break; // 超出屏幕范围
+                if (screenPos > maxVal) break;
 
-                if (screenPos >= -20) // 只绘制可见区域
+                if (screenPos >= -20)
                 {
-                    // 判断当前刻度类型
                     bool isMainTick = IsCloseToMultiple(currentVal, logicalStep);
                     bool isMidTick = !isMainTick && IsCloseToMultiple(currentVal, midStep);
 
-                    // 如果是小刻度，且太密了，就跳过
                     if (!isMainTick && !isMidTick && !drawSmallTicks)
                     {
                         currentVal += smallStep;
@@ -142,10 +155,9 @@ namespace TabPaint
 
                     if (Orientation == RulerOrientation.Horizontal)
                     {
-                        // 画线
+                        // 画刻度线 (使用 tickPen)
                         drawingContext.DrawLine(tickPen, new Point(screenPos, ActualHeight - tickHeight), new Point(screenPos, ActualHeight));
 
-                        // 画数字 (只在主刻度画)
                         if (isMainTick)
                         {
                             FormattedText text = new FormattedText(
@@ -154,15 +166,15 @@ namespace TabPaint
                                 FlowDirection.LeftToRight,
                                 typeface,
                                 10,
-                                Brushes.Black,
+                                textBrush, // <--- 【这里修改为 textBrush】
                                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
                             drawingContext.DrawText(text, new Point(screenPos + 2, 0));
                         }
                     }
-                    else // Vertical (竖向标尺)
+                    else // Vertical
                     {
-                        // 画刻度线
+                        // 画刻度线 (使用 tickPen)
                         drawingContext.DrawLine(tickPen, new Point(ActualWidth - tickHeight, screenPos), new Point(ActualWidth, screenPos));
 
                         if (isMainTick)
@@ -173,12 +185,11 @@ namespace TabPaint
                                 FlowDirection.LeftToRight,
                                 typeface,
                                 10,
-                                Brushes.Black,
+                                textBrush, // <--- 【这里修改为 textBrush】
                                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-
                             double xBase = ActualWidth - text.Height - 2;
-                            double yBase = screenPos + (text.Width / 2)+10;
+                            double yBase = screenPos + (text.Width / 2) + 10;
 
                             drawingContext.PushTransform(new RotateTransform(-90, xBase, yBase));
                             drawingContext.DrawText(text, new Point(xBase, yBase));
@@ -186,17 +197,14 @@ namespace TabPaint
                         }
                     }
                 }
-
-                // 推进循环
                 currentVal += smallStep;
-
-                // 浮点数累加修正 (防止 0.1 + 0.2 = 0.300000004)
                 currentVal = Math.Round(currentVal / smallStep) * smallStep;
             }
 
-            // 绘制鼠标红线
+            // 绘制鼠标红线 (保持红色或使用 DangerBrush)
             Pen markerPen = new Pen(Brushes.Red, 1);
             markerPen.Freeze();
+
             if (MouseMarker >= 0 && MouseMarker <= maxVal)
             {
                 if (Orientation == RulerOrientation.Horizontal)
@@ -205,6 +213,7 @@ namespace TabPaint
                     drawingContext.DrawLine(markerPen, new Point(0, MouseMarker), new Point(ActualWidth, MouseMarker));
             }
         }
+
 
         // 辅助函数：判断 value 是否接近 step 的倍数
         private bool IsCloseToMultiple(double value, double step)

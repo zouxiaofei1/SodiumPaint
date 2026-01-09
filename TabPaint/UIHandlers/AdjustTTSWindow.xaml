@@ -26,6 +26,7 @@
         <Style TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,4"/>
             <Setter Property="FontSize" Value="13"/>
@@ -97,7 +98,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Thumb}">
-                        <Ellipse x:Name="Ellipse" Fill="{DynamicResource TextInverseBrush}" Stroke="{DynamicResource SliderThumbStaticBrush}" StrokeThickness="1"/>
+                        <Ellipse x:Name="Ellipse" Fill="{DynamicResource SystemAccentPressedBrush}" Stroke="{DynamicResource SliderThumbStaticBrush}" StrokeThickness="1"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Ellipse" Property="Fill" Value="{DynamicResource ChromeLowBrush}"/>

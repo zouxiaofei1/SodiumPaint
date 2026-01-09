@@ -24,23 +24,7 @@ namespace TabPaint
             {
                 get
                 {
-                    if (_cachedCursor == null)
-                    {
-                        // 仅在第一次访问时加载
-                        var resourceInfo = System.Windows.Application.GetResourceStream(
-                            new Uri("pack://application:,,,/Resources/Cursors/DashedCross.cur"));
-
-                        if (resourceInfo != null)
-                        {
-                            _cachedCursor = new System.Windows.Input.Cursor(resourceInfo.Stream);
-                        }
-                        else
-                        {
-                            // 防止资源没找到导致后续空指针，回退到默认
-                            return System.Windows.Input.Cursors.Cross;
-                        }
-                    }
-                    return _cachedCursor;
+                    return System.Windows.Input.Cursors.Cross;
                 }
             }
             public bool _selecting = false;

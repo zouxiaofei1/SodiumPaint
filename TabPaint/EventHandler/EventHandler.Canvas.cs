@@ -606,25 +606,28 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
             if (IsViewMode) return;
             if (_router.CurrentTool is SelectTool selTool && selTool._selectionData != null)
             {
-                // 1. 检查点击的是否是左键（通常右键用于弹出菜单，不应触发提交）
+                // 检查点击的是否是左键
                 if (e.ChangedButton != MouseButton.Left) return;
 
-                // 2. 深度判定：点击来源是否属于滚动条的任何组成部分
                 if (IsVisualAncestorOf<System.Windows.Controls.Primitives.ScrollBar>(e.OriginalSource as DependencyObject))
                 {
-                    return; // 点击在滚动条上（轨道、滑块、箭头等），不执行提交
+                    return;
                 }
 
-                // 获取逻辑坐标
-                Point pt = e.GetPosition(CanvasWrapper);
+                Point ptInCanvas = e.GetPosition(CanvasWrapper);
+                Point pixelPos = _ctx.ToPixel(ptInCanvas);
 
-                // 3. 判定：点击是否不在选区内，且不在缩放句柄上
-                bool hitHandle = selTool.HitTestHandle(pt, selTool._selectionRect) != SelectTool.ResizeAnchor.None;
-                bool hitInside = selTool.IsPointInSelection(pt);
+                bool hitHandle = selTool.HitTestHandle(pixelPos, selTool._selectionRect) != SelectTool.ResizeAnchor.None;
+                bool hitInside = selTool.IsPointInSelection(pixelPos);
 
-                if (!hitHandle && !hitInside)
+                if (hitHandle || hitInside)
                 {
-                   // s(1);
+                    selTool.OnPointerDown(_ctx, ptInCanvas);
+
+                    e.Handled = true;
+                }
+                else
+                {
                     selTool.CommitSelection(_ctx);
                     selTool.ClearSelections(_ctx);
                     selTool.lag = 0;

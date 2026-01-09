@@ -16,17 +16,20 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         // 定义高亮颜色
-        private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#9333EA"));
-        private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
-
         private void UpdateToolSelectionHighlight()
         {
             if (_router == null) return;
-            // 1. 获取当前工具类型字符串，用于匹配 Tag
+
+            // --- 关键修改：从资源字典动态获取当前主题色画刷 ---
+            // 使用 FindResource 确保即便在运行时切换了主题色，这里也能拿到最新的
+            var accentBrush = Application.Current.FindResource("ToolAccentBrush") as Brush;
+            var accentSubtleBrush = Application.Current.FindResource("ToolAccentSubtleSelectedBrush") as Brush;
+
+            // 1. 获取当前工具类型字符串
             string currentToolTag = _router.CurrentTool switch
             {
                 SelectTool => "SelectTool",
-                PenTool when _ctx.PenStyle == BrushStyle.Eraser => "EraserTool", // 橡皮也是PenTool的一种变体
+                PenTool when _ctx.PenStyle == BrushStyle.Eraser => "EraserTool",
                 PenTool when _ctx.PenStyle == BrushStyle.Pencil => "PenTool",
                 EyedropperTool => "EyedropperTool",
                 FillTool => "FillTool",
@@ -34,27 +37,25 @@ namespace TabPaint
                 _ => ""
             };
 
-            // 2. 检查是否处于折叠模式 (根据 CollapsedToolsPanel 的可见性)
+            // 2. 检查是否处于折叠模式
             bool isCollapsedMode = MainToolBar.CollapsedToolsPanel.Visibility == Visibility.Visible;
 
-            // 清除折叠按钮的高亮
+            // 清除折叠按钮的高亮（使用 ClearValue 恢复 Style 默认定义的状态）
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BorderBrushProperty);
 
-            // ================= 处理展开模式下的常规按钮 =================
+            // 获取所有常规工具按钮
             var toolControls = new Control[] {
         MainToolBar.PickColorButton, MainToolBar.EraserButton, MainToolBar.SelectButton,
         MainToolBar.FillButton, MainToolBar.TextButton, MainToolBar.PenButton
     };
 
-            // 先清除所有展开按钮的高亮
+            // 清除所有展开按钮及特殊切换按钮的高亮
             foreach (var ctrl in toolControls)
             {
                 ctrl.ClearValue(Control.BorderBrushProperty);
                 ctrl.ClearValue(Control.BackgroundProperty);
             }
-
-            // 清除特殊按钮高亮 (Brush/Shape)
             MainToolBar.BrushToggle.ClearValue(Control.BorderBrushProperty);
             MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
@@ -68,15 +69,10 @@ namespace TabPaint
                 if (isCollapsedMode)
                 {
                     // --- 折叠模式逻辑 ---
+                    MainToolBar.ToolsMenuToggle.BorderBrush = accentBrush;
+                    MainToolBar.ToolsMenuToggle.Background = accentSubtleBrush;
 
-                    // A. 高亮主折叠按钮
-                    MainToolBar.ToolsMenuToggle.BorderBrush = PurpleHighlightBrush;
-                    MainToolBar.ToolsMenuToggle.Background = PurpleBackgroundBrush;
-
-                    // B. 更新主折叠按钮的图标和 ToolTip
                     UpdateCollapsedButtonIcon(currentToolTag);
-
-                    // C. 高亮下拉菜单内的对应项
                     UpdateCollapsedMenuHighlight(currentToolTag);
                 }
                 else
@@ -95,26 +91,27 @@ namespace TabPaint
 
                     if (target != null)
                     {
-                        target.BorderBrush = PurpleHighlightBrush;
-                        target.Background = PurpleBackgroundBrush;
+                        target.BorderBrush = accentBrush;
+                        target.Background = accentSubtleBrush;
                     }
                 }
             }
             else
             {
-                // 处理非基础工具 (画刷样式、形状等)，这些通常不折叠在第一个组里
+                // 处理非基础工具 (画刷样式、形状等)
                 if (_router.CurrentTool == _tools.Pen && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
-                    MainToolBar.BrushToggle.BorderBrush = PurpleHighlightBrush;
-                    MainToolBar.BrushToggle.Background = PurpleBackgroundBrush;
+                    MainToolBar.BrushToggle.BorderBrush = accentBrush;
+                    MainToolBar.BrushToggle.Background = accentSubtleBrush;
                 }
                 else if (_router.CurrentTool == _tools.Shape)
                 {
-                    MainToolBar.ShapeToggle.BorderBrush = PurpleHighlightBrush;
-                    MainToolBar.ShapeToggle.Background = PurpleBackgroundBrush;
+                    MainToolBar.ShapeToggle.BorderBrush = accentBrush;
+                    MainToolBar.ShapeToggle.Background = accentSubtleBrush;
                 }
             }
         }
+
 
         // 辅助方法：更新折叠按钮的图标
         private void UpdateCollapsedButtonIcon(string toolTag)
@@ -196,7 +193,7 @@ namespace TabPaint
                 {
                     if (menuItem.Tag?.ToString() == toolTag)
                     {
-                        menuItem.Background = new SolidColorBrush(Color.FromRgb(231, 243, 255)); // 浅蓝色高亮
+                        menuItem.Background = Application.Current.FindResource("ListItemSelectedBackgroundBrush") as Brush  ; // 浅蓝色高亮
                         menuItem.FontWeight = FontWeights.Bold;
                     }
                     else
@@ -324,8 +321,8 @@ namespace TabPaint
                 }
                 CurrentTool.OnPointerMove(_ctx, position);
             }// 定义高亮颜色
-            private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#886CE4"));
-            private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
+            //private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#886CE4"));
+            //private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
 
             public SelectTool GetSelectTool()
             {

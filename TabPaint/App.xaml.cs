@@ -73,7 +73,7 @@ namespace TabPaint
                 });
             });
             var currentSettings = SettingsManager.Instance.Current;
-
+            currentSettings.PropertyChanged += Settings_PropertyChanged;
             ThemeManager.ApplyTheme(currentSettings.ThemeMode);
             base.OnStartup(e);
 
@@ -102,7 +102,21 @@ namespace TabPaint
             ThemeManager.SetWindowImmersiveDarkMode(_mainWindow, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
             _mainWindow.Show();
         }
+        private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            var settings = (AppSettings)sender;
 
+            if (e.PropertyName == nameof(AppSettings.ThemeMode))
+            {
+                ThemeManager.ApplyTheme(settings.ThemeMode);
+                _mainWindow.SetUndoRedoButtonState();
+                _mainWindow.AutoUpdateMaximizeIcon();
+            }
+            else if (e.PropertyName == nameof(AppSettings.ThemeAccentColor))
+            {
+                ThemeManager.RefreshAccentColor(settings.ThemeAccentColor);
+            }
+        }
 
     }
 }

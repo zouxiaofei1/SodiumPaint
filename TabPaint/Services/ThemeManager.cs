@@ -3,6 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace TabPaint
 {
@@ -32,30 +33,16 @@ namespace TabPaint
         {
             // 1. 确定实际要应用的主题 (Light 或 Dark)
             bool isDark = false;
-            if (theme == AppTheme.Dark)
-            {
-                isDark = true;
-            }
-            else if (theme == AppTheme.Light)
-            {
-                isDark = false;
-            }
-            else // System
-            {
-                
-                isDark = IsSystemDark();
-            }
+            if (theme == AppTheme.Dark) isDark = true;
+            else if (theme == AppTheme.Light) isDark = false;
+            else isDark = IsSystemDark(); // System
 
-            // 2. 替换 ResourceDictionary
+            // 2. 替换基础 ResourceDictionary (Light/Dark)
             string dictPath = isDark ? "Resources/DarkTheme.xaml" : "Resources/LightTheme.xaml";
             var dictUri = new Uri($"pack://application:,,,/{dictPath}", UriKind.Absolute);
-
-            // 获取当前的资源字典集合
             var mergedDicts = Application.Current.Resources.MergedDictionaries;
 
-            // 找到旧的主题字典并移除 (假设通过 Source 判断，或者它是第一个)
-            // 这里使用一个简单的逻辑：移除任何包含 LightTheme 或 DarkTheme 的字典
-            // 也可以给你的 ResourceDictionary 加个 Key 来识别
+            // 移除旧字典
             ResourceDictionary oldDict = null;
             foreach (var dict in mergedDicts)
             {
@@ -68,35 +55,176 @@ namespace TabPaint
                 }
             }
 
-            // 创建新字典
             var newDict = new ResourceDictionary() { Source = dictUri };
-
-            // 替换逻辑 (为了防闪烁，先加后减，或者直接替换)
             if (oldDict != null)
             {
                 int index = mergedDicts.IndexOf(oldDict);
-                mergedDicts[index] = newDict; // 直接替换保持顺序
+                mergedDicts[index] = newDict;
             }
             else
             {
                 mergedDicts.Add(newDict);
             }
 
+            // 3. 记录当前主题状态
             CurrentAppliedTheme = isDark ? AppTheme.Dark : AppTheme.Light;
-            var iconsDict = new ResourceDictionary();
-            // 注意这里要用 pack URI 格式
-            iconsDict.Source = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
 
-            if (iconsDict != null&& ((MainWindow)System.Windows.Application.Current.MainWindow)!=null)
+            // 4. 图标字典重载 (保持原有逻辑)
+            var iconsDict = new ResourceDictionary();
+            iconsDict.Source = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
+            if (iconsDict != null && ((MainWindow)Application.Current.MainWindow) != null)
             {
-                // 移除再添加，强制让所有引用了这些图标的 DynamicResource 重新求值
                 Application.Current.Resources.MergedDictionaries.Remove(iconsDict);
                 Application.Current.Resources.MergedDictionaries.Add(iconsDict);
             }
-            // 3. 刷新 Mica 和 标题栏颜色
+
+            // =========================================================
+            // 【核心修改】针对 Win10 的特殊背景处理
+            // =========================================================
+            if (!IsWin11())
+            {
+                ApplyWin10FallbackBackground(isDark);
+            }
+
+            // 5. 刷新标题栏和强调色
             UpdateWindowStyle(isDark);
+            RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
+        }
+        private static bool IsWin11()
+        {
+            return Environment.OSVersion.Version.Build >= 22000;
         }
 
+        // 【新增方法】Win10 专用背景覆盖
+        private static void ApplyWin10FallbackBackground(bool isDark)
+        {
+            var resources = Application.Current.Resources;
+
+            // 我们要修改的是 WindowBackgroundBrush
+            // Win11 下这个通常是透明或者为了配合 Mica 设置的颜色
+            // Win10 下我们把它改成一个实心的高级灰，或者带有微弱纹理的画刷
+
+            if (isDark)
+            {
+                // Win10 深色模式：使用略微偏冷的深灰色，避免纯黑死板
+                // 颜色参考 VS Code 或 GitHub Dark Dimmed: #1E1E1E 或 #222222
+                var win10DarkBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#202020"));
+
+                // 进阶：如果你想要模拟噪点质感（不依赖图片），可以使用 DrawingBrush
+                // 注意：如果嫌代码生成麻烦，直接用上面的 SolidColorBrush 即可，性能最好。
+                // 这里为了演示“质感”，我们混合一点点颜色
+
+                win10DarkBg.Freeze();
+
+                // 覆盖资源
+                if (resources.Contains("WindowBackgroundBrush")) resources.Remove("WindowBackgroundBrush");
+                resources["WindowBackgroundBrush"] = win10DarkBg;
+
+                // 同时，为了让工具栏和背景区分开，建议在 Win10 下微调 ChromeLowBrush
+                // 让工具栏稍微亮一点点，形成层级
+                var win10Chrome = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D2D"));
+                win10Chrome.Freeze();
+                if (resources.Contains("ChromeLowBrush")) resources.Remove("ChromeLowBrush");
+                resources["ChromeLowBrush"] = win10Chrome;
+            }
+            else
+            {
+                // Win10 浅色模式：使用经典的 Windows 灰白
+                var win10LightBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F3F3F3"));
+                win10LightBg.Freeze();
+
+                if (resources.Contains("WindowBackgroundBrush")) resources.Remove("WindowBackgroundBrush");
+                resources["WindowBackgroundBrush"] = win10LightBg;
+            }
+        }
+        public static void RefreshAccentColor(string hexColor = null)
+        {
+            if (string.IsNullOrEmpty(hexColor))
+            {
+                // 注意：这里仅在确定 SettingsManager 已经初始化完成后调用才安全
+                hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
+            }
+
+            UpdateAccentResources(hexColor);
+        }
+
+        private static void UpdateAccentResources(string hexColor)
+        {
+            try
+            {
+                Color baseColor = (Color)ColorConverter.ConvertFromString(hexColor);
+
+                // 根据当前是深色还是浅色模式，微调基础颜色的亮度（可选优化）
+                // 这里我们直接基于 BaseColor 计算变种
+
+                // 1. 计算变种颜色
+                Color hoverColor = ChangeColorBrightness(baseColor, 0.2f); // 变亮 20%
+                Color pressedColor = ChangeColorBrightness(baseColor, -0.2f); // 变暗 20%
+                Color borderColor = ChangeColorBrightness(baseColor, -0.1f); // 稍微变暗做边框
+
+                // 2. 创建画刷 (Freeze 提高性能)
+                var resources = Application.Current.Resources;
+
+                // --- ToolAccent (工具栏图标/选中状态) ---
+                SetSolidBrush(resources, "ToolAccentBrush", baseColor);
+                SetSolidBrush(resources, "ToolAccentHoverBrush", hoverColor);
+                SetSolidBrush(resources, "ToolAccentBorderBrush", borderColor);
+
+                // --- ToolAccentSubtle (透明背景系列) ---
+                SetSolidBrush(resources, "ToolAccentSubtleHoverBrush", baseColor, 0.10);
+                SetSolidBrush(resources, "ToolAccentSubtlePressedBrush", baseColor, 0.20);
+                SetSolidBrush(resources, "ToolAccentSubtleSelectedBrush", baseColor, 0.15);
+                SetSolidBrush(resources, "ToolAccentSubtleHoverSelectedBrush", baseColor, 0.25);
+
+                // --- SystemAccent (滑块/复选框/RadioButton) ---
+                // 统一让系统控件也使用这个颜色
+                SetSolidBrush(resources, "SystemAccentBrush", baseColor);
+                SetSolidBrush(resources, "SystemAccentHoverBrush", hoverColor);
+                SetSolidBrush(resources, "SystemAccentPressedBrush", pressedColor);
+                SetSolidBrush(resources, "SliderTrackFillBrush", baseColor); // 滑块填充
+
+                // 列表选中项边框
+                SetSolidBrush(resources, "ListItemSelectedBorderBrush", baseColor);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting accent color: {ex.Message}");
+            }
+        }
+
+        private static void SetSolidBrush(ResourceDictionary resources, string key, Color color, double opacity = 1.0)
+        {
+            var brush = new SolidColorBrush(color) { Opacity = opacity };
+            brush.Freeze();
+
+            // 如果资源已存在，移除它以确保覆盖（对于 MergedDictionaries 这种方式比较稳妥）
+            if (resources.Contains(key)) resources.Remove(key);
+            resources[key] = brush;
+        }
+
+        // 辅助方法：调整亮度
+        private static Color ChangeColorBrightness(Color color, float correctionFactor)
+        {
+            float red = (float)color.R;
+            float green = (float)color.G;
+            float blue = (float)color.B;
+
+            if (correctionFactor < 0)
+            {
+                correctionFactor = 1 + correctionFactor;
+                red *= correctionFactor;
+                green *= correctionFactor;
+                blue *= correctionFactor;
+            }
+            else
+            {
+                red = (255 - red) * correctionFactor + red;
+                green = (255 - green) * correctionFactor + green;
+                blue = (255 - blue) * correctionFactor + blue;
+            }
+
+            return Color.FromArgb(color.A, (byte)red, (byte)green, (byte)blue);
+        }
         private static bool IsSystemDark()
         {
             try

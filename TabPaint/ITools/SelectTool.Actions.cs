@@ -500,6 +500,7 @@ namespace TabPaint
                         _startH = _selectionRect.Height;
                         _startX = _selectionRect.X;
                         _startY = _selectionRect.Y;
+                        ctx.ViewElement.CaptureMouse();
                         return;
 
                     }

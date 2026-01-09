@@ -18,8 +18,6 @@
         SizeChanged="Window_SizeChanged" 
         PreviewKeyUp="Window_KeyUp"
         x:Name="RootWindow">
-    <!-- 注意：Window Background 设为 WindowBackgroundBrush，配合 Mica 可能需要在 C# 端设为 Transparent，
-         但为了 Theme 统一先设为资源。如果 Mica 生效，通常会忽略此背景或设为透明 -->
 
     <WindowChrome.WindowChrome>
         <shell:WindowChrome 
@@ -39,6 +37,7 @@
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
             <Style x:Key="RulerVisibilityStyle" TargetType="{x:Type local:Ruler}">
                 <Setter Property="Visibility" Value="Collapsed"/>
+          
                 <!-- 默认隐藏 -->
                 <Style.Triggers>
                     <MultiDataTrigger>
@@ -117,7 +116,7 @@
 
                     <!-- 顶部标尺 -->
                     <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" 
-                                 Orientation="Horizontal" 
+                                 Orientation="Horizontal"      
                                  Style="{StaticResource RulerVisibilityStyle}"
 />
 
@@ -248,13 +247,11 @@
                                         </DrawingBrush.Viewport>
                                         <DrawingBrush.Drawing>
                                             <DrawingGroup>
-                                                <!-- 浅灰底色 #FFF0F0F0 -> ChromeMediumBrush -->
                                                 <GeometryDrawing Brush="{DynamicResource ChromeMediumBrush}">
                                                     <GeometryDrawing.Geometry>
                                                         <RectangleGeometry Rect="0,0,20,20"/>
                                                     </GeometryDrawing.Geometry>
                                                 </GeometryDrawing>
-                                                <!-- 深灰格子 #FFD0D0D0 -> CheckerboardDarkBrush (or BorderMediumBrush) -->
                                                 <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
                                                     <GeometryDrawing.Geometry>
                                                         <GeometryGroup>
@@ -271,8 +268,8 @@
                                 <Grid.LayoutTransform>
                                     <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                                 </Grid.LayoutTransform>
-
-                                <!-- 2. 只有边框的层 -->
+                                <Grid Name="ImageContentLayer" ClipToBounds="True">
+                                    <!-- 2. 只有边框的层 -->
                                 <Image Name="PreviewImage" 
                                      Stretch="Fill" 
                                      Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
@@ -293,12 +290,12 @@
                                        Visibility="Collapsed"
                                        gif:AnimationBehavior.AutoStart="True"
                                        gif:AnimationBehavior.RepeatBehavior="Forever" />
-
-                                <!-- 3. 选区预览层 -->
+                                    <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
+                                    <!-- 3. 选区预览层 -->
                                 <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
-
+                                </Grid>
                                 <!-- 5. 编辑器层 -->
-                                <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
+                              
                             </Grid>
                             <Canvas Name="SelectionOverlayCanvas" 
                                     Panel.ZIndex="100" 
@@ -478,8 +475,8 @@
 
                 <Border x:Name="BirdEyePanel" 
                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                        Margin="0,0,20,40"
-                        Width="220" Height="160"
+                        Margin="0,0,25,25"
+                        Width="140" Height="120"
                         Background="{DynamicResource ControlBackgroundBrush}"
                         BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1"
                         CornerRadius="4"

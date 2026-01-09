@@ -28,7 +28,7 @@ namespace TabPaint
         private bool _isProcessingQueue = false;
         private CancellationTokenSource _loadImageCts;
         private CancellationTokenSource _progressCts;
-        public async Task OpenImageAndTabs(string filePath, bool refresh = false,bool lazyload = false, bool forceFolderScan = false, bool nobackup = false)
+        public async Task OpenImageAndTabs(string filePath, bool refresh = false, bool lazyload = false, bool forceFolderScan = false, bool nobackup = false)
         {
             _isLoadingImage = true;
             OnPropertyChanged("IsLoadingImage");
@@ -44,7 +44,7 @@ namespace TabPaint
                     _imageFiles = new List<string> { filePath };
                 }
 
-                if(!nobackup)TriggerBackgroundBackup();
+                if (!nobackup) TriggerBackgroundBackup();
 
                 if (IsVirtualPath(filePath) && !_imageFiles.Contains(filePath))
                 {
@@ -72,20 +72,20 @@ namespace TabPaint
                 bool isFileLoadedFromCache = false;
                 string actualSourcePath = null; // 新增变量
                                                 // 检查是否有缓存
-                  if(current!=null)                              // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
-                if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
-                {
-                    // 显示一个小的加载状态或日志
-                    // Debug.WriteLine("Waiting for background save to finish...");
-                    try
+                if (current != null)                              // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
+                    if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                     {
-                        await pendingSave;
+                        // 显示一个小的加载状态或日志
+                        // Debug.WriteLine("Waiting for background save to finish...");
+                        try
+                        {
+                            await pendingSave;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine("Wait save failed: " + ex.Message);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Wait save failed: " + ex.Message);
-                    }
-                }
 
                 // 等待结束后，重新检查 BackupPath，因为它刚刚被后台线程更新了！
                 if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
@@ -96,7 +96,7 @@ namespace TabPaint
                         // Debug.WriteLine($"Restoring from backup: {actualSourcePath}");
                     }
                 }
-                await LoadImage(fileToLoad, actualSourcePath,lazyload);
+                await LoadImage(fileToLoad, actualSourcePath, lazyload);
 
                 ResetDirtyTracker();
 
@@ -118,7 +118,7 @@ namespace TabPaint
         {
             lock (_queueLock)
             {
-               
+
                 _pendingFilePath = filePath;
                 if (!_isProcessingQueue)
                 {
@@ -127,7 +127,7 @@ namespace TabPaint
                 }
             }
         }
-        private bool _lazyLoad = false;   
+        private bool _lazyLoad = false;
         private async Task ProcessImageLoadQueueAsync()
         {
             _isLoadingImage = true;
@@ -151,9 +151,9 @@ namespace TabPaint
                         filePathToLoad = _pendingFilePath;
                         _pendingFilePath = null;
                     }
-                 //   _lazyLoad = true;
+                    //   _lazyLoad = true;
                     await LoadAndDisplayImageInternalAsync(filePathToLoad);
-                  //  _lazyLoad = false;
+                    //  _lazyLoad = false;
                 }
             }
             finally
@@ -166,7 +166,7 @@ namespace TabPaint
         {
             try
             {
-                OpenImageAndTabs(filePath,lazyload:true);
+                OpenImageAndTabs(filePath, lazyload: true);
 
             }
             catch (Exception ex)
@@ -195,7 +195,8 @@ namespace TabPaint
                 var sortedFiles = await Task.Run(() =>
                 {
                     return Directory.EnumerateFiles(folder)
-                        .Where(f => {
+                        .Where(f =>
+                        {
                             var ext = System.IO.Path.GetExtension(f);
                             return ext != null && AllowedExtensions.Contains(ext);
                         })
@@ -229,81 +230,121 @@ namespace TabPaint
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
-
-            using var ms = new System.IO.MemoryStream(imageBytes);
-
-            // 1. 先只读取元数据获取原始尺寸，不解码像素，速度极快
-            var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-            int originalWidth = decoder.Frames[0].PixelWidth;
-
-            // 重置流位置以供 BitmapImage 读取
-            ms.Position = 0;
-
-            var img = new BitmapImage();
-            img.BeginInit();
-            img.CacheOption = BitmapCacheOption.OnLoad;
-
-            // 2. 只有当原图宽度大于 480 时才进行降采样
-            if (originalWidth > 480)
+            try
             {
-                img.DecodePixelWidth = 480;
-            }
-            // 否则不设置 DecodePixelWidth（默认为0，即加载原图尺寸），避免小图报错或被拉伸
+                using var ms = new System.IO.MemoryStream(imageBytes);
 
-            img.StreamSource = ms;
-            img.EndInit();
-            img.Freeze();
-            return img;
+                // 1. 先只读取元数据获取原始尺寸，不解码像素，速度极快
+                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                int originalWidth = decoder.Frames[0].PixelWidth;
+
+                // 重置流位置以供 BitmapImage 读取
+                ms.Position = 0;
+
+                var img = new BitmapImage();
+                img.BeginInit();
+                img.CacheOption = BitmapCacheOption.OnLoad;
+
+                // 2. 只有当原图宽度大于 480 时才进行降采样
+                if (originalWidth > 480)
+                {
+                    img.DecodePixelWidth = 480;
+                }
+                // 否则不设置 DecodePixelWidth（默认为0，即加载原图尺寸），避免小图报错或被拉伸
+
+                img.StreamSource = ms;
+                img.EndInit();
+                img.Freeze();
+                return img;
+            }
+            catch
+            {
+                // 预览图解码失败可以忽略，直接返回 null，不影响主图尝试
+                return null;
+            }
         }
 
 
         private BitmapImage DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
-           
-
-            using var ms = new System.IO.MemoryStream(imageBytes);
-
-            // 先用解码器获取原始尺寸
-            var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-            int originalWidth = decoder.Frames[0].PixelWidth;
-            int originalHeight = decoder.Frames[0].PixelHeight;
-
-            ms.Position = 0; // 重置流位置以重新读取
-
-            var img = new BitmapImage();
-            img.BeginInit();
-            img.CacheOption = BitmapCacheOption.OnLoad;
-            img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-            img.StreamSource = ms;
-
-            const int maxSize = 16384;
-            if (originalWidth > maxSize || originalHeight > maxSize)
+            try
             {
-                if (originalWidth >= originalHeight) img.DecodePixelWidth = maxSize;
-                else img.DecodePixelHeight = maxSize;
-                Dispatcher.Invoke(() => ShowToast("⚠️ 图片过大，已自动压缩显示"));
-            }
 
-            img.EndInit();
-            img.Freeze();
-            return img;
+                using var ms = new System.IO.MemoryStream(imageBytes);
+
+                // 先用解码器获取原始尺寸
+                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                int originalWidth = decoder.Frames[0].PixelWidth;
+                int originalHeight = decoder.Frames[0].PixelHeight;
+
+                ms.Position = 0; // 重置流位置以重新读取
+
+                var img = new BitmapImage();
+                img.BeginInit();
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                img.StreamSource = ms;
+
+                const int maxSize = 16384;
+                if (originalWidth > maxSize || originalHeight > maxSize)
+                {
+                    if (originalWidth >= originalHeight) img.DecodePixelWidth = maxSize;
+                    else img.DecodePixelHeight = maxSize;
+                    Dispatcher.Invoke(() => ShowToast("⚠️ 图片过大，已自动压缩显示"));
+                }
+
+                img.EndInit();
+                img.Freeze();
+                return img;
+            }
+            catch
+            {
+                // 这里返回 null 会导致 LoadImage 中的 fullResBitmap 为 null
+                // 从而触发 LoadImage 最后的 catch 块或者 if (fullResBitmap == null) return;
+                return null;
+            }
         }
 
-        private Task<(int Width, int Height)> GetImageDimensionsAsync(byte[] imageBytes)
+        //private Task<(int Width, int Height)> GetImageDimensionsAsync(byte[] imageBytes)
+        //{
+        //    return Task.Run(() =>
+        //    {
+        //        using var ms = new System.IO.MemoryStream(imageBytes);
+        //        // Create a decoder but only access the metadata, which is very fast.
+        //        var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+        //        return (decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
+        //    });
+        //}
+
+        private Task<(int Width, int Height)?> GetImageDimensionsAsync(byte[] imageBytes)
         {
             return Task.Run(() =>
             {
-                using var ms = new System.IO.MemoryStream(imageBytes);
-                // Create a decoder but only access the metadata, which is very fast.
-                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                return (decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
+                try
+                {
+                    using var ms = new System.IO.MemoryStream(imageBytes);
+                    // 尝试读取元数据
+                    var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+
+                    // 确保至少有一帧
+                    if (decoder.Frames != null && decoder.Frames.Count > 0)
+                    {
+                        return ((int Width, int Height)?)(decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    // 这里捕获 NotSupportedException, FileFormatException 等
+                    // 返回 null 表示无法解析尺寸
+                    return null;
+                }
             });
         }
 
-
         private readonly object _lockObj = new object();
-        private async Task LoadImage(string filePath, string? sourcePath = null,bool lazyload= false)
+        private async Task LoadImage(string filePath, string? sourcePath = null, bool lazyload = false)
         {
             _isCurrentFileGif = false;
             GifPlayerImage.Visibility = Visibility.Collapsed;
@@ -317,7 +358,7 @@ namespace TabPaint
                 _progressCts = null;
             }
             string fileToRead = sourcePath ?? filePath;
-            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath)){ await LoadBlankCanvasAsync(filePath);  return; }
+            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath)) { await LoadBlankCanvasAsync(filePath); return; }
 
 
             if (!File.Exists(fileToRead))
@@ -355,9 +396,16 @@ namespace TabPaint
                 await Dispatcher.InvokeAsync(() => this.FileSize = sizeString);
 
 
-                var (originalWidth, originalHeight) = await GetImageDimensionsAsync(imageBytes);
+                var dimensions = await GetImageDimensionsAsync(imageBytes);
                 if (token.IsCancellationRequested) return;
+                if (dimensions == null)
+                {
+                    // 方法1：直接调用错误处理（推荐）
+                    await LoadBlankCanvasAsync(filePath, "文件头部损坏或格式不支持，已创建空白画布");
+                    return;
 
+                }
+                var (originalWidth, originalHeight) = dimensions.Value;
                 long totalPixels = (long)originalWidth * originalHeight;
                 bool showProgress = totalPixels > 2000000 * PerformanceScore;
                 if (showProgress)
@@ -383,13 +431,14 @@ namespace TabPaint
                 else
                 {
                     // 小图直接显示尺寸
-                    await Dispatcher.InvokeAsync(() => {
+                    await Dispatcher.InvokeAsync(() =>
+                    {
                         _imageSize = $"{originalWidth}×{originalHeight}像素";
                         OnPropertyChanged(nameof(ImageSize));
                     });
                 }
                 long _totalPixels = (long)originalWidth * originalHeight;
-                bool isHugeImage = _totalPixels > 10_000_000*PerformanceScore; // 阈值：5000万像素 (约8K分辨率以上)
+                bool isHugeImage = _totalPixels > 10_000_000 * PerformanceScore; // 阈值：5000万像素 (约8K分辨率以上)
                 if (isHugeImage)
                 {
                     try
@@ -398,7 +447,7 @@ namespace TabPaint
                     }
                     catch (TaskCanceledException)
                     {
-                        return; 
+                        return;
                     }
                 }
 
@@ -427,7 +476,7 @@ namespace TabPaint
            : System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
- FitToWindow(1);
+                        FitToWindow(1);
                         CenterImage(); // 或者你更新后的 UpdateImagePosition()
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -436,7 +485,7 @@ namespace TabPaint
 
                     });
                 }
-              
+
 
 
                 // --- 阶段 1: 等待 480p 预览图并更新 ---
@@ -447,13 +496,13 @@ namespace TabPaint
                 {
                     if (token.IsCancellationRequested) return;
                     RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
-         
+
                     {
                         BackgroundImage.Source = previewBitmap;
                         _currentFileName = System.IO.Path.GetFileName(filePath);
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
-                         FitToWindow();
+                        FitToWindow();
                         CenterImage();
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
@@ -473,11 +522,11 @@ namespace TabPaint
                 {
                     try
                     {
-                        await Task.Delay(50, token); 
+                        await Task.Delay(50, token);
                     }
                     catch (TaskCanceledException)
                     {
-                        return; 
+                        return;
                     }
                 }
                 if (token.IsCancellationRequested || fullResBitmap == null) return;
@@ -562,7 +611,7 @@ namespace TabPaint
                     string ext = System.IO.Path.GetExtension(fileToRead)?.ToLower();
                     _isCurrentFileGif = (ext == ".gif");
 
-                    if (_isCurrentFileGif&&IsViewMode)
+                    if (_isCurrentFileGif && IsViewMode)
                     {
                         AnimationBehavior.SetSourceUri(GifPlayerImage, new Uri(fileToRead));
                         GifPlayerImage.Visibility = Visibility.Visible;   //if (SettingsManager.Instance.Current.StartInViewMode)
@@ -579,7 +628,7 @@ namespace TabPaint
                         GifPlayerImage.Visibility = Visibility.Collapsed;
                         BackgroundImage.Visibility = Visibility.Visible;
                     }
-             
+
 
                 }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); // 稍微降低优先级，确保UI先响应
             }
@@ -597,7 +646,7 @@ namespace TabPaint
             }
             finally
             {
- 
+
                 // 清理进度条资源
                 progressCts?.Dispose();
             }
@@ -704,7 +753,7 @@ namespace TabPaint
                 // 可选：提示用户
                 if (!string.IsNullOrEmpty(reason))
                 {
-                    ShowToast(reason); 
+                    ShowToast(reason);
                 }
             });
         }

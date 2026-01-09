@@ -45,7 +45,6 @@
 
   <ItemGroup>
     <None Remove="Resources\Cursors\Closedhand.cur" />
-    <None Remove="Resources\Cursors\DashedCross.cur" />
     <None Remove="Resources\Cursors\Eyedropper.cur" />
     <None Remove="Resources\Cursors\Openhand.cur" />
     <None Remove="Resources\TabPaint_64x64.png" />
@@ -57,7 +56,6 @@
 
   <ItemGroup>
     <Resource Include="Resources\Cursors\Closedhand.cur" />
-    <Resource Include="Resources\Cursors\DashedCross.cur" />
     <Resource Include="Resources\Cursors\Eyedropper.cur" />
     <Resource Include="Resources\Cursors\Openhand.cur" />
     <Resource Include="Resources\TabPaint.ico" />

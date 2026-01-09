@@ -3,7 +3,7 @@
 ; -------------------------------------------------------------------------
 
 #define MyAppName "TabPaint"
-#define MyAppVersion "0.9.1" ; 更新版本号
+#define MyAppVersion "bhli" ; 更新版本号
 #define MyAppPublisher "TabPaint Team"
 #define MyAppExeName "TabPaint.exe"
 ; 请确保此路径正确指向你的发布文件夹

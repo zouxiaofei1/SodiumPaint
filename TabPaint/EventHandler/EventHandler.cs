@@ -433,6 +433,20 @@ namespace TabPaint
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            if (msg == WM_MOUSEHWHEEL)
+            {
+                if (ScrollContainer != null && !_isZoomAnimating)
+                {
+                    short tilt = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+
+                    if (tilt != 0)
+                    {
+                        double scrollAmount = tilt / 2.0;
+                        ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + scrollAmount);
+                        handled = true;
+                    }
+                }
+            }
             if (msg == WM_CLIPBOARDUPDATE)
             {
                 if (SettingsManager.Instance.Current.EnableClipboardMonitor)
@@ -707,7 +721,11 @@ namespace TabPaint
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             UpdateImageBarSliderState(); UpdateToolSelectionHighlight();
-            if (IsViewMode && !_hasUserManuallyZoomed && _bitmap != null && _startupFinished)
+            CheckFittoWindow();
+        }
+        public void CheckFittoWindow()
+        {
+            if (!_hasUserManuallyZoomed && _bitmap != null && _startupFinished)
             {
                 // 使用 Dispatcher 稍作延迟，等待 ScrollViewer 的 Viewport 更新
                 Dispatcher.InvokeAsync(() =>

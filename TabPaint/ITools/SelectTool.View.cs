@@ -119,6 +119,7 @@ namespace TabPaint
                 ctx.SelectionOverlay.IsHitTestVisible = false;
                 ctx.SelectionOverlay.Visibility = Visibility.Visible;
             }
+            public Int32Rect GetSelectionRect() => _selectionRect;
             public ResizeAnchor HitTestHandle(Point px, Int32Rect rect)
             {
                 double size = 6 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale; // 句柄大小

@@ -56,7 +56,7 @@ namespace TabPaint
                 Width = workArea.Width + (SystemParameters.BorderWidth * 4);
                 Height = workArea.Height + (SystemParameters.BorderWidth * 4);
 
-                SetRestoreIcon();  // 切换到还原图标
+               
             }
             else
             {
@@ -67,8 +67,21 @@ namespace TabPaint
                 Height = _restoreBounds.Height;
                 WindowState = WindowState.Normal;
 
-                // 切换到最大化矩形图标
-                SetMaximizeIcon();
+                
+               
+            }
+            AutoUpdateMaximizeIcon();
+        }
+
+        public void AutoUpdateMaximizeIcon()
+        {
+            if(_maximized)
+            {
+                SetRestoreIcon();  // 切换到还原图标
+            }
+            else
+            {
+                SetMaximizeIcon();// 切换到最大化矩形图标
             }
         }
         private void SetBrushStyle(BrushStyle style)
@@ -291,7 +304,7 @@ namespace TabPaint
                 Height = 10,
                 Child = new Rectangle
                 {
-                    Stroke = Brushes.Black,
+                    Stroke = Application.Current.FindResource("TextPrimaryBrush") as Brush,
                     StrokeThickness = 1,
                     Width = 12,
                     Height = 12
@@ -387,7 +400,7 @@ namespace TabPaint
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, System.Windows.Shapes.Path image, bool isEnabled)
         {
             button.IsEnabled = isEnabled;
-            image.Fill = isEnabled ? Brushes.Black : Brushes.Gray;
+            image.Fill = isEnabled ? Application.Current.FindResource("TextPrimaryBrush") as Brush : Brushes.Gray;
         }
         private byte[] ExtractRegionFromBitmap(WriteableBitmap bmp, Int32Rect rect)
         {

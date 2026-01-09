@@ -139,7 +139,7 @@ namespace TabPaint
 
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
-            CreateNewTab(TabInsertPosition.AtEnd, true);
+            CreateNewTab(TabInsertPosition.AtEnd, true); CheckFittoWindow();
         }
 
         // 3. 放弃所有编辑 (Discard All) - 终极清理版

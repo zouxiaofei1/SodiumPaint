@@ -42,7 +42,7 @@
                                                 <ControlTemplate>
                                                     <Grid>
                                                         <Ellipse Width="18" Height="18" 
-                                                                 Fill="{DynamicResource TextInverseBrush}" 
+                                                             Fill="{DynamicResource SystemAccentPressedBrush}" 
                                                                  Stroke="{DynamicResource SliderThumbStaticBrush}" 
                                                                  StrokeThickness="1"/>
                                                         <!-- 鼠标悬停变色 -->

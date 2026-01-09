@@ -9,27 +9,25 @@
              PreviewKeyDown="UserControl_PreviewKeyDown"
              PreviewMouseDown="UserControl_PreviewMouseDown">
 
-    <!-- 
-         修改点：
-         BorderBrush="#CCCCCC" -> {DynamicResource BorderMediumBrush}
-         Background="White"    -> {DynamicResource ControlBackgroundBrush}
-    -->
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Border x:Name="MainBorder" 
             BorderThickness="1" 
             BorderBrush="{DynamicResource BorderMediumBrush}" 
             Background="{DynamicResource ControlBackgroundBrush}" 
             CornerRadius="4">
+        
         <Grid Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 显示快捷键文本的区域 -->
-            <!-- 
-                 修改点：
-                 Foreground="#333333" -> {DynamicResource TextControlBrush}
-            -->
             <TextBlock x:Name="KeyDisplay" 
                        Text="None" 
                        VerticalAlignment="Center" 
@@ -37,32 +35,19 @@
                        Foreground="{DynamicResource TextControlBrush}"
                        IsHitTestVisible="False"/>
 
-            <!-- 清除按钮 (X) -->
-            <!-- 
-                 修改点：
-                 Foreground="Gray" -> {DynamicResource TextSecondaryBrush} 
-            -->
             <Button Grid.Column="1" 
-                    Content="✕" 
-                    Width="24" 
+                    
+                    Width="20" 
                     BorderThickness="0" 
                     Background="Transparent" 
                     Foreground="{DynamicResource TextSecondaryBrush}"
-                    Cursor="Hand"
+                    Cursor="Hand" Style="{StaticResource CloseButtonStyle}"
                     Click="ClearButton_Click">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <!-- 
-                                     修改点：
-                                     Foreground="Red" -> {DynamicResource DangerHoverBrush}
-                                -->
-                                <Setter Property="Foreground" Value="{DynamicResource DangerHoverBrush}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
+                <Viewbox Width="10" Height="10">
+                    <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+          StrokeThickness="1.5" 
+          Data="M0,0 L12,12 M12,0 L0,12"/>
+                </Viewbox>
             </Button>
         </Grid>
     </Border>
