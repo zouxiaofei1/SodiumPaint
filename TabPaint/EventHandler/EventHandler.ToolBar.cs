@@ -28,10 +28,25 @@ namespace TabPaint
         {
             try
             {
-                // 1. 停止当前所有可能的加载任务
+                if (_currentTabItem != null)
+                {
+                    UpdateTabThumbnail(_currentTabItem); // 更新缩略图
+                    TriggerBackgroundBackup(); // 触发保存
+                }
+                int waitCount = 0;
+                while (_isSavingFile && waitCount < 10)
+                {
+                    await Task.Delay(100);
+                    waitCount++;
+                }
+
+                SaveSession();
+
+
+
                 _loadImageCts?.Cancel();
                 lock (_queueLock) { _pendingFilePath = null; }
-               // FileTabs.Clear();
+                FileTabs.Clear();
                 _imageFiles.Clear(); // 清空之前的文件夹扫描缓存
                 _currentImageIndex = -1;
 
@@ -41,7 +56,7 @@ namespace TabPaint
                 ResetDirtyTracker();
                _currentFilePath =  _workingPath = filePath;
                 CheckFilePathAvailibility(filePath);
-                await OpenImageAndTabs(filePath, refresh: true, lazyload: false, forceFolderScan: true);
+                await OpenImageAndTabs(filePath, refresh: true, lazyload: false, forceFolderScan: true); LoadSessionForCurrentWorkspace(filePath);
             }
             catch (Exception ex)
             {
@@ -246,7 +261,7 @@ namespace TabPaint
 
                 UpdateToolSelectionHighlight();
                 AutoSetFloatBarVisibility();
-
+                UpdateGlobalToolSettingsKey();
                 // 关闭 UserControl 里的 ToggleButton
                 MainToolBar.BrushToggle.IsChecked = false;
             }

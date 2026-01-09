@@ -32,6 +32,12 @@ namespace TabPaint
         Dark,
         System // 跟随系统
     }
+    public class ToolSettingsModel
+    {
+        public double Thickness { get; set; } = 5.0;
+        public double Opacity { get; set; } = 1.0;
+    }
+
     public class ShortcutItem
     {
         public Key Key { get; set; }
@@ -180,17 +186,16 @@ namespace TabPaint
         {
             try
             {
-
                 var settings = TabPaint.SettingsManager.Instance.Current;
 
-                // 1. 恢复笔刷大小
+                // 1. 恢复笔刷大小 (这步其实会被后面的 SetTool -> UpdateGlobalToolSettingsKey 覆盖，但保留无妨)
                 if (_ctx != null)
                 {
                     _ctx.PenThickness = settings.PenThickness;
                 }
 
-                // 2. 恢复工具和样式
-                ITool targetTool = null; // 默认
+                // 2. 准备目标工具
+                ITool targetTool = null;
                 BrushStyle targetStyle = settings.LastBrushStyle;
 
                 switch (settings.LastToolName)
@@ -206,24 +211,30 @@ namespace TabPaint
                         break;
                 }
 
+                // 3. 设置上下文样式
                 if (_ctx != null)
                 {
                     _ctx.PenStyle = targetStyle;
                 }
 
-                // 3. 应用工具切换
-                // 注意：这里需要确保界面元素(MainToolBar)已经加载完毕，否则高亮更新可能会空引用
-                Dispatcher.InvokeAsync(() =>
+                // 4. [修复核心] 立即同步应用工具切换，不要用 Dispatcher
+                // 这样能保证 CurrentToolKey 和 UI 状态在窗口显示给用户那一刻就是正确的
+                if (_router != null)
                 {
-                    _router.SetTool(targetTool);
 
-                }, System.Windows.Threading.DispatcherPriority.Loaded);
+                    if (settings.LastToolName == "PenTool") { SetBrushStyle(_ctx.PenStyle); UpdateGlobalToolSettingsKey(); }
+                    else _router.SetTool(targetTool);
+                  
+                }
+             
             }
-            finally
+            catch (Exception ex)
             {
-
+                // 建议加个日志，防止出错时不崩但不知道原因
+                System.Diagnostics.Debug.WriteLine($"RestoreAppState Error: {ex.Message}");
             }
         }
+
     }
     public class AppSettings : INotifyPropertyChanged
     {
@@ -272,35 +283,125 @@ namespace TabPaint
                 }
             }
         }
+        private Dictionary<string, ToolSettingsModel> _perToolSettings;
 
-        private double _penThickness = 5.0; // 默认值
-
-        [JsonPropertyName("pen_thickness")]
-        public double PenThickness
+        [JsonPropertyName("per_tool_settings")]
+        public Dictionary<string, ToolSettingsModel> PerToolSettings
         {
-            get => _penThickness;
+            get
+            {
+                if (_perToolSettings == null) _perToolSettings = GetDefaultToolSettings();
+                return _perToolSettings;
+            }
             set
             {
-                // 如果值没变，什么都不做
-                if (Math.Abs(_penThickness - value) < 0.01) return;
-
-                _penThickness = value;
+                _perToolSettings = value;
                 OnPropertyChanged();
             }
         }
-        private double _penOpacity = 1.0; // 默认不透明 (0.0 到 1.0)
-        [JsonPropertyName("pen_opacity")]
-        public double PenOpacity
+
+        // 新增：当前工具的 Key，用于指示 PenThickness/Opacity 应该读写字典里的哪一项
+        private string _currentToolKey = "Pen_Pencil";
+        [JsonIgnore]
+        public string CurrentToolKey
         {
-            get => _penOpacity;
+            get => _currentToolKey;
             set
             {
-                if (_penOpacity != value)
+                if (_currentToolKey != value)
                 {
-                    _penOpacity = value;
+                    _currentToolKey = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(PenThickness));
                     OnPropertyChanged(nameof(PenOpacity));
                 }
             }
+        }
+        [JsonIgnore] // 不再直接序列化这个值，而是序列化字典
+        public double PenThickness
+        {
+            get
+            {
+                // 特殊处理：铅笔强制为 1.0
+                if (_currentToolKey == "Pen_Pencil") return 1.0;
+
+                if (PerToolSettings.TryGetValue(_currentToolKey, out var settings))
+                {
+                    return settings.Thickness;
+                }
+                return 5.0; // Fallback
+            }
+            set
+            {
+                // 特殊处理：铅笔不允许修改粗细
+                if (_currentToolKey == "Pen_Pencil") return;
+
+                if (!PerToolSettings.ContainsKey(_currentToolKey))
+                {
+                    PerToolSettings[_currentToolKey] = new ToolSettingsModel();
+                }
+
+                if (Math.Abs(PerToolSettings[_currentToolKey].Thickness - value) > 0.01)
+                {
+                    PerToolSettings[_currentToolKey].Thickness = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        // 修改：PenOpacity 变成读写字典的代理属性
+        [JsonIgnore]
+        public double PenOpacity
+        {
+            get
+            {
+                if (PerToolSettings.TryGetValue(_currentToolKey, out var settings))
+                {
+                    return settings.Opacity;
+                }
+                return 1.0;
+            }
+            set
+            {
+                if (!PerToolSettings.ContainsKey(_currentToolKey))
+                {
+                    PerToolSettings[_currentToolKey] = new ToolSettingsModel();
+                }
+
+                if (Math.Abs(PerToolSettings[_currentToolKey].Opacity - value) > 0.001)
+                {
+                    PerToolSettings[_currentToolKey].Opacity = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        // ... (保留 ThemeMode, shortcuts 等其他代码) ...
+
+        // 初始化默认值
+        private Dictionary<string, ToolSettingsModel> GetDefaultToolSettings()
+        {
+            var dict = new Dictionary<string, ToolSettingsModel>();
+
+            // 为每种笔刷样式预设值
+            dict["Pen_Pencil"] = new ToolSettingsModel { Thickness = 1.0, Opacity = 1.0 };
+            dict["Pen_Round"] = new ToolSettingsModel { Thickness = 5.0, Opacity = 1.0 };
+            dict["Pen_Square"] = new ToolSettingsModel { Thickness = 10.0, Opacity = 1.0 };
+            dict["Pen_Highlighter"] = new ToolSettingsModel { Thickness = 20.0, Opacity = 0.5 }; // 荧光笔默认半透明
+            dict["Pen_Eraser"] = new ToolSettingsModel { Thickness = 20.0, Opacity = 1.0 };
+            dict["Pen_Watercolor"] = new ToolSettingsModel { Thickness = 30.0, Opacity = 0.8 };
+            dict["Pen_Crayon"] = new ToolSettingsModel { Thickness = 15.0, Opacity = 1.0 };
+            dict["Pen_Spray"] = new ToolSettingsModel { Thickness = 40.0, Opacity = 0.8 };
+            dict["Pen_Mosaic"] = new ToolSettingsModel { Thickness = 20.0, Opacity = 1.0 };
+            dict["Pen_Brush"] = new ToolSettingsModel { Thickness = 8.0, Opacity = 1.0 };
+
+            // 形状工具预留
+            dict["Shape"] = new ToolSettingsModel { Thickness = 3.0, Opacity = 1.0 };
+
+            // 其他工具如果需要也可以加
+            // dict["Select"] = ...
+
+            return dict;
         }
         private AppTheme _themeMode = AppTheme.System; // 默认跟随系统
 

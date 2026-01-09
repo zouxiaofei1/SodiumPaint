@@ -63,7 +63,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = "未命名";
-        public string ProgramVersion { get; set; } = "v0.9";
+        public string ProgramVersion { get; set; } = "v0.9.1";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -125,27 +125,6 @@ namespace TabPaint
         public Color ForegroundColor= Colors.Black;
         public SolidColorBrush SelectedBrush { get; set; } = new SolidColorBrush(Colors.Black);
 
-        // 绑定到 ItemsControl 的预设颜色集合
-        //public ObservableCollection<SolidColorBrush> ColorItems { get; set; }
-        //    = new ObservableCollection<SolidColorBrush>
-        //    {
-        //        new SolidColorBrush(Colors.Black),
-        //        new SolidColorBrush(Colors.Gray),
-        //        new SolidColorBrush(Colors.Brown),
-        //        new SolidColorBrush(Colors.Red),
-        //        new SolidColorBrush(Colors.Orange),
-        //        new SolidColorBrush(Colors.Yellow),
-        //        new SolidColorBrush(Colors.Green),
-        //         new SolidColorBrush( (Color)ColorConverter.ConvertFromString("#B5E61D")),
-        //        new SolidColorBrush(Colors.Cyan),
-        //        new SolidColorBrush(Colors.Blue),
-        //        new SolidColorBrush(Colors.Purple),
-        //        new SolidColorBrush(Colors.Pink),
-        //        new SolidColorBrush(Colors.BlueViolet),
-        //         new SolidColorBrush(Colors.CornflowerBlue),
-        //         new SolidColorBrush( (Color)ColorConverter.ConvertFromString("#C8BFE7")),
-        //        new SolidColorBrush(Colors.White)
-        //    };
 
         private double _zoomScale = 1.0;
         private bool _isInternalZoomUpdate =false;
@@ -270,11 +249,10 @@ namespace TabPaint
         private bool _isDraggingBirdEye = false;
         private Brush _originalGridBrush; // 用于存储启动时 XAML 里定义的那个格子画刷
         private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333"));
-        private bool _currentFileExists = true; // 标记当前文件是否存在于磁盘
+        public bool _currentFileExists = true; // 标记当前文件是否存在于磁盘
         private bool _hasUserManuallyZoomed = false;
         public static ThumbnailCache GlobalThumbnailCache = new ThumbnailCache(10000); // 存300张
-
-        // 全局信号量（一定要有，接上一个问题的修复）
+        private bool _isUpdatingToolSettings = false;
         public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(10);
     }
 }

@@ -257,7 +257,7 @@ namespace TabPaint
             // 最终校验
             if (ImageWidth > MaxPixelSize || ImageHeight > MaxPixelSize)
             {
-                MessageBox.Show($"图片尺寸不能超过 {MaxPixelSize}像素。", "尺寸过大", MessageBoxButton.OK, MessageBoxImage.Warning);
+                FluentMessageBox.Show($"图片尺寸不能超过 {MaxPixelSize}像素。", "尺寸过大", MessageBoxButton.OK);
 
                 // 强制修正回来
                 if (ImageWidth > MaxPixelSize) OnWidthChanged(MaxPixelSize, false);
@@ -271,7 +271,7 @@ namespace TabPaint
             }
             else
             {
-                MessageBox.Show("尺寸必须大于0", "错误");
+                FluentMessageBox.Show("尺寸必须大于0", "错误");
             }
         }
 

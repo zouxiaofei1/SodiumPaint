@@ -57,7 +57,7 @@ namespace TabPaint
 
             if (isNext || isPrev)
             {
-             
+
                 if (_router.CurrentTool is TextTool tx && tx._textBox != null) return false;
                 // 如果是第一次按下（而不是按住不放触发的重复事件），初始化时间
                 if (!_isNavigating)
@@ -184,6 +184,19 @@ namespace TabPaint
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
+                if (_router.CurrentTool is TextTool ttt && ttt._textBox != null && ttt._textBox.IsKeyboardFocused)
+                {
+                    switch (e.Key)
+                    {
+                        case Key.C: // 复制
+                        case Key.V: // 粘贴
+                        case Key.X: // 剪切
+                        case Key.A: // 全选
+                        case Key.Z: // 撤销 (建议加上，让用户能撤销输入的文字，而不是撤销整个文本框)
+                        case Key.Y: // 重做
+                            return;
+                    }
+                }
                 switch (e.Key)
                 {
                     case Key.Z:
@@ -542,7 +555,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                   ShowToast("GDI+ Read Failed: " + ex.Message);
+                    ShowToast("GDI+ Read Failed: " + ex.Message);
                 }
             }
 
@@ -709,7 +722,7 @@ namespace TabPaint
         private void UpdateUIStatus(double realScale)
         {
             if (MyStatusBar == null) return;
-                MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
+            MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
             ZoomLevel = realScale.ToString("P0"); // 如果你有绑定的属性
 
             // 更新滑块位置 (反向计算)
@@ -735,7 +748,7 @@ namespace TabPaint
             }
         }
         // 修改方法签名，增加 isIntermediate 参数，默认为 false
-        private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false)
+        private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false, bool slient = false)
         {
 
             double oldScale = zoomscale;
@@ -781,14 +794,14 @@ namespace TabPaint
             _canvasResizer.UpdateUI();
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
-            if (!isIntermediate)
-            {
 
 
-
-                UpdateRulerPositions();
-                if (IsViewMode && _startupFinished) { ShowToast(newScale.ToString("P0")); }
+            UpdateRulerPositions();
+            if (IsViewMode && _startupFinished && !slient) 
+            { 
+                ShowToast(newScale.ToString("P0")); 
             }
+
         }
 
         // 动画相关字段
@@ -868,6 +881,7 @@ namespace TabPaint
             if (!IsViewMode) UpdateSelectionScalingMode();
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+            if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
             // 动画结束清理
             if (isEnding)
             {
@@ -918,7 +932,7 @@ namespace TabPaint
 
             if (isCtrl || (isViewMode && wheelMode == MouseWheelMode.Zoom))
             {
-                e.Handled = true; 
+                e.Handled = true;
                 _hasUserManuallyZoomed = true;
                 // 获取鼠标在 ScrollContainer 中的位置作为缩放中心
                 Point mousePos = e.GetPosition(ScrollContainer);

@@ -147,21 +147,21 @@ namespace TabPaint
         {
             if (!SettingsManager.Instance.Current.SkipResetConfirmation)
             {
-                var result = System.Windows.MessageBox.Show(
+                var result = FluentMessageBox.Show(
                     "确定要重置当前工作区吗？\n" +
                     "· 所有“未命名”的新建画布将被删除\n" +
                     "· 所有打开的图片将还原至磁盘文件状态\n" +
                     "· 撤销记录、所有临时缓存文件及会话记录将被清空",
                     "放弃更改",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    MessageBoxButton.YesNo
+                   );
 
                 if (result != MessageBoxResult.Yes) return;
             }
-
+          
             _autoSaveTimer.Stop();
             _activeSaveTasks.Clear(); // 清空任务字典
-
+            FileTabs.Clear();
             // 2. 【核心】强制清空画布像素！
             // 即使后续逻辑意外触发了 Backup，备份的也只会是白纸，而不是旧画
             if (_surface != null && _surface.Bitmap != null)
@@ -760,11 +760,11 @@ namespace TabPaint
                 }
                 if (!SettingsManager.Instance.Current.SkipResetConfirmation)
                 {
-                    var result = MessageBox.Show(
+                    var result = FluentMessageBox.Show(
                         $"确定要将文件 '{tab.FileName}' 放入回收站吗？\n此操作不可撤销（取决于系统设置）。",
                         "删除文件",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
+                        MessageBoxButton.YesNo
+                      );
                     if (result != MessageBoxResult.Yes) return;
                 }
                 string path = tab.FilePath;

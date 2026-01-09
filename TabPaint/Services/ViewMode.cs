@@ -145,6 +145,8 @@ namespace TabPaint
 
         private void OnModeChanged(bool isView, bool isSilent = false)
         {
+            var settings = SettingsManager.Instance.Current;
+
             if (!isSilent) ShowToast(isView ? "进入看图模式" : "进入画图模式");
             AutoSetFloatBarVisibility();
             CheckBirdEyeVisibility();
@@ -169,6 +171,14 @@ namespace TabPaint
                     var controller = AnimationBehavior.GetAnimator(GifPlayerImage);
                     controller?.Play();
                 }
+                if (settings.ViewUseDarkCanvasBackground)
+                {
+                    // 只有当前不是 Dark 时才切换，避免重复刷新
+                    if (ThemeManager.CurrentAppliedTheme != AppTheme.Dark)
+                    {
+                        ThemeManager.ApplyTheme(AppTheme.Dark);
+                    }
+                }
                 RootWindow.MinHeight= 100;
                 RootWindow.MinWidth = 150;
                 CanvasResizeOverlay.Visibility = Visibility.Collapsed;
@@ -186,15 +196,19 @@ namespace TabPaint
                     GifPlayerImage.Visibility = Visibility.Collapsed; // 隐藏动态图
                     BackgroundImage.Visibility = Visibility.Visible;  // 显示静态图 (WriteableBitmap)
                 }
-
+                if (ThemeManager.CurrentAppliedTheme != settings.ThemeMode)
+                {
+                    // 如果 settings.ThemeMode 是 System，ThemeManager.ApplyTheme 内部会自动处理
+                    ThemeManager.ApplyTheme(settings.ThemeMode);
+                }
                 CanvasResizeOverlay.Visibility = Visibility.Visible;
-                RootWindow.MinHeight = 300;
-                RootWindow.MinWidth = 400;
+                RootWindow.MinHeight = 345;
+                RootWindow.MinWidth = 430;
                 _router.CurrentTool.SetCursor(_ctx);
             }
             UpdateCanvasVisuals();
             if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);
-          
+            AutoUpdateMaximizeIcon();
      
                 if (_canvasResizer != null) _canvasResizer.UpdateUI();
             if (!_hasUserManuallyZoomed && _bitmap != null)

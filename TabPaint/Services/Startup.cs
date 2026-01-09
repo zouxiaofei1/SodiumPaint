@@ -26,7 +26,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private void CheckFilePathAvailibility(string path)
+        public void CheckFilePathAvailibility(string path)
         {
             if (string.IsNullOrEmpty(path)) _currentFileExists = false;
             if((File.Exists(path)|| System.IO.Directory.Exists(path))&&(!IsVirtualPath(path)))

@@ -392,7 +392,7 @@
                             BorderBrush="{DynamicResource BorderMediumBrush}" 
                             BorderThickness="1">
                         <Border.Resources>
-                            <local:NonLinearRangeConverter x:Key="SizeConverter"/>
+                            <local:DynamicRangeConverter x:Key="DynamicSizeConverter"/>
                         </Border.Resources>
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
@@ -407,21 +407,30 @@
 
                             <!-- Slider Tooltip 颜色统一 -->
                             <Slider Grid.Row="1" x:Name="ThicknessSlider" 
-                                    Style="{StaticResource Win11VerticalSliderStyle}" 
-                                    Orientation="Vertical" 
-                                    Minimum="0" Maximum="1"
-                                    SmallChange="0.005" LargeChange="0.05"
-                                    DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-                                    Value="{Binding PenThickness, Mode=TwoWay, Converter={StaticResource SizeConverter}}" 
-                                    IsSnapToTickEnabled="False"
-                                    Margin="0,0,0,10"
-                                    Thumb.DragStarted="ThicknessSlider_DragStarted" 
-                                    Thumb.DragCompleted="ThicknessSlider_DragCompleted" 
-                                    ValueChanged="ThicknessSlider_ValueChanged">
+                Style="{StaticResource Win11VerticalSliderStyle}" 
+                Orientation="Vertical" 
+                Minimum="0" Maximum="1"
+                SmallChange="0.005" LargeChange="0.05"
+                IsSnapToTickEnabled="False"
+                Margin="0,0,0,10"
+                Thumb.DragStarted="ThicknessSlider_DragStarted" 
+                Thumb.DragCompleted="ThicknessSlider_DragCompleted" 
+                ValueChanged="ThicknessSlider_ValueChanged">
+
+                                <Slider.Value>
+                                    <MultiBinding Converter="{StaticResource DynamicSizeConverter}" Mode="TwoWay">
+                                        <!-- 绑定参数 1: 粗细数值 -->
+                                        <Binding Source="{x:Static local:SettingsManager.Instance}" Path="Current.PenThickness" Mode="TwoWay"/>
+                                        <!-- 绑定参数 2: 工具 Key (用于触发上限更新) -->
+                                        <Binding Source="{x:Static local:SettingsManager.Instance}" Path="Current.CurrentToolKey" Mode="OneWay"/>
+                                    </MultiBinding>
+                                </Slider.Value>
+
                                 <Slider.ToolTip>
                                     <ToolTip Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding PenThickness, StringFormat={}{0:F0}}"/>
+                                            <!-- Tooltip 保持简单绑定即可，因为它只负责显示结果 -->
+                                            <TextBlock Text="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current.PenThickness, StringFormat={}{0:F0}}"/>
                                             <TextBlock Text=" 像素" Margin="2,0,0,0"/>
                                         </StackPanel>
                                     </ToolTip>

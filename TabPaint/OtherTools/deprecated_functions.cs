@@ -54,4 +54,24 @@
 //{
 //    var version = Environment.OSVersion.Version.Major;
 //    return version >= 10;
-//}
+//}        // 绑定到 ItemsControl 的预设颜色集合
+//public ObservableCollection<SolidColorBrush> ColorItems { get; set; }
+//    = new ObservableCollection<SolidColorBrush>
+//    {
+//        new SolidColorBrush(Colors.Black),
+//        new SolidColorBrush(Colors.Gray),
+//        new SolidColorBrush(Colors.Brown),
+//        new SolidColorBrush(Colors.Red),
+//        new SolidColorBrush(Colors.Orange),
+//        new SolidColorBrush(Colors.Yellow),
+//        new SolidColorBrush(Colors.Green),
+//         new SolidColorBrush( (Color)ColorConverter.ConvertFromString("#B5E61D")),
+//        new SolidColorBrush(Colors.Cyan),
+//        new SolidColorBrush(Colors.Blue),
+//        new SolidColorBrush(Colors.Purple),
+//        new SolidColorBrush(Colors.Pink),
+//        new SolidColorBrush(Colors.BlueViolet),
+//         new SolidColorBrush(Colors.CornflowerBlue),
+//         new SolidColorBrush( (Color)ColorConverter.ConvertFromString("#C8BFE7")),
+//        new SolidColorBrush(Colors.White)
+//    };

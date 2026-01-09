@@ -624,7 +624,7 @@ namespace TabPaint
                     foreach (var info in session.Tabs)
                     {
                         // [新增] 2. 过滤逻辑
-                        if (startupDir != null)
+                      //  if (startupDir != null)
                         {
                             string tabDir = info.WorkDirectory;
 
@@ -634,12 +634,19 @@ namespace TabPaint
                                 tabDir = System.IO.Path.GetDirectoryName(info.OriginalPath);
                             }
 
-                            if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
-
+                            if (tabDir != null)
+                            {
+                                try
+                                {
+                                    tabDir = System.IO.Path.GetFullPath(tabDir);
+                                }
+                                catch (Exception ex) { }
+                                }
                             if (string.Compare(tabDir, startupDir, StringComparison.OrdinalIgnoreCase) != 0&&!info.IsNew)
                             {// 目录不匹配且不是新建文件，跳过
                                 continue;
                             }
+                            if (info.IsNew && !info.IsDirty) continue;
                         }
 
                         if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
@@ -942,7 +949,91 @@ namespace TabPaint
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
                 encoder.Save(fileStream);
             }
+        }// 修改原 LoadSession 方法，或者新建一个专门用于工作区切换加载的方法
+        private void LoadSessionForCurrentWorkspace(string workspaceFilePath)
+        {
+            if (!File.Exists(_sessionPath)) return;
+
+            try
+            {
+                string workspaceDir = System.IO.Path.GetDirectoryName(workspaceFilePath);
+                if (workspaceDir != null) workspaceDir = System.IO.Path.GetFullPath(workspaceDir);
+
+                var json = File.ReadAllText(_sessionPath);
+                var session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+
+                if (session.Tabs != null)
+                {
+                    foreach (var info in session.Tabs)
+                    {
+                        // 1. 路径判定
+                        string tabDir = info.WorkDirectory;
+
+                        // 兼容旧数据
+                        if (string.IsNullOrEmpty(tabDir) && !string.IsNullOrEmpty(info.OriginalPath) && !IsVirtualPath(info.OriginalPath))
+                        {
+                            try { tabDir = System.IO.Path.GetDirectoryName(info.OriginalPath); } catch { }
+                        }
+
+                        if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
+
+                        // 2. 核心判定：只有当 Tab 的工作目录 == 当前切换到的目录时，才恢复
+                        // 或者，如果是“新建文件(Virtual File)”，且它的归属目录是当前目录，也恢复
+                        bool shouldLoad = false;
+
+                        if (workspaceDir != null && tabDir != null &&
+                            string.Equals(tabDir, workspaceDir, StringComparison.OrdinalIgnoreCase))
+                        {
+                            shouldLoad = true;
+                        }
+
+                        if (shouldLoad)
+                        {
+                            // 检查是否已经在 FileTabs 里了（防止重复添加）
+                            if (FileTabs.Any(t => t.Id == info.Id || t.FilePath == info.OriginalPath))
+                            {
+                                // 如果已经在列表里（比如 ScanFolder 扫到了原图），
+                                // 我们需要把 Session 里的 BackupPath 赋给它，让它变成"已编辑"状态
+                                var existingTab = FileTabs.First(t => t.Id == info.Id || t.FilePath == info.OriginalPath);
+
+                                if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
+                                {
+                                    existingTab.BackupPath = info.BackupPath;
+                                    existingTab.IsDirty = info.IsDirty;
+                                    existingTab.IsNew = info.IsNew; // 或者是 false，取决于逻辑
+                                                                    // 触发重新加载缩略图显示修改后的样子
+                                    _ = existingTab.LoadThumbnailAsync(100, 60);
+                                }
+                            }
+                            else
+                            {
+                                // 如果列表里没有（比如是一个新建的未命名文件，物理磁盘上不存在），则添加
+                                if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
+                                {
+                                    var tab = new FileTabItem(info.OriginalPath)
+                                    {
+                                        Id = info.Id,
+                                        IsNew = info.IsNew,
+                                        IsDirty = info.IsDirty,
+                                        BackupPath = info.BackupPath,
+                                        UntitledNumber = info.UntitledNumber
+                                       
+                                    };
+                                    FileTabs.Add(tab);
+                                    _ = tab.LoadThumbnailAsync(100, 60);
+                                }
+                            }
+                        }
+                    }
+                }
+                UpdateImageBarVisibilityState();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Workspace Session Load Error: {ex.Message}");
+            }
         }
+
         private bool IsVirtualPath(string path)
         {
             return !string.IsNullOrEmpty(path) && path.StartsWith(VirtualFilePrefix);

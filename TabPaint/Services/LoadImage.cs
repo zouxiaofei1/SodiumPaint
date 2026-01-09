@@ -30,6 +30,7 @@ namespace TabPaint
         private CancellationTokenSource _progressCts;
         public async Task OpenImageAndTabs(string filePath, bool refresh = false, bool lazyload = false, bool forceFolderScan = false, bool nobackup = false)
         {
+           
             _isLoadingImage = true;
             OnPropertyChanged("IsLoadingImage");
             try

@@ -23,7 +23,63 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-       
+        private void UpdateGlobalToolSettingsKey()
+        {
+            // [修复] 开始更新，设置标志位为 true
+            _isUpdatingToolSettings = true;
+
+            try
+            {
+                if (_router?.CurrentTool == null || _ctx == null) return;
+                string key = "Pen_Round"; // 默认 fallback
+                bool isPencil = false;
+
+                if (_router.CurrentTool is PenTool)
+                {
+                    // 根据 BrushStyle 细分
+                    switch (_ctx.PenStyle)
+                    {
+                        case BrushStyle.Pencil: key = "Pen_Pencil"; isPencil = true; break;
+                        case BrushStyle.Round: key = "Pen_Round"; break;
+                        case BrushStyle.Square: key = "Pen_Square"; break;
+                        case BrushStyle.Highlighter: key = "Pen_Highlighter"; break;
+                        case BrushStyle.Eraser: key = "Pen_Eraser"; break;
+                        case BrushStyle.Watercolor: key = "Pen_Watercolor"; break;
+                        case BrushStyle.Crayon: key = "Pen_Crayon"; break;
+                        case BrushStyle.Spray: key = "Pen_Spray"; break;
+                        case BrushStyle.Mosaic: key = "Pen_Mosaic"; break;
+                        case BrushStyle.Brush: key = "Pen_Brush"; break;
+                    }
+                }
+                else if (_router.CurrentTool is ShapeTool)
+                {
+                    key = "Shape";
+                }
+               
+
+                if (ThicknessSlider != null)
+                {
+                    ThicknessSlider.IsEnabled = !isPencil;
+
+                    // 处理 Tip 显示
+                    if (isPencil && ThicknessTip != null)
+                        ThicknessTip.Visibility = Visibility.Collapsed;
+                    else if (ThicknessTip != null)
+                        ThicknessTip.Visibility = Visibility.Visible;
+                }
+
+                SettingsManager.Instance.Current.CurrentToolKey = key;
+
+                // 这里会触发 ThicknessSlider 的 Binding Update，进而触发 ValueChanged
+                _ctx.PenThickness = SettingsManager.Instance.Current.PenThickness;
+            }
+            finally
+            {
+                // [修复] 无论发生什么，最后一定要复位标志位，恢复滑块的正常交互
+                _isUpdatingToolSettings = false;
+            }
+        }
+
         public void UpdateCurrentColor(Color color, bool secondColor = false) // 更新前景色按钮颜色
         {
             if (secondColor)
@@ -564,11 +620,10 @@ namespace TabPaint
         // 辅助方法：统一处理保存错误并提供“另存为”建议
         private void HandleSaveError(string message, string failedPath)
         {
-            var result = MessageBox.Show(
+            var result = FluentMessageBox.Show(
                 $"{message}\n\n是否尝试【另存为】到其他位置？",
                 "保存失败",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+                MessageBoxButton.YesNo);
 
             if (result == MessageBoxResult.Yes)
             {
@@ -587,7 +642,7 @@ namespace TabPaint
             MyStatusBar.ZoomSliderControl.Value = newScale;
             ZoomLevel = newScale.ToString("P0");
             MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
-            SetZoom(newScale);
+            SetZoom(newScale,slient:true);
         }
     }
 }

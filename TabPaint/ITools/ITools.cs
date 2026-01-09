@@ -361,12 +361,13 @@ namespace TabPaint
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
                 tool.SetCursor(_ctx);
-                //var mainWindow = (MainWindow)Application.Current.MainWindow;
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                mw.AutoSetFloatBarVisibility();
+                mw._router.GetSelectTool().UpdateStatusBarSelectionSize();
+                mw.UpdateToolSelectionHighlight();
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).AutoSetFloatBarVisibility();
-                ((MainWindow)System.Windows.Application.Current.MainWindow)._router.GetSelectTool().UpdateStatusBarSelectionSize();
-
-                ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateToolSelectionHighlight();
+                // --- 新增：更新工具设置 Key ---
+                mw.UpdateGlobalToolSettingsKey();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)
     => CurrentTool?.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));

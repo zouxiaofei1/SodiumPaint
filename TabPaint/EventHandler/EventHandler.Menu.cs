@@ -412,18 +412,26 @@ namespace TabPaint
             if (!_isInitialLayoutComplete) return;
 
             // Check: 防止空引用
-            if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null)
+            if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null||ThicknessSlider.Visibility!=Visibility.Visible)
                 return;
+            if (_isUpdatingToolSettings)
+            {
+                ThicknessTip.Visibility = Visibility.Collapsed;
+                return;
+            }
+            double realSize = SettingsManager.Instance.Current.PenThickness;
 
-            double t = e.NewValue;
-            double realSize = 1.0 + (400.0 - 1.0) * (t * t);
-            PenThickness = realSize;
+            // 2. 更新悬浮提示的位置 (Slider 的 Thumb 位置)
+            SetThicknessSlider_Pos(e.NewValue);
             UpdateThicknessPreviewPosition();
 
-            ThicknessTipText.Text = $"{(int)realSize} 像素";
-            SetThicknessSlider_Pos(e.NewValue);
+            // 3. 更新提示文字
+            ThicknessTipText.Text = $"{(int)Math.Round(realSize)} 像素";
+
+            // 4. 显示提示
             ThicknessTip.Visibility = Visibility.Visible;
         }
+      
         private async void OnOpenWorkspaceClick(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog

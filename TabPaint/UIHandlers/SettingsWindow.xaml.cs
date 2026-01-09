@@ -96,7 +96,7 @@ del ""%~f0""
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"重置失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                FluentMessageBox.Show($"重置失败: {ex.Message}", "错误", MessageBoxButton.OK);
             }
         }
         private bool _isInternalChange = false; // 防止两个 ListBox 互相清空时触发死循环
@@ -186,10 +186,10 @@ del ""%~f0""
         }
         private void ResetShortcuts_Click(object sender, RoutedEventArgs e)
         {
-            var result = System.Windows.MessageBox.Show("确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。",
+            var result = FluentMessageBox.Show("确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。",
                              "确认重置",
-                             MessageBoxButton.YesNo,
-                             MessageBoxImage.Warning);
+                             MessageBoxButton.YesNo
+                            );
 
             if (result == MessageBoxResult.Yes)
             {
@@ -209,7 +209,7 @@ del ""%~f0""
                 // 处理帮助文档（空链接或特殊标记）
                 if (string.IsNullOrEmpty(url) || url.StartsWith("cmd://help"))
                 {
-                    System.Windows.MessageBox.Show("帮助文档正在编写中，敬请期待！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    FluentMessageBox.Show("帮助文档正在编写中，敬请期待！", "提示", MessageBoxButton.OK);
                     e.Handled = true;
                     return;
                 }
@@ -221,7 +221,7 @@ del ""%~f0""
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"无法打开链接: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                FluentMessageBox.Show($"无法打开链接: {ex.Message}", "错误", MessageBoxButton.OK);
             }
         }
 

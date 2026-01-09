@@ -160,7 +160,7 @@ namespace TabPaint
             // 1. 脏检查
             if (item.IsDirty&&!slient&& !SettingsManager.Instance.Current.SkipResetConfirmation)
             {
-                var result = System.Windows.MessageBox.Show(
+                var result = FluentMessageBox.Show(
                     $"图片 {item.DisplayName} 尚未保存，是否保存？",
                     "保存提示",
                     MessageBoxButton.YesNoCancel);

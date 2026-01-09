@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Forms;
+using System.Windows.Input;
 //
 //TabPaint主程序
 //
@@ -233,41 +234,62 @@ namespace TabPaint
             return sw.ElapsedTicks;
         }
     }
-    public class NonLinearRangeConverter : IValueConverter
+    public class DynamicRangeConverter : IMultiValueConverter
     {
-        // 最小粗细
         private const double MinSize = 1.0;
-        // 最大粗细
-        private const double MaxSize = 400.0;
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+
+        // --- 核心配置：在这里定义不同工具的上限 ---
+        private double GetMaxSizeForKey(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return 400.0; // 默认
+         //   
+            if (key == "Shape") return 24.0; // ★ Shape 工具上限锁死为 24
+            if (key == "Pen_Pencil") return 10.0;
+
+            return 400.0; // 其他画笔默认 400
+        }
+
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            // values[0]: 实际的粗细值 (double)
+            // values[1]: 当前工具的 Key (string)
+
+            if (values.Length < 2 || values[0] == DependencyProperty.UnsetValue)
+                return 0.0;
+
+            double thickness = System.Convert.ToDouble(values[0]);
+            string toolKey = values[1] as string;
+
+            double maxSize = GetMaxSizeForKey(toolKey);
+
+            // 反向计算比例：从 (1~Max) 映射回 Slider 的 (0~1)
+            double ratio = (thickness - MinSize) / (maxSize - MinSize);
+
+            // 开根号还原线性进度
+            double sliderVal = Math.Sqrt(Math.Max(0.0, Math.Min(1.0, ratio)));
+      
+            return sliderVal;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
             if (value is double sliderVal)
             {
-                // 确保 sliderVal 在 0~1 之间
+                // 注意：ConvertBack 无法直接拿到 Binding 的其他值，
+                // 所以这里必须通过单例访问当前的 ToolKey
+                string toolKey = SettingsManager.Instance.Current.CurrentToolKey;
+                double maxSize = GetMaxSizeForKey(toolKey);
+
                 double t = Math.Max(0.0, Math.Min(1.0, sliderVal));
 
-                // 使用平方曲线 (t * t) 使得小数值部分调节更细腻
-                double result = MinSize + (MaxSize - MinSize) * (t * t);
-
-                return Math.Round(result); // 取整，因为像素通常是整数
+                // 使用平方曲线 (t * t)
+                double result = MinSize + (maxSize - MinSize) * (t * t);
+            
+                // 返回 Thickness 数值，第二个参数 Binding.DoNothing 表示不修改 ToolKey
+                return new object[] { Math.Round(result), Binding.DoNothing };
             }
-            return MinSize;
-        }
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is double thickness || value is int || value is float)
-            {
-                double v = System.Convert.ToDouble(value);
 
-                // 反向计算比例
-                double ratio = (v - MinSize) / (MaxSize - MinSize);
-
-                // 开根号还原线性进度
-                double sliderVal = Math.Sqrt(Math.Max(0.0, ratio));
-
-                return sliderVal;
-            }
-            return 0.0;
+            return new object[] { MinSize, Binding.DoNothing };
         }
     }
     public class ScaleToTileRectConverter : IValueConverter

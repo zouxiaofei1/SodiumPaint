@@ -34,12 +34,12 @@ namespace TabPaint
         {
             _workingPath = path;
             _currentFilePath = path;
-
+            CheckFilePathAvailibility(_currentFilePath);
             // s(_currentImageIndex);
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent();
             RestoreWindowBounds();
-            CheckFilePathAvailibility(_currentFilePath);
+          
             if (SettingsManager.Instance.Current.StartInViewMode&& _currentFileExists)
             {
                 IsViewMode = true;
@@ -77,11 +77,11 @@ namespace TabPaint
                 double targetScale = SliderToZoom(sliderVal);
 
                 // 3. 应用缩放 (注意：不要在这里直接设置 Slider.Value，SetZoom 会去做的)
-                SetZoom(targetScale);
+                SetZoom(targetScale,slient:true);
             };
 
 
-            SetBrushStyle(BrushStyle.Round);
+           // SetBrushStyle(BrushStyle.Round);
             SetCropButtonState();
             _canvasResizer = new CanvasResizeManager(this); ;
             // 1. 先加载上次会话 (Tabs结构)
@@ -134,8 +134,8 @@ namespace TabPaint
             base.OnSourceInitialized(e); // 建议保留 base 调用
 
             MicaAcrylicManager.ApplyEffect(this);
-            MicaEnabled = true;
-            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+            MicaEnabled = true; var currentSettings = SettingsManager.Instance.Current;
+            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark)|| (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
             InitializeClipboardMonitor();
 
@@ -626,9 +626,9 @@ namespace TabPaint
         }
         private void MoveImageIndex(int direction) // direction: 1 or -1
         {
-            if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-         //  if()
-            if (_imageFiles.Count < 2) return;
+            if (_imageFiles.Count == 0 || _currentImageIndex < 0||FileTabs==null) return;
+         //   a.s(FileTabs.Count);
+            if (FileTabs.Count<2) return;
             // 清理和保存逻辑 (保持原有逻辑)
             _router.CleanUpSelectionandShape();
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))

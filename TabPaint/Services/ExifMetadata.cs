@@ -27,7 +27,14 @@ namespace TabPaint
 
                     // --- 1. 文件与画布信息 ---
                     sb.AppendLine("[文件信息]");
-                    sb.AppendLine($"路径: {filePath}");
+                    if (IsVirtualPath(filePath))
+                    {
+                        sb.AppendLine("路径: [内存文件] 未保存到磁盘");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"路径: {filePath}");
+                    }
                     sb.AppendLine($"大小: {(imageBytes.Length / 1024.0 / 1024.0):F2} MB");
                     sb.AppendLine();
 

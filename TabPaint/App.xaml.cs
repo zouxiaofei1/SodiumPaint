@@ -74,9 +74,7 @@ namespace TabPaint
             });
             var currentSettings = SettingsManager.Instance.Current;
             currentSettings.PropertyChanged += Settings_PropertyChanged;
-            ThemeManager.ApplyTheme(currentSettings.ThemeMode);
-            base.OnStartup(e);
-
+            AppTheme targetTheme = currentSettings.ThemeMode;
             // --- 原有的启动逻辑 ---
             string filePath = "";
             if (e.Args is { Length: > 0 })
@@ -90,16 +88,28 @@ namespace TabPaint
             else
             {
 #if DEBUG
-                //   filePath = @"E:\dev\"; //10图片
-       //         filePath = @"E:\dev\res\"; // 150+图片
-            //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
+                //  filePath = @"E:\dev\"; //10图片
+                //         filePath = @"E:\dev\res\"; // 150+图片
+                //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
                 // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹
-               
+
 #endif
             }
+            base.OnStartup(e); _mainWindow = new MainWindow(filePath);
+            _mainWindow.CheckFilePathAvailibility(filePath);
+            // 如果设置了“启动进入看图模式” 且 “看图模式使用深色背景”
+            // 则强制在启动时应用深色主题，无论全局设置是什么
+            //bool isDarkForWindow = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark) || (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _mainWindow._currentFileExists);
+            if (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _mainWindow._currentFileExists)
+            {
+                targetTheme = AppTheme.Dark;
+            }
+            ThemeManager.ApplyTheme(targetTheme);
 
-            _mainWindow = new MainWindow(filePath);
-            ThemeManager.SetWindowImmersiveDarkMode(_mainWindow, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+
+
+
+
             _mainWindow.Show();
         }
         private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -115,6 +125,14 @@ namespace TabPaint
             else if (e.PropertyName == nameof(AppSettings.ThemeAccentColor))
             {
                 ThemeManager.RefreshAccentColor(settings.ThemeAccentColor);
+            }
+
+            if (e.PropertyName == nameof(AppSettings.PenThickness))
+            {
+                if (_mainWindow._ctx != null)
+                {
+                    _mainWindow._ctx.PenThickness = SettingsManager.Instance.Current.PenThickness;
+                }
             }
         }
 
