@@ -167,7 +167,7 @@ namespace TabPaint
             catch (Exception ex)
             {
                 // 容错处理
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                ShowToast(ex.Message);
             }
         }
         private void OnScreenColorPickerClick(object sender, RoutedEventArgs e)

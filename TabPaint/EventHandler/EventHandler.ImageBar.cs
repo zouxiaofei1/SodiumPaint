@@ -225,7 +225,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Cleanup failed: {ex.Message}");
+                ShowToast($"Cleanup failed: {ex.Message}");
             }
             var originalCurrentTab = _currentTabItem;
             bool currentTabAffected = false;
@@ -422,7 +422,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"PrepareDragFilePath Error: {ex.Message}");
+                ShowToast($"PrepareDragFilePath Error: {ex.Message}");
             }
 
             // 如果上面失败了，且原路径是真实存在的，作为兜底返回原路径
@@ -466,7 +466,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Drag start failed: {ex.Message}");
+                ShowToast($"Drag start failed: {ex.Message}");
             }
         }
 
@@ -882,7 +882,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
+                //ShowToast($"Copy failed: {ex.Message}");
                 ShowToast("复制失败");
             }
             finally

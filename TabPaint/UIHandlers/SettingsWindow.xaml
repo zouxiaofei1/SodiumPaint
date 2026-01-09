@@ -283,7 +283,7 @@
                     </StackPanel>
 
                     <!-- 4. 快捷键设置 -->
-                    <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed" Margin="24">
+                    <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed"  Margin="24,24,44,24">
                         <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <StackPanel Margin="0,0,10,10">
 
@@ -355,7 +355,14 @@
                             </Grid>
                             <!-- 第 1.5 组：基础绘图工具 -->
                             <TextBlock Text="基础绘图工具" FontWeight="Bold" Margin="0,15,0,5"/>
-
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="选择工具" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToSelect], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
@@ -383,14 +390,7 @@
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToEraser], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
-                            <Grid Margin="0,5">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="180"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="选择工具" VerticalAlignment="Center"/>
-                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToSelect], Source={x:Static local:SettingsManager.Instance}}"/>
-                            </Grid>
+
 
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
@@ -593,7 +593,7 @@
                     </StackPanel>
 
                     <!-- 5. 高级 -->
-                    <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed" Margin="24">
+                    <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed" Margin="24,24,44,24">
                         <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <TextBlock Text="渲染与性能" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -724,7 +724,7 @@
                     </StackPanel>
 
                     <!-- 6. 关于页 -->
-                    <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24">
+                    <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24,24,44,24">
                         <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Image x:Name="AppIcon" 
@@ -746,6 +746,33 @@
                             <TextBlock Text="技术栈: " Foreground="{DynamicResource TextTertiaryBrush}"/>
                             <TextBlock Text=".NET WPF, Win32 API" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
+
+                        <!-- 新增：链接区域 -->
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+
+                        <TextBlock Margin="0,6" FontSize="14">
+                            <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint" RequestNavigate="Hyperlink_RequestNavigate">
+                                <Run Text="&#xE943;" FontFamily="Segoe MDL2 Assets"/> <!-- GitHub/Code Icon style -->
+                                <Run Text="GitHub 主页"/>
+                            </Hyperlink>
+                        </TextBlock>
+
+                        <TextBlock Margin="0,6" FontSize="14">
+                            <!-- 链接到 Releases 页面 -->
+                            <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
+                                <Run Text="&#xE895; " FontFamily="Segoe MDL2 Assets"/> <!-- Sync/Update Icon style -->
+                                <Run Text="检查更新"/>
+                            </Hyperlink>
+                        </TextBlock>
+
+                        <TextBlock Margin="0,6" FontSize="14">
+                            <!-- 帮助链接留空，使用特殊协议头标记或在代码中拦截 -->
+                            <Hyperlink NavigateUri="cmd://help" RequestNavigate="Hyperlink_RequestNavigate">
+                                <Run Text=" " FontFamily="Segoe MDL2 Assets"/> <!-- Help Icon style -->
+                                <Run Text="帮助文档"/>
+                            </Hyperlink>
+                        </TextBlock>
+
                     </StackPanel>
                 </Grid>
             </ScrollViewer>

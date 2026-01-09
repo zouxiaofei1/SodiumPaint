@@ -266,7 +266,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Drag-drop operation failed: {ex.Message}");
+                   // System.Diagnostics.Debug.WriteLine($"Drag-drop operation failed: {ex.Message}");
                 }
                 finally
                 {
@@ -292,18 +292,16 @@ namespace TabPaint
                         if (System.IO.File.Exists(filePath))
                         {
                             System.IO.File.Delete(filePath);
-                            System.Diagnostics.Debug.WriteLine($"Temp file deleted: {filePath}");
+                            //System.Diagnostics.Debug.WriteLine($"Temp file deleted: {filePath}");
                         }
                     }
                     catch (System.IO.IOException)
                     {
-                        // 如果文件被接收方程序锁定了（比如Word正在读取），
-                        // 这里可能会抛出异常。我们可以选择忽略，或者再试一次。
-                        System.Diagnostics.Debug.WriteLine($"File locked, could not delete: {filePath}");
+                      //  System.Diagnostics.Debug.WriteLine($"File locked, could not delete: {filePath}");
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error cleaning up temp file: {ex.Message}");
+                       // System.Diagnostics.Debug.WriteLine($"Error cleaning up temp file: {ex.Message}");
                     }
                 });
             }
@@ -465,7 +463,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("BlendPixels Error: " + ex.Message);
+                    //System.Diagnostics.Debug.WriteLine("BlendPixels Error: " + ex.Message);
                 }
                 finally
                 {

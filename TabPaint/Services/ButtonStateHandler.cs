@@ -298,7 +298,7 @@ namespace TabPaint
                 }
             };
         }
-        private void UpdateColorHighlight()
+        public void UpdateColorHighlight()
         {
 
             // 假设你的两个颜色按钮在 XAML 里设置了 Name="ColorBtn1" 和 Name="ColorBtn2"
@@ -518,15 +518,52 @@ namespace TabPaint
             encoder.Frames.Add(BitmapFrame.Create(saveSource));
 
             // 4. 写入文件
-            using (FileStream fs = new FileStream(path, FileMode.Create))
+            try
             {
-                encoder.Save(fs);
+                using (FileStream fs = new FileStream(path, FileMode.Create))
+                {
+                    encoder.Save(fs);
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // 捕获只读或权限错误
+                HandleSaveError("保存失败：文件是只读的，或者您没有权限写入此位置。", path);
+                return;
+            }
+            catch (IOException ex)
+            {
+                // 捕获文件被占用错误
+                HandleSaveError($"保存失败：文件可能正在被占用。\n{ex.Message}", path);
+                return;
+            }
+            catch (Exception ex)
+            {
+                HandleSaveError($"保存时发生错误：{ex.Message}", path);
+                return;
             }
 
             MarkAsSaved();
-
             // 5. 更新对应标签页的缩略图
             UpdateTabThumbnail(path);
+        }
+
+        // 辅助方法：统一处理保存错误并提供“另存为”建议
+        private void HandleSaveError(string message, string failedPath)
+        {
+            var result = MessageBox.Show(
+                $"{message}\n\n是否尝试【另存为】到其他位置？",
+                "保存失败",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                // 调用你的“另存为”逻辑
+                // SaveAs() 或类似的函数
+                // 确保你的 SaveAs 方法会弹出文件选择框，而不是直接递归调用 SaveBitmap
+               OnSaveAsClick(null, null)    ;
+            }
         }
 
 

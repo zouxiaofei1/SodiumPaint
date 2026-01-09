@@ -12,6 +12,7 @@
                 <ResourceDictionary Source="Resources/LightTheme.xaml"/>
               
             </ResourceDictionary.MergedDictionaries>
+
         </ResourceDictionary>
 
     </Application.Resources>

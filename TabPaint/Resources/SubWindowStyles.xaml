@@ -718,7 +718,117 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- 窗口右上角关闭按钮样式 -->
+    <Style x:Key="WindowCloseButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width" Value="46"/>
+        <Setter Property="Height" Value="32"/>
+        <!-- 关键点1：默认前景色使用你的主要文本色 -->
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" 
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="0,7,0,0">
+                        <!-- 可选：右上角圆角适配窗口 -->
 
+                        <!-- 关键点2：Path 的 Stroke 绑定到 RelativeSource TemplatedParent 的 Foreground -->
+                        <!-- 关键点3：使用 Stretch="Uniform" 和简单的 Data 让它自动居中 -->
+                        <Path x:Name="icon"
+                          Data="M0,0 L10,10 M0,10 L10,0" 
+                          Stroke="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" 
+                          StrokeThickness="1.5"
+                          Stretch="Uniform"
+                          Width="10" Height="10"
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center"
+                          SnapsToDevicePixels="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 悬停状态 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#C42B1C"/>
+                            <!-- 红色背景 -->
+                            <Setter Property="Foreground" Value="White"/>
+                            <!-- 关键点4：前景色变白，Path会自动跟着变 -->
+                        </Trigger>
+                        <!-- 按下状态 -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#A82417"/>
+                            <Setter Property="Foreground" Value="#E6E6E6"/>
+                            <!-- 稍微灰一点的白 -->
+                            <Setter TargetName="border" Property="Opacity" Value="1.0"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="HasDropShadow" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="5"
+                        SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ToolTipService.InitialShowDelay" Value="20"/>
+        <Setter Property="ToolTipService.BetweenShowDelay" Value="0"/>
+        <Setter Property="ToolTipService.ShowDuration" Value="7000"/>
+    </Style>
+    <Style x:Key="Win11SecondaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="4" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center" 
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtlePressedBrush}"/>
+                            <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlDisabledBackgroundBrush}"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ControlDisabledBorderBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <!-- 辅助资源：透明 RepeatButton 模板 -->
     <ControlTemplate x:Key="TransparentRepeatButtonTemplate" TargetType="RepeatButton">
         <Border Background="Transparent"/>

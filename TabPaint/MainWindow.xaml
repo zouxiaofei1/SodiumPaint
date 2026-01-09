@@ -8,7 +8,7 @@
         xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
         Title="TabPaint"
         Height="700" Width="850"
-        MinHeight="300" MinWidth="400"
+        MinHeight="345" MinWidth="430"
         Top="100" Left="100"
         SizeToContent="Manual"
         AllowsTransparency="False" 
@@ -37,7 +37,21 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
+            <Style x:Key="RulerVisibilityStyle" TargetType="{x:Type local:Ruler}">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <!-- 默认隐藏 -->
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding ShowRulers}" Value="True"/>
+                            <Condition Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
+        
     </Window.Resources>
 
     <!-- 主容器背景 -->
@@ -104,18 +118,31 @@
                     <!-- 顶部标尺 -->
                     <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" 
                                  Orientation="Horizontal" 
-                                 Visibility="{Binding ShowRulers, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
+                                 Style="{StaticResource RulerVisibilityStyle}"
+/>
 
                     <!-- 左侧标尺 -->
                     <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" 
                                  Orientation="Vertical"
-                                 Visibility="{Binding ShowRulers, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}"/>
+                                   Style="{StaticResource RulerVisibilityStyle}"/>
 
                     <!-- 左上角的小方块 (标尺交汇处) -->
                     <!-- 原色 #20F0F0F0，这里用 ChromeMediumBrush (#F0F0F0) 配合透明度 -->
                     <Border Grid.Row="0" Grid.Column="0" 
-                            Background="{DynamicResource ChromeMediumBrush}" Opacity="0.12"
-                            Visibility="{Binding ElementName=RulerTop, Path=Visibility}"/>
+        Background="{DynamicResource ChromeMediumBrush}" Opacity="0.12">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <!-- 联动顶部标尺的显示状态 -->
+                                    <DataTrigger Binding="{Binding Visibility, ElementName=RulerTop}" Value="Visible">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+
 
                     <ScrollViewer Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  
                                   Style="{StaticResource FluentScrollViewer}" Name="ScrollContainer" 

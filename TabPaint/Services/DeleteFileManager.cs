@@ -46,7 +46,6 @@ namespace TabPaint
             // 4. 切换焦点
             if (FileTabs.Count == 0)
             {
-                a.s("switch to new canvas");
                 ResetToNewCanvas();
             }
             else

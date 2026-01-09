@@ -112,10 +112,10 @@
 
         <!-- 右侧控制区 -->
         <StatusBarItem HorizontalAlignment="Right">
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Cursor="">
                 <ToggleButton x:Name="ClipboardMonitorToggle"
                       Width="24" Height="24"
-                      Margin="4,0,6,0" Padding="0"
+                      Margin="4,0,0,0" Padding="0"
                       ToolTip="监听剪切板 (Ctrl + Alt + P)"
                       Style="{StaticResource RoundedMenuToggleButtonStyle}"
                       DataContext="{Binding Source={x:Static app:SettingsManager.Instance}, Path=Current}"
@@ -129,33 +129,9 @@
                     </Grid>
                 </ToggleButton>
 
-                <!-- 信息按钮 -->
-                <Button Width="24" Height="24" 
-                        Style="{StaticResource RoundedMenuButtonStyle}" 
-                        Padding="2,0" 
-                        Cursor="Help">
-                    <Button.ToolTip>
-                        <!-- ToolTip 背景色和边框 -->
-                        <ToolTip Background="{DynamicResource ChromeLowBrush}" 
-                                 BorderBrush="{DynamicResource BorderBrush}" 
-                                 HasDropShadow="True">
-                            <StackPanel Margin="5">
-                                <TextBlock Text="图片详细信息" FontWeight="Bold" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                <Separator Background="{DynamicResource BorderMediumBrush}"/>
-                                <TextBlock Text="{Binding CurrentImageFullInfo}" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            </StackPanel>
-                        </ToolTip>
-                    </Button.ToolTip>
-                    <!-- Stroke="#333" -> IconFillBrush -->
-                    <Path Data="{DynamicResource Info_Image}"
-                          Stretch="Uniform" Fill="Transparent"  
-                          Stroke="{DynamicResource IconFillBrush}"  
-                          StrokeThickness="1" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" 
-                          Width="16" Height="16"/>
-                </Button>
 
                 <!-- 适应窗口按钮 -->
-                <Button Width="24" Height="24" ToolTip="适应窗口大小" Margin="6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
+                <Button Width="24" Height="24" ToolTip="适应窗口大小" Margin="4,0,6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
                     <!-- Fill="#333" -> IconFillBrush -->
                     <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" 
                           Fill="{DynamicResource IconFillBrush}" 

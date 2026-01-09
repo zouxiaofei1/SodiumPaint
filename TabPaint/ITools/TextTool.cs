@@ -108,7 +108,7 @@ namespace TabPaint
                 var outline = new System.Windows.Shapes.Rectangle  // 虚线框
                 {
                     Stroke = mw._darkBackgroundBrush,
-                    StrokeDashArray = new DoubleCollection { 8, 4 },
+                    StrokeDashArray = new DoubleCollection { 4, 4 },
                     StrokeThickness = invScale * 1.5,
                     Width = rect.Width,
                     Height = rect.Height
@@ -501,6 +501,7 @@ namespace TabPaint
 
                 var tb = new System.Windows.Controls.TextBox
                 {
+                    MaxLength = 100000,
                     FontSize = 24, // 默认值，会被 ApplyTextSettings 覆盖
                     AcceptsReturn = true,
                     TextWrapping = TextWrapping.Wrap,

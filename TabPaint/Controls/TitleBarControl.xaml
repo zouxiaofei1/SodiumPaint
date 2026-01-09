@@ -15,19 +15,29 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!-- 背景色改为 GlassBackgroundLowBrush (0.27 Opacity) 近似原有的 #50FFFFFF -->
+    <!-- 背景色保持不变 -->
     <Border Height="28" Background="{DynamicResource GlassBackgroundLowBrush}" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown" AllowDrop="True">
-        <DockPanel LastChildFill="True">
-            <!-- Icon -->
-            <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0" MouseLeftButtonDown="OnAppIconMouseDown">
+
+        <!-- [修改] 将 DockPanel 改为 Grid，以实现更强的布局控制 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <!-- Column 0: 图标 -->
+                <ColumnDefinition Width="*"/>
+                <!-- Column 1: 标题 (占据剩余所有空间) -->
+                <ColumnDefinition Width="Auto"/>
+                <!-- Column 2: 窗口按钮 (固定在右侧) -->
+            </Grid.ColumnDefinitions>
+
+            <!-- [Col 0] Icon -->
+            <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0" MouseLeftButtonDown="OnAppIconMouseDown">
                 <Image.ContextMenu>
-                    <!-- ContextMenu 背景改为 ControlBackgroundBrush -->
+                    <!-- ContextMenu 内容保持不变 -->
                     <ContextMenu x:Name="LogoContextMenu" Style="{StaticResource Win11ContextMenuStyle}" Background="{DynamicResource ControlBackgroundBrush}">
-                        <!-- === 这里复制 MenuBarControl 的文件菜单内容 === -->
+                        <!-- ... (省略中间菜单代码，与你原代码一致) ... -->
 
                         <MenuItem Header="新建" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+N" Click="OnNewClick">
                             <MenuItem.Icon>
-                                <!-- Fill 改为 IconFillBrush -->
                                 <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                             </MenuItem.Icon>
                         </MenuItem>
@@ -43,45 +53,26 @@
                         </MenuItem>
                         <Separator Style="{StaticResource MenuSeparator}"/>
                         <MenuItem Header="图片Exif信息" Style="{StaticResource Win11MenuItemStyle}">
-                            <!-- 1. 绑定 IsEnabled -->
                             <MenuItem.IsEnabled>
-                                <Binding Path="PlacementTarget.DataContext.CurrentImageFullInfo" 
-                                         RelativeSource="{RelativeSource AncestorType=ContextMenu}" 
-                                         />
+                                <Binding Path="PlacementTarget.DataContext.CurrentImageFullInfo" RelativeSource="{RelativeSource AncestorType=ContextMenu}"/>
                             </MenuItem.IsEnabled>
-
-                            <!-- 2. 图标: Stroke 改为 IconFillBrush -->
                             <MenuItem.Icon>
-                                <Path Data="{DynamicResource Info_Image}" 
-                                      Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" 
-                                      Width="16" Height="16"/>
+                                <Path Data="{DynamicResource Info_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
                             </MenuItem.Icon>
-
-                            <!-- 3. 子菜单内容 -->
                             <MenuItem StaysOpenOnClick="True">
                                 <MenuItem.Template>
                                     <ControlTemplate TargetType="MenuItem">
-                                        <!-- 面板背景改为 ChromeLowBrush (#F9F9F9), 边框改为 BorderLightBrush -->
                                         <Border Background="{DynamicResource ChromeLowBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Padding="8" MaxWidth="350">
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="*"/>
                                                 </Grid.RowDefinitions>
-
-                                                <!-- 标题 Foreground 改为 TextPrimaryBrush -->
                                                 <TextBlock Text="详细信息" FontWeight="Bold" Margin="0,0,0,6" Foreground="{DynamicResource TextPrimaryBrush}"/>
-
-                                                <!-- 分割线 Background 改为 BorderBrush -->
                                                 <Separator Grid.Row="0" VerticalAlignment="Bottom" Background="{DynamicResource BorderBrush}"/>
-
-                                                <!-- 滚动文本区域 Foreground 改为 TextSecondaryBrush -->
                                                 <ScrollViewer Grid.Row="1" MaxHeight="400" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0">
                                                     <TextBlock Text="{Binding Path=PlacementTarget.DataContext.CurrentImageFullInfo, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                                                               FontFamily="Consolas" 
-                                                               FontSize="11" 
-                                                               TextWrapping="Wrap"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                               FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 </ScrollViewer>
                                             </Grid>
                                         </Border>
@@ -89,9 +80,7 @@
                                 </MenuItem.Template>
                             </MenuItem>
                         </MenuItem>
-
                         <Separator Style="{StaticResource MenuSeparator}"/>
-
                         <MenuItem Style="{StaticResource Win11MenuItemStyle}"   Header="保存" InputGestureText="Ctrl+S" Click="OnSaveClick">
                             <MenuItem.Icon>
                                 <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
@@ -111,41 +100,56 @@
                 </Image.ContextMenu>
             </Image>
 
-            <!-- Title -->
-            <TextBlock x:Name="TitleTextBlock" Text="TabPaint" VerticalAlignment="Center" FontSize="12" Style="{StaticResource TitleTextStyle}"/>
+            <!-- [Col 1] Title -->
+            <!-- 关键修改：
+                 1. Grid.Column="1"：放在中间列。
+                 2. TextTrimming="CharacterEllipsis"：超出范围时显示省略号(...)，而不是挤走其他控件。
+                 3. TextWrapping="NoWrap"：确保单行显示。
+                 4. Margin：稍微加一点右边距，防止文字紧贴按钮。
+            -->
+            <TextBlock Grid.Column="1" 
+                       x:Name="TitleTextBlock" 
+                       Text="TabPaint" 
+                       VerticalAlignment="Center" 
+                       FontSize="12" 
+                       Style="{StaticResource TitleTextStyle}"
+                       TextTrimming="CharacterEllipsis" 
+                       TextWrapping="NoWrap"
+                       Margin="0,0,10,0"/>
 
-            <!-- Window Buttons -->
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+            <!-- [Col 2] Window Buttons -->
+            <!-- 关键修改：
+                 1. Grid.Column="2"：固定在右侧列。
+                 2. 不需要 DockPanel.Dock="Right"。
+            -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <Button Width="40" Height="30" x:Name="ModeSwitchButton" 
                         ToolTip="切换 画图/看图 模式" 
                         Click="OnModeSwitchClick" 
                         Style="{StaticResource TitleBarButtonStyle}"
                         Margin="0,0,8,0">
-                    <!-- Icon Fill 改为 IconFillBrush -->
                     <Path x:Name="ModeIconImage"  Data="{DynamicResource View_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
 
                 <Button Width="40" Height="30" ToolTip="最小化" Click="OnMinimizeClick" Style="{StaticResource TitleBarButtonStyle}">
                     <Viewbox Width="10" Height="10">
-                        <!-- Stroke 改为 TextPrimaryBrush -->
                         <Path Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" Data="M0,2 L12,2"/>
                     </Viewbox>
                 </Button>
                 <Button Width="40" Height="30" Name="MaxRestoreButton" ToolTip="最大化" Click="OnMaximizeRestoreClick" Style="{StaticResource TitleBarButtonStyle}">
                     <Viewbox Width="10" Height="10">
-                        <!-- Stroke 改为 TextPrimaryBrush -->
                         <Rectangle Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" Width="12" Height="12"/>
                     </Viewbox>
                 </Button>
                 <Button Width="48" Height="30" ToolTip="退出" Click="OnCloseClick" Style="{StaticResource CloseButtonStyle}">
                     <Viewbox Width="10" Height="10">
-                        <!-- 这里的绑定保持不变，因为 CloseButton 样式通常会在 Hover 时反转前景背景色 -->
                         <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
                               StrokeThickness="1.5" 
                               Data="M0,0 L12,12 M12,0 L0,12"/>
                     </Viewbox>
                 </Button>
             </StackPanel>
-        </DockPanel>
+
+        </Grid>
     </Border>
 </UserControl>

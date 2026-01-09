@@ -94,7 +94,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("Failed to copy to clipboard: " + ex.Message);
+                    //ShowToast("Failed to copy to clipboard: " + ex.Message);
                 }
             }
 
@@ -312,7 +312,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
+                    //System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
                     return null;
                 }
             }
@@ -1044,7 +1044,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
+                  // System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
                     return null;
                 }
             }

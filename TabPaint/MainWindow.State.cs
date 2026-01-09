@@ -168,7 +168,7 @@ namespace TabPaint
     "TIFF 图片 (*.tif;*.tiff)|*.tif;*.tiff|" +
     "ICO 图标 (*.ico)|*.ico";
         ITool LastTool;
-        private bool useSecondColor = false;//是否使用备用颜色
+        public bool useSecondColor = false;//是否使用备用颜色
         private bool _maximized = false;
         private Rect _restoreBounds;
         private string _currentFilePath = string.Empty;

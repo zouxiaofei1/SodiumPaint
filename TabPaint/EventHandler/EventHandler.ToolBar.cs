@@ -28,7 +28,6 @@ namespace TabPaint
         {
             try
             {
-                a.s("切换工作区到新文件：", filePath);
                 // 1. 停止当前所有可能的加载任务
                 _loadImageCts?.Cancel();
                 lock (_queueLock) { _pendingFilePath = null; }
@@ -46,7 +45,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"切换工作区失败: {ex.Message}");
+                ShowToast($"切换工作区失败: {ex.Message}");
             }
         }
 

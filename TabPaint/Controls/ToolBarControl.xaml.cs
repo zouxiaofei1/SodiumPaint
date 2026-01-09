@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace TabPaint.Controls
 {
@@ -147,55 +148,95 @@ namespace TabPaint.Controls
                     ToolsMenuToggle.IsChecked = false;
                 }
             }
+            RightColorSeperator.Visibility = e.NewSize.Width>435 ? Visibility.Visible : Visibility.Collapsed;
             UpdateColorPaletteVisibility();
         }
         private void UpdateColorPaletteVisibility()
         {
-            if (ColorPaletteItems == null || ColorPaletteItems.Items.Count == 0) return;
+            if (BasicColorsGrid == null) return;
 
-            double itemWidth = 28.0;
+            // 1. 基础配置
+            double buttonWidth = 19.0; // 16px宽度 + 3px Margin(左右各1.5)
+            double rightPadding = 45.0; //右侧预留给其他控件(如Tab切换、关闭按钮等)的空间，根据实际情况调整
 
-            double leftUsedWidth = 620; // 保底默认值
-
+            // 2. 获取 BasicColorsGrid 在窗口中的 X 坐标 (即左侧已占用的宽度)
+            double leftUsedWidth = 0;
             try
             {
-                // 获取 ColorPaletteItems 在 ToolBarControl 中的相对位置
-                Point relativePoint = ColorPaletteItems.TranslatePoint(new Point(0, 0), this);
-                // 如果 X > 0 说明布局已完成，使用真实坐标作为左侧已占用宽度
-                if (relativePoint.X > 0)
-                {
-                    leftUsedWidth = relativePoint.X;
-                }
+                Point p = BasicColorsGrid.TranslatePoint(new Point(0, 0), this);
+                leftUsedWidth = p.X;
             }
-            catch { }
+            catch
+            {
+                // 窗口刚初始化可能获取不到，给个默认值
+                leftUsedWidth = 600;
+            }
 
-            // 3. 计算留给颜色列表的剩余空间
-            // 总宽度 - 左侧占用 - 右侧留白(比如20px)
-            double availableWidth = this.ActualWidth - leftUsedWidth - 20;
-
+            // 3. 计算颜色栏可用的总宽度
+            double availableWidth = this.ActualWidth - leftUsedWidth - rightPadding;
             if (availableWidth < 0) availableWidth = 0;
 
-            // 4. 计算能放下多少个按钮
-            int visibleCount = (int)(availableWidth / itemWidth);
+            // 4. 计算能放下多少列 (每列宽 buttonWidth)
+            int visibleColumns = (int)(availableWidth / buttonWidth);
 
-            // 5. 遍历容器设置可见性
-            var generator = ColorPaletteItems.ItemContainerGenerator;
-            for (int i = 0; i < ColorPaletteItems.Items.Count; i++)
+            // 限制最大列数为10 (你的XML里原本是10列)
+            if (visibleColumns > 10) visibleColumns = 10;
+            if (visibleColumns < 1) visibleColumns = 1; // 至少显示1列
+
+            // 5. 核心逻辑：控制显示
+            // 假设你的颜色共有20个，分两行，每行10个。
+            // 索引 0-9 是第一行，10-19 是第二行。
+            // 如果 visibleColumns = 8，我们需要显示 0-7 和 10-17，隐藏 8,9 和 18,19。
+
+            // 更新 Grid 的列数定义，这样布局更紧凑
+            BasicColorsGrid.Columns = visibleColumns;
+
+            int totalItems = BasicColorsGrid.Children.Count;
+            // 假设是标准的2行布局 (根据你的XML: 鲜艳色系一行，深色系一行)
+            int originalColumns = 10;
+
+            for (int i = 0; i < totalItems; i++)
             {
-                // 获取第 i 个数据对应的 UI 元素 (ContentPresenter)
-                var container = generator.ContainerFromIndex(i) as UIElement;
-                if (container != null)
-                {
-                    // 如果索引小于允许显示的个数，则显示，否则折叠
-                    Visibility targetVisibility = (i < visibleCount) ? Visibility.Visible : Visibility.Collapsed;
+                UIElement child = BasicColorsGrid.Children[i];
 
-                    // 只有状态改变时才赋值，减少重绘开销
-                    if (container.Visibility != targetVisibility)
-                    {
-                        container.Visibility = targetVisibility;
-                    }
+                // 计算该元素原本所在的 列索引 (0-9)
+                // 第一行是 0-9, 第二行是 10-19
+                // 这是一个简单的取模运算，假设原本设计是10列
+                int originalColIndex = i % originalColumns;
+
+                // 如果该元素原本的列索引 小于 我们现在允许的列数，则显示
+                if (originalColIndex < visibleColumns)
+                {
+                    if (child.Visibility != Visibility.Visible)
+                        child.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    if (child.Visibility != Visibility.Collapsed)
+                        child.Visibility = Visibility.Collapsed;
                 }
             }
         }
+
+
+        private void Swatch_Click(object sender, RoutedEventArgs e)
+        {
+            // 1. 确保点击源是按钮且有背景色
+            if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                Color selectedColor = brush.Color;
+
+                mw.SelectedBrush = new SolidColorBrush(selectedColor);
+
+                // 4. 更新核心绘图上下文 (_ctx)
+                mw._ctx.PenColor = selectedColor;
+
+                mw.UpdateCurrentColor(selectedColor, mw.useSecondColor);
+
+                mw.UpdateColorHighlight(); 
+            }
+        }
+
     }
 }

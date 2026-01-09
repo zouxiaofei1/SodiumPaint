@@ -10,11 +10,6 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 
-                   注意：为了使 DynamicResource 在设计器中生效，
-                   且运行时能动态切换，这里通常引用的是一个空的或基础的样式文件。
-                   真正的 Light/Dark 字典应在 App.xaml 中加载。
-                -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
@@ -29,14 +24,14 @@
                 <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔" Padding="6,0" Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
 
                     <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色"  Padding="6,0" Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色"  Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Padding="6,0" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
                 </Button>
                 <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="填充" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
@@ -353,63 +348,36 @@
             <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
             </Button>
 
-            <ItemsControl  x:Name="ColorPaletteItems" ItemsSource="{Binding ColorItems}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Width="24" Height="24" Margin="2.5,0,1,0" 
-                    Click="OnColorButtonClick_Forward" 
-                    Background="{Binding}"
-                    Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid>
-                                        <!-- 悬浮边框: #B8AAFF -> ToolAccentHoverBrush -->
-                                        <Ellipse x:Name="hoverBorder" 
-                                     Margin="-3" 
-                                     Stroke="{DynamicResource ToolAccentHoverBrush}" 
-                                     StrokeThickness="2" 
-                                     Opacity="0"/>
+            <StackPanel>
+                <UniformGrid Columns="10" HorizontalAlignment="Left" VerticalAlignment="Top" x:Name="BasicColorsGrid">
 
-                                        <!-- 中层：白边层 -->
-                                        <!-- 在深色模式下，纯白的白边可能太亮，但作为色块的边框，通常为了区分颜色，
-                                             可以用 ControlBackgroundBrush 或者纯白。这里暂时保持 White，或者用 BorderLightBrush -->
-                                        <Ellipse x:Name="whiteEdge" Fill="{DynamicResource ControlBackgroundBrush}">
-                                            <Ellipse.Effect>
-                                                <!-- 投影颜色: Black -> TextPrimaryBrush (让投影随文字色变深) 虽然投影通常都是黑色，
-                                                     但这里为了稳妥，保持Black即可，或者用 ShadowBrush 如果有定义的话 -->
-                                                <DropShadowEffect BlurRadius="3" Color="Black" Opacity="0.1" ShadowDepth="0"/>
-                                            </Ellipse.Effect>
-                                        </Ellipse>
+                    <!-- Row 2: 鲜艳/标准色系 (Vibrant & Primary) -->
+                    <Button Style="{StaticResource ColorSwatch}" Background="#C0C0C0" Click="Swatch_Click" ToolTip="银色"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FF0000" Click="Swatch_Click" ToolTip="正红"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FF8000" Click="Swatch_Click" ToolTip="橙色"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FFFF00" Click="Swatch_Click" ToolTip="正黄"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#00FF00" Click="Swatch_Click" ToolTip="酸橙绿"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#00FFFF" Click="Swatch_Click" ToolTip="青色/天蓝"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#0080FF" Click="Swatch_Click" ToolTip="蔚蓝"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#8000FF" Click="Swatch_Click" ToolTip="紫罗兰"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FF00FF" Click="Swatch_Click" ToolTip="品红"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#D2691E" Click="Swatch_Click" ToolTip="巧克力色"/>
 
-                                        <!-- 内层：颜色填充层 -->
-                                        <Ellipse x:Name="colorCircle" 
-                                     Fill="{TemplateBinding Background}" 
-                                     Margin="2"/>
-                                    </Grid>
+                    <!-- Row 3: 中深/饱和色系 (Deep & Saturated) -->
+                    <Button Style="{StaticResource ColorSwatch}" Background="#808080" Click="Swatch_Click" ToolTip="灰色"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#CC0000" Click="Swatch_Click" ToolTip="深红"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#CC6600" Click="Swatch_Click" ToolTip="深橙"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FFD700" Click="Swatch_Click" ToolTip="金色"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#008000" Click="Swatch_Click" ToolTip="纯绿"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#008080" Click="Swatch_Click" ToolTip="水鸭青"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#0000FF" Click="Swatch_Click" ToolTip="纯蓝"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#800080" Click="Swatch_Click" ToolTip="紫色"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#C71585" Click="Swatch_Click" ToolTip="紫红"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#A0522D" Click="Swatch_Click" ToolTip="赭石"/>
 
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="hoverBorder" Property="Opacity" Value="1"/>
-                                            <Setter TargetName="colorCircle" Property="Margin" Value="1.5"/>
-                                        </Trigger>
-                                        <Trigger Property="IsPressed" Value="True">
-                                            <!-- 按下边框: #8A7DFF -> ToolAccentBrush -->
-                                            <Setter TargetName="hoverBorder" Property="Stroke" Value="{DynamicResource ToolAccentBrush}"/>
-                                            <Setter TargetName="colorCircle" Property="Opacity" Value="0.8"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
+                </UniformGrid>
+            </StackPanel>
+            <Border  x:Name="RightColorSeperator" DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="10,4,0,4"/>
         </DockPanel>
     </Border>
 </UserControl>

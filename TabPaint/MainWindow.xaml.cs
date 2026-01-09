@@ -38,6 +38,7 @@ namespace TabPaint
             // s(_currentImageIndex);
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent();
+            RestoreWindowBounds();
             CheckFilePathAvailibility(_currentFilePath);
             if (SettingsManager.Instance.Current.StartInViewMode&& _currentFileExists)
             {
@@ -208,7 +209,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"启动加载失败: {ex.Message}");
+                ShowToast($"启动加载失败: {ex.Message}");
                 // 可以在这里弹窗提示用户
             }
             finally
@@ -287,7 +288,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"读取文件夹失败: {ex.Message}");
+              ShowToast($"读取文件夹失败: {ex.Message}");
                 return null;
             }
         }
@@ -626,7 +627,8 @@ namespace TabPaint
         private void MoveImageIndex(int direction) // direction: 1 or -1
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0) return;
-
+         //  if()
+            if (_imageFiles.Count < 2) return;
             // 清理和保存逻辑 (保持原有逻辑)
             _router.CleanUpSelectionandShape();
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
@@ -956,7 +958,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Restore Selection Failed: {ex.Message}");
+                ShowToast($"Restore Selection Failed: {ex.Message}");
             }
             finally
             {

@@ -57,6 +57,7 @@ namespace TabPaint
 
             if (isNext || isPrev)
             {
+             
                 if (_router.CurrentTool is TextTool tx && tx._textBox != null) return false;
                 // 如果是第一次按下（而不是按住不放触发的重复事件），初始化时间
                 if (!_isNavigating)
@@ -527,7 +528,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("GDI+ Read Failed: " + ex.Message);
+                   ShowToast("GDI+ Read Failed: " + ex.Message);
                 }
             }
 
@@ -626,7 +627,7 @@ namespace TabPaint
             catch (Exception ex)
             {
                 // 处理剪切板被占用等异常，静默失败即可
-                System.Diagnostics.Debug.WriteLine("Clipboard Access Error: " + ex.Message);
+                ShowToast("Clipboard Access Error: " + ex.Message);
             }
         }
         private bool IsVisualAncestorOf<T>(DependencyObject node) where T : DependencyObject

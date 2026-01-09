@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Windows;
 using System.Windows.Input;
 using static TabPaint.MainWindow;
 
@@ -101,6 +102,27 @@ namespace TabPaint
         {
             var settings = TabPaint.SettingsManager.Instance.Current;
 
+            // --- 新增：保存窗口位置逻辑 ---
+            if (this.WindowState == System.Windows.WindowState.Maximized)
+            {
+                // 最大化时，保存还原后的坐标和尺寸
+                settings.WindowTop = this.RestoreBounds.Top;
+                settings.WindowLeft = this.RestoreBounds.Left;
+                settings.WindowHeight = this.RestoreBounds.Height;
+                settings.WindowWidth = this.RestoreBounds.Width;
+                settings.WindowState = (int)System.Windows.WindowState.Maximized;
+            }
+            else if (this.WindowState == System.Windows.WindowState.Normal)
+            {
+                // 正常模式，直接保存
+                settings.WindowTop = this.Top;
+                settings.WindowLeft = this.Left;
+                settings.WindowHeight = this.Height;
+                settings.WindowWidth = this.Width;
+                settings.WindowState = (int)System.Windows.WindowState.Normal;
+            }
+           // var settings = TabPaint.SettingsManager.Instance.Current;
+
             if (_router?.CurrentTool != null)
             {
                 settings.LastToolName = _router.CurrentTool.GetType().Name;
@@ -112,9 +134,48 @@ namespace TabPaint
             TabPaint.SettingsManager.Instance.Save();
         }
 
-        /// <summary>
-        /// 2. 恢复上次的应用状态
-        /// </summary>
+        private void RestoreWindowBounds()
+        {
+            var settings = TabPaint.SettingsManager.Instance.Current;
+
+            // 1. 如果是默认值(-10000)，说明是第一次运行，不做操作
+            if (settings.WindowLeft == -10000 || settings.WindowTop == -10000) return;
+
+            // 2. 检查保存的坐标是否在当前虚拟屏幕范围内 (WPF 原生方式)
+            // VirtualScreen 获取的是所有显示器组合而成的总矩形区域
+            double virtualLeft = SystemParameters.VirtualScreenLeft;
+            double virtualTop = SystemParameters.VirtualScreenTop;
+            double virtualWidth = SystemParameters.VirtualScreenWidth;
+            double virtualHeight = SystemParameters.VirtualScreenHeight;
+
+            // 只要窗口的左上角在虚拟屏幕范围内，就认为是可见的
+            bool isVisible = (settings.WindowLeft >= virtualLeft &&
+                              settings.WindowLeft < (virtualLeft + virtualWidth) &&
+                              settings.WindowTop >= virtualTop &&
+                              settings.WindowTop < (virtualTop + virtualHeight));
+
+            if (isVisible)
+            {
+                this.Left = settings.WindowLeft;
+                this.Top = settings.WindowTop;
+            }
+            else
+            {
+                // 如果不在屏幕范围内（比如上次在副屏，现在副屏拔了），居中显示
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+
+            // 3. 恢复尺寸（带点保护，防止出现 0 像素窗口）
+            this.Width = Math.Max(settings.WindowWidth, 200);
+            this.Height = Math.Max(settings.WindowHeight, 200);
+
+            // 4. 恢复最大化状态
+            if (settings.WindowState == (int)WindowState.Maximized)
+            {
+                this.WindowState = WindowState.Maximized;
+            }
+        }
+
         private void RestoreAppState()
         {
             try
@@ -350,7 +411,7 @@ namespace TabPaint
             }
         }
 
-        private double _viewInterpolationThreshold = 70.0; 
+        private double _viewInterpolationThreshold = 160.0;
         [JsonPropertyName("view_interpolation_threshold")]
         public double ViewInterpolationThreshold
         {
@@ -379,7 +440,7 @@ namespace TabPaint
                 }
             }
         }
-        private double _paintInterpolationThreshold = 80.0; 
+        private double _paintInterpolationThreshold = 200.0;
         [JsonPropertyName("paint_interpolation_threshold")]
         public double PaintInterpolationThreshold
         {
@@ -393,6 +454,22 @@ namespace TabPaint
                 }
             }
         }
+        [JsonPropertyName("window_width")]
+        public double WindowWidth { get; set; } = 850; // 默认宽
+
+        [JsonPropertyName("window_height")]
+        public double WindowHeight { get; set; } = 700; // 默认高
+
+        [JsonPropertyName("window_left")]
+        public double WindowLeft { get; set; } = -10000; // 默认无效值，用于判断是否是首次启动
+
+        [JsonPropertyName("window_top")]
+        public double WindowTop { get; set; } = -10000;
+
+        // 0: Normal, 1: Minimized, 2: Maximized
+        [JsonPropertyName("window_state")]
+        public int WindowState { get; set; } = 0;
+
         private bool _autoLoadFolderImages = true; // 默认值为 true，保持原有行为
 
         [JsonPropertyName("auto_load_folder_images")]
@@ -497,10 +574,10 @@ namespace TabPaint
         { "File.OpenWorkspace",  new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 打开工作区
         { "File.PasteNewTab",    new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 粘贴为新标签
           // === 3. 基础绘图工具  ===
-        { "Tool.SwitchToPen",    new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control } }, // 铅笔/画笔
-        { "Tool.SwitchToPick",   new ShortcutItem { Key = Key.D2, Modifiers = ModifierKeys.Control } }, // 取色
-        { "Tool.SwitchToEraser", new ShortcutItem { Key = Key.D3, Modifiers = ModifierKeys.Control } }, // 橡皮
-        { "Tool.SwitchToSelect", new ShortcutItem { Key = Key.D4, Modifiers = ModifierKeys.Control } }, // 选择
+        { "Tool.SwitchToSelect", new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control } }, // 选择
+        { "Tool.SwitchToPen",    new ShortcutItem { Key = Key.D2, Modifiers = ModifierKeys.Control } }, // 铅笔/画笔
+        { "Tool.SwitchToPick",   new ShortcutItem { Key = Key.D3, Modifiers = ModifierKeys.Control } }, // 取色
+        { "Tool.SwitchToEraser", new ShortcutItem { Key = Key.D4, Modifiers = ModifierKeys.Control } }, // 橡皮
         { "Tool.SwitchToFill",   new ShortcutItem { Key = Key.D5, Modifiers = ModifierKeys.Control } }, // 填充
         { "Tool.SwitchToText",   new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control } }, // 文字
         { "Tool.SwitchToBrush",  new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control } }, // 画刷菜单(通常只切到默认画刷)

@@ -59,8 +59,6 @@ namespace TabPaint
                             }
                             else
                             {
-                                // B2情况：这是一个完全陌生的新文件（不在当前文件夹列表里）
-                                // a.s("null");
                                 _ = _mainWindow.OpenFilesAsNewTabs(new string[] { filePath });
                             }
 
@@ -76,7 +74,7 @@ namespace TabPaint
             });
             var currentSettings = SettingsManager.Instance.Current;
 
-           // ThemeManager.ApplyTheme(currentSettings.ThemeMode);
+            ThemeManager.ApplyTheme(currentSettings.ThemeMode);
             base.OnStartup(e);
 
             // --- 原有的启动逻辑 ---
@@ -101,7 +99,7 @@ namespace TabPaint
             }
 
             _mainWindow = new MainWindow(filePath);
-           // ThemeManager.SetWindowImmersiveDarkMode(_mainWindow, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+            ThemeManager.SetWindowImmersiveDarkMode(_mainWindow, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
             _mainWindow.Show();
         }
 

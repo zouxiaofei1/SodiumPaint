@@ -197,5 +197,33 @@ del ""%~f0""
             }
         }
 
+
+        // --- 新增代码开始 ---
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            try
+            {
+                string url = e.Uri.AbsoluteUri;
+
+                // 处理帮助文档（空链接或特殊标记）
+                if (string.IsNullOrEmpty(url) || url.StartsWith("cmd://help"))
+                {
+                    System.Windows.MessageBox.Show("帮助文档正在编写中，敬请期待！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    e.Handled = true;
+                    return;
+                }
+
+                // 调用系统默认浏览器打开链接
+                // .NET Core / .NET 5+ 需要设置 UseShellExecute = true 才能打开 URL
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"无法打开链接: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
     }
 }
