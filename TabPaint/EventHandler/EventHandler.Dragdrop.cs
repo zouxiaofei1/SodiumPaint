@@ -28,6 +28,7 @@ namespace TabPaint
                 e.Handled = true;
                 return;
             }
+        
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
@@ -40,7 +41,7 @@ namespace TabPaint
                     return;
                 }
             }
-
+   
             // 2. 检查是否有文件拖入
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
@@ -114,6 +115,35 @@ namespace TabPaint
 
             e.Handled = true;
         }
+        private void InsertTabToCanvas(FileTabItem tab)
+        {
+            try
+            {
+                BitmapSource bitmapToInsert = null;
+
+                bitmapToInsert = GetHighResImageForTab(tab);
+
+                if (bitmapToInsert == null)
+                {
+                    ShowToast("无法获取该标签页的图像数据");
+                    return;
+                }
+
+                // 2. 切换到选择工具
+                _router.SetTool(_tools.Select);
+
+                // 3. 调用选择工具的插入逻辑
+                if (_tools.Select is SelectTool st)
+                {
+                    st.InsertImageAsSelection(_ctx, bitmapToInsert);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowToast("插入失败: " + ex.Message);
+            }
+        }
+
         private async void OnGlobalDrop(object sender, DragEventArgs e)
         {
             HideDragOverlay(); // 必须第一时间隐藏
@@ -121,10 +151,23 @@ namespace TabPaint
             // 1. 屏蔽内部拖拽
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
-                e.Handled = true;
-                return;
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    var imageFiles = files?.Where(f => IsImageFile(f)).ToArray();
+                    // 核心判断：只有当拖拽对象存在，且不是当前 Tab 时才执行插入
+                    if (imageFiles[0].IndexOf(_currentTabItem.DisplayName, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        e.Handled = true;
+                        return;
+                    }
+                }
+                else
+                {
+                    e.Handled = true; return; 
+                }
+            
             }
-
             // 2. 处理文件
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {

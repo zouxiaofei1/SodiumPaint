@@ -16,11 +16,11 @@
     </UserControl.Resources>
 
     <!-- 1. 背景色替换: 原 #90FFFFFF -> GlassBackgroundHighBrush (保留一定的通透感) 或 ChromeLowBrush -->
-    <Border Height="50" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" SizeChanged="OnToolBarSizeChanged">
-        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,7">
+    <Border Height="50" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" ClipToBounds="False" SizeChanged="OnToolBarSizeChanged">
+        <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,0" >
             <!-- 基础工具 -->
 
-            <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal">
+            <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal" Margin="0,0,0,7" >
                 <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                 </Button>
@@ -43,7 +43,7 @@
             </StackPanel>
 
             <!-- 2. 折叠模式：工具集合菜单 (默认隐藏) -->
-            <Grid x:Name="CollapsedToolsPanel" Visibility="Collapsed" Margin="6,0,6,0">
+            <Grid x:Name="CollapsedToolsPanel" Visibility="Collapsed" Margin="6,0,6,7">
                 <ToggleButton x:Name="ToolsMenuToggle" ToolTip="绘图工具" Style="{StaticResource DropDownButtonStyle}">
                     <Image x:Name="CurrentToolIcon" Source="{DynamicResource ColorPickerPencil_Image}" Width="16" Height="16" />
                 </ToggleButton>
@@ -91,7 +91,7 @@
             </Grid>
 
             <!-- 画刷菜单 -->
-            <Grid>
+            <Grid Margin="0,0,0,7" >
                 <ToggleButton x:Name="BrushToggle" x:FieldModifier="public" ToolTip="画刷"  Style="{StaticResource DropDownButtonStyle}">
                     <Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
                 </ToggleButton>
@@ -148,7 +148,7 @@
             </Grid>
 
             <!-- 形状菜单 -->
-            <Grid Margin="4,0,4,0">
+            <Grid Margin="4,0,4,7">
                 <ToggleButton x:Name="ShapeToggle" x:FieldModifier="public" ToolTip="形状" Style="{StaticResource DropDownButtonStyle}">
                     <!-- Stroke #333 -> IconFillBrush -->
                     <Path x:Name="CurrentShapeIcon" x:FieldModifier="public" Data="{DynamicResource Shapes_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
@@ -196,15 +196,15 @@
             </Grid>
 
             <!-- 分割线: #CCC -> BorderMediumBrush -->
-            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
+            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
 
-            <Button Margin="2,0,0,0" Name="CutImage" x:FieldModifier="public" ToolTip="裁剪选区" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="2,0,0,7" Name="CutImage" x:FieldModifier="public" ToolTip="裁剪选区" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <!-- Fill #333 -> IconFillBrush -->
                 <Path x:Name="CutImageIcon" x:FieldModifier="public" Data="{DynamicResource Cut_Selection_Image}"  Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
 
             <!-- 旋转/翻转菜单 -->
-            <Grid>
+            <Grid Margin="0,0,0,7">
                 <ToggleButton x:Name="RotateFlipMenuToggle" x:FieldModifier="public" ToolTip="旋转/翻转" Style="{StaticResource DropDownButtonStyle}">
                     <Image Source="{DynamicResource Spin180_Image}" Width="16" Height="16"/>
                 </ToggleButton>
@@ -238,14 +238,14 @@
                             <MenuItem Header="垂直翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick_Forward">
                                 <MenuItem.Icon>
                                     <!-- Stroke #333 -> IconFillBrush -->
-                                    <Path Data="{DynamicResource Flip_Vertical_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Flip_Vertical_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem Header="水平翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick_Forward">
                                 <MenuItem.Icon>
                                     <!-- Stroke #333 -> IconFillBrush -->
-                                    <Path Data="{DynamicResource Flip_Horizontal_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
+                                    <Path Data="{DynamicResource Flip_Horizontal_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </StackPanel>
@@ -254,11 +254,11 @@
             </Grid>
 
             <!-- 分割线: #CCC -> BorderMediumBrush -->
-            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
+            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
 
             <Button ToolTip="自定义颜色" 
         Click="OnCustomColorClick_Forward" 
-        Margin="5,0,2,0" 
+        Margin="5,0,2,7" 
         Padding="0" 
         Style="{StaticResource RoundedMenuButtonStyle}" 
         HorizontalAlignment="Left" 
@@ -343,15 +343,16 @@
                 </Viewbox>
             </Button>
 
-            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
+            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2,2,2,9" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
             </Button>
-            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,0" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
+            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,7" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
             </Button>
 
             <StackPanel>
-                <UniformGrid Columns="10" HorizontalAlignment="Left" VerticalAlignment="Top" x:Name="BasicColorsGrid">
+                <UniformGrid Columns="11" HorizontalAlignment="Left" VerticalAlignment="Top" x:Name="BasicColorsGrid">
 
                     <!-- Row 2: 鲜艳/标准色系 (Vibrant & Primary) -->
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FFFFFF" Click="Swatch_Click" ToolTip="白色"/>
                     <Button Style="{StaticResource ColorSwatch}" Background="#C0C0C0" Click="Swatch_Click" ToolTip="银色"/>
                     <Button Style="{StaticResource ColorSwatch}" Background="#FF0000" Click="Swatch_Click" ToolTip="正红"/>
                     <Button Style="{StaticResource ColorSwatch}" Background="#FF8000" Click="Swatch_Click" ToolTip="橙色"/>
@@ -364,6 +365,7 @@
                     <Button Style="{StaticResource ColorSwatch}" Background="#D2691E" Click="Swatch_Click" ToolTip="巧克力色"/>
 
                     <!-- Row 3: 中深/饱和色系 (Deep & Saturated) -->
+                    <Button Style="{StaticResource ColorSwatch}" Background="#000000" Click="Swatch_Click" ToolTip="黑色"/>
                     <Button Style="{StaticResource ColorSwatch}" Background="#808080" Click="Swatch_Click" ToolTip="灰色"/>
                     <Button Style="{StaticResource ColorSwatch}" Background="#CC0000" Click="Swatch_Click" ToolTip="深红"/>
                     <Button Style="{StaticResource ColorSwatch}" Background="#CC6600" Click="Swatch_Click" ToolTip="深橙"/>
@@ -377,7 +379,7 @@
 
                 </UniformGrid>
             </StackPanel>
-            <Border  x:Name="RightColorSeperator" DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="10,4,0,4"/>
+            <Border  x:Name="RightColorSeperator" DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="10,4,0,11"/>
         </DockPanel>
     </Border>
 </UserControl>

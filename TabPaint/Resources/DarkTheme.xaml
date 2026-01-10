@@ -11,7 +11,8 @@
     <SolidColorBrush x:Key="GlassBackgroundHighBrush" Color="#000000" Opacity="0.90"/>
     <SolidColorBrush x:Key="GlassBackgroundMediumBrush" Color="#000000" Opacity="0.50"/>
     <SolidColorBrush x:Key="GlassBackgroundLowBrush" Color="#000000" Opacity="0.20"/>
-
+    <SolidColorBrush x:Key="GlassBackgroundDragOverlay" Color="#221A1A1A"/>
+    
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
     <SolidColorBrush x:Key="TextControlBrush" Color="#F0F0F0"/>
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#CCCCCC"/>

@@ -253,6 +253,6 @@ namespace TabPaint
         private bool _hasUserManuallyZoomed = false;
         public static ThumbnailCache GlobalThumbnailCache = new ThumbnailCache(10000); // 存300张
         private bool _isUpdatingToolSettings = false;
-        public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(10);
+        public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
     }
 }

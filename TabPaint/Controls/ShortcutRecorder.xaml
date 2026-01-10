@@ -40,11 +40,11 @@
                     Width="20" 
                     BorderThickness="0" 
                     Background="Transparent" 
-                    Foreground="{DynamicResource TextSecondaryBrush}"
-                    Cursor="Hand" Style="{StaticResource CloseButtonStyle}"
+                   
+                    Cursor="Hand" Style="{StaticResource OtherCloseButtonStyle}"
                     Click="ClearButton_Click">
-                <Viewbox Width="10" Height="10">
-                    <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                <Viewbox Width="8" Height="8">
+                    <Path    Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
           StrokeThickness="1.5" 
           Data="M0,0 L12,12 M12,0 L0,12"/>
                 </Viewbox>

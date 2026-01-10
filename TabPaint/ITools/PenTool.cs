@@ -81,7 +81,6 @@ namespace TabPaint
                 }
 
                 ctx.CapturePointer();
-                System.Windows.Input.Mouse.OverrideCursor = this.Cursor;
 
                 var px = ctx.ToPixel(viewPos);
                 ctx.Undo.BeginStroke();
@@ -309,7 +308,7 @@ namespace TabPaint
                         return LineBounds(px, px, (int)ctx.PenThickness);
                     case BrushStyle.Brush:
                         DrawBrushStrokeUnsafe(ctx, px, buffer, stride, w, h);
-                        return LineBounds(px, px, 5);
+                        return LineBounds(px, px, (int)ctx.PenThickness + 5);
                     case BrushStyle.Spray:
                         DrawSprayStrokeUnsafe(ctx, px, buffer, stride, w, h);
                         return LineBounds(px, px, (int)ctx.PenThickness * 2);
@@ -503,20 +502,42 @@ namespace TabPaint
 
             private unsafe void DrawBrushStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
+                // 【修改点 2】：获取当前笔刷半径
+                int r = (int)(ctx.PenThickness / 2.0);
+                if (r < 1) r = 1;
+
+                int count = r * r * 4;
+
+                // 限制最小和最大粒子数，防止小笔刷太稀疏或大笔刷太卡
+                if (count < 20) count = 20;
+                if (count > 2000) count = 2000;
+
                 Color c = ctx.PenColor;
-                for (int i = 0; i < 20; i++)
+
+                for (int i = 0; i < count; i++)
                 {
-                    int dx = _rnd.Next(-2, 3);
-                    int dy = _rnd.Next(-2, 3);
+                    // 在半径范围内生成随机偏移
+                    int dx = _rnd.Next(-r, r + 1);
+                    int dy = _rnd.Next(-r, r + 1);
+
+                    // 如果希望毛刷是圆形的，取消下面这行的注释（性能会微弱下降，但形状更自然）
+                    if (dx * dx + dy * dy > r * r) continue;
+
                     int xx = (int)p.X + dx;
                     int yy = (int)p.Y + dy;
+
                     if (xx >= 0 && xx < w && yy >= 0 && yy < h)
                     {
                         byte* ptr = basePtr + yy * stride + xx * 4;
-                        ptr[0] = c.B; ptr[1] = c.G; ptr[2] = c.R; ptr[3] = c.A;
+                        // 直接赋值颜色（毛刷原本逻辑）
+                        ptr[0] = c.B;
+                        ptr[1] = c.G;
+                        ptr[2] = c.R;
+                        ptr[3] = c.A;
                     }
                 }
             }
+
 
             private unsafe void DrawSprayStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {

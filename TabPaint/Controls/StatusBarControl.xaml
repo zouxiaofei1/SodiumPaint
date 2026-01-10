@@ -33,8 +33,8 @@
                 <!-- Stroke="#555" -> IconFillBrush -->
                 <Path Data="{DynamicResource Cursor_Image}" Stretch="Uniform" Fill="Transparent" 
                       Stroke="{DynamicResource IconFillBrush}" 
-                      StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" 
-                      Width="16" Height="16"/>
+                      StrokeThickness="1.2" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" 
+                      Width="15" Height="15"/>
                 <!-- 字体颜色通常由 StatusBar 继承，或者显式指定 TextControlBrush -->
                 <TextBlock Margin="4,0,0,0" Text="{Binding MousePosition}" 
                            VerticalAlignment="Center" FontSize="11"
@@ -135,7 +135,7 @@
                     <!-- Fill="#333" -> IconFillBrush -->
                     <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" 
                           Fill="{DynamicResource IconFillBrush}" 
-                          Width="16" Height="16"/>
+                          Width="14" Height="14"/>
                 </Button>
 
                 <!-- 缩放下拉框 -->

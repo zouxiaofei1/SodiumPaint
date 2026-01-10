@@ -157,9 +157,8 @@ namespace TabPaint.Controls
 
             // 1. 基础配置
             double buttonWidth = 19.0; // 16px宽度 + 3px Margin(左右各1.5)
-            double rightPadding = 45.0; //右侧预留给其他控件(如Tab切换、关闭按钮等)的空间，根据实际情况调整
+            double rightPadding = 45.0;
 
-            // 2. 获取 BasicColorsGrid 在窗口中的 X 坐标 (即左侧已占用的宽度)
             double leftUsedWidth = 0;
             try
             {
@@ -168,7 +167,6 @@ namespace TabPaint.Controls
             }
             catch
             {
-                // 窗口刚初始化可能获取不到，给个默认值
                 leftUsedWidth = 600;
             }
 
@@ -180,31 +178,21 @@ namespace TabPaint.Controls
             int visibleColumns = (int)(availableWidth / buttonWidth);
 
             // 限制最大列数为10 (你的XML里原本是10列)
-            if (visibleColumns > 10) visibleColumns = 10;
+            if (visibleColumns > 11) visibleColumns = 11;
             if (visibleColumns < 1) visibleColumns = 1; // 至少显示1列
 
-            // 5. 核心逻辑：控制显示
-            // 假设你的颜色共有20个，分两行，每行10个。
-            // 索引 0-9 是第一行，10-19 是第二行。
-            // 如果 visibleColumns = 8，我们需要显示 0-7 和 10-17，隐藏 8,9 和 18,19。
-
-            // 更新 Grid 的列数定义，这样布局更紧凑
             BasicColorsGrid.Columns = visibleColumns;
 
             int totalItems = BasicColorsGrid.Children.Count;
             // 假设是标准的2行布局 (根据你的XML: 鲜艳色系一行，深色系一行)
-            int originalColumns = 10;
+            int originalColumns = 11;
 
             for (int i = 0; i < totalItems; i++)
             {
                 UIElement child = BasicColorsGrid.Children[i];
 
-                // 计算该元素原本所在的 列索引 (0-9)
-                // 第一行是 0-9, 第二行是 10-19
-                // 这是一个简单的取模运算，假设原本设计是10列
                 int originalColIndex = i % originalColumns;
 
-                // 如果该元素原本的列索引 小于 我们现在允许的列数，则显示
                 if (originalColIndex < visibleColumns)
                 {
                     if (child.Visibility != Visibility.Visible)

@@ -146,6 +146,7 @@ namespace TabPaint
             AppTitleBar.SaveClick += OnSaveClick;
             AppTitleBar.SaveAsClick += OnSaveAsClick;
             AppTitleBar.ExitClick += OnExitClick;
+            AppTitleBar.IconDragRequest += OnAppTitleBarIconDragRequest;
             // 注入到界面
             StatusBarHolder.Content = MyStatusBar;
 
@@ -154,5 +155,33 @@ namespace TabPaint
             _dragWatchdog.Tick += DragWatchdog_Tick;
     
         }
+        // 位于 MainWindow.xaml.cs 中
+
+        private void OnAppTitleBarIconDragRequest(object sender, MouseButtonEventArgs e)
+        {
+            // 1. 基础检查：单图模式且当前有 Tab
+            if (MainImageBar.IsSingleTabMode && _currentTabItem != null)
+            {
+                try
+                {
+                    string dragFilePath = PrepareDragFilePath(_currentTabItem);
+
+                    if (!string.IsNullOrEmpty(dragFilePath) && File.Exists(dragFilePath))
+                    {
+                        // 3. 构建拖拽数据
+                        var dataObject = new DataObject(DataFormats.FileDrop, new string[] { dragFilePath });
+
+                        // 4. 执行拖拽
+                        // 使用 Copy | Move，允许复制到桌面或其他文件夹
+                        DragDrop.DoDragDrop(AppTitleBar, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowToast("拖拽失败: " + ex.Message);
+                }
+            }
+        }
+
     }
 }

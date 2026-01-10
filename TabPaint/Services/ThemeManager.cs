@@ -144,7 +144,7 @@ namespace TabPaint
                 // 注意：这里仅在确定 SettingsManager 已经初始化完成后调用才安全
                 hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
             }
-
+            MainWindow mw = ((MainWindow)Application.Current.MainWindow);
             UpdateAccentResources(hexColor);
         }
 

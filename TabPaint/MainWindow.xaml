@@ -17,6 +17,7 @@
         WindowStyle="None"
         SizeChanged="Window_SizeChanged" 
         PreviewKeyUp="Window_KeyUp"
+    
         x:Name="RootWindow">
 
     <WindowChrome.WindowChrome>
@@ -42,7 +43,7 @@
                 <Style.Triggers>
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding ShowRulers}" Value="True"/>
+                            <Condition Binding="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current.ShowRulers}" Value="True"/>
                             <Condition Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False"/>
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Visibility" Value="Visible"/>
@@ -79,7 +80,7 @@
                        Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
             <!-- #region 3. 工具栏 (ToolBar) -->
-            <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top"
+            <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top" 
                 Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
             <!-- #endregion -->
 
@@ -88,9 +89,9 @@
                 IsTabStop="False" Focusable="False"/>
             <!-- #endregion -->
 
-            <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"  
-                       Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-
+          
+                
+     
             <!-- #region 5. 底部状态栏 (StatusBar) -->
             <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
                 Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
@@ -157,7 +158,7 @@
                                         <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="剪切" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
+                                <MenuItem Header="剪切" InputGestureText="Ctrl+X" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
                                     <MenuItem.Icon>
                                         <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
@@ -178,9 +179,10 @@
                                         <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="显示标尺" IsCheckable="True" 
-                                          IsChecked="{Binding ShowRulers, Mode=TwoWay}"
-                                          Style="{StaticResource Win11MenuItemStyle}">
+                       <MenuItem Header="显示标尺" IsCheckable="True" 
+          Style="{StaticResource Win11MenuItemStyle}"
+          DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
+          IsChecked="{Binding ShowRulers, Mode=TwoWay}">
                                     <MenuItem.Icon>
                                         <TextBlock Text="📏" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                     </MenuItem.Icon>
@@ -195,19 +197,20 @@
 
                                     <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
                                         <MenuItem.Icon>
-                                            <TextBlock Text="🪄" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
+
                                         </MenuItem.Icon>
                                     </MenuItem>
 
                                     <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
                                         <MenuItem.Icon>
-                                            <TextBlock Text="🪄" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <Path Data="{DynamicResource ChromaKey_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
 
                                     <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
                                         <MenuItem.Icon>
-                                            <TextBlock Text="&#xE8C6;" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
 
@@ -627,12 +630,12 @@
         <!-- #endregion -->
 
         <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
-        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="#AA1A1A1A" RenderTransformOrigin="0.5,0.5">
+        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="{DynamicResource GlassBackgroundDragOverlay}" RenderTransformOrigin="0.5,0.5">
             <!-- 背景暂时保持硬编码或者使用 TextPrimaryBrush 配合透明度，这里为了遮罩效果使用半透明黑 -->
             <Grid.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>
-            <Rectangle Stroke="{DynamicResource TextInverseBrush}" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
+            <Rectangle Stroke="{DynamicResource BorderMediumBrush}" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
 
             <!-- 文字和图标内容 -->
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">

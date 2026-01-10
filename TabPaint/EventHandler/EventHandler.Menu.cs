@@ -186,9 +186,10 @@ namespace TabPaint
         {
             if (File.Exists(filePath))
             {
-                // 调用你现有的打开逻辑
-                // 假设是 OpenImageAndTabs 或类似的入口
-                OpenImageAndTabs(filePath, true);
+                string[] files = [filePath];
+                OpenFilesAsNewTabs(files);
+
+                UpdateImageBarSliderState();
             }
             else
             {
@@ -377,6 +378,7 @@ namespace TabPaint
 
         private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
         {
+            //a.s("MaximizeRestore_Click");
             MaximizeWindowHandler();
         }
 

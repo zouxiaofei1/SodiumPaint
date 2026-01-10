@@ -19,7 +19,7 @@
     </UserControl.Resources>
 
     <!-- Background: 原 #90FFFFFF 改为 GlassBackgroundMediumBrush (半透明背景) -->
-    <Border x:Name="MainContainer" Background="{DynamicResource GlassBackgroundMediumBrush}" VerticalAlignment="Top" ClipToBounds="True" Margin="0,0,0,0">
+    <Border x:Name="MainContainer" Background="{DynamicResource GlassBackgroundMediumBrush}" VerticalAlignment="Top" ClipToBounds="False" >
         <Border.Style>
             <Style TargetType="Border">
                 <Setter Property="Height" Value="5"/>
@@ -75,7 +75,7 @@
                         <MultiDataTrigger.EnterActions>
                             <BeginStoryboard>
                                 <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="100" Duration="0:0:0.2" BeginTime="0:0:0.2">
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="95" Duration="0:0:0.2" BeginTime="0:0:0.2">
                                         <DoubleAnimation.EasingFunction>
                                             <CubicEase EasingMode="EaseOut"/>
                                         </DoubleAnimation.EasingFunction>
@@ -115,7 +115,7 @@
             </Style>
         </Border.Style>
 
-        <Grid Background="Transparent" AllowDrop="True" Margin="0,-5,0,0">
+        <Grid Background="Transparent" AllowDrop="True" Margin="0,-5,0,0" ClipToBounds="False">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -221,7 +221,7 @@
                                             Background="{DynamicResource BorderBrush}" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,5,0,5" Padding="0,0,2,0" CornerRadius="2"/>
 
                                     <!-- 状态指示器 (Dirty) -->
-                                    <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" IsHitTestVisible="False">
+                                    <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,10,0,0" IsHitTestVisible="False">
                                         <Ellipse.Style>
                                             <Style TargetType="Ellipse">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -239,7 +239,7 @@
                                     <!-- 悬浮关闭按钮 -->
                                     <!-- Background: 原 #CCFFFFFF 改为 GlassBackgroundHighBrush (高不透明度) -->
                                     <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" 
-                                            Background="{DynamicResource GlassBackgroundHighBrush}"   Style="{StaticResource CloseButtonStyle}" BorderThickness="0" 
+                                            Background="{DynamicResource GlassBackgroundHighBrush}"   Style="{StaticResource OtherCloseButtonStyle}" BorderThickness="0" 
                                             Click="Internal_OnFileTabCloseClick" Tag="{Binding}" Visibility="Hidden">
                                         <Button.Resources>
                                             <Style TargetType="Border">
@@ -247,7 +247,7 @@
                                             </Style>
                                         </Button.Resources>
                                         <!-- Stroke: 原 #666 改为 IconHoverBrush -->
-                                        <Path Data="M0,0 L8,8 M8,0 L0,8" Stroke="{DynamicResource IconHoverBrush}" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <Path   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"  Data="M0,0 L8,8 M8,0 L0,8" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                     </Button>
                                 </Grid>
                                 <DataTemplate.Triggers>

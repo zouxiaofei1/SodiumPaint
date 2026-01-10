@@ -37,6 +37,7 @@ namespace TabPaint
             CheckFilePathAvailibility(_currentFilePath);
             // s(_currentImageIndex);
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
+           // _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
             InitializeComponent();
             RestoreWindowBounds();
           
@@ -765,7 +766,7 @@ namespace TabPaint
         }
         private void UpdateRulerPositions()
         {
-            if (!ShowRulers || BackgroundImage == null) return;
+            if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
 
             // 计算 BackgroundImage 相对于 ScrollContainer (视口) 的位置
             // 因为 CanvasWrapper 是 Center 布局，当图片小于视口时，会有自动偏移
@@ -843,7 +844,7 @@ namespace TabPaint
                 ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + deltaY);
                 _lastMousePosition = currentPos;
             }
-            if (ShowRulers)
+            if (SettingsManager.Instance.Current.ShowRulers)
             {
                 Point pos = e.GetPosition(ScrollContainer);
                 RulerTop.MouseMarker = pos.X;
@@ -861,7 +862,21 @@ namespace TabPaint
             {
                 _isPanning = false;
                 ScrollContainer.ReleaseMouseCapture();
-                Mouse.OverrideCursor = null; // 恢复光标
+
+                // 【修改点】恢复张开手光标
+                SetViewCursor(false);
+            }
+
+            if (_isLoadingImage) return;
+
+            // ... 原有的画图模式逻辑 ...
+            if (!IsViewMode)
+            {
+                // 确保画图模式下没有残留的 OverrideCursor
+                if (Mouse.OverrideCursor != null) Mouse.OverrideCursor = null;
+
+                Point pos = e.GetPosition(CanvasWrapper);
+                _router.ViewElement_MouseUp(pos, e);
             }
         }
         private bool _isDragOverlayVisible = false;
@@ -979,6 +994,7 @@ namespace TabPaint
                 CheckFittoWindow();
             }
         }
+
 
     }
 }

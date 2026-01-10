@@ -214,6 +214,7 @@
     <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
         <Setter Property="Height" Value="32"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="Padding" Value="6,0,6,0"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -626,8 +627,33 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- 棋盘格画刷 (透明背景) -->
+    <Style x:Key="OtherCloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Border" Background="{TemplateBinding Background}">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 悬浮红色 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SystemAccentPressedBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <!-- 关闭按钮悬浮通常固定白色 -->
+                        </Trigger>
+                        <!-- 点击深红色 -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SystemAccentHoverBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- 棋盘格画刷 (透明背景) -->
         <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
             <DrawingBrush.Drawing>
                 <DrawingGroup>
@@ -723,7 +749,8 @@
                                 <TextBlock Grid.Column="2"
                                        Text="{TemplateBinding InputGestureText}"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                       Margin="16,0,8,0"
+                                       Margin="10,0,10,0"
+                                             FontSize="11"
                                        VerticalAlignment="Center"
                                        HorizontalAlignment="Right"/>
                             </Grid>
@@ -752,7 +779,8 @@
                                 Background="Transparent" 
                                 BorderBrush="Transparent" 
                                 BorderThickness="1"
-                                CornerRadius="2">
+                                           
+                                CornerRadius="4">
                                 <ContentPresenter ContentSource="Header" 
                                               RecognizesAccessKey="True"
                                               HorizontalAlignment="Center"
@@ -767,12 +795,13 @@
                                AllowsTransparency="True"
                                PopupAnimation="None">
                                 <Border Name="SubmenuBorder"
-                                    Background="{DynamicResource ControlBackgroundBrush}"
-                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    Background="{DynamicResource ChromeLowBrush}"
+                                    BorderBrush="{DynamicResource BorderLightBrush}"
                                     BorderThickness="1"
                                     CornerRadius="4"
-                                    Margin="5,0"
-                                    Padding="2">
+                                
+                                    Margin="3,0"
+                                    Padding="4">
                                     <ItemsPresenter x:Name="ItemsPresenter"
                                                 KeyboardNavigation.DirectionalNavigation="Cycle"
                                                 Grid.IsSharedSizeScope="true"
@@ -1524,20 +1553,32 @@
     </Storyboard>
 
     <Style x:Key="ColorSwatch" TargetType="Button">
-        <Setter Property="Width" Value="16"/>
-        <Setter Property="Height" Value="16"/>
-        <Setter Property="Margin" Value="1.5"/>
+        <Setter Property="Width" Value="21"/>
+        <Setter Property="Height" Value="21"/>
+        <Setter Property="Margin" Value="-1"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid>
+                        <Ellipse x:Name="HoverRing"
+                                 Width="19" Height="19"
+                                 Stroke="{DynamicResource BorderMediumBrush}"
+                                 StrokeThickness="1"
+                                 Fill="Transparent"
+                                 Opacity="0"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"/>
                         <Ellipse x:Name="Border" Stroke="{DynamicResource BorderDarkBrush}" StrokeThickness="2" Width="15" Height="15"/>
                         <Ellipse x:Name="ColorCircle" Width="15" Height="15" Fill="{TemplateBinding Background}" Stroke="{DynamicResource BorderLightBrush}" StrokeThickness="1"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Stroke" Value="{DynamicResource BorderMediumBrush}"/>
+                            <Setter TargetName="HoverRing" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ColorCircle" Property="Width" Value="14"/>
+                            <Setter TargetName="ColorCircle" Property="Height" Value="14"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

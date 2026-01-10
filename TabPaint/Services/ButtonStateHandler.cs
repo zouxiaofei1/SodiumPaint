@@ -61,11 +61,11 @@ namespace TabPaint
                 {
                     ThicknessSlider.IsEnabled = !isPencil;
 
-                    // 处理 Tip 显示
-                    if (isPencil && ThicknessTip != null)
-                        ThicknessTip.Visibility = Visibility.Collapsed;
-                    else if (ThicknessTip != null)
-                        ThicknessTip.Visibility = Visibility.Visible;
+                    //// 处理 Tip 显示
+                    //if (isPencil && ThicknessTip != null)
+                    //    ThicknessTip.Visibility = Visibility.Collapsed;
+                    //else if (ThicknessTip != null)
+                    //    ThicknessTip.Visibility = Visibility.Visible;
                 }
 
                 SettingsManager.Instance.Current.CurrentToolKey = key;
@@ -97,22 +97,34 @@ namespace TabPaint
             }
 
         }
-        public void MaximizeWindowHandler()
+        private bool _isProcessingMaximizeWindow = false;
+        public async void MaximizeWindowHandler()
         {
+            if (_isProcessingMaximizeWindow) return; // 如果正在冷却中，直接跳过
+
+            _isProcessingMaximizeWindow = true;
+
+            // --- 立即执行原来的逻辑 ---
+            ExecuteMaximizeLogic();
+           await Task.Delay(500);
+            _isProcessingMaximizeWindow = false;
+        }
+
+        public void ExecuteMaximizeLogic()
+        {
+           // a.s("ExecuteMaximizeLogic");
             ShowToast(!_maximized ? "进入全屏模式" : "退出全屏模式");
             if (!_maximized)
             {
                 _restoreBounds = new Rect(Left, Top, Width, Height);
                 _maximized = true;
-
                 var workArea = SystemParameters.WorkArea;
-                //s((SystemParameters.BorderWidth));
                 Left = workArea.Left - (SystemParameters.BorderWidth) * 2;
                 Top = workArea.Top - (SystemParameters.BorderWidth) * 2;
                 Width = workArea.Width + (SystemParameters.BorderWidth * 4);
                 Height = workArea.Height + (SystemParameters.BorderWidth * 4);
 
-               
+
             }
             else
             {
@@ -123,8 +135,7 @@ namespace TabPaint
                 Height = _restoreBounds.Height;
                 WindowState = WindowState.Normal;
 
-                
-               
+
             }
             AutoUpdateMaximizeIcon();
         }
@@ -145,7 +156,7 @@ namespace TabPaint
             _router.SetTool(_tools.Pen);
             _ctx.PenStyle = style;
             UpdateToolSelectionHighlight();
-
+            _tools.Pen.SetCursor(_ctx);
             AutoSetFloatBarVisibility();
         }
 
@@ -214,7 +225,7 @@ namespace TabPaint
           
             if (_currentTabItem == null)
             {
-                this.Title = $"TabPaint {ProgramVersion}";
+                this.Title = $"TabPaint";
                 if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = this.Title;
                 return;
             }
@@ -246,7 +257,7 @@ namespace TabPaint
             }
 
             // 4. 拼接标题
-            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint {ProgramVersion}";
+            string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint";
 
             // 5. 更新 UI
             this.Title = newTitle;
@@ -449,7 +460,7 @@ namespace TabPaint
 
             // 3. 最终判断：有选区 且 当前不是形状工具
             bool canCrop = hasSelection && !isShapeToolActive;
-
+            //a.s(canCrop);
             UpdateBrushAndButton(MainToolBar.CutImage, MainToolBar.CutImageIcon, canCrop);
         }
 

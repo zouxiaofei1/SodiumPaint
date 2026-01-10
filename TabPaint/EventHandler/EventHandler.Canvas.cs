@@ -554,7 +554,8 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
         }
         private void OnScrollContainerDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (!IsViewMode) return;
+
+            if (!IsViewMode) { e.Handled = false; return; }
             if (e.ChangedButton != MouseButton.Left) return;
             if (_isPanning)
             {
@@ -562,7 +563,7 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
                 ScrollContainer.ReleaseMouseCapture();
                 Mouse.OverrideCursor = null; // 恢复光标
             }
-
+            a.s("OnScrollContainerDoubleClick");
             MaximizeWindowHandler();
             e.Handled = true;
         }
@@ -574,30 +575,32 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
             if (e.ChangedButton != MouseButton.Left) return;
             if (Keyboard.IsKeyDown(Key.Space) && e.ChangedButton == MouseButton.Left || IsViewMode)
             {
-                bool canScrollX = ScrollContainer.ScrollableWidth > 0.5; // 用 0.5 容错
+                bool canScrollX = ScrollContainer.ScrollableWidth > 0.5;
                 bool canScrollY = ScrollContainer.ScrollableHeight > 0.5;
 
-                // 情况 A: 图片比窗口大 -> 执行平移 (Pan)
+                // 如果图片大于窗口，执行平移
                 if (canScrollX || canScrollY)
                 {
                     _isPanning = true;
                     _lastMousePosition = e.GetPosition(ScrollContainer);
-                    ScrollContainer.CaptureMouse();
+                    ScrollContainer.CaptureMouse(); // 捕获鼠标，防止移出窗口失效
 
-                    // 改变光标：抓手
-                    Mouse.OverrideCursor = System.Windows.Input.Cursors.ScrollAll;
+                    // 【修改点】设置抓紧光标
+                    SetViewCursor(true);
+
                     e.Handled = true;
                     return;
                 }
                 else
                 {
+                    // 图片小于窗口，拖动窗口本身
                     if (e.ButtonState == MouseButtonState.Pressed)
                     {
                         try
                         {
                             this.DragMove();
                         }
-                        catch {  }
+                        catch { }
                         e.Handled = true;
                         return;
                     }

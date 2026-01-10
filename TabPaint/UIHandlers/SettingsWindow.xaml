@@ -222,30 +222,49 @@
                                     </Style>
                                 </ItemsControl.Resources>
                              
-                                <!-- 默认蓝 -->
+                     
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
                      Command="{Binding SetColorCommand}" CommandParameter="#0078D4"/>
-                                <!-- 经典紫 -->
+                    
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
                      Command="{Binding SetColorCommand}" CommandParameter="#9333EA"/>
-                                <!-- 翡翠绿 -->
+                      
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
                      Command="{Binding SetColorCommand}" CommandParameter="#107C10"/>
-                                <!-- 活力橙 -->
+                      
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
                      Command="{Binding SetColorCommand}" CommandParameter="#D13438"/>
-                                <!-- 少女粉 -->
+                        
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
                      Command="{Binding SetColorCommand}" CommandParameter="#E3008C"/>
-                                <!-- 暗夜黑/灰 -->
+             
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
                      Command="{Binding SetColorCommand}" CommandParameter="#505050"/>
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FF8C00"
+     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FF8C00}"
+     Command="{Binding SetColorCommand}" CommandParameter="#FF8C00"/>
+
+                                <!-- 2. 青色 (Teal/Cyan) - 清新、科技感强，类似 Windows 默认风格之一 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#00B294"
+     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#00B294}"
+     Command="{Binding SetColorCommand}" CommandParameter="#00B294"/>
+
+                                <!-- 3. 靛青色 (Indigo/Blue Violet) - 沉稳、专业，比现有紫色更偏蓝 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#4F46E5"
+     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#4F46E5}"
+     Command="{Binding SetColorCommand}" CommandParameter="#4F46E5"/>
+
+                                <!-- 4. 金黄色 (Gold/Amber) - 高亮、醒目，用于强调特定重要性 -->
+                                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
+     IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
+     Command="{Binding SetColorCommand}" CommandParameter="#FFB900"/>
+
                             </ItemsControl>
                         </Grid>
 
@@ -295,7 +314,23 @@
                                 <ComboBoxItem Content="仅填充颜色 (保留Alpha)" Tag="PreserveAlpha"/>
                             </ComboBox>
                         </Grid>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="允许 Delete 键删除文件"/>
+                                <TextBlock Text="无选区时，允许通过单击 Delete 键删除当前文件" 
+                   Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+              IsChecked="{Binding Path=Current.EnableFileDeleteInPaintMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+              VerticalAlignment="Center"/>
+                        </Grid>
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
                     </StackPanel>
 

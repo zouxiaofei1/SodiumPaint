@@ -14,8 +14,8 @@ public class ShapeTool : ToolBase
     public override System.Windows.Input.Cursor Cursor => _isManipulating ? null : System.Windows.Input.Cursors.Cross;
 
     public enum ShapeType { Rectangle, Ellipse, Line, RoundedRectangle, Arrow }
-    private ShapeType _currentShapeType = ShapeType.Rectangle;
-
+    public ShapeType _currentShapeType = ShapeType.Rectangle;
+    public ShapeType CurrentShapeType => _currentShapeType;
     private Point _startPoint;
     private bool _isDrawing;
     private bool _isManipulating = false;
@@ -263,7 +263,7 @@ public class ShapeTool : ToolBase
         {
             // 箭头的翅膀长度 = thickness * arrowScale
             // 我们给它稍微多一点的空间，防止抗锯齿边缘被切
-            padding = (ctx.PenThickness * arrowScale) + 5;
+            padding = (ctx.PenThickness/  2.0 + arrowScale/2.0) + 2;
         }
         // 形状在全局坐标系下的完整矩形 (可能包含负坐标或超出画布)
         Rect shapeGlobalBounds = new Rect(

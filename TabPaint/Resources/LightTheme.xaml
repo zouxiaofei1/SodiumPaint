@@ -11,7 +11,8 @@
     <SolidColorBrush x:Key="GlassBackgroundHighBrush" Color="#FFFFFF" Opacity="0.90"/>
     <SolidColorBrush x:Key="GlassBackgroundMediumBrush" Color="#FFFFFF" Opacity="0.50"/>
     <SolidColorBrush x:Key="GlassBackgroundLowBrush" Color="#FFFFFF" Opacity="0.27"/>
-
+    <SolidColorBrush x:Key="GlassBackgroundDragOverlay" Color="#551A1A1A"/>
+    
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1A1A1A"/>
     <SolidColorBrush x:Key="TextControlBrush" Color="#333333"/>
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#666666"/>
@@ -23,7 +24,7 @@
     <SolidColorBrush x:Key="IconHoverBrush" Color="#555555"/>
     <SolidColorBrush x:Key="IconDisabledBrush" Color="#CCCCCC"/>
 
-    <SolidColorBrush x:Key="BorderLightBrush" Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="BorderLightBrush" Color="#E7E7E7"/>
     <SolidColorBrush x:Key="BorderBrush" Color="#E0E0E0"/>
     <SolidColorBrush x:Key="BorderMediumBrush" Color="#CCCCCC"/>
     <SolidColorBrush x:Key="BorderDarkBrush" Color="#8F8F8F"/>

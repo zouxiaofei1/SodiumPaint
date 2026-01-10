@@ -44,7 +44,10 @@ namespace TabPaint.Controls
             {
                 return;
             }
-
+            if (e.OriginalSource == AppIcon || e.Source == AppIcon)
+            {
+                return;
+            }
             // 3. 将事件转发给外部 (即 MainWindow)
             TitleBarMouseDown?.Invoke(this, e);
         }
@@ -118,7 +121,46 @@ namespace TabPaint.Controls
         private void OnSaveAsClick(object sender, RoutedEventArgs e) => SaveAsClick?.Invoke(this, e);
         private void OnExitClick(object sender, RoutedEventArgs e) => ExitClick?.Invoke(this, e);
 
+        public event EventHandler<MouseButtonEventArgs> IconDragRequest;
 
+        // 2. 用于记录鼠标按下时的坐标
+        private Point _dragStartPoint;
 
+        // 3. 鼠标按下预览：记录起点
+        private void OnAppIconPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragStartPoint = e.GetPosition(this);
+        }
+
+        // 4. 鼠标移动预览：判断是否构成拖拽
+        private void OnAppIconPreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point currentPosition = e.GetPosition(this);
+
+                // 计算移动距离是否超过系统阈值 (防止手抖误触)
+                if (Math.Abs(currentPosition.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(currentPosition.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+                {
+                    // 触发拖拽请求事件，参数传递 MouseButtonEventArgs 方便后续处理
+                    // 注意：这里传递 null 或构造新的参数皆可，主要是通知 MainWindow
+                    IconDragRequest?.Invoke(this, null);
+                }
+            }
+        }
+
+        private void Window_DoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            Point relativePoint = e.GetPosition(this);
+            // 只有在特定区域且非看图模式下才触发
+            if (relativePoint.Y < 60 && relativePoint.X > 20 && !((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode)
+            {
+                ((MainWindow)System.Windows.Application.Current.MainWindow).MaximizeWindowHandler();
+
+                // 【修复核心】：添加这一行，阻止事件继续传递给 WindowChrome/系统
+                e.Handled = true;
+            }
+        }
     }
 }

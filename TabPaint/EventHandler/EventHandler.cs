@@ -18,6 +18,18 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private bool IsEditingTextField()
+        {
+            // WPF 的 Editable ComboBox 内部使用的是 TextBox，
+            // 所以只要判断 FocusedElement 是不是 TextBox 即可涵盖 ComboBox 和普通的 TextBox
+            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox ||
+                Keyboard.FocusedElement is System.Windows.Controls.PasswordBox ||
+                Keyboard.FocusedElement is System.Windows.Controls.RichTextBox)
+            {
+                return true;
+            }
+            return false;
+        }
 
         private bool HandleGlobalShortcuts(object sender, KeyEventArgs e)
         {
@@ -298,7 +310,8 @@ namespace TabPaint
                             {
                                 st.DeleteSelection(_ctx);
                             }
-                            else if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < 2.0)
+                            else if (SettingsManager.Instance.Current.EnableFileDeleteInPaintMode)
+                                if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < 2.0)
                             {
                                 st.ResetLastDeleteTime();
                                 ShowToast("再次按下 Delete 删除文件");
@@ -315,6 +328,41 @@ namespace TabPaint
         }
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (IsEditingTextField())
+            {
+                // 1. 允许基础光标导航和删除键穿透给输入框
+                switch (e.Key)
+                {
+                    case Key.Left:
+                    case Key.Right:
+                    case Key.Up:
+                    case Key.Down:
+                    case Key.Home:
+                    case Key.End:
+                    case Key.Delete:
+                    case Key.Back:
+                    case Key.Tab:
+                    case Key.Enter:
+                        // 如果是输入框聚焦，遇到这些键直接返回，不让 MainWindow 处理，
+                        // 这样输入框就能正常移动光标和删除了
+                        return;
+                }
+
+                // 2. 允许 Ctrl + C/V/X/A/Z/Y 穿透给输入框
+                if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                {
+                    switch (e.Key)
+                    {
+                        case Key.C: // 复制文本
+                        case Key.V: // 粘贴文本
+                        case Key.X: // 剪切文本
+                        case Key.A: // 全选文本
+                        case Key.Z: // 撤销输入
+                        case Key.Y: // 重做输入
+                            return;
+                    }
+                }
+            }
             if (HandleGlobalShortcuts(sender, e)) return;
 
             // 2. 根据模式分发
@@ -379,12 +427,12 @@ namespace TabPaint
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             //  s(1);
-            if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
-            {
+            //if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
+            //{
 
-                MaximizeRestore_Click(sender, null);
-                return;
-            }
+            //  //  MaximizeRestore_Click(sender, null);
+            //    return;
+            //}
 
             if (e.LeftButton == MouseButtonState.Pressed)
             {

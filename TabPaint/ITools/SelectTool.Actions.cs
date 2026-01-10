@@ -219,7 +219,8 @@ namespace TabPaint
                     mw.UpdateSelectionScalingMode();
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
                     mw.NotifyCanvasSizeChanged(newW, newH);
-                   // mw._canvasResizer.UpdateUI();
+                   
+                    // mw._canvasResizer.UpdateUI();
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
                 }
@@ -251,7 +252,7 @@ namespace TabPaint
                 DrawOverlay(ctx, _selectionRect);
                 _transformStep = 0;
                 _hasLifted = true;
-                //mw.FitToWindow();
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
                 mw._canvasResizer.UpdateUI();
             }
 

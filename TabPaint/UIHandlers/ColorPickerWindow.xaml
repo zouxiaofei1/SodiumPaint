@@ -26,7 +26,7 @@
             <Border Name="Magnifier" Width="120" Height="120" 
                     BorderBrush="{DynamicResource SystemAccentBrush}" 
                     BorderThickness="2" 
-                    CornerRadius="60" 
+                   
                     Visibility="Collapsed">
 
                 <!-- 阴影让它浮起来 -->
@@ -35,10 +35,7 @@
                 </Border.Effect>
 
                 <Grid ClipToBounds="True">
-                    <Grid.Clip>
-                        <EllipseGeometry Center="60,60" RadiusX="60" RadiusY="60"/>
-                    </Grid.Clip>
-
+      
                     <!-- A. 放大显示的区域 -->
                     <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor">
                         <Rectangle.Fill>

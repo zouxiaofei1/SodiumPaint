@@ -99,7 +99,7 @@ namespace TabPaint
                 {
                     shapeTool.SetShapeType(type);
                     _router.SetTool(shapeTool);
-
+                    UpdateToolSelectionHighlight();
                     // 更新图标逻辑保持不变
                     switch (type)
                     {

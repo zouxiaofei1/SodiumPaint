@@ -31,7 +31,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style x:Key="CloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
+    <Style x:Key="OtherCloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="Template">
@@ -43,13 +43,13 @@
                     <ControlTemplate.Triggers>
                         <!-- 悬浮红色 -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource DangerBrush}"/>
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SystemAccentPressedBrush}"/>
                             <Setter Property="Foreground" Value="White"/>
                             <!-- 关闭按钮悬浮通常固定白色 -->
                         </Trigger>
                         <!-- 点击深红色 -->
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource DangerHoverBrush}"/>
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SystemAccentHoverBrush}"/>
                             <Setter Property="Foreground" Value="White"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

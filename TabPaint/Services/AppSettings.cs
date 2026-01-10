@@ -495,6 +495,22 @@ namespace TabPaint
                 OnPropertyChanged();
             }
         }
+        private bool _showRulers = false; // 默认不显示
+
+        [JsonPropertyName("show_rulers")]
+        public bool ShowRulers
+        {
+            get => _showRulers;
+            set
+            {
+                if (_showRulers != value)
+                {
+                    _showRulers = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private AppResamplingMode _resamplingMode = AppResamplingMode.Auto;
         [JsonPropertyName("resampling_mode")]
         public AppResamplingMode ResamplingMode
@@ -627,6 +643,21 @@ namespace TabPaint
                 if (_autoPopupOnClipboardImage != value)
                 {
                     _autoPopupOnClipboardImage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        private bool _enableFileDeleteInPaintMode = false; // 默认关闭
+
+        [JsonPropertyName("enable_file_delete_in_paint_mode")]
+        public bool EnableFileDeleteInPaintMode
+        {
+            get => _enableFileDeleteInPaintMode;
+            set
+            {
+                if (_enableFileDeleteInPaintMode != value)
+                {
+                    _enableFileDeleteInPaintMode = value;
                     OnPropertyChanged();
                 }
             }

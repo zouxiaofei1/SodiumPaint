@@ -16,6 +16,7 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         // 定义高亮颜色
+
         private void UpdateToolSelectionHighlight()
         {
             if (_router == null) return;
@@ -98,16 +99,79 @@ namespace TabPaint
             }
             else
             {
-                // 处理非基础工具 (画刷样式、形状等)
-                if (_router.CurrentTool == _tools.Pen && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
+                // === 新增/修改逻辑：处理复杂工具 (画刷 & 形状) ===
+
+                // A. 画刷菜单高亮处理
+                if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
+                    // 1. 高亮主按钮
                     MainToolBar.BrushToggle.BorderBrush = accentBrush;
                     MainToolBar.BrushToggle.Background = accentSubtleBrush;
+
+                    // 2. 高亮下拉菜单内的具体项
+                    // 获取当前画刷样式的 Tag 字符串 (例如 "Round", "Square", "Spray")
+                    string brushTag = _ctx.PenStyle.ToString();
+
+                    // 调用通用辅助方法更新菜单
+                    // 注意：需要确保你的 ToolBarControl x:Name 了 StackPanel，或者我们通过 Popup 遍历
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, brushTag);
                 }
-                else if (_router.CurrentTool == _tools.Shape)
+                else
                 {
+                    // 如果不是画刷工具，清除画刷菜单的选中状态
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, null);
+                }
+
+                // B. 形状菜单高亮处理
+                if (_router.CurrentTool is ShapeTool shapeTool)
+                {
+                    // 1. 高亮主按钮
                     MainToolBar.ShapeToggle.BorderBrush = accentBrush;
                     MainToolBar.ShapeToggle.Background = accentSubtleBrush;
+
+                    // 2. 高亮下拉菜单内的具体项
+                    // 我们需要从 shapeTool 获取当前的 ShapeType，但 ShapeType 是私有的或受保护的
+                    // 建议在 ShapeTool 中公开一个属性，或者在这里反射 (不推荐反射，建议修改 ShapeTool)
+
+                    // 假设 ShapeTool 有一个公开属性 CurrentShapeType
+                    string shapeTag = shapeTool.CurrentShapeType.ToString();
+
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, shapeTag);
+                }
+                else
+                {
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, null);
+                }
+            }
+        }
+        private void UpdateSubMenuHighlight(System.Windows.Controls.Primitives.Popup popup, string targetTag)
+        {
+            if (popup?.Child is Border border && border.Child is StackPanel panel)
+            {
+                foreach (var item in panel.Children)
+                {
+                    if (item is MenuItem menuItem)
+                    {
+                        if (targetTag != null && menuItem.Tag?.ToString() == targetTag)
+                        {
+                            // 选中样式
+                            menuItem.Background = Application.Current.FindResource("ToolAccentSubtleHoverBrush") as Brush;
+
+                            // 如果需要边框高亮（可选）
+                            // menuItem.BorderBrush = Application.Current.FindResource("ListItemSelectedBorderBrush") as Brush;
+                            // menuItem.BorderThickness = new Thickness(1);
+
+                            menuItem.FontWeight = FontWeights.Bold;
+                        }
+                        else
+                        {
+                            // 恢复默认
+                            menuItem.ClearValue(Control.BackgroundProperty);
+                            menuItem.ClearValue(Control.BorderBrushProperty);
+                            menuItem.ClearValue(Control.BorderThicknessProperty);
+                            menuItem.ClearValue(Control.FontWeightProperty);
+                        }
+                    }
                 }
             }
         }

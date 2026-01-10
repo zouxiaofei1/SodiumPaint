@@ -67,17 +67,17 @@
 
                 <!-- 编辑菜单 -->
                 <MenuItem Header="编辑" Style="{StaticResource ModernMenuItemStyle}">
-                    <MenuItem Header="复制" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+C" Click="OnCopyClick">
+                    <MenuItem Header="复制" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+C" Click="OnCopyClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="剪切" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
+                    <MenuItem Header="剪切" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="粘贴" Style="{StaticResource SubMenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
+                    <MenuItem Header="粘贴" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -87,34 +87,34 @@
 
                 <!-- 效果菜单 -->
                 <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
-                    <MenuItem Header="亮度/对比度/曝光" Style="{StaticResource SubMenuItemStyle}" Click="OnBCEClick">
+                    <MenuItem Header="亮度/对比度/曝光" Style="{StaticResource Win11MenuItemStyle}" Click="OnBCEClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"  Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="色温/色调/饱和度" Style="{StaticResource SubMenuItemStyle}" Click="OnTTSClick">
+                    <MenuItem Header="色温/色调/饱和度" Style="{StaticResource Win11MenuItemStyle}" Click="OnTTSClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Color_Temperature_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="黑白" Style="{StaticResource SubMenuItemStyle}" Click="OnBlackWhiteClick">
+                    <MenuItem Header="黑白" Style="{StaticResource Win11MenuItemStyle}" Click="OnBlackWhiteClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Black_And_White_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="反色" Style="{StaticResource SubMenuItemStyle}" Click="OnInvertClick">
+                    <MenuItem Header="反色" Style="{StaticResource Win11MenuItemStyle}" Click="OnInvertClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Invert_Color_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="自动色阶" Style="{StaticResource SubMenuItemStyle}" Click="OnAutoLevelsClick">
+                    <MenuItem Header="自动色阶" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoLevelsClick">
                         <MenuItem.Icon>
                             <!-- 类似直方图或魔法棒的图标 -->
                             <Path Data="M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
-                    <MenuItem Header="调整大小" Style="{StaticResource SubMenuItemStyle}" Click="OnResizeCanvasClick">
+                    <MenuItem Header="调整大小" Style="{StaticResource Win11MenuItemStyle}" Click="OnResizeCanvasClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Resize_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -142,7 +142,7 @@
 
                 <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="6,4"/>
 
-                <Button Margin="0,0,6,0" ToolTip="新建标签页" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="0,0,6,0" Width="32" ToolTip="新建标签页" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="12" Height="12"/>
                 </Button>
                 <Button Margin="0,0,6,0" ToolTip="放弃所有更改" Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">

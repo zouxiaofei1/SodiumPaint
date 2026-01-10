@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
+                 PreviewMouseDoubleClick   ="Window_DoubleClick"
              mc:Ignorable="d" 
              d:DesignHeight="30" d:DesignWidth="800">
 
@@ -30,7 +31,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- [Col 0] Icon -->
-            <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0" MouseLeftButtonDown="OnAppIconMouseDown">
+            <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"    PreviewMouseMove="OnAppIconPreviewMouseMove"  PreviewMouseLeftButtonDown="OnAppIconPreviewMouseDown" MouseLeftButtonDown="OnAppIconMouseDown">
                 <Image.ContextMenu>
                     <!-- ContextMenu 内容保持不变 -->
                     <ContextMenu x:Name="LogoContextMenu" Style="{StaticResource Win11ContextMenuStyle}" Background="{DynamicResource ControlBackgroundBrush}">
@@ -100,13 +101,6 @@
                 </Image.ContextMenu>
             </Image>
 
-            <!-- [Col 1] Title -->
-            <!-- 关键修改：
-                 1. Grid.Column="1"：放在中间列。
-                 2. TextTrimming="CharacterEllipsis"：超出范围时显示省略号(...)，而不是挤走其他控件。
-                 3. TextWrapping="NoWrap"：确保单行显示。
-                 4. Margin：稍微加一点右边距，防止文字紧贴按钮。
-            -->
             <TextBlock Grid.Column="1" 
                        x:Name="TitleTextBlock" 
                        Text="TabPaint" 
@@ -117,18 +111,13 @@
                        TextWrapping="NoWrap"
                        Margin="0,0,10,0"/>
 
-            <!-- [Col 2] Window Buttons -->
-            <!-- 关键修改：
-                 1. Grid.Column="2"：固定在右侧列。
-                 2. 不需要 DockPanel.Dock="Right"。
-            -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <Button Width="40" Height="30" x:Name="ModeSwitchButton" 
                         ToolTip="切换 画图/看图 模式" 
                         Click="OnModeSwitchClick" 
                         Style="{StaticResource TitleBarButtonStyle}"
-                        Margin="0,0,8,0">
-                    <Path x:Name="ModeIconImage"  Data="{DynamicResource View_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                        Margin="0,0,8,0" >
+                    <Path x:Name="ModeIconImage" Data="{DynamicResource View_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
 
                 <Button Width="40" Height="30" ToolTip="最小化" Click="OnMinimizeClick" Style="{StaticResource TitleBarButtonStyle}">
@@ -138,13 +127,13 @@
                 </Button>
                 <Button Width="40" Height="30" Name="MaxRestoreButton" ToolTip="最大化" Click="OnMaximizeRestoreClick" Style="{StaticResource TitleBarButtonStyle}">
                     <Viewbox Width="10" Height="10">
-                        <Rectangle Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" Width="12" Height="12"/>
+                        <Rectangle Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" Width="12" Height="12" RadiusX="2" RadiusY="2"/>
                     </Viewbox>
                 </Button>
                 <Button Width="48" Height="30" ToolTip="退出" Click="OnCloseClick" Style="{StaticResource CloseButtonStyle}">
                     <Viewbox Width="10" Height="10">
                         <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
-                              StrokeThickness="1.5" 
+                              StrokeThickness="1" 
                               Data="M0,0 L12,12 M12,0 L0,12"/>
                     </Viewbox>
                 </Button>

@@ -7,12 +7,13 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TabPaint.Controls;
-using static TabPaint.MainWindow;
 using XamlAnimatedGif; // 添加这一行
+using static TabPaint.MainWindow;
 
 //
 //看图模式
@@ -54,94 +55,79 @@ namespace TabPaint
             IsViewMode = !IsViewMode;
             OnModeChanged(IsViewMode);
         }
-        private System.Windows.Input.Cursor _cachedCursoropen, _cachedCursorclose;
-        public  System.Windows.Input.Cursor CursorOpenhand
+        private Cursor _cachedCursorOpen;
+        private Cursor _cachedCursorClosed;
+
+        public Cursor CursorOpenHand
         {
             get
             {
-                if (_cachedCursoropen == null)
+                if (_cachedCursorOpen == null)
                 {
-                    // 仅在第一次访问时加载
-                    var resourceInfo = System.Windows.Application.GetResourceStream(
-                        new Uri("pack://application:,,,/Resources/Cursors/Openhand.cur"));
-
-                    if (resourceInfo != null)
+                    try
                     {
-                        _cachedCursoropen = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                        // 确保路径与你实际存放 .cur 文件的路径一致
+                        var uri = new Uri("pack://application:,,,/Resources/Cursors/Openhand.cur");
+                        var resourceInfo = Application.GetResourceStream(uri);
+                        if (resourceInfo != null)
+                        {
+                            _cachedCursorOpen = new Cursor(resourceInfo.Stream);
+                        }
                     }
-                    else
+                    catch
                     {
-                        // 防止资源没找到导致后续空指针，回退到默认
-                        return System.Windows.Input.Cursors.Cross;
+                        // 如果加载失败，回退到系统默认的 ScrollAll (类似移动图标)
+                        _cachedCursorOpen = Cursors.ScrollAll;
                     }
                 }
-                return _cachedCursoropen;
+                return _cachedCursorOpen;
             }
         }
-        public System.Windows.Input.Cursor CursorClosedhand
+
+        public Cursor CursorClosedHand
         {
             get
             {
-                if (_cachedCursorclose == null)
+                if (_cachedCursorClosed == null)
                 {
-                    // 仅在第一次访问时加载
-                    var resourceInfo = System.Windows.Application.GetResourceStream(
-                        new Uri("pack://application:,,,/Resources/Cursors/Closedhand.cur"));
-
-                    if (resourceInfo != null)
+                    try
                     {
-                        _cachedCursorclose = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                        var uri = new Uri("pack://application:,,,/Resources/Cursors/Closedhand.cur");
+                        var resourceInfo = Application.GetResourceStream(uri);
+                        if (resourceInfo != null)
+                        {
+                            _cachedCursorClosed = new Cursor(resourceInfo.Stream);
+                        }
                     }
-                    else
+                    catch
                     {
-                        // 防止资源没找到导致后续空指针，回退到默认
-                        return System.Windows.Input.Cursors.Cross;
+                        // 加载失败回退
+                        _cachedCursorClosed = Cursors.SizeAll;
                     }
                 }
-                return _cachedCursorclose;
+                return _cachedCursorClosed;
             }
         }
         private void SetViewCursor(bool isPressed = false)
         {
+            if (!IsViewMode) return;
+
+            // 注意：ScrollContainer 是实际响应拖拽的控件，建议直接针对它设置
             if (isPressed)
             {
-                this.Cursor = CursorClosedhand; System.Windows.Input.Mouse.OverrideCursor = CursorClosedhand;
+                // 设置 OverrideCursor 强制覆盖全程序光标，确保拖拽出控件范围也不变
+                Mouse.OverrideCursor = CursorClosedHand;
             }
             else
             {
-                this.Cursor = CursorOpenhand; System.Windows.Input.Mouse.OverrideCursor = CursorOpenhand;
+                // 松开时清除强制覆盖，并设置当前控件光标
+                Mouse.OverrideCursor = null;
+                CanvasWrapper.Cursor = CursorOpenHand;
+                CanvasWrapper.ForceCursor = true;
+                ScrollContainer.Cursor = CursorOpenHand;
             }
         }
-        public void SetupMouseEvents()
-        {
-            // 这里以 MainCanvas 为例，也可以是 Window
-            RootWindow.PreviewMouseDown += (s, e) => {
-                if (IsViewMode) // 只有在看图模式或特定拖拽模式下执行
-                {
-                    SetViewCursor(true);
-                }
-            };
-
-            RootWindow.PreviewMouseUp += (s, e) => {
-                if (IsViewMode)
-                {
-                    SetViewCursor(false);
-                }
-            };
-
-            // 额外处理：防止鼠标在按下状态移出窗口后在外部松开，导致回到窗口时光标还是闭合状态
-            RootWindow.MouseEnter += (s, e) => {
-                if (IsViewMode)
-                {
-                    SetViewCursor(System.Windows.Input.Mouse.LeftButton == System.Windows.Input.MouseButtonState.Pressed);
-                }
-            };
-
-            // 离开区域恢复默认光标（可选）
-            RootWindow.MouseLeave += (s, e) => {
-                this.Cursor = System.Windows.Input.Cursors.Arrow;
-            };
-        }
+    
 
         private void OnModeChanged(bool isView, bool isSilent = false)
         {
@@ -152,7 +138,7 @@ namespace TabPaint
             CheckBirdEyeVisibility();
             if (isView)
             {
-                SetupMouseEvents();
+                SetViewCursor(false);
                 if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = true;
                 _router.CleanUpSelectionandShape();
                 if (_router.CurrentTool is TextTool textTool) textTool.Cleanup(_ctx);
@@ -205,6 +191,9 @@ namespace TabPaint
                 RootWindow.MinHeight = 345;
                 RootWindow.MinWidth = 430;
                 _router.CurrentTool.SetCursor(_ctx);
+                System.Windows.Input.Mouse.OverrideCursor = null; ScrollContainer.Cursor = Cursors.Arrow;
+                CanvasWrapper.Cursor = null;
+                CanvasWrapper.ForceCursor = false;
             }
             UpdateCanvasVisuals();
             if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);
