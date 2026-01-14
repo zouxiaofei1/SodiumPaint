@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TabPaint"
         mc:Ignorable="d"
-        Title="色彩调整" Height="290" Width="380"
+        Title="{DynamicResource L_AdjustTTS_Title}" Height="290" Width="380"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="Transparent"
@@ -207,7 +207,7 @@
                        RenderOptions.BitmapScalingMode="HighQuality"/>
 
                 <TextBlock Grid.Column="1" 
-                           Text="色彩调整" 
+                           Text="{DynamicResource L_AdjustTTS_Title}" 
                            VerticalAlignment="Center" 
                            HorizontalAlignment="Left"
                            FontSize="12" 
@@ -224,7 +224,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="色温" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{DynamicResource L_AdjustTTS_Temperature}" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1"
                              Text="{Binding ElementName=TemperatureSlider, Path=Value, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
                              PreviewTextInput="NumberValidationTextBox"
@@ -245,7 +245,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="色调" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{DynamicResource L_AdjustTTS_Tint}" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1"
                              Text="{Binding ElementName=TintSlider, Path=Value, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
                              PreviewTextInput="NumberValidationTextBox"
@@ -266,7 +266,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="饱和度" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{DynamicResource L_AdjustTTS_Saturation}" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1"
                              Text="{Binding ElementName=SaturationSlider, Path=Value, UpdateSourceTrigger=LostFocus, StringFormat=N0}"
                              PreviewTextInput="NumberValidationTextBox"
@@ -287,12 +287,12 @@
             <Border Grid.Row="2" Background="{DynamicResource PanelBackgroundBrush}" Padding="15,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderLightBrush}">
                 <Grid>
                     <!-- 左侧：重置按钮 -->
-                    <Button Content="重置" Width="80" HorizontalAlignment="Left" Click="Reset_Click"/>
+                    <Button Content="{DynamicResource L_Common_Reset}" Width="80" HorizontalAlignment="Left" Click="Reset_Click"/>
 
                     <!-- 右侧：确定/取消 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="确定" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
-                        <Button Content="取消" Width="80" Click="Cancel_Click" IsCancel="True"/>
+                        <Button Content="{DynamicResource L_Common_OK}" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
+                        <Button Content="{DynamicResource L_Common_Cancel}" Width="80" Click="Cancel_Click" IsCancel="True"/>
                     </StackPanel>
                 </Grid>
             </Border>

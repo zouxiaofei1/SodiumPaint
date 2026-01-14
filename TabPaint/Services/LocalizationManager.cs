@@ -58,6 +58,15 @@ namespace TabPaint
             return s.Contains("/Resources/Lang.", StringComparison.OrdinalIgnoreCase)
                    && s.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
         }
+
+        public static string GetString(string key)
+        {
+            var app = Application.Current;
+            if (app != null && app.TryFindResource(key) is string val)
+            {
+                return val;
+            }
+            return key;
+        }
     }
 }
-

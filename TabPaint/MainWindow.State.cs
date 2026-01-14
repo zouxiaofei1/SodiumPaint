@@ -62,12 +62,12 @@ namespace TabPaint
         public List<string> _imageFiles = new List<string>();
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
-        private string _currentFileName = "未命名";
+        private string _currentFileName = LocalizationManager.GetString("L_Common_Untitled");
         public string ProgramVersion { get; set; } = "v0.9.1";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
-        private string _mousePosition = "0,0像素";
+        private string _mousePosition = "0,0" + LocalizationManager.GetString("L_Main_Unit_Pixel");
         public string MousePosition
         {
             get => _mousePosition;
@@ -75,14 +75,14 @@ namespace TabPaint
         }
         private bool _isPanning = false;
         private Point _lastMousePosition;
-        private string _imageSize = "0×0像素";
+        private string _imageSize = "0×0" + LocalizationManager.GetString("L_Main_Unit_Pixel");
         public string ImageSize
         {
             get => _imageSize;
             set { _imageSize = value; OnPropertyChanged(); }
         }
 
-        private string _selectionSize = "0×0像素";
+        private string _selectionSize = "0×0" + LocalizationManager.GetString("L_Main_Unit_Pixel");
         public string SelectionSize
         {
             get => _selectionSize;
@@ -138,14 +138,15 @@ namespace TabPaint
         private Stack<UndoAction> _undoStack = new Stack<UndoAction>();
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
-        String PicFilterString = "所有图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.ico;*.heic;*.jfif|" +
-    "PNG 图片 (*.png)|*.png|" +
-    "JPEG 图片 (*.jpg;*.jpeg)|*.jpg;*.jpeg|" +
-    "WebP 图片 (*.webp)|*.webp|" +
-    "BMP 位图 (*.bmp)|*.bmp|" +
-    "GIF 动图 (*.gif)|*.gif|" +
-    "TIFF 图片 (*.tif;*.tiff)|*.tif;*.tiff|" +
-    "ICO 图标 (*.ico)|*.ico";
+        string PicFilterString => string.Format("{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.ico;*.heic;*.jfif|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico",
+            LocalizationManager.GetString("L_Main_Filter_AllImages"),
+            LocalizationManager.GetString("L_Main_Filter_PNG"),
+            LocalizationManager.GetString("L_Main_Filter_JPEG"),
+            LocalizationManager.GetString("L_Main_Filter_WebP"),
+            LocalizationManager.GetString("L_Main_Filter_BMP"),
+            LocalizationManager.GetString("L_Main_Filter_GIF"),
+            LocalizationManager.GetString("L_Main_Filter_TIFF"),
+            LocalizationManager.GetString("L_Main_Filter_ICO"));
         ITool LastTool;
         public bool useSecondColor = false;//是否使用备用颜色
         private bool _maximized = false;

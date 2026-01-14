@@ -126,6 +126,7 @@
 
     <!-- Common -->
     <sys:String x:Key="L_Common_OK" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定</sys:String>
+    <sys:String x:Key="L_Common_Untitled" xmlns:sys="clr-namespace:System;assembly=mscorlib">未命名</sys:String>
 
     <!-- MainWindow context menu (canvas) -->
     <sys:String x:Key="L_Main_Ctx_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制</sys:String>
@@ -143,6 +144,15 @@
     <sys:String x:Key="L_Main_Ctx_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">一键加边框 (2px)</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel" xmlns:sys="clr-namespace:System;assembly=mscorlib"> 像素</sys:String>
+    <sys:String x:Key="L_Main_Filter_AllImages" xmlns:sys="clr-namespace:System;assembly=mscorlib">所有图像文件</sys:String>
+    <sys:String x:Key="L_Main_Filter_PNG" xmlns:sys="clr-namespace:System;assembly=mscorlib">PNG 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_JPEG" xmlns:sys="clr-namespace:System;assembly=mscorlib">JPEG 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_WebP" xmlns:sys="clr-namespace:System;assembly=mscorlib">WebP 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_BMP" xmlns:sys="clr-namespace:System;assembly=mscorlib">BMP 位图</sys:String>
+    <sys:String x:Key="L_Main_Filter_GIF" xmlns:sys="clr-namespace:System;assembly=mscorlib">GIF 动图</sys:String>
+    <sys:String x:Key="L_Main_Filter_TIFF" xmlns:sys="clr-namespace:System;assembly=mscorlib">TIFF 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_ICO" xmlns:sys="clr-namespace:System;assembly=mscorlib">ICO 图标</sys:String>
+
     <sys:String x:Key="L_Main_Toast_Info" xmlns:sys="clr-namespace:System;assembly=mscorlib">提示信息</sys:String>
     <sys:String x:Key="L_Main_Drag_DropToOpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">拖放以打开</sys:String>
     <sys:String x:Key="L_Main_Drag_ReleaseToConfirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">释放鼠标以确认</sys:String>
@@ -252,4 +262,129 @@
     <sys:String x:Key="L_TitleBar_Minimize" xmlns:sys="clr-namespace:System;assembly=mscorlib">最小化</sys:String>
     <sys:String x:Key="L_TitleBar_Maximize" xmlns:sys="clr-namespace:System;assembly=mscorlib">最大化</sys:String>
     <sys:String x:Key="L_TitleBar_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">退出</sys:String>
+
+    <!-- AdjustBCEWindow -->
+    <sys:String x:Key="L_AdjustBCE_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整图像</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">亮度</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Contrast" xmlns:sys="clr-namespace:System;assembly=mscorlib">对比度</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Exposure" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光</sys:String>
+
+    <!-- AdjustTTSWindow -->
+    <sys:String x:Key="L_AdjustTTS_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">色彩调整</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Temperature" xmlns:sys="clr-namespace:System;assembly=mscorlib">色温</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Tint" xmlns:sys="clr-namespace:System;assembly=mscorlib">色调</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">饱和度</sys:String>
+
+    <!-- ResizeCanvasDialog -->
+    <sys:String x:Key="L_ResizeCanvas_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整画布大小</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode" xmlns:sys="clr-namespace:System;assembly=mscorlib">模式：</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放图片 (Resample)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整画布 (Canvas)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Width" xmlns:sys="clr-namespace:System;assembly=mscorlib">宽度</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Height" xmlns:sys="clr-namespace:System;assembly=mscorlib">高度</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio" xmlns:sys="clr-namespace:System;assembly=mscorlib">保持长宽比</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放: {0}%  |  原始: {1} x {2}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：{0} x {1}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：仅改变画布大小，不拉伸图像</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放模式：拉伸/压缩图像内容</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_LimitReached" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸不能超过 {0}像素。</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸必须大于 0</sys:String>
+
+    <!-- ModernColorPickerWindow -->
+    <sys:String x:Key="L_ColorPicker_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">编辑颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_Preview" xmlns:sys="clr-namespace:System;assembly=mscorlib">预览</sys:String>
+    <sys:String x:Key="L_ColorPicker_BasicColors" xmlns:sys="clr-namespace:System;assembly=mscorlib">基本颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_CustomColors" xmlns:sys="clr-namespace:System;assembly=mscorlib">自定义颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_AddCurrentColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加当前颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">红 (R)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">绿 (G)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">蓝 (B)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hue" xmlns:sys="clr-namespace:System;assembly=mscorlib">色调</sys:String>
+    <sys:String x:Key="L_ColorPicker_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">饱和度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">亮度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hex" xmlns:sys="clr-namespace:System;assembly=mscorlib">HEX (8位)</sys:String>
+
+    <sys:String x:Key="L_Color_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯白</sys:String>
+    <sys:String x:Key="L_Color_LightRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅红</sys:String>
+    <sys:String x:Key="L_Color_LightOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅橙/皮肤</sys:String>
+    <sys:String x:Key="L_Color_LightYellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅黄</sys:String>
+    <sys:String x:Key="L_Color_MintGreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">薄荷绿</sys:String>
+    <sys:String x:Key="L_Color_LightCyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅青</sys:String>
+    <sys:String x:Key="L_Color_LightBlue" xmlns:sys="clr-namespace:System;assembly=mscorlib">淡蓝</sys:String>
+    <sys:String x:Key="L_Color_Lavender" xmlns:sys="clr-namespace:System;assembly=mscorlib">淡紫</sys:String>
+    <sys:String x:Key="L_Color_LightPink" xmlns:sys="clr-namespace:System;assembly=mscorlib">淡粉</sys:String>
+    <sys:String x:Key="L_Color_Wheat" xmlns:sys="clr-namespace:System;assembly=mscorlib">小麦色</sys:String>
+
+    <sys:String x:Key="L_Color_Silver" xmlns:sys="clr-namespace:System;assembly=mscorlib">银色</sys:String>
+    <sys:String x:Key="L_Color_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">正红</sys:String>
+    <sys:String x:Key="L_Color_Orange" xmlns:sys="clr-namespace:System;assembly=mscorlib">橙色</sys:String>
+    <sys:String x:Key="L_Color_Yellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">正黄</sys:String>
+    <sys:String x:Key="L_Color_Lime" xmlns:sys="clr-namespace:System;assembly=mscorlib">酸橙绿</sys:String>
+    <sys:String x:Key="L_Color_Cyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">青色/天蓝</sys:String>
+    <sys:String x:Key="L_Color_Azure" xmlns:sys="clr-namespace:System;assembly=mscorlib">蔚蓝</sys:String>
+    <sys:String x:Key="L_Color_Violet" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫罗兰</sys:String>
+    <sys:String x:Key="L_Color_Magenta" xmlns:sys="clr-namespace:System;assembly=mscorlib">品红</sys:String>
+    <sys:String x:Key="L_Color_Chocolate" xmlns:sys="clr-namespace:System;assembly=mscorlib">巧克力色</sys:String>
+
+    <sys:String x:Key="L_Color_Gray" xmlns:sys="clr-namespace:System;assembly=mscorlib">灰色</sys:String>
+    <sys:String x:Key="L_Color_DeepRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">深红</sys:String>
+    <sys:String x:Key="L_Color_DeepOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">深橙</sys:String>
+    <sys:String x:Key="L_Color_Gold" xmlns:sys="clr-namespace:System;assembly=mscorlib">金色</sys:String>
+    <sys:String x:Key="L_Color_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯绿</sys:String>
+    <sys:String x:Key="L_Color_Teal" xmlns:sys="clr-namespace:System;assembly=mscorlib">水鸭青</sys:String>
+    <sys:String x:Key="L_Color_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯蓝</sys:String>
+    <sys:String x:Key="L_Color_Purple" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫色</sys:String>
+    <sys:String x:Key="L_Color_DeepPink" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫红</sys:String>
+    <sys:String x:Key="L_Color_Ochre" xmlns:sys="clr-namespace:System;assembly=mscorlib">赭石</sys:String>
+
+    <sys:String x:Key="L_Color_Black" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯黑</sys:String>
+    <sys:String x:Key="L_Color_Maroon" xmlns:sys="clr-namespace:System;assembly=mscorlib">栗色</sys:String>
+    <sys:String x:Key="L_Color_DeepBrown" xmlns:sys="clr-namespace:System;assembly=mscorlib">深褐</sys:String>
+    <sys:String x:Key="L_Color_Olive" xmlns:sys="clr-namespace:System;assembly=mscorlib">橄榄色</sys:String>
+    <sys:String x:Key="L_Color_ForestGreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">深绿/森林</sys:String>
+    <sys:String x:Key="L_Color_RockCyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">深岩青</sys:String>
+    <sys:String x:Key="L_Color_Navy" xmlns:sys="clr-namespace:System;assembly=mscorlib">海军蓝</sys:String>
+    <sys:String x:Key="L_Color_Indigo" xmlns:sys="clr-namespace:System;assembly=mscorlib">靛青</sys:String>
+    <sys:String x:Key="L_Color_DeepViolet" xmlns:sys="clr-namespace:System;assembly=mscorlib">深紫蓝</sys:String>
+    <sys:String x:Key="L_Color_Coffee" xmlns:sys="clr-namespace:System;assembly=mscorlib">咖啡色</sys:String>
+
+    <!-- Common Buttons -->
+    <sys:String x:Key="L_Common_Reset" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置</sys:String>
+    <sys:String x:Key="L_Common_Cancel" xmlns:sys="clr-namespace:System;assembly=mscorlib">取消</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。
+
+确定要继续吗？</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">确认重置</sys:String>
+    <sys:String x:Key="L_Settings_About_Help_ComingSoon" xmlns:sys="clr-namespace:System;assembly=mscorlib">帮助文档正在编写中，敬请期待！</sys:String>
+    <sys:String x:Key="L_Common_Error" xmlns:sys="clr-namespace:System;assembly=mscorlib">错误</sys:String>
+    <sys:String x:Key="L_Common_Tip" xmlns:sys="clr-namespace:System;assembly=mscorlib">提示</sys:String>
+
+    <!-- Toasts -->
+    <sys:String x:Key="L_Toast_Deleted" xmlns:sys="clr-namespace:System;assembly=mscorlib">已删除 (Ctrl+Z 撤销)</sys:String>
+    <sys:String x:Key="L_Toast_UndoDelete" xmlns:sys="clr-namespace:System;assembly=mscorlib">已撤销删除</sys:String>
+    <sys:String x:Key="L_Toast_FirstImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">已回到第一张图片</sys:String>
+    <sys:String x:Key="L_Toast_LastImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">这是最后一张图片</sys:String>
+    <sys:String x:Key="L_Toast_NoContentToCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">未检测到有效内容，无需裁剪</sys:String>
+    <sys:String x:Key="L_Toast_MinSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">已是最小尺寸</sys:String>
+    <sys:String x:Key="L_Toast_Copied" xmlns:sys="clr-namespace:System;assembly=mscorlib">已复制</sys:String>
+    <sys:String x:Key="L_Toast_PressDeleteAgain" xmlns:sys="clr-namespace:System;assembly=mscorlib">再次按下 Delete 删除文件</sys:String>
+    <sys:String x:Key="L_Toast_DragFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">拖拽失败: </sys:String>
+    <sys:String x:Key="L_Toast_Effect_Inverted" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用反色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">已自动调整色阶</sys:String>
+    <sys:String x:Key="L_Toast_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用黑白</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件已不存在，无法定位文件夹。</sys:String>
+    <sys:String x:Key="L_Toast_PasteFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">粘贴图片失败: </sys:String>
+    <sys:String x:Key="L_Toast_DeleteFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除失败: </sys:String>
+    <sys:String x:Key="L_Toast_CopyFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制失败</sys:String>
+    <sys:String x:Key="L_Toast_NoImageData" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法获取该标签页的图像数据</sys:String>
+    <sys:String x:Key="L_Toast_InsertFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入失败: </sys:String>
+    <sys:String x:Key="L_Toast_CannotInsertImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法插入图片: </sys:String>
+    <sys:String x:Key="L_Toast_SizeTooSmallForBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸过小，无法添加边框</sys:String>
+    <sys:String x:Key="L_Toast_NoSelection" xmlns:sys="clr-namespace:System;assembly=mscorlib">未选中图片区域</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NoText" xmlns:sys="clr-namespace:System;assembly=mscorlib">未识别到文字</sys:String>
+    <sys:String x:Key="L_Toast_ImageTooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 图片过大，已自动压缩显示</sys:String>
+    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">读取文件夹失败: </sys:String>
+    <sys:String x:Key="L_Toast_LoadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动加载失败: </sys:String>
 </ResourceDictionary>

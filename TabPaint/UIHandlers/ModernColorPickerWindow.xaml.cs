@@ -502,19 +502,19 @@ namespace TabPaint
         {
             if (Label1 == null) return; // 防止初始化时崩溃
 
-            if (ColorModeCombo.SelectedIndex == 0)
+            if (ColorModeCombo.SelectedIndex == 0) // RGB
             {
                 _currentMode = ColorMode.RGB;
-                Label1.Text = "红 (R)";
-                Label2.Text = "绿 (G)";
-                Label3.Text = "蓝 (B)";
+                Label1.Text = LocalizationManager.GetString("L_ColorPicker_Red");
+                Label2.Text = LocalizationManager.GetString("L_ColorPicker_Green");
+                Label3.Text = LocalizationManager.GetString("L_ColorPicker_Blue");
             }
-            else
+            else // HSV
             {
                 _currentMode = ColorMode.HSV;
-                Label1.Text = "色调";
-                Label2.Text = "饱和";
-                Label3.Text = "亮度"; // 或 "值"
+                Label1.Text = LocalizationManager.GetString("L_ColorPicker_Hue");
+                Label2.Text = LocalizationManager.GetString("L_ColorPicker_Saturation");
+                Label3.Text = LocalizationManager.GetString("L_ColorPicker_Brightness");
             }
 
             // 切换后立即刷新输入框里的数值格式

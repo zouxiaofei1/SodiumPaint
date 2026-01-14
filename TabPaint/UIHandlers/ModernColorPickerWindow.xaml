@@ -1,7 +1,7 @@
 ﻿<Window x:Class="TabPaint.ModernColorPickerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="编辑颜色" Height="660" Width="720"
+        Title="{DynamicResource L_ColorPicker_Title}" Height="660" Width="720"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="Transparent"
@@ -307,7 +307,7 @@
                            Margin="4,0,12,0"
                            VerticalAlignment="Center"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Padding="36,0,0,0" Text="编辑颜色" FontSize="16" FontWeight="SemiBold" 
+                    <TextBlock Padding="36,0,0,0" Text="{DynamicResource L_ColorPicker_Title}" FontSize="16" FontWeight="SemiBold" 
                                Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     <Button HorizontalAlignment="Right" Content="✕" Width="32" Height="32"
                             Style="{StaticResource FluentButton}" Background="Transparent" BorderThickness="0" 
@@ -431,7 +431,7 @@
                         <Rectangle x:Name="NewColorRect" Fill="Red" Visibility="Hidden"/>
 
                         <!-- 这里的文字需要反色或者描边，暂时用灰色 -->
-                        <TextBlock Text="预览" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12" FontWeight="Bold"/>
+                        <TextBlock Text="{DynamicResource L_ColorPicker_Preview}" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12" FontWeight="Bold"/>
                     </Grid>
 
                     <ComboBox Style="{StaticResource FluentComboBoxStyle}" x:Name="ColorModeCombo" Margin="0,0,0,10" SelectionChanged="ColorModeCombo_SelectionChanged" SelectedIndex="0" Padding="6,4">
@@ -445,7 +445,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="HexInput" Style="{StaticResource FluentTextBox}" Text="#FFFF0000" TextChanged="HexInput_TextChanged"/>
-                        <TextBlock Text="HEX (8位)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
+                        <TextBlock Text="{DynamicResource L_ColorPicker_Hex}" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
                     </Grid>
 
                     <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,10"/>
@@ -457,7 +457,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="Input1" Style="{StaticResource FluentTextBox}" Text="255" TextChanged="NumericInput_TextChanged"/>
-                        <TextBlock x:Name="Label1" Text="红 (R)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="Label1" Text="{DynamicResource L_ColorPicker_Red}" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <Grid Margin="0,0,0,8">
@@ -466,7 +466,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="Input2" Style="{StaticResource FluentTextBox}" Text="0" TextChanged="NumericInput_TextChanged"/>
-                        <TextBlock x:Name="Label2" Text="绿 (G)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="Label2" Text="{DynamicResource L_ColorPicker_Green}" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <Grid Margin="0,0,0,8">
@@ -475,7 +475,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="Input3" Style="{StaticResource FluentTextBox}" Text="0" TextChanged="NumericInput_TextChanged"/>
-                        <TextBlock x:Name="Label3" Text="蓝 (B)" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="Label3" Text="{DynamicResource L_ColorPicker_Blue}" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Width="40" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
 
                     <Grid Margin="0,0,0,8">
@@ -498,67 +498,67 @@
 
                 <!-- Basic Colors -->
                 <StackPanel>
-                    <TextBlock Text="基本颜色" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="4,0,0,8"/>
+                    <TextBlock Text="{DynamicResource L_ColorPicker_BasicColors}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="4,0,0,8"/>
                     <UniformGrid Columns="10" HorizontalAlignment="Left" VerticalAlignment="Top" x:Name="BasicColorsGrid">
                         <!-- Row 1: 浅色/粉彩色系 (Pastel & Light) -->
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFFFFF" Click="Swatch_Click" ToolTip="纯白"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFCCCC" Click="Swatch_Click" ToolTip="浅红"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFE5CC" Click="Swatch_Click" ToolTip="浅橙/皮肤"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFFFCC" Click="Swatch_Click" ToolTip="浅黄"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#CCFFCC" Click="Swatch_Click" ToolTip="薄荷绿"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#CCFFFF" Click="Swatch_Click" ToolTip="浅青"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#CCE5FF" Click="Swatch_Click" ToolTip="淡蓝"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#E5CCFF" Click="Swatch_Click" ToolTip="淡紫"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFCCFF" Click="Swatch_Click" ToolTip="淡粉"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#F5DEB3" Click="Swatch_Click" ToolTip="小麦色"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFFFFF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_White}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFCCCC" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_LightRed}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFE5CC" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_LightOrange}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFFFCC" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_LightYellow}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#CCFFCC" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_MintGreen}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#CCFFFF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_LightCyan}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#CCE5FF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_LightBlue}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#E5CCFF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Lavender}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFCCFF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_LightPink}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#F5DEB3" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Wheat}"/>
 
                         <!-- Row 2: 鲜艳/标准色系 (Vibrant & Primary) -->
-                        <Button Style="{StaticResource ColorSwatch}" Background="#C0C0C0" Click="Swatch_Click" ToolTip="银色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FF0000" Click="Swatch_Click" ToolTip="正红"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FF8000" Click="Swatch_Click" ToolTip="橙色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFFF00" Click="Swatch_Click" ToolTip="正黄"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#00FF00" Click="Swatch_Click" ToolTip="酸橙绿"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#00FFFF" Click="Swatch_Click" ToolTip="青色/天蓝"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#0080FF" Click="Swatch_Click" ToolTip="蔚蓝"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#8000FF" Click="Swatch_Click" ToolTip="紫罗兰"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FF00FF" Click="Swatch_Click" ToolTip="品红"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#D2691E" Click="Swatch_Click" ToolTip="巧克力色"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#C0C0C0" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Silver}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FF0000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Red}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FF8000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Orange}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFFF00" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Yellow}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#00FF00" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Lime}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#00FFFF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Cyan}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#0080FF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Azure}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#8000FF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Violet}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FF00FF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Magenta}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#D2691E" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Chocolate}"/>
 
                         <!-- Row 3: 中深/饱和色系 (Deep & Saturated) -->
-                        <Button Style="{StaticResource ColorSwatch}" Background="#808080" Click="Swatch_Click" ToolTip="灰色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#CC0000" Click="Swatch_Click" ToolTip="深红"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#CC6600" Click="Swatch_Click" ToolTip="深橙"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#FFD700" Click="Swatch_Click" ToolTip="金色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#008000" Click="Swatch_Click" ToolTip="纯绿"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#008080" Click="Swatch_Click" ToolTip="水鸭青"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#0000FF" Click="Swatch_Click" ToolTip="纯蓝"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#800080" Click="Swatch_Click" ToolTip="紫色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#C71585" Click="Swatch_Click" ToolTip="紫红"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#A0522D" Click="Swatch_Click" ToolTip="赭石"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#808080" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Gray}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#CC0000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_DeepRed}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#CC6600" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_DeepOrange}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#FFD700" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Gold}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#008000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Green}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#008080" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Teal}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#0000FF" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Blue}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#800080" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Purple}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#C71585" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_DeepPink}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#A0522D" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Ochre}"/>
 
                         <!-- Row 4: 极暗/阴影色系 (Dark & Shadow) -->
-                        <Button Style="{StaticResource ColorSwatch}" Background="#000000" Click="Swatch_Click" ToolTip="纯黑"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#800000" Click="Swatch_Click" ToolTip="栗色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#663300" Click="Swatch_Click" ToolTip="深褐"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#808000" Click="Swatch_Click" ToolTip="橄榄色"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#004000" Click="Swatch_Click" ToolTip="深绿/森林"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#004040" Click="Swatch_Click" ToolTip="深岩青"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#000080" Click="Swatch_Click" ToolTip="海军蓝"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#330066" Click="Swatch_Click" ToolTip="靛青"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#4B0082" Click="Swatch_Click" ToolTip="深紫蓝"/>
-                        <Button Style="{StaticResource ColorSwatch}" Background="#3E2723" Click="Swatch_Click" ToolTip="咖啡色"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#000000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Black}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#800000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Maroon}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#663300" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_DeepBrown}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#808000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Olive}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#004000" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_ForestGreen}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#004040" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_RockCyan}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#000080" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Navy}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#330066" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Indigo}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#4B0082" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_DeepViolet}"/>
+                        <Button Style="{StaticResource ColorSwatch}" Background="#3E2723" Click="Swatch_Click" ToolTip="{DynamicResource L_Color_Coffee}"/>
                     </UniformGrid>
                 </StackPanel>
 
                 <!-- Custom Colors -->
                 <StackPanel Grid.Column="1" Margin="20,-10,40,0">
                     <StackPanel Orientation="Horizontal" Margin="4,0,0,8">
-                        <TextBlock Text="自定义颜色" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource L_ColorPicker_CustomColors}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
                         <Button Content="+" Width="24" Height="24" Margin="10,0,0,0" Padding="0" 
                                 Background="{DynamicResource ButtonBackgroundBrush}" 
                                 Foreground="{DynamicResource TextSecondaryBrush}" 
                                 BorderThickness="0" 
-                                ToolTip="添加当前颜色"
+                                ToolTip="{DynamicResource L_ColorPicker_AddCurrentColor}"
                                 Click="AddCustomColor_Click">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
@@ -662,8 +662,8 @@
             <!-- 4. Footer -->
             <Grid Grid.Row="3" Margin="24,20,24,24">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="确定" Width="100" Height="32" Style="{StaticResource FluentAccentButton}" Click="OkButton_Click" Margin="0,0,10,0"/>
-                    <Button Content="取消" Width="100" Height="32" Style="{StaticResource FluentButton}" Click="CancelButton_Click"/>
+                    <Button Content="{DynamicResource L_Common_OK}" Width="100" Height="32" Style="{StaticResource FluentAccentButton}" Click="OkButton_Click" Margin="0,0,10,0"/>
+                    <Button Content="{DynamicResource L_Common_Cancel}" Width="100" Height="32" Style="{StaticResource FluentButton}" Click="CancelButton_Click"/>
                 </StackPanel>
             </Grid>
         </Grid>
