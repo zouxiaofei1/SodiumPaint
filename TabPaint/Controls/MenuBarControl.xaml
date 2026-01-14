@@ -24,40 +24,40 @@
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                 <!-- 文件菜单 -->
-                <MenuItem Header="文件" Style="{StaticResource ModernMenuItemStyle}" SubmenuOpened="OnFileMenuOpened">
-                    <MenuItem Header="新建" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
+                <MenuItem Header="{DynamicResource L_Menu_File}" Style="{StaticResource ModernMenuItemStyle}" SubmenuOpened="OnFileMenuOpened">
+                    <MenuItem Header="{DynamicResource L_Menu_File_New}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="打开" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+O" Click="OnOpenClick">
+                    <MenuItem Header="{DynamicResource L_Menu_File_Open}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+O" Click="OnOpenClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="打开新文件夹" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Shift+O" Click="OnOpenWorkspaceClick">
+                    <MenuItem Header="{DynamicResource L_Menu_File_OpenFolder}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Shift+O" Click="OnOpenWorkspaceClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="最近打开" x:Name="RecentFilesMenuItem" Style="{StaticResource Win11MenuItemStyle}">
+                    <MenuItem Header="{DynamicResource L_Menu_File_Recent}" x:Name="RecentFilesMenuItem" Style="{StaticResource Win11MenuItemStyle}">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Reset_Image}"  Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
-                        <MenuItem Header="占位符"  Style="{StaticResource Win11MenuItemStyle}" />
+                        <MenuItem Header="{DynamicResource L_Menu_File_Recent_Placeholder}"  Style="{StaticResource Win11MenuItemStyle}" />
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
-                    <MenuItem Header="保存" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+S" Click="OnSaveClick">
+                    <MenuItem Header="{DynamicResource L_Menu_File_Save}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+S" Click="OnSaveClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="另存为" Style="{StaticResource Win11MenuItemStyle}" Click="OnSaveAsClick">
+                    <MenuItem Header="{DynamicResource L_Menu_File_SaveAs}" Style="{StaticResource Win11MenuItemStyle}" Click="OnSaveAsClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="退出" Style="{StaticResource Win11MenuItemStyle}" Click="OnExitClick">
+                    <MenuItem Header="{DynamicResource L_Menu_File_Exit}" Style="{StaticResource Win11MenuItemStyle}" Click="OnExitClick">
                         <MenuItem.Icon>
                             <!-- Stroke="#333" 替换为 IconFillBrush -->
                             <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>
@@ -66,18 +66,18 @@
                 </MenuItem>
 
                 <!-- 编辑菜单 -->
-                <MenuItem Header="编辑" Style="{StaticResource ModernMenuItemStyle}">
-                    <MenuItem Header="复制" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+C" Click="OnCopyClick">
+                <MenuItem Header="{DynamicResource L_Menu_Edit}" Style="{StaticResource ModernMenuItemStyle}">
+                    <MenuItem Header="{DynamicResource L_Menu_Edit_Copy}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+C" Click="OnCopyClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="剪切" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Edit_Cut}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+X" Click="OnCutClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="粘贴" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Edit_Paste}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+V" Click="OnPasteClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -86,35 +86,35 @@
 
 
                 <!-- 效果菜单 -->
-                <MenuItem Header="效果" Style="{StaticResource ModernMenuItemStyle}">
-                    <MenuItem Header="亮度/对比度/曝光" Style="{StaticResource Win11MenuItemStyle}" Click="OnBCEClick">
+                <MenuItem Header="{DynamicResource L_Menu_Effect}" Style="{StaticResource ModernMenuItemStyle}">
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_BCE}" Style="{StaticResource Win11MenuItemStyle}" Click="OnBCEClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Brightness_Image}" Stretch="Uniform" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"  Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="色温/色调/饱和度" Style="{StaticResource Win11MenuItemStyle}" Click="OnTTSClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_TTS}" Style="{StaticResource Win11MenuItemStyle}" Click="OnTTSClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Color_Temperature_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="黑白" Style="{StaticResource Win11MenuItemStyle}" Click="OnBlackWhiteClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_BW}" Style="{StaticResource Win11MenuItemStyle}" Click="OnBlackWhiteClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Black_And_White_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="反色" Style="{StaticResource Win11MenuItemStyle}" Click="OnInvertClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_Invert}" Style="{StaticResource Win11MenuItemStyle}" Click="OnInvertClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Invert_Color_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="自动色阶" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoLevelsClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_AutoLevels}" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoLevelsClick">
                         <MenuItem.Icon>
                             <!-- 类似直方图或魔法棒的图标 -->
                             <Path Data="M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
-                    <MenuItem Header="调整大小" Style="{StaticResource Win11MenuItemStyle}" Click="OnResizeCanvasClick">
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_Resize}" Style="{StaticResource Win11MenuItemStyle}" Click="OnResizeCanvasClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Resize_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -126,31 +126,31 @@
             <!-- Background="#CCC" 替换为 BorderMediumBrush -->
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Margin="6,0" ToolTip="保存" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="6,0" ToolTip="{DynamicResource L_Menu_QA_Save}" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
 
                 <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
 
                 <!-- 注意：Undo/Redo 按钮需要 x:Name 以便后台代码暴露属性 -->
-                <Button Margin="6,0" ToolTip="撤销" x:Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="6,0" ToolTip="{DynamicResource L_Menu_QA_Undo}" x:Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path x:Name="UndoIcon" Data="{DynamicResource Undo_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
-                <Button ToolTip="重做" x:Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button ToolTip="{DynamicResource L_Menu_QA_Redo}" x:Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path x:Name="RedoIcon" Data="{DynamicResource Redo_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
 
                 <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="6,4"/>
 
-                <Button Margin="0,0,6,0" Width="32" ToolTip="新建标签页" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="0,0,6,0" Width="32" ToolTip="{DynamicResource L_Menu_QA_NewTab}" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="12" Height="12"/>
                 </Button>
-                <Button Margin="0,0,6,0" ToolTip="放弃所有更改" Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="0,0,6,0" ToolTip="{DynamicResource L_Menu_QA_DiscardAll}" Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
             </StackPanel>
 
-            <Button DockPanel.Dock="Right" Margin="0,5,10,5" Padding="2" ToolTip="设置" Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button DockPanel.Dock="Right" Margin="0,5,10,5" Padding="2" ToolTip="{DynamicResource L_Menu_QA_Settings}" Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path Data="{DynamicResource Settings_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="18" Height="18"/>
             </Button>
         </DockPanel>

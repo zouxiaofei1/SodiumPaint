@@ -21,30 +21,30 @@
             <!-- 基础工具 -->
 
             <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal" Margin="0,0,0,7" >
-                <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="选择区域" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Select}" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="铅笔"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Pen}"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
 
                     <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="取颜色"  Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_PickColor}"  Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="橡皮擦" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Eraser}" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="填充" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Fill}" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="文字" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Text}" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Text_Image}" Width="16" Height="16" />
                 </Button>
             </StackPanel>
 
             <!-- 2. 折叠模式：工具集合菜单 (默认隐藏) -->
             <Grid x:Name="CollapsedToolsPanel" Visibility="Collapsed" Margin="6,0,6,7">
-                <ToggleButton x:Name="ToolsMenuToggle" ToolTip="绘图工具" Style="{StaticResource DropDownButtonStyle}">
+                <ToggleButton x:Name="ToolsMenuToggle" ToolTip="{DynamicResource L_ToolBar_Tool_DrawTools}" Style="{StaticResource DropDownButtonStyle}">
                     <Image x:Name="CurrentToolIcon" Source="{DynamicResource ColorPickerPencil_Image}" Width="16" Height="16" />
                 </ToggleButton>
 
@@ -55,32 +55,32 @@
                     <!-- 背景 White -> ControlBackgroundBrush, 边框 -> BorderBrush -->
                     <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel x:Name="CollapsedMenuItems">
-                            <MenuItem Header="选择区域" Tag="SelectTool" Style="{StaticResource SubMenuItemStyle}" Click="OnSelectClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Tool_Select}" Tag="SelectTool" Style="{StaticResource SubMenuItemStyle}" Click="OnSelectClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="铅笔" Tag="PenTool" Style="{StaticResource SubMenuItemStyle}" Click="OnPenClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Tool_Pen}" Tag="PenTool" Style="{StaticResource SubMenuItemStyle}" Click="OnPenClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="取色器" Tag="EyedropperTool" Style="{StaticResource SubMenuItemStyle}" Click="OnPickColorClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Tool_Eyedropper}" Tag="EyedropperTool" Style="{StaticResource SubMenuItemStyle}" Click="OnPickColorClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="橡皮擦" Tag="EraserTool" Style="{StaticResource SubMenuItemStyle}" Click="OnEraserClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Tool_Eraser}" Tag="EraserTool" Style="{StaticResource SubMenuItemStyle}" Click="OnEraserClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="填充" Tag="FillTool" Style="{StaticResource SubMenuItemStyle}" Click="OnFillClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Tool_Fill}" Tag="FillTool" Style="{StaticResource SubMenuItemStyle}" Click="OnFillClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="文字" Tag="TextTool" Style="{StaticResource SubMenuItemStyle}" Click="OnTextClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Tool_Text}" Tag="TextTool" Style="{StaticResource SubMenuItemStyle}" Click="OnTextClick_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Text_Image}" Width="16" Height="16" />
                                 </MenuItem.Icon>
@@ -92,7 +92,7 @@
 
             <!-- 画刷菜单 -->
             <Grid Margin="0,0,0,7" >
-                <ToggleButton x:Name="BrushToggle" x:FieldModifier="public" ToolTip="画刷"  Style="{StaticResource DropDownButtonStyle}">
+                <ToggleButton x:Name="BrushToggle" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Brush}"  Style="{StaticResource DropDownButtonStyle}">
                     <Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
                 </ToggleButton>
                 <Popup x:Name="SubMenuPopupBrush" IsOpen="{Binding IsChecked, ElementName=BrushToggle, Mode=TwoWay}"
@@ -101,43 +101,43 @@
                     <Border Name="SubmenuBorderBrush" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
                             <!-- Path Fill #333 -> IconFillBrush -->
-                            <MenuItem Header="圆形笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Round">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Round}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Round">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Brush_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="方形笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Square">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Square}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Square">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Brush_Rect_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="毛刷" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Brush">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Brush}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Brush">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Brush_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="喷枪" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Spray">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Spray}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Spray">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Paint_Spray_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <Separator Style="{StaticResource MenuSeparator}"/>
-                            <MenuItem Header="蜡笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Crayon">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Crayon}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Crayon">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Crayon_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="水彩画笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Watercolor">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Watercolor}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Watercolor">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Watercolor_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="荧光笔" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Highlighter">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Highlighter}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Highlighter">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Highlighter_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="马赛克" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Mosaic">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Brush_Mosaic}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Mosaic">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Mosaic_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
@@ -149,7 +149,7 @@
 
             <!-- 形状菜单 -->
             <Grid Margin="4,0,4,7">
-                <ToggleButton x:Name="ShapeToggle" x:FieldModifier="public" ToolTip="形状" Style="{StaticResource DropDownButtonStyle}">
+                <ToggleButton x:Name="ShapeToggle" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Shape}" Style="{StaticResource DropDownButtonStyle}">
                     <!-- Stroke #333 -> IconFillBrush -->
                     <Path x:Name="CurrentShapeIcon" x:FieldModifier="public" Data="{DynamicResource Shapes_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                 </ToggleButton>
@@ -161,31 +161,31 @@
                     <Border Name="SubmenuBorderShape" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
                             <!-- 所有形状的 Stroke #333 -> IconFillBrush -->
-                            <MenuItem Header="矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Rectangle">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Rectangle}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Rectangle">
                                 <MenuItem.Icon>
                                     <Path x:Name="RectIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Rectangle}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="圆角矩形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="RoundedRectangle">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_RoundedRectangle}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="RoundedRectangle">
                                 <MenuItem.Icon>
                                     <Path x:Name="RoundedRectIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_RoundedRect}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="圆形" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Ellipse">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Ellipse}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Ellipse">
                                 <MenuItem.Icon>
                                     <Path x:Name="EllipseIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Ellipse}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="直线" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Line">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Line}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Line">
                                 <MenuItem.Icon>
                                     <Path x:Name="LineIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Line}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="箭头" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Arrow">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Arrow}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Arrow">
                                 <MenuItem.Icon>
                                     <Path x:Name="ArrowIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Arrow}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
@@ -198,14 +198,14 @@
             <!-- 分割线: #CCC -> BorderMediumBrush -->
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
 
-            <Button Margin="2,0,0,7" Name="CutImage" x:FieldModifier="public" ToolTip="裁剪选区" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="2,0,0,7" Name="CutImage" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Crop}" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <!-- Fill #333 -> IconFillBrush -->
                 <Path x:Name="CutImageIcon" x:FieldModifier="public" Data="{DynamicResource Cut_Selection_Image}"  Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
 
             <!-- 旋转/翻转菜单 -->
             <Grid Margin="0,0,0,7">
-                <ToggleButton x:Name="RotateFlipMenuToggle" x:FieldModifier="public" ToolTip="旋转/翻转" Style="{StaticResource DropDownButtonStyle}">
+                <ToggleButton x:Name="RotateFlipMenuToggle" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_RotateFlip}" Style="{StaticResource DropDownButtonStyle}">
                     <Image Source="{DynamicResource Spin180_Image}" Width="16" Height="16"/>
                 </ToggleButton>
 
@@ -215,19 +215,19 @@
                     <Border Name="SubmenuBorder" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
                             <!-- Path Fill #333 -> IconFillBrush -->
-                            <MenuItem Header="向左旋转90°(Ctrl + L)" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Rotate_Left}" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateLeftClick_Forward">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Rotate_Left_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="向右旋转90°(Ctrl + R)" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Rotate_Right}" Style="{StaticResource SubMenuItemStyle}" Click="OnRotateRightClick_Forward">
                                 <MenuItem.Icon>
                                     <Path Data="{DynamicResource Rotate_Right_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="旋转180°" Style="{StaticResource SubMenuItemStyle}" Click="OnRotate180Click_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Rotate_180}" Style="{StaticResource SubMenuItemStyle}" Click="OnRotate180Click_Forward">
                                 <MenuItem.Icon>
                                     <Image Source="{DynamicResource Spin180_Image}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
@@ -235,14 +235,14 @@
 
                             <Separator Style="{StaticResource MenuSeparator}"/>
 
-                            <MenuItem Header="垂直翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Flip_Vertical}" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipVerticalClick_Forward">
                                 <MenuItem.Icon>
                                     <!-- Stroke #333 -> IconFillBrush -->
                                     <Path Data="{DynamicResource Flip_Vertical_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
 
-                            <MenuItem Header="水平翻转" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick_Forward">
+                            <MenuItem Header="{DynamicResource L_ToolBar_Flip_Horizontal}" Style="{StaticResource SubMenuItemStyle}" Click="OnFlipHorizontalClick_Forward">
                                 <MenuItem.Icon>
                                     <!-- Stroke #333 -> IconFillBrush -->
                                     <Path Data="{DynamicResource Flip_Horizontal_Image}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
@@ -256,7 +256,7 @@
             <!-- 分割线: #CCC -> BorderMediumBrush -->
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
 
-            <Button ToolTip="自定义颜色" 
+            <Button ToolTip="{DynamicResource L_ToolBar_CustomColor}" 
         Click="OnCustomColorClick_Forward" 
         Margin="5,0,2,7" 
         Padding="0" 
@@ -343,39 +343,39 @@
                 </Viewbox>
             </Button>
 
-            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2,2,2,9" ToolTip="颜色1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
+            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2,2,2,9" ToolTip="{DynamicResource L_ToolBar_Color1}" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
             </Button>
-            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,7" ToolTip="颜色2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
+            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,7" ToolTip="{DynamicResource L_ToolBar_Color2}" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
             </Button>
 
             <StackPanel>
                 <UniformGrid Columns="11" HorizontalAlignment="Left" VerticalAlignment="Top" x:Name="BasicColorsGrid">
 
                     <!-- Row 2: 鲜艳/标准色系 (Vibrant & Primary) -->
-                    <Button Style="{StaticResource ColorSwatch}" Background="#FFFFFF" Click="Swatch_Click" ToolTip="白色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#C0C0C0" Click="Swatch_Click" ToolTip="银色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#FF0000" Click="Swatch_Click" ToolTip="正红"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#FF8000" Click="Swatch_Click" ToolTip="橙色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#FFFF00" Click="Swatch_Click" ToolTip="正黄"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#00FF00" Click="Swatch_Click" ToolTip="酸橙绿"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#00FFFF" Click="Swatch_Click" ToolTip="青色/天蓝"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#0080FF" Click="Swatch_Click" ToolTip="蔚蓝"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#8000FF" Click="Swatch_Click" ToolTip="紫罗兰"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#FF00FF" Click="Swatch_Click" ToolTip="品红"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#D2691E" Click="Swatch_Click" ToolTip="巧克力色"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FFFFFF" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_White}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#C0C0C0" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Silver}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FF0000" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Red}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FF8000" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Orange}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FFFF00" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Yellow}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#00FF00" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Lime}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#00FFFF" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Cyan}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#0080FF" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_SkyBlue}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#8000FF" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Violet}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FF00FF" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Magenta}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#D2691E" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Chocolate}"/>
 
                     <!-- Row 3: 中深/饱和色系 (Deep & Saturated) -->
-                    <Button Style="{StaticResource ColorSwatch}" Background="#000000" Click="Swatch_Click" ToolTip="黑色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#808080" Click="Swatch_Click" ToolTip="灰色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#CC0000" Click="Swatch_Click" ToolTip="深红"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#CC6600" Click="Swatch_Click" ToolTip="深橙"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#FFD700" Click="Swatch_Click" ToolTip="金色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#008000" Click="Swatch_Click" ToolTip="纯绿"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#008080" Click="Swatch_Click" ToolTip="水鸭青"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#0000FF" Click="Swatch_Click" ToolTip="纯蓝"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#800080" Click="Swatch_Click" ToolTip="紫色"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#C71585" Click="Swatch_Click" ToolTip="紫红"/>
-                    <Button Style="{StaticResource ColorSwatch}" Background="#A0522D" Click="Swatch_Click" ToolTip="赭石"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#000000" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Black}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#808080" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Gray}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#CC0000" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_DarkRed}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#CC6600" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_DarkOrange}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#FFD700" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Gold}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#008000" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Green}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#008080" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Teal}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#0000FF" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Blue}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#800080" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Purple}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#C71585" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Maroon}"/>
+                    <Button Style="{StaticResource ColorSwatch}" Background="#A0522D" Click="Swatch_Click" ToolTip="{DynamicResource L_ToolBar_Color_Sienna}"/>
 
                 </UniformGrid>
             </StackPanel>
