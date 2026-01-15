@@ -308,7 +308,7 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif" };
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif",".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }

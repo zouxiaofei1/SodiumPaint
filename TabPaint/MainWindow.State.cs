@@ -138,7 +138,7 @@ namespace TabPaint
         private Stack<UndoAction> _undoStack = new Stack<UndoAction>();
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
-        string PicFilterString => string.Format("{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.ico;*.heic;*.jfif|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico",
+        string PicFilterString => string.Format("{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif*.ico;*.heic;*.jfif|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico",
             LocalizationManager.GetString("L_Main_Filter_AllImages"),
             LocalizationManager.GetString("L_Main_Filter_PNG"),
             LocalizationManager.GetString("L_Main_Filter_JPEG"),

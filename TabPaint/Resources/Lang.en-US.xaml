@@ -1,408 +1,392 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- SettingsWindow -->
-    <sys:String x:Key="L_Settings_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaint Settings</sys:String>
-    <sys:String x:Key="L_Settings_Nav_General" xmlns:sys="clr-namespace:System;assembly=mscorlib">General</sys:String>
-    <sys:String x:Key="L_Settings_Nav_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paint</sys:String>
-    <sys:String x:Key="L_Settings_Nav_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">View</sys:String>
-    <sys:String x:Key="L_Settings_Nav_Shortcuts" xmlns:sys="clr-namespace:System;assembly=mscorlib">Shortcuts</sys:String>
-    <sys:String x:Key="L_Settings_Nav_Advanced" xmlns:sys="clr-namespace:System;assembly=mscorlib">Advanced</sys:String>
-    <sys:String x:Key="L_Settings_Nav_About" xmlns:sys="clr-namespace:System;assembly=mscorlib">About</sys:String>
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <sys:String x:Key="L_Settings_General_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">General</sys:String>
-    <sys:String x:Key="L_Settings_General_Startup_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Startup</sys:String>
-    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto load images in the same folder</sys:String>
-    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">When opening a single image, automatically scan and load other images in the same directory</sys:String>
-    <sys:String x:Key="L_Settings_General_StartInViewMode_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Start in view mode</sys:String>
-    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Hide toolbars on startup (useful as a default image viewer)</sys:String>
+    <!-- SettingsWindow Navigation -->
+    <sys:String x:Key="L_Settings_Title">TabPaint Settings</sys:String>
+    <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Paint">Paint</sys:String>
+    <sys:String x:Key="L_Settings_Nav_View">View</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Shortcuts">Shortcuts</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Advanced">Advanced</sys:String>
+    <sys:String x:Key="L_Settings_Nav_About">About</sys:String>
 
-    <sys:String x:Key="L_Settings_General_MouseWheel_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mouse wheel</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">How the app responds to mouse wheel scrolling</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up" xmlns:sys="clr-namespace:System;assembly=mscorlib">Scroll image</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch image</sys:String>
+    <!-- General Settings -->
+    <sys:String x:Key="L_Settings_General_Title">General</sys:String>
+    <sys:String x:Key="L_Settings_General_Startup_Header">Startup</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">Auto load images in the same folder</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">When opening a single image, automatically scan and load other images in the same directory</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Title">Start in view mode</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">Hide toolbars on startup (useful as a default image viewer)</sys:String>
 
-    <sys:String x:Key="L_Settings_General_Theme_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Theme</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch between light and dark modes</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_System" xmlns:sys="clr-namespace:System;assembly=mscorlib">System</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_Light" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_Dark" xmlns:sys="clr-namespace:System;assembly=mscorlib">Dark</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Title">Mouse wheel</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Desc">How the app responds to mouse wheel scrolling</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">Auto</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">Scroll image</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">Switch image</sys:String>
 
-    <sys:String x:Key="L_Settings_General_Accent_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Accent color</sys:String>
-    <sys:String x:Key="L_Settings_General_Accent_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">UI accent and tool icon color</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Title">Theme</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Desc">Switch between light and dark modes</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_System">System</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Light">Light</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Dark">Dark</sys:String>
 
-    <sys:String x:Key="L_Settings_General_Language_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Language</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Change the display language (Chinese/English)</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Option_Zh" xmlns:sys="clr-namespace:System;assembly=mscorlib">简体中文</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Option_En" xmlns:sys="clr-namespace:System;assembly=mscorlib">English</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Title">Accent color</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Desc">UI accent and tool icon color</sys:String>
+
+    <sys:String x:Key="L_Settings_General_Language_Title">Language</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language (Chinese/English)</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
 
     <!-- Paint panel -->
-    <sys:String x:Key="L_Settings_Paint_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paint</sys:String>
-    <sys:String x:Key="L_Settings_Paint_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Editing</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto popup on clipboard image</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">When clipboard monitoring detects a new image, activate and bring the window to front</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete selection background</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fill mode when pressing Delete or cutting selection</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent" xmlns:sys="clr-namespace:System;assembly=mscorlib">Transparent</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">White</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fill color only (keep alpha)</sys:String>
-    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Allow Delete key to delete file</sys:String>
-    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">When no selection, allow pressing Delete to delete the current file</sys:String>
+    <sys:String x:Key="L_Settings_Paint_Title">Paint</sys:String>
+    <sys:String x:Key="L_Settings_Paint_Habits_Header">Editing</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">Auto popup on clipboard image</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">When clipboard monitoring detects a new image, activate and bring the window to front</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">Delete selection background</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">Fill mode when pressing Delete or cutting selection</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">Transparent</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_White">White</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">Fill color only (keep alpha)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Allow Delete key to delete file</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">When no selection, allow pressing Delete to delete the current file</sys:String>
 
     <!-- View panel -->
-    <sys:String x:Key="L_Settings_View_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">View</sys:String>
-    <sys:String x:Key="L_Settings_View_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Interaction</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mouse wheel</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Action when scrolling the wheel in view mode</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom" xmlns:sys="clr-namespace:System;assembly=mscorlib">Zoom</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Switch" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch image (Prev/Next)</sys:String>
-    <sys:String x:Key="L_Settings_View_Display_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Display</sys:String>
-    <sys:String x:Key="L_Settings_View_DarkBg_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Use dark background</sys:String>
-    <sys:String x:Key="L_Settings_View_DarkBg_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Show dark gray background around the image</sys:String>
-    <sys:String x:Key="L_Settings_View_TransparentGrid_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Show transparency grid</sys:String>
-    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">When enabled, transparent areas show a checkerboard; otherwise white</sys:String>
+    <sys:String x:Key="L_Settings_View_Title">View</sys:String>
+    <sys:String x:Key="L_Settings_View_Habits_Header">Interaction</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Title">Mouse wheel</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Desc">Action when scrolling the wheel in view mode</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">Zoom</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Switch">Switch image (Prev/Next)</sys:String>
+    <sys:String x:Key="L_Settings_View_Display_Header">Display</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Title">Use dark background</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Desc">Show dark gray background around the image</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Title">Show transparency grid</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">When enabled, transparent areas show a checkerboard; otherwise white</sys:String>
 
     <!-- Shortcuts -->
-    <sys:String x:Key="L_Settings_Shortcuts_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Shortcuts</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav" xmlns:sys="clr-namespace:System;assembly=mscorlib">View &amp; Navigation</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_ToggleMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">Toggle view/paint mode</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_PrevImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">Previous image</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_NextImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">Next image</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_FullScreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fullscreen</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_RotateLeft" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rotate left</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_RotateRight" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rotate right</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_VFlip" xmlns:sys="clr-namespace:System;assembly=mscorlib">Flip vertical</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_HFlip" xmlns:sys="clr-namespace:System;assembly=mscorlib">Flip horizontal</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">Basic tools</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Select" xmlns:sys="clr-namespace:System;assembly=mscorlib">Select</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Pencil</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eyedropper" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eyedropper</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Fill" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fill</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Text" xmlns:sys="clr-namespace:System;assembly=mscorlib">Text</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brush</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Shape" xmlns:sys="clr-namespace:System;assembly=mscorlib">Shape</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_AdvancedTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">Advanced tools</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_ClipMonitor" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clipboard monitor</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_RemoveBg" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI remove background</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_ChromaKey" xmlns:sys="clr-namespace:System;assembly=mscorlib">Chroma key</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_OCR" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_ScreenPicker" xmlns:sys="clr-namespace:System;assembly=mscorlib">Screen color picker</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_CopyHex" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy current HEX</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_AutoCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto crop blank edges</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add border</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_FileOps" xmlns:sys="clr-namespace:System;assembly=mscorlib">File operations</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_OpenWorkspace" xmlns:sys="clr-namespace:System;assembly=mscorlib">Open workspace</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_PasteNewTab" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paste as new tab</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_Effects" xmlns:sys="clr-namespace:System;assembly=mscorlib">Effects</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_BCE" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brightness/Contrast/Exposure</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_TTS" xmlns:sys="clr-namespace:System;assembly=mscorlib">Temperature/Tint/Saturation</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">Black &amp; white</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert" xmlns:sys="clr-namespace:System;assembly=mscorlib">Invert</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto levels</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resize</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Title">Shortcuts</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav">View &amp; Navigation</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleMode">Toggle view/paint mode</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PrevImage">Previous image</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_NextImage">Next image</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_FullScreen">Fullscreen</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateLeft">Rotate left</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateRight">Rotate right</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_VFlip">Flip vertical</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_HFlip">Flip horizontal</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools">Basic tools</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Select">Select</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen">Pencil</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eyedropper">Eyedropper</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eraser">Eraser</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Fill">Fill</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Text">Text</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Brush">Brush</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Shape">Shape</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_AdvancedTools">Advanced tools</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ClipMonitor">Clipboard monitor</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_RemoveBg">AI remove background</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ChromaKey">Chroma key</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_OCR">OCR</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ScreenPicker">Screen color picker</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_CopyHex">Copy current HEX</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AutoCrop">Auto crop blank edges</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AddBorder">Add border</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_FileOps">File operations</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_OpenWorkspace">Open workspace</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PasteNewTab">Paste as new tab</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_Effects">Effects</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BCE">Brightness/Contrast/Exposure</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_TTS">Temperature/Tint/Saturation</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BW">Black &amp; white</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert">Invert</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">Auto levels</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">Resize</sys:String>
 
     <!-- Advanced panel -->
-    <sys:String x:Key="L_Settings_Advanced_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Advanced</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Render_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rendering &amp; Performance</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resampling</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Used when saving or resizing images</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Pixelation threshold</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Above this zoom level, switch from linear interpolation to nearest-neighbor</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">View mode</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paint mode</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Interaction</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Skip reset confirmation</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Skip the second confirmation when clearing tabs or resetting workspace</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Maintenance_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">Maintenance</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clear all caches and settings</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset" xmlns:sys="clr-namespace:System;assembly=mscorlib">Factory reset</sys:String>
-    <sys:String x:Key="L_Settings_ResetShortcuts" xmlns:sys="clr-namespace:System;assembly=mscorlib">Reset shortcuts to default</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Title">Advanced</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Render_Header">Rendering &amp; Performance</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Title">Resampling</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">Used when saving or resizing images</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">Pixelation threshold</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">Above this zoom level, switch from linear interpolation to nearest-neighbor</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">View mode</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">Paint mode</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Habits_Header">Interaction</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">Skip reset confirmation</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">Skip the second confirmation when clearing tabs or resetting workspace</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">Maintenance</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">Clear all caches and settings</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset">Factory reset</sys:String>
+    <sys:String x:Key="L_Settings_ResetShortcuts">Reset shortcuts to default</sys:String>
 
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear" xmlns:sys="clr-namespace:System;assembly=mscorlib">Bilinear</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fant (high quality)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality" xmlns:sys="clr-namespace:System;assembly=mscorlib">HighQuality</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">Auto</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">Bilinear</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant (high quality)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">HighQuality</sys:String>
 
-    <!-- Common -->
-    <sys:String x:Key="L_Common_OK" xmlns:sys="clr-namespace:System;assembly=mscorlib">OK</sys:String>
-    <sys:String x:Key="L_Common_Untitled" xmlns:sys="clr-namespace:System;assembly=mscorlib">Untitled</sys:String>
+    <!-- Common Strings -->
+    <sys:String x:Key="L_Common_OK">OK</sys:String>
+    <sys:String x:Key="L_Common_Untitled">Untitled</sys:String>
+    <sys:String x:Key="L_Common_Reset">Reset</sys:String>
+    <sys:String x:Key="L_Common_Cancel">Cancel</sys:String>
+    <sys:String x:Key="L_Common_Error">Error</sys:String>
+    <sys:String x:Key="L_Common_Tip">Tip</sys:String>
 
-    <sys:String x:Key="L_Main_Ctx_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add border (2px)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AddBorder">Add border (2px)</sys:String>
 
-    <sys:String x:Key="L_Main_Unit_Pixel" xmlns:sys="clr-namespace:System;assembly=mscorlib"> px</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add border (2px)</sys:String>
+    <sys:String x:Key="L_Main_Filter_AllImages">All image files</sys:String>
+    <sys:String x:Key="L_Main_Filter_PNG">PNG Image</sys:String>
+    <sys:String x:Key="L_Main_Filter_JPEG">JPEG Image</sys:String>
+    <sys:String x:Key="L_Main_Filter_WebP">WebP Image</sys:String>
+    <sys:String x:Key="L_Main_Filter_BMP">BMP Bitmap</sys:String>
+    <sys:String x:Key="L_Main_Filter_GIF">GIF Animation</sys:String>
+    <sys:String x:Key="L_Main_Filter_TIFF">TIFF Image</sys:String>
+    <sys:String x:Key="L_Main_Filter_ICO">ICO Icon</sys:String>
 
-    <sys:String x:Key="L_Main_Unit_Pixel" xmlns:sys="clr-namespace:System;assembly=mscorlib"> px</sys:String>
-    <sys:String x:Key="L_Main_Filter_AllImages" xmlns:sys="clr-namespace:System;assembly=mscorlib">All image files</sys:String>
-    <sys:String x:Key="L_Main_Filter_PNG" xmlns:sys="clr-namespace:System;assembly=mscorlib">PNG Image</sys:String>
-    <sys:String x:Key="L_Main_Filter_JPEG" xmlns:sys="clr-namespace:System;assembly=mscorlib">JPEG Image</sys:String>
-    <sys:String x:Key="L_Main_Filter_WebP" xmlns:sys="clr-namespace:System;assembly=mscorlib">WebP Image</sys:String>
-    <sys:String x:Key="L_Main_Filter_BMP" xmlns:sys="clr-namespace:System;assembly=mscorlib">BMP Bitmap</sys:String>
-    <sys:String x:Key="L_Main_Filter_GIF" xmlns:sys="clr-namespace:System;assembly=mscorlib">GIF Animation</sys:String>
-    <sys:String x:Key="L_Main_Filter_TIFF" xmlns:sys="clr-namespace:System;assembly=mscorlib">TIFF Image</sys:String>
-    <sys:String x:Key="L_Main_Filter_ICO" xmlns:sys="clr-namespace:System;assembly=mscorlib">ICO Icon</sys:String>
+    <!-- Color Names -->
+    <sys:String x:Key="L_Color_White">White</sys:String>
+    <sys:String x:Key="L_Color_LightRed">Light Red</sys:String>
+    <sys:String x:Key="L_Color_LightOrange">Light Orange / Skin</sys:String>
+    <sys:String x:Key="L_Color_LightYellow">Light Yellow</sys:String>
+    <sys:String x:Key="L_Color_MintGreen">Mint Green</sys:String>
+    <sys:String x:Key="L_Color_LightCyan">Light Cyan</sys:String>
+    <sys:String x:Key="L_Color_LightBlue">Light Blue</sys:String>
+    <sys:String x:Key="L_Color_Lavender">Lavender</sys:String>
+    <sys:String x:Key="L_Color_LightPink">Light Pink</sys:String>
+    <sys:String x:Key="L_Color_Wheat">Wheat</sys:String>
 
+    <sys:String x:Key="L_Color_Silver">Silver</sys:String>
+    <sys:String x:Key="L_Color_Red">Red</sys:String>
+    <sys:String x:Key="L_Color_Orange">Orange</sys:String>
+    <sys:String x:Key="L_Color_Yellow">Yellow</sys:String>
+    <sys:String x:Key="L_Color_Lime">Lime</sys:String>
+    <sys:String x:Key="L_Color_Cyan">Cyan</sys:String>
+    <sys:String x:Key="L_Color_Azure">Azure</sys:String>
+    <sys:String x:Key="L_Color_Violet">Violet</sys:String>
+    <sys:String x:Key="L_Color_Magenta">Magenta</sys:String>
+    <sys:String x:Key="L_Color_Chocolate">Chocolate</sys:String>
 
-    <sys:String x:Key="L_ColorPicker_Hue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Hue</sys:String>
-    <sys:String x:Key="L_ColorPicker_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">Saturation</sys:String>
-    <sys:String x:Key="L_ColorPicker_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brightness</sys:String>
-    <sys:String x:Key="L_ColorPicker_Hex" xmlns:sys="clr-namespace:System;assembly=mscorlib">HEX (8-digit)</sys:String>
+    <sys:String x:Key="L_Color_Gray">Gray</sys:String>
+    <sys:String x:Key="L_Color_DeepRed">Deep Red</sys:String>
+    <sys:String x:Key="L_Color_DeepOrange">Deep Orange</sys:String>
+    <sys:String x:Key="L_Color_Gold">Gold</sys:String>
+    <sys:String x:Key="L_Color_Green">Green</sys:String>
+    <sys:String x:Key="L_Color_Teal">Teal</sys:String>
+    <sys:String x:Key="L_Color_Blue">Blue</sys:String>
+    <sys:String x:Key="L_Color_Purple">Purple</sys:String>
+    <sys:String x:Key="L_Color_DeepPink">Deep Pink</sys:String>
+    <sys:String x:Key="L_Color_Ochre">Ochre</sys:String>
 
-    <!-- Common Buttons -->
-    <sys:String x:Key="L_ColorPicker_Hue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Hue</sys:String>
-    <sys:String x:Key="L_ColorPicker_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">Saturation</sys:String>
-    <sys:String x:Key="L_ColorPicker_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brightness</sys:String>
-    <sys:String x:Key="L_ColorPicker_Hex" xmlns:sys="clr-namespace:System;assembly=mscorlib">HEX (8-digit)</sys:String>
+    <sys:String x:Key="L_Color_Black">Black</sys:String>
+    <sys:String x:Key="L_Color_Maroon">Maroon</sys:String>
+    <sys:String x:Key="L_Color_DeepBrown">Deep Brown</sys:String>
+    <sys:String x:Key="L_Color_Olive">Olive</sys:String>
+    <sys:String x:Key="L_Color_ForestGreen">Forest Green</sys:String>
+    <sys:String x:Key="L_Color_RockCyan">Rock Cyan</sys:String>
+    <sys:String x:Key="L_Color_Navy">Navy</sys:String>
+    <sys:String x:Key="L_Color_Indigo">Indigo</sys:String>
+    <sys:String x:Key="L_Color_DeepViolet">Deep Violet</sys:String>
+    <sys:String x:Key="L_Color_Coffee">Coffee</sys:String>
 
-    <sys:String x:Key="L_Color_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">White</sys:String>
-    <sys:String x:Key="L_Color_LightRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light Red</sys:String>
-    <sys:String x:Key="L_Color_LightOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light Orange / Skin</sys:String>
-    <sys:String x:Key="L_Color_LightYellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light Yellow</sys:String>
-    <sys:String x:Key="L_Color_MintGreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mint Green</sys:String>
-    <sys:String x:Key="L_Color_LightCyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light Cyan</sys:String>
-    <sys:String x:Key="L_Color_LightBlue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light Blue</sys:String>
-    <sys:String x:Key="L_Color_Lavender" xmlns:sys="clr-namespace:System;assembly=mscorlib">Lavender</sys:String>
-    <sys:String x:Key="L_Color_LightPink" xmlns:sys="clr-namespace:System;assembly=mscorlib">Light Pink</sys:String>
-    <sys:String x:Key="L_Color_Wheat" xmlns:sys="clr-namespace:System;assembly=mscorlib">Wheat</sys:String>
+    <!-- Main Context Menu & UI -->
+    <sys:String x:Key="L_Main_Ctx_Copy">Copy</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Cut">Cut</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Paste">Paste</sys:String>
+    <sys:String x:Key="L_Main_Ctx_FixedZoom">Fixed zoom ratio</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ShowRulers">Show rulers</sys:String>
+    <sys:String x:Key="L_Main_Ctx_MiniTools">Mini tools</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI remove background (RMBG)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">Chroma key (remove background)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_OCR">Extract text (OCR)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ScreenPicker">Screen color picker</sys:String>
+    <sys:String x:Key="L_Main_Ctx_CopyHex">Copy color code (#HEX)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AutoCrop">Auto crop blank edges</sys:String>
 
-    <sys:String x:Key="L_Color_Silver" xmlns:sys="clr-namespace:System;assembly=mscorlib">Silver</sys:String>
-    <sys:String x:Key="L_Color_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">Red</sys:String>
-    <sys:String x:Key="L_Color_Orange" xmlns:sys="clr-namespace:System;assembly=mscorlib">Orange</sys:String>
-    <sys:String x:Key="L_Color_Yellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">Yellow</sys:String>
-    <sys:String x:Key="L_Color_Lime" xmlns:sys="clr-namespace:System;assembly=mscorlib">Lime</sys:String>
-    <sys:String x:Key="L_Color_Cyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cyan</sys:String>
-    <sys:String x:Key="L_Color_Azure" xmlns:sys="clr-namespace:System;assembly=mscorlib">Azure</sys:String>
-    <sys:String x:Key="L_Color_Violet" xmlns:sys="clr-namespace:System;assembly=mscorlib">Violet</sys:String>
-    <sys:String x:Key="L_Color_Magenta" xmlns:sys="clr-namespace:System;assembly=mscorlib">Magenta</sys:String>
-    <sys:String x:Key="L_Color_Chocolate" xmlns:sys="clr-namespace:System;assembly=mscorlib">Chocolate</sys:String>
-
-    <sys:String x:Key="L_Color_Gray" xmlns:sys="clr-namespace:System;assembly=mscorlib">Gray</sys:String>
-    <sys:String x:Key="L_Color_DeepRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Deep Red</sys:String>
-    <sys:String x:Key="L_Color_DeepOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">Deep Orange</sys:String>
-    <sys:String x:Key="L_Color_Gold" xmlns:sys="clr-namespace:System;assembly=mscorlib">Gold</sys:String>
-    <sys:String x:Key="L_Color_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">Green</sys:String>
-    <sys:String x:Key="L_Color_Teal" xmlns:sys="clr-namespace:System;assembly=mscorlib">Teal</sys:String>
-    <sys:String x:Key="L_Color_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Blue</sys:String>
-    <sys:String x:Key="L_Color_Purple" xmlns:sys="clr-namespace:System;assembly=mscorlib">Purple</sys:String>
-    <sys:String x:Key="L_Color_DeepPink" xmlns:sys="clr-namespace:System;assembly=mscorlib">Deep Pink</sys:String>
-    <sys:String x:Key="L_Color_Ochre" xmlns:sys="clr-namespace:System;assembly=mscorlib">Ochre</sys:String>
-
-    <sys:String x:Key="L_Color_Black" xmlns:sys="clr-namespace:System;assembly=mscorlib">Black</sys:String>
-    <sys:String x:Key="L_Color_Maroon" xmlns:sys="clr-namespace:System;assembly=mscorlib">Maroon</sys:String>
-    <sys:String x:Key="L_Color_DeepBrown" xmlns:sys="clr-namespace:System;assembly=mscorlib">Deep Brown</sys:String>
-    <sys:String x:Key="L_Color_Olive" xmlns:sys="clr-namespace:System;assembly=mscorlib">Olive</sys:String>
-    <sys:String x:Key="L_Color_ForestGreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Forest Green</sys:String>
-    <sys:String x:Key="L_Color_RockCyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rock Cyan</sys:String>
-    <sys:String x:Key="L_Color_Navy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Navy</sys:String>
-    <sys:String x:Key="L_Color_Indigo" xmlns:sys="clr-namespace:System;assembly=mscorlib">Indigo</sys:String>
-    <sys:String x:Key="L_Color_DeepViolet" xmlns:sys="clr-namespace:System;assembly=mscorlib">Deep Violet</sys:String>
-    <sys:String x:Key="L_Color_Coffee" xmlns:sys="clr-namespace:System;assembly=mscorlib">Coffee</sys:String>
-
-    <!-- Common Buttons -->
-    <sys:String x:Key="L_Main_Ctx_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy</sys:String>
-    <sys:String x:Key="L_Main_Ctx_Cut" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cut</sys:String>
-    <sys:String x:Key="L_Main_Ctx_Paste" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paste</sys:String>
-    <sys:String x:Key="L_Main_Ctx_FixedZoom" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fixed zoom ratio</sys:String>
-    <sys:String x:Key="L_Main_Ctx_ShowRulers" xmlns:sys="clr-namespace:System;assembly=mscorlib">Show rulers</sys:String>
-    <sys:String x:Key="L_Main_Ctx_MiniTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mini tools</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI remove background (RMBG)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey" xmlns:sys="clr-namespace:System;assembly=mscorlib">Chroma key (remove background)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_OCR" xmlns:sys="clr-namespace:System;assembly=mscorlib">Extract text (OCR)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_ScreenPicker" xmlns:sys="clr-namespace:System;assembly=mscorlib">Screen color picker</sys:String>
-    <sys:String x:Key="L_Main_Ctx_CopyHex" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy color code (#HEX)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AutoCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto crop blank edges</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add border (2px)</sys:String>
-
-    <sys:String x:Key="L_Main_Unit_Pixel" xmlns:sys="clr-namespace:System;assembly=mscorlib"> px</sys:String>
-    <sys:String x:Key="L_Main_Toast_Info" xmlns:sys="clr-namespace:System;assembly=mscorlib">Info</sys:String>
-    <sys:String x:Key="L_Main_Drag_DropToOpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drop to open</sys:String>
-    <sys:String x:Key="L_Main_Drag_ReleaseToConfirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">Release to confirm</sys:String>
+    <sys:String x:Key="L_Main_Unit_Pixel">px</sys:String>
+    <sys:String x:Key="L_Main_Toast_Info">Info</sys:String>
+    <sys:String x:Key="L_Main_Drag_DropToOpen">Drop to open</sys:String>
+    <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">Release to confirm</sys:String>
 
     <!-- Top menu bar -->
-    <sys:String x:Key="L_Menu_File" xmlns:sys="clr-namespace:System;assembly=mscorlib">File</sys:String>
-    <sys:String x:Key="L_Menu_File_New" xmlns:sys="clr-namespace:System;assembly=mscorlib">New</sys:String>
-    <sys:String x:Key="L_Menu_File_Open" xmlns:sys="clr-namespace:System;assembly=mscorlib">Open</sys:String>
-    <sys:String x:Key="L_Menu_File_OpenFolder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Open folder</sys:String>
-    <sys:String x:Key="L_Menu_File_Recent" xmlns:sys="clr-namespace:System;assembly=mscorlib">Recent</sys:String>
-    <sys:String x:Key="L_Menu_File_Recent_Placeholder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Placeholder</sys:String>
-    <sys:String x:Key="L_Menu_File_Save" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save</sys:String>
-    <sys:String x:Key="L_Menu_File_SaveAs" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save as</sys:String>
-    <sys:String x:Key="L_Menu_File_Exit" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exit</sys:String>
+    <sys:String x:Key="L_Menu_File">File</sys:String>
+    <sys:String x:Key="L_Menu_File_New">New</sys:String>
+    <sys:String x:Key="L_Menu_File_Open">Open</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenFolder">Open folder</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent">Recent</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent_Placeholder">Placeholder</sys:String>
+    <sys:String x:Key="L_Menu_File_Save">Save</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAs">Save as</sys:String>
+    <sys:String x:Key="L_Menu_File_Exit">Exit</sys:String>
 
-    <sys:String x:Key="L_Menu_Edit" xmlns:sys="clr-namespace:System;assembly=mscorlib">Edit</sys:String>
-    <sys:String x:Key="L_Menu_Edit_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy</sys:String>
-    <sys:String x:Key="L_Menu_Edit_Cut" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cut</sys:String>
-    <sys:String x:Key="L_Menu_Edit_Paste" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paste</sys:String>
+    <sys:String x:Key="L_Menu_Edit">Edit</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Copy">Copy</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Cut">Cut</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Paste">Paste</sys:String>
 
-    <sys:String x:Key="L_Menu_Effect" xmlns:sys="clr-namespace:System;assembly=mscorlib">Effects</sys:String>
-    <sys:String x:Key="L_Menu_Effect_BCE" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brightness/Contrast/Exposure</sys:String>
-    <sys:String x:Key="L_Menu_Effect_TTS" xmlns:sys="clr-namespace:System;assembly=mscorlib">Temperature/Tint/Saturation</sys:String>
-    <sys:String x:Key="L_Menu_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">Black &amp; white</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Invert" xmlns:sys="clr-namespace:System;assembly=mscorlib">Invert</sys:String>
-    <sys:String x:Key="L_Menu_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto levels</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Resize" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resize</sys:String>
+    <sys:String x:Key="L_Menu_Effect">Effects</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BCE">Brightness/Contrast/Exposure</sys:String>
+    <sys:String x:Key="L_Menu_Effect_TTS">Temperature/Tint/Saturation</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BW">Black &amp; white</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Invert">Invert</sys:String>
+    <sys:String x:Key="L_Menu_Effect_AutoLevels">Auto levels</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Resize">Resize</sys:String>
 
-    <!-- Menu bar quick actions tooltips -->
-    <sys:String x:Key="L_Menu_QA_Save" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save</sys:String>
-    <sys:String x:Key="L_Menu_QA_Undo" xmlns:sys="clr-namespace:System;assembly=mscorlib">Undo</sys:String>
-    <sys:String x:Key="L_Menu_QA_Redo" xmlns:sys="clr-namespace:System;assembly=mscorlib">Redo</sys:String>
-    <sys:String x:Key="L_Menu_QA_NewTab" xmlns:sys="clr-namespace:System;assembly=mscorlib">New tab</sys:String>
-    <sys:String x:Key="L_Menu_QA_DiscardAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">Discard all changes</sys:String>
-    <sys:String x:Key="L_Menu_QA_Settings" xmlns:sys="clr-namespace:System;assembly=mscorlib">Settings</sys:String>
+    <!-- Quick Actions Tooltips -->
+    <sys:String x:Key="L_Menu_QA_Save">Save</sys:String>
+    <sys:String x:Key="L_Menu_QA_Undo">Undo</sys:String>
+    <sys:String x:Key="L_Menu_QA_Redo">Redo</sys:String>
+    <sys:String x:Key="L_Menu_QA_NewTab">New tab</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardAll">Discard all changes</sys:String>
+    <sys:String x:Key="L_Menu_QA_Settings">Settings</sys:String>
 
-    <!-- About -->
-    <sys:String x:Key="L_Settings_About_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">About TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">Lightweight painting and image viewing tool</sys:String>
-    <sys:String x:Key="L_Settings_About_Developer" xmlns:sys="clr-namespace:System;assembly=mscorlib">Developer: </sys:String>
-    <sys:String x:Key="L_Settings_About_Stack" xmlns:sys="clr-namespace:System;assembly=mscorlib">Tech stack: </sys:String>
-    <sys:String x:Key="L_Settings_About_Github" xmlns:sys="clr-namespace:System;assembly=mscorlib">GitHub</sys:String>
-    <sys:String x:Key="L_Settings_About_CheckUpdate" xmlns:sys="clr-namespace:System;assembly=mscorlib">Check updates</sys:String>
-    <sys:String x:Key="L_Settings_About_Help" xmlns:sys="clr-namespace:System;assembly=mscorlib">Help</sys:String>
+    <!-- About Section -->
+    <sys:String x:Key="L_Settings_About_Title">About TabPaint</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">Lightweight painting and image viewing tool</sys:String>
+    <sys:String x:Key="L_Settings_About_Developer">Developer:</sys:String>
+    <sys:String x:Key="L_Settings_About_Stack">Tech stack:</sys:String>
+    <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
+    <sys:String x:Key="L_Settings_About_CheckUpdate">Check updates</sys:String>
+    <sys:String x:Key="L_Settings_About_Help">Help</sys:String>
+    <sys:String x:Key="L_Settings_About_Help_ComingSoon">Help documentation is being written, stay tuned!</sys:String>
 
     <!-- ToolBar -->
-    <sys:String x:Key="L_ToolBar_Tool_Select" xmlns:sys="clr-namespace:System;assembly=mscorlib">Select area</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Pen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Pencil</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_PickColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">Pick color</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Eraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Fill" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fill</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Text" xmlns:sys="clr-namespace:System;assembly=mscorlib">Text</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_DrawTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drawing tools</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Eyedropper" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eyedropper</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brush</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Round" xmlns:sys="clr-namespace:System;assembly=mscorlib">Round brush</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Square" xmlns:sys="clr-namespace:System;assembly=mscorlib">Square brush</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paint brush</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Spray" xmlns:sys="clr-namespace:System;assembly=mscorlib">Spray</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Crayon" xmlns:sys="clr-namespace:System;assembly=mscorlib">Crayon</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Watercolor" xmlns:sys="clr-namespace:System;assembly=mscorlib">Watercolor</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Highlighter" xmlns:sys="clr-namespace:System;assembly=mscorlib">Highlighter</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mosaic</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape" xmlns:sys="clr-namespace:System;assembly=mscorlib">Shape</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Rectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rectangle</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rounded rectangle</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Ellipse" xmlns:sys="clr-namespace:System;assembly=mscorlib">Ellipse</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Line" xmlns:sys="clr-namespace:System;assembly=mscorlib">Line</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Arrow" xmlns:sys="clr-namespace:System;assembly=mscorlib">Arrow</sys:String>
-    <sys:String x:Key="L_ToolBar_Crop" xmlns:sys="clr-namespace:System;assembly=mscorlib">Crop selection</sys:String>
-    <sys:String x:Key="L_ToolBar_RotateFlip" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rotate/Flip</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_Left" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rotate left 90° (Ctrl+L)</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_Right" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rotate right 90° (Ctrl+R)</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_180" xmlns:sys="clr-namespace:System;assembly=mscorlib">Rotate 180°</sys:String>
-    <sys:String x:Key="L_ToolBar_Flip_Vertical" xmlns:sys="clr-namespace:System;assembly=mscorlib">Flip vertical</sys:String>
-    <sys:String x:Key="L_ToolBar_Flip_Horizontal" xmlns:sys="clr-namespace:System;assembly=mscorlib">Flip horizontal</sys:String>
-    <sys:String x:Key="L_ToolBar_CustomColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">Custom color</sys:String>
-    <sys:String x:Key="L_ToolBar_Color1" xmlns:sys="clr-namespace:System;assembly=mscorlib">Color 1</sys:String>
-    <sys:String x:Key="L_ToolBar_Color2" xmlns:sys="clr-namespace:System;assembly=mscorlib">Color 2</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">White</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Silver" xmlns:sys="clr-namespace:System;assembly=mscorlib">Silver</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">Red</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Orange" xmlns:sys="clr-namespace:System;assembly=mscorlib">Orange</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Yellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">Yellow</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Lime" xmlns:sys="clr-namespace:System;assembly=mscorlib">Lime</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Cyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cyan</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_SkyBlue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Sky blue</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Violet" xmlns:sys="clr-namespace:System;assembly=mscorlib">Violet</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Magenta" xmlns:sys="clr-namespace:System;assembly=mscorlib">Magenta</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Chocolate" xmlns:sys="clr-namespace:System;assembly=mscorlib">Chocolate</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Black" xmlns:sys="clr-namespace:System;assembly=mscorlib">Black</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Gray" xmlns:sys="clr-namespace:System;assembly=mscorlib">Gray</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_DarkRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Dark red</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_DarkOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">Dark orange</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Gold" xmlns:sys="clr-namespace:System;assembly=mscorlib">Gold</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">Green</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Teal" xmlns:sys="clr-namespace:System;assembly=mscorlib">Teal</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Blue</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Purple" xmlns:sys="clr-namespace:System;assembly=mscorlib">Purple</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Maroon" xmlns:sys="clr-namespace:System;assembly=mscorlib">Maroon</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Sienna" xmlns:sys="clr-namespace:System;assembly=mscorlib">Sienna</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select">Select area</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Pen">Pencil</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_PickColor">Pick color</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eraser">Eraser</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Fill">Fill</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Text">Text</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_DrawTools">Drawing tools</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eyedropper">Eyedropper</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush">Brush</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Round">Round brush</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Square">Square brush</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Brush">Paint brush</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Spray">Spray</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Crayon">Crayon</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Watercolor">Watercolor</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Highlighter">Highlighter</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Mosaic">Mosaic</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape">Shape</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Rectangle">Rectangle</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle">Rounded rectangle</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Ellipse">Ellipse</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Line">Line</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Arrow">Arrow</sys:String>
+    <sys:String x:Key="L_ToolBar_Crop">Crop selection</sys:String>
+    <sys:String x:Key="L_ToolBar_RotateFlip">Rotate/Flip</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Left">Rotate left 90° (Ctrl+L)</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Right">Rotate right 90° (Ctrl+R)</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_180">Rotate 180°</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Vertical">Flip vertical</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Horizontal">Flip horizontal</sys:String>
+    <sys:String x:Key="L_ToolBar_CustomColor">Custom color</sys:String>
+    <sys:String x:Key="L_ToolBar_Color1">Color 1</sys:String>
+    <sys:String x:Key="L_ToolBar_Color2">Color 2</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_White">White</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Silver">Silver</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Red">Red</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Orange">Orange</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Yellow">Yellow</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Lime">Lime</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Cyan">Cyan</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_SkyBlue">Sky blue</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Violet">Violet</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Magenta">Magenta</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Chocolate">Chocolate</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Black">Black</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gray">Gray</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkRed">Dark red</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkOrange">Dark orange</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gold">Gold</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Green">Green</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Teal">Teal</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Blue">Blue</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Purple">Purple</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Maroon">Maroon</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Sienna">Sienna</sys:String>
 
     <!-- TitleBar -->
-    <sys:String x:Key="L_TitleBar_ExifInfo" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image EXIF info</sys:String>
-    <sys:String x:Key="L_TitleBar_ExifInfo_Details" xmlns:sys="clr-namespace:System;assembly=mscorlib">Details</sys:String>
-    <sys:String x:Key="L_TitleBar_ToggleMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">Toggle paint/view mode</sys:String>
-    <sys:String x:Key="L_TitleBar_Minimize" xmlns:sys="clr-namespace:System;assembly=mscorlib">Minimize</sys:String>
-    <sys:String x:Key="L_TitleBar_Maximize" xmlns:sys="clr-namespace:System;assembly=mscorlib">Maximize</sys:String>
-    <sys:String x:Key="L_TitleBar_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">Close</sys:String>
+    <sys:String x:Key="L_TitleBar_ExifInfo">Image EXIF info</sys:String>
+    <sys:String x:Key="L_TitleBar_ExifInfo_Details">Details</sys:String>
+    <sys:String x:Key="L_TitleBar_ToggleMode">Toggle paint/view mode</sys:String>
+    <sys:String x:Key="L_TitleBar_Minimize">Minimize</sys:String>
+    <sys:String x:Key="L_TitleBar_Maximize">Maximize</sys:String>
+    <sys:String x:Key="L_TitleBar_Close">Close</sys:String>
 
-    <!-- AdjustBCEWindow -->
-    <sys:String x:Key="L_AdjustBCE_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Adjust Image</sys:String>
-    <sys:String x:Key="L_AdjustBCE_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brightness</sys:String>
-    <sys:String x:Key="L_AdjustBCE_Contrast" xmlns:sys="clr-namespace:System;assembly=mscorlib">Contrast</sys:String>
-    <sys:String x:Key="L_AdjustBCE_Exposure" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exposure</sys:String>
+    <!-- Adjust Windows -->
+    <sys:String x:Key="L_AdjustBCE_Title">Adjust Image</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Brightness">Brightness</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Contrast">Contrast</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Exposure">Exposure</sys:String>
 
-    <!-- AdjustTTSWindow -->
-    <sys:String x:Key="L_AdjustTTS_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Color Adjustment</sys:String>
-    <sys:String x:Key="L_AdjustTTS_Temperature" xmlns:sys="clr-namespace:System;assembly=mscorlib">Temperature</sys:String>
-    <sys:String x:Key="L_AdjustTTS_Tint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Tint</sys:String>
-    <sys:String x:Key="L_AdjustTTS_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">Saturation</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Title">Color Adjustment</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Temperature">Temperature</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Tint">Tint</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Saturation">Saturation</sys:String>
 
     <!-- ResizeCanvasDialog -->
-    <sys:String x:Key="L_ResizeCanvas_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resize Canvas</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mode: </sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resample Image</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resize Canvas</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Width" xmlns:sys="clr-namespace:System;assembly=mscorlib">Width</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Height" xmlns:sys="clr-namespace:System;assembly=mscorlib">Height</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio" xmlns:sys="clr-namespace:System;assembly=mscorlib">Keep Aspect Ratio</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Info_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Scale: {0}%  |  Original: {1} x {2}</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">Canvas Mode: {0} x {1}</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">Canvas Mode: Only change canvas size, don't stretch image</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Desc_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">Resample Mode: Stretch/compress image content</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_LimitReached" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ Maximum size limit reached ({0}px)</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image size cannot exceed {0} pixels.</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">Size must be greater than 0</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Title">Resize Canvas</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode">Mode:</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Resample">Resample Image</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas">Resize Canvas</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Width">Width</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Height">Height</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio">Keep Aspect Ratio</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_Format">Scale: {0}%  |  Original: {1} x {2}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode">Canvas Mode: {0} x {1}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas">Canvas Mode: Only change canvas size, don't stretch image</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Resample">Resample Mode: Stretch/compress image content</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ Maximum size limit reached ({0}px)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge">Image size cannot exceed {0} pixels.</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize">Size must be greater than 0</sys:String>
 
-    <!-- ModernColorPickerWindow -->
-    <sys:String x:Key="L_ColorPicker_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Edit Color</sys:String>
-    <sys:String x:Key="L_ColorPicker_Preview" xmlns:sys="clr-namespace:System;assembly=mscorlib">Preview</sys:String>
-    <sys:String x:Key="L_ColorPicker_BasicColors" xmlns:sys="clr-namespace:System;assembly=mscorlib">Basic Colors</sys:String>
-    <sys:String x:Key="L_ColorPicker_CustomColors" xmlns:sys="clr-namespace:System;assembly=mscorlib">Custom Colors</sys:String>
-    <sys:String x:Key="L_ColorPicker_AddCurrentColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add current color</sys:String>
-    <sys:String x:Key="L_ColorPicker_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">Red (R)</sys:String>
-    <sys:String x:Key="L_ColorPicker_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">Green (G)</sys:String>
-    <sys:String x:Key="L_ColorPicker_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Blue (B)</sys:String>
-    <sys:String x:Key="L_ColorPicker_Hue" xmlns:sys="clr-namespace:System;assembly=mscorlib">Hue</sys:String>
-    <sys:String x:Key="L_ColorPicker_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">Saturation</sys:String>
-    <sys:String x:Key="L_ColorPicker_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brightness</sys:String>
-    <sys:String x:Key="L_ColorPicker_Hex" xmlns:sys="clr-namespace:System;assembly=mscorlib">HEX (8-digit)</sys:String>
+    <!-- ModernColorPickerWindow (Fixed Duplicates) -->
+    <sys:String x:Key="L_ColorPicker_Title">Edit Color</sys:String>
+    <sys:String x:Key="L_ColorPicker_Preview">Preview</sys:String>
+    <sys:String x:Key="L_ColorPicker_BasicColors">Basic Colors</sys:String>
+    <sys:String x:Key="L_ColorPicker_CustomColors">Custom Colors</sys:String>
+    <sys:String x:Key="L_ColorPicker_AddCurrentColor">Add current color</sys:String>
+    <sys:String x:Key="L_ColorPicker_Red">Red (R)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Green">Green (G)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Blue">Blue (B)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hue">Hue</sys:String>
+    <sys:String x:Key="L_ColorPicker_Saturation">Saturation</sys:String>
+    <sys:String x:Key="L_ColorPicker_Brightness">Brightness</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hex">HEX (8-digit)</sys:String>
 
-    <!-- Common Buttons -->
-    <sys:String x:Key="L_Common_Reset" xmlns:sys="clr-namespace:System;assembly=mscorlib">Reset</sys:String>
-    <sys:String x:Key="L_Common_Cancel" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cancel</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">This operation will delete all caches, temporary files, and user configurations, and restore the software to its initial state.
-
-Are you sure you want to continue?</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to reset all shortcuts to their default settings? This operation cannot be undone.</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Confirm Reset</sys:String>
-    <sys:String x:Key="L_Settings_About_Help_ComingSoon" xmlns:sys="clr-namespace:System;assembly=mscorlib">Help documentation is being written, stay tuned!</sys:String>
-    <sys:String x:Key="L_Common_Error" xmlns:sys="clr-namespace:System;assembly=mscorlib">Error</sys:String>
-    <sys:String x:Key="L_Common_Tip" xmlns:sys="clr-namespace:System;assembly=mscorlib">Tip</sys:String>
+    <!-- Dialog Confirmations -->
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">This operation will delete all caches, temporary files, and user configurations, and restore the software to its initial state. Are you sure you want to continue?</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">Are you sure you want to reset all shortcuts to their default settings? This operation cannot be undone.</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">Confirm Reset</sys:String>
 
     <!-- Toasts -->
-    <sys:String x:Key="L_Toast_Deleted" xmlns:sys="clr-namespace:System;assembly=mscorlib">Deleted (Ctrl+Z to undo)</sys:String>
-    <sys:String x:Key="L_Toast_UndoDelete" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete undone</sys:String>
-    <sys:String x:Key="L_Toast_FirstImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">Back to first image</sys:String>
-    <sys:String x:Key="L_Toast_LastImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">This is the last image</sys:String>
-    <sys:String x:Key="L_Toast_NoContentToCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">No valid content detected, no need to crop</sys:String>
-    <sys:String x:Key="L_Toast_MinSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">Already at minimum size</sys:String>
-    <sys:String x:Key="L_Toast_Copied" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copied</sys:String>
-    <sys:String x:Key="L_Toast_PressDeleteAgain" xmlns:sys="clr-namespace:System;assembly=mscorlib">Press Delete again to delete file</sys:String>
-    <sys:String x:Key="L_Toast_DragFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drag failed: </sys:String>
-    <sys:String x:Key="L_Toast_Effect_Inverted" xmlns:sys="clr-namespace:System;assembly=mscorlib">Invert applied</sys:String>
-    <sys:String x:Key="L_Toast_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">Auto levels applied</sys:String>
-    <sys:String x:Key="L_Toast_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">Black to white applied</sys:String>
-    <sys:String x:Key="L_Toast_FileNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">File no longer exists, cannot locate folder.</sys:String>
-    <sys:String x:Key="L_Toast_PasteFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paste image failed: </sys:String>
-    <sys:String x:Key="L_Toast_DeleteFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete failed: </sys:String>
-    <sys:String x:Key="L_Toast_CopyFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Copy failed</sys:String>
-    <sys:String x:Key="L_Toast_NoImageData" xmlns:sys="clr-namespace:System;assembly=mscorlib">Could not get image data for this tab</sys:String>
-    <sys:String x:Key="L_Toast_InsertFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert failed: </sys:String>
-    <sys:String x:Key="L_Toast_CannotInsertImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cannot insert image: </sys:String>
-    <sys:String x:Key="L_Toast_SizeTooSmallForBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image size too small to add border</sys:String>
-    <sys:String x:Key="L_Toast_NoSelection" xmlns:sys="clr-namespace:System;assembly=mscorlib">No area selected</sys:String>
-    <sys:String x:Key="L_Toast_OCR_NoText" xmlns:sys="clr-namespace:System;assembly=mscorlib">No text recognized</sys:String>
-    <sys:String x:Key="L_Toast_ImageTooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ Image too large, auto-downscaled for display</sys:String>
-    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Read folder failed: </sys:String>
-    <sys:String x:Key="L_Toast_LoadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Startup load failed: </sys:String>
+    <sys:String x:Key="L_Toast_Deleted">Deleted (Ctrl+Z to undo)</sys:String>
+    <sys:String x:Key="L_Toast_UndoDelete">Delete undone</sys:String>
+    <sys:String x:Key="L_Toast_FirstImage">Back to first image</sys:String>
+    <sys:String x:Key="L_Toast_LastImage">This is the last image</sys:String>
+    <sys:String x:Key="L_Toast_NoContentToCrop">No valid content detected, no need to crop</sys:String>
+    <sys:String x:Key="L_Toast_MinSize">Already at minimum size</sys:String>
+    <sys:String x:Key="L_Toast_Copied">Copied</sys:String>
+    <sys:String x:Key="L_Toast_PressDeleteAgain">Press Delete again to delete file</sys:String>
+    <sys:String x:Key="L_Toast_DragFailed">Drag failed:</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Inverted">Invert applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_AutoLevels">Auto levels applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_BW">Black to white applied</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound">File no longer exists, cannot locate folder.</sys:String>
+    <sys:String x:Key="L_Toast_PasteFailed">Paste image failed:</sys:String>
+    <sys:String x:Key="L_Toast_DeleteFailed">Delete failed:</sys:String>
+    <sys:String x:Key="L_Toast_CopyFailed">Copy failed</sys:String>
+    <sys:String x:Key="L_Toast_NoImageData">Could not get image data for this tab</sys:String>
+    <sys:String x:Key="L_Toast_InsertFailed">Insert failed:</sys:String>
+    <sys:String x:Key="L_Toast_CannotInsertImage">Cannot insert image:</sys:String>
+    <sys:String x:Key="L_Toast_SizeTooSmallForBorder">Image size too small to add border</sys:String>
+    <sys:String x:Key="L_Toast_NoSelection">No area selected</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NoText">No text recognized</sys:String>
+    <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ Image too large, auto-downscaled for display</sys:String>
+    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">Read folder failed:</sys:String>
+    <sys:String x:Key="L_Toast_LoadFailed_Prefix">Startup load failed:</sys:String>
 </ResourceDictionary>
