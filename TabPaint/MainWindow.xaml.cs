@@ -308,7 +308,7 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif" };
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif",".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
@@ -560,10 +560,11 @@ namespace TabPaint
             _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
         }
 
-        private void ShowToast(string message)
+        private void ShowToast(string messageOrKey)
         {
             if (_toastTimer == null) InitializeToastTimer();
             _toastTimer.Stop();
+            string message = LocalizationManager.GetString(messageOrKey);
             InfoToastText.Text = message;
 
             if (InfoToast.Opacity < 1.0)

@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:TabPaint"
         xmlns:controls="clr-namespace:TabPaint.Controls"
      
-        Title="TabPaint 设置" Height="500" Width="700"
+        Title="{DynamicResource L_Settings_Title}" Height="500" Width="700"
         ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource ChromeLowBrush}"
         Foreground="{DynamicResource TextPrimaryBrush}">
@@ -52,11 +52,21 @@
                          BorderThickness="0"
                          Margin="0,10,0,0"
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
-                    <ListBoxItem Tag="General" IsSelected="True">通用</ListBoxItem>
-                    <ListBoxItem Tag="Paint">画图设置</ListBoxItem>
-                    <ListBoxItem Tag="View">看图设置</ListBoxItem>
-                    <ListBoxItem Tag="Shortcuts">快捷键设置</ListBoxItem>
-                    <ListBoxItem Tag="Advanced">高级</ListBoxItem>
+                    <ListBoxItem Tag="General" IsSelected="True">
+                        <TextBlock Text="{DynamicResource L_Settings_Nav_General}"/>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="Paint">
+                        <TextBlock Text="{DynamicResource L_Settings_Nav_Paint}"/>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="View">
+                        <TextBlock Text="{DynamicResource L_Settings_Nav_View}"/>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="Shortcuts">
+                        <TextBlock Text="{DynamicResource L_Settings_Nav_Shortcuts}"/>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="Advanced">
+                        <TextBlock Text="{DynamicResource L_Settings_Nav_Advanced}"/>
+                    </ListBoxItem>
                 </ListBox>
                 <ListBox x:Name="BottomListBox" 
                          Grid.Row="1"
@@ -65,7 +75,9 @@
                          BorderThickness="0" 
                          Margin="0,0,0,10"
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
-                    <ListBoxItem Tag="About">关于</ListBoxItem>
+                    <ListBoxItem Tag="About">
+                        <TextBlock Text="{DynamicResource L_Settings_Nav_About}"/>
+                    </ListBoxItem>
                 </ListBox>
             </Grid>
         </Border>
@@ -79,9 +91,9 @@
                 <Grid>
                     <!-- 1. 通用 -->
                     <StackPanel x:Name="GeneralPanel" Visibility="Visible" Margin="24">
-                        <TextBlock Text="通用" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_General_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <TextBlock Text="启动" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_General_Startup_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -90,9 +102,9 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="自动加载同文件夹图片"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_AutoLoadFolderImages_Title}"/>
                                 <!-- Foreground: Gray -> TextTertiaryBrush -->
-                                <TextBlock Text="打开单张图片时，自动扫描并加载同级目录下的其他图片" 
+                                <TextBlock Text="{DynamicResource L_Settings_General_AutoLoadFolderImages_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -108,8 +120,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="默认进入看图模式"/>
-                                <TextBlock Text="程序启动时自动隐藏工具栏，适合作为默认看图软件使用" 
+                                <TextBlock Text="{DynamicResource L_Settings_General_StartInViewMode_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_StartInViewMode_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -127,8 +139,8 @@
                                 <ColumnDefinition Width="200"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="鼠标滚轮操作"/>
-                                <TextBlock Text="滑动鼠标滚轮时程序的响应" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_MouseWheel_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_MouseWheel_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <ComboBox Grid.Column="1" 
@@ -136,9 +148,9 @@
                                       SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       SelectedValuePath="Tag"
                                       Height="30" VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="自动" Tag="Auto"/>
-                                <ComboBoxItem Content="上下滚动图片" Tag="Up"/>
-                                <ComboBoxItem Content="切换图片" Tag="Switch"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_MouseWheel_Option_Auto}" Tag="Auto"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_MouseWheel_Option_Up}" Tag="Up"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_MouseWheel_Option_Switch}" Tag="Switch"/>
                             </ComboBox>
                         </Grid>
 
@@ -149,8 +161,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="外观主题"/>
-                                <TextBlock Text="切换明亮或黑暗模式" 
+                                <TextBlock Text="{DynamicResource L_Settings_General_Theme_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_Theme_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -159,9 +171,9 @@
                                       SelectedValue="{Binding Path=Current.ThemeMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       SelectedValuePath="Tag"
                                       Height="30" VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="跟随系统" Tag="System"/>
-                                <ComboBoxItem Content="浅色 (Light)" Tag="Light"/>
-                                <ComboBoxItem Content="深色 (Dark)" Tag="Dark"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_Theme_Option_System}" Tag="System"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_Theme_Option_Light}" Tag="Light"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_Theme_Option_Dark}" Tag="Dark"/>
                             </ComboBox>
                         </Grid>
                         <Grid Margin="0,15,0,5">
@@ -171,8 +183,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel VerticalAlignment="Top">
-                                <TextBlock Text="主题色"/>
-                                <TextBlock Text="界面强调颜色与工具图标颜色" 
+                                <TextBlock Text="{DynamicResource L_Settings_General_Accent_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_Accent_Desc}" 
                    Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -268,12 +280,36 @@
                             </ItemsControl>
                         </Grid>
 
+                        <!-- 语言设置 -->
+                        <Separator Margin="0,15,0,10" Background="{DynamicResource BorderLightBrush}"/>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="200"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{DynamicResource L_Settings_General_Language_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_General_Language_Desc}"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <ComboBox Grid.Column="1"
+                                      Style="{StaticResource FluentComboBoxStyle}"
+                                      SelectedValue="{Binding Path=Current.Language, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      SelectedValuePath="Tag"
+                                      Height="30" VerticalContentAlignment="Center">
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_Zh}" Tag="ChineseSimplified"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_En}" Tag="English"/>
+                            </ComboBox>
+                        </Grid>
+
                     </StackPanel>
 
                     <!-- 2. 画图设置 -->
                     <StackPanel x:Name="PaintPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="画图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="编辑习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Paint_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Paint_Habits_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -282,8 +318,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="剪贴板图片自动弹出"/>
-                                <TextBlock Text="当后台监听检测到剪贴板有新图片时，自动激活并置顶窗口" 
+                                <TextBlock Text="{DynamicResource L_Settings_Paint_AutoPopupClipboard_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Paint_AutoPopupClipboard_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -299,8 +335,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="选区删除背景"/>
-                                <TextBlock Text="使用Delete键或剪切选区时的填充方式" 
+                                <TextBlock Text="{DynamicResource L_Settings_Paint_SelectionClear_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Paint_SelectionClear_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -309,9 +345,9 @@
                                       SelectedValue="{Binding Path=Current.SelectionClearMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       SelectedValuePath="Tag"
                                       Height="30" VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="透明 (Transparent)" Tag="Transparent"/>
-                                <ComboBoxItem Content="纯白 (White)" Tag="White"/>
-                                <ComboBoxItem Content="仅填充颜色 (保留Alpha)" Tag="PreserveAlpha"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Paint_SelectionClear_Transparent}" Tag="Transparent"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Paint_SelectionClear_White}" Tag="White"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Paint_SelectionClear_PreserveAlpha}" Tag="PreserveAlpha"/>
                             </ComboBox>
                         </Grid>
                         <Grid Margin="0,5">
@@ -322,8 +358,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="允许 Delete 键删除文件"/>
-                                <TextBlock Text="无选区时，允许通过单击 Delete 键删除当前文件" 
+                                <TextBlock Text="{DynamicResource L_Settings_Paint_EnableFileDelete_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Paint_EnableFileDelete_Desc}" 
                    Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -336,8 +372,8 @@
 
                     <!-- 3. 看图设置 -->
                     <StackPanel x:Name="ViewPanel" Visibility="Collapsed" Margin="24">
-                        <TextBlock Text="看图设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_View_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_View_Habits_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -346,8 +382,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="鼠标滚轮功能"/>
-                                <TextBlock Text="看图模式下，直接滚动滚轮时的操作" 
+                                <TextBlock Text="{DynamicResource L_Settings_View_MouseWheel_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_View_MouseWheel_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -356,13 +392,13 @@
                                       SelectedValue="{Binding Path=Current.ViewMouseWheelMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       SelectedValuePath="Tag"
                                       Height="30" VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="缩放图片 (Zoom)" Tag="Zoom"/>
-                                <ComboBoxItem Content="切换图片 (Prev/Next)" Tag="SwitchImage"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Zoom}" Tag="Zoom"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Switch}" Tag="SwitchImage"/>
                             </ComboBox>
                         </Grid>
 
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
-                        <TextBlock Text="显示" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_View_Display_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -372,8 +408,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="使用深色背景"/>
-                                <TextBlock Text="在图片周围显示深灰色背景" 
+                                <TextBlock Text="{DynamicResource L_Settings_View_DarkBg_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_View_DarkBg_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -390,8 +426,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="显示透明度网格"/>
-                                <TextBlock Text="开启后透明区域显示灰白格子，关闭则显示纯白背景" 
+                                <TextBlock Text="{DynamicResource L_Settings_View_TransparentGrid_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_View_TransparentGrid_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -405,17 +441,17 @@
 
                     <!-- 4. 快捷键设置 -->
                     <StackPanel x:Name="ShortcutPanel" Visibility="Collapsed"  Margin="24,24,44,24">
-                        <TextBlock Text="快捷键设置" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <StackPanel Margin="0,0,10,10">
 
-                            <TextBlock Text="视图与导航" FontWeight="Bold" Margin="0,10,0,5"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_ViewNav}" FontWeight="Bold" Margin="0,10,0,5"/>
 
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="切换看图/画图模式" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_ToggleMode}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.ToggleMode], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -423,7 +459,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="上一张图片" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_PrevImage}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.PrevImage], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -431,7 +467,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="下一张图片" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_NextImage}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.NextImage], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -439,7 +475,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="全屏显示" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_FullScreen}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.FullScreen], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -447,7 +483,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="向左旋转" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_RotateLeft}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.RotateLeft], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -455,7 +491,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="向右旋转" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_RotateRight}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.RotateRight], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -463,7 +499,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="垂直翻转" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_VFlip}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.VerticalFlip], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -471,17 +507,17 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="水平翻转" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_HFlip}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.HorizontalFlip], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <!-- 第 1.5 组：基础绘图工具 -->
-                            <TextBlock Text="基础绘图工具" FontWeight="Bold" Margin="0,15,0,5"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_BasicTools}" FontWeight="Bold" Margin="0,15,0,5"/>
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="选择工具" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Select}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToSelect], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -489,7 +525,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="铅笔" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Pen}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToPen], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -498,7 +534,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="取色器" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Eyedropper}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToPick], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -507,7 +543,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="橡皮擦" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Eraser}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToEraser], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -518,7 +554,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="填充工具" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Fill}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToFill], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -527,7 +563,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="文字工具" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Text}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToText], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -536,7 +572,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="画刷" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Brush}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToBrush], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -545,18 +581,18 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="形状" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Shape}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToShape], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <!-- 第二组：高级工具 -->
-                            <TextBlock Text="高级工具" FontWeight="Bold" Margin="0,15,0,5"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_AdvancedTools}" FontWeight="Bold" Margin="0,15,0,5"/>
 
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="监听剪贴板开关" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_ClipMonitor}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ClipMonitor], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -566,7 +602,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="AI 移除背景" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_RemoveBg}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.RemoveBg], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -576,7 +612,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="色差抠图" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_ChromaKey}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ChromaKey], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -586,7 +622,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="OCR 文字识别" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_OCR}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.OCR], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -596,7 +632,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="屏幕取色器" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_ScreenPicker}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ScreenPicker], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -606,7 +642,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="复制当前颜色 HEX" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_CopyHex}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.CopyColorCode], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -616,7 +652,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="智能裁切空白边缘" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_AutoCrop}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.AutoCrop], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
@@ -626,18 +662,18 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="图片加边框" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_AddBorder}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.AddBorder], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
 
                             <!-- 第三组：文件操作 -->
-                            <TextBlock Text="其他文件操作" FontWeight="Bold" Margin="0,15,0,5"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_FileOps}" FontWeight="Bold" Margin="0,15,0,5"/>
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="打开工作区" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_OpenWorkspace}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.OpenWorkspace], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -645,17 +681,17 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="粘贴为新标签页" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_PasteNewTab}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.PasteNewTab], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <!-- 第四组：图像效果 -->
-                            <TextBlock Text="图像效果" FontWeight="Bold" Margin="0,15,0,5"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_Effects}" FontWeight="Bold" Margin="0,15,0,5"/>
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="亮度/对比度/曝光" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_BCE}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Brightness], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -663,7 +699,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="色温/色调/饱和度" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_TTS}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Temperature], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -671,7 +707,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="黑白" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_BW}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Grayscale], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -679,7 +715,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="反色" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_Invert}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Invert], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -687,7 +723,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="自动色阶" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_AutoLevels}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.AutoLevels], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">
@@ -695,7 +731,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="调整大小" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_Resize}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Resize], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                         </StackPanel>
@@ -703,7 +739,7 @@
 
                         <!-- 恢复默认快捷键按钮 -->
                         <Button Grid.Row="2" 
-                                Content="恢复默认快捷键" 
+                                Content="{DynamicResource L_Settings_ResetShortcuts}" 
                                 HorizontalAlignment="Left" 
                                 Foreground="{DynamicResource DangerBrush}" 
                                 Background="Transparent" 
@@ -715,9 +751,9 @@
 
                     <!-- 5. 高级 -->
                     <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed" Margin="24,24,44,24">
-                        <TextBlock Text="高级" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Advanced_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <TextBlock Text="渲染与性能" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Advanced_Render_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -725,8 +761,8 @@
                                 <ColumnDefinition Width="200"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="重采样算法"/>
-                                <TextBlock Text="用于图片保存或调整大小时" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Advanced_Resampling_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Advanced_Resampling_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <ComboBox Grid.Column="1" 
@@ -734,17 +770,17 @@
                                       SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       SelectedValuePath="Tag"
                                       Height="30" VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="自动 (Auto)" Tag="Auto"/>
-                                <ComboBoxItem Content="双线性 (Bilinear)" Tag="Bilinear"/>
-                                <ComboBoxItem Content="Fant (高质量)" Tag="Fant"/>
-                                <ComboBoxItem Content="HighQuality" Tag="HighQuality"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Advanced_Resampling_Option_Auto}" Tag="Auto"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Advanced_Resampling_Option_Bilinear}" Tag="Bilinear"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Advanced_Resampling_Option_Fant}" Tag="Fant"/>
+                                <ComboBoxItem Content="{DynamicResource L_Settings_Advanced_Resampling_Option_HighQuality}" Tag="HighQuality"/>
                             </ComboBox>
                         </Grid>
 
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
-                        <TextBlock Text="像素化阈值设置" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)" 
+                        <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_Desc}" 
                                    Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                         <!-- 看图模式阈值 -->
@@ -755,7 +791,7 @@
                                 <ColumnDefinition Width="70"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="看图模式" VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_ViewMode}" VerticalAlignment="Center"/>
 
                             <Slider Grid.Column="1" Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
                                     Minimum="0" Maximum="100" 
@@ -782,7 +818,7 @@
                                 <ColumnDefinition Width="70"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="画图模式" VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_PaintMode}" VerticalAlignment="Center"/>
 
                             <Slider Grid.Column="1" Margin="0,0,10,0" Style="{StaticResource Win11HorizontalSliderStyle}"
                                     Minimum="0" Maximum="100" 
@@ -800,7 +836,7 @@
                         </Grid>
 
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
-                        <TextBlock Text="交互习惯" FontWeight="SemiBold" FontSize="16" Margin="0,15,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Advanced_Habits_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,15,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
@@ -810,8 +846,8 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="重置工作区时不弹窗提示"/>
-                                <TextBlock Text="清空所有标签页或重置工作区时跳过二次确认弹窗" 
+                                <TextBlock Text="{DynamicResource L_Settings_Advanced_SkipResetConfirm_Title}"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Advanced_SkipResetConfirm_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
 
@@ -822,7 +858,7 @@
 
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
-                        <TextBlock Text="系统维护" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_Advanced_Maintenance_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -830,14 +866,14 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- 恢复出厂设置按钮重构：去掉了硬编码的背景色，改为边框风格 -->
-                            <Button Content="恢复出厂设置" Width="120" Height="32" 
+                            <Button Content="{DynamicResource L_Settings_Advanced_FactoryReset}" Width="120" Height="32" 
                                     HorizontalAlignment="Left" Click="FactoryReset_Click"
                                     Background="{DynamicResource ButtonBackgroundBrush}" 
                                     Foreground="{DynamicResource DangerBrush}" 
                                     BorderBrush="{DynamicResource DangerBrush}"
                                     BorderThickness="1"/>
 
-                            <TextBlock Grid.Column="1" Text="清除所有缓存和设置" 
+                            <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Advanced_FactoryReset_Button}" 
                                        VerticalAlignment="Center" Margin="15,0,0,0" 
                                        Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </Grid>
@@ -846,7 +882,7 @@
 
                     <!-- 6. 关于页 -->
                     <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24,24,44,24">
-                        <TextBlock Text="关于 TabPaint" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource L_Settings_About_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <Image x:Name="AppIcon" 
                                Source="pack://application:,,,/Resources/TabPaint.ico" 
@@ -856,15 +892,15 @@
                                Margin="0,0,0,16"/>
 
                         <TextBlock Text="TabPaint" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="轻量级绘画与看图工具" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,4,0,24"/>
+                        <TextBlock Text="{DynamicResource L_Settings_About_Subtitle}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,4,0,24"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4">
-                            <TextBlock Text="开发者: " Foreground="{DynamicResource TextTertiaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_About_Developer}" Foreground="{DynamicResource TextTertiaryBrush}"/>
                             <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4">
-                            <TextBlock Text="技术栈: " Foreground="{DynamicResource TextTertiaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_About_Stack}" Foreground="{DynamicResource TextTertiaryBrush}"/>
                             <TextBlock Text=".NET WPF, Win32 API" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
 
@@ -874,7 +910,7 @@
                         <TextBlock Margin="0,6" FontSize="14">
                             <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint" RequestNavigate="Hyperlink_RequestNavigate">
                                 <Run Text="&#xE943;" FontFamily="Segoe MDL2 Assets"/> <!-- GitHub/Code Icon style -->
-                                <Run Text="GitHub 主页"/>
+                                <Run Text="{DynamicResource L_Settings_About_Github}"/>
                             </Hyperlink>
                         </TextBlock>
 
@@ -882,7 +918,7 @@
                             <!-- 链接到 Releases 页面 -->
                             <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
                                 <Run Text="&#xE895; " FontFamily="Segoe MDL2 Assets"/> <!-- Sync/Update Icon style -->
-                                <Run Text="检查更新"/>
+                                <Run Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
                             </Hyperlink>
                         </TextBlock>
 
@@ -890,7 +926,7 @@
                             <!-- 帮助链接留空，使用特殊协议头标记或在代码中拦截 -->
                             <Hyperlink NavigateUri="cmd://help" RequestNavigate="Hyperlink_RequestNavigate">
                                 <Run Text=" " FontFamily="Segoe MDL2 Assets"/> <!-- Help Icon style -->
-                                <Run Text="帮助文档"/>
+                                <Run Text="{DynamicResource L_Settings_About_Help}"/>
                             </Hyperlink>
                         </TextBlock>
 
@@ -913,7 +949,7 @@
                            VerticalAlignment="Center" FontSize="12"/>
 
                 <Button DockPanel.Dock="Right" 
-                        Content="确定" 
+                        Content="{DynamicResource L_Common_OK}" 
                         Width="100" Height="32" 
                         Click="OkButton_Click" 
                         IsDefault="True"

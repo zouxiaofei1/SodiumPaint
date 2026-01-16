@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="调整大小" 
+        Title="{DynamicResource L_ResizeCanvas_Title}" 
         Height="320" Width="440"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" 
@@ -231,7 +231,7 @@
                            RenderOptions.BitmapScalingMode="HighQuality"/>
 
                     <TextBlock Padding="36,0,0,0" 
-                               Text="调整画布大小" 
+                               Text="{DynamicResource L_ResizeCanvas_Title}" 
                                FontSize="14" 
                                FontWeight="SemiBold" 
                                Foreground="{DynamicResource TextPrimaryBrush}" 
@@ -248,7 +248,7 @@
 
             <!-- 2. 模式选择 -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="24,16,24,8">
-                <TextBlock Text="模式：" 
+                <TextBlock Text="{DynamicResource L_ResizeCanvas_Mode}" 
                            VerticalAlignment="Center" 
                            Foreground="{DynamicResource TextSecondaryBrush}" 
                            Margin="0,0,10,0"/>
@@ -258,8 +258,8 @@
                           SelectedIndex="0" 
                           SelectionChanged="ModeComboBox_SelectionChanged" 
                           Height="30">
-                    <ComboBoxItem Content="缩放图片 (Resample)"/>
-                    <ComboBoxItem Content="调整画布 (Canvas)"/>
+                    <ComboBoxItem Content="{DynamicResource L_ResizeCanvas_Mode_Resample}"/>
+                    <ComboBoxItem Content="{DynamicResource L_ResizeCanvas_Mode_Canvas}"/>
                 </ComboBox>
             </StackPanel>
 
@@ -289,7 +289,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- 宽度 -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="宽度" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource L_ResizeCanvas_Width}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
                 <Slider x:Name="WidthSlider" Grid.Row="0" Grid.Column="1" 
                         Style="{StaticResource MinimalSliderStyle}"
                         Minimum="-1" Maximum="1" Value="0" LargeChange="0.1"
@@ -300,10 +300,10 @@
                 <!-- 锁链按钮 (跨列) -->
                 <ToggleButton x:Name="AspectRatioToggle" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Center" Margin="-100,4,-100,4"
                               Style="{StaticResource LinkToggleButtonStyle}" IsChecked="True"
-                              ToolTip="保持长宽比" Click="AspectRatioToggle_Click"/>
+                              ToolTip="{DynamicResource L_ResizeCanvas_KeepAspectRatio}" Click="AspectRatioToggle_Click"/>
 
                 <!-- 高度 -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="高度" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource L_ResizeCanvas_Height}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
                 <Slider x:Name="HeightSlider" Grid.Row="2" Grid.Column="1" 
                         Style="{StaticResource MinimalSliderStyle}"
                         Minimum="-1" Maximum="1" Value="0" LargeChange="0.1"
@@ -320,8 +320,8 @@
             <!-- 4. 底部按钮 -->
             <Border Grid.Row="3" Padding="16" Background="Transparent">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="OkButton" Content="确定" Width="80" IsDefault="True" Click="OkButton_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                    <Button x:Name="CancelButton" Content="取消" Width="80" Margin="10,0,0,0" IsCancel="True" Style="{StaticResource SecondaryButtonStyle}" Click="CancelButton_Click"/>
+                    <Button x:Name="OkButton" Content="{DynamicResource L_Common_OK}" Width="80" IsDefault="True" Click="OkButton_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                    <Button x:Name="CancelButton" Content="{DynamicResource L_Common_Cancel}" Width="80" Margin="10,0,0,0" IsCancel="True" Style="{StaticResource SecondaryButtonStyle}" Click="CancelButton_Click"/>
                 </StackPanel>
             </Border>
         </Grid>

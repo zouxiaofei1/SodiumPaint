@@ -26,6 +26,11 @@ namespace TabPaint
         Zoom,          // 缩放 (默认)
         SwitchImage    // 切图
     }
+    public enum AppLanguage
+    {
+        ChineseSimplified,
+        English
+    }
     public enum AppTheme
     {
         Light,
@@ -102,7 +107,7 @@ namespace TabPaint
             }
         }
     }
-    public partial class MainWindow
+        public partial class MainWindow
     {
         private void SaveAppState()
         {
@@ -238,6 +243,21 @@ namespace TabPaint
     }
     public class AppSettings : INotifyPropertyChanged
     {
+        private AppLanguage _language = AppLanguage.ChineseSimplified;
+
+        [JsonPropertyName("language")]
+        public AppLanguage Language
+        {
+            get => _language;
+            set
+            {
+                if (_language != value)
+                {
+                    _language = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private SelectionClearMode _selectionClearMode = SelectionClearMode.White; // 默认白底
 
         [JsonPropertyName("selection_clear_mode")]

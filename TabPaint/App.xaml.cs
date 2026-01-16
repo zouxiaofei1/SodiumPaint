@@ -73,6 +73,7 @@ namespace TabPaint
                 });
             });
             var currentSettings = SettingsManager.Instance.Current;
+            LocalizationManager.ApplyLanguage(currentSettings.Language);
             currentSettings.PropertyChanged += Settings_PropertyChanged;
             AppTheme targetTheme = currentSettings.ThemeMode;
             // --- 原有的启动逻辑 ---
@@ -125,6 +126,12 @@ namespace TabPaint
             else if (e.PropertyName == nameof(AppSettings.ThemeAccentColor))
             {
                 ThemeManager.RefreshAccentColor(settings.ThemeAccentColor);
+            }
+
+            // 语言变更：更新资源字典（已抽到 DynamicResource 的文本会即时更新）
+            if (e.PropertyName == nameof(AppSettings.Language))
+            {
+                LocalizationManager.ApplyLanguage(settings.Language);
             }
 
             if (e.PropertyName == nameof(AppSettings.PenThickness))

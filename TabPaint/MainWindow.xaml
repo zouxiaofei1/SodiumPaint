@@ -153,24 +153,24 @@
                                   AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
                         <ScrollViewer.ContextMenu>
                             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
-                                <MenuItem Header="复制" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
+                                <MenuItem Header="{DynamicResource L_Main_Ctx_Copy}" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
                                     <MenuItem.Icon>
                                         <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="剪切" InputGestureText="Ctrl+X" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
+                                <MenuItem Header="{DynamicResource L_Main_Ctx_Cut}" InputGestureText="Ctrl+X" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
                                     <MenuItem.Icon>
                                         <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="粘贴" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick">
+                                <MenuItem Header="{DynamicResource L_Main_Ctx_Paste}" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick">
                                     <MenuItem.Icon>
                                         <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
 
                                 <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
-                                <MenuItem Header="固定缩放倍数" 
+                                <MenuItem Header="{DynamicResource L_Main_Ctx_FixedZoom}" 
                                           IsCheckable="True" 
                                           Style="{StaticResource Win11MenuItemStyle}"
                                           DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
@@ -179,7 +179,7 @@
                                         <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                       <MenuItem Header="显示标尺" IsCheckable="True" 
+                       <MenuItem Header="{DynamicResource L_Main_Ctx_ShowRulers}" IsCheckable="True" 
           Style="{StaticResource Win11MenuItemStyle}"
           DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
           IsChecked="{Binding ShowRulers, Mode=TwoWay}">
@@ -190,47 +190,47 @@
                                 <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
 
                                 <!-- 二级菜单：小工具 -->
-                                <MenuItem x:Name="miniTools" Header="小工具" Style="{StaticResource Win11MenuItemStyle}">
+                                <MenuItem x:Name="miniTools" Header="{DynamicResource L_Main_Ctx_MiniTools}" Style="{StaticResource Win11MenuItemStyle}">
                                     <MenuItem.Icon>
                                         <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
 
-                                    <MenuItem Header="AI 一键抠图 (RMBG)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AI_RemoveBg}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
                                         <MenuItem.Icon>
                                             <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
 
                                         </MenuItem.Icon>
                                     </MenuItem>
 
-                                    <MenuItem Header="色差抠图 (去除背景)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AI_ChromaKey}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
                                         <MenuItem.Icon>
                                             <Path Data="{DynamicResource ChromaKey_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
 
-                                    <MenuItem Header="提取图中文字 (OCR)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_OCR}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
                                         <MenuItem.Icon>
                                             <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
 
-                                    <MenuItem Header="屏幕取色器" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Click="OnScreenColorPickerClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_ScreenPicker}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Click="OnScreenColorPickerClick">
                                         <MenuItem.Icon>
                                             <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
 
-                                    <MenuItem Header="复制颜色代码 (#HEX)" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"  Click="OnCopyColorCodeClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_CopyHex}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"  Click="OnCopyColorCodeClick">
                                         <MenuItem.Icon>
                                             <TextBlock Text="🎨" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="智能裁切空白" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"  Click="OnAutoCropClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AutoCrop}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"  Click="OnAutoCropClick">
                                         <MenuItem.Icon>
                                             <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="一键加边框 (2px)" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AddBorder}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
                                         <MenuItem.Icon>
                                             <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="2" Width="14" Height="14" CornerRadius="1"/>
                                         </MenuItem.Icon>
@@ -434,7 +434,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <!-- Tooltip 保持简单绑定即可，因为它只负责显示结果 -->
                                             <TextBlock Text="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current.PenThickness, StringFormat={}{0:F0}}"/>
-                                            <TextBlock Text=" 像素" Margin="2,0,0,0"/>
+                                            <TextBlock Text="{DynamicResource L_Main_Unit_Pixel}" Margin="2,0,0,0"/>
                                         </StackPanel>
                                     </ToolTip>
                                 </Slider.ToolTip>
@@ -624,7 +624,7 @@
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
                 </Border.Effect>
-                <TextBlock x:Name="InfoToastText" Text="提示信息" Foreground="{DynamicResource TextInverseBrush}" FontSize="14" VerticalAlignment="Center"/>
+                <TextBlock x:Name="InfoToastText" Text="{DynamicResource L_Main_Toast_Info}" Foreground="{DynamicResource TextInverseBrush}" FontSize="14" VerticalAlignment="Center"/>
             </Border>
         </Grid>
         <!-- #endregion -->
@@ -644,10 +644,10 @@
                       Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
 
                 <!-- 提示文字 -->
-                <TextBlock x:Name="DragOverlayText" Text="拖放以打开" Foreground="{DynamicResource TextInverseBrush}" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
+                <TextBlock x:Name="DragOverlayText" Text="{DynamicResource L_Main_Drag_DropToOpen}" Foreground="{DynamicResource TextInverseBrush}" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
 
                 <!-- 副标题 -->
-                <TextBlock x:Name="DragOverlaySubText" Text="释放鼠标以确认" Foreground="{DynamicResource BorderMediumBrush}" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
+                <TextBlock x:Name="DragOverlaySubText" Text="{DynamicResource L_Main_Drag_ReleaseToConfirm}" Foreground="{DynamicResource BorderMediumBrush}" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
             </StackPanel>
         </Grid>
         <!-- #endregion -->

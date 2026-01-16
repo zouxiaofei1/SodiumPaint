@@ -4,17 +4,13 @@
              xmlns:local="clr-namespace:TabPaint"
             >
     <Application.Resources>
-       
-
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-
                 <ResourceDictionary Source="Resources/LightTheme.xaml"/>
-              
+                <!-- Language dictionary will be swapped at runtime by LocalizationManager -->
+                <ResourceDictionary Source="Resources/Lang.zh-CN.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
         </ResourceDictionary>
-
     </Application.Resources>
     
 </Application>

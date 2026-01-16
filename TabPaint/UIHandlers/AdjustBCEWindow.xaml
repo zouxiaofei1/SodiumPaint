@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:TabPaint"
-        Title="调整" Height="290" Width="380"
+        Title="{DynamicResource L_AdjustBCE_Title}" Height="290" Width="380"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="Transparent"
@@ -198,7 +198,7 @@
                        RenderOptions.BitmapScalingMode="HighQuality"/>
                 <!-- 标题颜色：之前 #666666 -> TextSecondaryBrush -->
                 <TextBlock Grid.Column="1" 
-                           Text="调整图像" 
+                           Text="{DynamicResource L_AdjustBCE_Title}" 
                            VerticalAlignment="Center" 
                            HorizontalAlignment="Left"
                            FontSize="12" 
@@ -216,7 +216,7 @@
 
                     <!-- 亮度 -->
                     <Grid Margin="0,0,0,2">
-                        <TextBlock Text="亮度" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{DynamicResource L_AdjustBCE_Brightness}" Style="{StaticResource LabelStyle}"/>
                         <TextBox x:Name="BrightnessBox" 
                                  Style="{StaticResource ValueInputStyle}" 
                                  Text="0"
@@ -233,7 +233,7 @@
 
                     <!-- 对比度 -->
                     <Grid Margin="0,0,0,2">
-                        <TextBlock Text="对比度" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{DynamicResource L_AdjustBCE_Contrast}" Style="{StaticResource LabelStyle}"/>
                         <TextBox x:Name="ContrastBox" 
                                  Style="{StaticResource ValueInputStyle}" 
                                  Text="0"
@@ -250,7 +250,7 @@
 
                     <!-- 曝光 -->
                     <Grid Margin="0,0,0,2">
-                        <TextBlock Text="曝光" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{DynamicResource L_AdjustBCE_Exposure}" Style="{StaticResource LabelStyle}"/>
                         <TextBox x:Name="ExposureBox" 
                                  Style="{StaticResource ValueInputStyle}" 
                                  Text="0.0"
@@ -277,13 +277,13 @@
                 <Grid>
                     <!-- 左侧：重置按钮 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                        <Button Content="重置" Width="60" Click="Reset_Click"/>
+                        <Button Content="{DynamicResource L_Common_Reset}" Width="60" Click="Reset_Click"/>
                     </StackPanel>
 
                     <!-- 右侧：确定/取消 -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="确定" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
-                        <Button Content="取消" Width="80" Click="Cancel_Click" IsCancel="True"/>
+                        <Button Content="{DynamicResource L_Common_OK}" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
+                        <Button Content="{DynamicResource L_Common_Cancel}" Width="80" Click="Cancel_Click" IsCancel="True"/>
                     </StackPanel>
                 </Grid>
             </Border>
