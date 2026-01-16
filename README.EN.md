@@ -104,4 +104,4 @@ A: Supports major formats including JPG, PNG, BMP, WEBP, ICO, GIF (View & Play),
 This project is open-source under the **MIT License**.
 Powered by: `MicaWPF`, `SkiaSharp`, `XamlAnimatedGif`, `OnnxRuntime`, `WriteableBitmapEx`.
 
-*   **Feedback**: Please submit [Issues](https://github.com/zouxiaofei1/TabPaint/issues) or email `zouxiaofei1@gmail.com`
+*   **Feedback**: Please submit [Issues](https://github.com/zouxiaofei1/TabPaint/issues) 

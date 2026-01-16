@@ -88,7 +88,7 @@ namespace TabPaint
             else
             {
 #if DEBUG
-                //  filePath = @"E:\dev\"; //10图片
+                  filePath = @"E:\dev\misc\0000.png"; //10图片
                 //         filePath = @"E:\dev\res\"; // 150+图片
                 //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
                 // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹

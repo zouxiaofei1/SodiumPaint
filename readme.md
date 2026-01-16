@@ -106,5 +106,5 @@ A: 支持 JPG, PNG, BMP, WEBP, ICO, GIF (查看与播放), HEIC, TIF 等主流�
 本项目采用 **MIT License** 开源。
 使用了以下依赖：`MicaWPF`, `SkiaSharp`, `XamlAnimatedGif`, `OnnxRuntime`, `WriteableBitmapEx`
 
-*   **反馈与建议**: 请提交 [Issues](https://github.com/zouxiaofei1/TabPaint/issues) 或发送邮件至 `zouxiaofei1@gmail.com`
+*   **反馈与建议**: 请提交 [Issues](https://github.com/zouxiaofei1/TabPaint/issues) 
 
