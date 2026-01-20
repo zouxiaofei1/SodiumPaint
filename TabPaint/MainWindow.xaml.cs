@@ -104,11 +104,36 @@ namespace TabPaint
                 {
                     if (FileTabs.Count == 0)
                     {
-                        BlanketMode = true;
-                        CreateNewTab(TabInsertPosition.AfterCurrent, true);
+                        bool welcomeOpened = false;
+                        var settings = SettingsManager.Instance.Current;
 
+                        // 检查是否是第一次运行
+                        if (settings.IsFirstRun)
+                        {
+                            // 获取 exe 同级目录下的欢迎图片路径
+                            string welcomePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Welcome_zh_cn.png");
+
+                            if (File.Exists(welcomePath))
+                            {
+                                await OpenFilesAsNewTabs([welcomePath]);
+                                welcomeOpened = true;
+
+                                settings.IsFirstRun = false;
+                            }
+                        }
+
+                        // 如果没有打开欢迎页（文件不存在 或 不是第一次运行），则进入默认的空白模式
+                        if (!welcomeOpened)
+                        {
+                            BlanketMode = true;
+                            CreateNewTab(TabInsertPosition.AfterCurrent, true);
+                        }
                     }
-                    else SwitchToTab(FileTabs[0]);
+                    else
+                    {
+                        // 情况C: 有历史会话，切换到第一个标签
+                        SwitchToTab(FileTabs[0]);
+                    }
                 }
             }
             await Task.Run(() =>

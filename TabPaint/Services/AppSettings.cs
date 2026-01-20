@@ -273,6 +273,19 @@ namespace TabPaint
                 }
             }
         }
+        private bool _isFirstRun = true; // 默认为 true
+        public bool IsFirstRun
+        {
+            get => _isFirstRun;
+            set
+            {
+                if (_isFirstRun != value)
+                {
+                    _isFirstRun = value;
+                    OnPropertyChanged(nameof(IsFirstRun));
+                }
+            }
+        }
         private bool _startInViewMode = false; // 默认关闭，即启动为画图模式
 
         [JsonPropertyName("start_in_view_mode")]

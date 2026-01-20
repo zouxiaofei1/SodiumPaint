@@ -113,12 +113,6 @@ namespace TabPaint
                 if (resources.Contains("WindowBackgroundBrush")) resources.Remove("WindowBackgroundBrush");
                 resources["WindowBackgroundBrush"] = win10DarkBg;
 
-                // 同时，为了让工具栏和背景区分开，建议在 Win10 下微调 ChromeLowBrush
-                // 让工具栏稍微亮一点点，形成层级
-                var win10Chrome = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D2D"));
-                win10Chrome.Freeze();
-                if (resources.Contains("ChromeLowBrush")) resources.Remove("ChromeLowBrush");
-                resources["ChromeLowBrush"] = win10Chrome;
             }
             else
             {

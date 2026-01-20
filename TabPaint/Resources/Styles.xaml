@@ -308,7 +308,7 @@
                                 BorderBrush="{DynamicResource BorderLightBrush}" 
                                 BorderThickness="1" 
                                 CornerRadius="8" 
-                                Padding="2">
+                                Padding="2"  TextElement.Foreground="{DynamicResource TextPrimaryBrush}">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
                                 </Border.Effect>
@@ -808,7 +808,7 @@
                                     BorderBrush="{DynamicResource BorderLightBrush}"
                                     BorderThickness="1"
                                     CornerRadius="4"
-                                
+                                TextElement.Foreground="{DynamicResource TextPrimaryBrush}"
                                     Margin="3,0"
                                     Padding="4">
                                     <ItemsPresenter x:Name="ItemsPresenter"
@@ -1278,8 +1278,8 @@
     <Style x:Key="FluentScrollBar" TargetType="{x:Type ScrollBar}">
         <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
         <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
-        <Setter Property="Background" Value="{StaticResource ScrollBarTrackBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbIdleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ScrollBarTrackBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ScrollBarThumbIdleBrush}"/>
         <Setter Property="Width" Value="Auto"/>
         <Setter Property="Height" Value="Auto"/>
         <Setter Property="Template">
@@ -1358,7 +1358,7 @@
                         </Trigger>
 
                         <Trigger Property="IsMouseOver" Value="true">
-                            <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbHoverBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource ScrollBarThumbHoverBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -1401,7 +1401,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbHoverBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource ScrollBarThumbHoverBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -1445,7 +1445,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter Property="Foreground" Value="{StaticResource ScrollBarThumbHoverBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource ScrollBarThumbHoverBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -1508,7 +1508,7 @@
                         <!-- (可选) 如果你真的想在角落放个方块填补背景 -->
                         <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                 Width="18" Height="18" Margin="0,0,0,0"
-                                Background="{StaticResource ScrollBarTrackBrush}"
+                                Background="{DynamicResource ScrollBarTrackBrush}"
                               
                                 Visibility="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}">
                             <Border.Style>
