@@ -151,10 +151,8 @@ public class ShapeTool : ToolBase
         int w = (int)Math.Abs(current.X - _startPoint.X);
         int h = (int)Math.Abs(current.Y - _startPoint.Y);
 
-        // 直接设置主窗口的属性
         var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-        // 可以在这里加上 Shape 的线宽补偿，或者只显示内容大小，这里显示几何大小
-        mw.SelectionSize = $"{w}×{h}像素";
+        mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
     }
 
     private BitmapSource RenderShapeToBitmapClipped(Point globalStart, Point globalEnd, Rect validBounds, Color color, double thickness, double dpiX, double dpiY)
@@ -168,8 +166,6 @@ public class ShapeTool : ToolBase
         DrawingVisual drawingVisual = new DrawingVisual();
         using (DrawingContext dc = drawingVisual.RenderOpen())
         {
-            // 关键点：将坐标系平移，使得 validBounds 的左上角对应位图的 (0,0)
-            // 这样，原来在 validBounds 左边的部分（即负坐标部分）就会被裁剪掉
             dc.PushTransform(new TranslateTransform(-validBounds.X, -validBounds.Y));
 
             Pen pen = new Pen(new SolidColorBrush(color), thickness);

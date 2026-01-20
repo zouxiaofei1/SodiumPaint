@@ -21,8 +21,6 @@ namespace TabPaint
         {
             if (_router == null) return;
 
-            // --- 关键修改：从资源字典动态获取当前主题色画刷 ---
-            // 使用 FindResource 确保即便在运行时切换了主题色，这里也能拿到最新的
             var accentBrush = Application.Current.FindResource("ToolAccentBrush") as Brush;
             var accentSubtleBrush = Application.Current.FindResource("ToolAccentSubtleSelectedBrush") as Brush;
 
@@ -99,21 +97,14 @@ namespace TabPaint
             }
             else
             {
-                // === 新增/修改逻辑：处理复杂工具 (画刷 & 形状) ===
-
-                // A. 画刷菜单高亮处理
                 if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
                     // 1. 高亮主按钮
                     MainToolBar.BrushToggle.BorderBrush = accentBrush;
                     MainToolBar.BrushToggle.Background = accentSubtleBrush;
 
-                    // 2. 高亮下拉菜单内的具体项
-                    // 获取当前画刷样式的 Tag 字符串 (例如 "Round", "Square", "Spray")
                     string brushTag = _ctx.PenStyle.ToString();
 
-                    // 调用通用辅助方法更新菜单
-                    // 注意：需要确保你的 ToolBarControl x:Name 了 StackPanel，或者我们通过 Popup 遍历
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, brushTag);
                 }
                 else
@@ -129,11 +120,6 @@ namespace TabPaint
                     MainToolBar.ShapeToggle.BorderBrush = accentBrush;
                     MainToolBar.ShapeToggle.Background = accentSubtleBrush;
 
-                    // 2. 高亮下拉菜单内的具体项
-                    // 我们需要从 shapeTool 获取当前的 ShapeType，但 ShapeType 是私有的或受保护的
-                    // 建议在 ShapeTool 中公开一个属性，或者在这里反射 (不推荐反射，建议修改 ShapeTool)
-
-                    // 假设 ShapeTool 有一个公开属性 CurrentShapeType
                     string shapeTag = shapeTool.CurrentShapeType.ToString();
 
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, shapeTag);
@@ -194,32 +180,32 @@ namespace TabPaint
                 {
                     case "SelectTool":
                         resource = FindResource("Select_Image"); // 它是 Geometry
-                        toolName = "选择区域";
+                        toolName = LocalizationManager.GetString("L_ToolBar_Tool_Select");
                         break;
 
                     case "PenTool":
                         resource = FindResource("Pencil_Image"); // 它是 ImageSource
-                        toolName = "铅笔";
+                        toolName = LocalizationManager.GetString("L_ToolBar_Tool_Pen");
                         break;
 
                     case "EyedropperTool":
                         resource = FindResource("Pick_Colour_Image");
-                        toolName = "取色器";
+                        toolName = LocalizationManager.GetString("L_ToolBar_Tool_Eyedropper");
                         break;
 
                     case "EraserTool":
                         resource = FindResource("Eraser_Image");
-                        toolName = "橡皮擦";
+                        toolName = LocalizationManager.GetString("L_ToolBar_Tool_Eraser");
                         break;
 
                     case "FillTool":
                         resource = FindResource("Fill_Bucket_Image");
-                        toolName = "填充";
+                        toolName = LocalizationManager.GetString("L_ToolBar_Tool_Fill");
                         break;
 
                     case "TextTool":
                         resource = FindResource("Text_Image"); // 它是 Geometry
-                        toolName = "文字";
+                        toolName = LocalizationManager.GetString("L_ToolBar_Tool_Text");
                         break;
                 }
 

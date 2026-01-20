@@ -76,8 +76,6 @@ namespace TabPaint
                 if (current != null)                              // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
                     if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                     {
-                        // 显示一个小的加载状态或日志
-                        // Debug.WriteLine("Waiting for background save to finish...");
                         try
                         {
                             await pendingSave;
@@ -348,8 +346,11 @@ namespace TabPaint
                 _progressCts = null;
             }
             string fileToRead = sourcePath ?? filePath;
-            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath)) { await LoadBlankCanvasAsync(filePath); return; }
-
+            if (IsVirtualPath(filePath) && string.IsNullOrEmpty(sourcePath))
+            {
+                await LoadBlankCanvasAsync(filePath);
+                return;
+            }
 
             if (!File.Exists(fileToRead))
             {
@@ -362,7 +363,7 @@ namespace TabPaint
                 var fileInfo = new FileInfo(fileToRead);
                 if (fileInfo.Length == 0)
                 {
-                    await LoadBlankCanvasAsync(filePath, "文件为空，已创建空白画布");
+                    await LoadBlankCanvasAsync(filePath, LocalizationManager.GetString("L_Load_Reason_Empty"));
                     return;
                 }
             }
@@ -390,7 +391,7 @@ namespace TabPaint
                 if (dimensions == null)
                 {
                     // 方法1：直接调用错误处理（推荐）
-                    await LoadBlankCanvasAsync(filePath, "文件头部损坏或格式不支持，已创建空白画布");
+                    await LoadBlankCanvasAsync(filePath, LocalizationManager.GetString("L_Load_Reason_Header"));
                     return;
 
                 }
@@ -422,7 +423,7 @@ namespace TabPaint
                     // 小图直接显示尺寸
                     await Dispatcher.InvokeAsync(() =>
                     {
-                        _imageSize = $"{originalWidth}×{originalHeight}像素";
+                        _imageSize = $"{originalWidth}×{originalHeight}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
                         OnPropertyChanged(nameof(ImageSize));
                     });
                 }
@@ -590,7 +591,7 @@ namespace TabPaint
                     _undo?.ClearRedo();
                     _isEdited = false;
                     SetPreviewSlider();
-                    _imageSize = $"{_surface.Width}×{_surface.Height}像素";
+                    _imageSize = $"{_surface.Width}×{_surface.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                     OnPropertyChanged(nameof(ImageSize));
                     _hasUserManuallyZoomed = false;
                     FitToWindow();
@@ -631,7 +632,7 @@ namespace TabPaint
 
                 // 取消可能的进度条
                 _progressCts?.Cancel();
-                await LoadBlankCanvasAsync(filePath, "文件损坏或格式不支持，已创建空白画布");
+                await LoadBlankCanvasAsync(filePath, LocalizationManager.GetString("L_Load_Reason_Corrupt"));
             }
             finally
             {
@@ -705,7 +706,7 @@ namespace TabPaint
                 if (IsVirtualPath(filePath))
                 {
                     var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
-                    _currentFileName = tab?.FileName ?? "未命名";
+                    _currentFileName = tab?.FileName ?? LocalizationManager.GetString("L_Common_Untitled");
                 }
                 else
                 {
@@ -715,8 +716,8 @@ namespace TabPaint
                 _currentFilePath = filePath;
 
                 // 设置底部栏信息
-                this.CurrentImageFullInfo = reason ?? "[新建图像] 内存文件";
-                this.FileSize = "未保存";
+                this.CurrentImageFullInfo = reason ?? LocalizationManager.GetString("L_Load_Info_Memory");
+                this.FileSize = LocalizationManager.GetString("L_Status_Unsaved");
 
                 // 初始化 Surface 和 Canvas
                 if (_surface == null) _surface = new CanvasSurface(_bitmap);
@@ -726,7 +727,7 @@ namespace TabPaint
                 _undo?.ClearRedo();
                 _isEdited = false; // 刚打开的空文件不算被编辑过，或者是空文件视为原状
 
-                _imageSize = $"{width}×{height}像素";
+                _imageSize = $"{width}×{height}{LocalizationManager.GetString("L_Main_Unit_Pixel")}";
                 OnPropertyChanged(nameof(ImageSize));
                 UpdateWindowTitle();
 

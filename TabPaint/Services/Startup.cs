@@ -49,7 +49,6 @@ namespace TabPaint
             window.Topmost = false; // 取消置顶
             window.Focus();
 
-            // 如果需要更激进的置顶，可以使用 SetForegroundWindow API
             SetForegroundWindow(new System.Windows.Interop.WindowInteropHelper(window).Handle);
         }
 

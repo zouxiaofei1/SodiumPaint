@@ -20,10 +20,6 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-       
-        /// <summary>
-        /// 清空当前所有状态，并切换到新文件所在的文件夹上下文
-        /// </summary>
         private async Task SwitchWorkspaceToNewFile(string filePath)
         {
             try
@@ -178,9 +174,6 @@ namespace TabPaint
         {
             // 防止初始化时触发
             if (_tools == null || _router.CurrentTool != _tools.Text) return;
-
-            // 调用 TextTool 内部方法刷新当前 TextBox
-            // 注意：需要将 _tools.Text 强制转换为 TextTool 类型才能访问 UpdateCurrentTextBoxAttributes
             (_tools.Text as TextTool)?.UpdateCurrentTextBoxAttributes();
         }
 

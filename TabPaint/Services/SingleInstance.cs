@@ -19,7 +19,6 @@ namespace TabPaint
             return createdNew;
         }
 
-        // 【新增】手动释放互斥体（表示"我逻辑上已经退出了，新来的可以启动了"）
         public static void Release()
         {
             if (_mutex != null)
@@ -33,8 +32,6 @@ namespace TabPaint
                 _mutex.Close();
                 _mutex = null;
             }
-
-            // 同时停止监听管道，防止新实例误连到这个即将死亡的进程
             _pipeCts?.Cancel();
         }
 
@@ -57,13 +54,8 @@ namespace TabPaint
             }
             catch (Exception)
             {
-                // 关键：如果连接失败（旧实例Release了但进程还没死），
-                // 这里其实应该考虑是否由当前实例直接启动（但由于架构限制，通常让用户重试，
-                // 或者在这里不做处理，因为IsFirstInstance的逻辑在上面已经分流了）
             }
         }
-
-        // 监听后续实例消息
         public static void ListenForArgs(Action<string> onFileReceived)
         {
             _pipeCts = new CancellationTokenSource();

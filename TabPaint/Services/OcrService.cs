@@ -27,7 +27,6 @@ namespace TabPaint
 
             if (_ocrEngine == null)
             {
-                // 尝试当前输入法
                 try 
                 {
                     _ocrEngine = OcrEngine.TryCreateFromLanguage(new Language(Language.CurrentInputMethodLanguageTag));
@@ -58,9 +57,6 @@ namespace TabPaint
         // 辅助方法：放大图片以提高识别率
         private BitmapSource PreprocessImage(BitmapSource source)
         {
-            // 如果图片太小，OCR 效果极差。
-            // 这里简单的逻辑是：如果宽或高较小，强制放大 2 倍。
-            // 也可以更激进，统一放大 1.5x - 2.0x，这对小字体识别提升巨大。
             
             double scale = 1.0;
             if (source.PixelHeight < 400 || source.PixelWidth < 400)
@@ -69,7 +65,6 @@ namespace TabPaint
             }
             else
             {
-                // 即使是大图，稍微放大一点通常也有助于提升清晰度
                 scale = 1.5;
             }
 
@@ -85,7 +80,7 @@ namespace TabPaint
             if (_ocrEngine == null)
             {
                 InitBestEngine();
-                if (_ocrEngine == null) return "错误：未安装 OCR 语言包，请在 Windows 设置 -> 时间和语言 -> 语言中添加语言包。";
+                if (_ocrEngine == null) return LocalizationManager.GetString("L_OCR_Error_NoLangPack");
             }
 
             try
@@ -125,8 +120,6 @@ namespace TabPaint
                                 if (i < line.Words.Count - 1)
                                 {
                                     var nextWord = line.Words[i + 1];
-                                    // 只有当前字和下一个字都不是CJK字符时，才加空格
-                                    // (比如 "Hello" 和 "World" 之间加，"你" 和 "好" 之间不加)
                                     bool currentIsCjk = currentWord.Text.Any(IsCjk);
                                     bool nextIsCjk = nextWord.Text.Any(IsCjk);
 
@@ -144,7 +137,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                return $"OCR 识别失败: {ex.Message}";
+                return string.Format(LocalizationManager.GetString("L_OCR_Failed_Prefix"), ex.Message);
             }
         }
     }

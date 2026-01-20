@@ -271,12 +271,8 @@ namespace TabPaint
                 // 默认坐标
                 Point targetPoint = new Point(0, 0);
 
-                // === 核心修改逻辑 ===
-                // 1. 判断触发源：是快捷键(InputBinding/Shortcut) 还是 菜单点击(MenuItem)
                 if (sender is MainWindow || e is System.Windows.Input.KeyEventArgs) // 快捷键触发通常 sender 是 Window 或者 e 是 KeyEventArgs
                 {
-                    // 快捷键触发：主动获取鼠标在 Canvas 上的当前位置
-                    // 注意：_mainCanvas 是你存放图片的控件名（可能是 InkCanvas 或 Image 的父容器）
                     targetPoint = Mouse.GetPosition(CanvasWrapper);
                 }
                 else
@@ -288,20 +284,14 @@ namespace TabPaint
                 int x = (int)targetPoint.X;
                 int y = (int)targetPoint.Y;
 
-                // 2. 验证坐标是否在图片范围内
-                // 如果点到了图片外面（灰白格子区域），默认取最近的边缘点或返回
                 if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
                 {
-                    // 如果是快捷键悬停在外部，可能不想执行，或者取边缘色。
-                    // 这里采用保留你原有的 Clamp 逻辑，防止越界崩溃
                     x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
                     y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
                 }
 
-                // 3. 获取该点的颜色作为目标色
                 Color targetColor = GetPixelColor(x, y);
 
-                // 4. 执行抠图（容差 45 左右通常效果较好）
                 ApplyColorKey(targetColor, 45);
             }
             catch (Exception ex)
@@ -314,8 +304,6 @@ namespace TabPaint
         {
             if (_surface?.Bitmap == null) return;
 
-            // --- 关键：接入撤销系统 ---
-            // 1. 告诉撤销管理器准备开始一次“操作”，它会拍摄快照
             _undo.BeginStroke();
 
             _bitmap.Lock();
@@ -362,14 +350,10 @@ namespace TabPaint
                     }
                 });
             }
-
-            // 3. 标记整个区域为 Dirty，以便 UI 刷新
             var fullRect = new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight);
             _bitmap.AddDirtyRect(fullRect);
             _bitmap.Unlock();
 
-            // 4. 提交到撤销栈
-            // 告诉管理器哪个区域变了。因为是全图滤镜，我们传入全图区域。
             _undo.AddDirtyRect(fullRect);
             _undo.CommitStroke();
 
@@ -397,7 +381,7 @@ namespace TabPaint
             {
                 // 3. UI 提示
                 var oldStatus = _imageSize;
-                _imageSize = "正在提取文字...";
+                _imageSize = LocalizationManager.GetString("L_OCR_Status_Processing");
                 this.Cursor = System.Windows.Input.Cursors.Wait;
 
                 // 4. 调用服务
@@ -446,8 +430,8 @@ namespace TabPaint
             if (!IsVcRedistInstalled())
             {
                 var result = System.Windows.MessageBox.Show(
-                    "AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。\n\n是否立即前往微软官网下载？",
-                    "缺少必要组件",
+                    LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Content"),
+                    LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Title"),
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
 
@@ -462,7 +446,7 @@ namespace TabPaint
                 return;
             }
             var statusText = _imageSize; // 暂存状态栏
-            _imageSize = "正在准备 AI 模型...";
+            _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
             OnPropertyChanged(nameof(ImageSize));
 
             try
@@ -472,17 +456,15 @@ namespace TabPaint
                 // 2. 准备模型 (带进度)
                 var progress = new Progress<double>(p =>
                 {
-                    _imageSize = $"下载模型中: {p:F1}%";
+                    _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Downloading_Format"), p);
                     OnPropertyChanged(nameof(ImageSize));
                 });
 
                 string modelPath = await aiService.PrepareModelAsync(progress);
 
-                _imageSize = "AI 正在思考...";
+                _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
 
-                // 3. 执行推理 (后台线程)
-                // 此时锁定UI防止用户乱动
                 this.IsEnabled = false;
 
                 var resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap);
@@ -497,9 +479,7 @@ namespace TabPaint
             ex.InnerException is DllNotFoundException ||
             ex.Message.Contains("onnxruntime"))
                 {
-                    ShowToast(
-                        "无法加载 AI 核心组件。\n这通常是因为系统缺少 C++ 运行库或 CPU 不支持 AVX 指令集。\n请尝试安装 VC++ Runtime。"
-                        );
+                    ShowToast(LocalizationManager.GetString("L_AI_Error_DllNotFound"));
                 }
                 else
                 {
@@ -517,8 +497,6 @@ namespace TabPaint
 
         private void ApplyAiResult(byte[] newPixels)
         {
-            // 利用 UndoRedoManager 的全图撤销机制
-            // 先把当前状态压入 Undo 栈
             _undo.PushFullImageUndo();
 
             // 更新 Bitmap
@@ -565,8 +543,6 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
     // 尝试在可视树中查找 Slider 内部的 Thumb
     if (OpacitySlider.Template != null)
     {
-        // "Thumb" 是 WPF 默认 Slider 模板中滑块部件的标准名称
-        // 如果你的 Win11VerticalSliderStyle 修改了模板，请确认名称是否为 "Thumb"
         _opacitySliderThumb = OpacitySlider.Template.FindName("Thumb", OpacitySlider) as Thumb;
     }
 }

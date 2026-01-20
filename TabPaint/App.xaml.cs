@@ -191,9 +191,7 @@ namespace TabPaint
             }
             base.OnStartup(e); _mainWindow = new MainWindow(filePath);
             _mainWindow.CheckFilePathAvailibility(filePath);
-            // 如果设置了“启动进入看图模式” 且 “看图模式使用深色背景”
-            // 则强制在启动时应用深色主题，无论全局设置是什么
-            //bool isDarkForWindow = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark) || (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _mainWindow._currentFileExists);
+   
             if (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _mainWindow._currentFileExists)
             {
                 targetTheme = AppTheme.Dark;

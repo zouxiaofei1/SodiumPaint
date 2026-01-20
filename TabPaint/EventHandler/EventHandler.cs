@@ -343,8 +343,6 @@ namespace TabPaint
                     case Key.Back:
                     case Key.Tab:
                     case Key.Enter:
-                        // 如果是输入框聚焦，遇到这些键直接返回，不让 MainWindow 处理，
-                        // 这样输入框就能正常移动光标和删除了
                         return;
                 }
 
@@ -426,14 +424,6 @@ namespace TabPaint
 
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            //  s(1);
-            //if (e.ClickCount == 2) // 双击标题栏切换最大化/还原
-            //{
-
-            //  //  MaximizeRestore_Click(sender, null);
-            //    return;
-            //}
-
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 if (_maximized)
@@ -588,9 +578,6 @@ namespace TabPaint
             var dataObj = System.Windows.Clipboard.GetDataObject();
             if (dataObj == null) return null;
 
-            // 1. [最优先] 尝试读取 "System.Drawing.Bitmap"
-            // 既然你的格式列表里有这个，说明它是 .NET 对象，直接拿出来用 GDI+ 读取
-            // GDI+ 会忽略错误的 Alpha 通道，显示出图片
             if (dataObj.GetDataPresent("System.Drawing.Bitmap"))
             {
                 try
@@ -794,7 +781,6 @@ namespace TabPaint
                 }, DispatcherPriority.Loaded);
             }
         }
-        // 修改方法签名，增加 isIntermediate 参数，默认为 false
         private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false, bool slient = false)
         {
 

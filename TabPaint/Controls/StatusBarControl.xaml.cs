@@ -130,8 +130,6 @@ namespace TabPaint.Controls
         }
         private void OnStatusBarMouseDown(object sender, MouseButtonEventArgs e)
         {
-            // 只有当点击的是 StatusBar 自身或者非按钮类控件时才抢夺焦点
-            // 这样不会影响点击其他按钮的功能
             if (sender is UIElement element)
             {
                 element.Focus();

@@ -153,10 +153,6 @@ namespace TabPaint
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool GetPhysicallyInstalledSystemMemory(out long TotalMemoryInKilobytes);
 
-        /// <summary>
-        /// 严苛版性能评估 (< 1ms)
-        /// 目标：将普通办公本压在 3-5 分，主流游戏本 6-8 分，顶级工作站 9-10 分。
-        /// </summary>
         public static int EstimatePerformanceScore()
         {
             double score = 0;
@@ -252,9 +248,6 @@ namespace TabPaint
 
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            // values[0]: 实际的粗细值 (double)
-            // values[1]: 当前工具的 Key (string)
-
             if (values.Length < 2 || values[0] == DependencyProperty.UnsetValue)
                 return 0.0;
 
@@ -276,8 +269,6 @@ namespace TabPaint
         {
             if (value is double sliderVal)
             {
-                // 注意：ConvertBack 无法直接拿到 Binding 的其他值，
-                // 所以这里必须通过单例访问当前的 ToolKey
                 string toolKey = SettingsManager.Instance.Current.CurrentToolKey;
                 double maxSize = GetMaxSizeForKey(toolKey);
 

@@ -110,7 +110,7 @@ namespace TabPaint.Controls
         {
             // 防止事件冒泡导致的多次触发（如果子菜单也有Opened事件）
             var menuItem = e.OriginalSource as MenuItem;
-            if (menuItem == null || menuItem.Header.ToString() != "文件") return;
+            if (menuItem == null || menuItem.Header.ToString() != "文件" || menuItem.Header.ToString() != "Files") return;
         
             UpdateRecentFilesMenu();
         }
@@ -130,7 +130,12 @@ namespace TabPaint.Controls
 
             if (files == null || files.Count == 0)
             {
-                var emptyItem = new MenuItem { Header = "(无最近文件)", IsEnabled = false, Style = (Style)FindResource("SubMenuItemStyle") };
+                var emptyItem = new MenuItem
+                {
+                    Header = LocalizationManager.GetString("L_Menu_Recent_None"),
+                    IsEnabled = false,
+                    Style = (Style)FindResource("SubMenuItemStyle")
+                };
                 RecentFilesMenuItem.Items.Add(emptyItem);
             }
             else
@@ -156,7 +161,7 @@ namespace TabPaint.Controls
                 RecentFilesMenuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
                 // 3. 添加清除按钮
-                var clearItem = new MenuItem { Header = "清除最近文件列表", Style = (Style)FindResource("SubMenuItemStyle") };
+                var clearItem = new MenuItem { Header = LocalizationManager.GetString("L_Menu_Recent_Clear"), Style = (Style)FindResource("SubMenuItemStyle") };
                 clearItem.Click += (s, e) => { ClearRecentFilesClick?.Invoke(this, EventArgs.Empty); };
                 RecentFilesMenuItem.Items.Add(clearItem);
             }

@@ -83,10 +83,6 @@ namespace TabPaint
                     int width = bmp.PixelWidth;
                     long totalPixels = width * height;
 
-                    // --- 第一步：统计直方图 ---
-                    // 为了简化，这里计算 RGB 的综合亮度直方图，或者分别计算 R,G,B 通道
-                    // 自动色阶通常是针对 R, G, B 三个通道分别拉伸，这样可以修正色偏
-
                     int[] histR = new int[256];
                     int[] histG = new int[256];
                     int[] histB = new int[256];
@@ -102,9 +98,6 @@ namespace TabPaint
                             histR[row[x * 4 + 2]]++;
                         }
                     }
-
-                    // --- 第二步：寻找切入点 (Min/Max) ---
-                    // 通常忽略两端 0.5% 的极值像素，避免噪点影响
                     float clipPercent = 0.005f;
                     int threshold = (int)(totalPixels * clipPercent);
 
@@ -427,7 +420,7 @@ namespace TabPaint
             UpdateThicknessPreviewPosition();
 
             // 3. 更新提示文字
-            ThicknessTipText.Text = $"{(int)Math.Round(realSize)} 像素";
+            ThicknessTipText.Text = $"{(int)Math.Round(realSize)}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
 
             // 4. 显示提示
             ThicknessTip.Visibility = Visibility.Visible;
@@ -474,10 +467,7 @@ namespace TabPaint
             if (_bitmap == null) return;
             _router.CleanUpSelectionandShape();
             _undo.PushFullImageUndo();// 1. (为Undo做准备) 保存当前图像的完整快照
-            var dialog = new AdjustTTSWindow(_bitmap); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
-                                                       // 注意：这里我们传入的是 _bitmap 本身，因为 AdjustTTSWindow 内部会自己克隆一个原始副本
-
-
+            var dialog = new AdjustTTSWindow(_bitmap); 
             if (dialog.ShowDialog() == true) // 更新撤销/重做按钮的状态
             {
                 SetUndoRedoButtonState();

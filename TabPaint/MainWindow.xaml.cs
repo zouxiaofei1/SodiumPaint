@@ -613,10 +613,13 @@ namespace TabPaint
 
         private string FormatFileSize(long bytes)
         {
-            if (bytes < 1024) return $"大小: {bytes} B";
-            if (bytes < 1024 * 1024) return $"大小: {bytes / 1024.0:F1} KB";
-            return $"大小: {bytes / 1024.0 / 1024.0:F2} MB";
+            if (bytes < 1024)
+                return string.Format(LocalizationManager.GetString("L_Format_Size_B"), bytes);
+            if (bytes < 1024 * 1024)
+                return string.Format(LocalizationManager.GetString("L_Format_Size_KB"), bytes / 1024.0);
+            return string.Format(LocalizationManager.GetString("L_Format_Size_MB"), bytes / 1024.0 / 1024.0);
         }
+
 
         private void ShowNextImage()
         {
@@ -672,7 +675,6 @@ namespace TabPaint
         {
             try
             {
-                // 确保缓存目录存在 (建议放在 TabPaint 的缓存目录中)
                 string cacheDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache", "Clipboard");
                 if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
 
@@ -770,11 +772,6 @@ namespace TabPaint
         {
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
 
-            // 计算 BackgroundImage 相对于 ScrollContainer (视口) 的位置
-            // 因为 CanvasWrapper 是 Center 布局，当图片小于视口时，会有自动偏移
-            // 当图片大于视口时，Offset 为负数 (即 ScrollViewer 的偏移)
-
-            // 获取 CanvasWrapper 相对于 ScrollContainer 的位置
             Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
 
             // 获取 ZoomTransform 的当前缩放

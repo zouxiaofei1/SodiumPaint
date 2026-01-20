@@ -68,13 +68,9 @@ namespace TabPaint.Controls
 
             // 自动移除焦点，表示录入完成
             Keyboard.ClearFocus();
-
-            // 触发保存（可选，取决于你何时保存 Settings）
-            // SettingsManager.Instance.Save(); 
         }
         private void UserControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-          //  System.Windows.MessageBox.Show("UserControl_PreviewMouseDown");
             this.Focus();
             if (e.OriginalSource is DependencyObject source)
             {

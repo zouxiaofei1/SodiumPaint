@@ -81,9 +81,6 @@ namespace TabPaint
                 Application.Current.Resources.MergedDictionaries.Add(iconsDict);
             }
 
-            // =========================================================
-            // 【核心修改】针对 Win10 的特殊背景处理
-            // =========================================================
             if (!IsWin11())
             {
                 ApplyWin10FallbackBackground(isDark);
@@ -104,19 +101,11 @@ namespace TabPaint
         {
             var resources = Application.Current.Resources;
 
-            // 我们要修改的是 WindowBackgroundBrush
-            // Win11 下这个通常是透明或者为了配合 Mica 设置的颜色
-            // Win10 下我们把它改成一个实心的高级灰，或者带有微弱纹理的画刷
 
             if (isDark)
             {
-                // Win10 深色模式：使用略微偏冷的深灰色，避免纯黑死板
-                // 颜色参考 VS Code 或 GitHub Dark Dimmed: #1E1E1E 或 #222222
                 var win10DarkBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#202020"));
 
-                // 进阶：如果你想要模拟噪点质感（不依赖图片），可以使用 DrawingBrush
-                // 注意：如果嫌代码生成麻烦，直接用上面的 SolidColorBrush 即可，性能最好。
-                // 这里为了演示“质感”，我们混合一点点颜色
 
                 win10DarkBg.Freeze();
 
@@ -157,11 +146,6 @@ namespace TabPaint
             try
             {
                 Color baseColor = (Color)ColorConverter.ConvertFromString(hexColor);
-
-                // 根据当前是深色还是浅色模式，微调基础颜色的亮度（可选优化）
-                // 这里我们直接基于 BaseColor 计算变种
-
-                // 1. 计算变种颜色
                 Color hoverColor = ChangeColorBrightness(baseColor, 0.2f); // 变亮 20%
                 Color pressedColor = ChangeColorBrightness(baseColor, -0.2f); // 变暗 20%
                 Color borderColor = ChangeColorBrightness(baseColor, -0.1f); // 稍微变暗做边框

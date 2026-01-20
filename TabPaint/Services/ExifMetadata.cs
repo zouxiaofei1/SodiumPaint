@@ -26,24 +26,23 @@ namespace TabPaint
                     StringBuilder sb = new StringBuilder();
 
                     // --- 1. 文件与画布信息 ---
-                    sb.AppendLine("[文件信息]");
+                    sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_File"));
                     if (IsVirtualPath(filePath))
                     {
-                        sb.AppendLine("路径: [内存文件] 未保存到磁盘");
+                        sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
                     }
                     else
                     {
-                        sb.AppendLine($"路径: {filePath}");
+                        sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
                     }
-                    sb.AppendLine($"大小: {(imageBytes.Length / 1024.0 / 1024.0):F2} MB");
+                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Size_MB_Format"), imageBytes.Length / 1024.0 / 1024.0));
                     sb.AppendLine();
 
-                    sb.AppendLine("[画布信息]");
-                    sb.AppendLine($"尺寸: {bitmap.PixelWidth} × {bitmap.PixelHeight} px");
-                    // 【新增】位深度读取
-                    sb.AppendLine($"位深: {bitmap.Format.BitsPerPixel} bit");
-                    sb.AppendLine($"DPI: {bitmap.DpiX:F0} × {bitmap.DpiY:F0}");
-                    sb.AppendLine($"格式: {bitmap.Format}");
+                    sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_Canvas"));
+                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Dim_Format"), bitmap.PixelWidth, bitmap.PixelHeight));
+                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_BitDepth_Format"), bitmap.Format.BitsPerPixel));
+                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Dpi_Format"), bitmap.DpiX, bitmap.DpiY));
+                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_PixelFormat_Format"), bitmap.Format));
 
                     // --- 2. 尝试读取 EXIF 元数据 ---
                     using var ms = new MemoryStream(imageBytes);
@@ -58,12 +57,10 @@ namespace TabPaint
                         string device = "";
                         if (!string.IsNullOrEmpty(metadata.CameraManufacturer)) device += metadata.CameraManufacturer + " ";
                         if (!string.IsNullOrEmpty(metadata.CameraModel)) device += metadata.CameraModel;
-                        if (!string.IsNullOrEmpty(device)) exifSb.AppendLine($"设备: {device.Trim()}");
+                        if (!string.IsNullOrEmpty(device)) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Device_Format"), device.Trim()));
 
                         // --- 核心摄影参数 (修复数值解析) ---
 
-                        // 1. 曝光时间 (ExposureTime) - ID: 33434
-                        // 逻辑: 如果 < 1秒，显示为分数 (1/100)，否则显示为秒 (1.5s)
                         var expVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33434}");
                         if (expVal != null)
                         {
@@ -71,9 +68,9 @@ namespace TabPaint
                             if (seconds > 0)
                             {
                                 if (seconds < 1.0)
-                                    exifSb.AppendLine($"曝光时间: 1/{Math.Round(1.0 / seconds)} 秒");
+                                    exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_ExpTime_Fraction_Format"), Math.Round(1.0 / seconds)));
                                 else
-                                    exifSb.AppendLine($"曝光时间: {seconds} 秒");
+                                    exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_ExpTime_Sec_Format"), seconds));
                             }
                         }
 
@@ -82,12 +79,12 @@ namespace TabPaint
                         if (fVal != null)
                         {
                             double fNum = ParseUnsignedRational(fVal);
-                            if (fNum > 0) exifSb.AppendLine($"光圈值: f/{fNum:0.0}"); // 保留1位小数，如 f/1.8
+                            if (fNum > 0) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_FNumber_Format"), fNum));
                         }
 
-                        // 3. ISO 速度 - ID: 34855 (通常直接是 Short/UShort)
+                        // 3. ISO 速度 - ID: 34855 (通常直接是 Short/UShort)ssssssssssssss
                         var iso = TryGetQuery(metadata, "/app1/ifd/exif/{uint=34855}");
-                        if (iso != null) exifSb.AppendLine($"ISO速度: ISO-{iso}");
+                        if (iso != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_ISO_Format"), iso));
 
                         // 4. 曝光补偿 (ExposureBiasValue) - ID: 37380
                         // 注意：这是有符号分数 (SRATIONAL)，可以为负
@@ -97,7 +94,7 @@ namespace TabPaint
                             double bias = ParseSignedRational(biasVal);
                             // 格式化为 +0.3 / -1.0 / 0
                             string biasStr = bias == 0 ? "0" : (bias > 0 ? $"+{bias:0.##}" : $"{bias:0.##}");
-                            exifSb.AppendLine($"曝光补偿: {biasStr} EV");
+                            exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Bias_Format"), biasStr));
                         }
 
                         // 5. 焦距 (FocalLength) - ID: 37386
@@ -105,34 +102,47 @@ namespace TabPaint
                         if (focalVal != null)
                         {
                             double focal = ParseUnsignedRational(focalVal);
-                            exifSb.AppendLine($"焦距: {focal} mm");
+                            exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Focal_Format"), focal));
                         }
 
                         // 6. 35mm等效焦距 - ID: 41989 (通常是 Short)
                         var focal35 = TryGetQuery(metadata, "/app1/ifd/exif/{uint=41989}");
-                        if (focal35 != null) exifSb.AppendLine($"35mm焦距: {focal35} mm");
+                        if (focal35 != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Focal35_Format"), focal35));
+
 
                         // 测光模式
                         var meter = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37383}");
-                        if (meter != null) exifSb.AppendLine($"测光模式: {MapMeteringMode(meter)}");
+                        if (meter != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Metering_Format"), MapMeteringMode(meter)));
+
 
                         // 闪光灯
                         var flash = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37385}");
-                        if (flash != null) exifSb.AppendLine($"闪光灯: {((Convert.ToInt32(flash) & 1) == 1 ? "开启" : "关闭")}");
+                        if (flash != null)
+                        {
+                            bool isFlashOn = (Convert.ToInt32(flash) & 1) == 1;
+                            string flashStatus = isFlashOn ? LocalizationManager.GetString("L_Exif_Flash_On") : LocalizationManager.GetString("L_Exif_Flash_Off");
+                            // [Localized] Flash: {0}
+                            exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Flash_Format"), flashStatus));
+                        }
 
                         // 软件/后期
-                        if (!string.IsNullOrEmpty(metadata.ApplicationName)) exifSb.AppendLine($"处理软件: {metadata.ApplicationName}");
-                        if (!string.IsNullOrEmpty(metadata.DateTaken)) exifSb.AppendLine($"拍摄日期: {metadata.DateTaken}");
+                        if (!string.IsNullOrEmpty(metadata.ApplicationName))
+                            exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Software_Format"), metadata.ApplicationName));
+
+                        // Date Taken
+                        // [Localized] Date: {0}
+                        if (!string.IsNullOrEmpty(metadata.DateTaken))
+                            exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Date_Format"), metadata.DateTaken));
 
                         // 镜头信息
                         var lens = TryGetQuery(metadata, "/app1/ifd/exif/{uint=42036}");
-                        if (lens != null) exifSb.AppendLine($"镜头: {lens}");
+                        if (lens != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Lens_Format"), lens));
 
                         // 合并
                         if (exifSb.Length > 0)
                         {
                             sb.AppendLine();
-                            sb.AppendLine("[照片元数据]");
+                            sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_Photo"));
                             sb.Append(exifSb.ToString());
                         }
                     }
@@ -140,7 +150,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    return "无法解析详细信息: " + ex.Message;
+                    return LocalizationManager.GetString("L_Exif_Error_Parse") + ex.Message;
                 }
             });
         }
@@ -205,15 +215,15 @@ namespace TabPaint
             int code = Convert.ToInt32(val);
             return code switch
             {
-                0 => "未知",
-                1 => "平均测光",
-                2 => "中央重点平均测光",
-                3 => "点测光",
-                4 => "多点测光",
-                5 => "模式测光",
-                6 => "部分测光",
-                255 => "其他",
-                _ => "未知"
+                0 => LocalizationManager.GetString("L_Exif_Meter_Unknown"),
+                1 => LocalizationManager.GetString("L_Exif_Meter_Average"),
+                2 => LocalizationManager.GetString("L_Exif_Meter_Center"),
+                3 => LocalizationManager.GetString("L_Exif_Meter_Spot"),
+                4 => LocalizationManager.GetString("L_Exif_Meter_MultiSpot"),
+                5 => LocalizationManager.GetString("L_Exif_Meter_Pattern"),
+                6 => LocalizationManager.GetString("L_Exif_Meter_Partial"),
+                255 => LocalizationManager.GetString("L_Exif_Meter_Other"),
+                _ => LocalizationManager.GetString("L_Exif_Meter_Unknown")
             };
         }
 

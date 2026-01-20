@@ -55,7 +55,10 @@ namespace TabPaint
                     if (pos.Y <= 100)
                     {
                         e.Effects = DragDropEffects.Move;
-                        ShowDragOverlay("切换工作区", "将清空当前画布并打开新文件夹");
+                        ShowDragOverlay(
+              LocalizationManager.GetString("L_Drag_SwitchWorkspace_Title"),
+              LocalizationManager.GetString("L_Drag_SwitchWorkspace_Desc")
+          );
                     }
                     // B. 其他区域 (菜单栏、工具栏、ImageBar、画布)
                     else
@@ -65,19 +68,28 @@ namespace TabPaint
                         // B-1. 多文件 -> 强制作为新标签页打开
                         if (imageFiles.Length > 1)
                         {
-                            ShowDragOverlay("批量打开", $"将 {imageFiles.Length} 张图片作为新标签页打开");
+                            ShowDragOverlay(
+                      LocalizationManager.GetString("L_Drag_BatchOpen_Title"),
+                      string.Format(LocalizationManager.GetString("L_Drag_BatchOpen_Desc"), imageFiles.Length)
+                  );
                         }
                         // B-2. 单文件 -> 根据位置决定是“添加到列表”还是“插入画布”
                         else
                         {
                             if (pos.Y < 210)
                             {
-                                ShowDragOverlay("添加到列表", "将图片作为新标签页加入");
+                                ShowDragOverlay(
+                                LocalizationManager.GetString("L_Drag_AddToList_Title"),
+                                LocalizationManager.GetString("L_Drag_AddToList_Desc")
+                            );
                             }
                             // 如果拖到了下方的画布区，倾向于“插入图片到当前画作”
                             else
                             {
-                                ShowDragOverlay("插入图片", "在当前位置插入图片");
+                                ShowDragOverlay(
+                             LocalizationManager.GetString("L_Drag_Insert_Title"),
+                             LocalizationManager.GetString("L_Drag_Insert_Desc")
+                         );
                             }
                         }
                     }
@@ -105,7 +117,10 @@ namespace TabPaint
                 {
                     e.Effects = e.AllowedEffects;
                 }
-                ShowDragOverlay("插入文字", "松开鼠标创建文本框");
+                ShowDragOverlay(
+           LocalizationManager.GetString("L_Drag_InsertText_Title"),
+           LocalizationManager.GetString("L_Drag_InsertText_Desc")
+       );
             }
             else
             {

@@ -48,7 +48,7 @@ namespace TabPaint
             private const double HandleSize = 6;
             private DispatcherTimer _tabSwitchTimer;
             private FileTabItem _pendingTab; // 当前正在倒计时的目标 Tab
-           // private DateTime _hoverStartTime;
+                                             // private DateTime _hoverStartTime;
             public enum ResizeAnchor
             {
                 None,
@@ -95,9 +95,15 @@ namespace TabPaint
 
                     // 2. 状态栏文字倒计时
                     double remaining = (targetDelay - elapsed) / 1000.0;
-                    string cleanStateText = isCleanSelection ? "(快速)" : "";
-                    mw.SelectionSize = $"跳转至: {_pendingTab.FileName} {cleanStateText} ({remaining:F1}s)";
+                    string cleanStateText = isCleanSelection ? LocalizationManager.GetString("L_Selection_Drag_Quick") : "";
 
+                    string statusText = string.Format(
+            LocalizationManager.GetString("L_Selection_Drag_Jump"),
+            _pendingTab.FileName,
+            cleanStateText,
+            remaining
+        );
+                    mw.SelectionSize = statusText;
 
                     if (ctxForTimer != null)
                     {
@@ -110,12 +116,12 @@ namespace TabPaint
                 // --- 触发切换 ---
                 if (elapsed > targetDelay)
                 {
-                  
+
                     if (ctxForTimer != null) ctxForTimer.SelectionPreview.Opacity = 0.7; // 恢复默认拖拽透明度
                     Mouse.OverrideCursor = null;
 
                     _draggingSelection = false;
-                   
+
                     // 准备数据
                     int w = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
                     int h = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;

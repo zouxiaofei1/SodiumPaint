@@ -62,12 +62,6 @@ namespace TabPaint
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
-
-            // ================== 【修改开始】 ==================
-            // 1. 动态获取主题资源中的颜色
-            // 使用 TryFindResource 防止设计器模式或资源未加载时崩溃，并提供默认值
-
-            // 文字颜色：适配 TextPrimaryBrush (亮色模式黑，暗色模式白)
             Brush textBrush = (Brush)TryFindResource("TextPrimaryBrush") ?? Brushes.Black;
 
             // 刻度线颜色：适配 TextTertiaryBrush 或 BorderDarkBrush (灰色，看起来不那么刺眼)
@@ -91,9 +85,6 @@ namespace TabPaint
 
             Pen textPen = new Pen(textBrush, 1); // 如果需要文字轮廓才用这个，DrawText不需要Pen
             textPen.Freeze();
-            // ================== 【修改结束】 ==================
-
-            // 1. 绘制背景 (使用动态获取的 bgBrush)
             drawingContext.DrawRectangle(bgBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
 
             // 2. 绘制边缘分割线 (使用 borderPen)
@@ -121,13 +112,7 @@ namespace TabPaint
             bool drawSmallTicks = (smallStep * zoom) > 4.0;
             double maxVal = (Orientation == RulerOrientation.Horizontal ? ActualWidth : ActualHeight);
 
-            // ================== 【修改字体颜色】 ==================
             Typeface typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-
-            // 注意：这里不需要 textPen，因为 DrawText 不需要 Pen
-            // 关键点：FormattedText 的颜色参数使用上面获取的 textBrush
-
-            // ... (中间的计算逻辑保持不变) ...
 
             double startValue = -OriginOffset / zoom;
             double startStepIndex = Math.Floor(startValue / smallStep);
@@ -213,9 +198,6 @@ namespace TabPaint
                     drawingContext.DrawLine(markerPen, new Point(0, MouseMarker), new Point(ActualWidth, MouseMarker));
             }
         }
-
-
-        // 辅助函数：判断 value 是否接近 step 的倍数
         private bool IsCloseToMultiple(double value, double step)
         {
             double tolerance = step * 0.001;

@@ -442,9 +442,6 @@ namespace TabPaint
                 byte* basePtr = (byte*)bmp.BackBuffer;
                 int stride = bmp.BackBufferStride;
 
-                // 定义什么是"空白"。通常是全透明 (0) 或全白 (255,255,255)
-                // 这里我们可以稍微宽松一点，或者只认定完全透明/白色
-                // 为了演示，这里检查 Alpha=0 或者 (R=255,G=255,B=255)
                 bool IsEmpty(byte* pixel)
                 {
                     byte b = pixel[0];
@@ -514,9 +511,6 @@ namespace TabPaint
                     }
                     if (colHasContent) break;
                 }
-
-                // 计算裁剪区域
-                // +1 是因为坐标是 0-based，宽度长度需要包含当前像素
                 cropRect = new Int32Rect(left, top, right - left + 1, bottom - top + 1);
             }
             bmp.Unlock();
@@ -527,8 +521,6 @@ namespace TabPaint
                 ShowToast("L_Toast_MinSize");
                 return;
             }
-
-            // 执行裁剪 (复用 ResizeCanvas 的逻辑或者创建新逻辑)
             ApplyAutoCrop(cropRect);
         }
 

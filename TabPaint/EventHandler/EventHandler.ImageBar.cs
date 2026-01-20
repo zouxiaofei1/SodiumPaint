@@ -148,13 +148,10 @@ namespace TabPaint
             if (!SettingsManager.Instance.Current.SkipResetConfirmation)
             {
                 var result = FluentMessageBox.Show(
-                    "确定要重置当前工作区吗？\n" +
-                    "· 所有“未命名”的新建画布将被删除\n" +
-                    "· 所有打开的图片将还原至磁盘文件状态\n" +
-                    "· 撤销记录、所有临时缓存文件及会话记录将被清空",
-                    "放弃更改",
-                    MessageBoxButton.YesNo
-                   );
+                  LocalizationManager.GetString("L_Msg_ResetWorkspace_Content"),
+                  LocalizationManager.GetString("L_Msg_ResetWorkspace_Title"),
+                  MessageBoxButton.YesNo
+                 );
 
                 if (result != MessageBoxResult.Yes) return;
             }
@@ -761,10 +758,10 @@ namespace TabPaint
                 if (!SettingsManager.Instance.Current.SkipResetConfirmation)
                 {
                     var result = FluentMessageBox.Show(
-                        $"确定要将文件 '{tab.FileName}' 放入回收站吗？\n此操作不可撤销（取决于系统设置）。",
-                        "删除文件",
-                        MessageBoxButton.YesNo
-                      );
+                     string.Format(LocalizationManager.GetString("L_Msg_DeleteFile_Content"), tab.FileName),
+                     LocalizationManager.GetString("L_Msg_DeleteFile_Title"),
+                     MessageBoxButton.YesNo
+                   );
                     if (result != MessageBoxResult.Yes) return;
                 }
                 string path = tab.FilePath;

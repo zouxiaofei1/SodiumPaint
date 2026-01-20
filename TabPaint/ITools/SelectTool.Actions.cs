@@ -56,7 +56,7 @@ namespace TabPaint
                 // 4. 通知 UI 更新
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 mw.SetCropButtonState();
-                mw.SelectionSize = "0×0像素";
+                mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), 0, 0);
                 mw.SetUndoRedoButtonState();
                 LastSelectionDeleteTime = DateTime.Now;
             }
@@ -94,7 +94,6 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    //ShowToast("Failed to copy to clipboard: " + ex.Message);
                 }
             }
 
@@ -242,9 +241,6 @@ namespace TabPaint
                 Canvas.SetTop(ctx.SelectionPreview, 0);
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
-
-                // 必须确保 Preview 的尺寸被重置，防止之前的 Transform 残留影响
-                // 使用你之前定义的 SetPreviewPosition 或者手动设置
                 ctx.SelectionPreview.Width = imgW;
                 ctx.SelectionPreview.Height = imgH;
 
@@ -675,14 +671,9 @@ namespace TabPaint
                         }
                     }
 
-                    // 4. 边界检查 (Clamping) - 修复“无限拖拽”的关键
-                    // 即使鼠标移到了另一侧，宽高也被锁死在 1
                     if (proposedW < 1) proposedW = 1;
                     if (proposedH < 1) proposedH = 1;
 
-                    // 5. 坐标重算 (Re-calculate Position)
-                    // 这一步至关重要：根据“固定边”和“最终宽”算出 X/Y
-                    // 这样可以保证矩形永远吸附在固定边上，而不会乱跑
                     double finalX = _startX;
                     double finalY = _startY;
 
@@ -695,8 +686,6 @@ namespace TabPaint
                     }
                     else
                     {
-                        // 如果锚点在右侧或中间，X 其实就是起始 X (LeftEdge)
-                        // 注意：对于 RightMiddle, TopRight 等，LeftEdge 是不动的，也就是 _startX
                         finalX = _startX;
                     }
 
@@ -867,7 +856,7 @@ namespace TabPaint
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {// 状态栏更新
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SelectionSize =
-                        $"{_selectionRect.Width}×{_selectionRect.Height}像素";
+                        $"{_selectionRect.Width}×{_selectionRect.Height}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
                 });
             }
             private void LiftSelectionFromCanvas(ToolContext ctx)
@@ -1029,8 +1018,6 @@ namespace TabPaint
                         stride
                     );
 
-                    // 2. 处理缩放 (Resize)
-                    // 如果视觉矩形 _selectionRect 的尺寸与原始数据 _originalRect 不一致，说明用户拖动了句柄进行缩放
                     if (_selectionRect.Width != _originalRect.Width || _selectionRect.Height != _originalRect.Height)
                     {
                         double scaleX = (double)_selectionRect.Width / _originalRect.Width;
@@ -1063,9 +1050,6 @@ namespace TabPaint
 
                     // 1. 原始计算出的矩形（可能超出画布）
                     var rawRect = MakeRect(_startPixel, px);
-
-                    // 2. 【修复关键】将矩形限制在画布范围内
-                    // 必须确保 _selectionRect 和后面提取数据用的矩形完全一致
                     _selectionRect = ClampRect(rawRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
 
                     if (_selectionRect.Width > 0 && _selectionRect.Height > 0)

@@ -365,9 +365,6 @@ namespace TabPaint
                     96d, 96d, PixelFormats.Pbgra32);
 
                 rtb.Render(BackgroundImage);
-
-                // 2. 关键修复：深拷贝为 WriteableBitmap
-                // 这会将显存/MIL资源中的数据拷贝到系统内存，彻底切断线程关联
                 var safeBitmap = new WriteableBitmap(rtb);
                 safeBitmap.Freeze(); // 冻结以供跨线程使用
 
@@ -516,9 +513,6 @@ namespace TabPaint
                         }
                         catch { tabDir = null; }
                     }
-
-                    // 如果是新建文件（虚拟路径）或者获取目录失败，
-                    // 将其 WorkDirectory 归类为当前活跃目录，这样它会随当前文件夹一起加载
                     if (string.IsNullOrEmpty(tabDir))
                     {
                         tabDir = currentContextDir;

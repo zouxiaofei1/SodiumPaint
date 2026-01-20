@@ -61,16 +61,10 @@ namespace TabPaint
                 {
                     ThicknessSlider.IsEnabled = !isPencil;
 
-                    //// 处理 Tip 显示
-                    //if (isPencil && ThicknessTip != null)
-                    //    ThicknessTip.Visibility = Visibility.Collapsed;
-                    //else if (ThicknessTip != null)
-                    //    ThicknessTip.Visibility = Visibility.Visible;
                 }
 
                 SettingsManager.Instance.Current.CurrentToolKey = key;
 
-                // 这里会触发 ThicknessSlider 的 Binding Update，进而触发 ValueChanged
                 _ctx.PenThickness = SettingsManager.Instance.Current.PenThickness;
             }
             finally
@@ -558,10 +552,6 @@ namespace TabPaint
                 UpdateTabThumbnail(path);
                 return;
             }
-            // ==========================================
-
-
-            // 2. (原逻辑) 创建用于保存的 BitmapSource
             BitmapSource saveSource = BitmapSource.Create(
                 width, height,
                 _originalDpiX,
@@ -608,18 +598,21 @@ namespace TabPaint
             catch (UnauthorizedAccessException)
             {
                 // 捕获只读或权限错误
-                HandleSaveError("保存失败：文件是只读的，或者您没有权限写入此位置。", path);
+                string msg = LocalizationManager.GetString("L_Save_Error_ReadOnly");
+                HandleSaveError(msg, path);
                 return;
             }
             catch (IOException ex)
             {
                 // 捕获文件被占用错误
-                HandleSaveError($"保存失败：文件可能正在被占用。\n{ex.Message}", path);
+                string msg = string.Format(LocalizationManager.GetString("L_Save_Error_InUse"), ex.Message);
+                HandleSaveError(msg, path);
                 return;
             }
             catch (Exception ex)
             {
-                HandleSaveError($"保存时发生错误：{ex.Message}", path);
+                string msg = string.Format(LocalizationManager.GetString("L_Save_Error_General"), ex.Message);
+                HandleSaveError(msg, path);
                 return;
             }
 
@@ -632,15 +625,11 @@ namespace TabPaint
         private void HandleSaveError(string message, string failedPath)
         {
             var result = FluentMessageBox.Show(
-                $"{message}\n\n是否尝试【另存为】到其他位置？",
-                "保存失败",
+                string.Format(LocalizationManager.GetString("L_Msg_SaveError_Content"), message),
+                LocalizationManager.GetString("L_Msg_SaveError_Title"),
                 MessageBoxButton.YesNo);
-
             if (result == MessageBoxResult.Yes)
             {
-                // 调用你的“另存为”逻辑
-                // SaveAs() 或类似的函数
-                // 确保你的 SaveAs 方法会弹出文件选择框，而不是直接递归调用 SaveBitmap
                OnSaveAsClick(null, null)    ;
             }
         }

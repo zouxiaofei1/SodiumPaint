@@ -20,7 +20,6 @@ namespace TabPaint
         [DllImport("gdi32.dll")]
         static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
 
-        // 获取设备各方向的逻辑像素与物理像素的比率
         public static void GetDpiScale(Visual visual, out double dpiX, out double dpiY)
         {
             var source = PresentationSource.FromVisual(visual);
@@ -35,7 +34,6 @@ namespace TabPaint
             dpiY = 1.0;
         }
 
-        // 修改后的截屏方法：捕获物理像素，并处理多屏幕边界
         public static BitmapSource CaptureScreen(double dpiScaleX, double dpiScaleY)
         {
             // 1. 获取 WPF 逻辑坐标系的虚拟屏幕尺寸
@@ -52,8 +50,6 @@ namespace TabPaint
             {
                 using (var bmpGraphics = Graphics.FromImage(screenBmp))
                 {
-                    // 3. 这里的 CopyFromScreen 通常接受的是物理坐标（取决于 App 的 DPI 感知级别）
-                    // 为了保险，我们从逻辑左上角开始截取整个物理区域
                     bmpGraphics.CopyFromScreen(
                         (int)(screenLeft * dpiScaleX),
                         (int)(screenTop * dpiScaleY),
@@ -66,8 +62,6 @@ namespace TabPaint
                         IntPtr.Zero,
                         Int32Rect.Empty,
                         BitmapSizeOptions.FromEmptyOptions());
-
-                    // 重要：标记该图片不需要再被系统拉伸，否则可能再次模糊
                     bitmapSource.Freeze();
                     return bitmapSource;
                 }

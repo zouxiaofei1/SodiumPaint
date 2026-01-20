@@ -415,4 +415,105 @@
     <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">准备拖拽文件失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动拖拽失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换工作区失败: {0}</sys:String>
+
+
+    <sys:String x:Key="L_Load_Reason_Empty" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件为空，已创建空白画布</sys:String>
+    <sys:String x:Key="L_Load_Reason_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件头部损坏或格式不支持，已创建空白画布</sys:String>
+    <sys:String x:Key="L_Load_Reason_Corrupt" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件损坏或格式不支持，已创建空白画布</sys:String>
+    <sys:String x:Key="L_Load_Info_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">[新建图像] 内存文件</sys:String>
+    <sys:String x:Key="L_Status_Unsaved" xmlns:sys="clr-namespace:System;assembly=mscorlib">未保存</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">放弃更改</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要重置当前工作区吗？&#x0a;· 所有“未命名”的新建画布将被删除&#x0a;· 所有打开的图片将还原至磁盘文件状态&#x0a;· 撤销记录、所有临时缓存文件及会话记录将被清空</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除文件</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要将文件 '{0}' 放入回收站吗？&#x0a;此操作不可撤销（取决于系统设置）。</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}&#x0a;&#x0a;是否尝试【另存为】到其他位置？</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存提示</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片 {0} 尚未保存，是否保存？</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸过大</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸不能超过 {0}像素。</sys:String>
+    <sys:String x:Key="L_Msg_ResetFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置失败: {0}</sys:String>
+    <!-- File Size Formatting -->
+    <sys:String x:Key="L_Format_Size_B" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0} B</sys:String>
+    <sys:String x:Key="L_Format_Size_KB" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0:F1} KB</sys:String>
+    <sys:String x:Key="L_Format_Size_MB" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0:F2} MB</sys:String>
+
+    <!-- OCR & AI Tools -->
+    <sys:String x:Key="L_OCR_Error_NoLangPack" xmlns:sys="clr-namespace:System;assembly=mscorlib">错误：未安装 OCR 语言包，请在 Windows 设置 -> 时间和语言 -> 语言中添加语言包。</sys:String>
+    <sys:String x:Key="L_OCR_Status_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在提取文字...</sys:String>
+    <sys:String x:Key="L_OCR_Failed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 识别失败: {0}</sys:String>
+
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">缺少必要组件</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。&#x0a;&#x0a;是否立即前往微软官网下载？</sys:String>
+    <sys:String x:Key="L_AI_Status_Preparing" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在准备 AI 模型...</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型中: {0:F1}%</sys:String>
+    <sys:String x:Key="L_AI_Status_Thinking" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 正在思考...</sys:String>
+    <sys:String x:Key="L_AI_Error_DllNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法加载 AI 核心组件。&#x0a;这通常是因为系统缺少 C++ 运行库或 CPU 不支持 AVX 指令集。&#x0a;请尝试安装 VC++ Runtime。</sys:String>
+
+    <!-- Exif Info -->
+    <sys:String x:Key="L_Exif_Section_File" xmlns:sys="clr-namespace:System;assembly=mscorlib">[文件信息]</sys:String>
+    <sys:String x:Key="L_Exif_Path_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">路径: [内存文件] 未保存到磁盘</sys:String>
+    <sys:String x:Key="L_Exif_Path_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">路径: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Size_MB_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0:F2} MB</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">[画布信息]</sys:String>
+    <sys:String x:Key="L_Exif_Dim_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸: {0} × {1} px</sys:String>
+    <sys:String x:Key="L_Exif_BitDepth_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">位深: {0} bit</sys:String>
+    <sys:String x:Key="L_Exif_Dpi_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">DPI: {0:F0} × {1:F0}</sys:String>
+    <sys:String x:Key="L_Exif_PixelFormat_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">格式: {0}</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Photo" xmlns:sys="clr-namespace:System;assembly=mscorlib">[照片元数据]</sys:String>
+    <sys:String x:Key="L_Exif_Device_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">设备: {0}</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Fraction_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光时间: 1/{0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Sec_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光时间: {0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_FNumber_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">光圈值: f/{0:0.0}</sys:String>
+    <sys:String x:Key="L_Exif_ISO_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">ISO速度: ISO-{0}</sys:String>
+    <sys:String x:Key="L_Exif_Bias_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光补偿: {0} EV</sys:String>
+    <sys:String x:Key="L_Exif_Focal_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">焦距: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Focal35_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">35mm焦距: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Metering_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">测光模式: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">闪光灯: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">开启</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭</sys:String>
+    <sys:String x:Key="L_Exif_Software_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">处理软件: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Date_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">拍摄日期: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Lens_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">镜头: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Error_Parse" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法解析详细信息:</sys:String>
+
+    <sys:String x:Key="L_Exif_Meter_Unknown" xmlns:sys="clr-namespace:System;assembly=mscorlib">未知</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Average" xmlns:sys="clr-namespace:System;assembly=mscorlib">平均测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Center" xmlns:sys="clr-namespace:System;assembly=mscorlib">中央重点平均测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Spot" xmlns:sys="clr-namespace:System;assembly=mscorlib">点测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_MultiSpot" xmlns:sys="clr-namespace:System;assembly=mscorlib">多点测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Pattern" xmlns:sys="clr-namespace:System;assembly=mscorlib">模式测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Partial" xmlns:sys="clr-namespace:System;assembly=mscorlib">部分测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Other" xmlns:sys="clr-namespace:System;assembly=mscorlib">其他</sys:String>
+    <!-- New Additions for C# Logic -->
+    <sys:String x:Key="L_Save_Error_ReadOnly" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败：文件是只读的，或者您没有权限写入此位置。</sys:String>
+    <sys:String x:Key="L_Save_Error_InUse" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败：文件可能正在被占用。&#x0a;{0}</sys:String>
+    <sys:String x:Key="L_Save_Error_General" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存时发生错误：{0}</sys:String>
+
+    <sys:String x:Key="L_Selection_Size_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}×{1}像素</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Jump" xmlns:sys="clr-namespace:System;assembly=mscorlib">跳转至: {0} {1} ({2:F1}s)</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Quick" xmlns:sys="clr-namespace:System;assembly=mscorlib">(快速)</sys:String>
+
+    <sys:String x:Key="L_Clipboard_InternalFormat" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaintInternal</sys:String>
+
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换工作区</sys:String>
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">将清空当前画布并打开新文件夹</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量打开</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">将 {0} 张图片作为新标签页打开</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加到列表</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">将图片作为新标签页加入</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入图片</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">在当前位置插入图片</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入文字</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">松开鼠标创建文本框</sys:String>
+
+    <sys:String x:Key="L_Mode_Switch_ToPaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换到画图模式 (Tab)</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToView" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换到看图模式 (Tab)</sys:String>
+
+    <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(无最近文件)</sys:String>
+    <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">清除最近文件列表</sys:String>
+
 </ResourceDictionary>

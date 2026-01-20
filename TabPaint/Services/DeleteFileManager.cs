@@ -3,19 +3,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Threading;
-using TabPaint.Controls;
 using static TabPaint.MainWindow;
 
 //
@@ -104,27 +91,7 @@ namespace TabPaint
         
             // 停止计时器 (如果列表空了)
             if (_pendingDeletionTabs.Count == 0) _deleteCommitTimer.Stop();
-            //if (IsVirtualPath(tabToRestore.FilePath))
-            //{
-            //    var conflictTab = FileTabs.FirstOrDefault(t => t.FilePath == tabToRestore.FilePath);
 
-            //    if (conflictTab != null)
-            //    {
-            //        if (conflictTab.IsNew && !conflictTab.IsDirty)
-            //        {
-            //            FileTabs.Remove(conflictTab);
-            //            _imageFiles.Remove(conflictTab.FilePath);
-            //        }
-            //        else
-            //        {
-            //            int newNum = GetNextAvailableUntitledNumber();           //            string newPath = $"{VirtualFilePrefix}{newNum}";
-
-            //            tabToRestore.UntitledNumber = newNum;
-            //            tabToRestore.FilePath = newPath;
-            //            tabToRestore.Id = $"Virtual_{newNum}"; 
-            //        }
-            //    }
-            //}
             // 恢复到 UI 列表
             if (_lastDeletedTabIndex >= 0 && _lastDeletedTabIndex <= FileTabs.Count)
                 FileTabs.Insert(_lastDeletedTabIndex, tabToRestore);

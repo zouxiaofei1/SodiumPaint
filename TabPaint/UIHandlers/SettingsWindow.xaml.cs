@@ -13,7 +13,7 @@ namespace TabPaint
 {
     public partial class SettingsWindow : Window
     {
-        public string ProgramVersion { get; set; } = "v0.8.2"; // 默认值，实际运行时由主程序传入
+        public string ProgramVersion { get; set; } = "v0.9.2"; // 默认值，实际运行时由主程序传入
 
         public SettingsWindow()
         {
@@ -54,12 +54,11 @@ namespace TabPaint
         }
         private void FactoryReset_Click(object sender, RoutedEventArgs e)
         {
-            // 1. 弹出确认警告
             var result = System.Windows.MessageBox.Show(
-                "此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。\n\n确定要继续吗？",
-                "恢复出厂设置",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+              LocalizationManager.GetString("L_Settings_Advanced_FactoryReset_Confirm"),
+              LocalizationManager.GetString("L_Settings_Advanced_FactoryReset"),
+              MessageBoxButton.YesNo,
+              MessageBoxImage.Warning);
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -96,7 +95,10 @@ del ""%~f0""
             }
             catch (Exception ex)
             {
-                FluentMessageBox.Show($"重置失败: {ex.Message}", "错误", MessageBoxButton.OK);
+                FluentMessageBox.Show(
+       string.Format(LocalizationManager.GetString("L_Msg_ResetFailed"), ex.Message),
+       LocalizationManager.GetString("L_Common_Error"),
+       MessageBoxButton.OK);
             }
         }
         private bool _isInternalChange = false; // 防止两个 ListBox 互相清空时触发死循环

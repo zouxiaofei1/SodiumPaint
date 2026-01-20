@@ -427,9 +427,6 @@ namespace TabPaint
                                 }
                                 else
                                 {
-                                    // 【修复关键】：标准的 Source-Over Alpha Blending 算法
-                                    // 以前的算法强制 pTargetRow[3] = 255，导致半透明叠加在透明背景上变黑/不透明
-
                                     byte dstB = pTargetRow[0];
                                     byte dstG = pTargetRow[1];
                                     byte dstR = pTargetRow[2];
@@ -445,8 +442,6 @@ namespace TabPaint
                                     // 如果最终透明度为0（理论上不会进这里因为 srcA>0），直接跳过
                                     if (outA > 0)
                                     {
-                                        // 计算最终颜色: C_out = (Cs * as + Cd * ad * (1 - as)) / a_out
-                                        // 这里的颜色分量已经不是预乘的，所以直接混合
 
                                         float factorDest = da * (1.0f - sa);
 
@@ -538,9 +533,6 @@ namespace TabPaint
 
                         if (writeAlpha)
                         {
-                            // 模式：透明 或 白色 (写入RGBA)
-                            // 这种情况下，如果我们要写全0或全255，其实可以用 int* 赋值来进一步加速(一次写4字节)
-                            // 但为了代码可读性，先保持 byte 操作，编译器优化通常足够好
                             for (int x = 0; x < rect.Width; x++)
                             {
                                 rowPtr[0] = targetB;

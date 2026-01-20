@@ -195,23 +195,13 @@ namespace TabPaint
                         // currentLeftGlobalIndex 代表：屏幕最左侧的那条像素线，对应的是第几张图
                         double currentLeftGlobalIndex = firstTabGlobalIndex + (MainImageBar.Scroller.HorizontalOffset / itemWidth);
 
-                        // C. 计算映射比例
-                        // 当滚动到底部时，左边缘的最大索引应该是 (总数 - 可视数量)
                         double maxLeftGlobalIndex = totalCount - visibleItemsCount;
-
-                        // 防止除以0或负数（图片很少填不满屏幕的情况）
                         if (maxLeftGlobalIndex > 0)
                         {
                             // 计算进度比例 (0.0 ~ 1.0)
                             double ratio = currentLeftGlobalIndex / maxLeftGlobalIndex;
-
-                            // 钳制范围，防止回弹时越界
                             ratio = Math.Max(0, Math.Min(1, ratio));
-
-                            // D. 映射到 Slider 范围 (0 ~ Total-1)
                             double targetValue = ratio * (totalCount - 1);
-
-                            // 只有变化超过微小阈值才赋值，减少计算抖动
                             if (Math.Abs(MainImageBar.Slider.Value - targetValue) > 0.05)
                             {
                                 MainImageBar.Slider.Value = targetValue;
@@ -219,7 +209,6 @@ namespace TabPaint
                         }
                         else
                         {
-                            // 图片太少，不足以填满一屏，滑块始终在 0 或根据需求处理
                             MainImageBar.Slider.Value = 0;
                         }
                     }
@@ -247,8 +236,6 @@ namespace TabPaint
 
                     foreach (var path in nextItems)
                     {
-                        // --- [修改部分 START] ---
-                        // 增加黑名单检查：如果已经在Tab里，或者被手动关闭过，就跳过
                         if (!FileTabs.Any(t => t.FilePath == path) && !_explicitlyClosedFiles.Contains(path))
                         {
                             FileTabs.Add(CreateTabFromPath(path));
@@ -338,7 +325,6 @@ namespace TabPaint
         private void InitDebounceTimer()
         {
             _sliderDebounceTimer = new System.Windows.Threading.DispatcherTimer();
-            // 延迟时间设置为 50ms 到 100ms 比较合适，既跟手又不卡顿
             _sliderDebounceTimer.Interval = TimeSpan.FromMilliseconds(10);
             _sliderDebounceTimer.Tick += OnSliderDebounceTick;
         }
@@ -527,13 +513,8 @@ namespace TabPaint
 
             // 计算对应的 Slider 值
             double val = slider.Minimum + (slider.Maximum - slider.Minimum) * ratio;
-
-            // 【关键优化】：给首尾一点吸附空间，确保鼠标在最边缘时一定能选中第一张或最后一张
-            // 防止因为像素计算误差导致 ratio=0.999 变成 Count-2
             if (ratio > 0.99) val = slider.Maximum;
             if (ratio < 0.01) val = slider.Minimum;
-
-            // 这行代码会触发 PreviewSlider_ValueChanged，进而触发 Timer
             slider.Value = val;
 
             // 【删除】不要在这里调用 OpenImageAndTabs，会和 ValueChanged 冲突！

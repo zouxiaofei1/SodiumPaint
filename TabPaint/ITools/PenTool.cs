@@ -459,10 +459,6 @@ namespace TabPaint
                 int half = size / 2;
                 int x = (int)p.X - half;
                 int y = (int)p.Y - half;
-
-                // 核心逻辑变化：
-                // 如果是橡皮擦，目标颜色是【全透明】。
-                // 如果是普通方块笔，目标颜色是画笔颜色。
                 Color targetColor = isEraser ? Color.FromArgb(255, 255,255, 255) : ctx.PenColor;
 
                 float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
@@ -485,8 +481,6 @@ namespace TabPaint
                     for (int xx = xstart; xx < xend; xx++)
                     {
                         int pixelIndex = rowIdx + xx;
-                        // 只有非橡皮擦才检查 Mask (橡皮擦通常允许重复擦除以加强效果，或者也为了均匀擦除检查Mask)
-                        // 为了逻辑统一，建议这里也检查Mask，防止单次Draw内重叠导致的擦除不均匀
                         if (_currentStrokeMask[pixelIndex]) continue;
                         _currentStrokeMask[pixelIndex] = true;
 
@@ -507,8 +501,6 @@ namespace TabPaint
                 if (r < 1) r = 1;
 
                 int count = r * r * 4;
-
-                // 限制最小和最大粒子数，防止小笔刷太稀疏或大笔刷太卡
                 if (count < 20) count = 20;
                 if (count > 2000) count = 2000;
 

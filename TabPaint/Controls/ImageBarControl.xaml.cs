@@ -89,17 +89,11 @@ namespace TabPaint.Controls
             // 稍微放宽一点判定，或者严格判定
             return bounds.Contains(mousePos);
         }
-        // ==========================================
-        // 1. 暴露内部控件给 MainWindow (修复 "当前上下文中不存在名称" 的错误)
-        // ==========================================
         public ScrollViewer Scroller => FileTabsScroller;
         public ItemsControl TabList => FileTabList;
         public Slider Slider => PreviewSlider;
         public Button AddButton => LeftAddBtn; // 修复 LeftAddBtn 访问
 
-        // ==========================================
-        // 2. 简单的点击事件 (使用路由事件冒泡)
-        // ==========================================
         public static readonly RoutedEvent SaveAllClickEvent = EventManager.RegisterRoutedEvent("SaveAllClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ImageBarControl));
         public event RoutedEventHandler SaveAllClick { add { AddHandler(SaveAllClickEvent, value); } remove { RemoveHandler(SaveAllClickEvent, value); } }
         private void Internal_OnSaveAllClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SaveAllClickEvent, sender));

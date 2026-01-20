@@ -419,4 +419,105 @@
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drag start failed: {0}</sys:String>
     <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch workspace failed: {0}</sys:String>
 
+
+    <!-- New Replacements for Hardcoded Strings -->
+    <sys:String x:Key="L_Load_Reason_Empty" xmlns:sys="clr-namespace:System;assembly=mscorlib">File is empty, blank canvas created.</sys:String>
+    <sys:String x:Key="L_Load_Reason_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">File header corrupted or format unsupported, blank canvas created.</sys:String>
+    <sys:String x:Key="L_Load_Reason_Corrupt" xmlns:sys="clr-namespace:System;assembly=mscorlib">File corrupted or format unsupported, blank canvas created.</sys:String>
+    <sys:String x:Key="L_Load_Info_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">[New Image] Memory File</sys:String>
+    <sys:String x:Key="L_Status_Unsaved" xmlns:sys="clr-namespace:System;assembly=mscorlib">Unsaved</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Discard Changes</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to reset the current workspace?&#x0a;· All 'Untitled' new canvases will be deleted&#x0a;· All open images will revert to disk state&#x0a;· Undo history, temporary cache, and session records will be cleared</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete File</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to move file '{0}' to the Recycle Bin?&#x0a;This operation cannot be undone (depends on system settings).</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save Failed</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}&#x0a;&#x0a;Do you want to try [Save As] to another location?</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save Changes</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image {0} has not been saved. Do you want to save it?</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Size Too Large</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image dimensions cannot exceed {0} pixels.</sys:String>
+    <sys:String x:Key="L_Msg_ResetFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">Factory reset failed: {0}</sys:String>
+    <!-- File Size Formatting -->
+    <sys:String x:Key="L_Format_Size_B" xmlns:sys="clr-namespace:System;assembly=mscorlib">Size: {0} B</sys:String>
+    <sys:String x:Key="L_Format_Size_KB" xmlns:sys="clr-namespace:System;assembly=mscorlib">Size: {0:F1} KB</sys:String>
+    <sys:String x:Key="L_Format_Size_MB" xmlns:sys="clr-namespace:System;assembly=mscorlib">Size: {0:F2} MB</sys:String>
+
+    <!-- OCR & AI Tools -->
+    <sys:String x:Key="L_OCR_Error_NoLangPack" xmlns:sys="clr-namespace:System;assembly=mscorlib">Error: OCR language pack not installed. Please add it in Windows Settings -> Time &amp; Language.</sys:String>
+    <sys:String x:Key="L_OCR_Status_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">Extracting text...</sys:String>
+    <sys:String x:Key="L_OCR_Failed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR Failed: {0}</sys:String>
+
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Missing Components</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI features require [Visual C++ 2015-2022 Runtime].&#x0a;&#x0a;Download from Microsoft now?</sys:String>
+    <sys:String x:Key="L_AI_Status_Preparing" xmlns:sys="clr-namespace:System;assembly=mscorlib">Preparing AI model...</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading model: {0:F1}%</sys:String>
+    <sys:String x:Key="L_AI_Status_Thinking" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI is thinking...</sys:String>
+    <sys:String x:Key="L_AI_Error_DllNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">Failed to load AI components.&#x0a;System likely missing C++ Runtime or AVX support.&#x0a;Please install VC++ Runtime.</sys:String>
+
+    <!-- Exif Info -->
+    <sys:String x:Key="L_Exif_Section_File" xmlns:sys="clr-namespace:System;assembly=mscorlib">[File Info]</sys:String>
+    <sys:String x:Key="L_Exif_Path_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">Path: [Memory] Not saved</sys:String>
+    <sys:String x:Key="L_Exif_Path_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Path: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Size_MB_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Size: {0:F2} MB</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">[Canvas Info]</sys:String>
+    <sys:String x:Key="L_Exif_Dim_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Dim: {0} × {1} px</sys:String>
+    <sys:String x:Key="L_Exif_BitDepth_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Depth: {0} bit</sys:String>
+    <sys:String x:Key="L_Exif_Dpi_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">DPI: {0:F0} × {1:F0}</sys:String>
+    <sys:String x:Key="L_Exif_PixelFormat_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Format: {0}</sys:String>
+
+    <sys:String x:Key="L_Exif_Section_Photo" xmlns:sys="clr-namespace:System;assembly=mscorlib">[Photo Metadata]</sys:String>
+    <sys:String x:Key="L_Exif_Device_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Device: {0}</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Fraction_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exp. Time: 1/{0} s</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Sec_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exp. Time: {0} s</sys:String>
+    <sys:String x:Key="L_Exif_FNumber_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">F-Stop: f/{0:0.0}</sys:String>
+    <sys:String x:Key="L_Exif_ISO_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">ISO: ISO-{0}</sys:String>
+    <sys:String x:Key="L_Exif_Bias_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exp. Bias: {0} EV</sys:String>
+    <sys:String x:Key="L_Exif_Focal_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Focal Len: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Focal35_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">35mm Equiv: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Metering_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Metering: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Flash: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">On</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">Off</sys:String>
+    <sys:String x:Key="L_Exif_Software_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Software: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Date_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Date Taken: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Lens_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Lens: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Error_Parse" xmlns:sys="clr-namespace:System;assembly=mscorlib">Parse Failed:</sys:String>
+
+    <sys:String x:Key="L_Exif_Meter_Unknown" xmlns:sys="clr-namespace:System;assembly=mscorlib">Unknown</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Average" xmlns:sys="clr-namespace:System;assembly=mscorlib">Average</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Center" xmlns:sys="clr-namespace:System;assembly=mscorlib">Center-weighted</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Spot" xmlns:sys="clr-namespace:System;assembly=mscorlib">Spot</sys:String>
+    <sys:String x:Key="L_Exif_Meter_MultiSpot" xmlns:sys="clr-namespace:System;assembly=mscorlib">Multi-spot</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Pattern" xmlns:sys="clr-namespace:System;assembly=mscorlib">Pattern</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Partial" xmlns:sys="clr-namespace:System;assembly=mscorlib">Partial</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Other" xmlns:sys="clr-namespace:System;assembly=mscorlib">Other</sys:String>
+    <!-- New Additions for C# Logic -->
+    <sys:String x:Key="L_Save_Error_ReadOnly" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save failed: The file is read-only or you do not have permission to write to this location.</sys:String>
+    <sys:String x:Key="L_Save_Error_InUse" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save failed: The file may be in use.&#x0a;{0}</sys:String>
+    <sys:String x:Key="L_Save_Error_General" xmlns:sys="clr-namespace:System;assembly=mscorlib">Error occurred while saving: {0}</sys:String>
+
+    <sys:String x:Key="L_Selection_Size_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}×{1}px</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Jump" xmlns:sys="clr-namespace:System;assembly=mscorlib">Jump to: {0} {1} ({2:F1}s)</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Quick" xmlns:sys="clr-namespace:System;assembly=mscorlib">(Quick)</sys:String>
+
+    <sys:String x:Key="L_Clipboard_InternalFormat" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaintInternal</sys:String>
+
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch Workspace</sys:String>
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clear canvas and open new folder</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Batch Open</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Open {0} images as new tabs</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add to List</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Add image as a new tab</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert Image</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert image at current position</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Insert Text</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">Release to create text box</sys:String>
+
+    <sys:String x:Key="L_Mode_Switch_ToPaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch to Paint Mode (Tab)</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToView" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch to View Mode (Tab)</sys:String>
+
+    <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(No recent files)</sys:String>
+    <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clear Recent Files List</sys:String>
+
 </ResourceDictionary>

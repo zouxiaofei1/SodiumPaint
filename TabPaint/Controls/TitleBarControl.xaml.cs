@@ -67,9 +67,6 @@ namespace TabPaint.Controls
         }
         public void UpdateModeIcon(bool isViewMode)
         {
-            // 逻辑判定：
-            // 如果当前是看图模式 (isViewMode == true)，按钮应该显示 "去画图" 的图标
-            // 如果当前是画图模式 (isViewMode == false)，按钮应该显示 "去看图" 的图标
             string resourceKey = isViewMode ? "Paint_Mode_Image" : "View_Mode_Image";
 
             if (ModeIconImage != null)
@@ -87,7 +84,9 @@ namespace TabPaint.Controls
                 }
 
                 // 更新提示文字
-                ModeSwitchButton.ToolTip = isViewMode ? "切换到画图模式 (Tab)" : "切换到看图模式 (Tab)";
+                ModeSwitchButton.ToolTip = isViewMode
+             ? LocalizationManager.GetString("L_Mode_Switch_ToPaint")
+             : LocalizationManager.GetString("L_Mode_Switch_ToView");
             }
         }
         public event RoutedEventHandler NewClick;
@@ -145,8 +144,6 @@ namespace TabPaint.Controls
                 if (Math.Abs(currentPosition.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
                     Math.Abs(currentPosition.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
                 {
-                    // 触发拖拽请求事件，参数传递 MouseButtonEventArgs 方便后续处理
-                    // 注意：这里传递 null 或构造新的参数皆可，主要是通知 MainWindow
                     IconDragRequest?.Invoke(this, null);
                 }
             }
@@ -160,7 +157,6 @@ namespace TabPaint.Controls
             {
                 ((MainWindow)System.Windows.Application.Current.MainWindow).MaximizeWindowHandler();
 
-                // 【修复核心】：添加这一行，阻止事件继续传递给 WindowChrome/系统
                 e.Handled = true;
             }
         }

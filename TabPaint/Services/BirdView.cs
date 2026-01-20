@@ -26,13 +26,11 @@ namespace TabPaint
             // 如果不在看图模式或面板不可见，直接返回
             if (BirdEyePanel.Visibility != Visibility.Visible || BackgroundImage.Source == null) return;
 
-            // 获取实际的显示尺寸（考虑了 Uniform 拉伸）
             double miniWidth = BirdEyeImage.ActualWidth;
             double miniHeight = BirdEyeImage.ActualHeight;
 
             if (miniWidth <= 0 || miniHeight <= 0) return;
 
-            // 计算比例：鸟瞰图尺寸 / 主画布内容尺寸 (ExtentWidth 是包含缩放后的尺寸)
             double ratioX = miniWidth / ScrollContainer.ExtentWidth;
             double ratioY = miniHeight / ScrollContainer.ExtentHeight;
 
