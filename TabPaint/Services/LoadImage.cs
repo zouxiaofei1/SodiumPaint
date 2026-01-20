@@ -292,7 +292,7 @@ namespace TabPaint
                 {
                     if (originalWidth >= originalHeight) img.DecodePixelWidth = maxSize;
                     else img.DecodePixelHeight = maxSize;
-                    Dispatcher.Invoke(() => ShowToast("⚠️ 图片过大，已自动压缩显示"));
+                    Dispatcher.Invoke(() => ShowToast("L_Toast_ImageTooLarge"));
                 }
 
                 img.EndInit();
@@ -306,17 +306,6 @@ namespace TabPaint
                 return null;
             }
         }
-
-        //private Task<(int Width, int Height)> GetImageDimensionsAsync(byte[] imageBytes)
-        //{
-        //    return Task.Run(() =>
-        //    {
-        //        using var ms = new System.IO.MemoryStream(imageBytes);
-        //        // Create a decoder but only access the metadata, which is very fast.
-        //        var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-        //        return (decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
-        //    });
-        //}
 
         private Task<(int Width, int Height)?> GetImageDimensionsAsync(byte[] imageBytes)
         {
@@ -364,8 +353,7 @@ namespace TabPaint
 
             if (!File.Exists(fileToRead))
             {
-                // 只有非虚拟路径不存在时才报错
-                ShowToast($"找不到图片文件: {fileToRead}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FileNotFound_Format"), fileToRead));
                 return;
             }
 

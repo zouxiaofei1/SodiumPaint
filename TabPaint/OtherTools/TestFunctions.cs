@@ -19,6 +19,7 @@ using System.Windows.Input;
 
 namespace TabPaint
 {
+
     public class ColorMatchConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

@@ -1,10 +1,12 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
 namespace TabPaint.Controls
 {
+  
     public partial class TitleBarControl : UserControl
     {
         // --- 1. 新增：暴露内部控件给 MainWindow 访问 ---

@@ -196,5 +196,10 @@ namespace TabPaint.Controls
             RaiseEvent(new RoutedEventArgs(OpenWorkspaceClickEvent));
         }
 
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            // 这里写你的逻辑
+        }
+
     }
 }

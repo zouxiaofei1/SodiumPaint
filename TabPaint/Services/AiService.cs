@@ -24,7 +24,7 @@ namespace TabPaint
         private const string ModelName = "rmbg-1.4.onnx";
 
         // 开发时先设为 null，第一次下载成功后在控制台输出 MD5，然后填入此处
-        private const string ExpectedMD5 = null; // "你的MD5值"; 
+        private const string ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d"; // "你的MD5值"; 
 
         private readonly string _cacheDir;
 
@@ -44,7 +44,7 @@ namespace TabPaint
                 // 如果设置了MD5且校验失败，则删除重下
                 if (!string.IsNullOrEmpty(ExpectedMD5) && !VerifyMd5(modelPath, ExpectedMD5))
                 {
-                    System.Diagnostics.Debug.WriteLine("MD5校验失败，重新下载...");
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).ShowToast("L_Toast_MD5CheckFailed");
                     File.Delete(modelPath);
                 }
                 else

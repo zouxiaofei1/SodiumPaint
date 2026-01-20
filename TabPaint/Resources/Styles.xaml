@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:TabPaint">
     <!-- ToolTip 样式 -->
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
@@ -180,6 +181,7 @@
     </Style>
 
     <!-- Win11 风格 ContextMenu 样式 -->
+    <!-- Win11 风格 ContextMenu 样式 (已修复) -->
     <Style x:Key="Win11ContextMenuStyle" TargetType="ContextMenu">
         <Setter Property="Background" Value="{DynamicResource ChromeLowBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
@@ -188,27 +190,35 @@
         <Setter Property="Padding" Value="4"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+
+        <!-- 增加阴影效果 (之前可能写在 Popup 或 Border 上) -->
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
+            </Setter.Value>
+        </Setter>
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Popup x:Name="PART_Popup"
-                       AllowsTransparency="True"
-                       Placement="MousePoint"
-                       IsOpen="{TemplateBinding IsOpen}"
-                       PopupAnimation="None" 
-                       Focusable="False">
-                        <Border CornerRadius="8" 
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            Padding="{TemplateBinding Padding}">
-                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
-                        </Border>
-                    </Popup>
+                    <!-- ✅ 正确：直接写 Border，不要外包 Popup -->
+                    <Border CornerRadius="8" 
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}">
+
+                        <!-- 加上滚动条以防菜单太长 -->
+                        <ScrollViewer Style="{DynamicResource FluentScrollViewer}" VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
+                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </ScrollViewer>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
 
     <!-- Win11 风格 MenuItem 样式 -->
     <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
@@ -276,7 +286,7 @@
                                 <TextBlock x:Name="RightArrow" 
                                        Grid.Column="3"
                                        Text="&#xE76C;" 
-                                       FontFamily="Segoe Fluent Icons" 
+                                       FontFamily="Segoe MDL2 Assets" 
                                        FontSize="10"
                                        VerticalAlignment="Center" 
                                        Margin="0,0,8,0"
@@ -334,7 +344,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
     <!-- 分隔条样式 -->
     <Style x:Key="Win11MenuSeparatorStyle" TargetType="Separator">
         <Setter Property="Height" Value="1"/>

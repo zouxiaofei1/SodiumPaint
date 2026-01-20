@@ -2,11 +2,14 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Forms;
 
 namespace TabPaint
 {
+
     public static class ThemeManager
     {
         private const string RegistryKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
@@ -89,6 +92,7 @@ namespace TabPaint
             // 5. 刷新标题栏和强调色
             UpdateWindowStyle(isDark);
             RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
+
         }
         private static bool IsWin11()
         {
@@ -249,6 +253,8 @@ namespace TabPaint
                 SetWindowImmersiveDarkMode(window, isDark);
                 // 这里可能还需要通知你的 MicaAcrylicManager 刷新
                 // MicaAcrylicManager.UpdateTheme(window, isDark); 
+                var bgBrush = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
+                window.Background = bgBrush;
             }
         }
 

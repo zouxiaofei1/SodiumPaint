@@ -125,7 +125,7 @@ namespace TabPaint
 
                 if (bitmapToInsert == null)
                 {
-                    ShowToast("无法获取该标签页的图像数据");
+                    ShowToast("L_Toast_NoImageData");
                     return;
                 }
 
@@ -140,7 +140,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast("插入失败: " + ex.Message);
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_InsertFailed"), ex.Message));
             }
         }
 
@@ -394,7 +394,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast("无法插入图片: " + ex.Message);
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CannotInsertImage"), ex.Message));
             }
         }
     }

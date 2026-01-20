@@ -777,7 +777,7 @@ namespace TabPaint
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                     if (ctx.EditorOverlay.Children.Contains(_textBox))
                         ctx.EditorOverlay.Children.Remove(_textBox);
-                    lag = 1;
+                    lag = 2;
                     return;
                 }
                 double tweakX = 2.0;

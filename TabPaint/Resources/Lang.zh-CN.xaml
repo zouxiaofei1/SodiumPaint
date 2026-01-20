@@ -386,5 +386,33 @@
     <sys:String x:Key="L_Toast_OCR_NoText" xmlns:sys="clr-namespace:System;assembly=mscorlib">未识别到文字</sys:String>
     <sys:String x:Key="L_Toast_ImageTooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 图片过大，已自动压缩显示</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">读取文件夹失败: </sys:String>
-    <sys:String x:Key="L_Toast_LoadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动加载失败: </sys:String>
+    <sys:String x:Key="L_Toast_LoadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动加载失败:</sys:String>
+
+    <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">已添加 2px 边框</sys:String>
+    <sys:String x:Key="L_Toast_CropFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">裁切失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorCopied_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已复制颜色: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorPicked_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已吸取颜色: #{0:X2}{1:X2}{2:X2}</sys:String>
+    <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">抠图失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OCR_VersionError" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 功能仅支持 Windows 10 (1803) 或更高版本。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Success_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">成功提取 {0} 个字符到剪切板！</sys:String>
+    <sys:String x:Key="L_Toast_OCR_InitFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 初始化失败，请检查系统设置中是否已安装对应语言的 OCR 数据包。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NotSupported" xmlns:sys="clr-namespace:System;assembly=mscorlib">当前系统不支持 OCR API。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 错误: {0}</sys:String>
+    <sys:String x:Key="L_Toast_GDIReadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">GDI+ 读取失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ClipboardError_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">剪贴板访问错误: {0}</sys:String>
+    <sys:String x:Key="L_Toast_RestoreSelectionFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">恢复选区失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_MD5CheckFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">MD5校验失败，重新下载...</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">进入全屏模式</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">退出全屏模式</sys:String>
+    <sys:String x:Key="L_Toast_SaveFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">找不到图片文件: {0}</sys:String>
+    <sys:String x:Key="L_Toast_Mode_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">进入看图模式</sys:String>
+    <sys:String x:Key="L_Toast_Mode_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">进入画图模式</sys:String>
+    <sys:String x:Key="L_Toast_SavedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已保存 {0} 张图片。</sys:String>
+    <sys:String x:Key="L_Toast_CleanedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已清理 {0} 张未编辑图片</sys:String>
+    <sys:String x:Key="L_Toast_CleanupFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">清理失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法打开文件夹: {0}</sys:String>
+    <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">准备拖拽文件失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动拖拽失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换工作区失败: {0}</sys:String>
 </ResourceDictionary>

@@ -323,7 +323,7 @@ namespace TabPaint
         {
             BackgroundImage.Width = pixwidth;
             BackgroundImage.Height = pixheight;
-            _imageSize = $"{pixwidth}×{pixheight}像素";
+            _imageSize = $"{pixwidth}×{pixheight}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
             OnPropertyChanged(nameof(ImageSize));
             UpdateWindowTitle();
         }
@@ -475,7 +475,7 @@ namespace TabPaint
                 if (top == height)
                 {
                     bmp.Unlock();
-                    ShowToast("未检测到有效内容，无需裁剪");
+                    ShowToast("L_Toast_NoContentToCrop");
                     return;
                 }
 
@@ -524,7 +524,7 @@ namespace TabPaint
             // 检查是否需要裁剪
             if (cropRect.Width == width && cropRect.Height == height)
             {
-                ShowToast("已是最小尺寸");
+                ShowToast("L_Toast_MinSize");
                 return;
             }
 
@@ -625,8 +625,7 @@ namespace TabPaint
             NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
             NotifyCanvasChanged();
             _canvasResizer.UpdateUI();
-
-            ShowToast($"已裁剪至 {cropRect.Width}x{cropRect.Height}");
+            ShowToast(string.Format("Cropped: {0}x{1}", cropRect.Width, cropRect.Height));
         }
     }
 }

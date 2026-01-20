@@ -1,5 +1,7 @@
 ﻿
+using Microsoft.Win32;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -18,6 +20,44 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private bool IsOcrSupported()
+        {
+            // 1. 检查操作系统版本 (Windows 10 是 Major 10)
+            var os = Environment.OSVersion;
+            if (os.Version.Major < 10) return false;
+
+            // 2. 检查 Build 版本。
+            // Windows 10 Build 10240 引入了 OCR，但建议 17134 (1803) 以上以获得稳定支持
+            if (os.Version.Build < 17134) return false;
+
+            return true;
+        }
+        private bool IsVcRedistInstalled()
+        {
+            try
+            {
+                // 检查 x64 运行时 (如果你编译的是 x86 程序，请将路径中的 x64 改为 x86)
+                string keyPath = @"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64";
+
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(keyPath))
+                {
+                    if (key != null)
+                    {
+                        int installed = (int)key.GetValue("Installed", 0);
+                        int major = (int)key.GetValue("Major", 0);
+                        // 14.0 以上通常代表 2015+ 版本
+                        return installed == 1 && major >= 14;
+                    }
+                }
+            }
+            catch
+            {
+                // 如果无法读取注册表，保守起见返回 true，依靠异常捕获来处理
+                return true;
+            }
+            return false;
+        }
+
         private void OnAddBorderClick(object sender, RoutedEventArgs e)
         {
             // 1. 检查画布是否存在
@@ -31,7 +71,7 @@ namespace TabPaint
             // 如果图片太小，不足以画边框，直接返回
             if (w <= borderSize * 2 || h <= borderSize * 2)
             {
-                ShowToast("图片尺寸过小，无法添加边框");
+                ShowToast("L_Toast_SizeTooSmallForBorder");
                 return;
             }
 
@@ -116,7 +156,7 @@ namespace TabPaint
 
             // 7. 刷新界面状态
             NotifyCanvasChanged();
-            ShowToast($"已添加 2px 边框");
+            ShowToast("L_Toast_BorderAdded");
         }
 
         private Point _lastRightClickPosition; // 记录右键点击时的相对坐标
@@ -135,7 +175,7 @@ namespace TabPaint
             catch (Exception ex)
             {
                 // 简单的错误处理
-               ShowToast($"裁切失败: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CropFailed_Prefix"), ex.Message));
             }
         }
         private void OnCopyColorCodeClick(object sender, RoutedEventArgs e)
@@ -152,7 +192,7 @@ namespace TabPaint
 
                 if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
                 {
-                    ShowToast("未选中图片区域"); // 假设你有ShowToast方法
+                    ShowToast("L_Toast_NoSelection");
                     return;
                 }
                 Color color = GetPixelColor(x, y);
@@ -162,12 +202,12 @@ namespace TabPaint
                 System.Windows.Clipboard.SetText(hexCode);
 
                 // 6. 提示用户
-                ShowToast($"已复制颜色: {hexCode}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ColorCopied_Format"), hexCode));
             }
             catch (Exception ex)
             {
                 // 容错处理
-                ShowToast(ex.Message);
+                ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error") + ": {0}", ex.Message));
             }
         }
         private void OnScreenColorPickerClick(object sender, RoutedEventArgs e)
@@ -209,7 +249,7 @@ namespace TabPaint
             OnPropertyChanged(nameof(ForegroundBrush));
             OnPropertyChanged(nameof(BackgroundBrush));
             // 简单的提示
-            ShowToast($"已吸取颜色: #{c.R:X2}{c.G:X2}{c.B:X2}");
+            ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ColorPicked_Format"), c.R, c.G, c.B));
         }
         private void OnScrollContainerContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
@@ -223,44 +263,51 @@ namespace TabPaint
 
         private void OnChromaKeyClick(object sender, RoutedEventArgs e)
         {
-            if (_bitmap == null) return;
-            _router.CleanUpSelectionandShape();
-
-            // 默认坐标
-            Point targetPoint = new Point(0, 0);
-
-            // === 核心修改逻辑 ===
-            // 1. 判断触发源：是快捷键(InputBinding/Shortcut) 还是 菜单点击(MenuItem)
-            if (sender is MainWindow || e is System.Windows.Input.KeyEventArgs) // 快捷键触发通常 sender 是 Window 或者 e 是 KeyEventArgs
+            try
             {
-                // 快捷键触发：主动获取鼠标在 Canvas 上的当前位置
-                // 注意：_mainCanvas 是你存放图片的控件名（可能是 InkCanvas 或 Image 的父容器）
-                targetPoint = Mouse.GetPosition(CanvasWrapper);
+                if (_bitmap == null) return;
+                _router.CleanUpSelectionandShape();
+
+                // 默认坐标
+                Point targetPoint = new Point(0, 0);
+
+                // === 核心修改逻辑 ===
+                // 1. 判断触发源：是快捷键(InputBinding/Shortcut) 还是 菜单点击(MenuItem)
+                if (sender is MainWindow || e is System.Windows.Input.KeyEventArgs) // 快捷键触发通常 sender 是 Window 或者 e 是 KeyEventArgs
+                {
+                    // 快捷键触发：主动获取鼠标在 Canvas 上的当前位置
+                    // 注意：_mainCanvas 是你存放图片的控件名（可能是 InkCanvas 或 Image 的父容器）
+                    targetPoint = Mouse.GetPosition(CanvasWrapper);
+                }
+                else
+                {
+                    // 右键菜单触发：使用记录下的右键点击位置
+                    targetPoint = _lastRightClickPosition;
+                }
+
+                int x = (int)targetPoint.X;
+                int y = (int)targetPoint.Y;
+
+                // 2. 验证坐标是否在图片范围内
+                // 如果点到了图片外面（灰白格子区域），默认取最近的边缘点或返回
+                if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
+                {
+                    // 如果是快捷键悬停在外部，可能不想执行，或者取边缘色。
+                    // 这里采用保留你原有的 Clamp 逻辑，防止越界崩溃
+                    x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
+                    y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
+                }
+
+                // 3. 获取该点的颜色作为目标色
+                Color targetColor = GetPixelColor(x, y);
+
+                // 4. 执行抠图（容差 45 左右通常效果较好）
+                ApplyColorKey(targetColor, 45);
             }
-            else
+            catch (Exception ex)
             {
-                // 右键菜单触发：使用记录下的右键点击位置
-                targetPoint = _lastRightClickPosition;
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message));
             }
-
-            int x = (int)targetPoint.X;
-            int y = (int)targetPoint.Y;
-
-            // 2. 验证坐标是否在图片范围内
-            // 如果点到了图片外面（灰白格子区域），默认取最近的边缘点或返回
-            if (x < 0 || x >= _bitmap.PixelWidth || y < 0 || y >= _bitmap.PixelHeight)
-            {
-                // 如果是快捷键悬停在外部，可能不想执行，或者取边缘色。
-                // 这里采用保留你原有的 Clamp 逻辑，防止越界崩溃
-                x = Math.Clamp(x, 0, _bitmap.PixelWidth - 1);
-                y = Math.Clamp(y, 0, _bitmap.PixelHeight - 1);
-            }
-
-            // 3. 获取该点的颜色作为目标色
-            Color targetColor = GetPixelColor(x, y);
-
-            // 4. 执行抠图（容差 45 左右通常效果较好）
-            ApplyColorKey(targetColor, 45);
         }
 
         private void ApplyColorKey(Color targetColor, int tolerance)
@@ -333,9 +380,11 @@ namespace TabPaint
         {
             // 1. 检查是否有图
             if (_surface?.Bitmap == null) return;
-
-            // 2. 确定要识别的区域
-            // 如果有选区（Selection），则只识别选区；否则识别全图
+            if (!IsOcrSupported())
+            {
+                ShowToast("L_Toast_OCR_VersionError");
+                return;
+            }
             BitmapSource sourceToRecognize = _surface.Bitmap;
            
             if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection)
@@ -359,18 +408,29 @@ namespace TabPaint
                 if (!string.IsNullOrWhiteSpace(text))
                 {
                     System.Windows.Clipboard.SetText(text);
-                    ShowToast($"成功提取 {text.Length} 个字符到剪切板！");
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Success_Format"), text.Length));
                 }
                 else
                 {
-                    ShowToast("未识别到文字");
+                    ShowToast("L_Toast_OCR_NoText");
                 }
 
                 _imageSize = oldStatus;
             }
             catch (Exception ex)
             {
-                ShowToast($"OCR 错误: {ex.Message}");
+                if (ex.Message.Contains("0x80004005") || ex.Message.Contains("Language"))
+                {
+                    ShowToast("L_Toast_OCR_InitFailed");
+                }
+                else if (ex is PlatformNotSupportedException)
+                {
+                    ShowToast("L_Toast_OCR_NotSupported");
+                }
+                else
+                {
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OCR_Error_Prefix"), ex.Message));
+                }
             }
             finally
             {
@@ -383,7 +443,24 @@ namespace TabPaint
         {
             if (_surface?.Bitmap == null) return;
             _router.CleanUpSelectionandShape();
-            // 1. 简单的加载状态提示 (可以用你的 imagebar 进度条或者状态栏)
+            if (!IsVcRedistInstalled())
+            {
+                var result = System.Windows.MessageBox.Show(
+                    "AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。\n\n是否立即前往微软官网下载？",
+                    "缺少必要组件",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://aka.ms/vs/17/release/vc_redist.x64.exe", // 微软官方直接下载链接
+                        UseShellExecute = true
+                    });
+                }
+                return;
+            }
             var statusText = _imageSize; // 暂存状态栏
             _imageSize = "正在准备 AI 模型...";
             OnPropertyChanged(nameof(ImageSize));
@@ -416,7 +493,18 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"抠图失败: {ex.Message}");
+                if (ex is DllNotFoundException ||
+            ex.InnerException is DllNotFoundException ||
+            ex.Message.Contains("onnxruntime"))
+                {
+                    ShowToast(
+                        "无法加载 AI 核心组件。\n这通常是因为系统缺少 C++ 运行库或 CPU 不支持 AVX 指令集。\n请尝试安装 VC++ Runtime。"
+                        );
+                }
+                else
+                {
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message));
+                }
             }
             finally
             {

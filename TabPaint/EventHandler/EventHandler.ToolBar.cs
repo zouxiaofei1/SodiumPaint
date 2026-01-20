@@ -60,7 +60,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"切换工作区失败: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SwitchWorkspaceFailed_Prefix"), ex.Message));
             }
         }
 

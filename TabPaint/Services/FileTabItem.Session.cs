@@ -923,7 +923,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"保存失败: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SaveFailed_Prefix"), ex.Message));
                 return false;
             }
         }

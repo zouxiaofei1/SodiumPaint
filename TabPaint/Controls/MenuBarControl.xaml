@@ -10,21 +10,16 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 确保这里包含了你的 LightTheme.xaml 或者在 App.xaml 中已全局合并 -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!-- 
-        原 Background="#50FFFFFF" 替换为 GlassBackgroundMediumBrush (Opacity 0.5) 
-        如果需要更通透的效果可以使用 GlassBackgroundLowBrush
-    -->
     <Border Height="36" Background="{DynamicResource GlassBackgroundLowBrush}" AllowDrop="True" MouseLeftButtonDown="OnRootBorderMouseDown">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
                 <!-- 文件菜单 -->
-                <MenuItem Header="{DynamicResource L_Menu_File}" Style="{StaticResource ModernMenuItemStyle}" SubmenuOpened="OnFileMenuOpened">
+                <MenuItem Header="{DynamicResource L_Menu_File}" Style="{StaticResource ModernMenuItemStyle}" SubmenuOpened="OnFileMenuOpened" Click="MenuItem_Click">
                     <MenuItem Header="{DynamicResource L_Menu_File_New}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+N" Click="OnNewClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>

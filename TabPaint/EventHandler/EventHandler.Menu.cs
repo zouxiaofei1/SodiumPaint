@@ -61,7 +61,7 @@ namespace TabPaint
             // 更新状态
             NotifyCanvasChanged();
             SetUndoRedoButtonState();
-            ShowToast("已应用反色");
+            ShowToast("L_Toast_Effect_Inverted");
         }
 
         private void OnAutoLevelsClick(object sender, RoutedEventArgs e)
@@ -157,7 +157,7 @@ namespace TabPaint
 
             NotifyCanvasChanged();
             SetUndoRedoButtonState();
-            ShowToast("已自动调整色阶");
+            ShowToast("L_Toast_Effect_AutoLevels");
         }
 
         // 辅助方法：构建色阶映射表
@@ -193,8 +193,7 @@ namespace TabPaint
             }
             else
             {
-                ShowToast($"文件未找到：\n{filePath}");
-                // 可选：如果文件不存在，从列表中移除？
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FileNotFound_Format"), filePath));
             }
         }
 
@@ -500,7 +499,8 @@ namespace TabPaint
             ConvertToBlackAndWhite(_bitmap);
             CheckDirtyState();
             SetUndoRedoButtonState();
-            ShowToast("已应用黑白");
+            ShowToast("L_Toast_Effect_BW");
+
         }
         private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
         {

@@ -178,7 +178,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast("拖拽失败: " + ex.Message);
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragFailed"), ex.Message));
                 }
             }
         }

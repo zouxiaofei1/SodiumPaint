@@ -66,7 +66,7 @@ namespace TabPaint
             SaveSession();
             // 简单提示 (实际项目中建议用 Statusbar)
             if (successCount > 0)
-                ShowToast($"已保存 {successCount} 张图片。");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SavedCount_Format"), successCount));
         }
         private void OnSaveAllDoubleClick(object sender, RoutedEventArgs e)
         {
@@ -132,7 +132,7 @@ namespace TabPaint
             }
 
             UpdateImageBarSliderState();
-            ShowToast($"已清理 {filesToRemove.Count} 张未编辑图片");
+            ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CleanedCount_Format"), filesToRemove.Count));
         }
 
 
@@ -225,7 +225,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"Cleanup failed: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CleanupFailed_Prefix"), ex.Message));
             }
             var originalCurrentTab = _currentTabItem;
             bool currentTabAffected = false;
@@ -309,7 +309,7 @@ namespace TabPaint
                 // 2. 再次确认文件是否存在（防止文件已被外部删除）
                 if (!System.IO.File.Exists(tab.FilePath))
                 {
-                    ShowToast("文件已不存在，无法定位文件夹。");
+                    ShowToast("L_Toast_FileNotFound");
                     return;
                 }
 
@@ -321,7 +321,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast($"无法打开文件夹: {ex.Message}");
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_OpenFolderFailed_Prefix"), ex.Message));
                 }
             }
         }
@@ -422,7 +422,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"PrepareDragFilePath Error: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PrepareDragFailed_Prefix"), ex.Message));
             }
 
             // 如果上面失败了，且原路径是真实存在的，作为兜底返回原路径
@@ -466,7 +466,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"Drag start failed: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragStartFailed_Prefix"), ex.Message));
             }
         }
 
@@ -721,7 +721,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast("粘贴图片失败: " + ex.Message);
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_PasteFailed"), ex.Message));
                 }
             }
 
@@ -785,7 +785,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast("删除失败: " + ex.Message);
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DeleteFailed"), ex.Message));
                 }
 
             }
@@ -882,8 +882,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                //ShowToast($"Copy failed: {ex.Message}");
-                ShowToast("复制失败");
+                ShowToast("L_Toast_CopyFailed");
             }
             finally
             {

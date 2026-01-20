@@ -190,7 +190,10 @@
                                 <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
 
                                 <!-- 二级菜单：小工具 -->
-                                <MenuItem x:Name="miniTools" Header="{DynamicResource L_Main_Ctx_MiniTools}" Style="{StaticResource Win11MenuItemStyle}">
+                                <controls:DelayedMenuItem x:Name="miniTools" 
+                          Header="{DynamicResource L_Main_Ctx_MiniTools}" 
+                          Style="{StaticResource Win11MenuItemStyle}"
+                          CloseDelay="300">
                                     <MenuItem.Icon>
                                         <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
@@ -235,7 +238,7 @@
                                             <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="2" Width="14" Height="14" CornerRadius="1"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
-                                </MenuItem>
+                                </controls:DelayedMenuItem>
                             </ContextMenu>
                         </ScrollViewer.ContextMenu>
 

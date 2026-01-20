@@ -15,12 +15,12 @@
     <sys:String x:Key="L_Settings_General_Title">General</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">Startup</sys:String>
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">Auto load images in the same folder</sys:String>
-    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">When opening a single image, automatically scan and load other images in the same directory</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">Automatically scan and load other images in the same directory</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Title">Start in view mode</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">Hide toolbars on startup (useful as a default image viewer)</sys:String>
 
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">Mouse wheel</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Desc">How the app responds to mouse wheel scrolling</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Desc">Responds to mouse wheel scrolling</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">Auto</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">Scroll image</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">Switch image</sys:String>
@@ -35,7 +35,7 @@
     <sys:String x:Key="L_Settings_General_Accent_Desc">UI accent and tool icon color</sys:String>
 
     <sys:String x:Key="L_Settings_General_Language_Title">Language</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language (Chinese/English)</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language </sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
 
@@ -43,20 +43,20 @@
     <sys:String x:Key="L_Settings_Paint_Title">Paint</sys:String>
     <sys:String x:Key="L_Settings_Paint_Habits_Header">Editing</sys:String>
     <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">Auto popup on clipboard image</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">When clipboard monitoring detects a new image, activate and bring the window to front</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">Activate window when clipboard monitoring detects a new image</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">Delete selection background</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">Fill mode when pressing Delete or cutting selection</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">Fill mode of deleting a selection</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">Transparent</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_White">White</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">Fill color only (keep alpha)</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Allow Delete key to delete file</sys:String>
-    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">When no selection, allow pressing Delete to delete the current file</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Allow pressing Delete to delete the current file</sys:String>
 
     <!-- View panel -->
     <sys:String x:Key="L_Settings_View_Title">View</sys:String>
     <sys:String x:Key="L_Settings_View_Habits_Header">Interaction</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Title">Mouse wheel</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Desc">Action when scrolling the wheel in view mode</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Desc">Scrolling wheel in view mode</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">Zoom</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Switch">Switch image (Prev/Next)</sys:String>
     <sys:String x:Key="L_Settings_View_Display_Header">Display</sys:String>
@@ -389,4 +389,34 @@
     <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ Image too large, auto-downscaled for display</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">Read folder failed:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">Startup load failed:</sys:String>
+
+    <!-- New Toast Messages -->
+    <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">Added 2px border</sys:String>
+    <sys:String x:Key="L_Toast_CropFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Crop failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorCopied_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Color copied: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorPicked_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Color picked: #{0:X2}{1:X2}{2:X2}</sys:String>
+    <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Remove BG failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OCR_VersionError" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR requires Windows 10 (1803) or higher.</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Success_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Successfully extracted {0} characters to clipboard!</sys:String>
+    <sys:String x:Key="L_Toast_OCR_InitFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR init failed. Check if OCR language pack is installed in system settings.</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NotSupported" xmlns:sys="clr-namespace:System;assembly=mscorlib">System does not support OCR API.</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR Error: {0}</sys:String>
+    <sys:String x:Key="L_Toast_GDIReadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">GDI+ Read Failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ClipboardError_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clipboard Access Error: {0}</sys:String>
+    <sys:String x:Key="L_Toast_RestoreSelectionFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Restore Selection Failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_MD5CheckFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">MD5 check failed, redownloading...</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">Enter Fullscreen</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">Exit Fullscreen</sys:String>
+    <sys:String x:Key="L_Toast_SaveFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Image file not found: {0}</sys:String>
+    <sys:String x:Key="L_Toast_Mode_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">View Mode</sys:String>
+    <sys:String x:Key="L_Toast_Mode_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Paint Mode</sys:String>
+    <sys:String x:Key="L_Toast_SavedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Saved {0} images.</sys:String>
+    <sys:String x:Key="L_Toast_CleanedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cleaned up {0} unedited images</sys:String>
+    <sys:String x:Key="L_Toast_CleanupFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cleanup failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Cannot open folder: {0}</sys:String>
+    <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Prepare drag file error: {0}</sys:String>
+    <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drag start failed: {0}</sys:String>
+    <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch workspace failed: {0}</sys:String>
+
 </ResourceDictionary>

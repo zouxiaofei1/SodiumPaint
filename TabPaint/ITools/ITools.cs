@@ -367,9 +367,6 @@ namespace TabPaint
                 _ctx = ctx;
                 CurrentTool = defaultTool;
 
-          //      _ctx.ViewElement.MouseDown += (s, e) => CurrentTool.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));
-          //      _ctx.ViewElement.MouseMove += ViewElement_MouseMove;
-           //     _ctx.ViewElement.MouseUp += (s, e) => CurrentTool.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement));
             }
 
             public void ViewElement_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -381,12 +378,10 @@ namespace TabPaint
                 {
 
                     Point px = _ctx.ToPixel(position);
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}像素";
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
                 }
                 CurrentTool.OnPointerMove(_ctx, position);
             }// 定义高亮颜色
-            //private readonly Brush PurpleHighlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#886CE4"));
-            //private readonly Brush PurpleBackgroundBrush = new SolidColorBrush(Color.FromArgb(40, 136, 108, 228)); // 15% 透明度的紫色背景
 
             public SelectTool GetSelectTool()
             {

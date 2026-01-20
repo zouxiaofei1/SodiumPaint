@@ -133,7 +133,7 @@ namespace TabPaint
         {
             var settings = SettingsManager.Instance.Current;
 
-            if (!isSilent) ShowToast(isView ? "进入看图模式" : "进入画图模式");
+            if (!isSilent) ShowToast(isView ? "L_Toast_Mode_View" : "L_Toast_Mode_Paint");
             AutoSetFloatBarVisibility();
             CheckBirdEyeVisibility();
             if (isView)

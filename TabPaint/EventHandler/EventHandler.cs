@@ -107,7 +107,7 @@ namespace TabPaint
                         {
                             // 复用已有的复制逻辑
                             CopyTabToClipboard(_currentTabItem);
-                            ShowToast("已复制");
+                            ShowToast("L_Toast_Copied");
                         }
                         e.Handled = true;
                         break;
@@ -314,8 +314,8 @@ namespace TabPaint
                                 if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < 2.0)
                             {
                                 st.ResetLastDeleteTime();
-                                ShowToast("再次按下 Delete 删除文件");
-                            }
+                                    ShowToast("L_Toast_PressDeleteAgain");
+                                }
                             else
                             {
                                 HandleDeleteFileAction();
@@ -603,7 +603,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    ShowToast("GDI+ Read Failed: " + ex.Message);
+                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_GDIReadFailed_Prefix"), ex.Message));
                 }
             }
 
@@ -701,8 +701,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                // 处理剪切板被占用等异常，静默失败即可
-                ShowToast("Clipboard Access Error: " + ex.Message);
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardError_Prefix"), ex.Message));
             }
         }
         private bool IsVisualAncestorOf<T>(DependencyObject node) where T : DependencyObject
@@ -846,8 +845,8 @@ namespace TabPaint
 
             UpdateRulerPositions();
             if (IsViewMode && _startupFinished && !slient) 
-            { 
-                ShowToast(newScale.ToString("P0")); 
+            {
+                ShowToast(newScale.ToString("P0"));
             }
 
         }

@@ -112,8 +112,8 @@ namespace TabPaint
 
         public void ExecuteMaximizeLogic()
         {
-           // a.s("ExecuteMaximizeLogic");
-            ShowToast(!_maximized ? "进入全屏模式" : "退出全屏模式");
+            // a.s("ExecuteMaximizeLogic");
+            ShowToast(!_maximized ? "L_Toast_FullScreen_On" : "L_Toast_FullScreen_Off");
             if (!_maximized)
             {
                 _restoreBounds = new Rect(Left, Top, Width, Height);

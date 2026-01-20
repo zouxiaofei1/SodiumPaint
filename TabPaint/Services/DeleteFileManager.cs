@@ -59,7 +59,7 @@ namespace TabPaint
             _deleteCommitTimer.Start();
 
             // 6. 弹出提示
-            ShowToast("已删除 (Ctrl+Z 撤销)");
+            ShowToast("L_Toast_Deleted");
         }
         private void CommitPendingDeletions()
         {
@@ -142,8 +142,7 @@ namespace TabPaint
 
             // 马上切回这个 Tab
             SwitchToTab(tabToRestore);
-
-            ShowToast("已撤销删除");
+            ShowToast("L_Toast_UndoDelete");
         }
     }
 }

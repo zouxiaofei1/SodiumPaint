@@ -1,6 +1,8 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices; // 必须引用，用于置顶窗口
+using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
@@ -11,6 +13,9 @@ namespace TabPaint
     {
         // 保存 MainWindow 的静态引用，方便回调使用
         private static MainWindow _mainWindow;
+        private static readonly string LogDirectory = System.IO.Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+      "TabPaint", "CrashLogs");
         public static class a
         {
             public static void s(params object[] args)
@@ -20,8 +25,96 @@ namespace TabPaint
                 Debug.WriteLine(message);
             }
         }
+
+        private void SetupExceptionHandling()
+        {
+            // 1. 捕获 UI 线程的未处理异常
+            this.DispatcherUnhandledException += (s, e) =>
+            {
+                LogException(e.Exception, "UIThread");
+                e.Handled = true; // 设置为 true 可以防止程序直接闪退，但建议视情况决定是否继续运行
+                ShutdownAppWithErrorMessage(e.Exception);
+            };
+
+            // 2. 捕获非 UI 线程的未处理异常 (如后台线程)
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                var exception = e.ExceptionObject as Exception;
+                LogException(exception, "AppDomain");
+                // 这种异常通常无法恢复，记录后程序即将终止
+            };
+
+            // 3. 捕获 Task 中未观察到的异常
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                LogException(e.Exception, "TaskScheduler");
+                e.SetObserved(); // 标记为已观察，防止程序崩溃
+            };
+        }
+
+        // [新增] 核心日志写入方法
+        private static void LogException(Exception ex, string source)
+        {
+            try
+            {
+                if (ex == null) return;
+
+                // 确保目录存在
+                if (!Directory.Exists(LogDirectory))
+                {
+                    Directory.CreateDirectory(LogDirectory);
+                }
+
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                string filename = $"Crash_{timestamp}.txt";
+                string fullPath = System.IO.Path.Combine(LogDirectory, filename);
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine($"Time: {DateTime.Now}");
+                sb.AppendLine($"Version: {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}");
+                sb.AppendLine($"Source: {source}");
+                sb.AppendLine(new string('-', 50));
+                sb.AppendLine($"Message: {ex.Message}");
+                sb.AppendLine($"Type: {ex.GetType().FullName}");
+                sb.AppendLine(new string('-', 50));
+                sb.AppendLine("Stack Trace:");
+                sb.AppendLine(ex.StackTrace);
+
+                // 记录内部异常 (InnerException)
+                if (ex.InnerException != null)
+                {
+                    sb.AppendLine(new string('=', 50));
+                    sb.AppendLine("Inner Exception:");
+                    sb.AppendLine(ex.InnerException.Message);
+                    sb.AppendLine(ex.InnerException.StackTrace);
+                }
+
+                File.WriteAllText(fullPath, sb.ToString());
+            }
+            catch (Exception logEx)
+            {
+                // 如果写日志都失败了，只能写到调试输出里
+                Debug.WriteLine($"Failed to log crash: {logEx.Message}");
+            }
+        }
+
+        // [新增] 提示用户并退出
+        private void ShutdownAppWithErrorMessage(Exception ex)
+        {
+            string msg = $"TabPaint 遇到错误需要关闭。\n\n错误信息: {ex.Message}\n\n日志已保存至: {LogDirectory}";
+            MessageBox.Show(msg, "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
+
+            try
+            {
+            }
+            catch { }
+
+            Environment.Exit(1);
+        }
+
         protected override void OnStartup(StartupEventArgs e)
         {
+            SetupExceptionHandling();
             // 1. 检查单实例
             if (!SingleInstance.IsFirstInstance())
             {

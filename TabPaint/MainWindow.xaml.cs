@@ -210,8 +210,7 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"启动加载失败: {ex.Message}");
-                // 可以在这里弹窗提示用户
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_LoadFailed_Prefix"), ex.Message));
             }
             finally
             {
@@ -289,7 +288,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-              ShowToast($"读取文件夹失败: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ReadFolderFailed_Prefix"), ex.Message));
+
                 return null;
             }
         }
@@ -444,7 +444,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"读取剪切板数据失败: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardReadFailed_Prefix"), ex.Message));
+
                 return;
             }
 
@@ -560,7 +561,7 @@ namespace TabPaint
             _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
         }
 
-        private void ShowToast(string messageOrKey)
+        public void ShowToast(string messageOrKey)
         {
             if (_toastTimer == null) InitializeToastTimer();
             _toastTimer.Stop();
@@ -651,13 +652,13 @@ namespace TabPaint
             if (newIndex >= _imageFiles.Count)
             {
                 newIndex = newIndex % _imageFiles.Count; // 循环回到开头附近
-                if (gap == 1) ShowToast("已回到第一张图片");
+                if (gap == 1) ShowToast("L_Toast_FirstImage");
             }
             else if (newIndex < 0)
             {
                 // 处理负数取模 (C# % 操作符对负数结果为负)
                 newIndex = (_imageFiles.Count + (newIndex % _imageFiles.Count)) % _imageFiles.Count;
-                if (gap == 1) ShowToast("这是最后一张图片");
+                if (gap == 1) ShowToast("L_Toast_LastImage");
             }
 
             _currentImageIndex = newIndex;
@@ -974,7 +975,8 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                ShowToast($"Restore Selection Failed: {ex.Message}");
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RestoreSelectionFailed_Prefix"), ex.Message));
+
             }
             finally
             {

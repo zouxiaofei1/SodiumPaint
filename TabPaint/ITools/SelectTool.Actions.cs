@@ -999,7 +999,7 @@ namespace TabPaint
                 // 刷新虚线框
                 DrawOverlay(ctx, _selectionRect);
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}像素";
+                mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 mw.SetCropButtonState();
             }
             public BitmapSource GetSelectionCroppedBitmap()
