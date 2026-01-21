@@ -6,36 +6,24 @@ namespace TabPaint.Controls
 {
     public partial class ToolBarControl : UserControl
     {
-        // ================= 定义路由事件 =================
-
-        // 基础工具
         public static readonly RoutedEvent PenClickEvent = RegisterEvent("PenClick");
         public static readonly RoutedEvent PickColorClickEvent = RegisterEvent("PickColorClick");
         public static readonly RoutedEvent EraserClickEvent = RegisterEvent("EraserClick");
         public static readonly RoutedEvent SelectClickEvent = RegisterEvent("SelectClick");
         public static readonly RoutedEvent FillClickEvent = RegisterEvent("FillClick");
         public static readonly RoutedEvent TextClickEvent = RegisterEvent("TextClick");
-
-        // 样式点击 (画刷/形状) - 需要传递 Tag 或 Source
         public static readonly RoutedEvent BrushStyleClickEvent = RegisterEvent("BrushStyleClick");
         public static readonly RoutedEvent ShapeStyleClickEvent = RegisterEvent("ShapeStyleClick");
-
-        // 编辑操作
         public static readonly RoutedEvent CropClickEvent = RegisterEvent("CropClick");
         public static readonly RoutedEvent RotateLeftClickEvent = RegisterEvent("RotateLeftClick");
         public static readonly RoutedEvent RotateRightClickEvent = RegisterEvent("RotateRightClick");
         public static readonly RoutedEvent Rotate180ClickEvent = RegisterEvent("Rotate180Click");
         public static readonly RoutedEvent FlipVerticalClickEvent = RegisterEvent("FlipVerticalClick");
         public static readonly RoutedEvent FlipHorizontalClickEvent = RegisterEvent("FlipHorizontalClick");
-
-        // 颜色操作
         public static readonly RoutedEvent CustomColorClickEvent = RegisterEvent("CustomColorClick");
         public static readonly RoutedEvent ColorOneClickEvent = RegisterEvent("ColorOneClick");
         public static readonly RoutedEvent ColorTwoClickEvent = RegisterEvent("ColorTwoClick");
         public static readonly RoutedEvent ColorButtonClickEvent = RegisterEvent("ColorButtonClick");
-
-        // ================= 事件包装器 =================
-
         public event RoutedEventHandler PenClick { add => AddHandler(PenClickEvent, value); remove => RemoveHandler(PenClickEvent, value); }
         public event RoutedEventHandler PickColorClick { add => AddHandler(PickColorClickEvent, value); remove => RemoveHandler(PickColorClickEvent, value); }
         public event RoutedEventHandler EraserClick { add => AddHandler(EraserClickEvent, value); remove => RemoveHandler(EraserClickEvent, value); }
@@ -64,27 +52,19 @@ namespace TabPaint.Controls
             InitializeComponent();
         }
 
-        // 辅助注册方法
         private static RoutedEvent RegisterEvent(string name)
         {
             return EventManager.RegisterRoutedEvent(name, RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ToolBarControl));
         }
-
-        // ================= 内部转发方法 (XAML Click 指向这里) =================
-
         private void OnPenClick_Forward(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(PenClickEvent));
         private void OnPickColorClick_Forward(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(PickColorClickEvent));
         private void OnEraserClick_Forward(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(EraserClickEvent));
         private void OnSelectClick_Forward(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SelectClickEvent));
         private void OnFillClick_Forward(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(FillClickEvent));
         private void OnTextClick_Forward(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(TextClickEvent));
-
-        // 注意：MenuItem 的 Tag 和 Source 需要保留，所以直接传 e，或者把 Source 设为触发的 MenuItem
         private void OnBrushStyleClick_Forward(object sender, RoutedEventArgs e)
         {
-            // 关闭 Popup
             BrushToggle.IsChecked = false;
-            // 转发事件，保持 Source 为被点击的 MenuItem，这样 MainWindow 可以读取 Tag
             RaiseEvent(new RoutedEventArgs(BrushStyleClickEvent, sender));
         }
 
@@ -129,7 +109,6 @@ namespace TabPaint.Controls
 
             if (e.NewSize.Width < collapseThreshold)
             {
-                // 窗口变窄：隐藏展开面板，显示折叠菜单
                 if (ExpandedToolsPanel.Visibility == Visibility.Visible)
                 {
                     ExpandedToolsPanel.Visibility = Visibility.Collapsed;
@@ -138,7 +117,6 @@ namespace TabPaint.Controls
             }
             else
             {
-                // 窗口够宽：显示展开面板，隐藏折叠菜单
                 if (ExpandedToolsPanel.Visibility == Visibility.Collapsed)
                 {
                     ExpandedToolsPanel.Visibility = Visibility.Visible;
@@ -170,21 +148,18 @@ namespace TabPaint.Controls
                 leftUsedWidth = 600;
             }
 
-            // 3. 计算颜色栏可用的总宽度
             double availableWidth = this.ActualWidth - leftUsedWidth - rightPadding;
             if (availableWidth < 0) availableWidth = 0;
 
             // 4. 计算能放下多少列 (每列宽 buttonWidth)
             int visibleColumns = (int)(availableWidth / buttonWidth);
 
-            // 限制最大列数为10 (你的XML里原本是10列)
             if (visibleColumns > 11) visibleColumns = 11;
             if (visibleColumns < 1) visibleColumns = 1; // 至少显示1列
 
             BasicColorsGrid.Columns = visibleColumns;
 
             int totalItems = BasicColorsGrid.Children.Count;
-            // 假设是标准的2行布局 (根据你的XML: 鲜艳色系一行，深色系一行)
             int originalColumns = 11;
 
             for (int i = 0; i < totalItems; i++)
@@ -209,7 +184,6 @@ namespace TabPaint.Controls
 
         private void Swatch_Click(object sender, RoutedEventArgs e)
         {
-            // 1. 确保点击源是按钮且有背景色
             if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -217,7 +191,6 @@ namespace TabPaint.Controls
 
                 mw.SelectedBrush = new SolidColorBrush(selectedColor);
 
-                // 4. 更新核心绘图上下文 (_ctx)
                 mw._ctx.PenColor = selectedColor;
 
                 mw.UpdateCurrentColor(selectedColor, mw.useSecondColor);

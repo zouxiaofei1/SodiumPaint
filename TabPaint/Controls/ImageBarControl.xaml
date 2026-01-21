@@ -11,14 +11,11 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 确保这里包含了你的 LightTheme.xaml 引用，或者在 App.xaml 中已全局合并 -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         </ResourceDictionary>
     </UserControl.Resources>
-
-    <!-- Background: 原 #90FFFFFF 改为 GlassBackgroundMediumBrush (半透明背景) -->
     <Border x:Name="MainContainer" Background="{DynamicResource GlassBackgroundMediumBrush}" VerticalAlignment="Top" ClipToBounds="False" >
         <Border.Style>
             <Style TargetType="Border">
@@ -26,7 +23,6 @@
                 <Setter Property="Opacity" Value="1"/>
 
                 <Style.Triggers>
-                    <!-- 保持原有动画逻辑不变 -->
                     <DataTrigger Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="True">
                         <DataTrigger.EnterActions>
                             <BeginStoryboard>
@@ -121,20 +117,15 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="24" />
             </Grid.ColumnDefinitions>
-
-            <!-- 1. 左侧控制按钮 -->
-            <!-- BorderBrush: 原 #33999999 改为 BorderBrush (通用边框色) -->
             <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="0,0,2,0" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}">
                 <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
                     <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick"  PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick"  Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <!-- Fill: 原 #333 改为 IconFillBrush -->
                         <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="关闭所有未编辑的图片" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                     </Button>
                     <Button ToolTip="放弃所有更改" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <!-- Fill: 原 #FFDD6666 改为 WarningBrush -->
                         <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="16" Height="16"/>
                     </Button>
                 </UniformGrid>
@@ -190,37 +181,29 @@
 
                                         <StackPanel Orientation="Vertical">
                                             <Image Source="{Binding Thumbnail}" Width="100" Height="60" Stretch="Uniform" VerticalAlignment="Center"/>
-                                            <!-- Foreground: 默认文本颜色跟随 Style，但建议显式使用 TextPrimaryBrush -->
                                             <TextBlock Text="{Binding DisplayName}" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
 
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Background" Value="Transparent"/>
-                                                <!-- BorderBrush: 原 #DDD 改为 BorderMediumBrush -->
                                                 <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
                                                 <Setter Property="BorderThickness" Value="1"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <!-- Background: 原 #11000000 改为 ListItemHoverBrush -->
                                                         <Setter Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
                                                     </Trigger>
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <!-- Background: 原 #CCE6F0FF 改为 ListItemSelectedBackgroundBrush -->
                                                         <Setter Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
-                                                        <!-- BorderBrush: 原 #FF0078D7 改为 ListItemSelectedBorderBrush -->
                                                         <Setter Property="BorderBrush" Value="{DynamicResource ListItemSelectedBorderBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Button.Style>
                                     </Button>
-
-                                    <!-- InsertLine: 原 #aaa 改为 BorderBrush -->
                                     <Border x:Name="InsertLine" Width="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" 
                                             Background="{DynamicResource BorderBrush}" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,5,0,5" Padding="0,0,2,0" CornerRadius="2"/>
 
-                                    <!-- 状态指示器 (Dirty) -->
                                     <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,10,0,0" IsHitTestVisible="False">
                                         <Ellipse.Style>
                                             <Style TargetType="Ellipse">
@@ -228,16 +211,12 @@
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsDirty}" Value="True">
                                                         <Setter Property="Visibility" Value="Visible"/>
-                                                        <!-- Fill: 原 #FF5555 改为 DangerBrush -->
                                                         <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Ellipse.Style>
                                     </Ellipse>
-
-                                    <!-- 悬浮关闭按钮 -->
-                                    <!-- Background: 原 #CCFFFFFF 改为 GlassBackgroundHighBrush (高不透明度) -->
                                     <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" 
                                             Background="{DynamicResource GlassBackgroundHighBrush}"   Style="{StaticResource OtherCloseButtonStyle}" BorderThickness="0" 
                                             Click="Internal_OnFileTabCloseClick" Tag="{Binding}" Visibility="Hidden">
@@ -246,7 +225,6 @@
                                                 <Setter Property="CornerRadius" Value="9"/>
                                             </Style>
                                         </Button.Resources>
-                                        <!-- Stroke: 原 #666 改为 IconHoverBrush -->
                                         <Path   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"  Data="M0,0 L8,8 M8,0 L0,8" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                     </Button>
                                 </Grid>
@@ -271,7 +249,6 @@
                 <Slider.Template>
                     <ControlTemplate TargetType="Slider">
                         <Grid Background="Transparent" x:Name="RootGrid">
-                            <!-- Background: 原 #333(0.1) 改为 TextControlBrush(0.1) 或者直接用 BorderLightBrush -->
                             <Border Width="4" CornerRadius="2" Background="{DynamicResource TextControlBrush}" Opacity="0.1" HorizontalAlignment="Center"/>
                             <Track x:Name="PART_Track" Orientation="Vertical">
                                 <Track.DecreaseRepeatButton>
@@ -282,15 +259,11 @@
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Grid>
-                                                    <!-- Shadow: 保持原样或使用 TextControlBrush 降低透明度 -->
                                                     <Ellipse Fill="#33000000" Margin="0,2,-1,-2"/>
-                                                    <!-- ThumbDot: 原 Purple 改为 ToolAccentBrush -->
-                                                    <!-- Stroke: 原 White 改为 TextInverseBrush -->
                                                     <Ellipse x:Name="ThumbDot" Fill="{DynamicResource ToolAccentBrush}" Stroke="{DynamicResource TextInverseBrush}" StrokeThickness="2"/>
                                                 </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsEnabled" Value="False">
-                                                        <!-- Value: 原 Gray 改为 TextDisabledBrush -->
                                                         <Setter TargetName="ThumbDot" Value="{DynamicResource TextDisabledBrush}" Property="Fill" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>

@@ -28,7 +28,6 @@ namespace TabPaint
         {
             if (e.OriginalSource is FrameworkElement element && element.DataContext is FileTabItem clickedItem)
             {
-
                 SwitchToTab(clickedItem);
             }
         }
@@ -61,7 +60,6 @@ namespace TabPaint
                 // 跳过没有路径的新建文件 (避免弹出10个保存对话框)
                 if (IsVirtualPath(tab.FilePath) && (!isDoubleClick)) continue;
                 if (SaveSingleTab(tab)) successCount++;
-
             }
             SaveSession();
             // 简单提示 (实际项目中建议用 Statusbar)
@@ -72,7 +70,6 @@ namespace TabPaint
         {
             SaveAll(true);
         }
-
         private void OnSaveAllClick(object sender, RoutedEventArgs e)
         {
             SaveAll(false);
@@ -86,10 +83,7 @@ namespace TabPaint
 
             foreach (var path in filesToRemove)
             {
-                if (!IsVirtualPath(path))
-                {
-                    _explicitlyClosedFiles.Add(path);
-                }
+                if (!IsVirtualPath(path))  _explicitlyClosedFiles.Add(path);
             }
 
             _imageFiles = _imageFiles.Where(f => dirtyPaths.Contains(f)).ToList();
@@ -109,12 +103,7 @@ namespace TabPaint
                     FileTabs.RemoveAt(i);
                 }
             }
-
-            // 5. 处理结果状态
-            if (FileTabs.Count == 0)
-            {
-                ResetToNewCanvas();
-            }
+            if (FileTabs.Count == 0)  ResetToNewCanvas();
             else
             {
                 if (currentWasRemoved)
@@ -124,10 +113,7 @@ namespace TabPaint
                 }
                 else
                 {
-                    if (_currentTabItem != null)
-                    {
-                        _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
-                    }
+                    if (_currentTabItem != null)_currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
                 }
             }
 
@@ -141,8 +127,6 @@ namespace TabPaint
         {
             CreateNewTab(TabInsertPosition.AtEnd, true); CheckFittoWindow();
         }
-
-        // 3. 放弃所有编辑 (Discard All) - 终极清理版
         private async void OnDiscardAllClick(object sender, RoutedEventArgs e)
         {
             if (!SettingsManager.Instance.Current.SkipResetConfirmation)
@@ -159,8 +143,6 @@ namespace TabPaint
             _autoSaveTimer.Stop();
             _activeSaveTasks.Clear(); // 清空任务字典
             FileTabs.Clear();
-            // 2. 【核心】强制清空画布像素！
-            // 即使后续逻辑意外触发了 Backup，备份的也只会是白纸，而不是旧画
             if (_surface != null && _surface.Bitmap != null)
             {
                 try
@@ -184,8 +166,6 @@ namespace TabPaint
                 }
                 catch { }
             }
-
-            // 3. 标记当前 Tab 为干净，防止 TriggerBackgroundBackup 再次尝试保存
             if (_currentTabItem != null)
             {
                 _currentTabItem.IsDirty = false;
@@ -193,7 +173,6 @@ namespace TabPaint
                 _currentTabItem.BackupPath = null; // 切断缓存路径关联
             }
             CloseTab(_currentTabItem);
-            // --- 核心新增：强制清理物理文件 (Cache & Session) ---
             try
             {
                 _router.CleanUpSelectionandShape();
@@ -229,8 +208,6 @@ namespace TabPaint
             for (int i = FileTabs.Count - 1; i >= 0; i--)
             {
                 var tab = FileTabs[i];
-
-                // 先把 BackupPath 指针置空，因为物理文件刚才已经被我们强删了
                 tab.BackupPath = null;
 
                 if (tab.IsNew)
@@ -301,9 +278,7 @@ namespace TabPaint
             // 获取绑定的 Tab 对象
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
             {
-                // 1. 检查路径是否有效（防止对 "未命名" 的新建文件操作）
                 if (string.IsNullOrEmpty(tab.FilePath)) return;
-                // 2. 再次确认文件是否存在（防止文件已被外部删除）
                 if (!System.IO.File.Exists(tab.FilePath))
                 {
                     ShowToast("L_Toast_FileNotFound");
@@ -347,10 +322,7 @@ namespace TabPaint
         private string PrepareDragFilePath(FileTabItem tab)
         {
 
-            if (!tab.IsDirty && !tab.IsNew && !IsVirtualPath(tab.FilePath))
-            {
-                return tab.FilePath;
-            }
+            if (!tab.IsDirty && !tab.IsNew && !IsVirtualPath(tab.FilePath))return tab.FilePath;
             try
             {
                 BitmapSource bitmapToSave = null;
@@ -384,16 +356,9 @@ namespace TabPaint
 
                     string tempFilePath = System.IO.Path.Combine(tempFolder, fileName);
 
-                    // --- 关键修改开始 ---
-
                     bool isJpeg = fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                                   fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
-
-                    // 如果是 JPEG，必须把透明背景变成白色，否则会变黑
-                    if (isJpeg)
-                    {
-                        bitmapToSave = ConvertToWhiteBackground(bitmapToSave);
-                    }
+                    if (isJpeg) bitmapToSave = ConvertToWhiteBackground(bitmapToSave);
 
                     using (var fs = new FileStream(tempFilePath, FileMode.Create))
                     {
@@ -412,8 +377,6 @@ namespace TabPaint
                         encoder.Frames.Add(BitmapFrame.Create(bitmapToSave));
                         encoder.Save(fs);
                     }
-                    // --- 关键修改结束 ---
-
                     return tempFilePath;
                 }
             }
@@ -441,7 +404,6 @@ namespace TabPaint
             if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold) return;
             try
             {
-                // 2. 使用锁定的源数据创建数据包
                 var dataObject = new System.Windows.DataObject();
 
                 dataObject.SetData("TabPaintReorderItem", _mouseDownTabItem);
@@ -486,11 +448,9 @@ namespace TabPaint
                     double width = grid.ActualWidth;
 
                     var insLine = FindVisualChild<Border>(grid, "InsertLine");
-                    // var rightLine = FindVisualChild<Border>(grid, "InsertLineRight");
 
                     if (insLine == null) return;
                     insLine.Visibility = Visibility.Visible;
-                    //  // 判断是在左半边还是右半边
                 }
             }
             else
@@ -511,7 +471,6 @@ namespace TabPaint
                 {
                     return tChild;
                 }
-                // 递归查找 (虽然这里 Grid 只有一层，但通用性更好)
                 var result = FindVisualChild<T>(child, childName);
                 if (result != null) return result;
             }
@@ -534,7 +493,6 @@ namespace TabPaint
             {
                 var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
 
-                // 注意：现在 sender 是 Grid，我们需要从 DataContext 拿 Tab
                 var targetGrid = sender as Grid;
                 var targetTab = targetGrid?.DataContext as FileTabItem;
 
@@ -549,21 +507,12 @@ namespace TabPaint
 
                     int newUIIndex = targetUIIndex;
 
-                    // 如果是在右侧放置，目标索引+1
-                    if (insertAfter)
-                    {
-                        newUIIndex++;
-                    }
-
-                    if (oldUIIndex < newUIIndex)
-                    {
-                        newUIIndex--;
-                    }
+                    if (insertAfter)newUIIndex++;
+                    if (oldUIIndex < newUIIndex) newUIIndex--;
+ 
                     // 简单校验
                     if (newUIIndex < 0) newUIIndex = 0;
                     if (newUIIndex >= FileTabs.Count) newUIIndex = FileTabs.Count - 1;
-
-                    // 执行移动逻辑 (直接复用你之前的逻辑，只改索引计算)
                     if (oldUIIndex != newUIIndex)
                     {
                         FileTabs.Move(oldUIIndex, newUIIndex);
@@ -612,9 +561,7 @@ namespace TabPaint
         {
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
             {
-                // 1. 先复制
                 CopyTabToClipboard(tab);
-                // 2. 后关闭 (实现剪切效果)
                 CloseTab(tab);
             }
         }
@@ -648,7 +595,6 @@ namespace TabPaint
             IDataObject data = Clipboard.GetDataObject();
             if (data.GetDataPresent(DataFormats.FileDrop))
             {
-                // --- 处理文件粘贴 ---
                 string[] files = (string[])data.GetData(DataFormats.FileDrop);
                 if (files != null && files.Length > 0)
                 {
@@ -685,7 +631,6 @@ namespace TabPaint
             }
             else if (data.GetDataPresent(DataFormats.Bitmap))
             {
-                // --- 处理位图粘贴 ---
                 try
                 {
                     BitmapSource source = Clipboard.GetImage();
@@ -728,8 +673,6 @@ namespace TabPaint
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
                 UpdateImageBarSliderState();
-
-                // 核心逻辑：执行切换
                 if (tabToSelect != null)
                 {
                     SwitchToTab(tabToSelect);
@@ -739,7 +682,6 @@ namespace TabPaint
 
         private void OnTabDeleteClick(object sender, RoutedEventArgs e)
         {
-            // 这里的“关闭”等同于界面上的 X 按钮
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
             {
                 CloseTab(tab);
@@ -766,10 +708,7 @@ namespace TabPaint
                 }
                 string path = tab.FilePath;
 
-                // 1. 先从 TabPaint 关闭
                 CloseTab(tab);
-
-                // 2. 再执行物理删除
                 try
                 {
                     if (File.Exists(path))
@@ -794,12 +733,10 @@ namespace TabPaint
 
             try
             {
-                // --- 1. 准备位图数据 (供画图、Word、QQ等粘贴图像使用) ---
-                // 即使是纯文件，也尽量读取出Bitmap放进去，增强兼容性
                 if (tab.IsDirty || tab.IsNew)
                 {
                     // 如果是脏文件，从画布或缓存获取最新状态
-                    heavyBitmap = GetCurrentCanvasSnapshotSafe(); // 假设这是你获取当前画布截图的方法
+                    heavyBitmap = GetCurrentCanvasSnapshotSafe(); 
                     if (heavyBitmap == null && !string.IsNullOrEmpty(tab.BackupPath))
                     {
                         heavyBitmap = LoadBitmapFromFile(tab.BackupPath);
@@ -807,12 +744,8 @@ namespace TabPaint
                 }
                 else
                 {
-                    // 如果是干净文件，尝试读取（如果是超大图可能会略过此步以优化性能）
-                    // 这里为了演示，假设我们总是尝试提供位图
                     if (!IsVirtualPath(tab.FilePath))
                     {
-                        // 注意：这里为了不阻塞UI，如果是大图可以考虑不放Bitmap，只放FileDrop
-                        // 但为了体验一致性，通常还是放
                         heavyBitmap = LoadBitmapFromFile(tab.FilePath);
                     }
                 }
@@ -821,8 +754,6 @@ namespace TabPaint
                 {
                     dataObject.SetImage(heavyBitmap);
                 }
-
-                // --- 2. 准备文件路径数据 (供 Windows 资源管理器粘贴文件使用) ---
                 string pathForClipboard = null;
 
                 if (!tab.IsDirty && !tab.IsNew && !string.IsNullOrEmpty(tab.FilePath) && File.Exists(tab.FilePath))
@@ -890,8 +821,6 @@ namespace TabPaint
                 }
             }
         }
-
-
         // #endregion
     }
 }

@@ -15,7 +15,6 @@
         ShowInTaskbar="False">
     <Window.Resources>
         <ResourceDictionary>
-            <!-- 引入子窗口样式 (保持原样) -->
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
@@ -25,7 +24,6 @@
         <WindowChrome CaptionHeight="32" ResizeBorderThickness="5" GlassFrameThickness="-1"/>
     </WindowChrome.WindowChrome>
 
-    <!-- 主容器：带有阴影和边框 -->
     <Border Background="{DynamicResource ControlBackgroundBrush}" 
             BorderBrush="{DynamicResource BorderBrush}" 
             BorderThickness="1" 
@@ -35,17 +33,11 @@
             <!-- 阴影效果 -->
             <DropShadowEffect BlurRadius="20" ShadowDepth="5" Direction="270" Color="Black" Opacity="0.25"/>
         </Border.Effect>
-
-        <!-- 使用 Grid 将标题栏和内容区分开 -->
-        <!-- ClipToBounds=True 确保内部背景色不会溢出圆角 -->
         <Grid ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <!-- 0: 标题栏 -->
                 <RowDefinition Height="*"/>
-                <!-- 1: 内容区 -->
                 <RowDefinition Height="Auto"/>
-                <!-- 2: 按钮区 -->
             </Grid.RowDefinitions>
 
             <!-- 设置外层Border的圆角遮罩，防止内部矩形背景覆盖圆角 -->
@@ -56,9 +48,6 @@
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Grid.OpacityMask>
-
-            <!-- ================= 标题栏 ================= -->
-            <!-- 稍微深一点的颜色作为底色区分 (SubtleHoverBrush 通常比背景深一点点) -->
             <Border Grid.Row="0" 
                     Background="{DynamicResource SubtleHoverBrush}" 
                     Height="32"
@@ -78,17 +67,12 @@
                                FontSize="12" 
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                IsHitTestVisible="False"/>
-                    <!-- 穿透点击以支持拖拽 -->
-
-                    <!-- 关闭按钮 (右上角) -->
                     <Button Grid.Column="1"
                             Style="{StaticResource WindowCloseButtonStyle}"
                             Click="BtnClose_Click"
                             WindowChrome.IsHitTestVisibleInChrome="True"/>
                 </Grid>
             </Border>
-
-            <!-- 分割线 (可选，如果颜色区分明显可不要) -->
             <Border Grid.Row="0" VerticalAlignment="Bottom" Height="1" Background="{DynamicResource BorderBrush}" Opacity="0.5"/>
 
             <!-- ================= 内容区 ================= -->
@@ -97,10 +81,6 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <!-- 可选：图标区域 (如果需要显示 Info/Warning 图标，可加在这里) -->
-                <!-- <Path ... Grid.Column="0" /> -->
-
                 <TextBlock x:Name="TxtMessage" 
                            Grid.Column="1"
                            Text="Message Content" 
@@ -114,7 +94,6 @@
             <Border Grid.Row="2" 
                     Background="{DynamicResource ControlAltBackgroundBrush}" 
                     Padding="24,16,24,24">
-                <!-- ControlAltBackgroundBrush 可以设置成与标题栏一样的浅灰色，形成上下呼应，或者就用透明 -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
 
                     <Button x:Name="BtnYes" Content="Yes" Style="{DynamicResource Win11PrimaryButtonStyle}" Width="76" Height="32" Margin="8,0,0,0" Click="BtnYes_Click" Visibility="Collapsed"/>

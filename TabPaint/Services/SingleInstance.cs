@@ -34,8 +34,6 @@ namespace TabPaint
             }
             _pipeCts?.Cancel();
         }
-
-        // 发送参数给第一个实例
         public static void SendArgsToFirstInstance(string[] args)
         {
             if (args == null || args.Length == 0) return;

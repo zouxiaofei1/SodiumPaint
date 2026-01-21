@@ -170,20 +170,12 @@ namespace TabPaint
 
                 if (!CanUndo || _surface?.Bitmap == null) return;
 
-                // === 原有逻辑：从栈中取出动作 ===
                 var action = _undo.Pop();
-
-                // 如果 action 是 FileDelete 类型（如果你选择将其入栈）
-                if (action.ActionType == UndoActionType.FileDelete)
-                {
-                    // 这里可以执行恢复逻辑，但建议使用下面提到的 Timer 方案更稳定
-                }
 
                 if (mw._router.CurrentTool is SelectTool selTool) selTool.Cleanup(mw._ctx);
 
                 if (action.ActionType == UndoActionType.Transform)
                 {
-                    // ... (保持你原有的 Transform 逻辑不变) ...
                     var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
                     var currentPixels = _surface.ExtractRegion(currentRect);
                     _redo.Push(new UndoAction(currentRect, currentPixels, action.RedoRect, action.RedoPixels));

@@ -54,7 +54,6 @@
                     </MenuItem>
                     <MenuItem Header="{DynamicResource L_Menu_File_Exit}" Style="{StaticResource Win11MenuItemStyle}" Click="OnExitClick">
                         <MenuItem.Icon>
-                            <!-- Stroke="#333" 替换为 IconFillBrush -->
                             <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
@@ -104,7 +103,6 @@
                     </MenuItem>
                     <MenuItem Header="{DynamicResource L_Menu_Effect_AutoLevels}" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoLevelsClick">
                         <MenuItem.Icon>
-                            <!-- 类似直方图或魔法棒的图标 -->
                             <Path Data="M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
@@ -116,9 +114,7 @@
                     </MenuItem>
                 </MenuItem>
             </Menu>
-
             <!-- 快捷操作按钮 -->
-            <!-- Background="#CCC" 替换为 BorderMediumBrush -->
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Margin="6,0" ToolTip="{DynamicResource L_Menu_QA_Save}" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
@@ -126,8 +122,6 @@
                 </Button>
 
                 <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
-
-                <!-- 注意：Undo/Redo 按钮需要 x:Name 以便后台代码暴露属性 -->
                 <Button Margin="6,0" ToolTip="{DynamicResource L_Menu_QA_Undo}" x:Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path x:Name="UndoIcon" Data="{DynamicResource Undo_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>

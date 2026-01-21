@@ -19,18 +19,13 @@ namespace TabPaint
 
             var tab = _currentTabItem;
 
-            // 1. 记录撤销所需信息
             _lastDeletedTabForUndo = tab;
             _lastDeletedTabIndex = FileTabs.IndexOf(tab);
 
-            // 2. 加入待删除队列
             _pendingDeletionTabs.Add(tab);
-
-            // 3. UI 上移除 (让用户感觉已经删了)
             FileTabs.Remove(tab);
             _imageFiles.Remove(tab.FilePath);
 
-            // 4. 切换焦点
             if (FileTabs.Count == 0)
             {
                 ResetToNewCanvas();
@@ -40,12 +35,9 @@ namespace TabPaint
                 int nextIndex = Math.Min(_lastDeletedTabIndex, FileTabs.Count - 1);
                 SwitchToTab(FileTabs[nextIndex]);
             }
-
-            // 5. 启动/重置 2秒计时器
             _deleteCommitTimer.Stop();
             _deleteCommitTimer.Start();
 
-            // 6. 弹出提示
             ShowToast("L_Toast_Deleted");
         }
         private void CommitPendingDeletions()

@@ -72,6 +72,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_PrevImage">Previous image</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_NextImage">Next image</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_FullScreen">Fullscreen</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Minimize">Minimize Window</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_RotateLeft">Rotate left</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_RotateRight">Rotate right</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_VFlip">Flip vertical</sys:String>

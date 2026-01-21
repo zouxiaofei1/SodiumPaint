@@ -51,10 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="OtherTools\deprecated_functions.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="Resources\Cursors\Closedhand.cur" />
     <Resource Include="Resources\Cursors\Eyedropper.cur" />
     <Resource Include="Resources\Cursors\Openhand.cur" />

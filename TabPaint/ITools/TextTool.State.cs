@@ -112,8 +112,6 @@ namespace TabPaint
                     var textDecors = targetRange.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection;
                     var foreground = targetRange.GetPropertyValue(TextElement.ForegroundProperty) as SolidColorBrush;
 
-                    // 注意：如果 RTF 中包含多种样式，GetPropertyValue 可能会返回 DependencyProperty.UnsetValue
-                    // 我们需要做一下兼容处理
                     double fontSize = (fontSizeObj is double d) ? d : 24.0; // 默认 24
                     FontWeight fontWeight = (fontWeightObj is FontWeight w) ? w : FontWeights.Normal;
                     FontStyle fontStyle = (fontStyleObj is FontStyle s) ? s : FontStyles.Normal;

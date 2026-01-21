@@ -52,7 +52,6 @@ namespace TabPaint
                     ctx.ViewElement.Cursor = this.Cursor;
                 }
             }
-            // 判断是否是“连续线段”类型的笔刷（不需要插值打点，而是直接画线）
             private bool IsLineBasedBrush(BrushStyle style)
             {
                 return style == BrushStyle.Round ||
@@ -88,8 +87,6 @@ namespace TabPaint
                 _lastPixel = px;
 
                 Int32Rect? dirty = null;
-
-                // --- 修复：PointerDown 时根据笔刷类型分流 ---
                 ctx.Surface.Bitmap.Lock();
                 unsafe
                 {
@@ -100,7 +97,6 @@ namespace TabPaint
 
                     if (IsLineBasedBrush(ctx.PenStyle))
                     {
-                        // 线段型笔刷：原地画一条长度为0的线（即一个点）
                         dirty = DrawBrushLineUnsafe(ctx, px, px, backBuffer, stride, width, height);
                     }
                     else
@@ -115,7 +111,7 @@ namespace TabPaint
                     if (finalRect.Width > 0 && finalRect.Height > 0)
                     {
                         ctx.Surface.Bitmap.AddDirtyRect(finalRect); // 更新屏幕
-                        ctx.Undo.AddDirtyRect(finalRect);           // 修复：通知 Undo 系统
+                        ctx.Undo.AddDirtyRect(finalRect);        
                     }
                 }
                 ctx.Surface.Bitmap.Unlock(); 
@@ -159,7 +155,7 @@ namespace TabPaint
                     if (finalRect.Width > 0 && finalRect.Height > 0)
                     {
                         ctx.Surface.Bitmap.AddDirtyRect(finalRect); // 1. 更新屏幕
-                        ctx.Undo.AddDirtyRect(finalRect);           // 2. 修复：关键！必须通知 Undo 系统
+                        ctx.Undo.AddDirtyRect(finalRect);      
                     }
                 }
 
@@ -186,8 +182,6 @@ namespace TabPaint
                 ctx.IsDirty = true;
                 ctx.ReleasePointerCapture();
             }
-
-            // ---------------- 核心绘制逻辑 (Unsafe) ----------------
 
             private unsafe Int32Rect? DrawContinuousStrokeUnsafe(ToolContext ctx, Point from, Point to, byte* buffer, int stride, int w, int h)
             {
@@ -318,18 +312,12 @@ namespace TabPaint
                 }
                 return null;
             }
-
-            // ---------------- 具体笔刷实现 (Unsafe) ----------------
-
             private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
                 int r = (int)(ctx.PenThickness / 2.0);
                 if (r < 1) r = 1;
 
-                Color targetColor = ctx.PenColor; // 目标颜色 (R,G,B,A)
-
-                // 获取全局力度 (0.0 - 1.0)
-                // 这里的 Opacity 不再直接乘到 Alpha 上，而是作为插值因子
+                Color targetColor = ctx.PenColor; 
                 float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
 
                 // 如果力度为0，完全不画
@@ -362,11 +350,8 @@ namespace TabPaint
 
                     for (int x = xmin; x <= xmax; x++)
                     {
-                        // 1. 检查 Mask：防止同一次 Stroke 内重复叠加导致颜色过深
                         int pixelIndex = rowIdx + x;
                         if (_currentStrokeMask[pixelIndex]) continue;
-
-                        // 2. 几何计算：点到线段的距离
                         double t = 0;
                         if (lenSq > 0)
                         {
@@ -383,30 +368,14 @@ namespace TabPaint
                             _currentStrokeMask[pixelIndex] = true;
 
                             byte* p = rowPtr + x * 4;
-
-                            // --- 核心修改：线性插值 (Lerp) 算法 ---
-
-                            // 蓝色 B
-                            // 公式：新值 = 旧值 + (目标值 - 旧值) * 力度
                             p[0] = (byte)(p[0] + (targetB - p[0]) * globalOpacity);
-
-                            // 绿色 G
                             p[1] = (byte)(p[1] + (targetG - p[1]) * globalOpacity);
-
-                            // 红色 R
                             p[2] = (byte)(p[2] + (targetR - p[2]) * globalOpacity);
-
-                            // Alpha 通道 - 这里是实现“透明绘图”的关键
-                            // 如果 targetA 是 0 (透明)，且 opacity 是 1，则 p[3] 变为 0
                             p[3] = (byte)(p[3] + (targetA - p[3]) * globalOpacity);
                         }
                     }
                 }
             }
-
-
-
-            // ---------------- 铅笔 (Bresenham + Lerp) ----------------
             private unsafe void DrawPencilLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
             {
                 int x0 = (int)p1.X; int y0 = (int)p1.Y;
@@ -496,7 +465,6 @@ namespace TabPaint
 
             private unsafe void DrawBrushStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
-                // 【修改点 2】：获取当前笔刷半径
                 int r = (int)(ctx.PenThickness / 2.0);
                 if (r < 1) r = 1;
 
@@ -508,11 +476,8 @@ namespace TabPaint
 
                 for (int i = 0; i < count; i++)
                 {
-                    // 在半径范围内生成随机偏移
                     int dx = _rnd.Next(-r, r + 1);
                     int dy = _rnd.Next(-r, r + 1);
-
-                    // 如果希望毛刷是圆形的，取消下面这行的注释（性能会微弱下降，但形状更自然）
                     if (dx * dx + dy * dy > r * r) continue;
 
                     int xx = (int)p.X + dx;
@@ -558,8 +523,6 @@ namespace TabPaint
                     if (xx >= 0 && xx < w && yy >= 0 && yy < h)
                     {
                         byte* pPx = basePtr + yy * stride + xx * 4;
-                        // 喷枪是随机打点，通常不使用 StrokeMask，允许粒子重叠以产生更浓密的效果
-                        // 但这也意味着如果 Opacity 很高，重叠处会瞬间变成目标色
 
                         pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * globalOpacity);
                         pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * globalOpacity);
@@ -613,8 +576,6 @@ namespace TabPaint
                 float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
 
                 if (globalOpacity <= 0.005f) return;
-
-                // 水彩通常比较淡，我们在全局力度基础上再乘一个系数，防止一下涂太死
                 float baseOpacity = globalOpacity * 0.5f;
 
                 float tB = targetColor.B;
@@ -638,14 +599,11 @@ namespace TabPaint
                         {
                             // 边缘衰减
                             double falloff = 1.0 - (dist / irregularRadius);
-                            // 核心修改：衰减值影响的是【混合力度 (Opacity)】，而不是目标颜色的 Alpha
                             float localOpacity = baseOpacity * (float)(falloff * falloff);
 
                             if (localOpacity > 0.001f)
                             {
                                 byte* pPx = rowPtr + x * 4;
-                                // 水彩也不使用 Mask，允许笔触内部叠加产生自然的深浅不一
-
                                 pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * localOpacity);
                                 pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * localOpacity);
                                 pPx[2] = (byte)(pPx[2] + (tR - pPx[2]) * localOpacity);
@@ -774,9 +732,6 @@ namespace TabPaint
                     }
                 }
             }
-
-            // --- 辅助方法 ---
-
             private static byte ClampColor(int value)
             {
                 if (value < 0) return 0;

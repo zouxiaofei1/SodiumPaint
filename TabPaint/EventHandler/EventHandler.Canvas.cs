@@ -25,9 +25,6 @@ namespace TabPaint
             // 1. 检查操作系统版本 (Windows 10 是 Major 10)
             var os = Environment.OSVersion;
             if (os.Version.Major < 10) return false;
-
-            // 2. 检查 Build 版本。
-            // Windows 10 Build 10240 引入了 OCR，但建议 17134 (1803) 以上以获得稳定支持
             if (os.Version.Build < 17134) return false;
 
             return true;
@@ -36,7 +33,6 @@ namespace TabPaint
         {
             try
             {
-                // 检查 x64 运行时 (如果你编译的是 x86 程序，请将路径中的 x64 改为 x86)
                 string keyPath = @"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64";
 
                 using (RegistryKey key = Registry.LocalMachine.OpenSubKey(keyPath))
@@ -52,7 +48,6 @@ namespace TabPaint
             }
             catch
             {
-                // 如果无法读取注册表，保守起见返回 true，依靠异常捕获来处理
                 return true;
             }
             return false;
@@ -74,23 +69,16 @@ namespace TabPaint
                 ShowToast("L_Toast_SizeTooSmallForBorder");
                 return;
             }
-
-            // 2. 准备撤销 (记录当前状态)
             _undo.BeginStroke();
-
-            // 3. 锁定位图进行绘制
             bmp.Lock();
             try
             {
-                // 获取当前前景色 (B, G, R, A)
                 Color c = ForegroundColor;
 
                 unsafe
                 {
                     byte* basePtr = (byte*)bmp.BackBuffer;
                     int stride = bmp.BackBufferStride;
-
-                    // 定义一个局部函数来快速填充矩形区域
                     void FillRect(int rectX, int rectY, int rectW, int rectH)
                     {
                         for (int y = rectY; y < rectY + rectH; y++)
@@ -106,38 +94,20 @@ namespace TabPaint
                             }
                         }
                     }
-
-                    // --- 绘制四条边 ---
-
-                    // 1. 上边框 (全宽)
                     FillRect(0, 0, w, borderSize);
-
-                    // 2. 下边框 (全宽)
                     FillRect(0, h - borderSize, w, borderSize);
-
-                    // 3. 左边框 (中间部分，避免与上下重叠绘制，虽然重叠也没事)
                     FillRect(0, borderSize, borderSize, h - 2 * borderSize);
-
-                    // 4. 右边框 (中间部分)
                     FillRect(w - borderSize, borderSize, borderSize, h - 2 * borderSize);
                 }
-
-                // 上
                 var rTop = new Int32Rect(0, 0, w, borderSize);
                 bmp.AddDirtyRect(rTop);
                 _undo.AddDirtyRect(rTop);
-
-                // 下
                 var rBottom = new Int32Rect(0, h - borderSize, w, borderSize);
                 bmp.AddDirtyRect(rBottom);
                 _undo.AddDirtyRect(rBottom);
-
-                // 左
                 var rLeft = new Int32Rect(0, 0, borderSize, h);
                 bmp.AddDirtyRect(rLeft);
                 _undo.AddDirtyRect(rLeft);
-
-                // 右
                 var rRight = new Int32Rect(w - borderSize, 0, borderSize, h);
                 bmp.AddDirtyRect(rRight);
                 _undo.AddDirtyRect(rRight);
@@ -146,15 +116,9 @@ namespace TabPaint
             {
                 bmp.Unlock();
             }
-
-            // 5. 提交撤销 (计算差异并推入栈)
             _undo.CommitStroke();
-
-            // 6. 标记文件已修改
             _isEdited = true;
             _ctx.IsDirty = true;
-
-            // 7. 刷新界面状态
             NotifyCanvasChanged();
             ShowToast("L_Toast_BorderAdded");
         }
@@ -198,15 +162,11 @@ namespace TabPaint
                 Color color = GetPixelColor(x, y);
                 string hexCode = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
-                // 5. 复制到剪贴板
                 System.Windows.Clipboard.SetText(hexCode);
-
-                // 6. 提示用户
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ColorCopied_Format"), hexCode));
             }
             catch (Exception ex)
             {
-                // 容错处理
                 ShowToast(string.Format(LocalizationManager.GetString("L_Common_Error") + ": {0}", ex.Message));
             }
         }
@@ -267,8 +227,6 @@ namespace TabPaint
             {
                 if (_bitmap == null) return;
                 _router.CleanUpSelectionandShape();
-
-                // 默认坐标
                 Point targetPoint = new Point(0, 0);
 
                 if (sender is MainWindow || e is System.Windows.Input.KeyEventArgs) // 快捷键触发通常 sender 是 Window 或者 e 是 KeyEventArgs
@@ -373,7 +331,6 @@ namespace TabPaint
            
             if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection)
             {
-                // 假设你有个方法能拿到选区的 CroppedBitmap
                 sourceToRecognize = selTool.GetSelectionCroppedBitmap();
             }
 
@@ -388,7 +345,6 @@ namespace TabPaint
                 var ocrService = new OcrService(); // 也可以作为单例注入
                 string text = await ocrService.RecognizeTextAsync(sourceToRecognize);
 
-                // 5. 结果处理
                 if (!string.IsNullOrWhiteSpace(text))
                 {
                     System.Windows.Clipboard.SetText(text);
@@ -576,8 +532,6 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
                 UpdateToolTipOffset(toolTip);
             }
         }
-
-        // 核心计算逻辑
         private void UpdateToolTipOffset(System.Windows.Controls.ToolTip toolTip)
         {
             // 1. 获取 Slider 的实际高度
@@ -627,7 +581,6 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
                 ScrollContainer.ReleaseMouseCapture();
                 Mouse.OverrideCursor = null; // 恢复光标
             }
-            a.s("OnScrollContainerDoubleClick");
             MaximizeWindowHandler();
             e.Handled = true;
         }

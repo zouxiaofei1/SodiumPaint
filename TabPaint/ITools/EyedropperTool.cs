@@ -14,11 +14,7 @@ namespace TabPaint
         public class EyedropperTool : ToolBase
         {
             public override string Name => "Eyedropper";
-
-            // 1. 定义一个私有变量缓存光标
             private System.Windows.Input.Cursor _cachedCursor;
-
-            // 2. 修改属性获取逻辑
             public override System.Windows.Input.Cursor Cursor
             {
                 get

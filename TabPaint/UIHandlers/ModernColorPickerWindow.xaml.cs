@@ -50,7 +50,6 @@ namespace TabPaint
                 {
                     try
                     {
-                        // 将 Hex 字符串 (#AARRGGBB) 转回 Color 对象
                         var color = (Color)ColorConverter.ConvertFromString(hex);
                         _customColors.Add(color);
                     }
@@ -59,19 +58,13 @@ namespace TabPaint
                     }
                 }
             }
-
-            // 立即渲染加载出来的颜色
             RenderCustomColors();
         }
-
-        // 新增：无边框窗口拖动支持
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
                 this.DragMove();
         }
-
-        // 新增：基本颜色块点击处理
         private void Swatch_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Background is SolidColorBrush brush)
@@ -88,8 +81,6 @@ namespace TabPaint
         {
             var hueColor = ColorFromHsv(_currentHue, 1, 1);
             SpectrumBaseColor.Fill = new SolidColorBrush(hueColor);
-
-            // 同时更新 Alpha 滑块的顶端颜色（不带透明度）
             var pureColor = GetRgbFromHsv(false); // false = 不带 alpha，纯色
             if (AlphaGradientStop != null)
                 AlphaGradientStop.Color = pureColor;
@@ -129,8 +120,6 @@ namespace TabPaint
 
                 if (NewColorRect != null)
                     NewColorRect.Fill = new SolidColorBrush(c);
-
-                // HEX 显示 8 位：#AARRGGBB
                 if (HexInput != null)
                     HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
                 if (SpectrumLayerGroup != null)
@@ -155,16 +144,12 @@ namespace TabPaint
                         Input3.Text = Math.Round(_currentVal * 100).ToString();
                     }
                 }
-
-                // 1. 更新 Hue 滑块位置
                 if (HueSliderGrid.ActualHeight > 0)
                 {
                     double h = HueSliderGrid.ActualHeight;
                     double hueY = (1 - (_currentHue / 360.0)) * h;
                     Canvas.SetTop(HueCursor, Math.Clamp(hueY, 0, h));
                 }
-
-                // 2. 更新 Spectrum 光标位置
                 if (SpectrumBaseColor.ActualWidth > 0)
                 {
                     double w = SpectrumBaseColor.ActualWidth;
@@ -172,8 +157,6 @@ namespace TabPaint
                     Canvas.SetLeft(ColorCursor, _currentSat * w);
                     Canvas.SetTop(ColorCursor, (1 - _currentVal) * h);
                 }
-
-                // 3. 【新增】更新 Alpha 滑块位置
                 if (AlphaSliderGrid.ActualHeight > 0)
                 {
                     double h = AlphaSliderGrid.ActualHeight;
@@ -190,13 +173,11 @@ namespace TabPaint
                 _isUpdatingInputs = false;
             }
         }
-
         #endregion
 
         #region UI Rendering
         private void RenderHueGradient()
         {
-            // 注意：因为XAML里Image被放到了Grid里自适应，这里的bitmap大小可能需要稍大一点保证清晰度
             int w = 20;
             int h = 360;
             var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
@@ -290,7 +271,6 @@ namespace TabPaint
             if (grid != null)
             {
                 grid.CaptureMouse();
-                // 修复：传递 Grid 的 ActualHeight
                 UpdateHueFromMouse(e.GetPosition(grid), grid.ActualHeight);
             }
         }
@@ -298,8 +278,6 @@ namespace TabPaint
         {
             if (h <= 0) return;
             double y = Math.Clamp(p.Y, 0, h);
-
-            // 计算 Hue (0在底部，360在顶部)
             _currentHue = 360 - (y / h * 360);
             _currentHue = Math.Clamp(_currentHue, 0, 360);
 
@@ -324,15 +302,12 @@ namespace TabPaint
             var grid = sender as Grid;
             grid?.ReleaseMouseCapture();
         }
-
-
         #endregion
 
         #region Interaction - Alpha Slider
 
         private void Alpha_MouseDown(object sender, MouseButtonEventArgs e)
         {
-          
             e.Handled = true;  
             _isDraggingAlpha = true;
 
@@ -352,8 +327,6 @@ namespace TabPaint
             Keyboard.ClearFocus();
             e.Handled = true;
             _isDraggingHue = true;
-
-            // 同样，让 HueSliderGrid 接管
             HueSliderGrid.CaptureMouse();
             UpdateHueFromMouse(e.GetPosition(HueSliderGrid), HueSliderGrid.ActualHeight);
         }
@@ -379,14 +352,11 @@ namespace TabPaint
         {
             if (h <= 0) return;
             double y = Math.Clamp(p.Y, 0, h);
-
-            // y=0 -> Alpha=255, y=h -> Alpha=0
             _currentAlpha = 255 - (y / h * 255);
             _currentAlpha = Math.Clamp(_currentAlpha, 0, 255);
 
             UpdateUI();
         }
-
         #endregion
 
         #region Text Input Handling
@@ -396,8 +366,6 @@ namespace TabPaint
             if (_isUpdatingInputs) return;
 
             string hex = HexInput.Text.Trim('#');
-
-            // 支持 6位 (RRGGBB) 和 8位 (AARRGGBB)
             if (hex.Length == 6)
             {
                 try
@@ -407,8 +375,6 @@ namespace TabPaint
                     byte g = Convert.ToByte(hex.Substring(2, 2), 16);
                     byte b = Convert.ToByte(hex.Substring(4, 2), 16);
                     SetColorFromRgb(r, g, b);
-                    // UpdateUI 会被 SetColorFromRgb 间接触发吗？不会，Set只改状态
-                    // 手动刷新预览
                     var c = GetRgbFromHsv(true);
                     NewColorRect.Fill = new SolidColorBrush(c);
                     SelectedColor = c;
@@ -438,8 +404,6 @@ namespace TabPaint
                 catch { }
             }
         }
-
-        // 统一处理 RGB 或 HSV 的输入变化
         private void NumericInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_isUpdatingInputs) return;
@@ -450,7 +414,6 @@ namespace TabPaint
                 double.TryParse(Input3.Text, out double v3) &&
                 double.TryParse(InputAlpha.Text, out double vAlpha)) // 读取 Alpha
             {
-                // 更新 Alpha
                 _currentAlpha = Math.Clamp(vAlpha, 0, 255);
 
                 if (_currentMode == ColorMode.RGB)
@@ -480,7 +443,6 @@ namespace TabPaint
                 if (AlphaSliderGrid.ActualHeight > 0)
                     Canvas.SetTop(AlphaCursor, (1 - (_currentAlpha / 255.0)) * AlphaSliderGrid.ActualHeight);
 
-                // 更新光标位置
                 if (SpectrumBaseColor.ActualWidth > 0)
                 {
                     double w = SpectrumBaseColor.ActualWidth;
@@ -516,8 +478,6 @@ namespace TabPaint
                 Label2.Text = LocalizationManager.GetString("L_ColorPicker_Saturation");
                 Label3.Text = LocalizationManager.GetString("L_ColorPicker_Brightness");
             }
-
-            // 切换后立即刷新输入框里的数值格式
             UpdateUI();
         }
 
@@ -526,16 +486,11 @@ namespace TabPaint
 
         private void AddCustomColor_Click(object sender, RoutedEventArgs e)
         {
-            // 获取当前选中的颜色
             var newColor = SelectedColor;
 
-            // 如果已经存在，就不添加了(可选逻辑)
             if (_customColors.Contains(newColor)) return;
-
-            // 添加到列表
             _customColors.Insert(0, newColor); // 插入到最前面
 
-            // 限制最大数量为16
             if (_customColors.Count > 16)
                 _customColors.RemoveAt(16);
 
@@ -573,7 +528,6 @@ namespace TabPaint
                         var c = _customColors[i];
                         var btn = new Button
                         {
-                            // 【关键修改】这里改成引用新的 MiniColorSwatch 样式
                             Style = (Style)FindResource("MiniColorSwatch"),
 
                             Background = new SolidColorBrush(c),
@@ -584,7 +538,6 @@ namespace TabPaint
                     }
                     else
                     {
-                        // === 空槽位 (虚线) ===
                         var dashedCircle = new System.Windows.Shapes.Ellipse
                         {
                             Stroke = new SolidColorBrush(Color.FromRgb(187, 187, 187)),

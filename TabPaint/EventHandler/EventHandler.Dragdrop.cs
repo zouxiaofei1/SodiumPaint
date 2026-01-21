@@ -64,8 +64,6 @@ namespace TabPaint
                     else
                     {
                         e.Effects = DragDropEffects.Copy;
-
-                        // B-1. 多文件 -> 强制作为新标签页打开
                         if (imageFiles.Length > 1)
                         {
                             ShowDragOverlay(
@@ -73,7 +71,6 @@ namespace TabPaint
                       string.Format(LocalizationManager.GetString("L_Drag_BatchOpen_Desc"), imageFiles.Length)
                   );
                         }
-                        // B-2. 单文件 -> 根据位置决定是“添加到列表”还是“插入画布”
                         else
                         {
                             if (pos.Y < 210)
@@ -83,7 +80,6 @@ namespace TabPaint
                                 LocalizationManager.GetString("L_Drag_AddToList_Desc")
                             );
                             }
-                            // 如果拖到了下方的画布区，倾向于“插入图片到当前画作”
                             else
                             {
                                 ShowDragOverlay(
@@ -108,11 +104,8 @@ namespace TabPaint
                     e.Effects = DragDropEffects.Copy;
                 }
                 // 如果不允许 Copy，检查是否允许 Move (比如从 Word 拖拽有时候是 Move)
-                else if ((e.AllowedEffects & DragDropEffects.Move) == DragDropEffects.Move)
-                {
-                    e.Effects = DragDropEffects.Move;
-                }
-                // 最后的保底，或者直接用 e.AllowedEffects
+                else if ((e.AllowedEffects & DragDropEffects.Move) == DragDropEffects.Move) e.Effects = DragDropEffects.Move;
+
                 else
                 {
                     e.Effects = e.AllowedEffects;
@@ -143,11 +136,7 @@ namespace TabPaint
                     ShowToast("L_Toast_NoImageData");
                     return;
                 }
-
-                // 2. 切换到选择工具
                 _router.SetTool(_tools.Select);
-
-                // 3. 调用选择工具的插入逻辑
                 if (_tools.Select is SelectTool st)
                 {
                     st.InsertImageAsSelection(_ctx, bitmapToInsert);
@@ -161,7 +150,7 @@ namespace TabPaint
 
         private async void OnGlobalDrop(object sender, DragEventArgs e)
         {
-            HideDragOverlay(); // 必须第一时间隐藏
+            HideDragOverlay(); 
 
             // 1. 屏蔽内部拖拽
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
@@ -170,7 +159,6 @@ namespace TabPaint
                 {
                     string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                     var imageFiles = files?.Where(f => IsImageFile(f)).ToArray();
-                    // 核心判断：只有当拖拽对象存在，且不是当前 Tab 时才执行插入
                     if (imageFiles[0].IndexOf(_currentTabItem.DisplayName, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         e.Handled = true;
@@ -197,31 +185,19 @@ namespace TabPaint
                     // A. 标题栏区域 -> 切换工作区
                     if (pos.Y <= 100)
                     {
-                        // 逻辑：取第一个文件进行切换
                         await SwitchWorkspaceToNewFile(imageFiles[0]);
                     }
-                    // B. 其他区域
                     else
                     {
                         // B-1. 多文件 -> 全部新建标签页
-                        if (imageFiles.Length > 1)
-                        {
-                            await OpenFilesAsNewTabs(imageFiles);
-                        }
-                        // B-2. 单文件 -> 视位置而定
+                        if (imageFiles.Length > 1)  await OpenFilesAsNewTabs(imageFiles);
+
                         else
                         {
                             string filePath = imageFiles[0];
 
-                            if (pos.Y < 200)
-                            {
-                                await OpenFilesAsNewTabs(new string[] { filePath });
-                            }
-                            // 如果在画布区域，插入图片
-                            else
-                            {
-                                InsertImageToCanvas(filePath);
-                            }
+                            if (pos.Y < 200) await OpenFilesAsNewTabs(new string[] { filePath });
+                            else InsertImageToCanvas(filePath);
                         }
                     }
                 }
@@ -267,8 +243,6 @@ namespace TabPaint
 
                         // 切换工具
                         _router.SetTool(_tools.Text);
-
-                        // 如果有样式信息，先应用到 UI
                         if (styleInfo != null)
                         {
                             ApplyDetectedTextStyle(styleInfo);
@@ -319,9 +293,6 @@ namespace TabPaint
             // 获取窗口物理位置
             Point p1 = this.PointToScreen(new Point(0, 0));
             Point p2 = this.PointToScreen(new Point(this.ActualWidth, this.ActualHeight));
-
-            // 为了防止边界闪烁，可以给窗口范围加一点“缓冲余量”(Padding)，比如向外扩 5 像素
-            // 只有鼠标真的离开窗口 5 像素远了，才强制隐藏
             double padding = 5.0;
 
             bool isInside = (cursorScreenPos.X >= p1.X - padding && cursorScreenPos.X <= p2.X + padding &&
@@ -329,8 +300,6 @@ namespace TabPaint
 
             if (!isInside)
             {
-                // 鼠标由于移动太快，已经逃逸到窗口外，但 DragLeave 没触发
-                // 手动进行“垃圾回收”
                 HideDragOverlay();
             }
         }
@@ -341,7 +310,6 @@ namespace TabPaint
             var window = Window.GetWindow(this);
             if (window == null) return;
 
-            // 获取鼠标在屏幕上的物理坐标 (Pixel)
             POINT cursorScreenPos;
             GetCursorPos(out cursorScreenPos);
 
@@ -367,7 +335,6 @@ namespace TabPaint
             DragOverlayText.Text = title;
             DragOverlaySubText.Text = subText;
 
-            // 如果已经在显示中，就不重复播放动画，直接返回
             if (_isDragOverlayVisible) return;
 
             _isDragOverlayVisible = true;

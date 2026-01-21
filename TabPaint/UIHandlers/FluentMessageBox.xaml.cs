@@ -65,10 +65,6 @@ namespace TabPaint
                     break;
             }
         }
-
-        // --- 核心交互逻辑 ---
-
-        // 1. 窗口拖动
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
@@ -76,12 +72,8 @@ namespace TabPaint
                 this.DragMove();
             }
         }
-
-        // 2. 右上角关闭按钮点击
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            // 如果只有OK按钮，关闭等同于OK；如果是YesNo，通常等同于Cancel或No
-            // 这里默认视为 Cancel/None
             if (BtnCancel.Visibility == Visibility.Visible)
             {
                 Result = MessageBoxResult.Cancel;

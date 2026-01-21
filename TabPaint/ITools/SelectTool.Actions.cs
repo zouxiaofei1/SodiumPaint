@@ -25,8 +25,6 @@ namespace TabPaint
                 if (!_hasLifted)
                 {
                     ctx.Undo.BeginStroke();
-
-                    // 重要：告诉 Undo 管理器哪个区域变了
                     ctx.Undo.AddDirtyRect(_selectionRect);
 
                     // 执行擦除
@@ -42,8 +40,6 @@ namespace TabPaint
                     ctx.SelectionOverlay.Children.Clear();
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 }
-
-                // 3. 彻底重置 SelectTool 状态
                 _selectionData = null;
                 _selectionRect = new Int32Rect(0, 0, 0, 0);
                 _originalRect = new Int32Rect(0, 0, 0, 0);
@@ -52,8 +48,6 @@ namespace TabPaint
                 _draggingSelection = false;
                 _resizing = false;
                 Mouse.OverrideCursor = null;
-
-                // 4. 通知 UI 更新
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 mw.SetCropButtonState();
                 mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), 0, 0);
@@ -258,13 +252,10 @@ namespace TabPaint
                 if (_selectionData != null) CommitSelection(ctx);
 
                 BitmapSource? sourceBitmap = null;
-
-                // --- 逻辑 A: 检查剪贴板是否直接包含位图 (如截图、浏览器右键复制图片) ---
                 if (System.Windows.Clipboard.ContainsImage())
                 {
                     sourceBitmap = System.Windows.Clipboard.GetImage();
                 }
-                // --- 逻辑 B: 检查剪贴板是否包含文件 (如在资源管理器 Ctrl+C 复制的文件) ---
                 else if (System.Windows.Clipboard.ContainsData(System.Windows.DataFormats.FileDrop))
                 {
                     var fileList = System.Windows.Clipboard.GetData(System.Windows.DataFormats.FileDrop) as string[];
@@ -274,7 +265,6 @@ namespace TabPaint
                         sourceBitmap = LoadImageFromFile(filePath);
                     }
                 }
-                // --- 逻辑 C: 检查应用内自定义剪贴板 ---
                 else if (_clipboardData != null)
                 {
                     sourceBitmap = BitmapSource.Create(_clipboardWidth, _clipboardHeight,
@@ -309,7 +299,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    //System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine("Load file from clipboard failed: " + ex.Message);
                     return null;
                 }
             }
@@ -333,7 +323,6 @@ namespace TabPaint
             {
                 if (ctx.Surface?.Bitmap == null) return;
                 IsPasted = false;
-                // 1. 彻底重置预览控件的状态 (修复全白/错位的核心)
                 ctx.SelectionPreview.Clip = null;             // 清除残留的裁剪
                 ctx.SelectionPreview.RenderTransform = null;  // 清除残留的位移/缩放
                 Canvas.SetLeft(ctx.SelectionPreview, 0);      // 归位布局坐标
@@ -355,9 +344,6 @@ namespace TabPaint
                 ctx.Undo.BeginStroke();
                 ctx.Undo.AddDirtyRect(_selectionRect);
                 ctx.Undo.CommitStroke();
-
-                // 只有在 cut=true 时才擦除原画板 (注意：通常 Ctrl+A 不应该立即擦除，除非你设计如此)
-                // 建议调用端 Ctrl+A 时传入 false，只有移动时才擦除，但这里保留你的逻辑
                 if (cut)
                 {
                     ClearRect(ctx, _selectionRect, ctx.EraserColor);
@@ -458,21 +444,14 @@ namespace TabPaint
 
 
                 ctx.Surface.ReplaceBitmap(newBitmap);
-                Cleanup(ctx); // 使用你已有的清理方法
+                Cleanup(ctx); 
                 ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
                 ctx.IsDirty = true;
                 ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(finalWidth, finalHeight);
                 // 更新UI（例如Undo/Redo按钮的状态）
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
             }
-
-            /// <summary>
-            /// 后面是鼠标键盘事件处理
-            /// </summary>
-
-
-
-            public override void OnPointerDown(ToolContext ctx, Point viewPos)
+            public override void OnPointerDown(ToolContext ctx, Point viewPos) ////////////////////////////////////////////////////////////////////////////// 后面是鼠标键盘事件处理
             {
 
                 if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
@@ -606,8 +585,6 @@ namespace TabPaint
                 {
                     if (!_hasLifted) LiftSelectionFromCanvas(ctx);
 
-                    // 1. 确定“不动点” (Pivot Edges)
-                    // 当我们拖动左边时，RightEdge 是不动的；拖动上边时，BottomEdge 是不动的。
                     double fixedRight = _startX + _startW;
                     double fixedBottom = _startY + _startH;
 
@@ -615,7 +592,6 @@ namespace TabPaint
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
 
-                    // 2. 预计算建议的宽高 (尚未Clamping)
                     double proposedW = _startW;
                     double proposedH = _startH;
 
@@ -841,7 +817,6 @@ namespace TabPaint
                     }
                     else
                     {
-                        // 完全移出画面时，隐藏或者是清空 Clip（视你的需求而定，建议清空 Clip 并依赖 Viewport 裁剪）
                         ctx.SelectionPreview.Clip = Geometry.Empty;
                     }
 
@@ -955,9 +930,6 @@ namespace TabPaint
                 int newY = (int)Math.Round(centerY - newSelectionH / 2.0);
 
                 _selectionRect = new Int32Rect(newX, newY, newSelectionW, newSelectionH);
-
-                // 2. UI 渲染修复部分 (Fix Start) --------------------------
-
                 // 更新源图片
                 var previewBmp = new WriteableBitmap(transform);
                 ctx.SelectionPreview.Source = previewBmp;
@@ -974,8 +946,6 @@ namespace TabPaint
                 // 应用变换：缩放 + 位移
                 var tg = new TransformGroup();
                 tg.Children.Add(new ScaleTransform(scaleX, scaleY));
-                // 再位移
-                // 注意：newX, newY 是像素坐标，转换为逻辑坐标
                 tg.Children.Add(new TranslateTransform(newX * dpiScaleX, newY * dpiScaleY));
 
                 ctx.SelectionPreview.RenderTransform = tg;
@@ -998,8 +968,6 @@ namespace TabPaint
 
                 try
                 {
-                    // 1. 从原始字节数据创建基础 BitmapSource
-                    // 注意：_originalRect 的宽高始终对应 _selectionData 的像素维度
                     int stride = _originalRect.Width * 4;
 
                     // 获取当前画布的 DPI，确保 OCR 识别精度一致
@@ -1026,14 +994,12 @@ namespace TabPaint
                         // 使用 TransformedBitmap 进行高质量缩放
                         result = new TransformedBitmap(result, new ScaleTransform(scaleX, scaleY));
                     }
-
-                    // 冻结对象以便跨线程使用（OCR 通常在 Task 中运行）
                     result.Freeze();
                     return result;
                 }
                 catch (Exception ex)
                 {
-                  // System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
+                   System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
                     return null;
                 }
             }
@@ -1083,11 +1049,7 @@ namespace TabPaint
                     _draggingSelection = false;
 
                     Point relativePoint = ctx.SelectionPreview.TranslatePoint(new Point(0, 0), ctx.ViewElement);
-
-                    // 2. 将视觉坐标转换为位图像素坐标
                     Point pixelPoint = ctx.ToPixel(relativePoint);
-
-                    // 3. 更新逻辑选区矩形
                     _selectionRect.X = (int)Math.Round(pixelPoint.X);
                     _selectionRect.Y = (int)Math.Round(pixelPoint.Y);
                 }

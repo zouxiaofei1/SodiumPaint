@@ -31,7 +31,6 @@ namespace TabPaint
         {
       
             if (_currentTabItem == null) return;
-            // 假设你的画布是 _surface.Bitmap (WriteableBitmap)
             if (_surface?.Bitmap == null) return;
          
             // 1. 基础检查
@@ -101,7 +100,6 @@ namespace TabPaint
                     // 更新 UI 模型
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        // 查找对应的 Tab 对象（因为 _currentTabItem 可能已经变了）
                         var targetTab = FileTabs.FirstOrDefault(t => t.Id == fileId);
                         if (targetTab != null)
                         {
@@ -129,8 +127,6 @@ namespace TabPaint
                     myCts.Dispose();
                 }
             }, token);
-
-            // 【关键】：注册任务
             if (_activeSaveTasks.ContainsKey(fileId))
             {
                 _activeSaveTasks[fileId] = saveTask;
@@ -149,13 +145,9 @@ namespace TabPaint
             double height = BackgroundImage.ActualHeight;
 
             if (width <= 0 || height <= 0) return null;
-
-            // 2. 获取屏幕 DPI (适配高分屏)
             Matrix m = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice;
             double dpiX = m.M11 * 96.0;
             double dpiY = m.M22 * 96.0;
-
-            // 3. 创建渲染目标
             RenderTargetBitmap rtb = new RenderTargetBitmap(
                 (int)(width * m.M11),
                 (int)(height * m.M22),
@@ -190,7 +182,7 @@ namespace TabPaint
             {
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 关键：加载后释放文件占用
+                bitmap.CacheOption = BitmapCacheOption.OnLoad; 
                 bitmap.UriSource = new Uri(path);
                 bitmap.EndInit();
                 bitmap.Freeze();
@@ -208,9 +200,6 @@ namespace TabPaint
             _autoSaveTimer.Interval = TimeSpan.FromSeconds(3); // 3秒停笔后触发
             _autoSaveTimer.Tick += AutoSaveTimer_Tick;
         }
-
-        // 在 MainWindow 类中修改 NotifyCanvasChanged 方法
-
         public void NotifyCanvasChanged()
         {
             if (_currentTabItem == null) return;
@@ -240,7 +229,6 @@ namespace TabPaint
             {
                 // 绘制白色背景
                 context.DrawRectangle(Brushes.White, null, new Rect(0, 0, width, height));
-                // 可选：画一个浅灰色边框让它看得清楚
                 context.DrawRectangle(null, new Pen(Application.Current.FindResource("ListItemPressedBrush") as Brush, 1), new Rect(0.5, 0.5, width - 1, height - 1));
             }
             bmp.Render(drawingVisual);
@@ -396,7 +384,6 @@ namespace TabPaint
                     var bmp = GetCurrentCanvasSnapshot();
                     if (bmp != null)
                     {
-                        // 【修复核心】：检查并重建目录
                         if (!System.IO.Directory.Exists(_cacheDir))
                         {
                             System.IO.Directory.CreateDirectory(_cacheDir);
@@ -609,7 +596,6 @@ namespace TabPaint
                 if (!string.IsNullOrEmpty(_currentFilePath))
                 {
                     startupDir = System.IO.Path.GetDirectoryName(_currentFilePath);
-                    // 统一路径格式（去掉末尾斜杠等，防止匹配失败），可选
                     if (startupDir != null) startupDir = System.IO.Path.GetFullPath(startupDir);
                 }
 
@@ -617,8 +603,6 @@ namespace TabPaint
                 {
                     foreach (var info in session.Tabs)
                     {
-                        // [新增] 2. 过滤逻辑
-                      //  if (startupDir != null)
                         {
                             string tabDir = info.WorkDirectory;
 
@@ -701,7 +685,6 @@ namespace TabPaint
         }
         private void CreateNewTab(TabInsertPosition tabposition = TabInsertPosition.AfterCurrent, bool switchto = false)
         {
-            // 1. 【核心修改】动态计算下一个可用的编号 (找空位)
             int availableNumber = GetNextAvailableUntitledNumber();
             string virtualPath = $"{VirtualFilePrefix}{availableNumber}";
 
@@ -709,7 +692,7 @@ namespace TabPaint
             var newTab = new FileTabItem(virtualPath)
             {
                 IsNew = true,
-                UntitledNumber = availableNumber, // 关键：记录这个编号
+                UntitledNumber = availableNumber,
                 IsDirty = false,
                    Id = $"Virtual_{availableNumber}",
                     BackupPath = null
@@ -775,8 +758,6 @@ namespace TabPaint
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
 
-
-            // 2. 核心变量同步
             _currentFilePath = tab.FilePath;
             _currentFileName = tab.FileName;
             _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
@@ -791,7 +772,6 @@ namespace TabPaint
             UpdateWindowTitle();
             if (IsTransferringSelection)
             {
-                // 等待一下 UI 布局更新（可选）
                 await Task.Delay(50);
                 RestoreTransferredSelection();
             }
@@ -891,7 +871,7 @@ namespace TabPaint
                             else
                                 encoder = new PngBitmapEncoder();
 
-                            encoder.Frames.Add(BitmapFrame.Create(bmp)); // 修复：确保 Frame 被添加
+                            encoder.Frames.Add(BitmapFrame.Create(bmp)); 
                             encoder.Save(fs);
                         }
                     }
@@ -970,9 +950,6 @@ namespace TabPaint
                         }
 
                         if (tabDir != null) tabDir = System.IO.Path.GetFullPath(tabDir);
-
-                        // 2. 核心判定：只有当 Tab 的工作目录 == 当前切换到的目录时，才恢复
-                        // 或者，如果是“新建文件(Virtual File)”，且它的归属目录是当前目录，也恢复
                         bool shouldLoad = false;
 
                         if (workspaceDir != null && tabDir != null &&
@@ -986,8 +963,6 @@ namespace TabPaint
                             // 检查是否已经在 FileTabs 里了（防止重复添加）
                             if (FileTabs.Any(t => t.Id == info.Id || t.FilePath == info.OriginalPath))
                             {
-                                // 如果已经在列表里（比如 ScanFolder 扫到了原图），
-                                // 我们需要把 Session 里的 BackupPath 赋给它，让它变成"已编辑"状态
                                 var existingTab = FileTabs.First(t => t.Id == info.Id || t.FilePath == info.OriginalPath);
 
                                 if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
@@ -1032,8 +1007,6 @@ namespace TabPaint
         {
             return !string.IsNullOrEmpty(path) && path.StartsWith(VirtualFilePrefix);
         }
-
-        // 辅助方法：生成唯一的虚拟路径
         private string GenerateVirtualPath()
         {
             // 格式： ::TABPAINT_NEW::{ID}

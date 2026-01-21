@@ -36,11 +36,8 @@ namespace TabPaint.Controls
             else
                 KeyDisplay.Text = "无";
         }
-
-        // 核心逻辑：监听按键
         private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // 忽略单独按下的控制键（如只按了Ctrl）
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl ||
                 e.Key == Key.LeftAlt || e.Key == Key.RightAlt ||
                 e.Key == Key.LeftShift || e.Key == Key.RightShift ||
@@ -50,9 +47,7 @@ namespace TabPaint.Controls
                 return;
             }
 
-            e.Handled = true; // 阻止事件冒泡，防止触发外层快捷键
-
-            // 获取按下的实际按键 (处理 System Key 如 Alt组合)
+            e.Handled = true; 
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
 
             // 获取修饰键
@@ -65,8 +60,6 @@ namespace TabPaint.Controls
             CurrentItem.Modifiers = modifiers;
 
             UpdateDisplay();
-
-            // 自动移除焦点，表示录入完成
             Keyboard.ClearFocus();
         }
         private void UserControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -86,7 +79,6 @@ namespace TabPaint.Controls
             e.Handled = true;
 
         }
-
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
             if (CurrentItem != null)

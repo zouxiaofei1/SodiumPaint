@@ -128,7 +128,6 @@ namespace TabPaint
         {
             if (string.IsNullOrEmpty(hexColor))
             {
-                // 注意：这里仅在确定 SettingsManager 已经初始化完成后调用才安全
                 hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
             }
             MainWindow mw = ((MainWindow)Application.Current.MainWindow);
@@ -183,8 +182,6 @@ namespace TabPaint
             if (resources.Contains(key)) resources.Remove(key);
             resources[key] = brush;
         }
-
-        // 辅助方法：调整亮度
         private static Color ChangeColorBrightness(Color color, float correctionFactor)
         {
             float red = (float)color.R;
@@ -229,14 +226,10 @@ namespace TabPaint
             foreach (Window window in Application.Current.Windows)
             {
                 SetWindowImmersiveDarkMode(window, isDark);
-                // 这里可能还需要通知你的 MicaAcrylicManager 刷新
-                // MicaAcrylicManager.UpdateTheme(window, isDark); 
                 var bgBrush = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
                 window.Background = bgBrush;
             }
         }
-
-        // --- Win32 API 设置标题栏深色模式 ---
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 

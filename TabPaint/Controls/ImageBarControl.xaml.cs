@@ -16,7 +16,6 @@ namespace TabPaint.Controls
         {
             if (value is bool b)
             {
-                // 如果是 True，则隐藏 (Collapsed)；如果是 False，则显示 (Visible)
                 return b ? Visibility.Collapsed : Visibility.Visible;
             }
             return Visibility.Visible;
@@ -61,14 +60,10 @@ namespace TabPaint.Controls
                 source?.RemoveHook(WndProc);
             }
         }
-
-        // 核心：消息处理函数
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            // 只有当鼠标指针在这个控件上方时才处理，避免干扰其他区域
             if (msg == WM_MOUSEHWHEEL && IsMouseOverControl(FileTabsScroller))
             {
-                // 获取滚动的 Delta 值 (高位字)
                 int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
                 FileTabsScroller.ScrollToHorizontalOffset(FileTabsScroller.HorizontalOffset + delta);
 
@@ -77,22 +72,18 @@ namespace TabPaint.Controls
 
             return IntPtr.Zero;
         }
-
-        // 辅助方法：判断鼠标是否在 ScrollViewer 区域内
         private bool IsMouseOverControl(UIElement control)
         {
             if (control == null || !control.IsVisible) return false;
 
             var mousePos = Mouse.GetPosition(control);
             var bounds = new Rect(0, 0, control.RenderSize.Width, control.RenderSize.Height);
-
-            // 稍微放宽一点判定，或者严格判定
             return bounds.Contains(mousePos);
         }
         public ScrollViewer Scroller => FileTabsScroller;
         public ItemsControl TabList => FileTabList;
         public Slider Slider => PreviewSlider;
-        public Button AddButton => LeftAddBtn; // 修复 LeftAddBtn 访问
+        public Button AddButton => LeftAddBtn; 
 
         public static readonly RoutedEvent SaveAllClickEvent = EventManager.RegisterRoutedEvent("SaveAllClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ImageBarControl));
         public event RoutedEventHandler SaveAllClick { add { AddHandler(SaveAllClickEvent, value); } remove { RemoveHandler(SaveAllClickEvent, value); } }
@@ -138,10 +129,6 @@ namespace TabPaint.Controls
         private void Internal_OnTabDeleteClick(object sender, RoutedEventArgs e) => TabDeleteClick?.Invoke(sender, e);
         private void Internal_OnTabFileDeleteClick(object sender, RoutedEventArgs e) => TabFileDeleteClick?.Invoke(sender, e);
 
-        // ==========================================
-        // 4. 复杂事件 (直接使用 C# 事件，避开 DragEventArgs 构造函数问题)
-        // ==========================================
-
         public event MouseButtonEventHandler FileTabPreviewMouseDown;
         private void Internal_OnFileTabPreviewMouseDown(object sender, MouseButtonEventArgs e) => FileTabPreviewMouseDown?.Invoke(sender, e);
 
@@ -163,8 +150,6 @@ namespace TabPaint.Controls
             if (e.Delta != 0)
             {
                 scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - e.Delta);
-
-                // 标记事件已处理，防止事件冒泡导致父容器(比如画布)也跟着滚动或缩放
                 e.Handled = true;
             }
         }
@@ -198,8 +183,6 @@ namespace TabPaint.Controls
         }
         public FileTabItem GetTabFromPoint(Point pointRelativeToWindow)
         {
-            // 1. 坐标系转换：获取相对于 FileTabList（ItemsControl）的坐标
-            // 使用这种方式可以避开窗口装饰器导致的坐标偏移
             Point pointInList = this.FileTabList.PointFromScreen(this.PointToScreen(new Point(0, 0)));
             Point mousePosInList = this.FileTabList.PointFromScreen(this.PointToScreen(pointRelativeToWindow));
             if (pointRelativeToWindow.Y > 220) return null;
@@ -213,8 +196,6 @@ namespace TabPaint.Controls
                 // 获取该 Tab 相对于 FileTabList 的位置
                 Point relativePos = container.TranslatePoint(new Point(0, 0), FileTabList);
                 Rect bounds = new Rect(relativePos.X, relativePos.Y+110, container.ActualWidth, container.ActualHeight);
-
-                // 3. 判定鼠标坐标是否在这个 Tab 的矩形范围内
                 if (bounds.Contains(mousePosInList))
                 {
                     return FileTabList.Items[i] as FileTabItem;
@@ -246,8 +227,6 @@ namespace TabPaint.Controls
             get { return (bool)GetValue(IsViewModeProperty); }
             set { SetValue(IsViewModeProperty, value); }
         }
-
-        // 2. IsPinned: 是否锁定展开 (可以通过快捷键或右键菜单触发)
         public static readonly DependencyProperty IsPinnedProperty =
             DependencyProperty.Register("IsPinned", typeof(bool), typeof(ImageBarControl), new PropertyMetadata(false));
 
@@ -256,8 +235,6 @@ namespace TabPaint.Controls
             get { return (bool)GetValue(IsPinnedProperty); }
             set { SetValue(IsPinnedProperty, value); }
         }
-
-        // 公开方法供外部快捷键调用 (比如按下 Ctrl+T 锁定/解锁)
         public void TogglePin()
         {
             IsPinned = !IsPinned;

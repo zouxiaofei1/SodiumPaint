@@ -14,54 +14,38 @@
         MouseDown="Window_MouseDown"
         MouseMove="Window_MouseMove"
         Loaded="ColorPickerWindow_Loaded">
-    <!-- Cursor="None" 隐藏系统鼠标，我们自己画十字或者靠放大镜中间的十字 -->
 
     <Grid>
-        <!-- 1. 底层全屏截图 -->
         <Image Name="ScreenShotImage" Stretch="Fill" />
 
-        <!-- 2. 放大镜容器 (使用 Canvas 绝对定位) -->
         <Canvas Name="OverlayCanvas">
-            <!-- 修改点1: 边框颜色使用 SystemAccentBrush -->
             <Border Name="Magnifier" Width="120" Height="120" 
                     BorderBrush="{DynamicResource SystemAccentBrush}" 
                     BorderThickness="2" 
                    
                     Visibility="Collapsed">
 
-                <!-- 阴影让它浮起来 -->
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
                 </Border.Effect>
 
                 <Grid ClipToBounds="True">
-      
-                    <!-- A. 放大显示的区域 -->
                     <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor">
                         <Rectangle.Fill>
-                            <!-- 绑定到全屏截图 -->
                             <VisualBrush Visual="{Binding ElementName=ScreenShotImage}" 
                                          x:Name="ZoomBrush"
                                          ViewboxUnits="Absolute"/>
                         </Rectangle.Fill>
                     </Rectangle>
-
-                    <!-- B. 像素网格装饰 -->
-                    <!-- 修改点2: 中心选中像素的高亮框使用 SystemAccentBrush (统一风格) -->
-                    <!-- 如果需要更高对比度，可以考虑外层再套一个白色边框，或后续添加专用Resource -->
                     <Rectangle Width="12" Height="12" 
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Stroke="{DynamicResource SystemAccentBrush}" 
                                StrokeThickness="1" 
                                SnapsToDevicePixels="True"/>
-
-                    <!-- C. 底部文字信息 -->
-                    <!-- 修改点3: 背景色使用 TextPrimaryBrush (深色) + Opacity 实现半透明 -->
                     <Border VerticalAlignment="Bottom" 
                             Background="{DynamicResource TextPrimaryBrush}" 
                             Opacity="0.75"
                             Height="24">
-                        <!-- 修改点4: 文字颜色使用 TextInverseBrush (通常是白色) -->
                         <TextBlock Name="ColorText" Text="#FFFFFF" 
                                    HorizontalAlignment="Center" VerticalAlignment="Center" 
                                    Foreground="{DynamicResource TextInverseBrush}" 

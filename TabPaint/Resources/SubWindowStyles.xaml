@@ -190,7 +190,6 @@
                         </Trigger>
                         <!-- 悬停状态 -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <!-- 注意：如果已选中，Trigger顺序很重要，通常MouseOver写在Selected上面或者做多重判断，这里保持简单逻辑 -->
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
                         </Trigger>
                         <!-- 选中且悬停 (修正) -->
@@ -573,7 +572,6 @@
                                             CanContentScroll="{TemplateBinding CanContentScroll}"
                                             Margin="{TemplateBinding Padding}"/>
 
-                        <!-- 假设你已经定义了 FluentScrollBar 样式，这里需要对其引用的资源也做同样的 DynamicResource 处理 -->
                         <ScrollBar x:Name="PART_VerticalScrollBar"
                                Style="{DynamicResource FluentScrollBar}" 
                                Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
@@ -781,7 +779,6 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Width" Value="46"/>
         <Setter Property="Height" Value="32"/>
-        <!-- 关键点1：默认前景色使用你的主要文本色 -->
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -789,10 +786,6 @@
                     <Border x:Name="border" 
                         Background="{TemplateBinding Background}"
                         CornerRadius="0,7,0,0">
-                        <!-- 可选：右上角圆角适配窗口 -->
-
-                        <!-- 关键点2：Path 的 Stroke 绑定到 RelativeSource TemplatedParent 的 Foreground -->
-                        <!-- 关键点3：使用 Stretch="Uniform" 和简单的 Data 让它自动居中 -->
                         <Path x:Name="icon"
                           Data="M0,0 L10,10 M0,10 L10,0" 
                           Stroke="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" 
@@ -809,7 +802,6 @@
                             <Setter TargetName="border" Property="Background" Value="#C42B1C"/>
                             <!-- 红色背景 -->
                             <Setter Property="Foreground" Value="White"/>
-                            <!-- 关键点4：前景色变白，Path会自动跟着变 -->
                         </Trigger>
                         <!-- 按下状态 -->
                         <Trigger Property="IsPressed" Value="True">
@@ -886,7 +878,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <!-- 辅助资源：透明 RepeatButton 模板 -->
     <ControlTemplate x:Key="TransparentRepeatButtonTemplate" TargetType="RepeatButton">
         <Border Background="Transparent"/>
     </ControlTemplate>

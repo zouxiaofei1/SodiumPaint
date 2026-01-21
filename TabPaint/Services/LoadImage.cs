@@ -92,7 +92,6 @@ namespace TabPaint
                     if (File.Exists(current.BackupPath))
                     {
                         actualSourcePath = current.BackupPath;
-                        // Debug.WriteLine($"Restoring from backup: {actualSourcePath}");
                     }
                 }
                 await LoadImage(fileToLoad, actualSourcePath, lazyload);
@@ -108,7 +107,6 @@ namespace TabPaint
             }
             finally
             {
-                // [新增] 无论上面发生什么错误，最终都必须关闭加载状态
                 _isLoadingImage = false;
                 OnPropertyChanged("IsLoadingImage");
             }
@@ -150,9 +148,7 @@ namespace TabPaint
                         filePathToLoad = _pendingFilePath;
                         _pendingFilePath = null;
                     }
-                    //   _lazyLoad = true;
                     await LoadAndDisplayImageInternalAsync(filePathToLoad);
-                    //  _lazyLoad = false;
                 }
             }
             finally
@@ -170,7 +166,6 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                // 最好有异常处理
                 Debug.WriteLine($"Error loading image {filePath}: {ex.Message}");
             }
         }
@@ -190,7 +185,6 @@ namespace TabPaint
 
                 string folder = System.IO.Path.GetDirectoryName(filePath)!;
                 if (!File.Exists(_currentFilePath) && !Directory.Exists(_currentFilePath)) { MainImageBar.IsSingleTabMode = true; }
-                // 放到后台线程处理
                 var sortedFiles = await Task.Run(() =>
                 {
                     return Directory.EnumerateFiles(folder)
@@ -200,7 +194,6 @@ namespace TabPaint
                             return ext != null && AllowedExtensions.Contains(ext);
                         })
                         .OrderBy(f => f, NaturalStringComparer.Default)
-                        // --- 修改结束 ---
                         .ToList();
                 });
 
@@ -233,7 +226,6 @@ namespace TabPaint
             {
                 using var ms = new System.IO.MemoryStream(imageBytes);
 
-                // 1. 先只读取元数据获取原始尺寸，不解码像素，速度极快
                 var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
                 int originalWidth = decoder.Frames[0].PixelWidth;
 
@@ -244,11 +236,8 @@ namespace TabPaint
                 img.BeginInit();
                 img.CacheOption = BitmapCacheOption.OnLoad;
 
-                // 2. 只有当原图宽度大于 480 时才进行降采样
-                if (originalWidth > 480)
-                {
-                    img.DecodePixelWidth = 480;
-                }
+                if (originalWidth > 480) img.DecodePixelWidth = 480;
+               
                 // 否则不设置 DecodePixelWidth（默认为0，即加载原图尺寸），避免小图报错或被拉伸
 
                 img.StreamSource = ms;
@@ -299,8 +288,6 @@ namespace TabPaint
             }
             catch
             {
-                // 这里返回 null 会导致 LoadImage 中的 fullResBitmap 为 null
-                // 从而触发 LoadImage 最后的 catch 块或者 if (fullResBitmap == null) return;
                 return null;
             }
         }
@@ -324,8 +311,6 @@ namespace TabPaint
                 }
                 catch (Exception)
                 {
-                    // 这里捕获 NotSupportedException, FileFormatException 等
-                    // 返回 null 表示无法解析尺寸
                     return null;
                 }
             });
@@ -467,7 +452,7 @@ namespace TabPaint
                         _currentFilePath = filePath;
                         UpdateWindowTitle();
                         FitToWindow(1);
-                        CenterImage(); // 或者你更新后的 UpdateImagePosition()
+                        CenterImage(); 
                         BackgroundImage.InvalidateVisual();
                         Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
                         isInitialLayoutSet = true; // 标记初始布局已完成
@@ -575,8 +560,6 @@ namespace TabPaint
                         _bitmap.Unlock();
                     }
 
-                    // 5. 【极其重要】主动释放资源并 GC
-                    // 解除引用
                     source = null;
                     fullResBitmap = null;
                     RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
@@ -739,12 +722,7 @@ namespace TabPaint
                 CenterImage();
                 _canvasResizer.UpdateUI();
                 SetPreviewSlider();
-
-                // 可选：提示用户
-                if (!string.IsNullOrEmpty(reason))
-                {
-                    ShowToast(reason);
-                }
+                if (!string.IsNullOrEmpty(reason)) ShowToast(reason);
             });
         }
 

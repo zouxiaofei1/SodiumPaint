@@ -15,13 +15,28 @@ using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
 //
-//TabPaint主程序
+//TabPaint定义
 //
 
 namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private const int WM_NCHITTEST = 0x0084;
+        private const int HTLEFT = 10;
+        private const int HTRIGHT = 11;
+        private const int HTTOP = 12;
+        private const int HTTOPLEFT = 13;
+        private const int HTTOPRIGHT = 14;
+        private const int HTBOTTOM = 15;
+        private const int HTBOTTOMLEFT = 16;
+        private const int HTBOTTOMRIGHT = 17;
+
+
+        private const double ZoomStep = 0.1; // 每次滚轮缩放步进
+        private const double ZoomTimes = 1.1;
+        private const double MinZoom = 0.05;
+        private const double MaxZoom = 50.0;
         private const int WM_CLIPBOARDUPDATE = 0x031D;
         private const int WM_MOUSEHWHEEL = 0x020E;
         [DllImport("user32.dll", SetLastError = true)]

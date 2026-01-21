@@ -18,12 +18,6 @@ namespace TabPaint
  
     public static class MicaAcrylicManager
     {
-        
-        static void s<T>(T a)
-        {
-            System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
         // ===== DWM API（Win11 Mica） =====
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE attribute, ref int pvAttribute, int cbAttribute);
@@ -91,9 +85,6 @@ namespace TabPaint
         [DllImport("user32.dll")]
         private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WINDOWCOMPOSITIONATTRIBUTE_DATA data);
 
-        /// <summary>
-        /// 自动检测系统并启用 Mica（Win11）或 Acrylic（Win10）。
-        /// </summary>
         public static void ApplyEffect(Window window)
         {
             var hwnd = new WindowInteropHelper(window).Handle;
@@ -107,8 +98,6 @@ namespace TabPaint
             else
             {
                 DisableEffect(window);
-
-                // 关键：确保 Win10 下允许窗口不透明，这样拖拽才丝滑
                 window.Background = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
             }
         }
@@ -141,12 +130,9 @@ namespace TabPaint
         }
         [DllImport("dwmapi.dll")]
         private static extern int DwmIsCompositionEnabled(out bool enabled);
-
-      
       
         private static bool IsWin11()
-        {
-            // 粗略判断：Win11 Version >= 22000
+        {// 粗略判断：Win11 Version >= 22000
             var version = Environment.OSVersion.Version.Build;
             return version >= 22000;
         }

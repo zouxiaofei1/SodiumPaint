@@ -18,14 +18,11 @@ namespace TabPaint
         private Image _targetImage;
 
         private bool _isDragging = false;
-        // 关键标志位：防止 TextBox 和 Slider 互相循环触发更新
         private bool _isUpdatingFromTextBox = false;
 
         private DispatcherTimer _updateTimer;
 
         public WriteableBitmap FinalBitmap { get; private set; }
-
-        // 用于外部获取最终值（可选）
         public double Brightness => BrightnessSlider.Value;
         public double Contrast => ContrastSlider.Value;
         public double Exposure => ExposureSlider.Value;
@@ -43,12 +40,6 @@ namespace TabPaint
             _originalBitmap = bitmapForPreview.Clone();
             _targetImage = targetImage;
             _previewBitmap = bitmapForPreview;
-
-            // 确保 targetImage 使用的是我们可操作的位图对象
-            // 如果外部传入的已经是 WriteableBitmap 且赋值给了 Source，这一步可能多余，但为了保险：
-            // 注意：不要在这里直接设置 targetImage.Source，因为这会改变主界面的引用，
-            // 除非我们确定要实时预览到主画布上（看之前的逻辑是这样的）。
-            // 保持原样，直接修改 _previewBitmap 像素即可。
 
             _updateTimer = new DispatcherTimer
             {
@@ -72,25 +63,16 @@ namespace TabPaint
                 slider.Value = 0;
             }
         }
-
-        // --- 核心逻辑修改：滑块变动 ---
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!this.IsLoaded) return;
 
-            // 如果这次变动是由 TextBox 代码触发的，就不再反向写回 TextBox
-            // 否则会导致用户输入 "0." 时，被强行格式化为 "0"，小数点无法输入
             if (!_isUpdatingFromTextBox)
             {
                 UpdateTextBoxesFromSliders();
             }
-
-            // 应用预览（这里可以根据性能决定是否使用 Timer，
-            // 但为了打字跟手，这里简化逻辑，直接用 Timer 去抖动）
             ApplyPreviewWithThrottle();
         }
-
-        // --- 核心逻辑新增：输入框变动 ---
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (!this.IsLoaded) return;
@@ -111,25 +93,17 @@ namespace TabPaint
 
             _isUpdatingFromTextBox = false;
         }
-
-        // --- 核心逻辑新增：输入验证（只允许数字、小数点、负号） ---
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
-            // 正则匹配：允许数字、小数点、负号
             Regex regex = new Regex("[^0-9.-]+");
             e.Handled = regex.IsMatch(e.Text);
         }
-
-        // --- 核心逻辑新增：重置按钮 ---
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
-            // 直接设置 Slider，利用 Slider_ValueChanged 事件自动更新 TextBox 和 Preview
             BrightnessSlider.Value = 0;
             ContrastSlider.Value = 0;
             ExposureSlider.Value = 0;
         }
-
-        // 辅助方法：将 Slider 值格式化写入 TextBox
         private void UpdateTextBoxesFromSliders()
         {
             // 亮度对比度取整显示，曝光保留一位小数
@@ -166,8 +140,6 @@ namespace TabPaint
             int stride = _originalBitmap.BackBufferStride;
             int byteCount = _originalBitmap.PixelHeight * stride;
 
-            // 注意：频繁创建大数组可能会有GC压力，但在调整窗口生命周期内尚可接受
-            // 如果卡顿严重，可以将 pixelData 提升为类成员变量并在构造函数初始化
             byte[] pixelData = new byte[byteCount];
 
             _originalBitmap.CopyPixels(pixelData, stride, 0);

@@ -203,7 +203,6 @@ namespace TabPaint.Controls
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
-            // 这里写你的逻辑
         }
 
     }

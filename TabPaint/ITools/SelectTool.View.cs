@@ -17,8 +17,8 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
-            public void Cleanup(ToolContext ctx)
-            {//注意是小写
+            public void Cleanup(ToolContext ctx)//注意是小写!!!
+            {
                 HidePreview(ctx);
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
@@ -37,10 +37,8 @@ namespace TabPaint
                 _selectionData = null;
                 lag = 0;
             }
-            // 在 SelectTool 类内部
             public void RefreshOverlay(ToolContext ctx)
             {
-                // 如果当前没有正在选取的区域，或者没有数据，就不重绘
                 if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
                 {
                     DrawOverlay(ctx, _selectionRect);
@@ -84,9 +82,6 @@ namespace TabPaint
 
                 // 2. 顶层黑色虚线
                 outlinePath.StrokeDashArray = new DoubleCollection { 4, 4 }; // 4实4空
-
-                // 【美化专题 1】: 蚂蚁线动画
-                // 添加一个永远运行的动画让 DashOffset 动起来
                 DoubleAnimation animation = new DoubleAnimation
                 {
                     From = 0,
@@ -181,10 +176,8 @@ namespace TabPaint
                     return new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight);
                 }
                 Matrix transform = source.CompositionTarget.TransformToDevice;
-                double dpiX = transform.M11; // Horizontal scaling
-                double dpiY = transform.M22; // Vertical scaling
-
-                // Convert window bounds from DIUs to physical pixels
+                double dpiX = transform.M11; 
+                double dpiY = transform.M22; 
                 return new Rect(
                     window.Left * dpiX,
                     window.Top * dpiY,
@@ -293,16 +286,11 @@ namespace TabPaint
                         if (System.IO.File.Exists(filePath))
                         {
                             System.IO.File.Delete(filePath);
-                            //System.Diagnostics.Debug.WriteLine($"Temp file deleted: {filePath}");
+                           
                         }
-                    }
-                    catch (System.IO.IOException)
-                    {
-                      //  System.Diagnostics.Debug.WriteLine($"File locked, could not delete: {filePath}");
                     }
                     catch (Exception ex)
                     {
-                       // System.Diagnostics.Debug.WriteLine($"Error cleaning up temp file: {ex.Message}");
                     }
                 });
             }
@@ -459,7 +447,7 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    //System.Diagnostics.Debug.WriteLine("BlendPixels Error: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine("BlendPixels Error: " + ex.Message);
                 }
                 finally
                 {

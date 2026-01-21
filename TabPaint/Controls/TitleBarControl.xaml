@@ -15,28 +15,17 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-
-    <!-- 背景色保持不变 -->
     <Border Height="28" Background="{DynamicResource GlassBackgroundLowBrush}" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown" AllowDrop="True">
 
-        <!-- [修改] 将 DockPanel 改为 Grid，以实现更强的布局控制 -->
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <!-- Column 0: 图标 -->
                 <ColumnDefinition Width="*"/>
-                <!-- Column 1: 标题 (占据剩余所有空间) -->
                 <ColumnDefinition Width="Auto"/>
-                <!-- Column 2: 窗口按钮 (固定在右侧) -->
             </Grid.ColumnDefinitions>
-
-            <!-- [Col 0] Icon -->
             <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"    PreviewMouseMove="OnAppIconPreviewMouseMove"  PreviewMouseLeftButtonDown="OnAppIconPreviewMouseDown" MouseLeftButtonDown="OnAppIconMouseDown">
                 <Image.ContextMenu>
-                    <!-- ContextMenu 内容保持不变 -->
                     <ContextMenu x:Name="LogoContextMenu" Style="{StaticResource Win11ContextMenuStyle}" Background="{DynamicResource ControlBackgroundBrush}">
-                        <!-- ... (省略中间菜单代码，与你原代码一致) ... -->
-
                         <MenuItem Header="{DynamicResource L_Menu_File_New}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+N" Click="OnNewClick">
                             <MenuItem.Icon>
                                 <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>

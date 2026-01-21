@@ -86,8 +86,6 @@ namespace TabPaint
                 double targetDelay = isCleanSelection ? 500 : 1000;
                 double elapsed = (DateTime.Now - _hoverStartTime).TotalMilliseconds;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-
-                // --- 动画效果部分 ---
                 if (elapsed > 200)
                 {
                     // 1. 光标反馈
@@ -112,8 +110,6 @@ namespace TabPaint
                         ctxForTimer.SelectionPreview.Opacity = 0.5 + (Math.Sin(elapsed / 100.0) * 0.2);
                     }
                 }
-
-                // --- 触发切换 ---
                 if (elapsed > targetDelay)
                 {
 
@@ -121,8 +117,6 @@ namespace TabPaint
                     Mouse.OverrideCursor = null;
 
                     _draggingSelection = false;
-
-                    // 准备数据
                     int w = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
                     int h = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
                     byte[] dataClone = null;
@@ -131,8 +125,6 @@ namespace TabPaint
                         dataClone = new byte[_selectionData.Length];
                         Array.Copy(_selectionData, dataClone, _selectionData.Length);
                     }
-
-                    // 调用主窗口传输方法
                     mw.TransferSelectionToTab(_pendingTab, dataClone, w, h);
 
                     ResetSwitchTimer();

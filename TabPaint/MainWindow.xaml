@@ -125,16 +125,12 @@
                     <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" 
                                  Orientation="Vertical"
                                    Style="{StaticResource RulerVisibilityStyle}"/>
-
-                    <!-- 左上角的小方块 (标尺交汇处) -->
-                    <!-- 原色 #20F0F0F0，这里用 ChromeMediumBrush (#F0F0F0) 配合透明度 -->
                     <Border Grid.Row="0" Grid.Column="0" 
         Background="{DynamicResource ChromeMediumBrush}" Opacity="0.12">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <!-- 联动顶部标尺的显示状态 -->
                                     <DataTrigger Binding="{Binding Visibility, ElementName=RulerTop}" Value="Visible">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
@@ -341,7 +337,6 @@
                                             <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False">
                                                 <Setter Property="Effect">
                                                     <Setter.Value>
-                                                        <!-- 阴影颜色保持黑色，通常不随主题变化 -->
                                                         <DropShadowEffect Color="Black" 
                                                                           Direction="270" 
                                                                           ShadowDepth="0" 
@@ -370,7 +365,6 @@
                     </ScrollViewer>
                 </Grid>
 
-                <!-- 粗细预览圆 Stroke="Purple" -> ToolAccentBrush -->
                 <Rectangle x:Name="ThicknessPreview" 
                            IsHitTestVisible="False" 
                            Fill="Transparent" 
@@ -425,9 +419,7 @@
 
                                 <Slider.Value>
                                     <MultiBinding Converter="{StaticResource DynamicSizeConverter}" Mode="TwoWay">
-                                        <!-- 绑定参数 1: 粗细数值 -->
                                         <Binding Source="{x:Static local:SettingsManager.Instance}" Path="Current.PenThickness" Mode="TwoWay"/>
-                                        <!-- 绑定参数 2: 工具 Key (用于触发上限更新) -->
                                         <Binding Source="{x:Static local:SettingsManager.Instance}" Path="Current.CurrentToolKey" Mode="OneWay"/>
                                     </MultiBinding>
                                 </Slider.Value>
@@ -621,7 +613,6 @@
         </Border>
 
         <!-- 通知层 -->
-        <!-- Toast 背景模拟：#A0444444 -> TextControlBrush (#333) with Opacity -->
         <Grid x:Name="NotificationLayer" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,120" IsHitTestVisible="False">
             <Border x:Name="InfoToast" Background="{DynamicResource TextControlBrush}" CornerRadius="20" Padding="20,8" Opacity="0">
                 <Border.Effect>
@@ -634,7 +625,6 @@
 
         <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
         <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="{DynamicResource GlassBackgroundDragOverlay}" RenderTransformOrigin="0.5,0.5">
-            <!-- 背景暂时保持硬编码或者使用 TextPrimaryBrush 配合透明度，这里为了遮罩效果使用半透明黑 -->
             <Grid.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1"/>
             </Grid.RenderTransform>

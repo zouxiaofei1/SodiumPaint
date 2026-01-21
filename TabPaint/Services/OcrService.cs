@@ -53,8 +53,6 @@ namespace TabPaint
             if (c >= 0x3000 && c <= 0x303F) return true;
             return false;
         }
-
-        // 辅助方法：放大图片以提高识别率
         private BitmapSource PreprocessImage(BitmapSource source)
         {
             

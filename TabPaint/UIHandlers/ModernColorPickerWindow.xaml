@@ -284,7 +284,6 @@
     <!-- 主窗口背景 -->
     <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1">
         <Border.Effect>
-            <!-- 阴影颜色通常保持黑色，即便在暗色模式下，或由系统管理 -->
             <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.15" Color="Black"/>
         </Border.Effect>
 
@@ -429,8 +428,6 @@
                         <Border Grid.Column="0" Background="{Binding Fill, ElementName=OriginalColorRect}" CornerRadius="4,0,0,4"/>
                         <Border Grid.Column="1" Background="{Binding Fill, ElementName=NewColorRect}" CornerRadius="0,4,4,0"/>
                         <Rectangle x:Name="NewColorRect" Fill="Red" Visibility="Hidden"/>
-
-                        <!-- 这里的文字需要反色或者描边，暂时用灰色 -->
                         <TextBlock Text="{DynamicResource L_ColorPicker_Preview}" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" IsHitTestVisible="False" FontSize="12" FontWeight="Bold"/>
                     </Grid>
 
@@ -577,13 +574,9 @@
                     </StackPanel>
 
                     <UniformGrid Columns="6" x:Name="CustomColorsGrid">
-                        <!-- 这是一个格子单元 -->
                         <Grid Width="24" Height="24" Margin="6">
-                            <!-- 默认放一个虚线圆圈 -->
                             <Ellipse Stroke="#BBB" StrokeThickness="1" StrokeDashArray="3 2"/>
                         </Grid>
-
-                        <!-- 复制下面的 Grid 块，填满剩下的空位 (共18-24个左右) -->
                         <Grid Width="24" Height="24" Margin="6">
                             <Ellipse Stroke="#BBB" StrokeThickness="1" StrokeDashArray="3 2"/>
                         </Grid>

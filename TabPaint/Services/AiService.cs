@@ -17,14 +17,9 @@ namespace TabPaint
     public class AiService
     {
         private const string ModelUrl_HF = "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx";
-
-        // ModelScope 镜像 (示例链接，如果不可用需替换为其他可用的 RMBG 镜像或 U2Net)
         private const string ModelUrl_MS = "https://modelscope.cn/models/AI-ModelScope/RMBG-1.4/resolve/master/onnx/model.onnx";
-
         private const string ModelName = "rmbg-1.4.onnx";
-
-        // 开发时先设为 null，第一次下载成功后在控制台输出 MD5，然后填入此处
-        private const string ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d"; // "你的MD5值"; 
+        private const string ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d"; 
 
         private readonly string _cacheDir;
 
@@ -52,7 +47,6 @@ namespace TabPaint
                     return modelPath;
                 }
             }
-
             // 2. 决定下载源
             string url = CultureInfo.CurrentCulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
                 ? ModelUrl_MS // 中文环境首选 ModelScope
@@ -113,7 +107,6 @@ namespace TabPaint
 
             return modelPath;
         }
-
         private bool VerifyMd5(string path, string expected)
         {
             using (var md5 = MD5.Create())
@@ -182,8 +175,6 @@ namespace TabPaint
                 for (int x = 0; x < w; x++)
                 {
                     int offset = y * stride + x * 4;
-
-                    // 注意数组越界保护
                     if (offset + 2 >= pixels.Length) continue;
 
                     // WPF 是 BGRA 顺序
@@ -221,8 +212,6 @@ namespace TabPaint
                     for (int x = 0; x < targetW; x++)
                     {
                         int offset = y * stride + x * 4;
-                        // RMBG 归一化: 0-1 range
-                        // 注意 WPF 是 BGRA 顺序
                         float b = ptr[offset + 0] / 255.0f;
                         float g = ptr[offset + 1] / 255.0f;
                         float r = ptr[offset + 2] / 255.0f;

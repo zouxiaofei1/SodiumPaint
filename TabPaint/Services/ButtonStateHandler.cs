@@ -25,7 +25,6 @@ namespace TabPaint
     {
         private void UpdateGlobalToolSettingsKey()
         {
-            // [修复] 开始更新，设置标志位为 true
             _isUpdatingToolSettings = true;
 
             try
@@ -36,7 +35,6 @@ namespace TabPaint
 
                 if (_router.CurrentTool is PenTool)
                 {
-                    // 根据 BrushStyle 细分
                     switch (_ctx.PenStyle)
                     {
                         case BrushStyle.Pencil: key = "Pen_Pencil"; isPencil = true; break;
@@ -69,7 +67,6 @@ namespace TabPaint
             }
             finally
             {
-                // [修复] 无论发生什么，最后一定要复位标志位，恢复滑块的正常交互
                 _isUpdatingToolSettings = false;
             }
         }
@@ -97,8 +94,6 @@ namespace TabPaint
             if (_isProcessingMaximizeWindow) return; // 如果正在冷却中，直接跳过
 
             _isProcessingMaximizeWindow = true;
-
-            // --- 立即执行原来的逻辑 ---
             ExecuteMaximizeLogic();
            await Task.Delay(500);
             _isProcessingMaximizeWindow = false;
@@ -106,7 +101,6 @@ namespace TabPaint
 
         public void ExecuteMaximizeLogic()
         {
-            // a.s("ExecuteMaximizeLogic");
             ShowToast(!_maximized ? "L_Toast_FullScreen_On" : "L_Toast_FullScreen_Off");
             if (!_maximized)
             {
@@ -176,12 +170,8 @@ namespace TabPaint
         private void UpdateThicknessPreviewPosition()
         {
             if (ThicknessPreview == null) return;
-
-            // 1. 获取尺寸
             double zoom = ZoomTransform.ScaleX;
             double size = PenThickness * zoom;
-
-            // 2. 设置宽高
             ThicknessPreview.Width = size;
             ThicknessPreview.Height = size;
 
@@ -197,8 +187,6 @@ namespace TabPaint
                 ThicknessPreview.RadiusX = size / 2;
                 ThicknessPreview.RadiusY = size / 2;
             }
-
-            // (可选) 针对橡皮擦等特殊工具，也可以改变颜色以示区分
             if (_ctx.PenStyle == BrushStyle.Eraser)
             {
                 ThicknessPreview.Stroke = Brushes.Black; // 橡皮擦用黑色虚线
@@ -226,18 +214,15 @@ namespace TabPaint
 
             string dirtyMark = _currentTabItem.IsDirty ? "*" : "";
 
-            // 如果是新建的未保存文件(IsNew)，通常显示 "未命名-0" 之类，这里取 FileName
             string displayFileName = _currentTabItem.FileName;
 
             string countInfo = "";
 
-            // 逻辑修正：只要不是新建的纯内存图片(IsNew)，都去文件列表里找位置
             if (!_currentTabItem.IsNew)
             {
                 int total = _imageFiles.Count;
                 int currentIndex = -1;
 
-                // 核心修复：直接在总文件列表(_imageFiles)中查找路径，而不是在标签列表(FileTabs)中查对象
                 if (!string.IsNullOrEmpty(_currentTabItem.FilePath))
                 {
                     currentIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
@@ -260,8 +245,6 @@ namespace TabPaint
         }
 
         private bool _fontsLoaded = false;
-
-        // 定义一个辅助类来存储显示名称和实际字体对象的映射（可选，但推荐，方便绑定）
         public class FontDisplayItem
         {
             public string DisplayName { get; set; }
@@ -375,7 +358,6 @@ namespace TabPaint
         public void UpdateColorHighlight()
         {
 
-            // 假设你的两个颜色按钮在 XAML 里设置了 Name="ColorBtn1" 和 Name="ColorBtn2"
             MainToolBar.ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
             MainToolBar.ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
@@ -397,9 +379,6 @@ namespace TabPaint
             mw.OpacityPanel.Visibility = showOpacity ? Visibility.Visible : Visibility.Collapsed;
 
             var rows = mw.ToolPanelGrid.RowDefinitions;
-
-            // === 重置基础状态 ===
-            // 先把 Opacity 放回它原来的位置 (Row 3)，防止状态残留
             Grid.SetRow(mw.OpacityPanel, 3);
 
             // 重置所有行高为默认配置
@@ -407,7 +386,6 @@ namespace TabPaint
             rows[2].Height = new GridLength(15);                     // 间距
             rows[3].Height = new GridLength(10000, GridUnitType.Star); // 下槽位
 
-            // === 根据情况调整 ===
             if (showThickness && showOpacity)
             {
                 // 两个都显示：保持默认状态即可 (上槽位给Thickness, 下槽位给Opacity)
@@ -448,13 +426,9 @@ namespace TabPaint
             bool hasSelection = _tools.Select is SelectTool st &&
                      _ctx.SelectionOverlay.Visibility != Visibility.Collapsed;
 
-            // 2. 获取当前激活的工具 (假设你的 MainWindow 有一个变量存储当前工具，通常叫 _currentTool 或 CurrentTool)
-            // 如果没有公开的 CurrentTool，可以通过对比 _tools 中的实例来判断
             bool isShapeToolActive = _router.CurrentTool is ShapeTool;
 
-            // 3. 最终判断：有选区 且 当前不是形状工具
             bool canCrop = hasSelection && !isShapeToolActive;
-            //a.s(canCrop);
             UpdateBrushAndButton(MainToolBar.CutImage, MainToolBar.CutImageIcon, canCrop);
         }
 
@@ -530,8 +504,6 @@ namespace TabPaint
                     // 创建 Pixmap 指向这块内存
                     using (var pixmap = new SKPixmap(info, ptr, stride))
                     {
-                        // 3. 编码并保存
-                        // 质量设为 90 (0-100)，或者你可以从设置里读取
                         using (var data = pixmap.Encode(SKEncodedImageFormat.Webp, 90))
                         {
                             using (var fs = new FileStream(path, FileMode.Create))
@@ -561,8 +533,6 @@ namespace TabPaint
                 pixels,
                 stride
             );
-
-            // 3. (原逻辑) 根据扩展名选择编码器
             BitmapEncoder encoder;
 
             if (ext == ".jpg" || ext == ".jpeg")
@@ -621,7 +591,6 @@ namespace TabPaint
             UpdateTabThumbnail(path);
         }
 
-        // 辅助方法：统一处理保存错误并提供“另存为”建议
         private void HandleSaveError(string message, string failedPath)
         {
             var result = FluentMessageBox.Show(
@@ -633,9 +602,6 @@ namespace TabPaint
                OnSaveAsClick(null, null)    ;
             }
         }
-
-
-
         private void UpdateSliderBarValue(double newScale)
         {
            

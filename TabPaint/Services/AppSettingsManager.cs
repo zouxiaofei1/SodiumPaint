@@ -112,9 +112,6 @@ namespace TabPaint
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return;
 
             var list = Current.RecentFiles ?? new List<string>();
-
-            // 如果已存在，先移除（为了移到最前面）
-            // 忽略大小写比较
             var existing = list.FirstOrDefault(f => f.Equals(filePath, StringComparison.OrdinalIgnoreCase));
             if (existing != null)
             {
@@ -131,7 +128,6 @@ namespace TabPaint
             }
 
             Current.RecentFiles = list;
-           // Save(); // 立即保存
         }
         public void ClearRecentFiles()
         {

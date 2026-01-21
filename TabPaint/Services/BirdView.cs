@@ -72,8 +72,6 @@ namespace TabPaint
             _isDraggingBirdEye = false;
             BirdEyeCanvas.ReleaseMouseCapture();
         }
-
-        // 辅助：根据鸟瞰图上的点，移动主画布
         private void MoveMainViewToPoint(Point p)
         {
             double miniWidth = BirdEyeImage.ActualWidth;
@@ -114,7 +112,6 @@ namespace TabPaint
             if (needScroll)
             {
                 BirdEyePanel.Visibility = Visibility.Visible;
-                // 这里可能需要做一个延迟或者 Invoke，因为 Image 的 ActualWidth 可能还没更新
                 Dispatcher.BeginInvoke(new Action(UpdateBirdEyeView), DispatcherPriority.Render);
             }
             else

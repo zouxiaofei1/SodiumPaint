@@ -47,11 +47,8 @@ public class ShapeTool : ToolBase
         if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
         var selectTool = GetSelectTool();
         var px = ctx.ToPixel(viewPos);
-
-        // --- 逻辑分支 A: 操控模式 ---
         if (_isManipulating && selectTool != null)
         {
-            // 检查 SelectTool 是否还有有效数据（可能被 Delete 删掉了）
             if (!selectTool.HasActiveSelection)
             {
                 _isManipulating = false;
@@ -184,13 +181,8 @@ public class ShapeTool : ToolBase
                 pen.EndLineCap = PenLineCap.Round;
             }
             pen.Freeze();
-
-            // 绘制形状时，依然使用全局坐标 (globalStart/End)
-            // 因为我们上面已经 PushTransform 做过反向平移了
             Point p1 = globalStart;
             Point p2 = globalEnd;
-
-            // 计算用于绘图指令的矩形 (不含 stroke，纯逻辑坐标)
             Rect logicalRect = new Rect(
                 Math.Min(p1.X, p2.X),
                 Math.Min(p1.Y, p2.Y),
@@ -257,8 +249,6 @@ public class ShapeTool : ToolBase
         double padding = ctx.PenThickness / 2.0 + 2;
         if (_currentShapeType == ShapeType.Arrow)
         {
-            // 箭头的翅膀长度 = thickness * arrowScale
-            // 我们给它稍微多一点的空间，防止抗锯齿边缘被切
             padding = (ctx.PenThickness/  2.0 + arrowScale/2.0) + 2;
         }
         // 形状在全局坐标系下的完整矩形 (可能包含负坐标或超出画布)
@@ -268,11 +258,8 @@ public class ShapeTool : ToolBase
             rawRect.Width + padding * 2,
             rawRect.Height + padding * 2
         );
-
-        // 3. 获取画布的矩形 (0, 0, W, H)
         Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
 
-        // 4. 计算交集：只保留落在画布内的部分
         Rect validBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
 
         // 如果完全在画布外，直接不画
@@ -339,7 +326,6 @@ public class ShapeTool : ToolBase
             if (st != null)
             {
                 st.OnKeyDown(ctx, e);
-                // 检查按键后状态：如果选区没了（被剪切或删除），退出操控模式
                 if (!st.HasActiveSelection)
                 {
                     _isManipulating = false;

@@ -149,11 +149,8 @@ namespace TabPaint
                 double dx = currentMouse.X - _startDragPoint.X;
                 double dy = currentMouse.Y - _startDragPoint.Y;
 
-                // 原始尺寸（起始坐标视为 0,0）
                 double startW = _startRect.Width;
                 double startH = _startRect.Height;
-
-                // 固定的右边界和下边界 (相对于起始原点)
                 double rightEdge = startW;
                 double bottomEdge = startH;
 
@@ -168,7 +165,6 @@ namespace TabPaint
                     case ResizeAnchor.TopLeft:
                         // 1. 计算宽度，限制最小值1，限制最大值 MaxCanvasSize
                         newW = Math.Min(MaxCanvasSize, Math.Max(1, startW - dx));
-                        // 2. 核心：根据【固定右边】和【限制后的新宽度】反推 X
                         newX = rightEdge - newW;
 
                         newH = Math.Min(MaxCanvasSize, Math.Max(1, startH - dy));
@@ -251,19 +247,13 @@ namespace TabPaint
 
                 // 2. 创建新位图
                 var newBmp = new WriteableBitmap(newW, newH, currentBmp.DpiX, currentBmp.DpiY, PixelFormats.Bgra32, null);
-
-                // 填充白色背景 (如果不填充，默认为透明)
-                // 你可能需要一个 FillRect 方法，这里简化处理
                 byte[] whiteBg = new byte[newW * newH * 4];
                 for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = 255;
                 newBmp.WritePixels(new Int32Rect(0, 0, newW, newH), whiteBg, newBmp.BackBufferStride, 0);
 
                 // 3. 将旧图像绘制到新图像的指定偏移位置
-                // 计算重叠区域
                 int copyX = Math.Max(0, offsetX); // 在新图中的起始X
                 int copyY = Math.Max(0, offsetY); // 在新图中的起始Y
-
-                // 源图中需要复制的区域 (处理裁剪)
                 int srcX = offsetX < 0 ? -offsetX : 0; // 如果 offsetX 是正数(裁剪)，源图从 srcX 开始
                 int srcY = offsetY < 0 ? -offsetY : 0;
 
@@ -284,12 +274,9 @@ namespace TabPaint
                     rect, oldPixels,                // Undo: 回到旧尺寸，旧像素
                     new Int32Rect(0, 0, newW, newH), newPixels // Redo: 回到新尺寸，新像素
                 );
-
-                // 5. 替换当前显示的位图
                 mw._ctx.Surface.ReplaceBitmap(newBmp);
                 mw.NotifyCanvasSizeChanged(newW, newH);
                 mw._bitmap = newBmp;
-                // 6. 刷新界面
                 UpdateUI(); 
                 EnsureEdgeVisible(newBounds);
             }
@@ -303,9 +290,6 @@ namespace TabPaint
 
                 // 定义留白大小 (比如 50px)
                 double padding = 50;
-
-                // 根据拉伸的方向调整滚动条
-                // resizeRect.X < 0 说明向左扩展了
                 if (resizeRect.X < 0)
                 {
                     scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + (resizeRect.X * scale) - padding);

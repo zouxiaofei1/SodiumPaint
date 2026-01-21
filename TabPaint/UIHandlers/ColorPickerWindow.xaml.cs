@@ -14,14 +14,11 @@ namespace TabPaint
         private double _dpiX = 1.0;
         private double _dpiY = 1.0;
 
-        // 设置放大镜里显示多少个像素宽度的内容
-        // 比如 15x15 的区域，放到 120x120 的圆里，每个像素会被放大 8 倍
         private const int ZoomPixelSize = 15;
 
         public ColorPickerWindow()
         {
             InitializeComponent();
-            // 注意：事件绑定已在 XAML 中定义，或在此处 += 
         }
 
         private void ColorPickerWindow_Loaded(object sender, RoutedEventArgs e)
@@ -35,7 +32,6 @@ namespace TabPaint
 
             var screenshot = ScreenColorPickerHelper.CaptureScreen(_dpiX, _dpiY);
             ScreenShotImage.Source = screenshot;
-            // 确保图片填满逻辑窗口，坐标系对齐
             ScreenShotImage.Stretch = Stretch.Fill;
         }
 
@@ -48,7 +44,6 @@ namespace TabPaint
         {
             Magnifier.Visibility = Visibility.Visible;
 
-            // --- 1. 解决遮挡问题 (智能跟随) ---
             double offset = 20; // 距离鼠标的距离
             double magSize = Magnifier.Width;
 
@@ -68,14 +63,6 @@ namespace TabPaint
 
             Canvas.SetLeft(Magnifier, targetLeft);
             Canvas.SetTop(Magnifier, targetTop);
-
-            // --- 2. 实现像素放大预览 (VisualBrush Viewbox) ---
-
-            // 我们需要确定 Viewbox 在 Image 控件上的逻辑坐标区域
-            // 因为 ScreenShotImage 是 Stretch="Fill" 铺满窗口的，
-            // 所以 Image 的逻辑坐标 == 窗口的逻辑坐标 (logicalPos)
-
-            // 计算 Viewbox 的矩形 (以鼠标为中心，向四周扩散 ZoomPixelSize 的一半)
             double halfSize = ZoomPixelSize / 2.0;
 
             // Viewbox 是逻辑坐标系下的矩形
@@ -86,9 +73,6 @@ namespace TabPaint
                 ZoomPixelSize);
 
             ZoomBrush.Viewbox = viewboxRect;
-
-            // --- 3. 获取精确颜色 (逻辑不变) ---
-            // 仍然需要转回物理坐标去 Bitmap 里取色，这样最准
             int physicalX = (int)((SystemParameters.VirtualScreenLeft + logicalPos.X) * _dpiX);
             int physicalY = (int)((SystemParameters.VirtualScreenTop + logicalPos.Y) * _dpiY);
 

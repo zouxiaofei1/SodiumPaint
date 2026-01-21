@@ -33,27 +33,18 @@ namespace TabPaint
 
             // --- 1. 捕获 Undo 数据 (旧图全貌) ---
             var undoRect = new Int32Rect(0, 0, oldW, oldH);
-            // 使用你现有的 ExtractRegion 方法或 CopyPixels
             byte[] undoPixels = new byte[oldH * oldBitmap.BackBufferStride];
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
 
             // --- 2. 创建新位图 ---
             var newBitmap = new WriteableBitmap(newWidth, newHeight, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
-
-            // --- 3. 填充背景色 (白色) ---
-            // 如果不填充，WriteableBitmap 默认为透明。根据你的应用习惯填充白色。
             int newStride = newBitmap.BackBufferStride;
             byte[] whiteBg = new byte[newHeight * newStride];
             for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = 255; // 简单的全白填充
             newBitmap.WritePixels(new Int32Rect(0, 0, newWidth, newHeight), whiteBg, newStride, 0);
 
-            // --- 4. 计算居中位置 ---
-            // 计算旧图在新图中的左上角坐标
             int destX = (newWidth - oldW) / 2;
             int destY = (newHeight - oldH) / 2;
-
-            // --- 5. 计算有效的复制区域 (Intersection) ---
-            // 只有当旧图和新图重叠的部分才需要复制
             int srcX = 0;
             int srcY = 0;
             int copyW = oldW;
@@ -104,9 +95,6 @@ namespace TabPaint
             NotifyCanvasSizeChanged(newWidth, newHeight);
             NotifyCanvasChanged();
             SetUndoRedoButtonState();
-
-            // 自动适应窗口或更新滚动条位置
-            // EnsureEdgeVisible(new Rect(0, 0, newWidth, newHeight)); // 可选
         }
 
         private void ApplyTransform(System.Windows.Media.Transform transform)
@@ -203,7 +191,7 @@ namespace TabPaint
             double cy = _bitmap.PixelHeight / 2.0;
             ApplyTransform(flipVertical ? new ScaleTransform(1, -1, cx, cy) : new ScaleTransform(-1, 1, cx, cy));
         }
-        private BitmapSource CreateWhiteThumbnail()  // 辅助方法：生成纯白缩略图
+        private BitmapSource CreateWhiteThumbnail()  // 生成纯白缩略图
         {
             int w = 100; int h = 60;
             var bmp = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
@@ -211,7 +199,6 @@ namespace TabPaint
             using (var ctx = visual.RenderOpen())
             {
                 ctx.DrawRectangle(Brushes.White, null, new Rect(0, 0, w, h));
-                // 可以在中间画个加号或者 "New" 字样
             }
             bmp.Render(visual);
             bmp.Freeze();
@@ -233,15 +220,12 @@ namespace TabPaint
         }
         private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
         {
-            // 1. 计算左上角和右下角的边界坐标
             int left = Math.Max(0, rect.X);
             int top = Math.Max(0, rect.Y);
 
-            // 2. 计算右边界和下边界（不能超过最大宽高）
             int right = Math.Min(maxWidth, rect.X + rect.Width);
             int bottom = Math.Min(maxHeight, rect.Y + rect.Height);
 
-            // 3. 计算新的宽高。确保结果不为负数
             int width = Math.Max(0, right - left);
             int height = Math.Max(0, bottom - top);
 
@@ -332,13 +316,10 @@ namespace TabPaint
             var oldBitmap = _surface.Bitmap;
             if (oldBitmap == null) return;
             if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight) return;
-
-            // --- 1. 捕获变换前的完整状态 (Undo) ---
             var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
             var undoPixels = new byte[oldBitmap.PixelHeight * oldBitmap.BackBufferStride];
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
 
-            // --- 2. 准备变换 ---
             var transform = new ScaleTransform(
                 (double)newWidth / oldBitmap.PixelWidth,
                 (double)newHeight / oldBitmap.PixelHeight
@@ -372,24 +353,17 @@ namespace TabPaint
             RenderOptions.SetBitmapScalingMode(transformedBitmap, wpfScalingMode);
             var newFormatedBitmap = new FormatConvertedBitmap(transformedBitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
             var newBitmap = new WriteableBitmap(newFormatedBitmap);
-
-            // --- 3. 捕获变换后的完整状态 (Redo) ---
             var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
             var redoPixels = new byte[newBitmap.PixelHeight * newBitmap.BackBufferStride];
             newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
 
-            // --- 4. 替换画布 ---
             _surface.ReplaceBitmap(newBitmap);
-
-            // --- 5. 记录 Undo ---
             _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
 
             NotifyCanvasSizeChanged(newWidth, newHeight);
             NotifyCanvasChanged();
             _bitmap = newBitmap;
             SetUndoRedoButtonState();
-
-            // 如果有 canvasResizer 控件，也更新它
             if (_canvasResizer != null)
                 _canvasResizer.UpdateUI();
         }
@@ -448,9 +422,6 @@ namespace TabPaint
                     byte g = pixel[1];
                     byte r = pixel[2];
                     byte a = pixel[3];
-
-                    // 判定条件：完全透明 或 完全白色
-                    // 你也可以扩展判定，比如跟随当前背景色 BackgroundColor
                     return a == 0 || (r == 255 && g == 255 && b == 255);
                 }
 
@@ -523,8 +494,6 @@ namespace TabPaint
             }
             ApplyAutoCrop(cropRect);
         }
-
-        // 辅助方法：将带透明度的图片合成到白色背景上
         private BitmapSource ConvertToWhiteBackground(BitmapSource source)
         {
             if (source == null) return null;
@@ -569,15 +538,12 @@ namespace TabPaint
                     return BitmapScalingMode.Unspecified;
             }
         }
-
-        // 核心重采样方法
         private BitmapSource ResampleBitmap(BitmapSource source, int width, int height)
         {
             // 1. 设置绘图视觉对象
             var visual = new DrawingVisual();
             using (var dc = visual.RenderOpen())
             {
-                // 关键：应用设置中的插值算法
                 RenderOptions.SetBitmapScalingMode(visual, GetWpfScalingMode());
 
                 // 绘制图像到新的尺寸

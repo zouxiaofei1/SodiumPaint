@@ -13,10 +13,8 @@ namespace TabPaint.Controls
             NewZoom = newZoom;
         }
     }
-
     public partial class StatusBarControl : UserControl
     {
-        // 1. 定义路由事件
         public static readonly RoutedEvent ClipboardMonitorClickEvent = EventManager.RegisterRoutedEvent(
             "ClipboardMonitorClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(StatusBarControl));
 
@@ -31,8 +29,6 @@ namespace TabPaint.Controls
 
         public static readonly RoutedEvent ZoomSelectionChangedEvent = EventManager.RegisterRoutedEvent(
             "ZoomSelectionChanged", RoutingStrategy.Bubble, typeof(SelectionChangedEventHandler), typeof(StatusBarControl));
-
-        // 2. 暴露事件
         public event RoutedEventHandler ClipboardMonitorClick
         {
             add { AddHandler(ClipboardMonitorClickEvent, value); }
@@ -58,8 +54,6 @@ namespace TabPaint.Controls
             add { AddHandler(ZoomSelectionChangedEvent, value); }
             remove { RemoveHandler(ZoomSelectionChangedEvent, value); }
         }
-
-        // 3. 暴露内部控件 (为了保持 MainWindow 代码兼容性)
         public ComboBox ZoomComboBox => ZoomMenu;
         public ToggleButton ClipboardToggle => ClipboardMonitorToggle;
         public Slider ZoomSliderControl => ZoomSlider;
@@ -69,8 +63,6 @@ namespace TabPaint.Controls
         {
             InitializeComponent();
         }
-
-        // 4. 内部事件触发逻辑
         private void OnClipboardMonitorToggleClick(object sender, RoutedEventArgs e)
         {
             RaiseEvent(new RoutedEventArgs(ClipboardMonitorClickEvent));
@@ -103,16 +95,11 @@ namespace TabPaint.Controls
         }
         public static readonly RoutedEvent ZoomChangedEvent = EventManager.RegisterRoutedEvent(
           "ZoomChanged", RoutingStrategy.Bubble, typeof(EventHandler<ZoomRoutedEventArgs>), typeof(StatusBarControl));
-
-        // 2. 暴露事件
         public event EventHandler<ZoomRoutedEventArgs> ZoomChanged
         {
             add { AddHandler(ZoomChangedEvent, value); }
             remove { RemoveHandler(ZoomChangedEvent, value); }
         }
-
-
-        // B. 按下回车键时
         private void OnZoomMenuPreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -122,8 +109,6 @@ namespace TabPaint.Controls
                 e.Handled = true; // 标记已处理，防止发出系统提示音
             }
         }
-
-        // C. 失去焦点时 (比如点到了画布上)
         private void OnZoomMenuLostFocus(object sender, RoutedEventArgs e)
         {
             TryApplyZoomText();
@@ -135,8 +120,6 @@ namespace TabPaint.Controls
                 element.Focus();
             }
         }
-
-        // D. 解析文本并触发事件的通用方法
         private void TryApplyZoomText()
         {
             string text = ZoomMenu.Text.Trim();
@@ -151,8 +134,6 @@ namespace TabPaint.Controls
                 RaiseZoomChanged(finalZoom);
             }
         }
-
-        // 触发事件的辅助方法
         private void RaiseZoomChanged(double zoom)
         {
             RaiseEvent(new ZoomRoutedEventArgs(ZoomChangedEvent, zoom));

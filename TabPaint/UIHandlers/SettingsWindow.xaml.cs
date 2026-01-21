@@ -89,7 +89,6 @@ del ""%~f0""
                     WindowStyle = ProcessWindowStyle.Hidden
                 };
                 Process.Start(psi);
-
                 // 5. 关闭当前程序
                 System.Windows.Application.Current.Shutdown();
             }
@@ -102,7 +101,6 @@ del ""%~f0""
             }
         }
         private bool _isInternalChange = false; // 防止两个 ListBox 互相清空时触发死循环
-
         private void NavListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // 1. 确保控件都已加载（避免初始化时的空引用）
@@ -110,14 +108,10 @@ del ""%~f0""
                 ShortcutPanel == null || AdvancedPanel == null || AboutPanel == null) return;
 
             if (_isInternalChange) return;
-
-            // 确定是哪个 ListBox 触发的
             System.Windows.Controls.ListBox source = sender as System.Windows.Controls.ListBox;
             if (source.SelectedIndex == -1) return; // 如果是由于代码清空导致的触发，不执行逻辑
 
             _isInternalChange = true;
-
-            // 2. 互斥逻辑：点主菜单则清空底部，点底部则清空主菜单
             if (source == NavListBox)
             {
                 BottomListBox.SelectedIndex = -1;
@@ -126,16 +120,12 @@ del ""%~f0""
             {
                 NavListBox.SelectedIndex = -1;
             }
-
-            // 3. 先隐藏所有面板
             GeneralPanel.Visibility = Visibility.Collapsed;
             PaintPanel.Visibility = Visibility.Collapsed;
             ViewPanel.Visibility = Visibility.Collapsed;
             ShortcutPanel.Visibility = Visibility.Collapsed;
             AdvancedPanel.Visibility = Visibility.Collapsed;
             AboutPanel.Visibility = Visibility.Collapsed;
-
-            // 4. 根据来源和索引显示面板
             if (source == NavListBox)
             {
                 switch (NavListBox.SelectedIndex)
@@ -163,8 +153,6 @@ del ""%~f0""
                     if (value < 0) value = 0;
                     if (value > 5000) value = 5000;
                     textBox.Text = value.ToString("0"); // 修正文本框显示
-
-                    // 手动触发一次绑定更新，确保后端数据也被修正
                     var binding = textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty);
                     binding?.UpdateSource();
                 }
@@ -198,26 +186,11 @@ del ""%~f0""
                 SettingsManager.Instance.Current.ResetShortcutsToDefault();
             }
         }
-
-
-        // --- 新增代码开始 ---
-
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             try
             {
                 string url = e.Uri.AbsoluteUri;
-
-                // 处理帮助文档（空链接或特殊标记）
-                if (string.IsNullOrEmpty(url) || url.StartsWith("cmd://help"))
-                {
-                    FluentMessageBox.Show("帮助文档正在编写中，敬请期待！", "提示", MessageBoxButton.OK);
-                    e.Handled = true;
-                    return;
-                }
-
-                // 调用系统默认浏览器打开链接
-                // .NET Core / .NET 5+ 需要设置 UseShellExecute = true 才能打开 URL
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 e.Handled = true;
             }

@@ -35,11 +35,7 @@ namespace TabPaint
                     await Task.Delay(100);
                     waitCount++;
                 }
-
                 SaveSession();
-
-
-
                 _loadImageCts?.Cancel();
                 lock (_queueLock) { _pendingFilePath = null; }
                 FileTabs.Clear();
@@ -85,7 +81,6 @@ namespace TabPaint
 
         private void OnShapeStyleClick(object sender, RoutedEventArgs e)
         {
-            // 注意：这里要用 e.OriginalSource
             if (e.OriginalSource is System.Windows.Controls.MenuItem item && item.Tag is string tag)
             {
                 var shapeTool = _tools.Shape as ShapeTool;
@@ -198,8 +193,6 @@ namespace TabPaint
             if (e.OriginalSource is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
             {
                 SelectedBrush = new SolidColorBrush(brush.Color);
-
-                // 如果你有 ToolContext，可同步笔颜色，例如：
                 _ctx.PenColor = brush.Color;
                 UpdateCurrentColor(_ctx.PenColor, useSecondColor);
             }
@@ -207,12 +200,9 @@ namespace TabPaint
 
         private void OnCustomColorClick(object sender, RoutedEventArgs e)
         {
-            // 获取当前颜色作为初始值
             System.Windows.Media.Color initialColor = _ctx.PenColor;
-            // 如果 _ctx.PenColor 是 Colors.Transparent 或者其他特殊值，最好给个默认值
             if (initialColor == Colors.Transparent) initialColor = Colors.Black;
 
-            // 使用新的现代化窗口
             var dlg = new ModernColorPickerWindow(initialColor);
             dlg.Owner = this; // 确保在主窗口之上
 
@@ -228,21 +218,14 @@ namespace TabPaint
         }
         private void OnStatusBarZoomChanged(object sender, ZoomRoutedEventArgs e)
         {
-            // 获取传递过来的 double 值
             double newScale = e.NewZoom;
-
-            // 限制范围 (MinZoom, MaxZoom 需要是你类中定义的常量或变量)
             zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
-
-            // 应用缩放
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
             UpdateSliderBarValue(zoomscale);
 
         }
-
         private void OnBrushStyleClick(object sender, RoutedEventArgs e)
         {
-            // 注意：这里要用 e.OriginalSource，因为 sender 现在是 ToolBarControl
             if (e.OriginalSource is System.Windows.Controls.MenuItem menuItem
                 && menuItem.Tag is string tagString
                 && Enum.TryParse(tagString, out BrushStyle style))
@@ -266,8 +249,6 @@ namespace TabPaint
             if (combo != null && combo.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
                 double selectedScale = Convert.ToDouble(item.Tag);
-
-                // 这里的 zoomscale, MinZoom, MaxZoom 应该是 MainWindow 里的变量
                 zoomscale = Math.Clamp(selectedScale, MinZoom, MaxZoom);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
 
@@ -330,7 +311,6 @@ namespace TabPaint
                 }
                 else if (absoluteLeft > windowWidth - DragSafetyMargin)
                 {
-                    // 修正 X
                     proposedTransformX = windowWidth - DragSafetyMargin - initialLeft;
                 }
 
@@ -342,16 +322,11 @@ namespace TabPaint
                 {
                     proposedTransformY = windowHeight - DragSafetyMargin - initialTop;
                 }
-
-                // --- 应用修正后的值 ---
                 TextBarDragTransform.X = proposedTransformX;
                 TextBarDragTransform.Y = proposedTransformY;
                 _textBarLastPoint = currentPoint;
             }
         }
-
-
-        // 新增 MouseUp
         private void TextEditBar_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (_isTextBarDragging)

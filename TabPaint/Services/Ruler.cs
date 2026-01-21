@@ -63,20 +63,12 @@ namespace TabPaint
         {
             base.OnRender(drawingContext);
             Brush textBrush = (Brush)TryFindResource("TextPrimaryBrush") ?? Brushes.Black;
-
-            // 刻度线颜色：适配 TextTertiaryBrush 或 BorderDarkBrush (灰色，看起来不那么刺眼)
             Brush tickBrush = (Brush)TryFindResource("TextTertiaryBrush") ?? Brushes.Gray;
-
-            // 边框线颜色
             Brush borderBrush = (Brush)TryFindResource("BorderMediumBrush") ?? Brushes.Gray;
-
-            // 背景色：保持你原有的逻辑，但建议加上判空
             Brush bgBrush = (Brush)TryFindResource("GlassBackgroundMediumBrush") ?? Brushes.Transparent;
 
             // 冻结画刷以提升性能 (OnRender会被频繁调用)
             if (textBrush.CanFreeze) textBrush = textBrush.Clone(); // 确保是副本以便Freeze? 其实通常资源已经是Freezed的，但在代码中创建Pen最好Freeze Pen
-
-            // 2. 创建 Pen (画笔)
             Pen borderPen = new Pen(borderBrush, 1);
             borderPen.Freeze();
 
@@ -87,7 +79,6 @@ namespace TabPaint
             textPen.Freeze();
             drawingContext.DrawRectangle(bgBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
 
-            // 2. 绘制边缘分割线 (使用 borderPen)
             if (Orientation == RulerOrientation.Horizontal)
                 drawingContext.DrawLine(borderPen, new Point(0, ActualHeight), new Point(ActualWidth, ActualHeight));
             else

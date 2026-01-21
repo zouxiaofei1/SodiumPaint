@@ -20,7 +20,6 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- Fluent 风格按钮 (统一颜色) -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
@@ -56,7 +55,6 @@
             </Setter>
         </Style>
 
-        <!-- 强调色按钮 (统一颜色) -->
         <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
@@ -135,14 +133,12 @@
             </Setter>
         </Style>
 
-        <!-- 标签文本样式 (统一颜色) -->
         <Style TargetType="TextBlock" x:Key="LabelStyle">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- 数值输入框样式 (统一颜色) -->
         <Style TargetType="TextBox" x:Key="ValueInputStyle">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
@@ -196,7 +192,6 @@
                        Margin="10,0,8,0"
                        VerticalAlignment="Center"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
-                <!-- 标题颜色：之前 #666666 -> TextSecondaryBrush -->
                 <TextBlock Grid.Column="1" 
                            Text="{DynamicResource L_AdjustBCE_Title}" 
                            VerticalAlignment="Center" 
@@ -205,9 +200,6 @@
                            Foreground="{DynamicResource TextSecondaryBrush}"/>
             </Grid>
 
-            <!-- 内容区域 -->
-            <!-- 背景：之前 #FFFFFF -> WindowBackgroundBrush -->
-            <!-- 边框：之前 #E5E5E5 -> BorderLightBrush -->
             <Border Grid.Row="1" 
                     Background="{DynamicResource WindowBackgroundBrush}" 
                     BorderThickness="0,1,0,0" 
@@ -267,8 +259,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- 底部按钮栏 -->
-            <!-- 背景：之前 #F3F3F3 -> PanelBackgroundBrush -->
             <Border Grid.Row="2" 
                     Background="{DynamicResource PanelBackgroundBrush}" 
                     Padding="15,12" 

@@ -15,8 +15,6 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        // 定义高亮颜色
-
         private void UpdateToolSelectionHighlight()
         {
             if (_router == null) return;
@@ -39,7 +37,6 @@ namespace TabPaint
             // 2. 检查是否处于折叠模式
             bool isCollapsedMode = MainToolBar.CollapsedToolsPanel.Visibility == Visibility.Visible;
 
-            // 清除折叠按钮的高亮（使用 ClearValue 恢复 Style 默认定义的状态）
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BorderBrushProperty);
 
@@ -59,8 +56,6 @@ namespace TabPaint
             MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
-
-            // 3. 核心逻辑分支
             bool isBasicTool = !string.IsNullOrEmpty(currentToolTag);
 
             if (isBasicTool)
@@ -109,14 +104,10 @@ namespace TabPaint
                 }
                 else
                 {
-                    // 如果不是画刷工具，清除画刷菜单的选中状态
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, null);
                 }
-
-                // B. 形状菜单高亮处理
                 if (_router.CurrentTool is ShapeTool shapeTool)
                 {
-                    // 1. 高亮主按钮
                     MainToolBar.ShapeToggle.BorderBrush = accentBrush;
                     MainToolBar.ShapeToggle.Background = accentSubtleBrush;
 
@@ -143,9 +134,6 @@ namespace TabPaint
                             // 选中样式
                             menuItem.Background = Application.Current.FindResource("ToolAccentSubtleHoverBrush") as Brush;
 
-                            // 如果需要边框高亮（可选）
-                            // menuItem.BorderBrush = Application.Current.FindResource("ListItemSelectedBorderBrush") as Brush;
-                            // menuItem.BorderThickness = new Thickness(1);
 
                             menuItem.FontWeight = FontWeights.Bold;
                         }
@@ -161,21 +149,15 @@ namespace TabPaint
                 }
             }
         }
-
-
-        // 辅助方法：更新折叠按钮的图标
         private void UpdateCollapsedButtonIcon(string toolTag)
         {
-            // 1. 初始化：全部隐藏
             MainToolBar.CurrentToolIcon.Visibility = Visibility.Collapsed;
 
-            // 2. 准备变量
             object resource = null;
             string toolName = "";
 
             try
             {
-                // 3. 根据 Tag 匹配资源名称和显示名称
                 switch (toolTag)
                 {
                     case "SelectTool":
@@ -231,10 +213,6 @@ namespace TabPaint
         }
 
         }
-
-
-
-        // 辅助方法：高亮下拉菜单内的选中项
         private void UpdateCollapsedMenuHighlight(string toolTag)
         {
             foreach (var item in MainToolBar.CollapsedMenuItems.Children)
@@ -377,7 +355,6 @@ namespace TabPaint
 
             public void CleanUpSelectionandShape()
             {
-               // s(1);
                 var mw = (MainWindow)Application.Current.MainWindow;
                 if (CurrentTool is SelectTool selTool)
                 {
@@ -410,8 +387,6 @@ namespace TabPaint
                 mw.AutoSetFloatBarVisibility();
                 mw._router.GetSelectTool().UpdateStatusBarSelectionSize();
                 mw.UpdateToolSelectionHighlight();
-
-                // --- 新增：更新工具设置 Key ---
                 mw.UpdateGlobalToolSettingsKey();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)

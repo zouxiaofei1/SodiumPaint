@@ -23,7 +23,6 @@ namespace TabPaint
         {
             if (_surface?.Bitmap == null) return;
             _router.CleanUpSelectionandShape();
-            // 1. 记录 Undo (整图操作推荐 PushFullImageUndo)
             _undo.PushFullImageUndo();
 
             var bmp = _surface.Bitmap;
@@ -43,8 +42,6 @@ namespace TabPaint
                         byte* row = basePtr + y * stride;
                         for (int x = 0; x < width; x++)
                         {
-                            // 反色公式：255 - 原值
-                            // 注意：通常不反转 Alpha 通道 (pixel[3])
                             row[x * 4] = (byte)(255 - row[x * 4]);     // B
                             row[x * 4 + 1] = (byte)(255 - row[x * 4 + 1]); // G
                             row[x * 4 + 2] = (byte)(255 - row[x * 4 + 2]); // R
@@ -57,8 +54,6 @@ namespace TabPaint
             {
                 bmp.Unlock();
             }
-
-            // 更新状态
             NotifyCanvasChanged();
             SetUndoRedoButtonState();
             ShowToast("L_Toast_Effect_Inverted");
@@ -152,8 +147,6 @@ namespace TabPaint
             SetUndoRedoButtonState();
             ShowToast("L_Toast_Effect_AutoLevels");
         }
-
-        // 辅助方法：构建色阶映射表
         private byte[] BuildLevelLut(byte min, byte max)
         {
             byte[] lut = new byte[256];
@@ -195,22 +188,15 @@ namespace TabPaint
             SettingsManager.Instance.ClearRecentFiles();
         }
 
-        private void OnSettingsClick(object sender, RoutedEventArgs e)
+        private void OnSettingsClick(object sender, RoutedEventArgs e)// 打开设置窗口
         {
-            // 打开设置窗口
-            
             var settingsWindow = new SettingsWindow();
             TabPaint.SettingsManager.Instance.Current.PropertyChanged += (s, e) =>
             {
-                // 当这两个阈值属性发生变化时，强制刷新渲染模式
                 if (e.PropertyName == "ViewInterpolationThreshold" ||
                     e.PropertyName == "PaintInterpolationThreshold")
                 {
-                    // 确保在 UI 线程执行
-                    this.Dispatcher.Invoke(() =>
-                    {
-                        RefreshBitmapScalingMode();
-                    });
+                    this.Dispatcher.Invoke(() =>{ RefreshBitmapScalingMode(); });
                 }
             };
 
@@ -224,14 +210,8 @@ namespace TabPaint
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
             // 如果是空路径 OR 是虚拟路径，都视为"从未保存过"，走另存为
-            if (string.IsNullOrEmpty(_currentFilePath) || IsVirtualPath(_currentFilePath))
-            {
-                OnSaveAsClick(sender, e);
-            }
-            else
-            {
-                SaveBitmap(_currentFilePath);
-            }
+            if (string.IsNullOrEmpty(_currentFilePath) || IsVirtualPath(_currentFilePath)) OnSaveAsClick(sender, e);
+            else SaveBitmap(_currentFilePath);
         }
 
 
@@ -352,11 +332,7 @@ namespace TabPaint
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             if(!_programClosed)OnClosing();
-            //Close();
         }
-
-
-
         private void CropMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (_router.CurrentTool is SelectTool selectTool)
@@ -370,11 +346,8 @@ namespace TabPaint
 
         private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
         {
-            //a.s("MaximizeRestore_Click");
             MaximizeWindowHandler();
         }
-
-
         private void OnExitClick(object sender, RoutedEventArgs e)
         {
             System.Windows.Application.Current.Shutdown();
@@ -404,8 +377,6 @@ namespace TabPaint
         private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!_isInitialLayoutComplete) return;
-
-            // Check: 防止空引用
             if (ThicknessTip == null || ThicknessTipText == null || ThicknessSlider == null||ThicknessSlider.Visibility!=Visibility.Visible)
                 return;
             if (_isUpdatingToolSettings)
@@ -415,14 +386,11 @@ namespace TabPaint
             }
             double realSize = SettingsManager.Instance.Current.PenThickness;
 
-            // 2. 更新悬浮提示的位置 (Slider 的 Thumb 位置)
             SetThicknessSlider_Pos(e.NewValue);
             UpdateThicknessPreviewPosition();
 
-            // 3. 更新提示文字
             ThicknessTipText.Text = $"{(int)Math.Round(realSize)}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
 
-            // 4. 显示提示
             ThicknessTip.Visibility = Visibility.Visible;
         }
       
@@ -509,19 +477,11 @@ namespace TabPaint
                 int newHeight = dialog.ImageHeight;
 
                 // 2. 根据模式分流逻辑
-                if (dialog.IsCanvasResizeMode)
-                {
-                    ResizeCanvasDimensions(newWidth, newHeight);
-                }
-                else
-                {
-                    // 模式 B：缩放图像 (拉伸像素，你原有的 ResizeCanvas 方法)
-                    ResizeCanvas(newWidth, newHeight);
-                }
+                if (dialog.IsCanvasResizeMode) ResizeCanvasDimensions(newWidth, newHeight);
+                else ResizeCanvas(newWidth, newHeight);
 
                 CheckDirtyState();
 
-                // 确保 UI 组件（如 ResizeOverlay）更新
                 if (_canvasResizer != null) _canvasResizer.UpdateUI();
             }
         }

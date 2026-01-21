@@ -13,7 +13,6 @@ namespace TabPaint
 
         public static void ApplyLanguage(AppLanguage language)
         {
-            // 1) Culture (parsing/formatting + 일부系统资源用得到)
             try
             {
                 CultureInfo ci = language switch
@@ -32,7 +31,6 @@ namespace TabPaint
                 // ignore
             }
 
-            // 2) Swap language ResourceDictionary
             var app = Application.Current;
             if (app == null) return;
 

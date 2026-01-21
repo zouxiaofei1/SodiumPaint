@@ -101,8 +101,6 @@ namespace TabPaint
             targetOffset = Math.Max(0, targetOffset);
             double maxOffset = Math.Max(0, FileTabs.Count * itemWidth - viewportWidth);
             targetOffset = Math.Min(targetOffset, maxOffset);
-
-            // 🔥 关键修复：使用 Dispatcher 并在滚动期间上锁
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 try
@@ -216,8 +214,6 @@ namespace TabPaint
 
                 // 此时布局已自然完成，ActualWidth 可以直接读取
                 double btnWidth = MainImageBar.AddButton.ActualWidth;
-
-                // 极限优化：如果按钮大小是固定的（比如 40），直接写死 double btnWidth = 40; 能省去所有计算开销
                 if (btnWidth == 0) btnWidth = 46; // 给个保底值
 
                 double hiddenWidth = btnWidth
@@ -237,8 +233,6 @@ namespace TabPaint
             _savedUndoPoint = _undo.UndoCount;
 
             _currentTabItem.IsDirty = false;
-
-           // SaveSession();
         }
     }
 }

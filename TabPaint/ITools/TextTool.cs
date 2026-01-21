@@ -442,18 +442,18 @@ namespace TabPaint
                             _startX = Canvas.GetLeft(_textBox);
                             _startY = Canvas.GetTop(_textBox);
 
-                            ctx.EditorOverlay.CaptureMouse();   // 【重要】捕获鼠标，防止拖出窗口后丢失状态
+                            ctx.EditorOverlay.CaptureMouse();   
                             e.Handled = true;
                         }
                         // 2. 命中虚线边框 -> 移动模式
                         else if (IsInsideBorder(pixelPos))
                         {
                             _dragging = true;
-                            _startMouse = pixelPos;             // 【关键修正】这里要用当前的 pixelPos，不要用 viewPos
+                            _startMouse = pixelPos;         
                             _startX = Canvas.GetLeft(_textBox); // 记录当前文本框位置
                             _startY = Canvas.GetTop(_textBox);
 
-                            ctx.EditorOverlay.CaptureMouse();   // 【重要】捕获鼠标
+                            ctx.EditorOverlay.CaptureMouse(); 
                             e.Handled = true;                   // 防止事件传给 TextBox 导致光标闪烁
                         }
                         else
@@ -522,8 +522,6 @@ namespace TabPaint
 
                 return tb;
             }
-
-            // 核心方法：将 Toolbar 状态应用到 TextBox
             public void ApplyTextSettings(System.Windows.Controls.TextBox tb)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -714,8 +712,6 @@ namespace TabPaint
                 _textBox.UpdateLayout();
                 DrawTextboxOverlay(ctx);
             }
-
-            // 3. 辅助：将原本匿名函数转为具名函数，方便 += 和 -=
             private void Overlay_PreviewMouseUp(object sender, MouseButtonEventArgs e)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -787,8 +783,6 @@ namespace TabPaint
                 double tbTop = Canvas.GetTop(_textBox);
                 double tbWidth = _textBox.ActualWidth;
                 double tbHeight = _textBox.ActualHeight;
-
-                // 2. 构建 FormattedText (保持之前的 96 DPI 修复)
                 var formattedText = new FormattedText(
                     _textBox.Text,
                     CultureInfo.CurrentCulture,
@@ -866,7 +860,6 @@ namespace TabPaint
                 // 8. 写回混合后的结果
                 ctx.Undo.BeginStroke();
                 ctx.Undo.AddDirtyRect(dirtyRect);
-                // 注意：destPixels 现在包含了混合后的结果
                 writeableBitmap.WritePixels(dirtyRect, destPixels, stride, 0);
                 ctx.Undo.CommitStroke();
 

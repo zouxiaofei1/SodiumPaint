@@ -66,7 +66,6 @@ namespace TabPaint
                 {
                     try
                     {
-                        // 确保路径与你实际存放 .cur 文件的路径一致
                         var uri = new Uri("pack://application:,,,/Resources/Cursors/Openhand.cur");
                         var resourceInfo = Application.GetResourceStream(uri);
                         if (resourceInfo != null)
@@ -111,8 +110,6 @@ namespace TabPaint
         private void SetViewCursor(bool isPressed = false)
         {
             if (!IsViewMode) return;
-
-            // 注意：ScrollContainer 是实际响应拖拽的控件，建议直接针对它设置
             if (isPressed)
             {
                 // 设置 OverrideCursor 强制覆盖全程序光标，确保拖拽出控件范围也不变
@@ -184,7 +181,6 @@ namespace TabPaint
                 }
                 if (ThemeManager.CurrentAppliedTheme != settings.ThemeMode)
                 {
-                    // 如果 settings.ThemeMode 是 System，ThemeManager.ApplyTheme 内部会自动处理
                     ThemeManager.ApplyTheme(settings.ThemeMode);
                 }
                 CanvasResizeOverlay.Visibility = Visibility.Visible;

@@ -3,28 +3,24 @@
     TabPaint 自动化发布脚本 (修复版：彻底分离运行库与程序文件)
 #>
 
-# ==============================================================================
-# 1. 配置区域
-# ==============================================================================
-$SourceBuildDir = "E:\dev\TabPaint-mains\TabPaint\bin\Release\net8.0-windows10.0.19041.0"
-$FinalOutputDir = "E:\dev\TabPaint_Resources"
-$IssFilePath    = "E:\dev\TabPaint-mains\TabPaint\Resources\TabPaint_Setup.iss"
+
+$SourceBuildDir = "E:\dev\TabPaint\TabPaint-main\TabPaint\bin\x64\Release\net8.0-windows10.0.19041.0"
+$FinalOutputDir = "E:\dev\TabPaint\TabPaint_Resources"
+$IssFilePath    = "E:\dev\TabPaint\TabPaint-main\TabPaint\Resources\TabPaint_Setup.iss"
 $IsccPath       = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 # [关键修改] 程序纯净文件暂存区 (里面只放 TabPaint 的文件)
-$StagingDir     = "E:\dev\TabPaint_Release" 
+$StagingDir     = "E:\dev\TabPaint\TabPaint_Release" 
 
 # [关键修改] 外部资源缓存区 (专门放下载的运行库，避免被打包进 Zip)
-$ResourceCacheDir = "E:\dev\TabPaint_Resources"
+$ResourceCacheDir = "E:\dev\TabPaint\TabPaint_Resources"
 
 # .NET 8 Desktop Runtime 下载配置
 $RuntimeUrl      = "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe"
 $RuntimeFileName = "windowsdesktop-runtime-8.0-win-x64.exe"
 $RuntimeLocalPath = Join-Path $ResourceCacheDir $RuntimeFileName
 
-# ==============================================================================
-# 2. 准备目录与程序文件
-# ==============================================================================
+
 
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "      TabPaint 自动化发布 (目录分离版)" -ForegroundColor Cyan
@@ -47,9 +43,7 @@ foreach ($fileName in $TargetFiles) {
     Copy-Item -Path (Join-Path $SourceBuildDir $fileName) -Destination (Join-Path $StagingDir $fileName) -Force
 }
 
-# ==============================================================================
-# 3. 生成绿色版 ZIP (现在是纯净的)
-# ==============================================================================
+
 Write-Host "[2/6] 生成纯净版 ZIP..." -ForegroundColor Yellow
 $ZipOutputPath = Join-Path $FinalOutputDir "TabPaint_v$($Version)_Portable.zip"
 if (Test-Path $ZipOutputPath) { Remove-Item $ZipOutputPath -Force }
@@ -58,9 +52,7 @@ if (Test-Path $ZipOutputPath) { Remove-Item $ZipOutputPath -Force }
 Compress-Archive -Path "$StagingDir\*" -DestinationPath $ZipOutputPath -Force
 Write-Host "   -> Zip 已生成 (体积应很小)" -ForegroundColor Green
 
-# ==============================================================================
-# 4. 准备运行库文件 (下载到 ResourceCacheDir)
-# ==============================================================================
+
 Write-Host "[3/6] 检查运行库缓存..." -ForegroundColor Yellow
 
 if (-not (Test-Path $RuntimeLocalPath)) {
@@ -77,9 +69,7 @@ if (-not (Test-Path $RuntimeLocalPath)) {
     Write-Host "   -> 运行库已存在于缓存目录。" -ForegroundColor Green
 }
 
-# ==============================================================================
-# 5. 编译 Lite 版本
-# ==============================================================================
+
 Write-Host "[4/6] 编译 Lite 版本 (不含运行库)..." -ForegroundColor Yellow
 
 $LiteArgs = @(
@@ -93,9 +83,7 @@ $LiteArgs = @(
 Start-Process -FilePath $IsccPath -ArgumentList $LiteArgs -Wait -NoNewWindow
 Write-Host "   -> Lite 版编译完成。" -ForegroundColor Green
 
-# ==============================================================================
-# 6. 编译 Full 版本
-# ==============================================================================
+
 if ($RuntimeLocalPath) {
     Write-Host "[5/6] 编译 Full 版本 (内嵌运行库)..." -ForegroundColor Yellow
 

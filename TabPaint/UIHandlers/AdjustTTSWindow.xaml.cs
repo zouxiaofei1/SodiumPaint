@@ -14,8 +14,6 @@ namespace TabPaint
     {
         private WriteableBitmap _originalBitmap;
         private WriteableBitmap _previewBitmap;
-
-        // 公开最终结果供主窗口获取
         public WriteableBitmap FinalBitmap { get; private set; }
 
         public double Temperature => TemperatureSlider.Value;
@@ -62,12 +60,6 @@ namespace TabPaint
             Regex regex = new Regex("[^0-9-]+");
             e.Handled = regex.IsMatch(e.Text);
         }
-
-        // --- 新增：回车键确认输入 ---
-        // --- 1. 输入字符过滤 (防止输入字母等非法字符) ---
-
-
-        // --- 2. 文本变化实时更新 (解决输入不立即生效问题) ---
         private void Input_TextChanged(object sender, TextChangedEventArgs e)
         {
             TextBox textBox = sender as TextBox;
@@ -86,7 +78,6 @@ namespace TabPaint
             // 情况B：尝试解析数值
             if (double.TryParse(input, out double result))
             {
-                // 限制数值范围 (防止输入 999 导致崩溃或无效)
                 if (result > targetSlider.Maximum) result = targetSlider.Maximum;
                 if (result < targetSlider.Minimum) result = targetSlider.Minimum;
 
@@ -94,13 +85,9 @@ namespace TabPaint
                 if (Math.Abs(targetSlider.Value - result) > 0.01)
                 {
                     targetSlider.Value = result;
-                    // Slider.Value 的改变会自动触发 Slider_ValueChanged -> ApplyPreview
                 }
             }
         }
-
-
-        // --- 新增：重置功能 ---
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
             // 归零，由于绑定了 Slider_ValueChanged，会自动触发重绘

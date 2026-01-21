@@ -20,8 +20,6 @@ namespace TabPaint
     {
         private bool IsEditingTextField()
         {
-            // WPF 的 Editable ComboBox 内部使用的是 TextBox，
-            // 所以只要判断 FocusedElement 是不是 TextBox 即可涵盖 ComboBox 和普通的 TextBox
             if (Keyboard.FocusedElement is System.Windows.Controls.TextBox ||
                 Keyboard.FocusedElement is System.Windows.Controls.PasswordBox ||
                 Keyboard.FocusedElement is System.Windows.Controls.RichTextBox)
@@ -90,9 +88,6 @@ namespace TabPaint
                 e.Handled = true;
                 return true;
             }
-
-            // --- 硬编码/锁定部分 (如果有必须全局生效的锁定键，写在这里) ---
-
             return false;
         }
 
@@ -163,9 +158,17 @@ namespace TabPaint
 
             if (IsShortcut("Tool.SwitchToShape", e))
             {
-                // 形状默认选中 "Rectangle" 
                 _router.SetTool(_tools.Shape);
                 e.Handled = true; return;
+            }
+            if (IsShortcut("View.ToggleMinimize", e))
+            {
+                if (this.WindowState != WindowState.Minimized)
+                {
+                    this.WindowState = WindowState.Minimized;
+                }
+                e.Handled = true;
+                return;
             }
             if (IsShortcut("Tool.ClipMonitor", e))
             {
@@ -191,8 +194,6 @@ namespace TabPaint
             if (IsShortcut("Effect.Invert", e)) { OnInvertColorsClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+R
             if (IsShortcut("Effect.AutoLevels", e)) { OnAutoLevelsClick(sender, e); e.Handled = true; return; }  // Ctrl+Alt+T
             if (IsShortcut("Effect.Resize", e)) { OnResizeCanvasClick(sender, e); e.Handled = true; return; }      // Ctrl+Alt+Y
-
-            // === B. 然后处理 锁定快捷键 (硬编码，不允许更改) ===
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
@@ -242,13 +243,9 @@ namespace TabPaint
 
                                 if (styleInfo != null && !string.IsNullOrWhiteSpace(styleInfo.Text))
                                 {
-                                    // A. 切换工具
+
                                     if (!(_router.CurrentTool is TextTool)) _router.SetTool(_tools.Text);
-
-                                    // B. 【核心】应用样式到 UI 工具栏
                                     ApplyDetectedTextStyle(styleInfo);
-
-                                    // C. 生成文本框 (TextTool 会自动读取刚刚更新的 UI 设置)
                                     Point center = new Point(ActualWidth / 2, ActualHeight / 2);
                                     if (_router.CurrentTool is TextTool tt)
                                     {
@@ -260,8 +257,6 @@ namespace TabPaint
                             }
                             catch { /* 解析失败则回退到纯文本 */ }
                         }
-
-                        // 2. 原有的纯文本逻辑 (作为回退)
                         if (Clipboard.ContainsText())
                         {
                             string text = Clipboard.GetText();
@@ -345,8 +340,6 @@ namespace TabPaint
                     case Key.Enter:
                         return;
                 }
-
-                // 2. 允许 Ctrl + C/V/X/A/Z/Y 穿透给输入框
                 if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
                 {
                     switch (e.Key)
@@ -386,13 +379,7 @@ namespace TabPaint
             }
 
             var item = settings.Shortcuts[actionName];
-
-            // 必须处理 System Key (例如 Alt 键组合会被识别为 System)
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
-
-            // 宽松匹配：如果设置了 Key.None，则视为禁用该快捷键
-            // if (item.Key == Key.None) return false;
-
             return (key == item.Key && Keyboard.Modifiers == item.Modifiers);
         }
 
@@ -468,9 +455,6 @@ namespace TabPaint
                 }
             }
         }
-        // 在类成员变量区域添加
-
-        // 在构造函数 MainWindow() 中调用此方法，或者直接把代码放进去
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern uint GetClipboardSequenceNumber();
@@ -505,7 +489,6 @@ namespace TabPaint
                     // 1. 获取当前剪切板的系统序列号
                     uint currentSeq = GetClipboardSequenceNumber();
 
-                    // 2. 检查是否完全重复的消息 (序列号没变 = 剪切板内容没变，纯粹是系统发神经)
                     if (currentSeq == _lastClipboardSequenceNumber)
                     {
                         // 忽略
@@ -515,13 +498,9 @@ namespace TabPaint
                     var timeSinceLast = (DateTime.Now - _lastClipboardActionTime).TotalMilliseconds;
                     if (timeSinceLast < CLIPBOARD_COOLDOWN_MS)
                     {
-
-                        // 虽然跳过逻辑，但要更新序列号，以免冷却结束后把旧消息当新消息
                         _lastClipboardSequenceNumber = currentSeq;
                         return IntPtr.Zero;
                     }
-
-                    // 4. 通过所有检查，记录状态并执行
                     _lastClipboardSequenceNumber = currentSeq;
                     _lastClipboardActionTime = DateTime.Now;
                     OnClipboardContentChanged();
@@ -593,8 +572,6 @@ namespace TabPaint
                     ShowToast(string.Format(LocalizationManager.GetString("L_Toast_GDIReadFailed_Prefix"), ex.Message));
                 }
             }
-
-            // 2. [次优先] 尝试读取 "Bitmap" (标准 GDI 句柄)
             if (dataObj.GetDataPresent("Bitmap"))
             {
                 try
@@ -608,12 +585,7 @@ namespace TabPaint
                 catch { }
             }
 
-            // 3. [保底] WPF 原生读取 (如果上面都失败了，只能面对可能全透明的结果)
-            if (System.Windows.Clipboard.ContainsImage())
-            {
-                return System.Windows.Clipboard.GetImage();
-            }
-
+            if (System.Windows.Clipboard.ContainsImage())  return System.Windows.Clipboard.GetImage();
             return null;
         }
 
@@ -623,29 +595,24 @@ namespace TabPaint
             IntPtr hBitmap = IntPtr.Zero;
             try
             {
-                // 获取 GDI 句柄
                 hBitmap = bitmap.GetHbitmap();
 
-                // 利用 Interop 创建 WPF 位图
                 var wpfBitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
                     hBitmap,
                     IntPtr.Zero,
                     System.Windows.Int32Rect.Empty,
                     BitmapSizeOptions.FromEmptyOptions());
 
-                // 关键：冻结对象，使其可以在不同线程使用（如果不冻结，异步写入文件可能会报错）
                 wpfBitmap.Freeze();
 
                 return wpfBitmap;
             }
             finally
             {
-                // 极其重要：必须手动释放 GDI 句柄，否则会造成 GDI 句柄泄漏导致程序崩溃
                 if (hBitmap != IntPtr.Zero)
                 {
                     DeleteObject(hBitmap);
                 }
-                // bitmap.Dispose(); // DataObject 取出的对象通常不需要手动 Dispose，交给 GC 即可
             }
         }
 
@@ -671,7 +638,6 @@ namespace TabPaint
                     var bitmapSource = GetBestImageFromClipboard();
                     if (bitmapSource != null)
                     {
-                        // TabPaint 架构依赖文件路径，所以我们需要保存为临时缓存文件
                         string cachePath = SaveClipboardImageToCache(bitmapSource);
                         if (!string.IsNullOrEmpty(cachePath))
                         {
@@ -696,7 +662,7 @@ namespace TabPaint
             while (node != null)
             {
                 if (node is T) return true;
-                node = VisualTreeHelper.GetParent(node); // 关键：获取视觉树父级
+                node = VisualTreeHelper.GetParent(node);
             }
             return false;
         }
@@ -726,7 +692,7 @@ namespace TabPaint
             bool isNext = IsShortcut("View.NextImage", e);
             bool isPrev = IsShortcut("View.PrevImage", e);
 
-            if (isNext || isPrev) // 根据你的实际快捷键添加
+            if (isNext || isPrev) 
             {
                 // 重置状态
                 _isNavigating = false;
@@ -757,7 +723,7 @@ namespace TabPaint
         {
             if (MyStatusBar == null) return;
             MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
-            ZoomLevel = realScale.ToString("P0"); // 如果你有绑定的属性
+            ZoomLevel = realScale.ToString("P0"); 
 
             // 更新滑块位置 (反向计算)
             double targetSliderVal = ZoomToSlider(realScale);
@@ -812,8 +778,6 @@ namespace TabPaint
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
 
             RefreshBitmapScalingMode();
-
-            // 5. 计算并应用滚动条偏移量 (核心锚点逻辑)
             double offsetX = ScrollContainer.HorizontalOffset;
             double offsetY = ScrollContainer.VerticalOffset;
 
@@ -899,14 +863,14 @@ namespace TabPaint
             // 2. 更新缩放 (View Model / UI)
             zoomscale = nextScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = nextScale;
-
+           
             double scaleRatio = nextScale / oldScale;
 
             _virtualScrollH = (_virtualScrollH + _zoomCenter.X) * scaleRatio - _zoomCenter.X;
             _virtualScrollV = (_virtualScrollV + _zoomCenter.Y) * scaleRatio - _zoomCenter.Y;
-
+       
             ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
-            ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
+            ScrollContainer.ScrollToVerticalOffset(_virtualScrollV); 
             UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
             _canvasResizer.UpdateUI();
@@ -918,11 +882,7 @@ namespace TabPaint
             // 动画结束清理
             if (isEnding)
             {
-                SetZoom(nextScale, _zoomCenter, isIntermediate: false);
                 StopSmoothZoom();
-            }
-            else
-            {
             }
         }
 

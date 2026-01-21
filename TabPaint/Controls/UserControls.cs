@@ -18,13 +18,6 @@ using System.Windows.Threading;
 using TabPaint.Controls;
 using static TabPaint.MainWindow;
 
-//
-//TabPaint主程序
-// 各种ITool + InputRouter + EventHandler + CanvasSurface 相关过程
-//已经被拆分到Itools文件夹中
-//MainWindow 类通用过程,很多都是找不到归属的,也有的是新加的测试功能
-//
-
 namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
@@ -35,8 +28,6 @@ namespace TabPaint
         
             var viewModeBinding = new Binding("IsViewMode") { Source = this, Mode = BindingMode.OneWay };
             BindingOperations.SetBinding(MainImageBar, ImageBarControl.IsViewModeProperty, viewModeBinding);
-
-            // 2. 恢复事件订阅 (从你提供的 XAML 逐一搬运)
             MainImageBar.SaveAllClick += OnSaveAllClick;
             MainImageBar.SaveAllDoubleClick += OnSaveAllDoubleClick;
             MainImageBar.ClearUneditedClick += OnClearUneditedClick;
@@ -155,8 +146,6 @@ namespace TabPaint
             _dragWatchdog.Tick += DragWatchdog_Tick;
     
         }
-        // 位于 MainWindow.xaml.cs 中
-
         private void OnAppTitleBarIconDragRequest(object sender, MouseButtonEventArgs e)
         {
             // 1. 基础检查：单图模式且当前有 Tab

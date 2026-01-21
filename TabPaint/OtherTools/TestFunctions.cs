@@ -43,23 +43,17 @@ namespace TabPaint
         {
             if (value is double scale && scale > 0)
             {
-                // 获取基础数值 (参数传入，默认为1)
                 double baseSize = 1.0;
                 if (parameter != null && double.TryParse(parameter.ToString(), out double p))
                 {
                     baseSize = p;
                 }
-
-                // 计算反向值： 基础值 / 缩放倍率
                 double result = baseSize / scale ;
 
-                // 如果目标是 Thickness (用于 BorderThickness 或 Margin)
                 if (targetType == typeof(Thickness))
                 {
                     return new Thickness(result);
                 }
-
-                // 如果目标是 double (用于 Shadow BlurRadius)
                 return result;
             }
             return value;
@@ -80,16 +74,12 @@ namespace TabPaint
 
         protected override Size MeasureOverride(Size constraint)
         {
-           
-            // 获取子元素想要的尺寸
             var size = base.MeasureOverride(constraint);
-            // 向上取整 (Ceiling)，避免内容被切掉
             return new Size(Math.Ceiling(size.Width), Math.Ceiling(size.Height));
         }
 
         protected override Size ArrangeOverride(Size arrangeSize)
         {
-            // 强制将分配给子元素的区域取整
             var snappedSize = new Size(Math.Ceiling(arrangeSize.Width), Math.Ceiling(arrangeSize.Height));
             base.ArrangeOverride(snappedSize);
             return snappedSize;
@@ -97,7 +87,6 @@ namespace TabPaint
     }
     public class NonLinearConverter : IValueConverter
     {
-        // 设定的最大阈值，对应 XAML 中的 Maximum="5000"
         private const double MaxDataValue = 5000.0;
         private const double MaxSliderValue = 100.0;
 
@@ -121,7 +110,6 @@ namespace TabPaint
             // Slider 位置 -> 数据 (平方，恢复数据)
             if (value is double sVal)
             {
-                // 公式：Data = 5000 * (Slider / 100)^2
                 double ratio = sVal / MaxSliderValue;
                 return Math.Round(MaxDataValue * ratio * ratio); // 取整，避免小数点
             }
@@ -130,11 +118,10 @@ namespace TabPaint
     }
     public class NaturalStringComparer : IComparer<string>
     {
-        // 单例模式，避免重复创建对象
         public static readonly NaturalStringComparer Default = new NaturalStringComparer();
 
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
-        [SuppressUnmanagedCodeSecurity] // 稍微提升一点性能
+        [SuppressUnmanagedCodeSecurity] 
         private static extern int StrCmpLogicalW(string psz1, string psz2);
 
         public int Compare(string? x, string? y)
@@ -183,21 +170,12 @@ namespace TabPaint
                 else if (cpuTicks < 3000) score += 4.0;
                 else if (cpuTicks < 4500) score += 3.0;
                 else if (cpuTicks < 6500) score += 2.0;   // 普通办公本区间
-                else if (cpuTicks < 9000) score += 1.0;   // 老旧机器
-                // > 9000 ticks: 0分
-
+                else if (cpuTicks < 9000) score += 1.0; 
                 double screenWidth = SystemParameters.PrimaryScreenWidth;
                 double screenHeight = SystemParameters.PrimaryScreenHeight;
                 // 大于 2K 分辨率 (约360万像素)
-                if (screenWidth * screenHeight > 3600000)
-                {
-                    if (cpuTicks > 4500)
-                    {
-                        score -= 1.5;
-                    }
-                }
-
-                // 兜底修正
+                if (screenWidth * screenHeight > 3600000)if (cpuTicks > 4500) score -= 1.5;
+               
                 if (score > 10) score = 10;
                 if (score < 1) score = 1;
             }
@@ -208,10 +186,8 @@ namespace TabPaint
             finally
             {
                 sw.Stop();
-                // 开发阶段建议保留此行，观察不同机器的真实 Ticks 数据以便微调
                 Debug.WriteLine($"[Benchmark] Ticks: {RunStrictMicroTest()} | Score: {score} | Time: {sw.Elapsed.TotalMilliseconds:F4}ms");
             }
-
             return (int)Math.Round(score);
         }
 
@@ -225,7 +201,6 @@ namespace TabPaint
             }
             sw.Stop();
 
-            // 防止 JIT 优化移除循环
             if (result == 999999) Debug.WriteLine("");
 
             return sw.ElapsedTicks;
@@ -234,8 +209,6 @@ namespace TabPaint
     public class DynamicRangeConverter : IMultiValueConverter
     {
         private const double MinSize = 1.0;
-
-        // --- 核心配置：在这里定义不同工具的上限 ---
         private double GetMaxSizeForKey(string key)
         {
             if (string.IsNullOrEmpty(key)) return 400.0; // 默认
@@ -255,8 +228,6 @@ namespace TabPaint
             string toolKey = values[1] as string;
 
             double maxSize = GetMaxSizeForKey(toolKey);
-
-            // 反向计算比例：从 (1~Max) 映射回 Slider 的 (0~1)
             double ratio = (thickness - MinSize) / (maxSize - MinSize);
 
             // 开根号还原线性进度
@@ -273,11 +244,7 @@ namespace TabPaint
                 double maxSize = GetMaxSizeForKey(toolKey);
 
                 double t = Math.Max(0.0, Math.Min(1.0, sliderVal));
-
-                // 使用平方曲线 (t * t)
                 double result = MinSize + (maxSize - MinSize) * (t * t);
-            
-                // 返回 Thickness 数值，第二个参数 Binding.DoNothing 表示不修改 ToolKey
                 return new object[] { Math.Round(result), Binding.DoNothing };
             }
 
@@ -290,11 +257,7 @@ namespace TabPaint
         {
             double scale = 1.0;
             if (value is double d) scale = d;
-
-            // 防止除以0或极小值
             if (scale < 0.01) scale = 0.01;
-
-            // 参数传入基础格子大小 (例如 20)
             double baseSize = 20.0;
             if (parameter != null && double.TryParse(parameter.ToString(), out double parsedSize))
             {
@@ -342,8 +305,6 @@ namespace TabPaint
             // 越界保护
             if (realZoom < MinZoomReal) realZoom = MinZoomReal;
             if (realZoom > MaxZoomReal) realZoom = MaxZoomReal;
-
-            // 公式: x = 100 * log(y/min) / log(max/min)
             return 100.0 * Math.Log(realZoom / MinZoomReal) / Math.Log(MaxZoomReal / MinZoomReal);
         }
         private double SliderToZoom(double sliderValue)
@@ -359,28 +320,21 @@ namespace TabPaint
 
             public void Toggle()
             {
-                // 第一次调用：Stopwatch 为空，开始计时
                 if (_stopwatch == null)
                 {
                     _stopwatch = Stopwatch.StartNew();
                     a.s("计时开始...");
                 }
-                // 第二次调用：Stopwatch 正在运行，停止并打印耗时
                 else if (_stopwatch.IsRunning)
                 {
                     _stopwatch.Stop();
                     s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
-
-                    // 可选：如果希望第三次调用重新开始，可以重置
-                    // _stopwatch = null; 
                 }
                 else
                 {
                     Console.WriteLine("计时器已结束。如需重新开始，请重置状态。");
                 }
             }
-
-            // 重置方法（可选）
             public void Reset()
             {
                 _stopwatch = null;

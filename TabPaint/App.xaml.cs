@@ -28,7 +28,6 @@ namespace TabPaint
 
         private void SetupExceptionHandling()
         {
-            // 1. 捕获 UI 线程的未处理异常
             this.DispatcherUnhandledException += (s, e) =>
             {
                 LogException(e.Exception, "UIThread");
@@ -36,7 +35,6 @@ namespace TabPaint
                 ShutdownAppWithErrorMessage(e.Exception);
             };
 
-            // 2. 捕获非 UI 线程的未处理异常 (如后台线程)
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 var exception = e.ExceptionObject as Exception;
@@ -44,7 +42,6 @@ namespace TabPaint
                 // 这种异常通常无法恢复，记录后程序即将终止
             };
 
-            // 3. 捕获 Task 中未观察到的异常
             TaskScheduler.UnobservedTaskException += (s, e) =>
             {
                 LogException(e.Exception, "TaskScheduler");
@@ -52,7 +49,6 @@ namespace TabPaint
             };
         }
 
-        // [新增] 核心日志写入方法
         private static void LogException(Exception ex, string source)
         {
             try
@@ -80,7 +76,6 @@ namespace TabPaint
                 sb.AppendLine("Stack Trace:");
                 sb.AppendLine(ex.StackTrace);
 
-                // 记录内部异常 (InnerException)
                 if (ex.InnerException != null)
                 {
                     sb.AppendLine(new string('=', 50));
@@ -98,7 +93,6 @@ namespace TabPaint
             }
         }
 
-        // [新增] 提示用户并退出
         private void ShutdownAppWithErrorMessage(Exception ex)
         {
             string msg = $"TabPaint 遇到错误需要关闭。\n\n错误信息: {ex.Message}\n\n日志已保存至: {LogDirectory}";
@@ -115,7 +109,7 @@ namespace TabPaint
         protected override void OnStartup(StartupEventArgs e)
         {
             SetupExceptionHandling();
-            // 1. 检查单实例
+            //检查单实例
             if (!SingleInstance.IsFirstInstance())
             {
                 SingleInstance.SendArgsToFirstInstance(e.Args);
@@ -123,9 +117,7 @@ namespace TabPaint
                 return;
             }
             SingleInstance.ListenForArgs((filePath) =>
-            {
-                // 注意：管道是在后台线程，操作 UI 必须回到主线程 (Dispatcher)
-                Current.Dispatcher.Invoke(() =>
+           {     Current.Dispatcher.Invoke(() =>
                 {
                     if (_mainWindow != null)
                     {
@@ -145,8 +137,6 @@ namespace TabPaint
                                 };
 
                                 _mainWindow.FileTabs.Add(newTab);
-
-                                // 立即切换
                                 _mainWindow.SwitchToTab(newTab);
                                 _mainWindow.ScrollToTabCenter(newTab);
                             }

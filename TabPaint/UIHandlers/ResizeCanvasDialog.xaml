@@ -17,12 +17,10 @@
 
     <Window.Resources>
         <ResourceDictionary>
-            <!-- 引入子窗口样式 (保持原样) -->
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Slider 样式 -->
             <Style x:Key="MinimalSliderStyle" TargetType="Slider">
                 <Setter Property="Focusable" Value="False"/>
                 <Setter Property="Template">
@@ -45,13 +43,11 @@
                                                              Fill="{DynamicResource SystemAccentPressedBrush}" 
                                                                  Stroke="{DynamicResource SliderThumbStaticBrush}" 
                                                                  StrokeThickness="1"/>
-                                                        <!-- 鼠标悬停变色 -->
                                                         <Ellipse x:Name="HoverState" Width="18" Height="18" 
                                                                  Fill="Transparent" IsHitTestVisible="False"/>
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <!-- 使用列表项悬停色代替原来的半透明黑，或者使用主题定义的 Hover -->
                                                             <Setter TargetName="HoverState" Property="Fill" Value="{DynamicResource IconHoverBrush}"/>
                                                             <Setter TargetName="HoverState" Property="Opacity" Value="0.1"/>
                                                         </Trigger>
@@ -81,19 +77,14 @@
                                       Stretch="Uniform" Width="16" Height="16"/>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <!-- 1. 选中状态：图标变蓝色，背景变淡蓝 -->
                                 <Trigger Property="IsChecked" Value="True">
                                     <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource SystemAccentBrush}"/>
                                     <Setter Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                                 </Trigger>
-
-                                <!-- 2. 普通悬停状态：鼠标手势，图标稍微变深 -->
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Cursor" Value="Hand"/>
                                     <Setter TargetName="Icon" Property="Fill" Value="{DynamicResource IconHoverBrush}"/>
                                 </Trigger>
-
-                                <!-- 3. 同时满足 选中 + 悬停：图标变深蓝色 (纠正后的 MultiDataTrigger) -->
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
                                         <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True"/>
@@ -205,13 +196,9 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
-                <!-- Title -->
                 <RowDefinition Height="Auto"/>
-                <!-- Mode Select -->
                 <RowDefinition Height="*"/>
-                <!-- Controls -->
                 <RowDefinition Height="Auto"/>
-                <!-- Footer -->
             </Grid.RowDefinitions>
 
             <!-- 1. 标题栏 -->
@@ -267,25 +254,16 @@
             <Grid Grid.Row="2" Margin="24,0,24,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <!-- Width Row -->
                     <RowDefinition Height="Auto"/>
-                    <!-- Link Row -->
                     <RowDefinition Height="Auto"/>
-                    <!-- Height Row -->
                     <RowDefinition Height="Auto"/>
-                    <!-- Info -->
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="40"/>
-                    <!-- Label -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Slider -->
                     <ColumnDefinition Width="10"/>
-                    <!-- Spacer -->
                     <ColumnDefinition Width="80"/>
-                    <!-- TextBox -->
                     <ColumnDefinition Width="25"/>
-                    <!-- Unit -->
                 </Grid.ColumnDefinitions>
 
                 <!-- 宽度 -->

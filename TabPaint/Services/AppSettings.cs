@@ -70,7 +70,6 @@ namespace TabPaint
             }
         }
 
-        // === 核心修复逻辑 ===
         private string GetKeyDisplayName(Key key)
         {
             // 处理主键盘区的数字键 D0 - D9
@@ -85,8 +84,6 @@ namespace TabPaint
             {
                 return "Num " + ((int)key - (int)Key.NumPad0).ToString();
             }
-
-            // 处理其他常见特殊字符的友好显示 (可选)
             switch (key)
             {
                 case Key.OemPlus: return "+";
@@ -149,11 +146,7 @@ namespace TabPaint
         {
             var settings = TabPaint.SettingsManager.Instance.Current;
 
-            // 1. 如果是默认值(-10000)，说明是第一次运行，不做操作
             if (settings.WindowLeft == -10000 || settings.WindowTop == -10000) return;
-
-            // 2. 检查保存的坐标是否在当前虚拟屏幕范围内 (WPF 原生方式)
-            // VirtualScreen 获取的是所有显示器组合而成的总矩形区域
             double virtualLeft = SystemParameters.VirtualScreenLeft;
             double virtualTop = SystemParameters.VirtualScreenTop;
             double virtualWidth = SystemParameters.VirtualScreenWidth;
@@ -175,12 +168,8 @@ namespace TabPaint
                 // 如果不在屏幕范围内（比如上次在副屏，现在副屏拔了），居中显示
                 this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
-
-            // 3. 恢复尺寸（带点保护，防止出现 0 像素窗口）
             this.Width = Math.Max(settings.WindowWidth, 200);
             this.Height = Math.Max(settings.WindowHeight, 200);
-
-            // 4. 恢复最大化状态
             if (settings.WindowState == (int)WindowState.Maximized)
             {
                 this.WindowState = WindowState.Maximized;
@@ -221,9 +210,6 @@ namespace TabPaint
                 {
                     _ctx.PenStyle = targetStyle;
                 }
-
-                // 4. [修复核心] 立即同步应用工具切换，不要用 Dispatcher
-                // 这样能保证 CurrentToolKey 和 UI 状态在窗口显示给用户那一刻就是正确的
                 if (_router != null)
                 {
 
@@ -235,7 +221,6 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                // 建议加个日志，防止出错时不崩但不知道原因
                 System.Diagnostics.Debug.WriteLine($"RestoreAppState Error: {ex.Message}");
             }
         }
@@ -355,7 +340,6 @@ namespace TabPaint
         {
             get
             {
-                // 特殊处理：铅笔强制为 1.0
                 if (_currentToolKey == "Pen_Pencil") return 1.0;
 
                 if (PerToolSettings.TryGetValue(_currentToolKey, out var settings))
@@ -430,10 +414,6 @@ namespace TabPaint
 
             // 形状工具预留
             dict["Shape"] = new ToolSettingsModel { Thickness = 3.0, Opacity = 1.0 };
-
-            // 其他工具如果需要也可以加
-            // dict["Select"] = ...
-
             return dict;
         }
         private AppTheme _themeMode = AppTheme.System; // 默认跟随系统
@@ -451,7 +431,6 @@ namespace TabPaint
                 }
             }
         }
-        // 在 AppSettings 类中添加
         private bool _isFixedZoom = false;
 
         [JsonPropertyName("is_fixed_zoom")]
@@ -477,7 +456,6 @@ namespace TabPaint
                 {
                     _enableClipboardMonitor = value;
                     OnPropertyChanged();
-                    //SettingsManager.Instance.Save(); // 自动保存
                 }
             }
         }
@@ -741,6 +719,8 @@ namespace TabPaint
         { "View.FullScreen",     new ShortcutItem { Key = Key.F11, Modifiers = ModifierKeys.None } },
         { "View.VerticalFlip",   new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 自动色阶
         { "View.HorizontalFlip",       new ShortcutItem { Key = Key.H, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 调整大小
+        { "View.ToggleMinimize", new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } }, 
+
         // 2. 高级工具 (Ctrl + Alt 系列)
         { "Tool.ClipMonitor",    new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 剪贴板监听开关
         { "Tool.RemoveBg",       new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 抠图
@@ -769,9 +749,6 @@ namespace TabPaint
         { "Effect.Invert",       new ShortcutItem { Key = Key.U, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 反色
         { "Effect.AutoLevels",   new ShortcutItem { Key = Key.I, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 自动色阶
         { "Effect.Resize",       new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 调整大小
-
-
-
     };
             return defaults;
         }

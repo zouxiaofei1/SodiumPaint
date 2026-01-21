@@ -35,9 +35,7 @@ namespace TabPaint
             _workingPath = path;
             _currentFilePath = path;
             CheckFilePathAvailibility(_currentFilePath);
-            // s(_currentImageIndex);
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
-           // _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
             InitializeComponent();
             RestoreWindowBounds();
           
@@ -73,11 +71,8 @@ namespace TabPaint
                     return;
                 }
                 double sliderVal = MyStatusBar.ZoomSliderControl.Value;
-
-                // 2. 通过算法算出真实的缩放倍率 (例如滑块50 -> 倍率1.26)
                 double targetScale = SliderToZoom(sliderVal);
 
-                // 3. 应用缩放 (注意：不要在这里直接设置 Slider.Value，SetZoom 会去做的)
                 SetZoom(targetScale,slient:true);
             };
 
@@ -85,7 +80,6 @@ namespace TabPaint
            // SetBrushStyle(BrushStyle.Round);
             SetCropButtonState();
             _canvasResizer = new CanvasResizeManager(this); ;
-            // 1. 先加载上次会话 (Tabs结构)
             LoadSession();
             if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
             {
@@ -117,11 +111,9 @@ namespace TabPaint
                             {
                                 await OpenFilesAsNewTabs([welcomePath]);
                                 welcomeOpened = true;
-
                                 settings.IsFirstRun = false;
                             }
                         }
-
                         // 如果没有打开欢迎页（文件不存在 或 不是第一次运行），则进入默认的空白模式
                         if (!welcomeOpened)
                         {
@@ -131,18 +123,15 @@ namespace TabPaint
                     }
                     else
                     {
-                        // 情况C: 有历史会话，切换到第一个标签
                         SwitchToTab(FileTabs[0]);
                     }
                 }
             }
             await Task.Run(() =>
             {
-                // 注意：创建 ResourceDictionary 必须在 UI 线程，但我们可以通过 Dispatcher 插入低优先级任务
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     var iconsDict = new ResourceDictionary();
-                    // 注意这里要用 pack URI 格式
                     iconsDict.Source = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
 
                     // 把图标合并到全局资源中
@@ -169,10 +158,7 @@ namespace TabPaint
             if (src != null)
             {
                 src.CompositionTarget.BackgroundColor = Colors.Transparent;
-            }
-
-            // 初始化 Mica
-
+            }// 初始化 Mica
         }
         private void MainWindow_Activated(object sender, EventArgs e)
         {
@@ -183,7 +169,6 @@ namespace TabPaint
                 MicaEnabled = true;
             }
         }
-        // 修改为 async void，以便使用 await
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
 
@@ -208,7 +193,6 @@ namespace TabPaint
                 ItalicBtn.Unchecked += FontSettingChanged;
                 UnderlineBtn.Checked += FontSettingChanged;
                 UnderlineBtn.Unchecked += FontSettingChanged;
-
 
                 // Canvas 事件
                 CanvasWrapper.MouseDown += OnCanvasMouseDown;
@@ -242,8 +226,7 @@ namespace TabPaint
 
                 _isInitialLayoutComplete = true;
                 if (FileTabs.Count > 0)
-                {
-                    // 模拟触发一次滚动检查
+                { // 模拟触发一次滚动检查
                     OnFileTabsScrollChanged(MainImageBar.Scroller, null);
                 }
             }
@@ -256,16 +239,12 @@ namespace TabPaint
                 UpdateCanvasVisuals();
             }
         }
-
-        // 3. 核心逻辑：根据模式和设置更新背景
         private void UpdateCanvasVisuals()
         {
             var settings = SettingsManager.Instance.Current;
 
             if (IsViewMode)
             {
-                // --- 逻辑 A: Canvas 外部背景 (ScrollContainer) ---
-                // 如果开启深色背景，使用 #1A1A1A，否则透明(跟随窗口背景)
                 if (settings.ViewUseDarkCanvasBackground)
                 {
                     ScrollContainer.Background = _darkBackgroundBrush;
@@ -274,9 +253,6 @@ namespace TabPaint
                 {
                     ScrollContainer.Background = Brushes.Transparent;
                 }
-
-                // --- 逻辑 B: Canvas 内部背景 (图片下方的底色) ---
-                // 如果开启显示透明格子，还原原始画刷；否则显示纯白底
                 if (settings.ViewShowTransparentGrid)
                 {
                     CanvasWrapper.Background = _originalGridBrush;
@@ -288,8 +264,6 @@ namespace TabPaint
             }
             else
             {
-                // --- 画图模式 (Paint Mode) ---
-                // 强制恢复默认状态：外部透明，内部显示格子
                 ScrollContainer.Background = Brushes.Transparent;
                 CanvasWrapper.Background = _originalGridBrush;
             }
@@ -300,10 +274,8 @@ namespace TabPaint
         {
             try
             {
-                // 获取所有文件
                 var allFiles = Directory.GetFiles(folderPath);
 
-                // 使用你现有的 IsImageFile 方法进行过滤，并按名称排序取第一个
                 var firstImage = allFiles
                     .Where(f => IsImageFile(f))
                     .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) // 确保按文件名顺序（如 1.jpg, 2.jpg）
@@ -342,7 +314,6 @@ namespace TabPaint
         {
             if (files == null || files.Length == 0) return;
 
-            // 1. 确定插入位置
             int insertIndex = _imageFiles.Count;
             int uiInsertIndex = FileTabs.Count;
 
@@ -404,7 +375,6 @@ namespace TabPaint
 
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
-                //s(ScrollContainer.ViewportWidth);
                 double viewWidth = ScrollContainer.ViewportWidth;
                 double viewHeight = ScrollContainer.ViewportHeight;
 
@@ -423,7 +393,6 @@ namespace TabPaint
         }
         private async void PasteClipboardAsNewTab()
         {
-            // 准备一个列表来存放待处理的文件路径
             List<string> filesToProcess = new List<string>();
 
             try
@@ -435,7 +404,6 @@ namespace TabPaint
                     {
                         foreach (string file in dropList)
                         {
-                            // 复用你现有的 IsImageFile 方法检查是否为支持的图片
                             if (IsImageFile(file))
                             {
                                 filesToProcess.Add(file);
@@ -448,14 +416,12 @@ namespace TabPaint
                     var bitmapSource = Clipboard.GetImage();
                     if (bitmapSource != null)
                     {
-                        // 生成临时文件路径
                         string cacheDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "TabPaint_Cache");
                         if (!System.IO.Directory.Exists(cacheDir)) System.IO.Directory.CreateDirectory(cacheDir);
 
                         string fileName = $"Paste_{DateTime.Now:yyyyMMdd_HHmmss}.png";
                         string filePath = System.IO.Path.Combine(cacheDir, fileName);
 
-                        // 保存为本地 PNG
                         using (var fileStream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
                         {
                             System.Windows.Media.Imaging.BitmapEncoder encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
@@ -478,7 +444,6 @@ namespace TabPaint
             int insertIndex = _imageFiles.Count; // 默认插到最后
             int uiInsertIndex = FileTabs.Count;
 
-            // 如果当前有选中的 Tab，且不是新建的空文件，则插在它后面
             if (_currentTabItem != null && !_currentTabItem.IsNew)
             {
                 int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
@@ -499,17 +464,11 @@ namespace TabPaint
 
             foreach (string file in filesToProcess)
             {
-                // 去重检查（可选）
                 if (_imageFiles.Contains(file)) continue;
-
-                // 2. 插入到底层数据源
                 _imageFiles.Insert(insertIndex + addedCount, file);
 
-                // 3. 插入到 UI 列表
                 var newTab = new FileTabItem(file);
                 newTab.IsLoading = true;
-                // 如果是剪切板生成的临时文件，最好标记一下，方便后续处理保存逻辑
-                // if (file.Contains("TabPaint_Cache")) newTab.IsTemp = true; 
 
                 if (uiInsertIndex + addedCount <= FileTabs.Count)
                 {
@@ -535,10 +494,8 @@ namespace TabPaint
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
 
-                // 4. 自动切换到第一张新加入的图片
                 if (firstNewTab != null)
                 {
-                    // 取消当前选中状态
                     if (_currentTabItem != null) _currentTabItem.IsSelected = false;
 
                     // 选中新图
@@ -546,7 +503,6 @@ namespace TabPaint
                     _currentTabItem = firstNewTab;
 
                     await OpenImageAndTabs(firstNewTab.FilePath);
-
                     // 确保新加的图片在视野内
                     MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
                 }
@@ -567,7 +523,6 @@ namespace TabPaint
             BackgroundImage.Width = BackgroundImage.Source.Width;
             BackgroundImage.Height = BackgroundImage.Source.Height;
 
-            // 如果在 ScrollViewer 中，自动滚到中心
             if (ScrollContainer != null)
             {
                 ScrollContainer.ScrollToHorizontalOffset(
@@ -601,11 +556,6 @@ namespace TabPaint
                 fadeIn.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
                 InfoToast.BeginAnimation(OpacityProperty, fadeIn);
             }
-            else
-            {
-            }
-
-            // 4. 重新开始倒计时（重置停留时间）
             _toastTimer.Start();
         }
 
@@ -615,14 +565,12 @@ namespace TabPaint
             _toastTimer.Stop(); // 停止计时器
 
             DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
-            // 缓动效果（可选）
             fadeOut.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn };
 
             InfoToast.BeginAnimation(OpacityProperty, fadeOut);
         }
 
         private DateTime _navKeyPressStartTime = DateTime.MinValue;
-        // 标记是否正在进行连续导航
         private bool _isNavigating = false;
         private int CalculateNavigationGap()
         {
@@ -644,13 +592,10 @@ namespace TabPaint
                 return string.Format(LocalizationManager.GetString("L_Format_Size_KB"), bytes / 1024.0);
             return string.Format(LocalizationManager.GetString("L_Format_Size_MB"), bytes / 1024.0 / 1024.0);
         }
-
-
         private void ShowNextImage()
         {
             MoveImageIndex(1);
         }
-
         private void ShowPrevImage()
         {
             MoveImageIndex(-1);
@@ -658,9 +603,7 @@ namespace TabPaint
         private void MoveImageIndex(int direction) // direction: 1 or -1
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0||FileTabs==null) return;
-         //   a.s(FileTabs.Count);
             if (FileTabs.Count<2) return;
-            // 清理和保存逻辑 (保持原有逻辑)
             _router.CleanUpSelectionandShape();
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
@@ -669,14 +612,10 @@ namespace TabPaint
                 _isEdited = false;
             }
 
-            // --- 核心修改：获取动态步长 ---
             int gap = CalculateNavigationGap();
             int actualStep = gap * direction;
-
-            // 计算新索引
             int newIndex = _currentImageIndex + actualStep;
 
-            // 处理循环逻辑 (使用取模运算更简洁，但也可用 if/else)
             if (newIndex >= _imageFiles.Count)
             {
                 newIndex = newIndex % _imageFiles.Count; // 循环回到开头附近
@@ -684,7 +623,6 @@ namespace TabPaint
             }
             else if (newIndex < 0)
             {
-                // 处理负数取模 (C# % 操作符对负数结果为负)
                 newIndex = (_imageFiles.Count + (newIndex % _imageFiles.Count)) % _imageFiles.Count;
                 if (gap == 1) ShowToast("L_Toast_LastImage");
             }
@@ -724,11 +662,8 @@ namespace TabPaint
         {
             if (files == null || files.Length == 0) return;
 
-            // 1. 确定插入位置
             int insertIndex = _imageFiles.Count; // 默认插到最后
             int uiInsertIndex = FileTabs.Count;
-
-            // 如果当前有选中的 Tab，且不是新建的空文件，则插在它后面
             if (_currentTabItem != null && !_currentTabItem.IsNew)
             {
                 int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
@@ -745,11 +680,8 @@ namespace TabPaint
             {
                 // 去重检查
                 if (_imageFiles.Contains(file)) continue;
-
-                // 2. 插入到底层数据源 _imageFiles
                 _imageFiles.Insert(insertIndex + addedCount, file);
 
-                // 3. 插入到 UI 列表 FileTabs
                 var newTab = new FileTabItem(file);
                 newTab.IsLoading = true;
 
@@ -769,17 +701,14 @@ namespace TabPaint
             {
                 // 更新 Slider 范围
                 ImageFilesCount = _imageFiles.Count;
-                SetPreviewSlider(); // 假设你有这个方法更新 ImageBar Slider
+                SetPreviewSlider(); 
 
-                // 4. 自动切换到第一张新加入的图片
                 if (firstNewTab != null)
                 {
                     if (_currentTabItem != null) _currentTabItem.IsSelected = false;
 
                     firstNewTab.IsSelected = true;
                     _currentTabItem = firstNewTab;
-
-                    // 调用你原本的打开逻辑
                     await OpenImageAndTabs(firstNewTab.FilePath);
 
                     // 滚动 ImageBar
@@ -838,19 +767,14 @@ namespace TabPaint
             if (BackgroundImage == null) return; // 防止空引用
 
             var settings = TabPaint.SettingsManager.Instance.Current;
-            // 注意：设置里是 0-100，这里除以 100 转为倍率
             double threshold = (IsViewMode ? settings.ViewInterpolationThreshold : settings.PaintInterpolationThreshold) / 100.0;
-
-            // 核心逻辑：只要当前缩放 >= 阈值，就用邻近插值（像素风），否则用线性插值（模糊平滑）
             if (zoomscale >= threshold)
             {
                 if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.NearestNeighbor) RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
-
             }
             else
             {
                 if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.Linear) RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
-
             }
         }
 
@@ -886,14 +810,10 @@ namespace TabPaint
             {
                 _isPanning = false;
                 ScrollContainer.ReleaseMouseCapture();
-
-                // 【修改点】恢复张开手光标
                 SetViewCursor(false);
             }
 
             if (_isLoadingImage) return;
-
-            // ... 原有的画图模式逻辑 ...
             if (!IsViewMode)
             {
                 // 确保画图模式下没有残留的 OverrideCursor
@@ -940,7 +860,6 @@ namespace TabPaint
         {
             if (targetTab == null || targetTab == _currentTabItem) return;
 
-            // 1. 暂存数据
             IsTransferringSelection = true;
             _transferSelectionData = selectionData;
             _transferWidth = width;
@@ -972,10 +891,6 @@ namespace TabPaint
                 {
                     _router.SetTool(st);
                 }
-
-                // ================== 【核心修复代码】 ==================
-                // 强制清除工具中残留的“上一张图”的选区数据
-                // 防止 InsertImageAsSelection 里的 CommitSelection 把旧数据印在画布上
                 st._selectionData = null;
                 st._selectionRect = new Int32Rect(0, 0, 0, 0);
 
@@ -985,12 +900,8 @@ namespace TabPaint
                     _ctx.SelectionPreview.Visibility = Visibility.Collapsed;
                     _ctx.SelectionPreview.Source = null;
                 }
-                // ======================================================
-
-                // 2. 插入新图片（带画布扩容）
                 st.InsertImageAsSelection(_ctx, bmp, expandCanvas: true);
 
-                // 3. 强制进入拖拽状态
                 st.ForceDragState();
 
                 NotifyCanvasChanged();
@@ -1019,7 +930,5 @@ namespace TabPaint
                 CheckFittoWindow();
             }
         }
-
-
     }
 }

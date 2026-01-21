@@ -46,7 +46,6 @@ namespace TabPaint
 
                     // --- 2. 尝试读取 EXIF 元数据 ---
                     using var ms = new MemoryStream(imageBytes);
-                    // 这里使用 BitmapCreateOptions.PreservePixelFormat 以尽可能保留原始信息，虽不影响 Metadata 读取
                     var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
 
                     if (decoder.Frames[0].Metadata is BitmapMetadata metadata)
@@ -58,8 +57,6 @@ namespace TabPaint
                         if (!string.IsNullOrEmpty(metadata.CameraManufacturer)) device += metadata.CameraManufacturer + " ";
                         if (!string.IsNullOrEmpty(metadata.CameraModel)) device += metadata.CameraModel;
                         if (!string.IsNullOrEmpty(device)) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Device_Format"), device.Trim()));
-
-                        // --- 核心摄影参数 (修复数值解析) ---
 
                         var expVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33434}");
                         if (expVal != null)
@@ -74,7 +71,6 @@ namespace TabPaint
                             }
                         }
 
-                        // 2. 光圈值 (FNumber) - ID: 33437
                         var fVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33437}");
                         if (fVal != null)
                         {
@@ -82,12 +78,9 @@ namespace TabPaint
                             if (fNum > 0) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_FNumber_Format"), fNum));
                         }
 
-                        // 3. ISO 速度 - ID: 34855 (通常直接是 Short/UShort)ssssssssssssss
                         var iso = TryGetQuery(metadata, "/app1/ifd/exif/{uint=34855}");
                         if (iso != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_ISO_Format"), iso));
 
-                        // 4. 曝光补偿 (ExposureBiasValue) - ID: 37380
-                        // 注意：这是有符号分数 (SRATIONAL)，可以为负
                         var biasVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37380}");
                         if (biasVal != null)
                         {
@@ -96,8 +89,6 @@ namespace TabPaint
                             string biasStr = bias == 0 ? "0" : (bias > 0 ? $"+{bias:0.##}" : $"{bias:0.##}");
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Bias_Format"), biasStr));
                         }
-
-                        // 5. 焦距 (FocalLength) - ID: 37386
                         var focalVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37386}");
                         if (focalVal != null)
                         {
@@ -105,7 +96,6 @@ namespace TabPaint
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Focal_Format"), focal));
                         }
 
-                        // 6. 35mm等效焦距 - ID: 41989 (通常是 Short)
                         var focal35 = TryGetQuery(metadata, "/app1/ifd/exif/{uint=41989}");
                         if (focal35 != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Focal35_Format"), focal35));
 
@@ -129,8 +119,6 @@ namespace TabPaint
                         if (!string.IsNullOrEmpty(metadata.ApplicationName))
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Software_Format"), metadata.ApplicationName));
 
-                        // Date Taken
-                        // [Localized] Date: {0}
                         if (!string.IsNullOrEmpty(metadata.DateTaken))
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Date_Format"), metadata.DateTaken));
 
@@ -154,9 +142,6 @@ namespace TabPaint
                 }
             });
         }
-
-        // --- 辅助方法区 ---
-
         private object TryGetQuery(BitmapMetadata metadata, string query)
         {
             try { if (metadata.ContainsQuery(query)) return metadata.GetQuery(query); } catch { }
@@ -168,21 +153,18 @@ namespace TabPaint
         {
             if (value == null) return 0;
 
-            // 情况1: WPF 已经将其解析为 ulong (也就是那串巨大的数字)
             if (value is ulong raw)
             {
                 uint numerator = (uint)(raw & 0xFFFFFFFF); // 低32位是分子
                 uint denominator = (uint)(raw >> 32);      // 高32位是分母
                 return denominator == 0 ? 0 : (double)numerator / denominator;
             }
-            // 情况2: 有时是 long
             if (value is long rawLong)
             {
                 uint numerator = (uint)(rawLong & 0xFFFFFFFF);
                 uint denominator = (uint)(rawLong >> 32);
                 return denominator == 0 ? 0 : (double)numerator / denominator;
             }
-            // 情况3: 某些解码器直接返回 double
             if (value is double d) return d;
 
             return 0;

@@ -59,17 +59,11 @@ namespace TabPaint
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
-
-        // --- 核心逻辑 ---
-
-        // 滑块 -> 数值 (非线性映射: -1~1 => 0.1x~10x)
-        // 0点对应1倍。
         private double SliderToScale(double sliderValue)
         {
             return Math.Pow(10, sliderValue);
         }
 
-        // 数值 -> 滑块
         private double ScaleToSlider(double scale)
         {
             if (scale <= 0) return -1;
@@ -106,15 +100,12 @@ namespace TabPaint
             if (_isUpdating) return;
             _isUpdating = true;
 
-            // 1. 基础钳制：宽度不能超过最大值
             if (newWidth > MaxPixelSize) newWidth = MaxPixelSize;
 
-            // 2. 长宽比联动检查
             if (AspectRatioToggle.IsChecked == true)
             {
                 int calculatedHeight = (int)Math.Round(newWidth / _originalRatio);
 
-                // 3. 【关键】如果算出的高度超标，需要以高度为限制反推宽度
                 if (calculatedHeight > MaxPixelSize)
                 {
                     calculatedHeight = MaxPixelSize;
@@ -126,7 +117,6 @@ namespace TabPaint
                 HeightSlider.Value = ScaleToSlider((double)calculatedHeight / _originalHeight);
             }
 
-            // 4. 更新宽度相关 UI
             ImageWidth = newWidth;
             double scale = (double)newWidth / _originalWidth;
 
@@ -134,30 +124,20 @@ namespace TabPaint
             {
                 WidthSlider.Value = ScaleToSlider(scale);
             }
-
-            // 如果是用户输入的数字超标被钳制了，这里会把 TextBox 里的字变回 16384
-            // fromSlider 时也要更新 Text，防止 Slider 拖到顶显示 20000 但实际是 16384
             WidthTextBox.Text = newWidth.ToString();
 
             UpdateInfoText();
             _isUpdating = false;
         }
-
-        // 统一处理高度变更
         private void OnHeightChanged(int newHeight, bool fromSlider)
         {
             if (_isUpdating) return;
             _isUpdating = true;
-
-            // 1. 基础钳制
             if (newHeight > MaxPixelSize) newHeight = MaxPixelSize;
 
-            // 2. 长宽比联动
             if (AspectRatioToggle.IsChecked == true)
             {
                 int calculatedWidth = (int)Math.Round(newHeight * _originalRatio);
-
-                // 3. 【关键】如果算出的宽度超标，以宽度为限反推高度
                 if (calculatedWidth > MaxPixelSize)
                 {
                     calculatedWidth = MaxPixelSize;
@@ -183,9 +163,6 @@ namespace TabPaint
             UpdateInfoText();
             _isUpdating = false;
         }
-
-        // --- 事件处理 ---
-
         private void WidthSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_isUpdating) return;

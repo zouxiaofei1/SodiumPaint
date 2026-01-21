@@ -28,8 +28,6 @@ namespace TabPaint
 
                 var rect = FloodFill(ctx.Surface, (int)start.X, (int)start.Y, target, ctx.PenColor);
                 ctx.Undo.AddDirtyRect(rect);
-
-                // 结束整笔
                 ctx.Undo.CommitStroke();
                 ctx.IsDirty = true;
             }

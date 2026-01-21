@@ -28,7 +28,6 @@ namespace TabPaint
                 {
                     _filePath = value;
                     OnPropertyChanged(nameof(FilePath));
-                    // 🔥 关键：当路径变了，文件名和显示名自然也变了
                     OnPropertyChanged(nameof(FileName));
                     OnPropertyChanged(nameof(DisplayName));
                 }
@@ -98,7 +97,6 @@ namespace TabPaint
                 set { _isLoading = value; OnPropertyChanged(nameof(IsLoading)); }
             }
 
-            // 🔴 状态：是否修改未保存
             private bool _isDirty;
             public bool IsDirty
             {
@@ -106,7 +104,6 @@ namespace TabPaint
                 set { _isDirty = value; OnPropertyChanged(nameof(IsDirty)); }
             }
 
-            // 🔵 状态：是否是纯新建的内存文件
             private bool _isNew;
             public bool IsNew
             {
@@ -115,7 +112,6 @@ namespace TabPaint
                 {
                     _isNew = value;
                     OnPropertyChanged(nameof(IsNew));
-                    // 🔥 关键：从“新建”变为“非新建”状态时，名字显示逻辑会切换
                     OnPropertyChanged(nameof(DisplayName));
                     OnPropertyChanged(nameof(FileName));
                 }
@@ -138,7 +134,6 @@ namespace TabPaint
                 FilePath = path;
             }
 
-            // 在 MainWindow.cs -> FileTabItem 类内部
             private CancellationTokenSource _loadCts;
             public async Task LoadThumbnailAsync(int containerWidth, int containerHeight)
             {
@@ -248,8 +243,6 @@ namespace TabPaint
                 }
                 finally
                 {
-                    // 只有当任务完成或取消，且当前没有缩略图时，才把 Loading 设为 false
-                    // (防止刚设为 false 又被新的任务设为 true 的闪烁，虽然有了 CTS 这种情况很少)
                     if (!token.IsCancellationRequested)
                         IsLoading = false;
 
@@ -270,9 +263,6 @@ namespace TabPaint
         // 文件总数绑定属性
         public int ImageFilesCount;
         private bool _isInitialLayoutComplete = false;
-        // 这里的 1 表示下一个新建文件的编号
-        
-        // 存储当前会话中被用户手动关闭的图片路径，防止自动滚动时诈尸
         private HashSet<string> _explicitlyClosedFiles = new HashSet<string>();
         private long _currentCanvasVersion = 0;
         private const string VirtualFilePrefix = "::TABPAINT_NEW::";

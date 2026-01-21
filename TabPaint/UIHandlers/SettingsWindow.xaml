@@ -14,8 +14,6 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
-                <!-- 确保 App.xaml 中已经合并了 LightTheme.xaml，否则这里可能需要单独引用，
-                     但通常由App全局管理，这里只需引用 SubWindowStyles -->
             </ResourceDictionary.MergedDictionaries>
             <local:NonLinearConverter x:Key="NonLinearConverter"/>
             <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
@@ -31,10 +29,6 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
-
-        <!-- 左侧导航 -->
-        <!-- Background: #F0F0F0 -> ChromeMediumBrush -->
-        <!-- BorderBrush: #E5E5E5 -> BorderBrush (稍微深一点点，但在深色模式下可见性更好) -->
         <Border Grid.Row="0" Grid.Column="0" 
                 Background="{DynamicResource ChromeMediumBrush}" 
                 BorderBrush="{DynamicResource BorderBrush}" 
@@ -83,7 +77,6 @@
         </Border>
 
         <!-- 右侧内容区 -->
-        <!-- Background: White -> WindowBackgroundBrush -->
         <Border Grid.Row="0" Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}">
 
             <ScrollViewer Style="{StaticResource FluentScrollViewer}" Padding="0" Margin="0" 
@@ -103,7 +96,6 @@
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="{DynamicResource L_Settings_General_AutoLoadFolderImages_Title}"/>
-                                <!-- Foreground: Gray -> TextTertiaryBrush -->
                                 <TextBlock Text="{DynamicResource L_Settings_General_AutoLoadFolderImages_Desc}" 
                                            Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
                             </StackPanel>
@@ -129,8 +121,6 @@
                                       IsChecked="{Binding Path=Current.StartInViewMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                                       VerticalAlignment="Center"/>
                         </Grid>
-
-                        <!-- 分隔线 Background: #EEEEEE -> BorderLightBrush -->
                         <Separator Margin="0,10,0,10" Background="{DynamicResource BorderLightBrush}"/>
 
                         <Grid Margin="0,5">
@@ -233,28 +223,28 @@
                                         </Setter>
                                     </Style>
                                 </ItemsControl.Resources>
-                             
-                     
+
+
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
                      Command="{Binding SetColorCommand}" CommandParameter="#0078D4"/>
-                    
+
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
                      Command="{Binding SetColorCommand}" CommandParameter="#9333EA"/>
-                      
+
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
                      Command="{Binding SetColorCommand}" CommandParameter="#107C10"/>
-                      
+
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
                      Command="{Binding SetColorCommand}" CommandParameter="#D13438"/>
-                        
+
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
                      Command="{Binding SetColorCommand}" CommandParameter="#E3008C"/>
-             
+
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
                      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
                      Command="{Binding SetColorCommand}" CommandParameter="#505050"/>
@@ -262,17 +252,13 @@
      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FF8C00}"
      Command="{Binding SetColorCommand}" CommandParameter="#FF8C00"/>
 
-                                <!-- 2. 青色 (Teal/Cyan) - 清新、科技感强，类似 Windows 默认风格之一 -->
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#00B294"
      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#00B294}"
      Command="{Binding SetColorCommand}" CommandParameter="#00B294"/>
 
-                                <!-- 3. 靛青色 (Indigo/Blue Violet) - 沉稳、专业，比现有紫色更偏蓝 -->
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#4F46E5"
      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#4F46E5}"
      Command="{Binding SetColorCommand}" CommandParameter="#4F46E5"/>
-
-                                <!-- 4. 金黄色 (Gold/Amber) - 高亮、醒目，用于强调特定重要性 -->
                                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
      IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
      Command="{Binding SetColorCommand}" CommandParameter="#FFB900"/>
@@ -478,6 +464,15 @@
                                 <TextBlock Text="{DynamicResource L_Settings_Shortcuts_FullScreen}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.FullScreen], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Minimize}" VerticalAlignment="Center"/>
+                                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.ToggleMinimize], Source={x:Static local:SettingsManager.Instance}}"/>
+                            </Grid>
+
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="180"/>
@@ -800,7 +795,6 @@
                                     VerticalAlignment="Center"
                                     Value="{Binding Path=Current.ViewInterpolationThreshold, Converter={StaticResource NonLinearConverter}, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
 
-                            <!-- 输入框通常需要自定义Style，或者手动设置其颜色，这里假设有全局样式 -->
                             <TextBox Grid.Column="2" 
                                      Text="{Binding Path=Current.ViewInterpolationThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0}, Source={x:Static local:SettingsManager.Instance}}"
                                      LostFocus="TextBox_LostFocus"
@@ -864,8 +858,6 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
-                            <!-- 恢复出厂设置按钮重构：去掉了硬编码的背景色，改为边框风格 -->
                             <Button Content="{DynamicResource L_Settings_Advanced_FactoryReset}" Width="120" Height="32" 
                                     HorizontalAlignment="Left" Click="FactoryReset_Click"
                                     Background="{DynamicResource ButtonBackgroundBrush}" 
@@ -903,8 +895,6 @@
                             <TextBlock Text="{DynamicResource L_Settings_About_Stack}" Foreground="{DynamicResource TextTertiaryBrush}"/>
                             <TextBlock Text=".NET WPF, Win32 API" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
-
-                        <!-- 新增：链接区域 -->
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
                         <TextBlock Margin="0,6" FontSize="14">
@@ -915,7 +905,6 @@
                         </TextBlock>
 
                         <TextBlock Margin="0,6" FontSize="14">
-                            <!-- 链接到 Releases 页面 -->
                             <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
                                 <Run Text="&#xE895; " FontFamily="Segoe MDL2 Assets"/> <!-- Sync/Update Icon style -->
                                 <Run Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
@@ -923,8 +912,7 @@
                         </TextBlock>
 
                         <TextBlock Margin="0,6" FontSize="14">
-                            <!-- 帮助链接留空，使用特殊协议头标记或在代码中拦截 -->
-                            <Hyperlink NavigateUri="cmd://help" RequestNavigate="Hyperlink_RequestNavigate">
+                            <Hyperlink NavigateUri="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" RequestNavigate="Hyperlink_RequestNavigate">
                                 <Run Text=" " FontFamily="Segoe MDL2 Assets"/> <!-- Help Icon style -->
                                 <Run Text="{DynamicResource L_Settings_About_Help}"/>
                             </Hyperlink>
@@ -934,16 +922,11 @@
                 </Grid>
             </ScrollViewer>
         </Border>
-
-        <!-- 底部栏 -->
-        <!-- Background: #F3F3F3 -> PanelBackgroundBrush -->
-        <!-- BorderBrush: #E5E5E5 -> BorderBrush -->
         <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
                 Background="{DynamicResource PanelBackgroundBrush}" 
                 BorderBrush="{DynamicResource BorderBrush}" 
                 BorderThickness="0,1,0,0">
             <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="24,0">
-                <!-- Foreground: #888888 -> TextTertiaryBrush -->
                 <TextBlock DockPanel.Dock="Left" Text="{Binding ProgramVersion}" 
                            Foreground="{DynamicResource TextTertiaryBrush}" 
                            VerticalAlignment="Center" FontSize="12"/>

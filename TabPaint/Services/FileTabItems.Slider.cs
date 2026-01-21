@@ -21,8 +21,6 @@ namespace TabPaint
         public partial class FileTabItem : INotifyPropertyChanged
         {  // 当滑块拖动时触发
            
-
-
         }
         private bool _isSyncingSlider = false; // 防止死循环
         private bool _isUpdatingUiFromScroll = false;
@@ -65,9 +63,6 @@ namespace TabPaint
                 double requiredWidth = _imageFiles.Count * itemWidth;
                 bool needSlider = requiredWidth > (viewportWidth + 5);
 
-                // --- 修改开始 ---
-
-                // 强制保持可见，无论是否需要滑动
                 if (MainImageBar.Slider.Visibility != Visibility.Visible)
                 {
                     MainImageBar.Slider.Visibility = Visibility.Visible;
@@ -77,8 +72,6 @@ namespace TabPaint
                 {
                     // 不需要滑动时，禁用控件
                     MainImageBar.Slider.IsEnabled = false;
-
-                    // 归零（可选，看你喜好，归零会让滑块回到顶部）
                      MainImageBar.Slider.Value = 0; 
                 }
                 else
@@ -86,8 +79,6 @@ namespace TabPaint
                     // 需要滑动时，启用控件
                     MainImageBar.Slider.IsEnabled = true;
                     MainImageBar.Slider.Maximum = Math.Max(0, _imageFiles.Count - 1);
-
-                    // ...原有逻辑保持不变...
                     if (FileTabs.Count > 0 && !_isSyncingSlider)
                     {
                         var firstTab = FileTabs[0];
@@ -110,15 +101,11 @@ namespace TabPaint
                         }
                     }
                 }
-                // --- 修改结束 ---
-
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
         private void CleanupOffScreenTabs(double itemWidth, double viewportWidth)
         {
-            if (FileTabs.Count <= 40) return; // 阈值：保持一定数量的缓存，少于这个数不清理
-
-            // 获取当前 ScrollViewer 的偏移位置
+            if (FileTabs.Count <= 40) return; 
             double currentOffset = MainImageBar.Scroller.HorizontalOffset;
 
             // 计算当前视野内的第一个 Item 的索引（相对于 FileTabs 集合）
@@ -165,13 +152,9 @@ namespace TabPaint
             if (_isProgrammaticScroll) return;   
             if (!_isInitialLayoutComplete) return;
             if (e == null) return;
-            double itemWidth = 124; // 请确保这与 XAML 中 Tab 的实际宽度(包含Margin)一致
-         
-            // 1. 计算当前视图内可见的 Tab 范围（局部索引）
+            double itemWidth = 124; 
             int firstLocalIndex = (int)(MainImageBar.Scroller.HorizontalOffset / itemWidth);
             int visibleCount = (int)(MainImageBar.Scroller.ViewportWidth / itemWidth) + 2;
-
-            // 2. 【核心修复】使用线性映射实现均匀滚动
             if (!_isSyncingSlider && !_isWheelScrollingSlider && _imageFiles.Count > 0 && FileTabs.Count > 0)
             {
                 _isUpdatingUiFromScroll = true;
@@ -184,15 +167,11 @@ namespace TabPaint
                     // 计算当前窗口能完整显示多少张图片 (浮点数，例如能显示 5.5 张)
                     double visibleItemsCount = viewportWidth / itemWidth;
 
-                    // B. 计算“视野左边缘”的全局精确索引
-                    // 先找到当前加载的第一个 Tab 在全局列表里的位置
                     var firstTab = FileTabs[0];
                     int firstTabGlobalIndex = _imageFiles.IndexOf(firstTab.FilePath);
 
                     if (firstTabGlobalIndex >= 0)
                     {
-                        // 加上当前的物理滚动偏移量 (转换为 item 单位)
-                        // currentLeftGlobalIndex 代表：屏幕最左侧的那条像素线，对应的是第几张图
                         double currentLeftGlobalIndex = firstTabGlobalIndex + (MainImageBar.Scroller.HorizontalOffset / itemWidth);
 
                         double maxLeftGlobalIndex = totalCount - visibleItemsCount;
@@ -240,13 +219,12 @@ namespace TabPaint
                         {
                             FileTabs.Add(CreateTabFromPath(path));
                         }
-                        // --- [修改部分 END] ---
                     }
                     needLoadThumbnail = true;
                 }
             }
 
-            // 4. 【向前加载】逻辑优化 (Load Previous)
+            //向前加载
             if (firstLocalIndex < 3 && FileTabs.Count > 0)
             {
                 var firstTab = FileTabs[0];
@@ -254,7 +232,6 @@ namespace TabPaint
 
                 if (firstFileIndex > 0)
                 {
-                    // ... [保留计算 takeCount 的代码] ...
                     int takeCount = PageSize;
                     int start = Math.Max(0, firstFileIndex - takeCount);
                     int actualTake = firstFileIndex - start;
@@ -266,13 +243,11 @@ namespace TabPaint
                         int insertCount = 0;
                         foreach (var path in prevPaths)
                         {
-                            // --- [修改部分 START] ---
                             if (!FileTabs.Any(t => t.FilePath == path) && !_explicitlyClosedFiles.Contains(path))
                             {
                                 FileTabs.Insert(0, CreateTabFromPath(path));
                                 insertCount++;
                             }
-                            // --- [修改部分 END] ---
                         }
 
                         if (insertCount > 0)
@@ -320,8 +295,6 @@ namespace TabPaint
             }
         }
         private System.Windows.Threading.DispatcherTimer _sliderDebounceTimer;
-
-        // 在构造函数或 Window_Loaded 中初始化
         private void InitDebounceTimer()
         {
             _sliderDebounceTimer = new System.Windows.Threading.DispatcherTimer();
@@ -419,8 +392,6 @@ namespace TabPaint
                 _isDragging = false;
                 var slider = (Slider)sender;
                 slider.ReleaseMouseCapture();
-
-                // 停止 Timer，立即执行一次，确保最后停下的位置一定被加载
                 _sliderDebounceTimer?.Stop();
                 OnSliderDebounceTick(null, null);
 
@@ -472,7 +443,7 @@ namespace TabPaint
                 if (int.TryParse(numPart, out int num))
                 {
                     newTab.UntitledNumber = num;
-                    newTab.Id = $"Virtual_{num}"; // 关键：恢复确定性 ID
+                    newTab.Id = $"Virtual_{num}"; 
                 }
 
                 // 2. 检查是否有缓存文件（恢复内容）
@@ -516,8 +487,6 @@ namespace TabPaint
             if (ratio > 0.99) val = slider.Maximum;
             if (ratio < 0.01) val = slider.Minimum;
             slider.Value = val;
-
-            // 【删除】不要在这里调用 OpenImageAndTabs，会和 ValueChanged 冲突！
         }
         private bool IsMouseOverThumb(MouseButtonEventArgs e)/// 检查鼠标事件的原始源是否是 Thumb 或其内部的任何元素。
         {
