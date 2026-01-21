@@ -111,7 +111,7 @@ namespace TabPaint
                         if (settings.IsFirstRun)
                         {
                             // 获取 exe 同级目录下的欢迎图片路径
-                            string welcomePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Welcome_zh_cn.png");
+                            string welcomePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Welcome_zh_cn.jpg");
 
                             if (File.Exists(welcomePath))
                             {
