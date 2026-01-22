@@ -385,11 +385,10 @@ namespace TabPaint
             _router.CleanUpSelectionandShape();
             if (!IsVcRedistInstalled())
             {
-                var result = System.Windows.MessageBox.Show(
+                var result = FluentMessageBox.Show(
                     LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Content"),
                     LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Title"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    MessageBoxButton.YesNo);
 
                 if (result == MessageBoxResult.Yes)
                 {

@@ -629,7 +629,8 @@ namespace TabPaint
         {
             // 1. 初始进度 (假设元数据和缩略图已完成)
             double currentProgress = 5.0;
-            progressCallback($"正在加载 {currentProgress:0}%");
+            string loadingFormat = LocalizationManager.GetString("L_Progress_Loading_Format");
+            progressCallback(string.Format(loadingFormat, (int)currentProgress));
             int performanceScore = PerformanceScore; // 假设这是之前定义的全局静态变量
             if (performanceScore <= 0) performanceScore = 5; // 默认值
 
@@ -649,7 +650,7 @@ namespace TabPaint
                     if (currentProgress > 99) currentProgress = 99;
 
                     // 回调更新 UI
-                    progressCallback($"正在加载 {(int)currentProgress}%");
+                    progressCallback(string.Format(loadingFormat, (int)currentProgress));
                 }
             }
             catch (TaskCanceledException)

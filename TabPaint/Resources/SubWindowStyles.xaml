@@ -881,4 +881,180 @@
     <ControlTemplate x:Key="TransparentRepeatButtonTemplate" TargetType="RepeatButton">
         <Border Background="Transparent"/>
     </ControlTemplate>
+
+    <Style x:Key="Win11ContextMenuStyle" TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource ChromeLowBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+
+        <!-- 增加阴影效果 (之前可能写在 Popup 或 Border 上) -->
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
+            </Setter.Value>
+        </Setter>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <!-- ✅ 正确：直接写 Border，不要外包 Popup -->
+                    <Border CornerRadius="8" 
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}">
+
+                        <!-- 加上滚动条以防菜单太长 -->
+                        <ScrollViewer Style="{DynamicResource FluentScrollViewer}" VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
+                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- Win11 风格 MenuItem 样式 -->
+    <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="6,0,6,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Grid>
+                        <!-- 主体背景 -->
+                        <Border x:Name="Bg" 
+                            Background="Transparent" 
+                            CornerRadius="4" 
+                            Margin="4,2" 
+                            SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32" SharedSizeGroup="IconGroup"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="ShortcutGroup"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 勾选标记 -->
+                                <Viewbox x:Name="CheckMark" 
+                                     Grid.Column="0" 
+                                     Width="14" Height="14" 
+                                     Visibility="Collapsed" 
+                                     VerticalAlignment="Center" 
+                                     HorizontalAlignment="Center">
+                                    <Path Data="M2,8 L6,12 L14,3" 
+                                      Stroke="{TemplateBinding Foreground}" 
+                                      StrokeThickness="2" 
+                                      StrokeStartLineCap="Round" 
+                                      StrokeEndLineCap="Round" 
+                                      StrokeLineJoin="Round"
+                                      Fill="Transparent"/>
+                                </Viewbox>
+
+                                <!-- 图标 -->
+                                <ContentPresenter x:Name="Icon" 
+                                              Grid.Column="0"
+                                              ContentSource="Icon" 
+                                              Margin="5,0" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Center"/>
+
+                                <!-- 标题 -->
+                                <ContentPresenter Grid.Column="1" 
+                                              ContentSource="Header" 
+                                              VerticalAlignment="Center" 
+                                              Margin="8,0,20,0"/>
+
+                                <!-- 快捷键 -->
+                                <TextBlock Grid.Column="2" 
+                                       Text="{TemplateBinding InputGestureText}" 
+                                       VerticalAlignment="Center" 
+                                       Foreground="{DynamicResource TextTertiaryBrush}" 
+                                       Margin="10,0,10,0" 
+                                       FontSize="11"/>
+
+                                <!-- 子菜单箭头 -->
+                                <TextBlock x:Name="RightArrow" 
+                                       Grid.Column="3"
+                                       Text="&#xE76C;" 
+                                       FontFamily="Segoe MDL2 Assets" 
+                                       FontSize="10"
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,8,0"
+                                       Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- 子菜单弹出层 -->
+                        <Popup x:Name="PART_Popup"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           HorizontalOffset="-2" 
+                           VerticalOffset="-4"
+                           IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                           Placement="Right"
+                           PopupAnimation="{DynamicResource {x:Static SystemParameters.MenuPopupAnimationKey}}">
+
+                            <Border Background="{DynamicResource ChromeLowBrush}" 
+                                BorderBrush="{DynamicResource BorderLightBrush}" 
+                                BorderThickness="1" 
+                                CornerRadius="8" 
+                                Padding="2"  TextElement.Foreground="{DynamicResource TextPrimaryBrush}">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
+                                </Border.Effect>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" PanningMode="Both">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
+                                                Grid.IsSharedSizeScope="True" 
+                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
+                        <!-- 鼠标悬停: 使用极淡的背景 -->
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleSelectedBrush}"/>
+                        </Trigger>
+
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="RightArrow" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- 分隔条样式 -->
+    <Style x:Key="Win11MenuSeparatorStyle" TargetType="Separator">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="4,4,4,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{DynamicResource BorderLightBrush}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

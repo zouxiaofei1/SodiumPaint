@@ -95,7 +95,7 @@ namespace TabPaint
                     ms.Seek(0, SeekOrigin.Begin);
 
                     var randomAccessStream = ms.AsRandomAccessStream();
-                    var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(randomAccessStream);
+                    var decoder = await global::Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(randomAccessStream);
 
                     // 获取 SoftwareBitmap
                     using (var softwareBitmap = await decoder.GetSoftwareBitmapAsync())

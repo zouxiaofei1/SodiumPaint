@@ -1,0 +1,73 @@
+﻿<Window x:Class="TabPaint.Windows.StickyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="StickyNote" Height="300" Width="400"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseDoubleClick="Window_MouseDoubleClick"
+        MouseWheel="Window_MouseWheel">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <!-- 将 ContextMenu 加在这个 Border 上 -->
+        <Border x:Name="MainBorder" 
+                BorderBrush="#40808080" BorderThickness="1" Background="#01FFFFFF">
+
+            <Border.ContextMenu>
+                <!-- 应用 Win11 样式 -->
+                <ContextMenu Style="{DynamicResource Win11ContextMenuStyle}">
+
+                    <!-- 置顶选项 (默认为选中，因为窗口初始化是 TopMost=True) -->
+                    <MenuItem Header="{DynamicResource L_Stick_TopMost}" 
+                              IsCheckable="True" 
+                              IsChecked="True"
+                              Click="OnTopMostClick"
+                              Style="{DynamicResource Win11MenuItemStyle}"/>
+
+                    <!-- 透明度子菜单 -->
+                    <MenuItem Header="{DynamicResource L_Stick_Opacity}" 
+                              Style="{DynamicResource Win11MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE793;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                        </MenuItem.Icon>
+                        <MenuItem Header="100%" Tag="1.0" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
+                        <MenuItem Header="80%"  Tag="0.8" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
+                        <MenuItem Header="60%"  Tag="0.6" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
+                        <MenuItem Header="40%"  Tag="0.4" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
+                        <MenuItem Header="20%"  Tag="0.2" Click="OnOpacityChangeClick" Style="{DynamicResource Win11MenuItemStyle}"/>
+                    </MenuItem>
+
+                    <!-- 重置缩放 (实用小功能) -->
+                    <MenuItem Header="{DynamicResource L_Stick_ResetScale}" 
+                              Click="OnResetScaleClick"
+                              Style="{DynamicResource Win11MenuItemStyle}"/>
+
+                    <Separator Style="{DynamicResource Win11MenuSeparatorStyle}"/>
+
+                    <!-- 关闭 -->
+                    <MenuItem Header="{DynamicResource L_Stick_Close}" 
+                              Click="OnCloseClick"
+                              InputGestureText="DblClick"
+                              Style="{DynamicResource Win11MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                </ContextMenu>
+            </Border.ContextMenu>
+
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
+            </Border.Effect>
+
+            <Image x:Name="DisplayImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+        </Border>
+    </Grid>
+</Window>

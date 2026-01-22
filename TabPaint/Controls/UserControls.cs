@@ -34,6 +34,7 @@ namespace TabPaint
             MainImageBar.DiscardAllClick += OnDiscardAllClick;
             MainImageBar.PrependTabClick += OnPrependTabClick;
             MainImageBar.NewTabClick += OnNewTabClick;
+            MainImageBar.TabStickImageClick += OnTabStickImageClick;
 
             MainImageBar.FileTabClick += OnFileTabClick;
             MainImageBar.FileTabCloseClick += OnFileTabCloseClick;
@@ -68,6 +69,7 @@ namespace TabPaint
             MainMenu.OpenWorkspaceClick += OnOpenWorkspaceClick;
             MainMenu.SaveClick += OnSaveClick;
             MainMenu.SaveAsClick += OnSaveAsClick;
+            MainMenu.NewWindowClick += OnNewWindowClick;
             MainMenu.ExitClick += OnExitClick;
             MainMenu.RecentFileClick += OnRecentFileClick;
             MainMenu.ClearRecentFilesClick += OnClearRecentFilesClick;
@@ -82,7 +84,7 @@ namespace TabPaint
             MainMenu.BlackWhiteClick += OnConvertToBlackAndWhiteClick;
             MainMenu.InvertClick += OnInvertColorsClick;
             MainMenu.AutoLevelsClick += OnAutoLevelsClick;
-
+        
             MainMenu.UndoClick += OnUndoClick;
             MainMenu.RedoClick += OnRedoClick;
             MainMenu.SettingsClick += OnSettingsClick;

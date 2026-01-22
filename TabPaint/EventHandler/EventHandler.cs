@@ -285,6 +285,7 @@ namespace TabPaint
                         break;
                     case Key.A:
                         if (_router.CurrentTool is TextTool tx && tx._textBox != null) break;
+                        if (_router.CurrentTool != _tools.Select) break;
                         _router.SetTool(_tools.Select);
                         SelectTool stSelectAll = _router.GetSelectTool();
                         if (stSelectAll.HasActiveSelection) stSelectAll.CommitSelection(_ctx);

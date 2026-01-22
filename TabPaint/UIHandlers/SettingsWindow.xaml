@@ -47,19 +47,38 @@
                          Margin="0,10,0,0"
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
                     <ListBoxItem Tag="General" IsSelected="True">
-                        <TextBlock Text="{DynamicResource L_Settings_Nav_General}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <!-- 设置图标 -->
+                            <Path Margin="0,0,12,0"  Data="{DynamicResource Settings_General_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Nav_General}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </ListBoxItem>
                     <ListBoxItem Tag="Paint">
-                        <TextBlock Text="{DynamicResource L_Settings_Nav_Paint}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Margin="0,0,12,0"  Data="{DynamicResource Paint_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Nav_Paint}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </ListBoxItem>
                     <ListBoxItem Tag="View">
-                        <TextBlock Text="{DynamicResource L_Settings_Nav_View}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Margin="0,0,12,0"  Data="{DynamicResource View_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Nav_View}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </ListBoxItem>
                     <ListBoxItem Tag="Shortcuts">
-                        <TextBlock Text="{DynamicResource L_Settings_Nav_Shortcuts}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Margin="0,0,12,0"  Data="{DynamicResource Keyboard_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Nav_Shortcuts}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </ListBoxItem>
                     <ListBoxItem Tag="Advanced">
-                        <TextBlock Text="{DynamicResource L_Settings_Nav_Advanced}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Width="16" Height="16" Margin="0,0,12,0" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                  Data="M4.5 2A2.5 2.5 0 0 0 2 4.5v7A2.5 2.5 0 0 0 4.5 14h7a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 11.5 2h-7ZM3 4.5A1.5 1.5 0 0 1 4.5 3h7A1.5 1.5 0 0 1 13 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 11.5v-7ZM5.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5Zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3Z" 
+                                  Stretch="Uniform"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Nav_Advanced}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </ListBoxItem>
                 </ListBox>
                 <ListBox x:Name="BottomListBox" 
@@ -70,7 +89,10 @@
                          Margin="0,0,0,10"
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}">
                     <ListBoxItem Tag="About">
-                        <TextBlock Text="{DynamicResource L_Settings_Nav_About}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Path Margin="0,0,12,0"  Data="{DynamicResource Info_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Nav_About}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </ListBoxItem>
                 </ListBox>
             </Grid>
@@ -741,6 +763,7 @@
                                 BorderThickness="0"
                                 Click="ResetShortcuts_Click"
                                 Cursor="Hand"
+                                 Style="{StaticResource Win11SecondaryButtonStyle}"
                                 Margin="0,0,0,5"/>
                     </StackPanel>
 
@@ -863,6 +886,7 @@
                                     Background="{DynamicResource ButtonBackgroundBrush}" 
                                     Foreground="{DynamicResource DangerBrush}" 
                                     BorderBrush="{DynamicResource DangerBrush}"
+                                     Style="{StaticResource Win11SecondaryButtonStyle}"
                                     BorderThickness="1"/>
 
                             <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Advanced_FactoryReset_Button}" 
@@ -873,52 +897,143 @@
                     </StackPanel>
 
                     <!-- 6. 关于页 -->
+                    <!-- 6. 关于页 -->
                     <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24,24,44,24">
-                        <TextBlock Text="{DynamicResource L_Settings_About_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,24" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
-                        <Image x:Name="AppIcon" 
-                               Source="pack://application:,,,/Resources/TabPaint.ico" 
-                               Width="64" Height="64" 
-                               HorizontalAlignment="Left" 
-                               RenderOptions.BitmapScalingMode="HighQuality"
-                               Margin="0,0,0,16"/>
+                        <!-- 顶部信息区域 -->
+                        <Border Background="Transparent" 
+            HorizontalAlignment="Center"
+            MaxWidth="400">
 
-                        <TextBlock Text="TabPaint" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{DynamicResource L_Settings_About_Subtitle}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,4,0,24"/>
+                            <StackPanel HorizontalAlignment="Center">
 
-                        <StackPanel Orientation="Horizontal" Margin="0,4">
-                            <TextBlock Text="{DynamicResource L_Settings_About_Developer}" Foreground="{DynamicResource TextTertiaryBrush}"/>
-                            <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <!-- 1. 图标 (移除导致偏斜的 Margin，只保留下边距) -->
+                                <Image x:Name="AppIcon" 
+                   Source="pack://application:,,,/Resources/TabPaint.ico" 
+                   Width="84" Height="84" 
+                   HorizontalAlignment="Center" 
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   Margin="0,0,0,16"/>
+
+                                <!-- 2. 应用名称 (移除左边距，确保居中) -->
+                                <TextBlock Text="TabPaint" 
+                       HorizontalAlignment="Center"
+                       FontSize="22" 
+                       FontWeight="SemiBold" 
+                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                                <!-- 3. 副标题 (移除左边距，确保居中) -->
+                                <TextBlock Text="{DynamicResource L_Settings_About_Subtitle}" 
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextSecondaryBrush}" 
+                       FontSize="12" 
+                       Margin="0,8,0,16"/>
+
+                                <!-- 4. 开发者与版本号 (徽章样式) -->
+                                <!-- 使用 WrapPanel 或 StackPanel Orientation="Horizontal" 让它们在同一行 -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+
+                                    <!-- 开发者徽章 -->
+                                    <Border Background="#252525" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{DynamicResource L_Settings_About_Developer}" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" FontSize="11"/>
+                                            <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- 版本号徽章 (使用不同的背景色，例如稍微亮一点或带一点品牌色，这里用深灰色示例) -->
+                                    <Border Background="#333333" CornerRadius="4" Padding="8,4">
+                                        <StackPanel Orientation="Horizontal">
+                                  
+                                            <TextBlock Text="Ver." Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" FontSize="11"/>
+                                            <TextBlock Text="{Binding ProgramVersion}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 分割线 -->
+                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}" Width="400" HorizontalAlignment="Center"/>
+
+                        <!-- 按钮区域 -->
+                        <StackPanel Margin="0,10,0,0" HorizontalAlignment="Center" Width="300">
+
+                            <!-- 统一样式资源 (保持不变) -->
+                            <StackPanel.Resources>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Height" Value="36"/>
+                                    <Setter Property="Margin" Value="0,0,0,10"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="border" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="border" Property="Background" Value="{DynamicResource ChromeMediumBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                                <Style TargetType="Hyperlink">
+                                    <Setter Property="TextDecorations" Value="None"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </Style>
+                            </StackPanel.Resources>
+
+                            <!-- GitHub 按钮 -->
+                            <Button Cursor="Hand">
+                                <TextBlock>
+                <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint" RequestNavigate="Hyperlink_RequestNavigate">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                        <TextBlock Text="{DynamicResource L_Settings_About_Github}"/>
+                    </StackPanel>
+                </Hyperlink>
+            </TextBlock>
+                            </Button>
+
+                            <!-- 检查更新 按钮 -->
+                            <Button Cursor="Hand">
+                                <TextBlock>
+                <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                        <TextBlock Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
+                    </StackPanel>
+                </Hyperlink>
+            </TextBlock>
+                            </Button>
+
+                            <!-- 帮助文档 按钮 -->
+                            <Button Cursor="Hand">
+                                <TextBlock>
+                <Hyperlink NavigateUri="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" RequestNavigate="Hyperlink_RequestNavigate">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                        <TextBlock Text="{DynamicResource L_Settings_About_Help}"/>
+                    </StackPanel>
+                </Hyperlink>
+            </TextBlock>
+                            </Button>
+
                         </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,4">
-                            <TextBlock Text="{DynamicResource L_Settings_About_Stack}" Foreground="{DynamicResource TextTertiaryBrush}"/>
-                            <TextBlock Text=".NET WPF, Win32 API" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        </StackPanel>
-                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
-
-                        <TextBlock Margin="0,6" FontSize="14">
-                            <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint" RequestNavigate="Hyperlink_RequestNavigate">
-                                <Run Text="&#xE943;" FontFamily="Segoe MDL2 Assets"/> <!-- GitHub/Code Icon style -->
-                                <Run Text="{DynamicResource L_Settings_About_Github}"/>
-                            </Hyperlink>
-                        </TextBlock>
-
-                        <TextBlock Margin="0,6" FontSize="14">
-                            <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
-                                <Run Text="&#xE895; " FontFamily="Segoe MDL2 Assets"/> <!-- Sync/Update Icon style -->
-                                <Run Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
-                            </Hyperlink>
-                        </TextBlock>
-
-                        <TextBlock Margin="0,6" FontSize="14">
-                            <Hyperlink NavigateUri="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" RequestNavigate="Hyperlink_RequestNavigate">
-                                <Run Text=" " FontFamily="Segoe MDL2 Assets"/> <!-- Help Icon style -->
-                                <Run Text="{DynamicResource L_Settings_About_Help}"/>
-                            </Hyperlink>
-                        </TextBlock>
 
                     </StackPanel>
+
                 </Grid>
             </ScrollViewer>
         </Border>

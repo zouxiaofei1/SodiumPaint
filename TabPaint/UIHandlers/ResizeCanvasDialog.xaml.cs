@@ -80,14 +80,32 @@ namespace TabPaint
 
             if (isLimitReached)
             {
-                InfoTextBlock.Text = $"⚠️ 已达到最大尺寸限制 ({MaxPixelSize}px)";
+                InfoTextBlock.Text = string.Format(
+            LocalizationManager.GetString("L_ResizeCanvas_LimitReached"),
+            MaxPixelSize);
                 InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 50, 50)); // 红色警告
             }
             else
             {
-                InfoTextBlock.Text = IsCanvasResizeMode
-                    ? $"画布模式：{ImageWidth} x {ImageHeight}"
-                    : $"缩放: {scale:P0}  |  原始: {_originalWidth} x {_originalHeight}";
+                if (IsCanvasResizeMode)
+                {
+                    // 原始: "画布模式：{ImageWidth} x {ImageHeight}"
+                    InfoTextBlock.Text = string.Format(
+                        LocalizationManager.GetString("L_Info_CanvasMode_Format"),
+                        ImageWidth,
+                        ImageHeight);
+                }
+                else
+                {
+                    // 原始: "缩放: {scale:P0}  |  原始: {_originalWidth} x {_originalHeight}"
+                    // 注意：{0:P0} 会自动根据语言环境处理百分比格式
+                    InfoTextBlock.Text = string.Format(
+                        LocalizationManager.GetString("L_Info_ResampleMode_Format"),
+                        scale,
+                        _originalWidth,
+                        _originalHeight);
+                }
+
 
                 InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136)); // 恢复灰色 #888888
             }
@@ -220,12 +238,11 @@ namespace TabPaint
 
             if (IsCanvasResizeMode)
             {
-                InfoTextBlock.Text = "画布模式：仅改变画布大小，不拉伸图像";
+                InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
             }
             else
             {
-                // AspectRatioToggle.IsChecked = true;
-                InfoTextBlock.Text = "缩放模式：拉伸/压缩图像内容";
+                InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
             }
         }
 

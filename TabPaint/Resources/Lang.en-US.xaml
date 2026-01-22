@@ -245,7 +245,7 @@
 
     <!-- About Section -->
     <sys:String x:Key="L_Settings_About_Title">About TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle">Lightweight painting and image viewing tool</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">Lightweight painting and image viewing tool🖌️</sys:String>
     <sys:String x:Key="L_Settings_About_Developer">Developer:</sys:String>
     <sys:String x:Key="L_Settings_About_Stack">Tech stack:</sys:String>
     <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
@@ -520,5 +520,39 @@
 
     <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(No recent files)</sys:String>
     <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">Clear Recent Files List</sys:String>
+    <sys:String x:Key="L_Stick_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">Close</sys:String>
+    <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">Always on Top</sys:String>
+    <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">Opacity</sys:String>
+    <sys:String x:Key="L_Stick_ResetScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">Reset Scale</sys:String>
+
+    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve" xmlns:sys="clr-namespace:System;assembly=mscorlib">Create a rectangular selection for moving, cropping, or copying. (Ctrl + 1)&#x0a;Drag and drop to Word, browser, desktop, etc.&#x0a;Drag an image onto the canvas to create a selection</sys:String>
+    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">Automatically create a tab include content of screen after screenshot.</sys:String>
+
+    <sys:String x:Key="L_ImgBar_ClearUnedited">Close all unedited images</sys:String>
+    <sys:String x:Key="L_ImgBar_NewTabLeft">New tab on the left</sys:String>
+    <sys:String x:Key="L_Ctx_StickImage">Stick Image</sys:String>
+    <sys:String x:Key="L_Ctx_DeleteFile">Delete File</sys:String>
+
+    <sys:String x:Key="L_Text_Bold">Bold</sys:String>
+    <sys:String x:Key="L_Text_Italic">Italic</sys:String>
+    <sys:String x:Key="L_Text_Underline">Underline</sys:String>
+    <sys:String x:Key="L_Text_Strike">Strikethrough</sys:String>
+    <sys:String x:Key="L_Text_AlignLeft">Align Left</sys:String>
+    <sys:String x:Key="L_Text_AlignCenter">Align Center</sys:String>
+    <sys:String x:Key="L_Text_AlignRight">Align Right</sys:String>
+    <sys:String x:Key="L_Text_OpaqueBackground">Opaque Background</sys:String>
+
+    <sys:String x:Key="L_Toast_OpenUrlFailed">Cannot open link</sys:String>
+    <sys:String x:Key="L_Key_None">None</sys:String>
+    <sys:String x:Key="L_Info_CanvasMode_Format">Canvas Mode: {0} x {1}</sys:String>
+    <sys:String x:Key="L_Info_ResampleMode_Format">Zoom: {0:P0}  |  Original: {1} x {2}</sys:String>
+    <sys:String x:Key="L_Info_DefaultScale">Zoom: 100% (Original Size)</sys:String>
+    <sys:String x:Key="L_Progress_Loading_Format">Loading {0}%</sys:String>
+
+    <!-- StatusBar Tooltips -->
+    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">Monitor Clipboard (Ctrl + Alt + P)</sys:String>
+    <sys:String x:Key="L_StatusBar_FitToWindow">Fit to Window</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomOut">Zoom Out</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomIn">Zoom In</sys:String>
 
 </ResourceDictionary>

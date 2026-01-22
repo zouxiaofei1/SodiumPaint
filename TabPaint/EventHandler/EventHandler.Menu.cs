@@ -19,6 +19,23 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void OnNewWindowClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                MainWindow newWindow = new MainWindow(string.Empty);
+
+                newWindow.Left = this.Left + 20;
+                newWindow.Top = this.Top + 20;
+
+                newWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"{LocalizationManager.GetString("L_Common_Error")}: {ex.Message}");
+            }
+        }
+
         private void OnInvertColorsClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;

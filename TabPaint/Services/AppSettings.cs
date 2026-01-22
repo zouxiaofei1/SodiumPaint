@@ -53,7 +53,7 @@ namespace TabPaint
         {
             get
             {
-                if (Key == Key.None) return "无";
+                if (Key == Key.None) return LocalizationManager.GetString("L_Key_None");
 
                 StringBuilder sb = new StringBuilder();
 

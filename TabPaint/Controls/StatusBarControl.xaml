@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:app="clr-namespace:TabPaint"
              xmlns:local="clr-namespace:TabPaint.Controls"
+             xmlns:behaviors="clr-namespace:TabPaint.Behaviors"
              mc:Ignorable="d" 
              MaxHeight="36"
              Height="36"
@@ -102,7 +103,9 @@
                 <ToggleButton x:Name="ClipboardMonitorToggle"
                       Width="24" Height="24"
                       Margin="4,0,0,0" Padding="0"
-                      ToolTip="监听剪切板 (Ctrl + Alt + P)"
+                      ToolTip="{DynamicResource L_StatusBar_ClipboardMonitor_ToolTip}"
+                      behaviors:AdvancedToolTipBehavior.EnableAdvancedToolTip="True"
+       behaviors:AdvancedToolTipBehavior.DetailedToolTip="{DynamicResource L_ClipboardMonitorToggle_Detail}"
                       Style="{StaticResource RoundedMenuToggleButtonStyle}"
                       DataContext="{Binding Source={x:Static app:SettingsManager.Instance}, Path=Current}"
                       IsChecked="{Binding EnableClipboardMonitor, Mode=TwoWay}"
@@ -116,7 +119,7 @@
 
 
                 <!-- 适应窗口按钮 -->
-                <Button Width="24" Height="24" ToolTip="适应窗口大小" Margin="4,0,6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
+                <Button Width="24" Height="24" ToolTip="{DynamicResource L_StatusBar_FitToWindow}" Margin="4,0,6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
                     <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" 
                           Fill="{DynamicResource IconFillBrush}" 
                           Width="14" Height="14"/>
@@ -140,7 +143,7 @@
                 </ComboBox>
 
                 <!-- 缩小按钮 -->
-                <Button Width="24" Height="24" ToolTip="缩小" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomOutClick" Margin="5,0,5,0" Padding="2,0">
+                <Button Width="24" Height="24" ToolTip="{DynamicResource L_StatusBar_ZoomOut}" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomOutClick" Margin="5,0,5,0" Padding="2,0">
                     <Image Source="{DynamicResource Zoom_Out_Image}" Width="16" Height="16"/>
                 </Button>
                 <!-- 缩放滑块 -->
@@ -152,7 +155,7 @@
                         IsSnapToTickEnabled="False" />
 
                 <!-- 放大按钮 -->
-                <Button Width="24" Height="24" ToolTip="放大" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Margin="5,0,5,0" Padding="2,0">
+                <Button Width="24" Height="24" ToolTip="{DynamicResource L_StatusBar_ZoomIn}" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnZoomInClick" Margin="5,0,5,0" Padding="2,0">
                     <Image Source="{DynamicResource Zoom_In_Image}" Width="16" Height="16"/>
                 </Button>
             </StackPanel>

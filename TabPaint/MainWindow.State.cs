@@ -78,7 +78,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = LocalizationManager.GetString("L_Common_Untitled");
-        public string ProgramVersion { get; set; } = "v0.9.2";
+        public string ProgramVersion { get; set; } = "v0.9.3-beta";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 

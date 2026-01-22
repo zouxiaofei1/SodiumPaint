@@ -464,14 +464,14 @@ namespace TabPaint
 
                     _textBox.PreviewKeyDown += (s, e) =>
                     {
-                        if (e.Key == Key.Delete)
-                        {
-                            CommitText(ctx);
-                            ctx.EditorOverlay.Children.Remove(_textBox);
-                            _textBox = null;
-                            ctx.EditorOverlay.IsHitTestVisible = false;
-                            e.Handled = true;
-                        }
+                        //if (e.Key == Key.Delete)
+                        //{
+                        //    CommitText(ctx);
+                        //    ctx.EditorOverlay.Children.Remove(_textBox);
+                        //    _textBox = null;
+                        //    ctx.EditorOverlay.IsHitTestVisible = false;
+                        //    e.Handled = true;
+                        //}
                     };
 
                     _textBox.Focusable = true;
@@ -575,7 +575,7 @@ namespace TabPaint
 
                 mw.SetUndoRedoButtonState();
                 _textBox = null;
-                lag = 1;
+                lag = 2;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
             private unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx, double globalOpacity)
@@ -865,7 +865,7 @@ namespace TabPaint
 
                 // UI 清理
                 CleanUpUI(ctx);
-                lag = 1;
+                lag = 2;
             }
 
 

@@ -192,7 +192,7 @@
 
     <!-- About -->
     <sys:String x:Key="L_Settings_About_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">关于 TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">轻量级绘画与看图工具</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">轻量级绘画与看图工具🖌️</sys:String>
     <sys:String x:Key="L_Settings_About_Developer" xmlns:sys="clr-namespace:System;assembly=mscorlib">开发者: </sys:String>
     <sys:String x:Key="L_Settings_About_Stack" xmlns:sys="clr-namespace:System;assembly=mscorlib">技术栈: </sys:String>
     <sys:String x:Key="L_Settings_About_Github" xmlns:sys="clr-namespace:System;assembly=mscorlib">GitHub 主页</sys:String>
@@ -288,7 +288,6 @@
     <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：{0} x {1}</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Desc_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：仅改变画布大小，不拉伸图像</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Desc_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放模式：拉伸/压缩图像内容</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_LimitReached" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_TooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸不能超过 {0}像素。</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸必须大于 0</sys:String>
 
@@ -516,5 +515,43 @@
 
     <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(无最近文件)</sys:String>
     <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">清除最近文件列表</sys:String>
+    <sys:String x:Key="L_Stick_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭</sys:String>
+    <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">置顶显示</sys:String>
+    <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">透明度</sys:String>
+    <sys:String x:Key="L_Stick_ResetScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置缩放</sys:String>
+
+    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">创建矩形选区以进行移动、裁剪或复制。 快捷键: Ctrl + 1&#x0a;支持拖拽至Word，浏览器，桌面等外部程序&#x0a;拖拽图片到画布可创建矩形选区</sys:String>
+    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">截图后自动创建包含这张图片的新标签页</sys:String>
+
+    <sys:String x:Key="L_ImgBar_ClearUnedited" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭所有未编辑的图片</sys:String>
+    <sys:String x:Key="L_ImgBar_NewTabLeft" xmlns:sys="clr-namespace:System;assembly=mscorlib">在左侧新建</sys:String>
+    <sys:String x:Key="L_Ctx_StickImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">贴图 (StickImage)</sys:String>
+    <sys:String x:Key="L_Ctx_DeleteFile" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除文件 (Delete)</sys:String>
+
+    <!-- 补充到 TextEditBar 相关 -->
+    <sys:String x:Key="L_Text_Bold" xmlns:sys="clr-namespace:System;assembly=mscorlib">加粗</sys:String>
+    <sys:String x:Key="L_Text_Italic" xmlns:sys="clr-namespace:System;assembly=mscorlib">斜体</sys:String>
+    <sys:String x:Key="L_Text_Underline" xmlns:sys="clr-namespace:System;assembly=mscorlib">下划线</sys:String>
+    <sys:String x:Key="L_Text_Strike" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除线</sys:String>
+    <sys:String x:Key="L_Text_AlignLeft" xmlns:sys="clr-namespace:System;assembly=mscorlib">左对齐</sys:String>
+    <sys:String x:Key="L_Text_AlignCenter" xmlns:sys="clr-namespace:System;assembly=mscorlib">居中</sys:String>
+    <sys:String x:Key="L_Text_AlignRight" xmlns:sys="clr-namespace:System;assembly=mscorlib">右对齐</sys:String>
+    <sys:String x:Key="L_Text_OpaqueBackground" xmlns:sys="clr-namespace:System;assembly=mscorlib">不透明背景</sys:String>
+
+    <!-- 补充到 Code Behind 错误提示 -->
+    <sys:String x:Key="L_Toast_OpenUrlFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法打开链接</sys:String>
+    <sys:String x:Key="L_Key_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">无</sys:String>
+    <!-- InfoTextBlock & Progress -->
+    <sys:String x:Key="L_ResizeCanvas_LimitReached" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
+    <sys:String x:Key="L_Info_CanvasMode_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：{0} x {1}</sys:String>
+    <sys:String x:Key="L_Info_ResampleMode_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放: {0:P0}  |  原始: {1} x {2}</sys:String>
+    <sys:String x:Key="L_Info_DefaultScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放：100% (原始大小)</sys:String>
+    <sys:String x:Key="L_Progress_Loading_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在加载 {0}%</sys:String>
+
+    <!-- StatusBar Tooltips -->
+    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip" xmlns:sys="clr-namespace:System;assembly=mscorlib">监听剪切板 (Ctrl + Alt + P)</sys:String>
+    <sys:String x:Key="L_StatusBar_FitToWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">适应窗口大小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomOut" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomIn" xmlns:sys="clr-namespace:System;assembly=mscorlib">放大</sys:String>
 
 </ResourceDictionary>

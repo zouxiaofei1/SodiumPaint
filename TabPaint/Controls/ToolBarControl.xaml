@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
+             xmlns:behaviors="clr-namespace:TabPaint.Behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="36" d:DesignWidth="1200">
 
@@ -19,7 +20,9 @@
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,0" >
             <!-- 基础工具 -->
             <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal" Margin="0,0,0,7" >
-                <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Select}" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="6,0,1,0" Name="SelectButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Select}" Click="OnSelectClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}"
+                         behaviors:AdvancedToolTipBehavior.EnableAdvancedToolTip="True"
+        behaviors:AdvancedToolTipBehavior.DetailedToolTip="{DynamicResource L_ToolBar_Tool_Select_Detail}">
                     <Image Source="{DynamicResource Select_Image}" Width="16" Height="16" />
                 </Button>
                 <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Pen}"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">

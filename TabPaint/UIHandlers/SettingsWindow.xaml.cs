@@ -54,11 +54,10 @@ namespace TabPaint
         }
         private void FactoryReset_Click(object sender, RoutedEventArgs e)
         {
-            var result = System.Windows.MessageBox.Show(
+            var result = FluentMessageBox.Show(
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset_Confirm"),
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset"),
-              MessageBoxButton.YesNo,
-              MessageBoxImage.Warning);
+              MessageBoxButton.YesNo);
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -176,10 +175,11 @@ del ""%~f0""
         }
         private void ResetShortcuts_Click(object sender, RoutedEventArgs e)
         {
-            var result = FluentMessageBox.Show("确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。",
-                             "确认重置",
-                             MessageBoxButton.YesNo
-                            );
+            var result = FluentMessageBox.Show(
+          LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Confirm"), // "确定要将所有快捷键..."
+          LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Title"),   // "确认重置"
+          MessageBoxButton.YesNo
+      );
 
             if (result == MessageBoxResult.Yes)
             {
@@ -196,7 +196,9 @@ del ""%~f0""
             }
             catch (Exception ex)
             {
-                FluentMessageBox.Show($"无法打开链接: {ex.Message}", "错误", MessageBoxButton.OK);
+                FluentMessageBox.Show($"{LocalizationManager.GetString("L_Toast_OpenUrlFailed")}: {ex.Message}",
+                            LocalizationManager.GetString("L_Common_Error"),
+                            MessageBoxButton.OK);
             }
         }
 

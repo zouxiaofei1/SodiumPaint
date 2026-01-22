@@ -108,11 +108,17 @@ namespace TabPaint.Controls
         public event EventHandler ClearRecentFilesClick;
         private void OnFileMenuOpened(object sender, RoutedEventArgs e)
         {
-            // 防止事件冒泡导致的多次触发（如果子菜单也有Opened事件）
-            var menuItem = e.OriginalSource as MenuItem;
-            if (menuItem == null || menuItem.Header.ToString() != "文件" || menuItem.Header.ToString() != "Files") return;
-        
-            UpdateRecentFilesMenu();
+            var menuItem = sender as MenuItem;
+            // 使用 GetString 获取当前语言下的 "文件" 对应的词，或者直接检查 Name 属性更安全
+            // 建议在 XAML 中给 MenuItem 一个 Name="FileMenu"，然后在代码中判断 if (menuItem == FileMenu)
+            if (menuItem == null) return;
+
+            // 如果必须对比 Header (不推荐，但为了兼容你的逻辑):
+            var header = menuItem.Header.ToString();
+            if (header == LocalizationManager.GetString("L_Menu_File"))
+            {
+                UpdateRecentFilesMenu();
+            }
         }
         public event RoutedEventHandler NewTabClick;
 
@@ -203,6 +209,21 @@ namespace TabPaint.Controls
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
+        }
+        public static readonly RoutedEvent NewWindowClickEvent = EventManager.RegisterRoutedEvent(
+    "NewWindowClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+
+        // 2. 提供事件包装器
+        public event RoutedEventHandler NewWindowClick
+        {
+            add { AddHandler(NewWindowClickEvent, value); }
+            remove { RemoveHandler(NewWindowClickEvent, value); }
+        }
+
+        // 3. 实现点击回调，触发事件 (对应 XAML 中的 Click="OnNewWindowClick")
+        private void OnNewWindowClick(object sender, RoutedEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(NewWindowClickEvent));
         }
 
     }

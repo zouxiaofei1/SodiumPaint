@@ -119,13 +119,13 @@
             </Grid.ColumnDefinitions>
             <Border Grid.Column="0" Margin="4,0,4,0" VerticalAlignment="Center" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="0,0,2,0" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}">
                 <UniformGrid Columns="1" Rows="3" Height="80" Width="28">
-                    <Button ToolTip="保存所有已编辑图片" Click="Internal_OnSaveAllClick"  PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick"  Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                    <Button ToolTip="{DynamicResource L_Menu_QA_Save}" Click="Internal_OnSaveAllClick"  PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick"  Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                     </Button>
-                    <Button ToolTip="关闭所有未编辑的图片" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                    <Button ToolTip="{DynamicResource  L_ImgBar_ClearUnedited}" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                     </Button>
-                    <Button ToolTip="放弃所有更改" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
+                    <Button ToolTip="{DynamicResource  L_Menu_QA_DiscardAll}" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
                         <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="16" Height="16"/>
                     </Button>
                 </UniformGrid>
@@ -138,7 +138,7 @@
                           ManipulationBoundaryFeedback="Internal_ScrollViewer_ManipulationBoundaryFeedback">
                 <StackPanel Orientation="Horizontal">
                     <!-- 左侧添加按钮 -->
-                    <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnPrependTabClick" ToolTip="在左侧新建" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Button Name="LeftAddBtn" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnPrependTabClick" ToolTip="{DynamicResource L_ImgBar_NewTabLeft}" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}"/>
 
                     <ItemsControl x:Name="FileTabList" ItemsSource="{Binding FileTabs}">
                         <ItemsControl.ItemsPanel>
@@ -160,14 +160,44 @@
                                             ToolTip="{Binding FileName}" Tag="{Binding}">
 
                                         <Button.ContextMenu>
-                                            <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
-                                                <MenuItem Header="复制 (Copy)" Click="Internal_OnTabCopyClick" Tag="{Binding}"/>
-                                                <MenuItem Header="剪切 (Cut)" Click="Internal_OnTabCutClick" Tag="{Binding}"/>
-                                                <MenuItem Header="在此处粘贴 (Paste)" Click="Internal_OnTabPasteClick" Tag="{Binding}"/>
-                                                <MenuItem Header="打开所在文件夹 (OpenFolder)" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}"/>
+                                            <ContextMenu Style="{StaticResource Win11ContextMenuStyle}" >
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="L_Menu_Edit_Copy" Click="Internal_OnTabCopyClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Menu_Edit_Cut" Click="Internal_OnTabCutClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Menu_Edit_Paste" Click="Internal_OnTabPasteClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Menu_File_OpenFolder" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Ctx_StickImage" 
+          Click="Internal_OnTabStickImageClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Open_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
                                                 <Separator/>
-                                                <MenuItem Header="关闭 (Close)" Click="Internal_OnTabDeleteClick" Tag="{Binding}"/>
-                                                <MenuItem Header="删除文件 (Delete)" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}"/>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_TitleBar_Close" Click="Internal_OnTabDeleteClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Ctx_DeleteFile" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Delete_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
                                             </ContextMenu>
                                         </Button.ContextMenu>
 
@@ -238,7 +268,7 @@
                     </ItemsControl>
 
                     <!-- 新建按钮 -->
-                    <Button x:Name="NewTabBtn" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnNewTabClick" ToolTip="新建画布 (Ctrl+N)" />
+                    <Button x:Name="NewTabBtn" Visibility="{Binding IsViewMode, ElementName=RootControl, Converter={StaticResource InverseBoolToVis}}" Style="{StaticResource Win11AddButtonStyle}" Click="Internal_OnNewTabClick" ToolTip="{DynamicResource L_Menu_QA_NewTab}" />
                 </StackPanel>
             </ScrollViewer>
 
