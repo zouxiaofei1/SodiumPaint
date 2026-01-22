@@ -215,7 +215,11 @@ namespace TabPaint
                     MainWindow_PreviewKeyDown(s, e);
                     _router.OnPreviewKeyDown(s, e);
                 };
-
+            
+                _ = Task.Delay(TimeSpan.FromSeconds(150)).ContinueWith(async _ =>
+                {
+                    CheckAndCleanDragTempAsync();
+                }, TaskScheduler.Default);
             }
             catch (Exception ex)
             {
@@ -305,7 +309,7 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif",".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif" };
+            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif",".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif",  ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
             return validExtensions.Contains(ext);
         }
@@ -507,6 +511,50 @@ namespace TabPaint
                     MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
                 }
             }
+        }
+        private async Task CheckAndCleanDragTempAsync()
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    if (!Directory.Exists(_dragTempDir)) return;
+
+                    var dirInfo = new DirectoryInfo(_dragTempDir);
+                    var files = dirInfo.GetFiles();
+                    int maxFileCount = 100; // 设定阈值：超过100个文件触发清理
+                    int targetCount = 20;   // 清理目标：清理到只剩20个
+                    if (files.Length > maxFileCount)
+                    {
+                        // 按创建时间升序排列（最旧的在前）
+                        var sortedFiles = files.OrderBy(f => f.CreationTime).ToList();
+                        int deleteCount = files.Length - targetCount;
+
+                        int deleted = 0;
+                        foreach (var file in sortedFiles)
+                        {
+                            if (deleted >= deleteCount) break;
+
+                            try
+                            {
+                                // 尝试删除，catch块忽略被占用的文件
+                                file.Delete();
+                                deleted++;
+                            }
+                            catch (IOException) { /* 文件可能被占用，跳过 */ }
+                            catch (UnauthorizedAccessException) { /* 无权限，跳过 */ }
+                        }
+
+                        // 可选：如果清理了文件，可以在 Output 输出调试信息
+                        System.Diagnostics.Debug.WriteLine($"[TabPaint] DragTemp cleaned. Removed {deleted} files.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // 避免因清理逻辑报错导致程序崩溃，仅记录日志
+                    System.Diagnostics.Debug.WriteLine($"[TabPaint] DragTemp cleanup failed: {ex.Message}");
+                }
+            });
         }
 
 

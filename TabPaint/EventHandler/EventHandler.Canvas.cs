@@ -202,7 +202,7 @@ namespace TabPaint
                 this.BackgroundColor = c;
                 this.BackgroundBrush = new SolidColorBrush(c);
             }
-              
+
 
             // 通知UI更新
             OnPropertyChanged(nameof(SelectedBrush));
@@ -328,7 +328,7 @@ namespace TabPaint
                 return;
             }
             BitmapSource sourceToRecognize = _surface.Bitmap;
-           
+
             if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection)
             {
                 sourceToRecognize = selTool.GetSelectionCroppedBitmap();
@@ -377,7 +377,130 @@ namespace TabPaint
                 this.Cursor = System.Windows.Input.Cursors.Arrow;
             }
         }
-        // 定义一个独立的方法，不依赖 RoutedEventArgs
+        private async void OnAiUpscaleClick(object sender, RoutedEventArgs e)
+        {
+            // 1. 基础检查
+            if (_surface?.Bitmap == null) return;
+            _router.CleanUpSelectionandShape();
+
+            if (!IsVcRedistInstalled())
+            {
+                ShowToast("L_Error_MissingVCRedist");
+                return;
+            }
+
+            // 2. 状态保存与 UI 锁定
+            var statusText = _imageSize;
+            _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
+            OnPropertyChanged(nameof(ImageSize));
+            this.IsEnabled = false;
+            this.Cursor = Cursors.Wait;
+
+            try
+            {
+                var aiService = new AiService(_cacheDir);
+
+                // --- 新增：大图预处理逻辑 ---
+                WriteableBitmap inputBmp = _surface.Bitmap;
+                const int MaxLongSide = 4096; // 限制长边最大 4096
+
+                if (inputBmp.PixelWidth > MaxLongSide || inputBmp.PixelHeight > MaxLongSide)
+                {
+                    _imageSize = "图片过大，正在进行预缩小...";
+                    OnPropertyChanged(nameof(ImageSize));
+
+                    double scale = (double)MaxLongSide / Math.Max(inputBmp.PixelWidth, inputBmp.PixelHeight);
+                    int targetW = (int)(inputBmp.PixelWidth * scale);
+                    int targetH = (int)(inputBmp.PixelHeight * scale);
+
+                    // 使用你现有的 ResampleBitmap 方法进行高质量缩放
+                    // 确保缩放后的图像是 WriteableBitmap 格式
+                    var resampledSource = ResampleBitmap(inputBmp, targetW, targetH);
+                    inputBmp = new WriteableBitmap(resampledSource);
+                }
+                // -----------------------
+
+                // 3. 准备模型
+                var dlProgress = new Progress<double>(p =>
+                {
+                    _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Downloading_Format"), p);
+                    OnPropertyChanged(nameof(ImageSize));
+                });
+
+                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.SuperResolution, dlProgress);
+
+                // 4. 执行推理
+                _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
+                OnPropertyChanged(nameof(ImageSize));
+
+                var inferProgress = new Progress<double>(p =>
+                {
+                    _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Upscaling_Format"), p);
+                    OnPropertyChanged(nameof(ImageSize));
+                });
+
+                // 注意这里传入的是处理后的 inputBmp，而不是直接传 _surface.Bitmap
+                var resultBitmap = await aiService.RunSuperResolutionAsync(modelPath, inputBmp, inferProgress);
+
+                // 5. 应用结果
+                ApplyUpscaleResult(resultBitmap);
+
+                ShowToast("L_Toast_Upscale_Success");
+            }
+            catch (Exception ex)
+            {
+                // 捕获溢出或其他异常
+                string errorMsg = ex.Message;
+                if (ex is OverflowException) errorMsg = "图片尺寸超出硬件/软件限制";
+                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_Upscale_Error_Prefix"), errorMsg));
+            }
+            finally
+            {
+                this.IsEnabled = true;
+                this.Cursor = Cursors.Arrow;
+                if (_surface?.Bitmap != null)
+                    _imageSize = $"{_surface.Bitmap.PixelWidth}×{_surface.Bitmap.PixelHeight}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
+                OnPropertyChanged(nameof(ImageSize));
+                NotifyCanvasChanged();
+                this.Focus();
+            }
+        }
+
+
+        // 专门处理超分结果的应用逻辑 (因为画布尺寸变了)
+        private void ApplyUpscaleResult(WriteableBitmap newBitmap)
+        {
+            var oldBitmap = _surface.Bitmap;
+            int oldW = oldBitmap.PixelWidth;
+            int oldH = oldBitmap.PixelHeight;
+
+            // 1. 记录 Undo (变换前)
+            var undoRect = new Int32Rect(0, 0, oldW, oldH);
+            byte[] undoPixels = new byte[oldH * oldBitmap.BackBufferStride];
+            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
+
+            // 2. 替换 Bitmap
+            _surface.ReplaceBitmap(newBitmap);
+            _bitmap = newBitmap;
+            BackgroundImage.Source = _bitmap; // 关键：更新显示源
+
+            // 3. 记录 Redo (变换后)
+            int newW = newBitmap.PixelWidth;
+            int newH = newBitmap.PixelHeight;
+            var redoRect = new Int32Rect(0, 0, newW, newH);
+            byte[] redoPixels = new byte[newH * newBitmap.BackBufferStride];
+            newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
+
+            // 4. 推入 Undo 栈 (利用你现有的 TransformAction)
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
+
+            // 5. 更新状态
+            NotifyCanvasSizeChanged(newW, newH);
+            SetUndoRedoButtonState();
+
+            // 自适应窗口
+            if (_canvasResizer != null) _canvasResizer.UpdateUI();
+        }
 
         private async void OnRemoveBackgroundClick(object sender, RoutedEventArgs e)
         {
@@ -389,7 +512,7 @@ namespace TabPaint
                     LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Content"),
                     LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Title"),
                     MessageBoxButton.YesNo);
-
+              
                 if (result == MessageBoxResult.Yes)
                 {
                     Process.Start(new ProcessStartInfo
@@ -415,7 +538,7 @@ namespace TabPaint
                     OnPropertyChanged(nameof(ImageSize));
                 });
 
-                string modelPath = await aiService.PrepareModelAsync(progress);
+                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.RemoveBackground,progress);
 
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
@@ -493,14 +616,14 @@ namespace TabPaint
         }
         private Thumb _opacitySliderThumb;
 
-private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
-{
-    // 尝试在可视树中查找 Slider 内部的 Thumb
-    if (OpacitySlider.Template != null)
-    {
-        _opacitySliderThumb = OpacitySlider.Template.FindName("Thumb", OpacitySlider) as Thumb;
-    }
-}
+        private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 尝试在可视树中查找 Slider 内部的 Thumb
+            if (OpacitySlider.Template != null)
+            {
+                _opacitySliderThumb = OpacitySlider.Template.FindName("Thumb", OpacitySlider) as Thumb;
+            }
+        }
 
         private void OpacitySlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
         {
@@ -583,7 +706,7 @@ private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
             MaximizeWindowHandler();
             e.Handled = true;
         }
-   
+
 
         private void OnScrollContainerMouseDown(object sender, MouseButtonEventArgs e)
         {

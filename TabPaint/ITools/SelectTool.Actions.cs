@@ -451,7 +451,7 @@ namespace TabPaint
                 // 更新UI（例如Undo/Redo按钮的状态）
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
             }
-            public override void OnPointerDown(ToolContext ctx, Point viewPos) ////////////////////////////////////////////////////////////////////////////// 后面是鼠标键盘事件处理
+            public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f) ////////////////////////////////////////////////////////////////////////////// 后面是鼠标键盘事件处理
             {
 
                 if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
@@ -507,7 +507,7 @@ namespace TabPaint
             }
             
             public bool _hasLifted = false;
-            public override void OnPointerMove(ToolContext ctx, Point viewPos)
+            public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 ctxForTimer = ctx; // 缓存 Context 供 Timer 使用
                 EnsureTimer();
@@ -1004,7 +1004,7 @@ namespace TabPaint
                 }
             }
 
-            public override void OnPointerUp(ToolContext ctx, Point viewPos)
+            public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 if (lag > 0) { lag--; return; }
                 ctx.ViewElement.ReleaseMouseCapture();

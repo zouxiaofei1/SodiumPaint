@@ -45,12 +45,73 @@ namespace TabPaint.Controls
         public event RoutedEventHandler ColorOneClick { add => AddHandler(ColorOneClickEvent, value); remove => RemoveHandler(ColorOneClickEvent, value); }
         public event RoutedEventHandler ColorTwoClick { add => AddHandler(ColorTwoClickEvent, value); remove => RemoveHandler(ColorTwoClickEvent, value); }
         public event RoutedEventHandler ColorButtonClick { add => AddHandler(ColorButtonClickEvent, value); remove => RemoveHandler(ColorButtonClickEvent, value); }
+        public static readonly RoutedEvent BrushMainClickEvent = RegisterEvent("BrushMainClick");
+        public event RoutedEventHandler BrushMainClick { add => AddHandler(BrushMainClickEvent, value); remove => RemoveHandler(BrushMainClickEvent, value); }
 
-
+        // 新增：当点击形状主按钮（左侧）时触发
+        public static readonly RoutedEvent ShapeMainClickEvent = RegisterEvent("ShapeMainClick");
+        public event RoutedEventHandler ShapeMainClick { add => AddHandler(ShapeMainClickEvent, value); remove => RemoveHandler(ShapeMainClickEvent, value); }
+        private void OnBrushMainButtonClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(BrushMainClickEvent));
+        private void OnShapeMainButtonClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(ShapeMainClickEvent));
         public ToolBarControl()
         {
             InitializeComponent();
         }
+        public void UpdateBrushIcon(string resourceKey, bool isPathData)
+        {
+            if (isPathData)
+            {
+                var pathData = TryFindResource(resourceKey) as Geometry;
+                if (pathData != null)
+                {
+                    var path = new System.Windows.Shapes.Path
+                    {
+                        Data = pathData,
+                        Stretch = Stretch.Uniform,
+                        Fill = (Brush)TryFindResource("IconFillBrush"), // 确保你有这个Brush资源
+                        Width = 16,
+                        Height = 16
+                    };
+                    CurrentBrushIconHost.Content = path;
+                }
+            }
+            else
+            {
+                // 如果是 ImageSource (如 png/ico)
+                var imgSrc = TryFindResource(resourceKey) as ImageSource;
+                if (imgSrc != null)
+                {
+                    var img = new Image { Source = imgSrc, Width = 16, Height = 16 };
+                    CurrentBrushIconHost.Content = img;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 更新形状分裂按钮左侧的图标
+        /// </summary>
+        public void UpdateShapeIcon(string resourceKey)
+        {
+            var pathData = TryFindResource(resourceKey) as Geometry;
+            if (pathData != null)
+            {
+                var path = new System.Windows.Shapes.Path
+                {
+                    Data = pathData,
+                    Stretch = Stretch.Uniform,
+                    Fill = Brushes.Transparent,
+                    Stroke = (Brush)TryFindResource("IconFillBrush"),
+                    StrokeThickness = 1.5,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    Width = 16,
+                    Height = 16
+                };
+                CurrentShapeIconHost.Content = path;
+            }
+        }
+   
 
         private static RoutedEvent RegisterEvent(string name)
         {

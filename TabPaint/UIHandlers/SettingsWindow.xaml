@@ -459,7 +459,7 @@
                                     <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_ToggleMode}" VerticalAlignment="Center"/>
+                                <TextBlock  Text="{DynamicResource L_Settings_Shortcuts_ToggleMode}" VerticalAlignment="Center"/>
                                 <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.ToggleMode], Source={x:Static local:SettingsManager.Instance}}"/>
                             </Grid>
                             <Grid Margin="0,5">

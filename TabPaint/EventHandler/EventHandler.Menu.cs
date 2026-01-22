@@ -19,6 +19,14 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void OnAppTitleBarLogoMiddleClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentTabItem != null)
+            {
+                CloseTab(_currentTabItem);
+            }
+        }
+
         private void OnNewWindowClick(object sender, RoutedEventArgs e)
         {
             try

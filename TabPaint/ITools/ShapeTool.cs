@@ -42,7 +42,7 @@ public class ShapeTool : ToolBase
         return mw._tools.Select as SelectTool;
     }
 
-    public override void OnPointerDown(ToolContext ctx, Point viewPos)
+    public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
         var selectTool = GetSelectTool();
@@ -131,7 +131,7 @@ public class ShapeTool : ToolBase
 
     }
 
-    public override void OnPointerMove(ToolContext ctx, Point viewPos)
+    public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         if (_isManipulating)
         {
@@ -221,7 +221,7 @@ public class ShapeTool : ToolBase
         bmp.Freeze();
         return bmp;
     }
-    public override void OnPointerUp(ToolContext ctx, Point viewPos)
+    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         if (_isManipulating)
         {

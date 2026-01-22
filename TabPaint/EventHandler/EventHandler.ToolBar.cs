@@ -89,32 +89,44 @@ namespace TabPaint
                 if (Enum.TryParse(tag, out ShapeTool.ShapeType type))
                 {
                     shapeTool.SetShapeType(type);
-                    _router.SetTool(shapeTool);
+                    _router.SetTool(shapeTool); UpdateShapeSplitButtonIcon(type);
                     UpdateToolSelectionHighlight();
                     // 更新图标逻辑保持不变
-                    switch (type)
-                    {
-                        case ShapeTool.ShapeType.Rectangle:
-                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Rectangle");
-                            break;
-                        case ShapeTool.ShapeType.Ellipse:
-                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Ellipse");
-                            break;
-                        case ShapeTool.ShapeType.Line:
-                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Line");
-                            break;
-                        case ShapeTool.ShapeType.Arrow:
-                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Arrow");
-                            break;
-                        case ShapeTool.ShapeType.RoundedRectangle:
-                            MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_RoundedRect");
-                            break;
-                    }
+                    //switch (type)
+                    //{
+                    //    case ShapeTool.ShapeType.Rectangle:
+                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Rectangle");
+                    //        break;
+                    //    case ShapeTool.ShapeType.Ellipse:
+                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Ellipse");
+                    //        break;
+                    //    case ShapeTool.ShapeType.Line:
+                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Line");
+                    //        break;
+                    //    case ShapeTool.ShapeType.Arrow:
+                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Arrow");
+                    //        break;
+                    //    case ShapeTool.ShapeType.RoundedRectangle:
+                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_RoundedRect");
+                    //        break;
+                    //}
                 }
                 MainToolBar.ShapeToggle.IsChecked = false;
             }
         }
-
+        private void UpdateShapeSplitButtonIcon(ShapeTool.ShapeType type)
+        {
+            string resKey = "Shapes_Image";
+            switch (type)
+            {
+                case ShapeTool.ShapeType.Rectangle: resKey = "Icon_Shape_Rectangle"; break;
+                case ShapeTool.ShapeType.Ellipse: resKey = "Icon_Shape_Ellipse"; break;
+                case ShapeTool.ShapeType.Line: resKey = "Icon_Shape_Line"; break;
+                case ShapeTool.ShapeType.Arrow: resKey = "Icon_Shape_Arrow"; break;
+                case ShapeTool.ShapeType.RoundedRectangle: resKey = "Icon_Shape_RoundedRect"; break;
+            }
+            MainToolBar.UpdateShapeIcon(resKey);
+        }
 
         private void FitToWindow_Click(object sender, RoutedEventArgs e)
         {
@@ -234,7 +246,7 @@ namespace TabPaint
                 _router.SetTool(_tools.Pen);
                 
                 _ctx.PenStyle = style;
-
+                UpdateBrushSplitButtonIcon(style);
                 UpdateToolSelectionHighlight();
                 AutoSetFloatBarVisibility();
                 UpdateGlobalToolSettingsKey();
@@ -242,6 +254,28 @@ namespace TabPaint
                 MainToolBar.BrushToggle.IsChecked = false;
             }
         }
+        private void UpdateBrushSplitButtonIcon(BrushStyle style)
+        {
+            string resKey = "Brush_Normal_Image"; // 默认
+            bool isPath = true; // 大部分是 Path
+
+            switch (style)
+            {
+                case BrushStyle.Round: resKey = "Brush_Normal_Image"; break;
+                case BrushStyle.Square: resKey = "Brush_Rect_Image"; break;
+                case BrushStyle.Brush: resKey = "Brush_Normal_Image"; break;
+                case BrushStyle.Calligraphy: resKey = "Brush_Image"; isPath = false; break; // 它是 Image
+                case BrushStyle.Spray: resKey = "Paint_Spray_Image"; break;
+                case BrushStyle.Crayon: resKey = "Crayon_Image"; break;
+                case BrushStyle.Watercolor: resKey = "Watercolor_Image"; break;
+                case BrushStyle.Highlighter: resKey = "Highlighter_Image"; isPath = false; break; // Image
+                case BrushStyle.Mosaic: resKey = "Mosaic_Image"; break;
+                    // Pencil 和 Eraser 通常在基础工具栏有独立按钮，这里也可以不用处理，或者给个默认图标
+            }
+
+            MainToolBar.UpdateBrushIcon(resKey, isPath);
+        }
+
         private void ZoomMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var combo = MyStatusBar.ZoomComboBox;
@@ -333,6 +367,24 @@ namespace TabPaint
             {
                 _isTextBarDragging = false;
                 TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
+            }
+        }
+        private void OnBrushMainClick(object sender, RoutedEventArgs e)
+        {
+            // 如果已经是 PenTool，则不做任何事，或者你可以根据需求重置参数
+            // 如果不是，则切换过去，PenStyle 保持不变（因为它是存储在 Context 里的）
+            if (!(_router.CurrentTool is PenTool))
+            {
+                _router.SetTool(_tools.Pen);
+            }
+        }
+
+        // 点击左侧形状按钮：切换到形状工具（保持当前 ShapeType）
+        private void OnShapeMainClick(object sender, RoutedEventArgs e)
+        {
+            if (!(_router.CurrentTool is ShapeTool))
+            {
+                _router.SetTool(_tools.Shape);
             }
         }
 

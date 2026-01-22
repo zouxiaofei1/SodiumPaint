@@ -231,7 +231,12 @@
                                     </MenuItem>
                                     <MenuItem Header="{DynamicResource L_Main_Ctx_AddBorder}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
                                         <MenuItem.Icon>
-                                            <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="2" Width="14" Height="14" CornerRadius="1"/>
+                                            <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="1.5" Width="14" Height="14" CornerRadius="1"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AI_SuperRes}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+8" Click="OnAiUpscaleClick">
+                                        <MenuItem.Icon>
+                                            <TextBlock Text="🔍" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         </MenuItem.Icon>
                                     </MenuItem>
                                 </controls:DelayedMenuItem>

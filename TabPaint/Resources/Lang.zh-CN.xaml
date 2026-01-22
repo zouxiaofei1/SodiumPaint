@@ -143,7 +143,9 @@
     <sys:String x:Key="L_Main_Ctx_CopyHex" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制颜色代码 (#HEX)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AutoCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">智能裁切空白</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">一键加边框 (2px)</sys:String>
-
+    <sys:String x:Key="L_Main_Ctx_AI_SuperRes" xmlns:sys="clr-namespace:System;assembly=mscorlib">4x超分辨率</sys:String>
+    
+    
     <sys:String x:Key="L_Main_Unit_Pixel" xmlns:sys="clr-namespace:System;assembly=mscorlib"> 像素</sys:String>
     <sys:String x:Key="L_Main_Filter_AllImages" xmlns:sys="clr-namespace:System;assembly=mscorlib">所有图像文件</sys:String>
     <sys:String x:Key="L_Main_Filter_PNG" xmlns:sys="clr-namespace:System;assembly=mscorlib">PNG 图片</sys:String>
@@ -163,6 +165,7 @@
     <sys:String x:Key="L_Menu_File_New" xmlns:sys="clr-namespace:System;assembly=mscorlib">新建</sys:String>
     <sys:String x:Key="L_Menu_File_Open" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开</sys:String>
     <sys:String x:Key="L_Menu_File_OpenFolder" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开新文件夹</sys:String>
+    <sys:String x:Key="L_Menu_File_NewWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开新窗口</sys:String>
     <sys:String x:Key="L_Menu_File_Recent" xmlns:sys="clr-namespace:System;assembly=mscorlib">最近打开</sys:String>
     <sys:String x:Key="L_Menu_File_Recent_Placeholder" xmlns:sys="clr-namespace:System;assembly=mscorlib">占位符</sys:String>
     <sys:String x:Key="L_Menu_File_Save" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存</sys:String>
@@ -212,6 +215,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Round" xmlns:sys="clr-namespace:System;assembly=mscorlib">圆形笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Square" xmlns:sys="clr-namespace:System;assembly=mscorlib">方形笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">毛刷</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Calligraphy" xmlns:sys="clr-namespace:System;assembly=mscorlib">书写笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Spray" xmlns:sys="clr-namespace:System;assembly=mscorlib">喷枪</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Crayon" xmlns:sys="clr-namespace:System;assembly=mscorlib">蜡笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Watercolor" xmlns:sys="clr-namespace:System;assembly=mscorlib">水彩画笔</sys:String>
@@ -553,5 +557,7 @@
     <sys:String x:Key="L_StatusBar_FitToWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">适应窗口大小</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomOut" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩小</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomIn" xmlns:sys="clr-namespace:System;assembly=mscorlib">放大</sys:String>
-
+    <sys:String x:Key="L_AI_Status_Upscaling_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在超分... {0:0}%</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">超分辨率处理完成 (400%)</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">超分失败: {0}</sys:String>
 </ResourceDictionary>

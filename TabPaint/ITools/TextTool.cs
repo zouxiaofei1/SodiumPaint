@@ -162,7 +162,7 @@ namespace TabPaint
                 return ResizeAnchor.None;
             }
 
-            public override void OnPointerMove(ToolContext ctx, Point viewPos)
+            public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 if ((_dragging || _resizing) && Mouse.LeftButton == MouseButtonState.Released)
                 {
@@ -304,7 +304,7 @@ namespace TabPaint
 
 
 
-            public override void OnPointerDown(ToolContext ctx, Point viewPos)
+            public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 MainWindow mw = ((MainWindow)System.Windows.Application.Current.MainWindow);
                 if (mw.IsViewMode) return;
@@ -365,7 +365,7 @@ namespace TabPaint
                 return inOuter && !inInner;
             }
 
-            public override void OnPointerUp(ToolContext ctx, Point viewPos)
+            public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (mw._router.CurrentTool != mw._tools.Text) return;

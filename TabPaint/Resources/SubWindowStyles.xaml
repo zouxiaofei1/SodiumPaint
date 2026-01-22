@@ -272,18 +272,92 @@
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
-    <!-- ComboBox 样式 -->
+    <Style x:Key="FluentComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <!-- 更宽的内边距，触控/鼠标友好 -->
+        <Setter Property="Margin" Value="4,2,4,2"/>
+        <!-- 项与项之间的间隔 -->
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                    <Border x:Name="bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}"
+                        SnapsToDevicePixels="true"
+                        CornerRadius="4">
+                        <!-- 这里的圆角是 Fluent 风格的关键 -->
+                        <Grid>
+                            <!-- 左侧选中指示器 (Pill)，Win11 风格特征 -->
+                            <Rectangle x:Name="Pill"
+                                   HorizontalAlignment="Left"
+                                   Width="3"
+                                   Height="16"
+                                   Fill="{DynamicResource SystemAccentBrush}"
+                                   RadiusX="1.5" RadiusY="1.5"
+                                   Visibility="Collapsed"
+                                   Margin="-6,0,0,0"/>
+
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 1. 鼠标悬停 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
+                        </Trigger>
+
+                        <!-- 2. 选中状态 -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
+                            <Setter TargetName="Pill" Property="Visibility" Value="Visible"/>
+                            <!-- 显示左侧蓝条 -->
+                        </Trigger>
+
+                        <!-- 3. 选中且鼠标悬停 (颜色稍微加深) -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemPressedBrush}"/>
+                        </MultiTrigger>
+
+                        <!-- 4. 禁用状态 -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
     <Style x:Key="FluentComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Height" Value="32"/>
+        <!-- 引用刚才定义的 Item 样式 -->
+        <Setter Property="ItemContainerStyle" Value="{StaticResource FluentComboBoxItemStyle}"/>
+
         <Setter Property="Template" Value="{StaticResource FluentComboBoxTemplate}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="Margin" Value="0,0,8,0"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
     </Style>
 
     <!-- ================= 滚动条样式 (适配暗色模式) ================= -->

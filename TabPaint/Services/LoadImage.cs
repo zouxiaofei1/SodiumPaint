@@ -173,7 +173,7 @@ namespace TabPaint
         private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 {
     ".png", ".jpg", ".jpeg", ".tif", ".tiff",
-    ".gif", ".webp", ".bmp", ".ico", ".heic",".jfif",".avif"
+    ".gif", ".webp", ".bmp", ".ico", ".heic",".jfif",".avif",".exif",".jpe",".jxl",".heif",".hif",".dib",".wdp",".wmp",".jxr"
 };
 
         // 2. 改为异步方法

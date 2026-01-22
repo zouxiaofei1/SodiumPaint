@@ -477,7 +477,7 @@ namespace TabPaint
                     dataObject.SetFileDropList(fileList);
                 }
 
-                DragDrop.DoDragDrop((DependencyObject)sender, dataObject, DragDropEffects.All);
+                DragDrop.DoDragDrop((DependencyObject)sender, dataObject, DragDropEffects.Copy);
 
                 e.Handled = true;
                 _mouseDownTabItem = null;
@@ -497,7 +497,7 @@ namespace TabPaint
         {
             if (e.Data.GetDataPresent("TabPaintReorderItem"))
             {
-                e.Effects = DragDropEffects.Move;
+                e.Effects = DragDropEffects.Copy;
                 e.Handled = true;
 
                 if (sender is Grid grid)
@@ -604,7 +604,7 @@ namespace TabPaint
                         UpdateWindowTitle(); // 如果需要
                     }
                 }
-                e.Effects = DragDropEffects.Move;
+                e.Effects = DragDropEffects.Copy;
                 e.Handled = true;
             }
         }

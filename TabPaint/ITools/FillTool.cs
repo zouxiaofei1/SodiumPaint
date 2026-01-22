@@ -16,7 +16,7 @@ namespace TabPaint
         {
             public override string Name => "Fill";
             public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Hand;
-            public override void OnPointerDown(ToolContext ctx, Point viewPos)
+            public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 var start = ctx.ToPixel(viewPos);

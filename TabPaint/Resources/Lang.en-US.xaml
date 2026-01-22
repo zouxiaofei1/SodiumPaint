@@ -137,6 +137,7 @@
     <sys:String x:Key="L_Common_Tip">Tip</sys:String>
 
     <sys:String x:Key="L_Main_Ctx_AddBorder">Add border (2px)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x Super-Resolution</sys:String>
 
     <sys:String x:Key="L_Main_Filter_AllImages">All image files</sys:String>
     <sys:String x:Key="L_Main_Filter_PNG">PNG Image</sys:String>
@@ -216,6 +217,7 @@
     <sys:String x:Key="L_Menu_File_New">New</sys:String>
     <sys:String x:Key="L_Menu_File_Open">Open</sys:String>
     <sys:String x:Key="L_Menu_File_OpenFolder">Open folder</sys:String>
+    <sys:String x:Key="L_Menu_File_NewWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">New Window</sys:String>
     <sys:String x:Key="L_Menu_File_Recent">Recent</sys:String>
     <sys:String x:Key="L_Menu_File_Recent_Placeholder">Placeholder</sys:String>
     <sys:String x:Key="L_Menu_File_Save">Save</sys:String>
@@ -266,6 +268,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Round">Round brush</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Square">Square brush</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Brush">Paint brush</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Calligraphy" xmlns:sys="clr-namespace:System;assembly=mscorlib">Calligraphy</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Spray">Spray</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Crayon">Crayon</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Watercolor">Watercolor</sys:String>
@@ -554,5 +557,7 @@
     <sys:String x:Key="L_StatusBar_FitToWindow">Fit to Window</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomOut">Zoom Out</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomIn">Zoom In</sys:String>
-
+    <sys:String x:Key="L_AI_Status_Upscaling_Format">Upscaling... {0:0}%</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Success">Upscale complete (400%)</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Error_Prefix">Upscale failed: {0}</sys:String>
 </ResourceDictionary>

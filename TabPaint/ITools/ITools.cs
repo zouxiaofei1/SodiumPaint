@@ -8,7 +8,7 @@ using System.Windows.Media.Imaging;
 using static TabPaint.MainWindow;
 
 //
-//工具管理器
+//工具管理器 ITools.cs
 //
 
 namespace TabPaint
@@ -39,7 +39,19 @@ namespace TabPaint
 
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.BrushSplitButtonBorder.BorderBrush = Brushes.Transparent;
+            MainToolBar.BrushSplitButtonBorder.Background = Brushes.Transparent;
+            MainToolBar.ShapeSplitButtonBorder.BorderBrush = Brushes.Transparent;
+            MainToolBar.ShapeSplitButtonBorder.Background = Brushes.Transparent;
+            MainToolBar.BrushMainButton.ClearValue(Control.BackgroundProperty);
+            MainToolBar.BrushMainButton.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
+            MainToolBar.BrushToggle.ClearValue(Control.BorderBrushProperty);
 
+            MainToolBar.ShapeMainButton.ClearValue(Control.BackgroundProperty);
+            MainToolBar.ShapeMainButton.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
+            MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
             // 获取所有常规工具按钮
             var toolControls = new Control[] {
         MainToolBar.PickColorButton, MainToolBar.EraserButton, MainToolBar.SelectButton,
@@ -52,12 +64,38 @@ namespace TabPaint
                 ctrl.ClearValue(Control.BorderBrushProperty);
                 ctrl.ClearValue(Control.BackgroundProperty);
             }
-            MainToolBar.BrushToggle.ClearValue(Control.BorderBrushProperty);
-            MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
-            MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
-            MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
             bool isBasicTool = !string.IsNullOrEmpty(currentToolTag);
+            if (!isBasicTool)
+            {
+                // 画刷工具高亮逻辑
+                if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
+                {
+                    // 高亮整个 SplitButton 的边框
+                    MainToolBar.BrushSplitButtonBorder.BorderBrush = accentBrush;
+                    MainToolBar.BrushSplitButtonBorder.Background = accentSubtleBrush;
 
+                    string brushTag = _ctx.PenStyle.ToString();
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, brushTag);
+                }
+                else
+                {
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, null);
+                }
+
+                // 形状工具高亮逻辑
+                if (_router.CurrentTool is ShapeTool shapeTool)
+                {
+                    MainToolBar.ShapeSplitButtonBorder.BorderBrush = accentBrush;
+                    MainToolBar.ShapeSplitButtonBorder.Background = accentSubtleBrush;
+
+                    string shapeTag = shapeTool.CurrentShapeType.ToString();
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, shapeTag);
+                }
+                else
+                {
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, null);
+                }
+            }
             if (isBasicTool)
             {
                 if (isCollapsedMode)
@@ -245,9 +283,9 @@ namespace TabPaint
             System.Windows.Input.Cursor Cursor { get; }
             void Cleanup(ToolContext ctx);
             void StopAction(ToolContext ctx);
-            void OnPointerDown(ToolContext ctx, Point viewPos);
-            void OnPointerMove(ToolContext ctx, Point viewPos);
-            void OnPointerUp(ToolContext ctx, Point viewPos);
+            void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f);
+            void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f);
+            void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f);
             void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e);
             void SetCursor(ToolContext ctx);
         }
@@ -256,9 +294,9 @@ namespace TabPaint
         {
             public abstract string Name { get; }
             public virtual System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.Arrow;
-            public virtual void OnPointerDown(ToolContext ctx, Point viewPos) { }
-            public virtual void OnPointerMove(ToolContext ctx, Point viewPos) { }
-            public virtual void OnPointerUp(ToolContext ctx, Point viewPos) { }
+            public virtual void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
+            public virtual void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
+            public virtual void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
             public virtual void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
             public virtual void Cleanup(ToolContext ctx) { }
             public virtual void StopAction(ToolContext ctx) { }
@@ -332,6 +370,19 @@ namespace TabPaint
                 CurrentTool = defaultTool;
 
             }
+            private float GetPressure(System.Windows.Input.MouseEventArgs e)
+            {
+                if (e.StylusDevice != null)
+                {
+                    var points = e.StylusDevice.GetStylusPoints(_ctx.ViewElement);
+                    if (points.Count > 0)
+                    {
+                        // 获取最新的压力值 (0.0 - 1.0f)
+                        return points[points.Count - 1].PressureFactor;
+                    }
+                }
+                return 1.0f; // 如果不是笔或者是鼠标，默认最大压力
+            }
 
             public void ViewElement_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
             {
@@ -344,7 +395,8 @@ namespace TabPaint
                     Point px = _ctx.ToPixel(position);
                     ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
                 }
-                CurrentTool.OnPointerMove(_ctx, position);
+                float pressure = GetPressure(e);
+                CurrentTool.OnPointerMove(_ctx, position, pressure);
             }// 定义高亮颜色
 
             public SelectTool GetSelectTool()
@@ -390,10 +442,16 @@ namespace TabPaint
                 mw.UpdateGlobalToolSettingsKey();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)
-    => CurrentTool?.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement));
+            {
+                float pressure = GetPressure(e);
+                CurrentTool?.OnPointerDown(_ctx, e.GetPosition(_ctx.ViewElement), pressure);
+            }
 
             public void ViewElement_MouseUp(object sender, MouseButtonEventArgs e)
-                => CurrentTool?.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement));
+            {
+                float pressure = GetPressure(e);
+                CurrentTool?.OnPointerUp(_ctx, e.GetPosition(_ctx.ViewElement), pressure);
+            }
             public void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
             {//快捷键
                 CurrentTool.OnKeyDown(_ctx, e);

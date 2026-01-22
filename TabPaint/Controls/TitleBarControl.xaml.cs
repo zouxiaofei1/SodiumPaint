@@ -89,18 +89,26 @@ namespace TabPaint.Controls
         public event RoutedEventHandler SaveClick;
         public event RoutedEventHandler SaveAsClick;
         public event RoutedEventHandler ExitClick;
-
+        public event RoutedEventHandler LogoMiddleClick;
         public bool IsLogoMenuEnabled { get; set; } = false;
         private void OnAppIconMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (IsLogoMenuEnabled)
+            if (e.ChangedButton == MouseButton.Middle)
+            {
+                LogoMiddleClick?.Invoke(this, e);
+                e.Handled = true;
+                return;
+            }
+
+            // 原有逻辑：处理左键菜单 (增加 Left 按钮判断)
+            if (e.ChangedButton == MouseButton.Left && IsLogoMenuEnabled)
             {
                 if (AppIcon.ContextMenu != null)
                 {
                     AppIcon.ContextMenu.PlacementTarget = AppIcon;
                     AppIcon.ContextMenu.IsOpen = true;
                 }
-                e.Handled = true; 
+                e.Handled = true;
             }
         }
 

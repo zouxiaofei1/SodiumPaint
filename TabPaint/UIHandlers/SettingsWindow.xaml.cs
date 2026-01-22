@@ -71,12 +71,12 @@ namespace TabPaint
                 string tempBatPath = Path.Combine(Path.GetTempPath(), "tabpaint_reset.bat");
 
                 string batContent = $@"
-@echo off
-timeout /t 1 /nobreak > NUL
-rd /s /q ""{appDataPath}""
-start """" ""{currentExe}""
-del ""%~f0""
-";
+                        @echo off
+                        timeout /t 1 /nobreak > NUL
+                        rd /s /q ""{appDataPath}""
+                        start """" ""{currentExe}""
+                        del ""%~f0""
+                        ";
                 File.WriteAllText(tempBatPath, batContent);
 
                 // 4. 启动批处理脚本

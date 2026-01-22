@@ -23,7 +23,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"    PreviewMouseMove="OnAppIconPreviewMouseMove"  PreviewMouseLeftButtonDown="OnAppIconPreviewMouseDown" MouseLeftButtonDown="OnAppIconMouseDown">
+            <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"    PreviewMouseMove="OnAppIconPreviewMouseMove"  PreviewMouseLeftButtonDown="OnAppIconPreviewMouseDown" MouseDown="OnAppIconMouseDown">
                 <Image.ContextMenu>
                     <ContextMenu x:Name="LogoContextMenu" Style="{StaticResource Win11ContextMenuStyle}" Background="{DynamicResource ControlBackgroundBrush}">
                         <MenuItem Header="{DynamicResource L_Menu_File_New}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+N" Click="OnNewClick">

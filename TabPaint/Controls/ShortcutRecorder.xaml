@@ -4,9 +4,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" 
-             d:DesignHeight="30" d:DesignWidth="200"
+             d:DesignHeight="35" d:DesignWidth="200"
              Focusable="True"
              PreviewKeyDown="UserControl_PreviewKeyDown"
+             InputMethod.IsInputMethodEnabled="False"
              PreviewMouseDown="UserControl_PreviewMouseDown">
 
     <UserControl.Resources>
@@ -16,12 +17,39 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Border x:Name="MainBorder" 
-            BorderThickness="1" 
-            BorderBrush="{DynamicResource BorderMediumBrush}" 
-            Background="{DynamicResource ControlBackgroundBrush}" 
-            CornerRadius="4">
-        
+
+    <!-- 将原来的属性移动到 Style 中，以便使用 Trigger -->
+    <Border x:Name="MainBorder" CornerRadius="4">
+        <Border.Style>
+            <Style TargetType="Border">
+                <!-- 1. 默认属性 & 增加高度 -->
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                <!-- 这里设置最小高度，增加控件高度 -->
+                <Setter Property="MinHeight" Value="28"/>
+                <Setter Property="Margin" Value="1"/>
+                <Style.Triggers>
+                    <!-- 2. 选中/录制状态特效 -->
+                    <!-- 监听 UserControl 是否有键盘焦点 -->
+                    <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                        <!-- 激活时的效果 -->
+                        <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+                        <!-- 或者使用你的强调色资源 -->
+                        <Setter Property="BorderThickness" Value="1.5"/>
+                        <!-- 边框变粗 -->
+                        <Setter Property="Background" Value="{DynamicResource ChromeMediumBrush}"/>
+                        <!-- 背景略微变化 -->
+                    </DataTrigger>
+
+                    <!-- 鼠标悬停效果 (可选，增加交互感) -->
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource ChromeLowBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
         <Grid Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -31,22 +59,23 @@
             <TextBlock x:Name="KeyDisplay" 
                        Text="None" 
                        VerticalAlignment="Center" 
-                       Margin="8,0" 
+                       Margin="10,0" 
                        Foreground="{DynamicResource TextControlBrush}"
                        IsHitTestVisible="False"/>
 
             <Button Grid.Column="1" 
-                    
-                    Width="20" 
+                    Width="24" 
+                    Height="24"
+                    Margin="0,0,4,0"
                     BorderThickness="0" 
                     Background="Transparent" 
-                   
-                    Cursor="Hand" Style="{StaticResource OtherCloseButtonStyle}"
+                    Cursor="Hand" 
+                    Style="{StaticResource OtherCloseButtonStyle}"
                     Click="ClearButton_Click">
                 <Viewbox Width="8" Height="8">
-                    <Path    Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
-          StrokeThickness="1.5" 
-          Data="M0,0 L12,12 M12,0 L0,12"/>
+                    <Path Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                          StrokeThickness="1.5" 
+                          Data="M0,0 L12,12 M12,0 L0,12"/>
                 </Viewbox>
             </Button>
         </Grid>

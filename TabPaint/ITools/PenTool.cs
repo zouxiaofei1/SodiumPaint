@@ -25,7 +25,7 @@ namespace TabPaint
             }
             private bool _drawing = false;
             private Point _lastPixel;
-
+            private float _lastPressure = 1.0f;
             // 荧光笔专用遮罩
             private bool[] _currentStrokeMask;
             private int _maskWidth;
@@ -58,14 +58,16 @@ namespace TabPaint
                        style == BrushStyle.Pencil ||
                        style == BrushStyle.Highlighter ||
                        style == BrushStyle.Watercolor ||
-                       style == BrushStyle.Crayon;
+                       style == BrushStyle.Crayon ||
+                       style == BrushStyle.Calligraphy;
             }
 
-            public override void OnPointerDown(ToolContext ctx, Point viewPos)
+            public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
-
+                if (ctx.PenStyle == BrushStyle.Calligraphy)pressure = 1.0f;
+                
                 // --- 荧光笔遮罩初始化 ---
                 int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
                 if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
@@ -80,12 +82,11 @@ namespace TabPaint
                 }
 
                 ctx.CapturePointer();
-
                 var px = ctx.ToPixel(viewPos);
                 ctx.Undo.BeginStroke();
                 _drawing = true;
                 _lastPixel = px;
-
+                _lastPressure = pressure; // 初始化压力
                 Int32Rect? dirty = null;
                 ctx.Surface.Bitmap.Lock();
                 unsafe
@@ -97,7 +98,7 @@ namespace TabPaint
 
                     if (IsLineBasedBrush(ctx.PenStyle))
                     {
-                        dirty = DrawBrushLineUnsafe(ctx, px, px, backBuffer, stride, width, height);
+                        dirty = DrawBrushLineUnsafe(ctx, px, pressure, px, pressure, backBuffer, stride, width, height);
                     }
                     else
                     {
@@ -117,11 +118,24 @@ namespace TabPaint
                 ctx.Surface.Bitmap.Unlock(); 
             }
 
-            public override void OnPointerMove(ToolContext ctx, Point viewPos)
+            public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 if (!_drawing) return;
                 var px = ctx.ToPixel(viewPos);
+                if (ctx.PenStyle == BrushStyle.Calligraphy)
+                {
+                    // 计算距离（速度）
+                    double distance = Math.Sqrt(Math.Pow(px.X - _lastPixel.X, 2) + Math.Pow(px.Y - _lastPixel.Y, 2));
 
+                    // 速度阈值：超过 60像素/帧 视为极快（压感最低），0视为静止（压感最高）
+                    double maxSpeed = 60.0;
+
+                    float speedPressure = (float)Math.Clamp(1.0 - (distance / maxSpeed), 0.1, 1.0);
+
+                    // 使用模拟压感覆盖传入的物理压感
+                    pressure = speedPressure;
+                }
+                // -
                 ctx.Surface.Bitmap.Lock();
 
                 // 计算本次绘制的脏矩形范围
@@ -135,8 +149,7 @@ namespace TabPaint
                     int width = ctx.Surface.Bitmap.PixelWidth;
                     int height = ctx.Surface.Bitmap.PixelHeight;
 
-                    // 传入指针进行极速绘制
-                    var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, px, backBuffer, stride, width, height);
+                    var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, _lastPressure, px, pressure,  backBuffer, stride, width, height);
 
                     if (dirty.HasValue)
                     {
@@ -162,9 +175,10 @@ namespace TabPaint
                 ctx.Surface.Bitmap.Unlock();
 
                 _lastPixel = px;
+                _lastPressure = pressure;
             }
 
-            public override void OnPointerUp(ToolContext ctx, Point viewPos)
+            public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 StopDrawing(ctx);
             }
@@ -183,12 +197,12 @@ namespace TabPaint
                 ctx.ReleasePointerCapture();
             }
 
-            private unsafe Int32Rect? DrawContinuousStrokeUnsafe(ToolContext ctx, Point from, Point to, byte* buffer, int stride, int w, int h)
+            private unsafe Int32Rect? DrawContinuousStrokeUnsafe(ToolContext ctx, Point from, float fromP, Point to, float toP, byte* buffer, int stride, int w, int h)
             {
                 // 1. 连续型笔刷：直接画线段，效率最高
                 if (IsLineBasedBrush(ctx.PenStyle))
                 {
-                    return DrawBrushLineUnsafe(ctx, from, to, buffer, stride, w, h);
+                    return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
                 }
 
                 // 2. 间断型笔刷：需要插值“盖章”
@@ -245,15 +259,18 @@ namespace TabPaint
                 return new Int32Rect(minX, minY, maxX - minX, maxY - minY);
             }
 
-            private unsafe Int32Rect? DrawBrushLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* buffer, int stride, int w, int h)
+            private unsafe Int32Rect? DrawBrushLineUnsafe(ToolContext ctx, Point p1, float p1Pressure, Point p2, float p2Pressure, byte* buffer, int stride, int w, int h)
             {
                 switch (ctx.PenStyle)
                 {
                     case BrushStyle.Round:
-                        DrawRoundStrokeUnsafe(ctx, p1, p2, buffer, stride, w, h);
-                        return LineBounds(p1, p2, (int)ctx.PenThickness);
+                    case BrushStyle.Calligraphy:
+                        DrawRoundStrokeUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
+                        int maxPressureSize = (int)(ctx.PenThickness * Math.Max(p1Pressure, p2Pressure) + 2);
+                        return LineBounds(p1, p2, maxPressureSize);
+
                     case BrushStyle.Pencil:
-                        DrawPencilLineUnsafe(ctx, p1, p2, buffer, stride, w, h);
+                        DrawPencilLineUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
                         return LineBounds(p1, p2, 1);
                     case BrushStyle.Highlighter:
                         DrawHighlighterLineUnsafe(ctx, p1, p2, buffer, stride, w, h);
@@ -312,89 +329,108 @@ namespace TabPaint
                 }
                 return null;
             }
-            private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
+            private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
             {
-                int r = (int)(ctx.PenThickness / 2.0);
-                if (r < 1) r = 1;
+                double baseThickness = ctx.PenThickness;
+                double minScale = 0.5;
+                double r1 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p1P)) / 2.0);
+                double r2 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p2P)) / 2.0);
 
-                Color targetColor = ctx.PenColor; 
+                // 压感同时影响透明度：压力越小越透明
                 float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-
-                // 如果力度为0，完全不画
                 if (globalOpacity <= 0.005f) return;
 
-                double dx = p2.X - p1.X;
-                double dy = p2.Y - p1.Y;
-                double lenSq = dx * dx + dy * dy;
-
-                int xmin = (int)Math.Min(p1.X, p2.X) - r;
-                int ymin = (int)Math.Min(p1.Y, p2.Y) - r;
-                int xmax = (int)Math.Max(p1.X, p2.X) + r;
-                int ymax = (int)Math.Max(p1.Y, p2.Y) + r;
-
-                xmin = Math.Max(0, xmin); ymin = Math.Max(0, ymin);
-                xmax = Math.Min(w - 1, xmax); ymax = Math.Min(h - 1, ymax);
-
-                int rSq = r * r;
-
-                // 预计算目标分量，避免循环内重复转换
+                Color targetColor = ctx.PenColor;
                 float targetB = targetColor.B;
                 float targetG = targetColor.G;
                 float targetR = targetColor.R;
                 float targetA = targetColor.A;
 
+                // 计算包围盒
+                double maxR = Math.Max(r1, r2);
+                int xmin = (int)(Math.Min(p1.X, p2.X) - maxR - 1);
+                int ymin = (int)(Math.Min(p1.Y, p2.Y) - maxR - 1);
+                int xmax = (int)(Math.Max(p1.X, p2.X) + maxR + 1);
+                int ymax = (int)(Math.Max(p1.Y, p2.Y) + maxR + 1);
+
+                xmin = Math.Max(0, xmin); ymin = Math.Max(0, ymin);
+                xmax = Math.Min(w - 1, xmax); ymax = Math.Min(h - 1, ymax);
+
+                double dx = p2.X - p1.X;
+                double dy = p2.Y - p1.Y;
+                double lenSq = dx * dx + dy * dy;
+
                 for (int y = ymin; y <= ymax; y++)
                 {
                     byte* rowPtr = basePtr + y * stride;
-                    int rowIdx = y * w; // 用来计算Mask索引
+                    int rowIdx = y * w;
 
                     for (int x = xmin; x <= xmax; x++)
                     {
                         int pixelIndex = rowIdx + x;
                         if (_currentStrokeMask[pixelIndex]) continue;
+
+                        // 计算点在直线上的投影比例 t (0 到 1)
                         double t = 0;
                         if (lenSq > 0)
                         {
                             t = ((x - p1.X) * dx + (y - p1.Y) * dy) / lenSq;
                             t = Math.Max(0, Math.Min(1, t));
                         }
+
+                        // 动态半径插值：r(t) = r1 + (r2 - r1) * t
+                        double currentR = r1 + (r2 - r1) * t;
+                        double rSq = currentR * currentR;
+
                         double projx = p1.X + t * dx;
                         double projy = p1.Y + t * dy;
                         double distSq = (x - projx) * (x - projx) + (y - projy) * (y - projy);
 
                         if (distSq <= rSq)
                         {
-                            // 标记该像素本次已绘制
                             _currentStrokeMask[pixelIndex] = true;
 
+                            // --- 【修改点 3：透明度映射优化】 ---
+                            float currentPressure = p1P + (p2P - p1P) * (float)t;
+
+                            float pressureAlpha = 0.3f + 0.7f * (float)Math.Pow(currentPressure, 0.5);
+
+                            float dynamicOpacity = globalOpacity * pressureAlpha;
+
                             byte* p = rowPtr + x * 4;
-                            p[0] = (byte)(p[0] + (targetB - p[0]) * globalOpacity);
-                            p[1] = (byte)(p[1] + (targetG - p[1]) * globalOpacity);
-                            p[2] = (byte)(p[2] + (targetR - p[2]) * globalOpacity);
-                            p[3] = (byte)(p[3] + (targetA - p[3]) * globalOpacity);
+                            p[0] = (byte)(p[0] + (targetB - p[0]) * dynamicOpacity);
+                            p[1] = (byte)(p[1] + (targetG - p[1]) * dynamicOpacity);
+                            p[2] = (byte)(p[2] + (targetR - p[2]) * dynamicOpacity);
+                            p[3] = (byte)(p[3] + (targetA - p[3]) * dynamicOpacity);
                         }
                     }
                 }
             }
-            private unsafe void DrawPencilLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
+            private unsafe void DrawPencilLineUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
             {
+                // 铅笔是Bresenham算法画线，这里需要修改为支持插值
+                // 为了支持透明度插值，Bresenham不太好用，我们改用一种简单的步进算法或者沿路径计算
+                // 既然已经是 Unsafe 并且有 Mask 保护，我们可以用简单的 DDA 或者投影法
+
                 int x0 = (int)p1.X; int y0 = (int)p1.Y;
                 int x1 = (int)p2.X; int y1 = (int)p2.Y;
 
                 Color targetColor = ctx.PenColor;
                 float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-
-                // 铅笔如果力度太小可能看不见，但为了统一逻辑还是允许微弱绘制
                 if (globalOpacity <= 0.005f) return;
 
-                float tB = targetColor.B;
-                float tG = targetColor.G;
-                float tR = targetColor.R;
-                float tA = targetColor.A;
+                float tB = targetColor.B; float tG = targetColor.G;
+                float tR = targetColor.R; float tA = targetColor.A;
 
                 int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
                 int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
                 int err = dx + dy, e2;
+
+                // 计算总长度用于插值
+                float totalDist = (float)Math.Sqrt(dx * dx + dy * dy);
+                if (totalDist == 0) totalDist = 1;
+
+                int startX = x0; int startY = y0;
 
                 while (true)
                 {
@@ -404,13 +440,20 @@ namespace TabPaint
                         if (!_currentStrokeMask[pixelIndex])
                         {
                             _currentStrokeMask[pixelIndex] = true;
-                            byte* p = basePtr + y0 * stride + x0 * 4;
 
-                            // Lerp 插值
-                            p[0] = (byte)(p[0] + (tB - p[0]) * globalOpacity);
-                            p[1] = (byte)(p[1] + (tG - p[1]) * globalOpacity);
-                            p[2] = (byte)(p[2] + (tR - p[2]) * globalOpacity);
-                            p[3] = (byte)(p[3] + (tA - p[3]) * globalOpacity);
+                            // 计算当前点距离起点的距离比例
+                            float currentDist = (float)Math.Sqrt(Math.Pow(x0 - startX, 2) + Math.Pow(y0 - startY, 2));
+                            float t = currentDist / totalDist;
+                            float currentPressure = p1P + (p2P - p1P) * t;
+
+                            // 铅笔：压力控制透明度
+                            float localOpacity = globalOpacity * Math.Clamp(currentPressure, 0.1f, 1.0f);
+
+                            byte* p = basePtr + y0 * stride + x0 * 4;
+                            p[0] = (byte)(p[0] + (tB - p[0]) * localOpacity);
+                            p[1] = (byte)(p[1] + (tG - p[1]) * localOpacity);
+                            p[2] = (byte)(p[2] + (tR - p[2]) * localOpacity);
+                            p[3] = (byte)(p[3] + (tA - p[3]) * localOpacity);
                         }
                     }
 
@@ -535,39 +578,66 @@ namespace TabPaint
 
             private unsafe void DrawMosaicStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
+                int blockSize = Math.Max(4, (int)(ctx.PenThickness / 4.0));
+
                 int radius = (int)(ctx.PenThickness / 2.0);
                 if (radius < 1) radius = 1;
-                int blockSize = 12;
 
+                long radiusSq = (long)radius * radius;
+
+                // 计算受影响的像素范围
                 int x_start = (int)Math.Max(0, p.X - radius);
                 int x_end = (int)Math.Min(w, p.X + radius);
                 int y_start = (int)Math.Max(0, p.Y - radius);
                 int y_end = (int)Math.Min(h, p.Y + radius);
 
-                for (int y = y_start; y < y_end; y++)
+                int gridXStart = (x_start / blockSize) * blockSize;
+                int gridYStart = (y_start / blockSize) * blockSize;
+
+                // 外层循环遍历马赛克“格子”
+                for (int by = gridYStart; by < y_end; by += blockSize)
                 {
-                    for (int x = x_start; x < x_end; x++)
+                    for (int bx = gridXStart; bx < x_end; bx += blockSize)
                     {
-                        double dist = Math.Sqrt((x - p.X) * (x - p.X) + (y - p.Y) * (y - p.Y));
-                        if (dist < radius)
+                        // 确保采样点在图像范围内
+                        int sampleX = Math.Clamp(bx, 0, w - 1);
+                        int sampleY = Math.Clamp(by, 0, h - 1);
+
+                        byte* srcPixel = basePtr + sampleY * stride + sampleX * 4;
+                        byte B = srcPixel[0];
+                        byte G = srcPixel[1];
+                        byte R = srcPixel[2];
+                        int fillStartY = Math.Max(by, y_start);
+                        int fillEndY = Math.Min(by + blockSize, y_end);
+                        int fillStartX = Math.Max(bx, x_start);
+                        int fillEndX = Math.Min(bx + blockSize, x_end);
+
+                        // 内层循环填充颜色
+                        for (int y = fillStartY; y < fillEndY; y++)
                         {
-                            int blockX = (x / blockSize) * blockSize;
-                            int blockY = (y / blockSize) * blockSize;
-                            blockX = Math.Clamp(blockX, 0, w - 1);
-                            blockY = Math.Clamp(blockY, 0, h - 1);
+                            // 预计算 Y 轴距离平方
+                            long dy = y - (int)p.Y;
+                            long dy2 = dy * dy;
 
-                            byte* sourcePixel = basePtr + blockY * stride + blockX * 4;
-                            byte* targetPixel = basePtr + y * stride + x * 4;
+                            byte* rowPtr = basePtr + y * stride;
 
-                            targetPixel[0] = sourcePixel[0];
-                            targetPixel[1] = sourcePixel[1];
-                            targetPixel[2] = sourcePixel[2];
-                            targetPixel[3] = 255;
+                            for (int x = fillStartX; x < fillEndX; x++)
+                            {
+                                // 4. 仅在圆形范围内才填充
+                                long dx = x - (int)p.X;
+                                if (dx * dx + dy2 < radiusSq)
+                                {
+                                    byte* destPixel = rowPtr + x * 4;
+                                    destPixel[0] = B;
+                                    destPixel[1] = G;
+                                    destPixel[2] = R;
+                               
+                                }
+                            }
                         }
                     }
                 }
             }
-
             private unsafe void DrawWatercolorStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
             {
                 int radius = (int)(ctx.PenThickness / 2.0);

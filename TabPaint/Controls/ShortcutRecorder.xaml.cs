@@ -46,7 +46,11 @@ namespace TabPaint.Controls
             {
                 return;
             }
-
+            if (e.Key == Key.ImeProcessed)
+            {
+                e.Handled = true;
+                return;
+            }
             e.Handled = true; 
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
 

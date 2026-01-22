@@ -105,7 +105,8 @@ namespace TabPaint
 
             MainToolBar.BrushStyleClick += OnBrushStyleClick;
             MainToolBar.ShapeStyleClick += OnShapeStyleClick;
-
+            MainToolBar.BrushMainClick += OnBrushMainClick; // 只是切换回画笔工具
+            MainToolBar.ShapeMainClick += OnShapeMainClick; // 只是切换回形状工具
             MainToolBar.CropClick += CropMenuItem_Click;
             MainToolBar.RotateLeftClick += OnRotateLeftClick;
             MainToolBar.RotateRightClick += OnRotateRightClick;
@@ -140,6 +141,7 @@ namespace TabPaint
             AppTitleBar.SaveAsClick += OnSaveAsClick;
             AppTitleBar.ExitClick += OnExitClick;
             AppTitleBar.IconDragRequest += OnAppTitleBarIconDragRequest;
+            AppTitleBar.LogoMiddleClick += OnAppTitleBarLogoMiddleClick;
             // 注入到界面
             StatusBarHolder.Content = MyStatusBar;
 

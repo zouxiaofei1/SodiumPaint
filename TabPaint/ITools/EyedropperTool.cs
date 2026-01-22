@@ -47,12 +47,11 @@ namespace TabPaint
                     ctx.ViewElement.Cursor = this.Cursor;
                 }
             }
-            public override void OnPointerDown(ToolContext ctx, Point viewPos)
+            public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
                 MainWindow  mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (mw.IsViewMode) return;
                 var px = ctx.ToPixel(viewPos);
-                // 添加边界检查，防止点击画布外崩溃
                 if (px.X >= 0 && px.Y >= 0 && px.X < ctx.Surface.Bitmap.PixelWidth && px.Y < ctx.Surface.Bitmap.PixelHeight)
                 {
                     ctx.PenColor = ctx.Surface.GetPixel((int)px.X, (int)px.Y);
