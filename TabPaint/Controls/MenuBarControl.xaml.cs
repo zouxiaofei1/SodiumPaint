@@ -100,7 +100,10 @@ namespace TabPaint.Controls
         public event RoutedEventHandler AutoLevelsClick { add { AddHandler(AutoLevelsClickEvent, value); } remove { RemoveHandler(AutoLevelsClickEvent, value); } }
         private void OnInvertClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(InvertClickEvent));
         private void OnAutoLevelsClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(AutoLevelsClickEvent));
+        public static readonly RoutedEvent WatermarkClickEvent = EventManager.RegisterRoutedEvent("WatermarkClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public event RoutedEventHandler WatermarkClick { add { AddHandler(WatermarkClickEvent, value); } remove { RemoveHandler(WatermarkClickEvent, value); } }
 
+        private void OnWatermarkClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(WatermarkClickEvent));
 
 
 
@@ -109,11 +112,7 @@ namespace TabPaint.Controls
         private void OnFileMenuOpened(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
-            // 使用 GetString 获取当前语言下的 "文件" 对应的词，或者直接检查 Name 属性更安全
-            // 建议在 XAML 中给 MenuItem 一个 Name="FileMenu"，然后在代码中判断 if (menuItem == FileMenu)
             if (menuItem == null) return;
-
-            // 如果必须对比 Header (不推荐，但为了兼容你的逻辑):
             var header = menuItem.Header.ToString();
             if (header == LocalizationManager.GetString("L_Menu_File"))
             {

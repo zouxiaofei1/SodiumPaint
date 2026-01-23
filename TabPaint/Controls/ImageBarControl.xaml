@@ -161,39 +161,39 @@
 
                                         <Button.ContextMenu>
                                             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}" >
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="L_Menu_Edit_Copy" Click="Internal_OnTabCopyClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="{DynamicResource L_Menu_Edit_Copy}" Click="Internal_OnTabCopyClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Menu_Edit_Cut" Click="Internal_OnTabCutClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Cut}" Click="Internal_OnTabCutClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Menu_Edit_Paste" Click="Internal_OnTabPasteClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Paste}" Click="Internal_OnTabPasteClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Menu_File_OpenFolder" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenFolder}" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Ctx_StickImage" 
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_StickImage}" 
           Click="Internal_OnTabStickImageClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Open_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator/>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_TitleBar_Close" Click="Internal_OnTabDeleteClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_TitleBar_Close}" Click="Internal_OnTabDeleteClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="L_Ctx_DeleteFile" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_DeleteFile}" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Delete_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>

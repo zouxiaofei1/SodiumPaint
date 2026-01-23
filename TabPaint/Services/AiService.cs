@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Management;
 
 namespace TabPaint
 {
@@ -29,8 +30,17 @@ namespace TabPaint
         private const string Sr_ModelName = "realesrgan-x4plus.onnx";
         private const int TileSize = 256; // 切块大小，越小内存占用越低，但推理次数越多
         private const int TileOverlap = 16; // 重叠区域，防止拼接缝隙
-        private const int ScaleFactor = 4; 
+        private const int ScaleFactor = 4;
 
+        public bool IsModelReady(AiTaskType taskType)
+        {
+            string modelName = taskType == AiTaskType.RemoveBackground ? BgRem_ModelName : Sr_ModelName;
+            string finalPath = Path.Combine(_cacheDir, modelName);
+
+            // 简单的存在性检查，具体的哈希校验交给 PrepareModelAsync
+            // 如果文件存在但损坏，PrepareModelAsync 会负责重新下载，所以这里只需检查文件是否存在以免打扰用户
+            return File.Exists(finalPath);
+        }
 
         public AiService(string cacheDir)
         {
@@ -38,7 +48,70 @@ namespace TabPaint
             if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
         }
         public enum AiTaskType { RemoveBackground, SuperResolution }
+        private int? _bestGpuId = null;
 
+        private int GetBestGpuDeviceId()
+        {
+            if (_bestGpuId.HasValue) return _bestGpuId.Value;
+
+            int bestId = 0; // 默认使用 0
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+                {
+                    var devices = searcher.Get().Cast<ManagementObject>().ToList();
+                    for (int i = 0; i < devices.Count; i++)
+                    {
+                        var name = devices[i]["Name"]?.ToString() ?? "";
+                        if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) ||
+                            (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) && !name.Contains("Radeon TM Graphics", StringComparison.OrdinalIgnoreCase)) || // 排除 AMD 核显
+                            name.Contains("Arc", StringComparison.OrdinalIgnoreCase)) // Intel 独显
+                        {
+                            bestId = i;
+                            System.Diagnostics.Debug.WriteLine($"[AI] Detected High-Perf GPU: {name} (ID: {i})");
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AI] GPU Detection failed: {ex.Message}. Defaulting to 0.");
+            }
+
+            _bestGpuId = bestId;
+            return bestId;
+        }
+
+        private SessionOptions GetSessionOptions()
+        {
+            var options = new SessionOptions();
+            int gpuId = GetBestGpuDeviceId();
+
+            try
+            {
+                options.AppendExecutionProvider_DML(gpuId);
+            }
+            catch
+            {
+                if (gpuId != 0)
+                {
+                    try
+                    {
+                        options.AppendExecutionProvider_DML(0);
+                    }
+                    catch
+                    {
+                        options.AppendExecutionProvider_CPU();
+                    }
+                }
+                else
+                {
+                    options.AppendExecutionProvider_CPU();
+                }
+            }
+            return options;
+        }
         public async Task<string> PrepareModelAsync(AiTaskType taskType, IProgress<double> progress)
         {
             // --- 配置部分 ---
@@ -211,7 +284,8 @@ namespace TabPaint
             // C. 后台线程
             return await Task.Run(() =>
             {
-                using var session = new InferenceSession(modelPath);
+                using var sessionOptions = GetSessionOptions();
+                using var session = new InferenceSession(modelPath, sessionOptions);
 
                 // 转换 Tensor
                 var tensor = PreprocessPixelsToTensor(inputPixels, targetW, targetH, inputStride);
@@ -245,17 +319,7 @@ namespace TabPaint
             // 3. 运行推理 (后台线程)
             await Task.Run(() =>
             {
-                var sessionOptions = new SessionOptions();
-                try
-                {
-                    sessionOptions.AppendExecutionProvider_DML(0);
-                }
-                catch
-                {
-                    // 回退 CPU
-                    sessionOptions.AppendExecutionProvider_CPU();
-                }
-
+                using var sessionOptions = GetSessionOptions();
                 using var session = new InferenceSession(modelPath, sessionOptions);
 
                 // 计算分块
@@ -295,6 +359,10 @@ namespace TabPaint
 
             // 4. 将像素写回 Bitmap
             outputBitmap.WritePixels(new Int32Rect(0, 0, outW, outH), outputPixels, outStride, 0);
+
+            outputPixels = null; // 解除大数组引用
+            inputPixels = null;  // 解除输入数组引用
+            GC.Collect(2, GCCollectionMode.Optimized);
             return outputBitmap;
         }
         private DenseTensor<float> ExtractTileToTensor(byte[] pixels, int startX, int startY, int validW, int validH, int fixedSize, int stride, int fullW, int fullH)

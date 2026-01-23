@@ -73,6 +73,7 @@ namespace TabPaint
             MainMenu.ExitClick += OnExitClick;
             MainMenu.RecentFileClick += OnRecentFileClick;
             MainMenu.ClearRecentFilesClick += OnClearRecentFilesClick;
+            MainMenu.WatermarkClick += OnWatermarkClick;
 
             MainMenu.CopyClick += OnCopyClick;
             MainMenu.CutClick += OnCutClick;

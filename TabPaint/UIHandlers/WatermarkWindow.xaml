@@ -1,0 +1,262 @@
+﻿<Window x:Class="TabPaint.WatermarkWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TabPaint"
+        mc:Ignorable="d"
+        Title="{DynamicResource L_Watermark_Title}" Height="600" Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        FontFamily="Microsoft YaHei UI, Segoe UI, sans-serif"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="4" CornerRadius="0"  />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- 复用 AdjustTTSWindow 中的资源，这里简略列出，实际项目中由于在此Window内定义，需要复制 AdjustTTSWindow 的 Resources -->
+        <!-- 务必确保包含 Slider, Button, TextBox, TextBlock 等样式 -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <!-- 可以在这里复制 AdjustTTSWindow 中的 NumberInputStyle 等样式 -->
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标题栏 -->
+            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Background="{DynamicResource WindowBackgroundBrush}">
+                <Grid MouseLeftButtonDown="TitleBar_MouseDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
+                           Width="20" Height="20" Margin="10,0,8,0" 
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                    <TextBlock Grid.Column="1" Text="{DynamicResource L_Watermark_Title}" 
+                               VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+
+                    <Button Grid.Column="2" Click="Cancel_Click" Width="32" Height="32" 
+                            WindowChrome.IsHitTestVisibleInChrome="True" Background="Transparent" BorderThickness="0" Padding="0" Style="{DynamicResource WindowCloseButtonStyle}"/>
+                </Grid>
+            </Border>
+
+            <!-- 内容区域 -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="20,10">
+
+                    <!-- 模式选择 -->
+                    <TextBlock Text="{DynamicResource L_Watermark_Type}" Style="{StaticResource LabelStyle}" Margin="0,0,0,5"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <RadioButton Content="{DynamicResource L_Watermark_TypeText}" IsChecked="True" x:Name="RadioText" GroupName="WMType" Checked="Mode_Checked" Margin="0,0,15,0" Style="{StaticResource ThemeRadioButtonStyle}"/>
+                        <RadioButton Content="{DynamicResource L_Watermark_TypeImage}" x:Name="RadioImage" GroupName="WMType" Checked="Mode_Checked" Style="{StaticResource ThemeRadioButtonStyle}"/>
+                    </StackPanel>
+
+                    <!-- 文本输入区域 -->
+                    <StackPanel x:Name="PanelText" Visibility="Visible">
+                        <TextBlock Text="{DynamicResource L_Watermark_Content}" Style="{StaticResource LabelStyle}" Margin="0,0,0,5"/>
+                        <TextBox x:Name="TxtContent" Text="TabPaint" Height="28" Padding="5,2" TextChanged="Input_TextChanged" Margin="0,0,0,10" Style="{StaticResource ModernTextBoxStyle}"/>
+
+                        <Grid Margin="0,5,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="LabelGroup"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="15"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 大小 -->
+                            <TextBlock Grid.Column="0" Text="{DynamicResource L_Watermark_FontSize}" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBox Grid.Column="1" x:Name="TxtFontSize" Text="40" Height="32"
+                                 PreviewTextInput="NumberValidationTextBox" 
+                                 TextChanged="Input_TextChanged" 
+                                 Style="{StaticResource ModernTextBoxStyle}" 
+                                 VerticalContentAlignment="Center"/>
+
+                            <!-- 字体 -->
+                            <TextBlock Grid.Column="3" Text="{DynamicResource L_Common_Font}" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox Grid.Column="4" x:Name="ComboFontFamily" 
+                                  Height="32" 
+                                  SelectionChanged="Param_Changed_Combo" 
+                                  Style="{StaticResource FluentComboBoxStyle}" Margin="0,0,0,5">
+                                <!-- 后台代码填充字体 -->
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- 颜色设置行 (Hex + 预览 + 选取按钮) -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="LabelGroup"/>
+                                <ColumnDefinition Width="*"/>
+                                <!-- 常用颜色 -->
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="80"/>
+                                <!-- Hex Input -->
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="40"/>
+                                <!-- Preview Rect (Clickable) -->
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="{DynamicResource L_Watermark_Color}" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                            <!-- 常用颜色下拉框 -->
+                            <ComboBox Grid.Column="1" x:Name="ComboCommonColors"
+              Height="32"
+              SelectionChanged="CommonColor_SelectionChanged"
+              Style="{StaticResource FluentComboBoxStyle}"
+              VerticalContentAlignment="Center">
+                                <!-- 后台代码填充 -->
+                            </ComboBox>
+
+                            <!-- Hex 输入框 (只允许 RGB) -->
+                            <TextBox Grid.Column="3" x:Name="TxtHexColor" Text="#FFFFFF" MaxLength="7" Height="32"
+             TextChanged="HexInput_TextChanged"
+             Style="{StaticResource ModernTextBoxStyle}"
+             VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontFamily="Consolas"/>
+
+                            <!-- 颜色预览色块 (点击弹出取色器) -->
+                            <Border Grid.Column="5" 
+            BorderBrush="{DynamicResource BorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="4" 
+            Cursor="Hand"
+            ToolTip="{DynamicResource L_ToolBar_CustomColor}"
+            MouseLeftButtonDown="ColorPreview_Click">
+                                <Border.Background>
+                                    <VisualBrush TileMode="Tile" Viewport="0,0,8,8" ViewportUnits="Absolute">
+                                        <VisualBrush.Visual>
+                                            <Grid Background="#FFF">
+                                                <Path Data="M0,0 L4,0 L4,4 L0,4 Z M4,4 L8,4 L8,8 L4,8 Z" Fill="#CCC" />
+                                            </Grid>
+                                        </VisualBrush.Visual>
+                                    </VisualBrush>
+                                </Border.Background>
+                                <Rectangle x:Name="RectColorPreview" Fill="White" RadiusX="3" RadiusY="3"/>
+                            </Border>
+                        </Grid>
+
+                    </StackPanel>
+
+                    <!-- 图片输入区域 -->
+                    <StackPanel x:Name="PanelImage" Visibility="Collapsed">
+                        <TextBlock Text="{DynamicResource L_Watermark_DropImage}" Style="{StaticResource LabelStyle}" Margin="0,0,0,8"/>
+                        <Border Height="60" Margin="0,0,0,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Background="{DynamicResource ChromeLowBrush}" AllowDrop="True" Drop="Image_Drop" MouseLeftButtonDown="ImageSelect_Click" Cursor="Hand">
+                            <Grid>
+                                <TextBlock x:Name="TxtImageName" Text="{DynamicResource L_Watermark_ClickOrDrop}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis" Margin="5"/>
+                                <Image x:Name="ImgPreview" Stretch="Uniform" Opacity="0.3" Margin="2"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="{DynamicResource L_Watermark_ImageScale}" Style="{StaticResource LabelStyle}" Margin="0,5,0,0"/>
+                        <Slider x:Name="SliderImgScale" Minimum="0.1" Maximum="2.0" Value="0.8" ValueChanged="Param_ValueChanged" Margin="0,0,0,10"/>
+                    </StackPanel>
+
+                    <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,5,0,10"/>
+
+                    <!-- 通用设置 -->
+
+                    <!-- Opacity -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource L_Watermark_Opacity}" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1" Text="{Binding ElementName=SliderOpacity, Path=Value, StringFormat=P0}"/>
+                    </Grid>
+                    <Slider x:Name="SliderOpacity" Minimum="0" Maximum="1" Value="0.5" ValueChanged="Param_ValueChanged" Margin="0,0,0,10"/>
+
+                    <!-- Angle -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource L_Watermark_Angle}" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1" Text="{Binding ElementName=SliderAngle, Path=Value, StringFormat=N0}"/>
+                    </Grid>
+                    <Slider x:Name="SliderAngle" Minimum="-180" Maximum="180" Value="-45" ValueChanged="Param_ValueChanged" Margin="0,0,0,10"/>
+
+                    <!-- Rows (Vertical Count) -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource L_Watermark_Rows}" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1" Text="{Binding ElementName=SliderRows, Path=Value, StringFormat=N0}"/>
+                    </Grid>
+                    <Slider x:Name="SliderRows" Minimum="1" Maximum="20" Value="3" ValueChanged="Param_ValueChanged" Margin="0,0,0,10"/>
+
+                    <!-- Cols (Horizontal Count) -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource L_Watermark_Cols}" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Style="{StaticResource NumberInputStyle}" Grid.Column="1" Text="{Binding ElementName=SliderCols, Path=Value, StringFormat=N0}"/>
+                    </Grid>
+                    <Slider x:Name="SliderCols" Minimum="1" Maximum="20" Value="3" ValueChanged="Param_ValueChanged" Margin="0,0,0,5"/>
+                    <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,5,0,10"/>
+                    <Grid Margin="0,5,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 随机偏移 -->
+                        <CheckBox x:Name="ChkRandom" 
+              Grid.Column="0"
+              Content="{DynamicResource L_Watermark_RandomOffset}" 
+              Style="{StaticResource FluentCheckBoxStyle}"
+              Foreground="{DynamicResource TextPrimaryBrush}"
+              Checked="Generic_Changed" 
+              Unchecked="Generic_Changed"
+              VerticalContentAlignment="Center">
+                        </CheckBox>
+
+                        <!-- 应用到所有 (新功能) -->
+                        <CheckBox x:Name="ChkApplyToAll" 
+              Grid.Column="1"
+              Content="{DynamicResource L_Watermark_ApplyToAll}" 
+              Style="{StaticResource FluentCheckBoxStyle}"
+              Foreground="{DynamicResource TextPrimaryBrush}"
+              VerticalContentAlignment="Center">
+                            <!-- 注意：这个 CheckBox 不需要 Generic_Changed，因为它不影响当前的预览画面 -->
+                        </CheckBox>
+                    </Grid>
+
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 底部按钮 -->
+            <Border Grid.Row="2" Background="{DynamicResource WindowBackgroundBrush}" Padding="15,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderLightBrush}">
+                <Grid>
+                    <Button Content="{DynamicResource L_Common_Reset}" Width="80" HorizontalAlignment="Left" Click="Reset_Click"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="{DynamicResource L_Common_OK}" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
+                        <Button Content="{DynamicResource L_Common_Cancel}" Width="80" Click="Cancel_Click" IsCancel="True"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -560,4 +560,27 @@
     <sys:String x:Key="L_AI_Status_Upscaling_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在超分... {0:0}%</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">超分辨率处理完成 (400%)</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">超分失败: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用需要下载背景移除模型 (约 170MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用需要下载超分辨率模型 (约 60MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Watermark" xmlns:sys="clr-namespace:System;assembly=mscorlib">水印</sys:String>
+    <sys:String x:Key="L_Watermark_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加水印</sys:String>
+    <sys:String x:Key="L_Watermark_Type" xmlns:sys="clr-namespace:System;assembly=mscorlib">水印类型</sys:String>
+    <sys:String x:Key="L_Watermark_ApplyToAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">应用到所有</sys:String>
+    <sys:String x:Key="L_Watermark_TypeText" xmlns:sys="clr-namespace:System;assembly=mscorlib">文字</sys:String>
+    <sys:String x:Key="L_Watermark_TypeImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片</sys:String>
+    <sys:String x:Key="L_Watermark_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">内容</sys:String>
+    <sys:String x:Key="L_Watermark_FontSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小</sys:String>
+    <sys:String x:Key="L_Watermark_Color" xmlns:sys="clr-namespace:System;assembly=mscorlib">颜色</sys:String>
+    <sys:String x:Key="L_Watermark_DropImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">拖拽图片到下方或点击选择</sys:String>
+    <sys:String x:Key="L_Watermark_ClickOrDrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">点击或拖入</sys:String>
+    <sys:String x:Key="L_Watermark_ImageScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放</sys:String>
+    <sys:String x:Key="L_Watermark_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">透明度</sys:String>
+    <sys:String x:Key="L_Watermark_Angle" xmlns:sys="clr-namespace:System;assembly=mscorlib">旋转角度</sys:String>
+    <sys:String x:Key="L_Watermark_Rows" xmlns:sys="clr-namespace:System;assembly=mscorlib">垂直数量</sys:String>
+    <sys:String x:Key="L_Watermark_Cols" xmlns:sys="clr-namespace:System;assembly=mscorlib">水平数量</sys:String>
+    <sys:String x:Key="L_Watermark_RandomOffset" xmlns:sys="clr-namespace:System;assembly=mscorlib">随机偏移</sys:String>
+    <sys:String x:Key="L_Toast_BatchStart" xmlns:sys="clr-namespace:System;assembly=mscorlib">开始批量添加水印...</sys:String>
+    <sys:String x:Key="L_Toast_BatchComplete" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量处理已完成。</sys:String>
+
 </ResourceDictionary>

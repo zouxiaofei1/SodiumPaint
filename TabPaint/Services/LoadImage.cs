@@ -662,9 +662,8 @@ namespace TabPaint
         {
             await Dispatcher.InvokeAsync(() =>
             {
-                // 1. 创建默认白色画布 (1200x900)
-                int width = 1200;
-                int height = 900;
+                int width = 2400;
+                int height = 1800;
                 _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
 
                 // 填充白色

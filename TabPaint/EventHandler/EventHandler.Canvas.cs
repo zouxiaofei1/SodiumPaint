@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -10,8 +11,8 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.Media.Ocr;
 using static TabPaint.MainWindow;
-
 //
 //TabPaintCanvas画布事件处理cs
 //
@@ -257,6 +258,22 @@ namespace TabPaint
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RemoveBgFailed_Prefix"), ex.Message));
             }
         }
+        private async void OnAiOcrClick(object sender, RoutedEventArgs e)
+        {
+            ShowToast("L_Toast_AiOcr_NotAvailable");
+        }
+
+        // 辅助方法：将 BitmapSource 转为 BMP 字节数组 (RapidOCR 接受)
+        private byte[] BitmapSourceToBytes(BitmapSource source)
+        {
+            var encoder = new BmpBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(source));
+            using (var ms = new MemoryStream())
+            {
+                encoder.Save(ms);
+                return ms.ToArray();
+            }
+        }
 
         private void ApplyColorKey(Color targetColor, int tolerance)
         {
@@ -388,6 +405,16 @@ namespace TabPaint
                 ShowToast("L_Error_MissingVCRedist");
                 return;
             }
+            var aiService = new AiService(_cacheDir);
+            if (!aiService.IsModelReady(AiService.AiTaskType.SuperResolution))
+            {
+                var result = FluentMessageBox.Show(
+                    LocalizationManager.GetString("L_AI_Download_SR_Content"),
+                    LocalizationManager.GetString("L_AI_Download_Title"),
+                    MessageBoxButton.YesNo);
+
+                if (result != MessageBoxResult.Yes) return;
+            }
 
             // 2. 状态保存与 UI 锁定
             var statusText = _imageSize;
@@ -398,9 +425,6 @@ namespace TabPaint
 
             try
             {
-                var aiService = new AiService(_cacheDir);
-
-                // --- 新增：大图预处理逻辑 ---
                 WriteableBitmap inputBmp = _surface.Bitmap;
                 const int MaxLongSide = 4096; // 限制长边最大 4096
 
@@ -444,7 +468,7 @@ namespace TabPaint
 
                 // 5. 应用结果
                 ApplyUpscaleResult(resultBitmap);
-
+                GC.Collect(2, GCCollectionMode.Forced, true);
                 ShowToast("L_Toast_Upscale_Success");
             }
             catch (Exception ex)
@@ -512,7 +536,7 @@ namespace TabPaint
                     LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Content"),
                     LocalizationManager.GetString("L_AI_RMBG_MissingRuntime_Title"),
                     MessageBoxButton.YesNo);
-              
+
                 if (result == MessageBoxResult.Yes)
                 {
                     Process.Start(new ProcessStartInfo
@@ -523,13 +547,24 @@ namespace TabPaint
                 }
                 return;
             }
-            var statusText = _imageSize; // 暂存状态栏
-            _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
-            OnPropertyChanged(nameof(ImageSize));
 
+             var aiService = new AiService(_cacheDir);
+                if (!aiService.IsModelReady(AiService.AiTaskType.RemoveBackground))
+                {
+                    var result = FluentMessageBox.Show(
+                        LocalizationManager.GetString("L_AI_Download_RMBG_Content"),
+                        LocalizationManager.GetString("L_AI_Download_Title"),
+                        MessageBoxButton.YesNo);
+
+                    if (result != MessageBoxResult.Yes) return;
+                }
+
+                var statusText = _imageSize; // 暂存状态栏
+                _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
+                OnPropertyChanged(nameof(ImageSize));
             try
             {
-                var aiService = new AiService(_cacheDir);
+   
 
                 // 2. 准备模型 (带进度)
                 var progress = new Progress<double>(p =>
@@ -538,7 +573,7 @@ namespace TabPaint
                     OnPropertyChanged(nameof(ImageSize));
                 });
 
-                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.RemoveBackground,progress);
+                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.RemoveBackground, progress);
 
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
@@ -593,6 +628,8 @@ namespace TabPaint
             CheckDirtyState();
             SetUndoRedoButtonState();
         }
+
+
         private void TextAlign_Click(object sender, RoutedEventArgs e)
         {
             var mw = (MainWindow)System.Windows.Application.Current.MainWindow;

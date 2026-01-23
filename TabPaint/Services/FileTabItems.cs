@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 //
 //ImageBar图片选择框相关代码
@@ -152,6 +153,36 @@ namespace TabPaint
         {
             e.Handled = true;
         }
+        public static void ForceCleanup()
+        {
+            Task.Run(() =>
+            {
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                GC.WaitForPendingFinalizers();
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            });
+        }
+        [System.Runtime.InteropServices.DllImport("psapi.dll")]
+        static extern int EmptyWorkingSet(IntPtr hwProc);
+
+        public static void AggressiveMemoryRelease()
+        {
+            // 先做标准的 GC 清理
+            ForceCleanup();
+
+            long memoryUsed = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
+            if (memoryUsed > 1024 * 1024 * 1024)
+            {
+                System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    try
+                    {
+                        EmptyWorkingSet(System.Diagnostics.Process.GetCurrentProcess().Handle);
+                    }
+                    catch { }
+                }, System.Windows.Threading.DispatcherPriority.Background);
+            }
+        }
 
         private async void CloseTab(FileTabItem item,bool slient=false)
         {
@@ -187,6 +218,7 @@ namespace TabPaint
                 UpdateImageBarSliderState();
                 return;
             }
+           
             if (wasSelected)
             {
                 int newIndex = Math.Max(0, Math.Min(removedUiIndex - 1, FileTabs.Count - 1));
@@ -203,6 +235,7 @@ namespace TabPaint
             UpdateImageBarSliderState();
             UpdateWindowTitle();
             UpdateImageBarVisibilityState();
+            AggressiveMemoryRelease();
         }
 
 

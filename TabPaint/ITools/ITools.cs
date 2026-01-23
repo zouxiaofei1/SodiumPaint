@@ -368,7 +368,18 @@ namespace TabPaint
             {
                 _ctx = ctx;
                 CurrentTool = defaultTool;
+                if (_ctx.ViewElement != null)
+                {
+                    // 禁用 "长按代表右键" 的系统手势 (消除起笔延迟)
+                    System.Windows.Input.Stylus.SetIsPressAndHoldEnabled(_ctx.ViewElement, false);
 
+                    // 禁用 "笔势" (如快速划动触发复制/粘贴等，消除干扰)
+                    System.Windows.Input.Stylus.SetIsFlicksEnabled(_ctx.ViewElement, false);
+
+                    // 禁用点击时的视觉反馈 (消除水波纹圆圈)
+                    System.Windows.Input.Stylus.SetIsTapFeedbackEnabled(_ctx.ViewElement, false);
+                    System.Windows.Input.Stylus.SetIsTouchFeedbackEnabled(_ctx.ViewElement, false);
+                }
             }
             private float GetPressure(System.Windows.Input.MouseEventArgs e)
             {
@@ -386,17 +397,42 @@ namespace TabPaint
 
             public void ViewElement_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
             {
-
-
                 var position = e.GetPosition(_ctx.ViewElement);
                 if (_ctx.Surface.Bitmap != null)
                 {
-
                     Point px = _ctx.ToPixel(position);
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 }
-                float pressure = GetPressure(e);
-                CurrentTool.OnPointerMove(_ctx, position, pressure);
+                if (e.StylusDevice != null)
+                {
+                    // 获取相对于ViewElement的所有高频点（包含历史轨迹）
+                    var stylusPoints = e.StylusDevice.GetStylusPoints(_ctx.ViewElement);
+
+                    if (stylusPoints.Count > 0)
+                    {
+                        // 遍历所有点进行绘制，还原平滑曲线
+                        for (int i = 0; i < stylusPoints.Count; i++)
+                        {
+                            var sp = stylusPoints[i];
+                            var pt = new Point(sp.X, sp.Y);
+                            // 注意：PressureFactor 获取的是 0.0-1.0 的压力值
+                            float pressure = sp.PressureFactor;
+
+                            // 每一个微小的移动都触发一次绘制
+                            CurrentTool.OnPointerMove(_ctx, pt, pressure);
+                        }
+                        return; // 处理完毕，直接返回，不再执行下方的鼠标逻辑
+                    }
+                }
+                float mousePressure = 1.0f;
+                // 保持原有的鼠标压力获取逻辑作为兼容
+                if (e.StylusDevice != null)
+                {
+                    var points = e.StylusDevice.GetStylusPoints(_ctx.ViewElement);
+                    if (points.Count > 0) mousePressure = points[points.Count - 1].PressureFactor;
+                }
+
+                CurrentTool.OnPointerMove(_ctx, position, mousePressure);
             }// 定义高亮颜色
 
             public SelectTool GetSelectTool()

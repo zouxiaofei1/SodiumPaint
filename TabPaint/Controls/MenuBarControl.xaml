@@ -118,6 +118,11 @@
                             <Path Data="{DynamicResource Resize_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_Watermark}" Style="{StaticResource Win11MenuItemStyle}" Click="OnWatermarkClick">
+                        <MenuItem.Icon>
+                            <Path Data="{DynamicResource Watermark_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="0.8" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
             </Menu>
             <!-- 快捷操作按钮 -->

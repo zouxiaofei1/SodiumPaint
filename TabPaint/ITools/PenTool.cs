@@ -332,7 +332,7 @@ namespace TabPaint
             private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
             {
                 double baseThickness = ctx.PenThickness;
-                double minScale = 0.5;
+                double minScale = 0.2;
                 double r1 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p1P)) / 2.0);
                 double r2 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p2P)) / 2.0);
 
@@ -393,7 +393,7 @@ namespace TabPaint
                             // --- 【修改点 3：透明度映射优化】 ---
                             float currentPressure = p1P + (p2P - p1P) * (float)t;
 
-                            float pressureAlpha = 0.3f + 0.7f * (float)Math.Pow(currentPressure, 0.5);
+                            float pressureAlpha = 0.2f + 0.8f * (float)Math.Pow(currentPressure, 0.5);
 
                             float dynamicOpacity = globalOpacity * pressureAlpha;
 

@@ -511,7 +511,127 @@ namespace TabPaint
             }
         }
 
+        private async void OnWatermarkClick(object sender, RoutedEventArgs e)
+        {
+            var oldBitmap = _surface.Bitmap;
+            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+            byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
+            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
 
+            // 2. 打开窗口
+            var dlg = new WatermarkWindow(_surface.Bitmap)
+            {
+                Owner = this
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                // ... (保持原有的重做/Undo推送代码不变) ...
+                var newBitmap = _surface.Bitmap;
+                var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
+                newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
+
+                // 推送 Undo
+                _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
+
+                // 刷新界面
+                NotifyCanvasChanged();
+                SetUndoRedoButtonState();
+
+                // =============== 新增部分 ===============
+                // 检查是否勾选了“应用到所有”
+                if (dlg.ApplyToAll)
+                {
+                    // 传入窗口中保存的参数配置
+                    await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
+                }
+                // =======================================
+            }
+            else
+            {
+                // 如果取消，WatermarkWindow 内部虽然恢复了像素，但最好通知一下 UI 刷新
+                NotifyCanvasChanged();
+            }
+        }
+        // 批量应用水印逻辑
+        private async Task ApplyWatermarkToAllTabs(WatermarkSettings settings)
+        {
+            if (settings == null) return;
+            ShowToast(LocalizationManager.GetString("L_Toast_BatchStart") ?? "Processing batch watermark...");
+
+            // 获取当前正在编辑的 Tab ID (它已经被实时修改过了，跳过)
+            string currentTabId = _currentTabItem?.Id;
+
+            // 创建列表副本以避免集合修改异常
+            var tabsToProcess = FileTabs.Where(t => t.Id != currentTabId).ToList();
+
+            foreach (var tab in tabsToProcess)
+            {
+                try
+                {
+                    tab.IsLoading = true; // 设置加载状态（如果你的 Tab 模板支持显示 Loading）
+
+                    await Task.Run(() =>
+                    {
+                        BitmapSource result = null;
+
+                        // 1. 必须在 UI 线程加载图片和渲染 WPF 视觉对象
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            // 确定源文件路径：如果有未保存的修改(BackupPath)，则使用 BackupPath，否则使用原文件
+                            string sourcePath = (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
+                                                ? tab.BackupPath
+                                                : tab.FilePath;
+
+                            if (!string.IsNullOrEmpty(sourcePath) && File.Exists(sourcePath))
+                            {
+                                var sourceBmp = LoadBitmapFromFile(sourcePath);
+                                if (sourceBmp != null)
+                                {
+                                    // 调用 WatermarkWindow 中的静态生成方法
+                                    result = WatermarkWindow.ApplyWatermarkToBitmap(sourceBmp, settings);
+                                }
+                            }
+                        });
+
+                        if (result == null) return;
+
+                        // 2. 在后台线程将结果保存到缓存目录 (IO 操作)
+                        if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
+
+                        string cacheFileName = $"{tab.Id}.png";
+                        string fullPath = Path.Combine(_cacheDir, cacheFileName);
+
+                        using (var fileStream = new FileStream(fullPath, FileMode.Create))
+                        {
+                            BitmapEncoder encoder = new PngBitmapEncoder();
+                            encoder.Frames.Add(BitmapFrame.Create(result));
+                            encoder.Save(fileStream);
+                        }
+
+                        // 3. 回到 UI 线程更新 Tab 数据模型
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            tab.BackupPath = fullPath;       // 指向新的缓存文件
+                            tab.IsDirty = true;              // 标记为未保存
+                            tab.LastBackupTime = DateTime.Now;
+
+                            // 刷新底部缩略图
+                            UpdateTabThumbnailFromBitmap(tab, result);
+
+                            tab.IsLoading = false;
+                        });
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Batch watermark error on {tab.FileName}: {ex.Message}");
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => tab.IsLoading = false);
+                }
+            }
+            SaveSession();
+            ShowToast(LocalizationManager.GetString("L_Toast_BatchComplete") ?? "Batch watermark applied.");
+        }
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
             CreateNewTab(TabInsertPosition.AfterCurrent,true);

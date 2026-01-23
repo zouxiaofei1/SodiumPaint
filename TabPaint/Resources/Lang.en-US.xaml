@@ -560,4 +560,26 @@
     <sys:String x:Key="L_AI_Status_Upscaling_Format">Upscaling... {0:0}%</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Success">Upscale complete (400%)</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Error_Prefix">Upscale failed: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Title">Download Model</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content">First time use requires downloading the background removal model (~170MB).&#x0a;Do you want to continue?</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content">First time use requires downloading the super resolution model (~60MB).&#x0a;Do you want to continue?</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Watermark">Watermark...</sys:String>
+    <sys:String x:Key="L_Watermark_Title">Add Watermark</sys:String>
+    <sys:String x:Key="L_Watermark_Type">Type</sys:String>
+    <sys:String x:Key="L_Watermark_TypeText">Text</sys:String>
+    <sys:String x:Key="L_Watermark_TypeImage">Image</sys:String>
+    <sys:String x:Key="L_Watermark_Content">Content</sys:String>
+    <sys:String x:Key="L_Watermark_FontSize">Size</sys:String>
+    <sys:String x:Key="L_Watermark_ApplyToAll">Apply to all</sys:String>
+    <sys:String x:Key="L_Watermark_Color">Color</sys:String>
+    <sys:String x:Key="L_Watermark_DropImage">Drop image below or click to select</sys:String>
+    <sys:String x:Key="L_Watermark_ClickOrDrop">Click or Drop</sys:String>
+    <sys:String x:Key="L_Watermark_ImageScale">Scale</sys:String>
+    <sys:String x:Key="L_Watermark_Opacity">Opacity</sys:String>
+    <sys:String x:Key="L_Watermark_Angle">Angle</sys:String>
+    <sys:String x:Key="L_Watermark_Rows">Vertical Qty</sys:String>
+    <sys:String x:Key="L_Watermark_Cols">Horizontal Qty</sys:String>
+    <sys:String x:Key="L_Watermark_RandomOffset">Random Offset</sys:String>
+    <sys:String x:Key="L_Toast_BatchStart">Batch processing started...</sys:String>
+    <sys:String x:Key="L_Toast_BatchComplete">Batch processing complete.</sys:String>
 </ResourceDictionary>
