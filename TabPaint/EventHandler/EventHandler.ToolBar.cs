@@ -270,6 +270,7 @@ namespace TabPaint
                 case BrushStyle.Watercolor: resKey = "Watercolor_Image"; break;
                 case BrushStyle.Highlighter: resKey = "Highlighter_Image"; isPath = false; break; // Image
                 case BrushStyle.Mosaic: resKey = "Mosaic_Image"; break;
+                case BrushStyle.AiEraser: resKey = "Eraser_Image"; isPath = false; break;
                     // Pencil 和 Eraser 通常在基础工具栏有独立按钮，这里也可以不用处理，或者给个默认图标
             }
 
@@ -371,11 +372,23 @@ namespace TabPaint
         }
         private void OnBrushMainClick(object sender, RoutedEventArgs e)
         {
-            // 如果已经是 PenTool，则不做任何事，或者你可以根据需求重置参数
-            // 如果不是，则切换过去，PenStyle 保持不变（因为它是存储在 Context 里的）
             if (!(_router.CurrentTool is PenTool))
             {
                 _router.SetTool(_tools.Pen);
+            }
+
+            if (_ctx.PenStyle == BrushStyle.Pencil ||
+                _ctx.PenStyle == BrushStyle.Eraser ||
+                _ctx.PenStyle == BrushStyle.AiEraser)
+            {
+                // 这里设置为默认画笔样式，通常是 Brush 或 Round
+                _ctx.PenStyle = BrushStyle.Brush;
+
+                // 3. 必须手动触发 UI 更新，否则图标和属性栏不会变
+                UpdateBrushSplitButtonIcon(_ctx.PenStyle);
+                UpdateToolSelectionHighlight();
+                AutoSetFloatBarVisibility();
+                UpdateGlobalToolSettingsKey();
             }
         }
 

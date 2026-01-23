@@ -283,6 +283,7 @@ namespace TabPaint
             System.Windows.Input.Cursor Cursor { get; }
             void Cleanup(ToolContext ctx);
             void StopAction(ToolContext ctx);
+            void OnMouseLeave(ToolContext ctx);
             void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f);
             void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f);
             void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f);
@@ -298,6 +299,7 @@ namespace TabPaint
             public virtual void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
             public virtual void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f) { }
             public virtual void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e) { }
+            public virtual void OnMouseLeave(ToolContext ctx) { }
             public virtual void Cleanup(ToolContext ctx) { }
             public virtual void StopAction(ToolContext ctx) { }
             public virtual void SetCursor(ToolContext ctx) { }
@@ -335,8 +337,16 @@ namespace TabPaint
             // 视图坐标 -> 像素坐标
             public Point ToPixel(Point viewPos)
             {
+                if (!ViewElement.Dispatcher.CheckAccess())
+                {
+                    // 如果没有权限，切换到 UI 线程执行并返回结果
+                    return (Point)ViewElement.Dispatcher.Invoke(() => ToPixel(viewPos));
+                }
+
                 var bmp = Surface.Bitmap;
-                if(bmp==null)return new Point(0,0);
+                if (bmp == null || ViewElement.ActualWidth == 0 || ViewElement.ActualHeight == 0)
+                    return new Point(0, 0);
+
                 double sx = bmp.PixelWidth / ViewElement.ActualWidth;
                 double sy = bmp.PixelHeight / ViewElement.ActualHeight;
                 return new Point(viewPos.X * sx, viewPos.Y * sy);
@@ -370,17 +380,20 @@ namespace TabPaint
                 CurrentTool = defaultTool;
                 if (_ctx.ViewElement != null)
                 {
-                    // 禁用 "长按代表右键" 的系统手势 (消除起笔延迟)
                     System.Windows.Input.Stylus.SetIsPressAndHoldEnabled(_ctx.ViewElement, false);
 
-                    // 禁用 "笔势" (如快速划动触发复制/粘贴等，消除干扰)
                     System.Windows.Input.Stylus.SetIsFlicksEnabled(_ctx.ViewElement, false);
 
-                    // 禁用点击时的视觉反馈 (消除水波纹圆圈)
                     System.Windows.Input.Stylus.SetIsTapFeedbackEnabled(_ctx.ViewElement, false);
                     System.Windows.Input.Stylus.SetIsTouchFeedbackEnabled(_ctx.ViewElement, false);
+                    _ctx.ViewElement.MouseLeave += ViewElement_MouseLeave;
                 }
             }
+            private void ViewElement_MouseLeave(object sender, MouseEventArgs e)
+            {
+                CurrentTool?.OnMouseLeave(_ctx);
+            }
+
             private float GetPressure(System.Windows.Input.MouseEventArgs e)
             {
                 if (e.StylusDevice != null)

@@ -1,859 +1,443 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using TabPaint;
 using static TabPaint.MainWindow;
-//
-//画笔工具
-//
 
-namespace TabPaint
+public partial class PenTool : ToolBase
 {
-    public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
+    public override string Name => "Pen";
+
+    // --- 修改 1：优化光标对象定义 ---
+    private System.Windows.Shapes.Path _brushCursor;
+    private TranslateTransform _cursorTransform; // 用于高性能移动
+    private EllipseGeometry _circleGeometry;     // 缓存圆形
+    private RectangleGeometry _squareGeometry;   // 缓存方形
+
+    // 缓存的画刷，减少GC压力
+    private SolidColorBrush _cachedFillBrush;
+    private Color _lastColor;
+    private double _lastOpacity = -1;
+
+    private bool _drawing = false;
+    private Point _lastPixel;
+    private float _lastPressure = 1.0f;
+    private bool[] _currentStrokeMask;
+    private int _maskWidth;
+    private int _maskHeight;
+    private WriteableBitmap _maskBitmap; // 专门用于存储 mask 数据的位图
+    private Image _maskImageOverlay;     // 用于显示红色遮罩的控件
+    private static List<Point[]> _sprayPatterns;
+    private static int _patternIndex = 0;
+    private static Random _rnd = new Random();
+
+    public override void Cleanup(ToolContext ctx)
     {
-        public class PenTool : ToolBase
+        base.Cleanup(ctx); CleanupMask(ctx);
+        _drawing = false;
+        StopDrawing(ctx);
+
+        // 清理自定义光标
+        if (_brushCursor != null && ctx.EditorOverlay.Children.Contains(_brushCursor))
         {
-            public override string Name => "Pen";
-            private System.Windows.Input.Cursor _cachedCursor;
-            public override System.Windows.Input.Cursor Cursor
+            ctx.EditorOverlay.Children.Remove(_brushCursor);
+            _brushCursor = null;
+            _cursorTransform = null;
+            _circleGeometry = null;
+            _squareGeometry = null;
+        }
+
+        // 恢复系统光标
+        if (ctx.ViewElement != null)
+        {
+            ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Arrow;
+        }
+        System.Windows.Input.Mouse.OverrideCursor = null;
+    }
+    public override void OnMouseLeave(ToolContext ctx)
+    {
+        if (_brushCursor != null)
+        {
+            _brushCursor.Visibility = Visibility.Collapsed;
+        }
+    }
+    public override void SetCursor(ToolContext ctx)
+    {
+        // 1. 隐藏系统光标
+        if (ctx.ViewElement != null)
+        {
+            ctx.ViewElement.Cursor = System.Windows.Input.Cursors.None;
+        }
+        if (ctx.EditorOverlay != null)
+        {
+            ctx.EditorOverlay.ClipToBounds = false;
+        }
+        if (_brushCursor == null)
+        {
+            _brushCursor = new System.Windows.Shapes.Path
             {
-                get
+                IsHitTestVisible = false, // 穿透点击
+                SnapsToDevicePixels = false, // 动态移动时关闭Snap可能更流畅，视情况而定
+                UseLayoutRounding = false      
+            };
+            _cursorTransform = new TranslateTransform();
+            _brushCursor.RenderTransform = _cursorTransform;
+
+            // 预先初始化几何体
+            _circleGeometry = new EllipseGeometry();
+            _squareGeometry = new RectangleGeometry();
+
+            Panel.SetZIndex(_brushCursor, 9999);
+        }
+        _brushCursor.Visibility = Visibility.Visible;
+        // 3. 添加到图层
+        if (!ctx.EditorOverlay.Children.Contains(_brushCursor))
+        {
+            ctx.EditorOverlay.Children.Add(_brushCursor);
+        }
+    }
+
+    private void UpdateCursorVisual(ToolContext ctx, Point viewPos)
+    {
+        if (_brushCursor == null || _cursorTransform == null) return;
+        if (_brushCursor.Visibility != Visibility.Visible)
+        {
+            _brushCursor.Visibility = Visibility.Visible;
+        }
+        double size = ctx.PenThickness;
+        if (size < 1.0) size = 1.0;
+        double halfSize = size / 2.0;
+
+        _cursorTransform.X = viewPos.X - halfSize;
+        _cursorTransform.Y = viewPos.Y - halfSize;
+
+        bool isSquare = ctx.PenStyle == BrushStyle.Square ||
+                        ctx.PenStyle == BrushStyle.Eraser ||
+                        ctx.PenStyle == BrushStyle.Mosaic;
+
+        if (isSquare)
+        {
+            // 更新方形尺寸
+            if (_brushCursor.Data != _squareGeometry) _brushCursor.Data = _squareGeometry;
+
+            if (_squareGeometry.Rect.Width != size)
+            {
+                _squareGeometry.Rect = new Rect(0, 0, size, size);
+            }
+        }
+        else
+        {
+            // 更新圆形尺寸
+            if (_brushCursor.Data != _circleGeometry) _brushCursor.Data = _circleGeometry;
+
+            // EllipseGeometry 的 Center 设置为半径位置，Radius 设置为半径
+            if (_circleGeometry.RadiusX != halfSize)
+            {
+                _circleGeometry.Center = new Point(halfSize, halfSize);
+                _circleGeometry.RadiusX = halfSize;
+                _circleGeometry.RadiusY = halfSize;
+            }
+        }
+        if (ctx.PenStyle == BrushStyle.Highlighter)
+        {
+            _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(50, 255, 255, 0));
+            _brushCursor.Stroke = Brushes.Yellow;
+            _brushCursor.StrokeThickness = 1.0;
+        }else 
+        if (ctx.PenStyle == BrushStyle.AiEraser)
+        {
+            _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(100, 255, 0, 0));
+            _brushCursor.Stroke = Brushes.Red;
+            _brushCursor.StrokeThickness = 1.0;
+        }
+        // 3. 颜色更新 (保持原有的缓存逻辑)
+        else if(ctx.PenStyle == BrushStyle.Eraser)
+        {
+            _brushCursor.Fill = Brushes.Transparent;
+            _brushCursor.Stroke = Brushes.Black;
+            _brushCursor.StrokeThickness = 1.0;
+        }
+        else
+        {
+            var appSettings = TabPaint.SettingsManager.Instance.Current;
+            double globalOpacity = appSettings.PenOpacity;
+            Color penColor = ctx.PenColor;
+
+            if (_cachedFillBrush == null || _lastColor != penColor || Math.Abs(_lastOpacity - globalOpacity) > 0.001)
+            {
+                byte a = (byte)(penColor.A * globalOpacity);
+                Color displayColor = Color.FromArgb(a, penColor.R, penColor.G, penColor.B);
+
+                _cachedFillBrush = new SolidColorBrush(displayColor);
+                if (_cachedFillBrush.CanFreeze) _cachedFillBrush.Freeze();
+
+                _lastColor = penColor;
+                _lastOpacity = globalOpacity;
+            }
+
+            _brushCursor.Fill = _cachedFillBrush;
+
+            if (globalOpacity < 0.3)
+            {
+                _brushCursor.Stroke = new SolidColorBrush(Color.FromArgb(100, 128, 128, 128));
+                _brushCursor.StrokeThickness = 0.5;
+            }
+            else
+            {
+                _brushCursor.Stroke = null;
+            }
+        }
+    }
+
+    public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
+    {
+        if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
+        if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
+
+        UpdateCursorVisual(ctx, viewPos); // 更新光标
+        if (ctx.PenStyle == BrushStyle.AiEraser)
+        {
+            // 确保遮罩层存在
+            if (_maskImageOverlay == null)
+            {
+                _maskImageOverlay = new Image
                 {
-                    return System.Windows.Input.Cursors.Cross;
-                }
+                    IsHitTestVisible = false,
+                    Opacity = 0.6 // 半透明显示
+                };
+                // 插入到 EditorOverlay 中，但在 Cursor 之下
+                ctx.EditorOverlay.Children.Insert(0, _maskImageOverlay);
             }
-            private bool _drawing = false;
-            private Point _lastPixel;
-            private float _lastPressure = 1.0f;
-            // 荧光笔专用遮罩
-            private bool[] _currentStrokeMask;
-            private int _maskWidth;
-            private int _maskHeight;
 
-            // 喷枪缓存
-            private static List<Point[]> _sprayPatterns;
-            private static int _patternIndex = 0;
-            private static Random _rnd = new Random();
-
-            public override void Cleanup(ToolContext ctx)
+            // 如果 Bitmap 大小变了或为空，重新创建
+            int w = ctx.Surface.Bitmap.PixelWidth;
+            int h = ctx.Surface.Bitmap.PixelHeight;
+            if (_maskBitmap == null || _maskBitmap.PixelWidth != w || _maskBitmap.PixelHeight != h)
             {
-                base.Cleanup(ctx);
-                _drawing = false;
-                StopDrawing(ctx);
+                _maskBitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+                _maskImageOverlay.Source = _maskBitmap;
+
+                // 确保 Image 控件填满画布
+                Canvas.SetLeft(_maskImageOverlay, 0);
+                Canvas.SetTop(_maskImageOverlay, 0);
+                _maskImageOverlay.Width = ctx.ViewElement.ActualWidth;
+                _maskImageOverlay.Height = ctx.ViewElement.ActualHeight;
             }
 
-            public override void SetCursor(ToolContext ctx)
-            {
-                System.Windows.Input.Mouse.OverrideCursor = null;
-
-                if (ctx.ViewElement != null)
-                {
-                    ctx.ViewElement.Cursor = this.Cursor;
-                }
-            }
-            private bool IsLineBasedBrush(BrushStyle style)
-            {
-                return style == BrushStyle.Round ||
-                       style == BrushStyle.Pencil ||
-                       style == BrushStyle.Highlighter ||
-                       style == BrushStyle.Watercolor ||
-                       style == BrushStyle.Crayon ||
-                       style == BrushStyle.Calligraphy;
-            }
-
-            public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
-            {
-                if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
-                if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
-                if (ctx.PenStyle == BrushStyle.Calligraphy)pressure = 1.0f;
-                
-                // --- 荧光笔遮罩初始化 ---
-                int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
-                if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
-                {
-                    _currentStrokeMask = new bool[totalPixels];
-                    _maskWidth = ctx.Surface.Width;
-                    _maskHeight = ctx.Surface.Height;
-                }
-                else
-                {
-                    Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
-                }
-
-                ctx.CapturePointer();
-                var px = ctx.ToPixel(viewPos);
-                ctx.Undo.BeginStroke();
-                _drawing = true;
-                _lastPixel = px;
-                _lastPressure = pressure; // 初始化压力
-                Int32Rect? dirty = null;
-                ctx.Surface.Bitmap.Lock();
-                unsafe
-                {
-                    byte* backBuffer = (byte*)ctx.Surface.Bitmap.BackBuffer;
-                    int stride = ctx.Surface.Bitmap.BackBufferStride;
-                    int width = ctx.Surface.Bitmap.PixelWidth;
-                    int height = ctx.Surface.Bitmap.PixelHeight;
-
-                    if (IsLineBasedBrush(ctx.PenStyle))
-                    {
-                        dirty = DrawBrushLineUnsafe(ctx, px, pressure, px, pressure, backBuffer, stride, width, height);
-                    }
-                    else
-                    {
-                        // 印章型笔刷（方块、喷枪等）：直接盖一个章
-                        dirty = DrawBrushAtUnsafe(ctx, px, backBuffer, stride, width, height);
-                    }
-                }
-                if (dirty.HasValue)
-                {
-                    var finalRect = ClampRect(dirty.Value, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
-                    if (finalRect.Width > 0 && finalRect.Height > 0)
-                    {
-                        ctx.Surface.Bitmap.AddDirtyRect(finalRect); // 更新屏幕
-                        ctx.Undo.AddDirtyRect(finalRect);        
-                    }
-                }
-                ctx.Surface.Bitmap.Unlock(); 
-            }
-
-            public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
-            {
-                if (!_drawing) return;
-                var px = ctx.ToPixel(viewPos);
-                if (ctx.PenStyle == BrushStyle.Calligraphy)
-                {
-                    // 计算距离（速度）
-                    double distance = Math.Sqrt(Math.Pow(px.X - _lastPixel.X, 2) + Math.Pow(px.Y - _lastPixel.Y, 2));
-
-                    // 速度阈值：超过 60像素/帧 视为极快（压感最低），0视为静止（压感最高）
-                    double maxSpeed = 60.0;
-
-                    float speedPressure = (float)Math.Clamp(1.0 - (distance / maxSpeed), 0.1, 1.0);
-
-                    // 使用模拟压感覆盖传入的物理压感
-                    pressure = speedPressure;
-                }
-                // -
-                ctx.Surface.Bitmap.Lock();
-
-                // 计算本次绘制的脏矩形范围
-                int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-                bool hasUpdate = false;
-
-                unsafe
-                {
-                    byte* backBuffer = (byte*)ctx.Surface.Bitmap.BackBuffer;
-                    int stride = ctx.Surface.Bitmap.BackBufferStride;
-                    int width = ctx.Surface.Bitmap.PixelWidth;
-                    int height = ctx.Surface.Bitmap.PixelHeight;
-
-                    var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, _lastPressure, px, pressure,  backBuffer, stride, width, height);
-
-                    if (dirty.HasValue)
-                    {
-                        hasUpdate = true;
-                        minX = dirty.Value.X;
-                        minY = dirty.Value.Y;
-                        maxX = dirty.Value.X + dirty.Value.Width;
-                        maxY = dirty.Value.Y + dirty.Value.Height;
-                    }
-                }
-
-                // 更新
-                if (hasUpdate && maxX >= minX && maxY >= minY)
-                {
-                    var finalRect = ClampRect(new Int32Rect(minX, minY, maxX - minX, maxY - minY), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
-                    if (finalRect.Width > 0 && finalRect.Height > 0)
-                    {
-                        ctx.Surface.Bitmap.AddDirtyRect(finalRect); // 1. 更新屏幕
-                        ctx.Undo.AddDirtyRect(finalRect);      
-                    }
-                }
-
-                ctx.Surface.Bitmap.Unlock();
-
-                _lastPixel = px;
-                _lastPressure = pressure;
-            }
-
-            public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
-            {
-                StopDrawing(ctx);
-            }
-
-            public override void StopAction(ToolContext ctx)
-            {
-                StopDrawing(ctx);
-            }
-
-            public void StopDrawing(ToolContext ctx)
-            {
-                if (!_drawing) return;
-                _drawing = false;
-                ctx.Undo.CommitStroke();
-                ctx.IsDirty = true;
-                ctx.ReleasePointerCapture();
-            }
-
-            private unsafe Int32Rect? DrawContinuousStrokeUnsafe(ToolContext ctx, Point from, float fromP, Point to, float toP, byte* buffer, int stride, int w, int h)
-            {
-                // 1. 连续型笔刷：直接画线段，效率最高
-                if (IsLineBasedBrush(ctx.PenStyle))
-                {
-                    return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
-                }
-
-                // 2. 间断型笔刷：需要插值“盖章”
-                double dx = to.X - from.X;
-                double dy = to.Y - from.Y;
-                double length = Math.Sqrt(dx * dx + dy * dy);
-
-                if (length < 0.5) return DrawBrushAtUnsafe(ctx, to, buffer, stride, w, h);
-
-                int steps = 1;
-                switch (ctx.PenStyle)
-                {
-                    case BrushStyle.Square:
-                    case BrushStyle.Eraser:
-                        steps = (int)(length / (Math.Max(1, ctx.PenThickness / 2.0)));
-                        break;
-                    case BrushStyle.Brush:
-                        steps = (int)(length / 2.0);
-                        break;
-                    case BrushStyle.Spray:
-                        steps = (int)(length / (Math.Max(1, ctx.PenThickness)));
-                        break;
-                    case BrushStyle.Mosaic:
-                        steps = (int)(length / 5.0);
-                        break;
-                }
-
-                if (steps < 1) steps = 1;
-
-                double xStep = dx / steps;
-                double yStep = dy / steps;
-                double x = from.X;
-                double y = from.Y;
-
-                int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-                bool hit = false;
-
-                for (int i = 0; i <= steps; i++)
-                {
-                    var rect = DrawBrushAtUnsafe(ctx, new Point(x, y), buffer, stride, w, h);
-                    if (rect.HasValue)
-                    {
-                        hit = true;
-                        if (rect.Value.X < minX) minX = rect.Value.X;
-                        if (rect.Value.Y < minY) minY = rect.Value.Y;
-                        if (rect.Value.X + rect.Value.Width > maxX) maxX = rect.Value.X + rect.Value.Width;
-                        if (rect.Value.Y + rect.Value.Height > maxY) maxY = rect.Value.Y + rect.Value.Height;
-                    }
-                    x += xStep;
-                    y += yStep;
-                }
-
-                if (!hit) return null;
-                return new Int32Rect(minX, minY, maxX - minX, maxY - minY);
-            }
-
-            private unsafe Int32Rect? DrawBrushLineUnsafe(ToolContext ctx, Point p1, float p1Pressure, Point p2, float p2Pressure, byte* buffer, int stride, int w, int h)
-            {
-                switch (ctx.PenStyle)
-                {
-                    case BrushStyle.Round:
-                    case BrushStyle.Calligraphy:
-                        DrawRoundStrokeUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
-                        int maxPressureSize = (int)(ctx.PenThickness * Math.Max(p1Pressure, p2Pressure) + 2);
-                        return LineBounds(p1, p2, maxPressureSize);
-
-                    case BrushStyle.Pencil:
-                        DrawPencilLineUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
-                        return LineBounds(p1, p2, 1);
-                    case BrushStyle.Highlighter:
-                        DrawHighlighterLineUnsafe(ctx, p1, p2, buffer, stride, w, h);
-                        return LineBounds(p1, p2, (int)ctx.PenThickness);
-                    case BrushStyle.Watercolor:
-                        // 简单起见，水彩和蜡笔在内部做局部插值
-                        double dist = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
-                        int steps = (int)(dist / (ctx.PenThickness / 4));
-                        if (steps == 0) steps = 1;
-                        double sx = (p2.X - p1.X) / steps;
-                        double sy = (p2.Y - p1.Y) / steps;
-                        double cx = p1.X, cy = p1.Y;
-                        for (int i = 0; i <= steps; i++)
-                        {
-                            DrawWatercolorStrokeUnsafe(ctx, new Point(cx, cy), buffer, stride, w, h);
-                            cx += sx; cy += sy;
-                        }
-                        return LineBounds(p1, p2, (int)ctx.PenThickness + 5);
-                    case BrushStyle.Crayon:
-                        double dist2 = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
-                        int steps2 = (int)(dist2 / (ctx.PenThickness / 2));
-                        if (steps2 == 0) steps2 = 1;
-                        double sx2 = (p2.X - p1.X) / steps2;
-                        double sy2 = (p2.Y - p1.Y) / steps2;
-                        double cx2 = p1.X, cy2 = p1.Y;
-                        for (int i = 0; i <= steps2; i++)
-                        {
-                            DrawOilPaintStrokeUnsafe(ctx, new Point(cx2, cy2), buffer, stride, w, h);
-                            cx2 += sx2; cy2 += sy2;
-                        }
-                        return LineBounds(p1, p2, (int)ctx.PenThickness + 5);
-                }
-                return null;
-            }
-
-            private unsafe Int32Rect? DrawBrushAtUnsafe(ToolContext ctx, Point px, byte* buffer, int stride, int w, int h)
-            {
-                // 用于那些不支持线段绘制，只能打点的笔刷
-                switch (ctx.PenStyle)
-                {
-                    case BrushStyle.Square:
-                        DrawSquareStrokeUnsafe(ctx, px, buffer, stride, w, h, false);
-                        return LineBounds(px, px, (int)ctx.PenThickness);
-                    case BrushStyle.Eraser:
-                        DrawSquareStrokeUnsafe(ctx, px, buffer, stride, w, h, true);
-                        return LineBounds(px, px, (int)ctx.PenThickness);
-                    case BrushStyle.Brush:
-                        DrawBrushStrokeUnsafe(ctx, px, buffer, stride, w, h);
-                        return LineBounds(px, px, (int)ctx.PenThickness + 5);
-                    case BrushStyle.Spray:
-                        DrawSprayStrokeUnsafe(ctx, px, buffer, stride, w, h);
-                        return LineBounds(px, px, (int)ctx.PenThickness * 2);
-                    case BrushStyle.Mosaic:
-                        DrawMosaicStrokeUnsafe(ctx, px, buffer, stride, w, h);
-                        return LineBounds(px, px, (int)ctx.PenThickness + 5);
-                }
-                return null;
-            }
-            private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
-            {
-                double baseThickness = ctx.PenThickness;
-                double minScale = 0.2;
-                double r1 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p1P)) / 2.0);
-                double r2 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p2P)) / 2.0);
-
-                // 压感同时影响透明度：压力越小越透明
-                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                if (globalOpacity <= 0.005f) return;
-
-                Color targetColor = ctx.PenColor;
-                float targetB = targetColor.B;
-                float targetG = targetColor.G;
-                float targetR = targetColor.R;
-                float targetA = targetColor.A;
-
-                // 计算包围盒
-                double maxR = Math.Max(r1, r2);
-                int xmin = (int)(Math.Min(p1.X, p2.X) - maxR - 1);
-                int ymin = (int)(Math.Min(p1.Y, p2.Y) - maxR - 1);
-                int xmax = (int)(Math.Max(p1.X, p2.X) + maxR + 1);
-                int ymax = (int)(Math.Max(p1.Y, p2.Y) + maxR + 1);
-
-                xmin = Math.Max(0, xmin); ymin = Math.Max(0, ymin);
-                xmax = Math.Min(w - 1, xmax); ymax = Math.Min(h - 1, ymax);
-
-                double dx = p2.X - p1.X;
-                double dy = p2.Y - p1.Y;
-                double lenSq = dx * dx + dy * dy;
-
-                for (int y = ymin; y <= ymax; y++)
-                {
-                    byte* rowPtr = basePtr + y * stride;
-                    int rowIdx = y * w;
-
-                    for (int x = xmin; x <= xmax; x++)
-                    {
-                        int pixelIndex = rowIdx + x;
-                        if (_currentStrokeMask[pixelIndex]) continue;
-
-                        // 计算点在直线上的投影比例 t (0 到 1)
-                        double t = 0;
-                        if (lenSq > 0)
-                        {
-                            t = ((x - p1.X) * dx + (y - p1.Y) * dy) / lenSq;
-                            t = Math.Max(0, Math.Min(1, t));
-                        }
-
-                        // 动态半径插值：r(t) = r1 + (r2 - r1) * t
-                        double currentR = r1 + (r2 - r1) * t;
-                        double rSq = currentR * currentR;
-
-                        double projx = p1.X + t * dx;
-                        double projy = p1.Y + t * dy;
-                        double distSq = (x - projx) * (x - projx) + (y - projy) * (y - projy);
-
-                        if (distSq <= rSq)
-                        {
-                            _currentStrokeMask[pixelIndex] = true;
-
-                            // --- 【修改点 3：透明度映射优化】 ---
-                            float currentPressure = p1P + (p2P - p1P) * (float)t;
-
-                            float pressureAlpha = 0.2f + 0.8f * (float)Math.Pow(currentPressure, 0.5);
-
-                            float dynamicOpacity = globalOpacity * pressureAlpha;
-
-                            byte* p = rowPtr + x * 4;
-                            p[0] = (byte)(p[0] + (targetB - p[0]) * dynamicOpacity);
-                            p[1] = (byte)(p[1] + (targetG - p[1]) * dynamicOpacity);
-                            p[2] = (byte)(p[2] + (targetR - p[2]) * dynamicOpacity);
-                            p[3] = (byte)(p[3] + (targetA - p[3]) * dynamicOpacity);
-                        }
-                    }
-                }
-            }
-            private unsafe void DrawPencilLineUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
-            {
-                // 铅笔是Bresenham算法画线，这里需要修改为支持插值
-                // 为了支持透明度插值，Bresenham不太好用，我们改用一种简单的步进算法或者沿路径计算
-                // 既然已经是 Unsafe 并且有 Mask 保护，我们可以用简单的 DDA 或者投影法
-
-                int x0 = (int)p1.X; int y0 = (int)p1.Y;
-                int x1 = (int)p2.X; int y1 = (int)p2.Y;
-
-                Color targetColor = ctx.PenColor;
-                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                if (globalOpacity <= 0.005f) return;
-
-                float tB = targetColor.B; float tG = targetColor.G;
-                float tR = targetColor.R; float tA = targetColor.A;
-
-                int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-                int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-                int err = dx + dy, e2;
-
-                // 计算总长度用于插值
-                float totalDist = (float)Math.Sqrt(dx * dx + dy * dy);
-                if (totalDist == 0) totalDist = 1;
-
-                int startX = x0; int startY = y0;
-
-                while (true)
-                {
-                    if (x0 >= 0 && x0 < w && y0 >= 0 && y0 < h)
-                    {
-                        int pixelIndex = y0 * w + x0;
-                        if (!_currentStrokeMask[pixelIndex])
-                        {
-                            _currentStrokeMask[pixelIndex] = true;
-
-                            // 计算当前点距离起点的距离比例
-                            float currentDist = (float)Math.Sqrt(Math.Pow(x0 - startX, 2) + Math.Pow(y0 - startY, 2));
-                            float t = currentDist / totalDist;
-                            float currentPressure = p1P + (p2P - p1P) * t;
-
-                            // 铅笔：压力控制透明度
-                            float localOpacity = globalOpacity * Math.Clamp(currentPressure, 0.1f, 1.0f);
-
-                            byte* p = basePtr + y0 * stride + x0 * 4;
-                            p[0] = (byte)(p[0] + (tB - p[0]) * localOpacity);
-                            p[1] = (byte)(p[1] + (tG - p[1]) * localOpacity);
-                            p[2] = (byte)(p[2] + (tR - p[2]) * localOpacity);
-                            p[3] = (byte)(p[3] + (tA - p[3]) * localOpacity);
-                        }
-                    }
-
-                    if (x0 == x1 && y0 == y1) break;
-                    e2 = 2 * err;
-                    if (e2 >= dy) { err += dy; x0 += sx; }
-                    if (e2 <= dx) { err += dx; y0 += sy; }
-                }
-            }
-
-
-            private unsafe void DrawSquareStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h, bool isEraser)
-            {
-                int size = (int)ctx.PenThickness;
-                int half = size / 2;
-                int x = (int)p.X - half;
-                int y = (int)p.Y - half;
-                Color targetColor = isEraser ? Color.FromArgb(255, 255,255, 255) : ctx.PenColor;
-
-                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                if (globalOpacity <= 0.005f) return;
-
-                float tB = targetColor.B;
-                float tG = targetColor.G;
-                float tR = targetColor.R;
-                float tA = targetColor.A;
-
-                int xend = Math.Min(w, x + size);
-                int yend = Math.Min(h, y + size);
-                int xstart = Math.Max(0, x);
-                int ystart = Math.Max(0, y);
-
-                for (int yy = ystart; yy < yend; yy++)
-                {
-                    byte* row = basePtr + yy * stride;
-                    int rowIdx = yy * w;
-                    for (int xx = xstart; xx < xend; xx++)
-                    {
-                        int pixelIndex = rowIdx + xx;
-                        if (_currentStrokeMask[pixelIndex]) continue;
-                        _currentStrokeMask[pixelIndex] = true;
-
-                        byte* p2 = row + xx * 4;
-
-                        p2[0] = (byte)(p2[0] + (tB - p2[0]) * globalOpacity);
-                        p2[1] = (byte)(p2[1] + (tG - p2[1]) * globalOpacity);
-                        p2[2] = (byte)(p2[2] + (tR - p2[2]) * globalOpacity);
-                        p2[3] = (byte)(p2[3] + (tA - p2[3]) * globalOpacity);
-                    }
-                }
-            }
-
-            private unsafe void DrawBrushStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
-            {
-                int r = (int)(ctx.PenThickness / 2.0);
-                if (r < 1) r = 1;
-
-                int count = r * r * 4;
-                if (count < 20) count = 20;
-                if (count > 2000) count = 2000;
-
-                Color c = ctx.PenColor;
-
-                for (int i = 0; i < count; i++)
-                {
-                    int dx = _rnd.Next(-r, r + 1);
-                    int dy = _rnd.Next(-r, r + 1);
-                    if (dx * dx + dy * dy > r * r) continue;
-
-                    int xx = (int)p.X + dx;
-                    int yy = (int)p.Y + dy;
-
-                    if (xx >= 0 && xx < w && yy >= 0 && yy < h)
-                    {
-                        byte* ptr = basePtr + yy * stride + xx * 4;
-                        // 直接赋值颜色（毛刷原本逻辑）
-                        ptr[0] = c.B;
-                        ptr[1] = c.G;
-                        ptr[2] = c.R;
-                        ptr[3] = c.A;
-                    }
-                }
-            }
-
-
-            private unsafe void DrawSprayStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
-            {
-                if (_sprayPatterns == null) InitializeSprayPatterns();
-                int radius = (int)(ctx.PenThickness / 2.0);
-                if (radius < 1) radius = 1;
-
-                int count = 80;
-                var pattern = _sprayPatterns[_patternIndex];
-                _patternIndex = (_patternIndex + 1) % _sprayPatterns.Count;
-
-                Color targetColor = ctx.PenColor;
-                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                if (globalOpacity <= 0.005f) return;
-
-                float tB = targetColor.B;
-                float tG = targetColor.G;
-                float tR = targetColor.R;
-                float tA = targetColor.A;
-
-                for (int i = 0; i < count && i < pattern.Length; i++)
-                {
-                    int xx = (int)(p.X + pattern[i].X * radius);
-                    int yy = (int)(p.Y + pattern[i].Y * radius);
-
-                    if (xx >= 0 && xx < w && yy >= 0 && yy < h)
-                    {
-                        byte* pPx = basePtr + yy * stride + xx * 4;
-
-                        pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * globalOpacity);
-                        pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * globalOpacity);
-                        pPx[2] = (byte)(pPx[2] + (tR - pPx[2]) * globalOpacity);
-                        pPx[3] = (byte)(pPx[3] + (tA - pPx[3]) * globalOpacity);
-                    }
-                }
-            }
-
-
-            private unsafe void DrawMosaicStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
-            {
-                int blockSize = Math.Max(4, (int)(ctx.PenThickness / 4.0));
-
-                int radius = (int)(ctx.PenThickness / 2.0);
-                if (radius < 1) radius = 1;
-
-                long radiusSq = (long)radius * radius;
-
-                // 计算受影响的像素范围
-                int x_start = (int)Math.Max(0, p.X - radius);
-                int x_end = (int)Math.Min(w, p.X + radius);
-                int y_start = (int)Math.Max(0, p.Y - radius);
-                int y_end = (int)Math.Min(h, p.Y + radius);
-
-                int gridXStart = (x_start / blockSize) * blockSize;
-                int gridYStart = (y_start / blockSize) * blockSize;
-
-                // 外层循环遍历马赛克“格子”
-                for (int by = gridYStart; by < y_end; by += blockSize)
-                {
-                    for (int bx = gridXStart; bx < x_end; bx += blockSize)
-                    {
-                        // 确保采样点在图像范围内
-                        int sampleX = Math.Clamp(bx, 0, w - 1);
-                        int sampleY = Math.Clamp(by, 0, h - 1);
-
-                        byte* srcPixel = basePtr + sampleY * stride + sampleX * 4;
-                        byte B = srcPixel[0];
-                        byte G = srcPixel[1];
-                        byte R = srcPixel[2];
-                        int fillStartY = Math.Max(by, y_start);
-                        int fillEndY = Math.Min(by + blockSize, y_end);
-                        int fillStartX = Math.Max(bx, x_start);
-                        int fillEndX = Math.Min(bx + blockSize, x_end);
-
-                        // 内层循环填充颜色
-                        for (int y = fillStartY; y < fillEndY; y++)
-                        {
-                            // 预计算 Y 轴距离平方
-                            long dy = y - (int)p.Y;
-                            long dy2 = dy * dy;
-
-                            byte* rowPtr = basePtr + y * stride;
-
-                            for (int x = fillStartX; x < fillEndX; x++)
-                            {
-                                // 4. 仅在圆形范围内才填充
-                                long dx = x - (int)p.X;
-                                if (dx * dx + dy2 < radiusSq)
-                                {
-                                    byte* destPixel = rowPtr + x * 4;
-                                    destPixel[0] = B;
-                                    destPixel[1] = G;
-                                    destPixel[2] = R;
-                               
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            private unsafe void DrawWatercolorStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
-            {
-                int radius = (int)(ctx.PenThickness / 2.0);
-                if (radius < 1) radius = 1;
-                Color targetColor = ctx.PenColor;
-                float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-
-                if (globalOpacity <= 0.005f) return;
-                float baseOpacity = globalOpacity * 0.5f;
-
-                float tB = targetColor.B;
-                float tG = targetColor.G;
-                float tR = targetColor.R;
-                float tA = targetColor.A;
-
-                double irregularRadius = radius * (0.9 + _rnd.NextDouble() * 0.2);
-                int x_start = (int)Math.Max(0, p.X - radius);
-                int x_end = (int)Math.Min(w, p.X + radius);
-                int y_start = (int)Math.Max(0, p.Y - radius);
-                int y_end = (int)Math.Min(h, p.Y + radius);
-
-                for (int y = y_start; y < y_end; y++)
-                {
-                    byte* rowPtr = basePtr + y * stride;
-                    for (int x = x_start; x < x_end; x++)
-                    {
-                        double dist = Math.Sqrt((x - p.X) * (x - p.X) + (y - p.Y) * (y - p.Y));
-                        if (dist < irregularRadius)
-                        {
-                            // 边缘衰减
-                            double falloff = 1.0 - (dist / irregularRadius);
-                            float localOpacity = baseOpacity * (float)(falloff * falloff);
-
-                            if (localOpacity > 0.001f)
-                            {
-                                byte* pPx = rowPtr + x * 4;
-                                pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * localOpacity);
-                                pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * localOpacity);
-                                pPx[2] = (byte)(pPx[2] + (tR - pPx[2]) * localOpacity);
-                                pPx[3] = (byte)(pPx[3] + (tA - pPx[3]) * localOpacity);
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            private unsafe void DrawOilPaintStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
-            {
-                double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                byte alpha = (byte)((0.2 * 255 / Math.Max(1, Math.Pow(ctx.PenThickness, 0.5))) * globalOpacity);
-
-                if (alpha == 0) return;
-
-                int radius = (int)(ctx.PenThickness / 2.0);
-                if (radius < 1) radius = 1;
-                Color baseColor = ctx.PenColor;
-                int x_center = (int)p.X;
-                int y_center = (int)p.Y;
-
-                int numClumps = radius / 2 + 5;
-                int brightnessVariation = 40;
-
-                for (int i = 0; i < numClumps; i++)
-                {
-                    int brightnessOffset = _rnd.Next(-brightnessVariation, brightnessVariation + 1);
-                    byte clumpR = ClampColor(baseColor.R + brightnessOffset);
-                    byte clumpG = ClampColor(baseColor.G + brightnessOffset);
-                    byte clumpB = ClampColor(baseColor.B + brightnessOffset);
-
-                    double angle = _rnd.NextDouble() * 2 * Math.PI;
-                    double distFromCenter = Math.Sqrt(_rnd.NextDouble()) * radius;
-                    int clumpCenterX = x_center + (int)(distFromCenter * Math.Cos(angle));
-                    int clumpCenterY = y_center + (int)(distFromCenter * Math.Sin(angle));
-
-                    int clumpRadius = _rnd.Next(1, radius / 4 + 3);
-                    int clumpRadiusSq = clumpRadius * clumpRadius;
-
-                    int startX = Math.Max(0, clumpCenterX - clumpRadius);
-                    int endX = Math.Min(w, clumpCenterX + clumpRadius);
-                    int startY = Math.Max(0, clumpCenterY - clumpRadius);
-                    int endY = Math.Min(h, clumpCenterY + clumpRadius);
-
-                    for (int y = startY; y < endY; y++)
-                    {
-                        for (int x = startX; x < endX; x++)
-                        {
-                            int dx = x - clumpCenterX;
-                            int dy = y - clumpCenterY;
-                            if (dx * dx + dy * dy < clumpRadiusSq)
-                            {
-                                byte* pixelPtr = basePtr + y * stride + x * 4;
-                                byte oldB = pixelPtr[0];
-                                byte oldG = pixelPtr[1];
-                                byte oldR = pixelPtr[2];
-                                pixelPtr[0] = (byte)((clumpB * alpha + oldB * (255 - alpha)) / 255);
-                                pixelPtr[1] = (byte)((clumpG * alpha + oldG * (255 - alpha)) / 255);
-                                pixelPtr[2] = (byte)((clumpR * alpha + oldR * (255 - alpha)) / 255);
-                            }
-                        }
-                    }
-                }
-            }
-
-            private unsafe void DrawHighlighterLineUnsafe(ToolContext ctx, Point p1, Point p2, byte* basePtr, int stride, int w, int h)
-            {
-                int r = (int)(ctx.PenThickness / 2.0);
-                if (r < 1) r = 1;
-                double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                byte baseAlpha = 30;
-                Color c = Color.FromArgb((byte)(baseAlpha * globalOpacity), 255, 255, 0);
-
-
-                int xmin = (int)Math.Min(p1.X, p2.X) - r;
-                int ymin = (int)Math.Min(p1.Y, p2.Y) - r;
-                int xmax = (int)Math.Max(p1.X, p2.X) + r;
-                int ymax = (int)Math.Max(p1.Y, p2.Y) + r;
-
-                xmin = Math.Max(0, xmin); ymin = Math.Max(0, ymin);
-                xmax = Math.Min(w - 1, xmax); ymax = Math.Min(h - 1, ymax);
-
-                double dx = p2.X - p1.X;
-                double dy = p2.Y - p1.Y;
-                double lenSq = dx * dx + dy * dy;
-
-                int invSA = 255 - c.A;
-
-                for (int y = ymin; y <= ymax; y++)
-                {
-                    int rowStartIndex = y * w;
-                    byte* rowPtr = basePtr + y * stride;
-                    for (int x = xmin; x <= xmax; x++)
-                    {
-                        int pixelIndex = rowStartIndex + x;
-                        if (_currentStrokeMask[pixelIndex]) continue;
-
-                        double t = 0;
-                        if (lenSq > 0)
-                        {
-                            t = ((x - p1.X) * dx + (y - p1.Y) * dy) / lenSq;
-                            t = Math.Max(0, Math.Min(1, t));
-                        }
-                        double closeX = p1.X + t * dx;
-                        double closeY = p1.Y + t * dy;
-                        double distSq = (x - closeX) * (x - closeX) + (y - closeY) * (y - closeY);
-
-                        if (distSq <= r * r)
-                        {
-                            _currentStrokeMask[pixelIndex] = true;
-                            byte* p = rowPtr + x * 4;
-
-                            byte oldB = p[0];
-                            byte oldG = p[1];
-                            byte oldR = p[2];
-                            byte oldA = p[3];
-
-                            p[0] = (byte)((c.B * c.A + oldB * invSA) / 255);
-                            p[1] = (byte)((c.G * c.A + oldG * invSA) / 255);
-                            p[2] = (byte)((c.R * c.A + oldR * invSA) / 255);
-                            p[3] = (byte)(c.A + (oldA * invSA) / 255);
-                        }
-                    }
-                }
-            }
-            private static byte ClampColor(int value)
-            {
-                if (value < 0) return 0;
-                if (value > 255) return 255;
-                return (byte)value;
-            }
-
-            private static void InitializeSprayPatterns()
-            {
-                if (_sprayPatterns != null) return;
-                _sprayPatterns = new List<Point[]>();
-                for (int i = 0; i < 5; i++)
-                    _sprayPatterns.Add(GenerateSprayPattern(200));
-            }
-
-            private static Point[] GenerateSprayPattern(int count)
-            {
-                Random r = new Random();
-                Point[] pts = new Point[count];
-                for (int i = 0; i < count; i++)
-                {
-                    double a = r.NextDouble() * 2 * Math.PI;
-                    double d = Math.Sqrt(r.NextDouble());
-                    pts[i] = new Point(d * Math.Cos(a), d * Math.Sin(a));
-                }
-                return pts;
-            }
-
-            private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
-            {
-                int left = Math.Max(0, rect.X);
-                int top = Math.Max(0, rect.Y);
-                int right = Math.Min(maxWidth, rect.X + rect.Width);
-                int bottom = Math.Min(maxHeight, rect.Y + rect.Height);
-                int width = Math.Max(0, right - left);
-                int height = Math.Max(0, bottom - top);
-                return new Int32Rect(left, top, width, height);
-            }
-        
-            private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)
-            {
-                int expand = penRadius + 2;
-                int x = (int)Math.Min(p1.X, p2.X) - expand;
-                int y = (int)Math.Min(p1.Y, p2.Y) - expand;
-                int w = (int)Math.Abs(p1.X - p2.X) + expand * 2;
-                int h = (int)Math.Abs(p1.Y - p2.Y) + expand * 2;
-                return ClampRect(new Int32Rect(x, y, w, h),
-                    ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth,
-                    ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
-            }
+            // 开始绘制流程
+            ctx.CapturePointer();
+            _drawing = true;
+            _lastPixel = ctx.ToPixel(viewPos);
+            _lastPressure = pressure;
+
+            // 绘制第一笔到 Mask 上
+            DrawMaskLine(ctx, _lastPixel, _lastPixel, pressure);
+            return; // *** 极其重要：直接返回，不执行后面画在主 Surface 上的逻辑 ***
         }
 
 
+        if (ctx.PenStyle == BrushStyle.Calligraphy) pressure = 1.0f;
+
+        // --- 荧光笔遮罩初始化 ---
+        int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
+        if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
+        {
+            _currentStrokeMask = new bool[totalPixels];
+            _maskWidth = ctx.Surface.Width;
+            _maskHeight = ctx.Surface.Height;
+        }
+        else
+        {
+            Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
+        }
+
+        ctx.CapturePointer();
+        var px = ctx.ToPixel(viewPos);
+        ctx.Undo.BeginStroke();
+        _drawing = true;
+        _lastPixel = px;
+        _lastPressure = pressure;
+        Int32Rect? dirty = null;
+        ctx.Surface.Bitmap.Lock();
+        unsafe
+        {
+            byte* backBuffer = (byte*)ctx.Surface.Bitmap.BackBuffer;
+            int stride = ctx.Surface.Bitmap.BackBufferStride;
+            int width = ctx.Surface.Bitmap.PixelWidth;
+            int height = ctx.Surface.Bitmap.PixelHeight;
+
+            if (IsLineBasedBrush(ctx.PenStyle))
+            {
+                dirty = DrawBrushLineUnsafe(ctx, px, pressure, px, pressure, backBuffer, stride, width, height);
+            }
+            else
+            {
+                dirty = DrawBrushAtUnsafe(ctx, px, backBuffer, stride, width, height);
+            }
+        }
+        if (dirty.HasValue)
+        {
+            var finalRect = ClampRect(dirty.Value, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+            if (finalRect.Width > 0 && finalRect.Height > 0)
+            {
+                ctx.Surface.Bitmap.AddDirtyRect(finalRect);
+                ctx.Undo.AddDirtyRect(finalRect);
+            }
+        }
+        ctx.Surface.Bitmap.Unlock();
+    }
+
+    public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
+    {
+        // 优先更新光标，确保视觉流畅
+        UpdateCursorVisual(ctx, viewPos);
+        
+        if (!_drawing) return;
+        var px = ctx.ToPixel(viewPos);
+
+        if (ctx.PenStyle == BrushStyle.AiEraser)
+        {
+            DrawMaskLine(ctx, _lastPixel, px, pressure);
+            _lastPixel = px;
+            _lastPressure = pressure;
+            return; // *** 直接返回 ***
+        }
+
+
+        if (ctx.PenStyle == BrushStyle.Calligraphy)
+        {
+            double distance = Math.Sqrt(Math.Pow(px.X - _lastPixel.X, 2) + Math.Pow(px.Y - _lastPixel.Y, 2));
+            double maxSpeed = 60.0;
+            float speedPressure = (float)Math.Clamp(1.0 - (distance / maxSpeed), 0.1, 1.0);
+            pressure = speedPressure;
+        }
+       ctx.Surface.Bitmap.Lock();
+
+        int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+        bool hasUpdate = false;
+
+        unsafe
+        {
+            byte* backBuffer = (byte*)ctx.Surface.Bitmap.BackBuffer;
+            int stride = ctx.Surface.Bitmap.BackBufferStride;
+            int width = ctx.Surface.Bitmap.PixelWidth;
+            int height = ctx.Surface.Bitmap.PixelHeight;
+
+            var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, _lastPressure, px, pressure, backBuffer, stride, width, height);
+
+            if (dirty.HasValue)
+            {
+                hasUpdate = true;
+                minX = dirty.Value.X;
+                minY = dirty.Value.Y;
+                maxX = dirty.Value.X + dirty.Value.Width;
+                maxY = dirty.Value.Y + dirty.Value.Height;
+            }
+        }
+      
+        if (hasUpdate && maxX >= minX && maxY >= minY)
+        {
+            var finalRect = ClampRect(new Int32Rect(minX, minY, maxX - minX, maxY - minY), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+            if (finalRect.Width > 0 && finalRect.Height > 0)
+            {
+                ctx.Surface.Bitmap.AddDirtyRect(finalRect);
+                ctx.Undo.AddDirtyRect(finalRect);
+            }
+        }
+
+        ctx.Surface.Bitmap.Unlock();
+       
+        _lastPixel = px;
+        _lastPressure = pressure; 
+    }
+
+    private bool IsLineBasedBrush(BrushStyle style)
+    {
+        return style == BrushStyle.Round ||
+               style == BrushStyle.Pencil ||
+               style == BrushStyle.Highlighter ||
+               style == BrushStyle.Watercolor ||
+               style == BrushStyle.Crayon ||
+               style == BrushStyle.Calligraphy;
+    }
+
+    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
+    {
+        StopDrawing(ctx);
+    }
+
+    public override void StopAction(ToolContext ctx)
+    {
+        StopDrawing(ctx);
+    }
+
+    public void StopDrawing(ToolContext ctx)
+    {
+        if (!_drawing) return;
+        _drawing = false;
+        ctx.Undo.CommitStroke();
+        ctx.IsDirty = true;
+        ctx.ReleasePointerCapture();
+
+        if (ctx.PenStyle == BrushStyle.AiEraser)
+        {
+            ApplyAiEraser(ctx);
+            return;
+        }
+    }
+
+
+    private static byte ClampColor(int value)
+    {
+        if (value < 0) return 0;
+        if (value > 255) return 255;
+        return (byte)value;
+    }
+
+    private static void InitializeSprayPatterns()
+    {
+        if (_sprayPatterns != null) return;
+        _sprayPatterns = new List<Point[]>();
+        for (int i = 0; i < 5; i++)
+            _sprayPatterns.Add(GenerateSprayPattern(200));
+    }
+
+    private static Point[] GenerateSprayPattern(int count)
+    {
+        Random r = new Random();
+        Point[] pts = new Point[count];
+        for (int i = 0; i < count; i++)
+        {
+            double a = r.NextDouble() * 2 * Math.PI;
+            double d = Math.Sqrt(r.NextDouble());
+            pts[i] = new Point(d * Math.Cos(a), d * Math.Sin(a));
+        }
+        return pts;
+    }
+
+    private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
+    {
+        int left = Math.Max(0, rect.X);
+        int top = Math.Max(0, rect.Y);
+        int right = Math.Min(maxWidth, rect.X + rect.Width);
+        int bottom = Math.Min(maxHeight, rect.Y + rect.Height);
+        int width = Math.Max(0, right - left);
+        int height = Math.Max(0, bottom - top);
+        return new Int32Rect(left, top, width, height);
+    }
+
+    private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)
+    {
+        int expand = penRadius + 2;
+        int x = (int)Math.Min(p1.X, p2.X) - expand;
+        int y = (int)Math.Min(p1.Y, p2.Y) - expand;
+        int w = (int)Math.Abs(p1.X - p2.X) + expand * 2;
+        int h = (int)Math.Abs(p1.Y - p2.Y) + expand * 2;
+        return ClampRect(new Int32Rect(x, y, w, h),
+            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth,
+            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
     }
 }

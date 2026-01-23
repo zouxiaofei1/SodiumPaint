@@ -78,7 +78,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = LocalizationManager.GetString("L_Common_Untitled");
-        public string ProgramVersion { get; set; } = "v0.9.3-beta";
+        public string ProgramVersion { get; set; } = "v0.9.3.1-beta";
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -123,7 +123,7 @@ namespace TabPaint
             }
         }
  
-        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon, Highlighter, Mosaic, Calligraphy }
+        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon, Highlighter, Mosaic, Calligraphy, AiEraser }
         public enum UndoActionType
         {
             Draw,         // 普通绘图
@@ -194,7 +194,7 @@ namespace TabPaint
         private string _sessionPath = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TabPaint", "session.json");
-        private readonly string _cacheDir = System.IO.Path.Combine(
+        public readonly string _cacheDir = System.IO.Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "TabPaint", "Cache");
         private System.Windows.Threading.DispatcherTimer _autoSaveTimer;

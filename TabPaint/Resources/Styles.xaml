@@ -27,7 +27,8 @@
         <Setter Property="ToolTipService.BetweenShowDelay" Value="0"/>
         <Setter Property="ToolTipService.ShowDuration" Value="7000"/>
     </Style>
-    <Style x:Key="TransparentInnerButtonStyle" TargetType="{x:Type ButtonBase}">
+
+    <Style x:Key="TransparentInnerButtonStyleToggle" TargetType="{x:Type ButtonBase}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -43,11 +44,11 @@
                     <ControlTemplate.Triggers>
                         <!-- 鼠标悬浮在子按钮上时，给一个非常淡的背景，表示子区域活跃 -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#1AFFFFFF"/>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtleHoverBrush}" />
                             <!-- 10% 白色，仅微微高亮 -->
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#33000000"/>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtlePressedBrush}"/>
                             <!-- 按下加深 -->
                         </Trigger>
                     </ControlTemplate.Triggers>

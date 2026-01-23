@@ -221,6 +221,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Watercolor" xmlns:sys="clr-namespace:System;assembly=mscorlib">水彩画笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Highlighter" xmlns:sys="clr-namespace:System;assembly=mscorlib">荧光笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">马赛克</sys:String>
+    <sys:String x:Key="L_ToolBar_AIEraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">智能擦除</sys:String>
     <sys:String x:Key="L_ToolBar_Shape" xmlns:sys="clr-namespace:System;assembly=mscorlib">形状</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Rectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">矩形</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">圆角矩形</sys:String>
@@ -294,6 +295,10 @@
     <sys:String x:Key="L_ResizeCanvas_Desc_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放模式：拉伸/压缩图像内容</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_TooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸不能超过 {0}像素。</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸必须大于 0</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_OriginSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放：100% (原始大小)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_ApplyToAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">应用到全部标签</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeStart" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在批量调整图片大小...</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeComplete" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量调整大小任务已完成</sys:String>
 
     <!-- ModernColorPickerWindow -->
     <sys:String x:Key="L_ColorPicker_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">编辑颜色</sys:String>
@@ -582,5 +587,17 @@
     <sys:String x:Key="L_Watermark_RandomOffset" xmlns:sys="clr-namespace:System;assembly=mscorlib">随机偏移</sys:String>
     <sys:String x:Key="L_Toast_BatchStart" xmlns:sys="clr-namespace:System;assembly=mscorlib">开始批量添加水印...</sys:String>
     <sys:String x:Key="L_Toast_BatchComplete" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量处理已完成。</sys:String>
+    <!-- AI Eraser -->
+    <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 处理中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">擦除完成!</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">擦除错误: {0}</sys:String>
+
+    <!-- AI Eraser (Inpainting) -->
+   
+    <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>
+
+    <!-- 统一 AI 状态描述 (如果之前没有) -->
+    <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在下载修复模型: {0:F1}%</sys:String>
 
 </ResourceDictionary>

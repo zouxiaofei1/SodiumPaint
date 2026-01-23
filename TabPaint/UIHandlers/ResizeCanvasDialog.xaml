@@ -293,15 +293,28 @@
                 <TextBlock x:Name="InfoTextBlock" Grid.Row="3" Grid.ColumnSpan="5" Margin="0,12,0,0" 
                            FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap"
                            Text="缩放：100% (原始大小)"/>
+  
             </Grid>
 
-            <!-- 4. 底部按钮 -->
-            <Border Grid.Row="3" Padding="16" Background="Transparent">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Grid Grid.Row="3" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 新增：批量应用选项 -->
+                <CheckBox x:Name="ApplyToAllCheckBox" 
+                     Grid.Column="0" 
+                     Content="{DynamicResource L_ResizeCanvas_ApplyToAll}" 
+                     Margin="24,0,0,0"  Style="{StaticResource FluentCheckBoxStyle}"
+                     VerticalAlignment="Center" FontSize="12"
+                     Foreground="{DynamicResource TextTertiaryBrush}">
+                </CheckBox>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16">
                     <Button x:Name="OkButton" Content="{DynamicResource L_Common_OK}" Width="80" IsDefault="True" Click="OkButton_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                     <Button x:Name="CancelButton" Content="{DynamicResource L_Common_Cancel}" Width="80" Margin="10,0,0,0" IsCancel="True" Style="{StaticResource SecondaryButtonStyle}" Click="CancelButton_Click"/>
                 </StackPanel>
-            </Border>
+            </Grid>
         </Grid>
     </Border>
 </Window>

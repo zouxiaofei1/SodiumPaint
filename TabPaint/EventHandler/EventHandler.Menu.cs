@@ -328,31 +328,38 @@ namespace TabPaint
 
         private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
         private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
-        private void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
+        private async void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
         {
-            if (_bitmap == null) return;// 1. (为Undo做准备) 保存当前图像的完整快照
+            if (_surface.Bitmap == null) return;
+
             _router.CleanUpSelectionandShape();
-            var fullRect = new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight);
-            _undo.PushFullImageUndo(); // 2. 创建对话框，并传入主位图的一个克隆体用于预览
-            var dialog = new AdjustBCEWindow(_bitmap, BackgroundImage);   // 3. 显示对话框并根据结果操作
+
+            var dialog = new AdjustBCEWindow(_surface.Bitmap, WatermarkPreviewLayer)
+            {
+                Owner = this
+            };
+
             if (dialog.ShowDialog() == true)
-            {// 4. 从对话框获取处理后的位图
-                WriteableBitmap adjustedBitmap = dialog.FinalBitmap;   // 5. 将处理后的像素数据写回到主位图 (_bitmap) 中
-                int stride = adjustedBitmap.BackBufferStride;
-                int byteCount = adjustedBitmap.PixelHeight * stride;
-                byte[] pixelData = new byte[byteCount];
-                adjustedBitmap.CopyPixels(pixelData, stride, 0);
-                _bitmap.WritePixels(fullRect, pixelData, stride, 0); 
-                CheckDirtyState();
-                SetUndoRedoButtonState();
+            {
+                _undo.PushFullImageUndo();
+
+                try
+                {
+                    dialog.ApplyToFullImage(_surface.Bitmap);
+
+                    // 6. 标记为脏并刷新状态
+                    CheckDirtyState();
+                    SetUndoRedoButtonState();
+                }
+                finally
+                {
+                }
             }
             else
-            {  // 用户点击了 "取消" 或关闭了窗口
-                _undo.Undo(); // 弹出刚刚压入的快照
-                _undo.ClearRedo(); // 清空因此产生的Redo项
-                SetUndoRedoButtonState();
+            {
             }
         }
+
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
@@ -457,22 +464,37 @@ namespace TabPaint
         }
         private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)
         {
-            if (_bitmap == null) return;
+            if (_surface.Bitmap == null) return;
+
             _router.CleanUpSelectionandShape();
-            _undo.PushFullImageUndo();// 1. (为Undo做准备) 保存当前图像的完整快照
-            var dialog = new AdjustTTSWindow(_bitmap); 
-            if (dialog.ShowDialog() == true) // 更新撤销/重做按钮的状态
+
+            var oldBitmap = _surface.Bitmap;
+            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+            byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
+            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
+
+            var dialog = new AdjustTTSWindow(_surface.Bitmap, WatermarkPreviewLayer)
             {
+                Owner = this
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var newBitmap = _surface.Bitmap;
+                var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
+                newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
+
+                _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
+
+                NotifyCanvasChanged();
                 SetUndoRedoButtonState();
                 CheckDirtyState();
             }
-            else// 用户点击了 "取消"
+            else
             {
-                _undo.Undo();
-                _undo.ClearRedo();
-                SetUndoRedoButtonState();
             }
         }
+
         private void OnConvertToBlackAndWhiteClick(object sender, RoutedEventArgs e)
         {
 
@@ -485,48 +507,240 @@ namespace TabPaint
             ShowToast("L_Toast_Effect_BW");
 
         }
-        private void OnResizeCanvasClick(object sender, RoutedEventArgs e)
+        private async void OnResizeCanvasClick(object sender, RoutedEventArgs e)
         {
             if (_surface?.Bitmap == null) return;
-            _router.CleanUpSelectionandShape();
-            // 1. 创建并配置对话框
-            var dialog = new ResizeCanvasDialog(
-                _surface.Bitmap.PixelWidth,
-                _surface.Bitmap.PixelHeight
-            );
-            dialog.Owner = this; // 设置所有者
+            _router.CleanUpSelectionandShape(); // 清理选区
+
+            // 获取当前原始尺寸
+            int originalW = _surface.Bitmap.PixelWidth;
+            int originalH = _surface.Bitmap.PixelHeight;
+
+            var dialog = new ResizeCanvasDialog(originalW, originalH);
+            dialog.Owner = this;
 
             if (dialog.ShowDialog() == true)
             {
-                int newWidth = dialog.ImageWidth;
-                int newHeight = dialog.ImageHeight;
+                int targetWidth = dialog.ImageWidth;
+                int targetHeight = dialog.ImageHeight;
+                bool isCanvasMode = dialog.IsCanvasResizeMode;
+                bool keepRatio = dialog.IsAspectRatioLocked;
 
-                // 2. 根据模式分流逻辑
-                if (dialog.IsCanvasResizeMode) ResizeCanvasDimensions(newWidth, newHeight);
-                else ResizeCanvas(newWidth, newHeight);
+                // 计算缩放比例 (仅用于 Resample 模式)
+                double scaleX = (double)targetWidth / originalW;
+                double scaleY = (double)targetHeight / originalH;
+
+                // 1. 处理当前图片 (保持原有逻辑，立即响应)
+                if (isCanvasMode) ResizeCanvasDimensions(targetWidth, targetHeight);
+                else ResizeCanvas(targetWidth, targetHeight);
 
                 CheckDirtyState();
-
                 if (_canvasResizer != null) _canvasResizer.UpdateUI();
+
+                // 2. 如果勾选了"应用到所有"，则启动后台批量任务
+                if (dialog.ApplyToAll)
+                {
+                    // 传递必要的参数：目标尺寸、缩放比例、模式、是否保持比例
+                    await BatchResizeImages(targetWidth, targetHeight, scaleX, scaleY, isCanvasMode, keepRatio);
+                }
             }
+        }
+        private async Task BatchResizeImages(int targetW, int targetH, double refScaleX, double refScaleY, bool isCanvasMode, bool keepRatio)
+        {
+            // 1. 获取需要处理的 Tab 数据 (排除当前正在编辑的 Tab)
+            string currentTabId = _currentTabItem?.Id;
+
+            var tasksInfo = FileTabs
+                .Where(t => t.Id != currentTabId)
+                .Select(t => new
+                {
+                    Tab = t,
+                    // 优先使用备份文件(未保存的修改)，否则使用原文件
+                    SourcePath = (!string.IsNullOrEmpty(t.BackupPath) && File.Exists(t.BackupPath)) ? t.BackupPath : t.FilePath
+                })
+                .Where(x => !string.IsNullOrEmpty(x.SourcePath) && File.Exists(x.SourcePath))
+                .ToList();
+
+            if (tasksInfo.Count == 0) return;
+
+            ShowToast(LocalizationManager.GetString("L_Toast_BatchResizeStart") ?? $"Resizing {tasksInfo.Count} images...");
+
+            // 2. 并发控制
+            int maxDegreeOfParallelism = Environment.ProcessorCount;
+            using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
+            {
+                var tasks = new List<Task>();
+
+                foreach (var info in tasksInfo)
+                {
+                    info.Tab.IsLoading = true;
+
+                    var task = Task.Run(async () =>
+                    {
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            string newCachePath = null;
+                            BitmapSource thumbnailResult = null;
+
+                            // 独立线程进行渲染和IO操作
+                            Thread renderThread = new Thread(() =>
+                            {
+                                try
+                                {
+                                    // A. 加载图片
+                                    var bmp = new BitmapImage();
+                                    bmp.BeginInit();
+                                    bmp.UriSource = new Uri(info.SourcePath);
+                                    bmp.CacheOption = BitmapCacheOption.OnLoad;
+                                    bmp.EndInit();
+                                    bmp.Freeze();
+
+                                    BitmapSource resultBmp = null;
+
+                                    // B. 计算新尺寸
+                                    if (isCanvasMode)
+                                    {
+                                        resultBmp = ResizeBitmapCanvas(bmp, targetW, targetH);
+                                    }
+                                    else
+                                    {
+                                        // 采样模式 (Resample)
+                                        int finalW, finalH;
+
+                                        if (keepRatio)
+                                        {
+                                            // 核心逻辑：按比例 -> 使用参考图片的缩放倍率
+                                            // 例如：第一张图从 1000->500 (0.5倍)，那么这张 2000 的图就变成 1000
+                                            finalW = (int)Math.Round(bmp.PixelWidth * refScaleX);
+                                            finalH = (int)Math.Round(bmp.PixelHeight * refScaleY); // 如果锁链开启，ScaleX应该等于ScaleY
+
+                                            // 防止无效尺寸
+                                            finalW = Math.Max(1, finalW);
+                                            finalH = Math.Max(1, finalH);
+                                        }
+                                        else
+                                        {
+                                            // 未锁定比例 -> 强制拉伸到指定像素
+                                            finalW = targetW;
+                                            finalH = targetH;
+                                        }
+
+                                        // 执行缩放
+                                        resultBmp = new TransformedBitmap(bmp, new ScaleTransform(
+                                            (double)finalW / bmp.PixelWidth,
+                                            (double)finalH / bmp.PixelHeight));
+                                    }
+
+                                    resultBmp.Freeze();
+
+                                    // C. 保存结果
+                                    if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
+                                    string fileName = $"{info.Tab.Id}_resize_{DateTime.Now.Ticks}.png";
+                                    string fullPath = Path.Combine(_cacheDir, fileName);
+
+                                    using (var fs = new FileStream(fullPath, FileMode.Create))
+                                    {
+                                        BitmapEncoder encoder = new PngBitmapEncoder();
+                                        encoder.Frames.Add(BitmapFrame.Create(resultBmp));
+                                        encoder.Save(fs);
+                                    }
+
+                                    newCachePath = fullPath;
+
+                                    // D. 生成缩略图
+                                    if (resultBmp.PixelWidth > 200)
+                                    {
+                                        var scale = 200.0 / resultBmp.PixelWidth;
+                                        var thumb = new TransformedBitmap(resultBmp, new ScaleTransform(scale, scale));
+                                        thumb.Freeze();
+                                        thumbnailResult = thumb;
+                                    }
+                                    else
+                                    {
+                                        thumbnailResult = resultBmp;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Batch Resize Error: {ex.Message}");
+                                }
+                            });
+
+                            renderThread.SetApartmentState(ApartmentState.STA); // WPF 图形处理必须 STA
+                            renderThread.IsBackground = true;
+                            renderThread.Start();
+                            renderThread.Join();
+
+                            // E. UI更新
+                            if (!string.IsNullOrEmpty(newCachePath))
+                            {
+                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                                {
+                                    var tab = info.Tab;
+                                    tab.BackupPath = newCachePath;
+                                    tab.IsDirty = true; // 标记为未保存
+                                    tab.LastBackupTime = DateTime.Now;
+                                    if (thumbnailResult != null) tab.Thumbnail = thumbnailResult;
+                                    tab.IsLoading = false;
+                                });
+                            }
+                            else
+                            {
+                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => info.Tab.IsLoading = false);
+                            }
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+
+                    tasks.Add(task);
+                }
+
+                await Task.WhenAll(tasks);
+            }
+
+            SaveSession();
+            ShowToast(LocalizationManager.GetString("L_Toast_BatchResizeComplete") ?? "Batch resize complete.");
+        }
+
+        private BitmapSource ResizeBitmapCanvas(BitmapSource source, int targetW, int targetH)
+        {
+            var rtb = new RenderTargetBitmap(targetW, targetH, 96, 96, PixelFormats.Pbgra32);
+            var dv = new DrawingVisual();
+            using (var ctx = dv.RenderOpen())
+            {
+                // 绘制背景 (透明或白色，取决于需求，这里留空即透明)
+
+                // 计算居中位置
+                double x = (targetW - source.PixelWidth) / 2.0;
+                double y = (targetH - source.PixelHeight) / 2.0;
+
+                // 绘制原图
+                ctx.DrawImage(source, new Rect(x, y, source.PixelWidth, source.PixelHeight));
+            }
+            rtb.Render(dv);
+            return rtb;
         }
 
         private async void OnWatermarkClick(object sender, RoutedEventArgs e)
         {
             var oldBitmap = _surface.Bitmap;
             var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+
             byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
 
             // 2. 打开窗口
-            var dlg = new WatermarkWindow(_surface.Bitmap)
+            var dlg = new WatermarkWindow(_surface.Bitmap, WatermarkPreviewLayer)
             {
                 Owner = this
             };
 
             if (dlg.ShowDialog() == true)
             {
-                // ... (保持原有的重做/Undo推送代码不变) ...
                 var newBitmap = _surface.Bitmap;
                 var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
                 newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
@@ -534,22 +748,16 @@ namespace TabPaint
                 // 推送 Undo
                 _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
 
-                // 刷新界面
                 NotifyCanvasChanged();
                 SetUndoRedoButtonState();
 
-                // =============== 新增部分 ===============
-                // 检查是否勾选了“应用到所有”
                 if (dlg.ApplyToAll)
                 {
-                    // 传入窗口中保存的参数配置
                     await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
                 }
-                // =======================================
             }
             else
             {
-                // 如果取消，WatermarkWindow 内部虽然恢复了像素，但最好通知一下 UI 刷新
                 NotifyCanvasChanged();
             }
         }
@@ -557,81 +765,144 @@ namespace TabPaint
         private async Task ApplyWatermarkToAllTabs(WatermarkSettings settings)
         {
             if (settings == null) return;
-            ShowToast(LocalizationManager.GetString("L_Toast_BatchStart") ?? "Processing batch watermark...");
 
-            // 获取当前正在编辑的 Tab ID (它已经被实时修改过了，跳过)
+            // 1. 获取需要处理的 Tab 数据
+            // 注意：不能在后台线程直接访问 FileTabs (ObservableCollection)，需要先在 UI 线程提取出数据副本
             string currentTabId = _currentTabItem?.Id;
 
-            // 创建列表副本以避免集合修改异常
-            var tabsToProcess = FileTabs.Where(t => t.Id != currentTabId).ToList();
+            // 提取纯数据对象(DTO)以传入后台，避免跨线程访问 UI 对象
+            var tasksInfo = FileTabs
+                .Where(t => t.Id != currentTabId)
+                .Select(t => new
+                {
+                    Tab = t,
+                    // 优先使用备份文件(未保存的修改)，否则使用原文件
+                    SourcePath = (!string.IsNullOrEmpty(t.BackupPath) && File.Exists(t.BackupPath)) ? t.BackupPath : t.FilePath
+                })
+                .Where(x => !string.IsNullOrEmpty(x.SourcePath) && File.Exists(x.SourcePath))
+                .ToList();
 
-            foreach (var tab in tabsToProcess)
+            if (tasksInfo.Count == 0) return;
+
+            ShowToast(LocalizationManager.GetString("L_Toast_BatchStart") ?? $"Processing {tasksInfo.Count} images...");
+
+            // 2. 准备并发控制
+            // 限制并发数为 CPU 核心数，避免创建过多 RenderTargetBitmap 耗尽显存/内存
+            int maxDegreeOfParallelism = Environment.ProcessorCount;
+            using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
             {
-                try
-                {
-                    tab.IsLoading = true; // 设置加载状态（如果你的 Tab 模板支持显示 Loading）
+                var tasks = new List<Task>();
 
-                    await Task.Run(() =>
+                foreach (var info in tasksInfo)
+                {
+                    // 更新 Tab 状态为加载中
+                    info.Tab.IsLoading = true;
+
+                    // 创建异步任务
+                    var task = Task.Run(async () =>
                     {
-                        BitmapSource result = null;
-
-                        // 1. 必须在 UI 线程加载图片和渲染 WPF 视觉对象
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        await semaphore.WaitAsync(); // 等待信号量
+                        try
                         {
-                            // 确定源文件路径：如果有未保存的修改(BackupPath)，则使用 BackupPath，否则使用原文件
-                            string sourcePath = (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
-                                                ? tab.BackupPath
-                                                : tab.FilePath;
+                            string newCachePath = null;
+                            BitmapSource thumbnailResult = null;
 
-                            if (!string.IsNullOrEmpty(sourcePath) && File.Exists(sourcePath))
+                            // 定义一个线程任务来执行渲染
+                            Thread renderThread = new Thread(() =>
                             {
-                                var sourceBmp = LoadBitmapFromFile(sourcePath);
-                                if (sourceBmp != null)
+                                try
                                 {
-                                    // 调用 WatermarkWindow 中的静态生成方法
-                                    result = WatermarkWindow.ApplyWatermarkToBitmap(sourceBmp, settings);
+                                    // A. 加载图片 (需要在新线程重新加载，不能复用 UI 线程的 Bitmap)
+                                    var bmp = new BitmapImage();
+                                    bmp.BeginInit();
+                                    bmp.UriSource = new Uri(info.SourcePath);
+                                    bmp.CacheOption = BitmapCacheOption.OnLoad;
+                                    bmp.EndInit();
+                                    bmp.Freeze(); // 冻结以便处理
+
+                                    // B. 应用水印 (这是静态纯计算方法)
+                                    var renderedBmp = WatermarkWindow.ApplyWatermarkToBitmap(bmp, settings);
+
+                                    // C. 保存到缓存
+                                    if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
+                                    string fileName = $"{info.Tab.Id}_{DateTime.Now.Ticks}.png"; // 加时间戳防止重名冲突
+                                    string fullPath = Path.Combine(_cacheDir, fileName);
+
+                                    using (var fileStream = new FileStream(fullPath, FileMode.Create))
+                                    {
+                                        BitmapEncoder encoder = new PngBitmapEncoder();
+                                        encoder.Frames.Add(BitmapFrame.Create(renderedBmp));
+                                        encoder.Save(fileStream);
+                                    }
+
+                                    newCachePath = fullPath;
+
+                                    if (renderedBmp.PixelWidth > 200)
+                                    {
+                                        var scale = 200.0 / renderedBmp.PixelWidth;
+                                        var thumb = new TransformedBitmap(renderedBmp, new ScaleTransform(scale, scale));
+                                        thumb.Freeze();
+                                        thumbnailResult = thumb;
+                                    }
+                                    else
+                                    {
+                                        thumbnailResult = renderedBmp; // 已经 Freeze 过了
+                                    }
                                 }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Thread Render Error: {ex.Message}");
+                                }
+                            });
+
+                            // 设置为 STA 模式，这是 WPF 渲染必须的
+                            renderThread.SetApartmentState(ApartmentState.STA);
+                            renderThread.IsBackground = true;
+                            renderThread.Start();
+                            renderThread.Join(); // 等待线程结束
+
+                            // === 回到 UI 线程更新 ===
+                            if (!string.IsNullOrEmpty(newCachePath))
+                            {
+                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                                {
+                                    var tab = info.Tab;
+                                    tab.BackupPath = newCachePath;
+                                    tab.IsDirty = true;
+                                    tab.LastBackupTime = DateTime.Now;
+
+                                    // 更新缩略图
+                                    if (thumbnailResult != null)
+                                    {
+                                        tab.Thumbnail = thumbnailResult; // 需要你的 ViewModel 支持
+                                    }
+
+                                    tab.IsLoading = false;
+                                });
                             }
-                        });
-
-                        if (result == null) return;
-
-                        // 2. 在后台线程将结果保存到缓存目录 (IO 操作)
-                        if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
-
-                        string cacheFileName = $"{tab.Id}.png";
-                        string fullPath = Path.Combine(_cacheDir, cacheFileName);
-
-                        using (var fileStream = new FileStream(fullPath, FileMode.Create))
-                        {
-                            BitmapEncoder encoder = new PngBitmapEncoder();
-                            encoder.Frames.Add(BitmapFrame.Create(result));
-                            encoder.Save(fileStream);
+                            else
+                            {
+                                // 失败处理
+                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => info.Tab.IsLoading = false);
+                            }
                         }
-
-                        // 3. 回到 UI 线程更新 Tab 数据模型
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        finally
                         {
-                            tab.BackupPath = fullPath;       // 指向新的缓存文件
-                            tab.IsDirty = true;              // 标记为未保存
-                            tab.LastBackupTime = DateTime.Now;
-
-                            // 刷新底部缩略图
-                            UpdateTabThumbnailFromBitmap(tab, result);
-
-                            tab.IsLoading = false;
-                        });
+                            semaphore.Release(); // 释放信号量
+                        }
                     });
+
+                    tasks.Add(task);
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Batch watermark error on {tab.FileName}: {ex.Message}");
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => tab.IsLoading = false);
-                }
+
+                // 等待所有任务完成
+                await Task.WhenAll(tasks);
             }
-            SaveSession();
+
+            SaveSession(); // 保存会话状态
             ShowToast(LocalizationManager.GetString("L_Toast_BatchComplete") ?? "Batch watermark applied.");
         }
+
         private void OnNewClick(object sender, RoutedEventArgs e)
         {
             CreateNewTab(TabInsertPosition.AfterCurrent,true);

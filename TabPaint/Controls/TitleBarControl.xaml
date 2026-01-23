@@ -47,7 +47,7 @@
                                 <Binding Path="PlacementTarget.DataContext.CurrentImageFullInfo" RelativeSource="{RelativeSource AncestorType=ContextMenu}"/>
                             </MenuItem.IsEnabled>
                             <MenuItem.Icon>
-                                <Path Data="{DynamicResource Info_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
+                                <Path Data="{DynamicResource Info_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="0.8" Width="16" Height="16"/>
                             </MenuItem.Icon>
                             <MenuItem StaysOpenOnClick="True">
                                 <MenuItem.Template>

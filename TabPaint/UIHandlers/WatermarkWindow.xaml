@@ -18,8 +18,6 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- 复用 AdjustTTSWindow 中的资源，这里简略列出，实际项目中由于在此Window内定义，需要复制 AdjustTTSWindow 的 Resources -->
-        <!-- 务必确保包含 Slider, Button, TextBox, TextBlock 等样式 -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>

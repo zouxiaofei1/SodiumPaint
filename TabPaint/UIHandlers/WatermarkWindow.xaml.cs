@@ -7,6 +7,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading; // 需要引用
+
 
 namespace TabPaint
 {
@@ -28,7 +30,9 @@ namespace TabPaint
 
     public partial class WatermarkWindow : Window
     {
-        public bool ApplyToAll => ChkApplyToAll.IsChecked == true; 
+        public bool ApplyToAll => ChkApplyToAll.IsChecked == true;
+        private Image _previewLayer;
+
         public WatermarkSettings CurrentSettings { get; private set; }
         private WriteableBitmap _originalBitmap; // 备份，用于重置和底图
         private WriteableBitmap _targetBitmap;   // 引用 MainWindow 的图，用于实时显示
@@ -45,14 +49,36 @@ namespace TabPaint
 
         private bool _isInitialized = false;
         private Color _selectedColor = Colors.White;
-        public WatermarkWindow(WriteableBitmap bitmapForPreview)
+        public WatermarkWindow(WriteableBitmap bitmapForPreview, Image previewLayer)
         {
             InitializeComponent();
             _targetBitmap = bitmapForPreview;
-            _originalBitmap = bitmapForPreview.Clone(); // 深度复制一份原始图作为底图
-            InitializeFonts(); InitializeCommonColors(); // <--- 新增
+            _originalBitmap = bitmapForPreview.Clone();
+
+            // 1. 获取并初始化预览层
+            _previewLayer = previewLayer;
+            if (_previewLayer != null)
+            {
+                _previewLayer.Source = null;
+                _previewLayer.Visibility = Visibility.Visible;
+                // 确保预览层大小与底图一致（防止因为 Source 为 null 导致没尺寸）
+                _previewLayer.Width = _originalBitmap.PixelWidth;
+                _previewLayer.Height = _originalBitmap.PixelHeight;
+            }
+
+            InitializeFonts();
+            InitializeCommonColors();
             _isInitialized = true;
-            UpdatePreview(); // 初始渲染
+            UpdatePreview();
+        }
+        protected override void OnClosed(EventArgs e)
+        {
+            if (_previewLayer != null)
+            {
+                _previewLayer.Source = null;
+                _previewLayer.Visibility = Visibility.Collapsed;
+            }
+            base.OnClosed(e);
         }
         private void InitializeCommonColors()
         {
@@ -156,10 +182,28 @@ namespace TabPaint
         }
         private void Ok_Click(object sender, RoutedEventArgs e)
         {
+            var finalBmp = ApplyWatermarkToBitmap(_originalBitmap, GetCurrentSettings());
+
+            // 将结果写回 MainWindow 的 WriteableBitmap
+            int w = finalBmp.PixelWidth;
+            int h = finalBmp.PixelHeight;
+            int stride = w * 4;
+            byte[] data = new byte[h * stride];
+            finalBmp.CopyPixels(data, stride, 0);
+
+            _targetBitmap.WritePixels(new Int32Rect(0, 0, w, h), data, stride, 0);
+
             FinalBitmap = _targetBitmap;
 
-            // 保存最后一次确认的设置，供主窗口批量处理使用
-            CurrentSettings = new WatermarkSettings
+            // 保存设置供批量处理
+            CurrentSettings = GetCurrentSettings();
+
+            DialogResult = true;
+            Close();
+        }
+        private WatermarkSettings GetCurrentSettings()
+        {
+            return new WatermarkSettings
             {
                 IsText = RadioText.IsChecked == true,
                 Text = TxtContent.Text,
@@ -174,15 +218,11 @@ namespace TabPaint
                 ImageScale = SliderImgScale.Value,
                 UseRandom = ChkRandom.IsChecked == true
             };
-
-            DialogResult = true;
-            Close();
         }
-
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             // 还原
-            RestoreOriginal();
+         //   RestoreOriginal();
             DialogResult = false;
             Close();
         }
@@ -328,57 +368,53 @@ namespace TabPaint
         // --- 核心渲染 ---
         private void UpdatePreview()
         {
-            if (!_isInitialized || _originalBitmap == null) return;
+            if (!_isInitialized || _originalBitmap == null || _previewLayer == null) return;
 
-            // 收集当前设置
-            var settings = new WatermarkSettings
+            var settings = GetCurrentSettings();
+
+            // 1. 计算降采样比例 (限制最大边长为 1920，保证流畅度)
+            // 无论原图多大，预览图最大只渲染到 1080p 级别，这对预览来说足够了
+            double maxPreviewDimension = 1920;
+            double originalW = _originalBitmap.PixelWidth;
+            double originalH = _originalBitmap.PixelHeight;
+
+            double scale = 1.0;
+            if (originalW > maxPreviewDimension || originalH > maxPreviewDimension)
             {
-                IsText = RadioText.IsChecked == true,
-                Text = TxtContent.Text,
-                ImageSource = _watermarkImageSource,
-                // 解析字体大小，带默认值防护
-                FontSize = double.TryParse(TxtFontSize.Text, out double fs) ? fs : 40,
-                FontFamily = ComboFontFamily.SelectedItem as FontFamily ?? new FontFamily("Microsoft YaHei"),
-                Color = _selectedColor,
-                Opacity = SliderOpacity.Value,
-                Angle = SliderAngle.Value,
-                Rows = (int)SliderRows.Value,
-                Cols = (int)SliderCols.Value,
-                ImageScale = SliderImgScale.Value,
-                UseRandom = ChkRandom.IsChecked == true
-            };
+                scale = Math.Min(maxPreviewDimension / originalW, maxPreviewDimension / originalH);
+            }
 
-            // 使用通用方法生成新的图像
-            // 注意：这里我们只生成用于显示的 WriteableBitmap 内容，
-            // 实际上 UpdatePreview 是把结果写回 _targetBitmap (即 MainWindow 的当前画布)
+            // 2. 传入 scale 参数生成 Visual
+            // onlyWatermark = true (透明底), renderScale = scale (缩小绘制)
+            var visual = CreateWatermarkVisual(_originalBitmap, settings, true, scale);
 
-            // 为了复用代码，我们将核心绘图逻辑提取为静态方法 RenderWatermarkToBitmap
-            // 但因为 UpdatePreview 需要直接操作 _targetBitmap 的像素内存以保持高性能预览，
-            // 我们稍微调整一下策略：提取 DrawingVisual 的构建逻辑。
+            // 3. 创建缩小后的 RenderTargetBitmap
+            int scaledW = (int)(originalW * scale);
+            int scaledH = (int)(originalH * scale);
 
-            var visual = CreateWatermarkVisual(_originalBitmap, settings);
+            // 防止极其微小的图片出错
+            if (scaledW < 1) scaledW = 1;
+            if (scaledH < 1) scaledH = 1;
 
-            int w = _originalBitmap.PixelWidth;
-            int h = _originalBitmap.PixelHeight;
-
-            var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+            var rtb = new RenderTargetBitmap(scaledW, scaledH, 96, 96, PixelFormats.Pbgra32);
             rtb.Render(visual);
+            rtb.Freeze();
 
-            var converted = new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0);
-
-            _targetBitmap.Lock();
-            converted.CopyPixels(new Int32Rect(0, 0, w, h), _targetBitmap.BackBuffer, _targetBitmap.BackBufferStride * h, _targetBitmap.BackBufferStride);
-            _targetBitmap.AddDirtyRect(new Int32Rect(0, 0, w, h));
-            _targetBitmap.Unlock();
+            // 4. 设置给 PreviewLayer
+            // WPF 会自动将这个小的 rtb 拉伸铺满设置了 Width/Height 的 Image 控件
+            _previewLayer.Source = rtb;
         }
-      
 
-        // 4. 核心渲染逻辑提取 (静态方法，供 ApplyToAll 使用)
-        // 该方法根据源图和设置，返回一个 DrawingVisual
-        private static DrawingVisual CreateWatermarkVisual(BitmapSource source, WatermarkSettings settings)
+
+
+        private static DrawingVisual CreateWatermarkVisual(BitmapSource source, WatermarkSettings settings, bool onlyWatermark, double renderScale = 1.0)
         {
             int w = source.PixelWidth;
             int h = source.PixelHeight;
+
+            // 如果是降采样预览，我们实际上是在画板的一小部分上画，但逻辑坐标系保持原图大小
+            // 最简单的方法是使用 ScaleTransform
+
             if (settings.Rows < 1) settings.Rows = 1;
             if (settings.Cols < 1) settings.Cols = 1;
 
@@ -387,7 +423,20 @@ namespace TabPaint
 
             using (var dc = visual.RenderOpen())
             {
-                dc.DrawImage(source, new Rect(0, 0, w, h));
+                // === 关键修改：应用缩放变换 ===
+                if (renderScale != 1.0)
+                {
+                    dc.PushTransform(new ScaleTransform(renderScale, renderScale));
+                }
+
+                // 下面的逻辑完全使用原图尺寸 (w, h) 进行计算
+                // 因为 PushTransform 会自动帮我们缩小绘制结果
+
+                // 1. 只有非预览模式才画底图
+                if (!onlyWatermark)
+                {
+                    dc.DrawImage(source, new Rect(0, 0, w, h));
+                }
 
                 if (settings.Opacity > 0)
                 {
@@ -396,6 +445,7 @@ namespace TabPaint
                     double cellH = (double)h / settings.Rows;
 
                     Brush textBrush = new SolidColorBrush(settings.Color);
+                    if (textBrush.CanFreeze) textBrush.Freeze();
 
                     for (int r = 0; r < settings.Rows; r++)
                     {
@@ -418,13 +468,14 @@ namespace TabPaint
                             {
                                 var ft = new FormattedText(settings.Text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                                     new Typeface(settings.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                                    settings.FontSize, textBrush, 96); // 这里的DPI假设为96，或者传入参数
+                                    settings.FontSize, textBrush, 96);
                                 dc.DrawText(ft, new Point(cx - ft.Width / 2, cy - ft.Height / 2));
                             }
                             else if (!settings.IsText && settings.ImageSource != null)
                             {
                                 double iw = settings.ImageSource.PixelWidth;
                                 double ih = settings.ImageSource.PixelHeight;
+                                // 图片也基于原图尺寸计算缩放
                                 double scaleX = (cellW * 0.8) / iw;
                                 double scaleY = (cellH * 0.8) / ih;
                                 double finalScale = Math.Min(scaleX, scaleY) * settings.ImageScale;
@@ -437,18 +488,31 @@ namespace TabPaint
                     }
                     dc.Pop(); // Opacity
                 }
+
+                // === 关键修改：弹出缩放变换 ===
+                if (renderScale != 1.0)
+                {
+                    dc.Pop();
+                }
             }
             return visual;
         }
 
-        // 5. 提供一个公开的静态辅助方法，生成最终图片
+
+
         public static BitmapSource ApplyWatermarkToBitmap(BitmapSource original, WatermarkSettings settings)
         {
-            var visual = CreateWatermarkVisual(original, settings);
+            if (!original.IsFrozen && original.CheckAccess() == false)
+                throw new InvalidOperationException("Source bitmap must be frozen.");
+
+            // 最终输出时，scale 必须是 1.0，onlyWatermark 必须是 false (包含底图)
+            var visual = CreateWatermarkVisual(original, settings, onlyWatermark: false, renderScale: 1.0);
+
             var rtb = new RenderTargetBitmap(original.PixelWidth, original.PixelHeight, 96, 96, PixelFormats.Pbgra32);
             rtb.Render(visual);
             rtb.Freeze();
             return rtb;
         }
+
     }
 }

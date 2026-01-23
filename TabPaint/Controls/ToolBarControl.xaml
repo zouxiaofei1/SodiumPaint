@@ -92,10 +92,6 @@
 
             <!-- 画刷菜单 (Split Button) -->
             <Grid Margin="0,0,0,7">
-                <!-- 
-                   外层 Border：负责整体轮廓、选中状态(蓝色边框) 和 整体悬浮背景 
-                   注意：CornerRadius 设为 4，与普通工具按钮一致
-                -->
                 <Border x:Name="BrushSplitButtonBorder" 
                         CornerRadius="4" 
                         BorderThickness="1" 
@@ -118,20 +114,20 @@
                         <!-- 左半部分：应用透明样式 -->
                         <Button x:Name="BrushMainButton" Click="OnBrushMainButtonClick" 
                                 ToolTip="{DynamicResource L_ToolBar_Brush}"
-                                Style="{StaticResource TransparentInnerButtonStyle}"
-                                Width="26" Height="30">
+                                Style="{StaticResource TransparentInnerButtonStyleToggle}"
+                                Width="26" Height="36">
                             <ContentControl x:Name="CurrentBrushIconHost" IsHitTestVisible="False" Width="16" Height="16">
                                 <Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
                             </ContentControl>
                         </Button>
 
                         <!-- 分割线：只有悬浮时才显现比较好看，或者一直显示淡淡的 -->
-                        <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.5"/>
+                        <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.4"/>
 
                         <!-- 右半部分：应用透明样式 -->
                         <ToggleButton x:Name="BrushToggle" 
-                                      Style="{StaticResource TransparentInnerButtonStyle}"
-                                      Width="16" Height="30">
+                                      Style="{StaticResource TransparentInnerButtonStyleToggle}"
+                                      Width="16" Height="36">
                             <Path Data="M0,0 L3.5,4 L7,0" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" 
                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </ToggleButton>
@@ -192,6 +188,11 @@
                                     <Path Data="{DynamicResource Mosaic_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <MenuItem Header="{DynamicResource L_ToolBar_AIEraser}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="AiEraser">
+                                <MenuItem.Icon>
+                                    <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </StackPanel>
                     </Border>
                 </Popup>
@@ -218,7 +219,7 @@
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="ShapeMainButton" Click="OnShapeMainButtonClick" 
                                 ToolTip="{DynamicResource L_ToolBar_Shape}"
-                                Style="{StaticResource TransparentInnerButtonStyle}"
+                                Style="{StaticResource TransparentInnerButtonStyleToggle}"
                                 Width="26" Height="30">
                             <ContentControl x:Name="CurrentShapeIconHost" IsHitTestVisible="False" Width="16" Height="16">
                                 <Path Data="{DynamicResource Shapes_Image}" Stretch="Uniform" Fill="Transparent" 
@@ -231,8 +232,8 @@
                         <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.5"/>
 
                         <ToggleButton x:Name="ShapeToggle" 
-                                      Style="{StaticResource TransparentInnerButtonStyle}"
-                                      Width="16" Height="30">
+                                      Style="{StaticResource TransparentInnerButtonStyleToggle}"
+                                      Width="16" Height="36">
                             <Path Data="M0,0 L3.5,4 L7,0" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" 
                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </ToggleButton>

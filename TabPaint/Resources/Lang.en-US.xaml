@@ -280,6 +280,7 @@
     <sys:String x:Key="L_ToolBar_Shape_Ellipse">Ellipse</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Line">Line</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Arrow">Arrow</sys:String>
+    <sys:String x:Key="L_ToolBar_AIEraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI Eraser</sys:String>
     <sys:String x:Key="L_ToolBar_Crop">Crop selection</sys:String>
     <sys:String x:Key="L_ToolBar_RotateFlip">Rotate/Flip</sys:String>
     <sys:String x:Key="L_ToolBar_Rotate_Left">Rotate left 90° (Ctrl+L)</sys:String>
@@ -347,6 +348,10 @@
     <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ Maximum size limit reached ({0}px)</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_TooLarge">Image size cannot exceed {0} pixels.</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize">Size must be greater than 0</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_OriginSize">Zoom：100% (Unresized)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_ApplyToAll">Apply to all tabs</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeStart">Batch resizing images...</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeComplete">Batch resize task completed</sys:String>
 
     <!-- ModernColorPickerWindow (Fixed Duplicates) -->
     <sys:String x:Key="L_ColorPicker_Title">Edit Color</sys:String>
@@ -582,4 +587,14 @@
     <sys:String x:Key="L_Watermark_RandomOffset">Random Offset</sys:String>
     <sys:String x:Key="L_Toast_BatchStart">Batch processing started...</sys:String>
     <sys:String x:Key="L_Toast_BatchComplete">Batch processing complete.</sys:String>
+
+    <!-- AI Eraser -->
+    <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading model...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI Processing...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser applied successfully!</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser error: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">The AI Eraser requires downloading a repair model (LaMa) for the first time, which is about 200MB. &#x0a;It will be verified via MD5 after downloading. Continue?</sys:String>
+
+    <!-- Unified AI Status (If not present) -->
+    <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading repair model: {0:F1}%</sys:String>
 </ResourceDictionary>

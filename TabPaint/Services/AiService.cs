@@ -20,7 +20,7 @@ namespace TabPaint
         private const string BgRem_ModelUrl_HF = "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx";
         private const string BgRem_ModelUrl_MS = "https://modelscope.cn/models/AI-ModelScope/RMBG-1.4/resolve/master/onnx/model.onnx";
         private const string BgRem_ModelName = "rmbg-1.4.onnx";
-        private const string ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d"; 
+        private const string ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d";
 
         private readonly string _cacheDir;
 
@@ -31,14 +31,217 @@ namespace TabPaint
         private const int TileSize = 256; // 切块大小，越小内存占用越低，但推理次数越多
         private const int TileOverlap = 16; // 重叠区域，防止拼接缝隙
         private const int ScaleFactor = 4;
+        private const string Inpaint_ModelUrl = "https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx";
+        private const string Inpaint_ModelUrl_Mirror = "https://modelscope.cn/models/codetrend/LaMa_Inpainting_Model_ONNX/resolve/master/lama_fp32.onnx";
+        private const string Inpaint_ModelName = "lama_fp32.onnx";
+        private const string Inpaint_MD5 = "2777748DC5275B27DAFC63C5D4F1F730";
+        // 检查模型是否准备好
+        public bool IsInpaintModelReady()
+        {
+            return File.Exists(Path.Combine(_cacheDir, Inpaint_ModelName));
+        }
+
+        public async Task<string> PrepareInpaintModelAsync(IProgress<double> progress)
+        {
+            string finalPath = Path.Combine(_cacheDir, Inpaint_ModelName);
+            if (File.Exists(finalPath)) return finalPath;
+
+            using (var client = new HttpClient())
+            {
+                client.Timeout = TimeSpan.FromMinutes(20);
+                // 复用之前的下载逻辑，MD5 暂时设为 null 跳过校验或自行计算
+                if (!await DownloadAndValidateAsync(client, Inpaint_ModelUrl, finalPath, null, progress))
+                {
+                    throw new Exception("Failed to download Inpainting model.");
+                }
+            }
+            return finalPath;
+        }
+
+        public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
+        {
+            int targetW = 512;
+            int targetH = 512;
+
+            return await Task.Run(() =>
+            {
+                var options = new SessionOptions();
+                options.AppendExecutionProvider_CPU();
+
+                using var session = new InferenceSession(modelPath, options);
+
+                var imgTensor = PreprocessImageBytesToTensor(imagePixels, targetW, targetH);
+                var maskTensor = PreprocessMaskBytesToTensor(maskPixels, targetW, targetH);
+
+                var inputs = new List<NamedOnnxValue>
+        {
+            NamedOnnxValue.CreateFromTensor("image", imgTensor),
+            NamedOnnxValue.CreateFromTensor("mask", maskTensor)
+        };
+
+                using var results = session.Run(inputs);
+                var outputTensor = results.First().AsTensor<float>();
+                return PostProcessInpaintToBytes(outputTensor, targetW, targetH);
+            });
+        }
+
+        private DenseTensor<float> PreprocessMaskBytesToTensor(byte[] pixels, int w, int h)
+        {
+            var tensor = new DenseTensor<float>(new[] { 1, 1, h, w });
+            Parallel.For(0, h, y =>
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int offset = (y * w + x) * 4;
+                    // 只要 alpha > 0 或者有红色，就判定为 mask
+                    float val = pixels[offset + 3] > 0 ? 1.0f : 0.0f;
+                    tensor[0, 0, y, x] = val;
+                }
+            });
+            return tensor;
+        }
+        private byte[] PostProcessInpaintToBytes(Tensor<float> tensor, int w, int h)
+        {
+            int stride = w * 4;
+            byte[] pixels = new byte[h * stride];
+
+            Parallel.For(0, h, y =>
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int offset = y * stride + x * 4;
+
+                    float r = tensor[0, 0, y, x];
+                    float g = tensor[0, 1, y, x];
+                    float b = tensor[0, 2, y, x];
+
+                    // 修复点：范围应为 0-255，直接转 byte
+                    pixels[offset + 0] = (byte)Math.Clamp(b, 0, 255); // Blue
+                    pixels[offset + 1] = (byte)Math.Clamp(g, 0, 255); // Green
+                    pixels[offset + 2] = (byte)Math.Clamp(r, 0, 255); // Red
+                    pixels[offset + 3] = 255; // Alpha
+                }
+            });
+
+            return pixels;
+        }
+
+        private DenseTensor<float> PreprocessImageBytesToTensor(byte[] pixels, int w, int h)
+        {
+            var tensor = new DenseTensor<float>(new[] { 1, 3, h, w });
+            // 假设输入是 BGRA 格式 (WPF 默认)
+            Parallel.For(0, h, y =>
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int offset = (y * w + x) * 4;
+                    tensor[0, 0, y, x] = pixels[offset + 2] / 255.0f; // R
+                    tensor[0, 1, y, x] = pixels[offset + 1] / 255.0f; // G
+                    tensor[0, 2, y, x] = pixels[offset + 0] / 255.0f; // B
+                }
+            });
+            return tensor;
+        }
+        private DenseTensor<float> PreprocessImage(WriteableBitmap bmp, int w, int h)
+        {
+            var resized = new TransformedBitmap(bmp, new ScaleTransform((double)w / bmp.PixelWidth, (double)h / bmp.PixelHeight));
+            var wb = new WriteableBitmap(resized);
+            var tensor = new DenseTensor<float>(new[] { 1, 3, h, w });
+            int stride = wb.BackBufferStride;
+            wb.Lock();
+            unsafe
+            {
+                byte* ptr = (byte*)wb.BackBuffer;
+                Parallel.For(0, h, y =>
+                {
+                    for (int x = 0; x < w; x++)
+                    {
+                        int offset = y * stride + x * 4;
+                        // LaMa 需要 Normalize 到 0-1 甚至可能有特定的 mean/std，通常 LaMa 是直接 0-255 归一化即可
+                        tensor[0, 0, y, x] = ptr[offset + 2] / 255.0f; // R
+                        tensor[0, 1, y, x] = ptr[offset + 1] / 255.0f; // G
+                        tensor[0, 2, y, x] = ptr[offset + 0] / 255.0f; // B
+                    }
+                });
+            }
+            wb.Unlock();
+            return tensor;
+        }
+
+        // 辅助方法：处理遮罩输入 (Mask 应该是单通道)
+        private DenseTensor<float> PreprocessMask(WriteableBitmap bmp, int w, int h)
+        {
+            var resized = new TransformedBitmap(bmp, new ScaleTransform((double)w / bmp.PixelWidth, (double)h / bmp.PixelHeight));
+            var wb = new WriteableBitmap(resized);
+            var tensor = new DenseTensor<float>(new[] { 1, 1, h, w });
+            int stride = wb.BackBufferStride;
+            wb.Lock();
+            unsafe
+            {
+                byte* ptr = (byte*)wb.BackBuffer;
+                Parallel.For(0, h, y =>
+                {
+                    for (int x = 0; x < w; x++)
+                    {
+                        int offset = y * stride + x * 4;
+                        float val = ptr[offset + 3] > 0 ? 1.0f : 0.0f;
+                        tensor[0, 0, y, x] = val;
+                    }
+                });
+            }
+            wb.Unlock();
+            return tensor;
+        }
+
+        // 辅助方法：后处理
+        private WriteableBitmap PostProcessInpaint(Tensor<float> tensor, int w, int h) // 注意参数去掉了 origW, origH
+        {
+            // 这里 w 和 h 应该是模型输出的尺寸 (通常是 512x512)
+            // 强制使用 Tensor 的实际维度，防止传入错误
+            int tensorH = tensor.Dimensions[2];
+            int tensorW = tensor.Dimensions[3];
+
+            var wb = new WriteableBitmap(tensorW, tensorH, 96, 96, PixelFormats.Bgra32, null);
+            int stride = wb.BackBufferStride;
+            byte[] pixels = new byte[tensorH * stride];
+
+            Parallel.For(0, tensorH, y =>
+            {
+                for (int x = 0; x < tensorW; x++)
+                {
+                    // 注意：这里需要确保 tensor 索引不越界
+                    // LaMa 输出通常是 0-1 范围
+                    float r = Math.Clamp(tensor[0, 0, y, x], 0, 1);
+                    float g = Math.Clamp(tensor[0, 1, y, x], 0, 1);
+                    float b = Math.Clamp(tensor[0, 2, y, x], 0, 1);
+
+                    int offset = y * stride + x * 4;
+
+                    // 写入 BGRA
+                    pixels[offset + 0] = (byte)(b * 255);
+                    pixels[offset + 1] = (byte)(g * 255);
+                    pixels[offset + 2] = (byte)(r * 255);
+                    pixels[offset + 3] = 255; // 确保 Alpha 通道是不透明的
+                }
+            });
+
+            wb.WritePixels(new Int32Rect(0, 0, tensorW, tensorH), pixels, stride, 0);
+            // 不要在后台线程做 TransformedBitmap 缩放，直接返回结果
+            wb.Freeze(); // 冻结以便跨线程传递
+            return wb;
+        }
 
         public bool IsModelReady(AiTaskType taskType)
         {
-            string modelName = taskType == AiTaskType.RemoveBackground ? BgRem_ModelName : Sr_ModelName;
+            string modelName;
+            switch (taskType)
+            {
+                case AiTaskType.RemoveBackground: modelName = BgRem_ModelName; break;
+                case AiTaskType.SuperResolution: modelName = Sr_ModelName; break;
+                case AiTaskType.Inpainting: modelName = Inpaint_ModelName; break;
+                default: return false;
+            }
             string finalPath = Path.Combine(_cacheDir, modelName);
-
-            // 简单的存在性检查，具体的哈希校验交给 PrepareModelAsync
-            // 如果文件存在但损坏，PrepareModelAsync 会负责重新下载，所以这里只需检查文件是否存在以免打扰用户
             return File.Exists(finalPath);
         }
 
@@ -47,7 +250,7 @@ namespace TabPaint
             _cacheDir = cacheDir;
             if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
         }
-        public enum AiTaskType { RemoveBackground, SuperResolution }
+        public enum AiTaskType { RemoveBackground, SuperResolution, Inpainting }
         private int? _bestGpuId = null;
 
         private int GetBestGpuDeviceId()
@@ -115,18 +318,36 @@ namespace TabPaint
         public async Task<string> PrepareModelAsync(AiTaskType taskType, IProgress<double> progress)
         {
             // --- 配置部分 ---
-            string modelName = taskType == AiTaskType.RemoveBackground ? BgRem_ModelName : Sr_ModelName;
+            string modelName;
+            string expectedMd5;
+            string urlMain;
+            string urlMirror;
 
-            // 背景移除模型 (RMBG-1.4) 的 MD5
-            string expectedMd5_Bg = "8bb9b16ff49cda31e7784852873cfd0d";
-            string expectedMd5_Sr = "25C354305A32B59300A610BCD7846977";
+            switch (taskType)
+            {
+                case AiTaskType.RemoveBackground:
+                    modelName = BgRem_ModelName;
+                    expectedMd5 = "8bb9b16ff49cda31e7784852873cfd0d";
+                    urlMain = BgRem_ModelUrl_HF;
+                    urlMirror = BgRem_ModelUrl_MS;
+                    break;
+                case AiTaskType.SuperResolution:
+                    modelName = Sr_ModelName;
+                    expectedMd5 = "25C354305A32B59300A610BCD7846977";
+                    urlMain = Sr_ModelUrl_HF;
+                    urlMirror = Sr_ModelUrl_Mirror;
+                    break;
+                case AiTaskType.Inpainting:
+                    modelName = Inpaint_ModelName;
+                    expectedMd5 = Inpaint_MD5; // 使用上方定义的常量，请务必计算正确MD5
+                    urlMain = Inpaint_ModelUrl;
+                    urlMirror = Inpaint_ModelUrl_Mirror;
+                    break;
+                default:
+                    throw new ArgumentException("Unknown Task Type");
+            }
 
-            string expectedMd5 = taskType == AiTaskType.RemoveBackground ? expectedMd5_Bg : expectedMd5_Sr;
-
-            string urlMain = taskType == AiTaskType.RemoveBackground ? BgRem_ModelUrl_HF : Sr_ModelUrl_HF;
-            string urlMirror = taskType == AiTaskType.RemoveBackground ? BgRem_ModelUrl_MS : Sr_ModelUrl_Mirror;
-
-            // 简单的本地化策略：中文环境优先使用镜像源
+            // --- 以下逻辑保持不变 (本地化策略、下载、校验) ---
             bool preferMirror = CultureInfo.CurrentCulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
             string primaryUrl = preferMirror ? urlMirror : urlMain;
             string secondaryUrl = preferMirror ? urlMain : urlMirror;
@@ -136,7 +357,7 @@ namespace TabPaint
             // 1. 检查已存在的文件
             if (File.Exists(finalPath))
             {
-                if(expectedMd5==null )return finalPath; // 未提供MD5，直接返回已存在文件（开发阶段用）
+                if (expectedMd5 == null) return finalPath; // 未提供MD5，直接返回已存在文件（开发阶段用）
                 // 验证现有文件完整性
                 if (await VerifyMd5Async(finalPath, expectedMd5))
                 {
@@ -158,7 +379,6 @@ namespace TabPaint
                 // 尝试主链接
                 if (!await DownloadAndValidateAsync(client, primaryUrl, finalPath, expectedMd5, progress))
                 {
-                    System.Diagnostics.Debug.WriteLine("[AI] Primary source failed. Trying secondary...");
                     // 失败则尝试备用链接
                     if (!await DownloadAndValidateAsync(client, secondaryUrl, finalPath, expectedMd5, progress))
                     {
@@ -332,13 +552,8 @@ namespace TabPaint
                 {
                     for (int x = 0; x < w; x += TileSize)
                     {
-                        // 1. 计算有效区域 (Valid Region)
-                        // 比如在边缘时，validW 可能是 48
                         int validW = Math.Min(TileSize, w - x);
                         int validH = Math.Min(TileSize, h - y);
-
-                        // 2. 提取 Tensor (关键修改：传入固定的 TileSize)
-                        // 我们需要告诉函数：给我一个 TileSize 大小的容器，但只填入 validW 大小的数据
                         var tileTensor = ExtractTileToTensor(inputPixels, x, y, validW, validH, TileSize, stride, w, h);
 
                         // 3. 推理 (此时输入的 tensor 永远是 [1, 3, TileSize, TileSize])

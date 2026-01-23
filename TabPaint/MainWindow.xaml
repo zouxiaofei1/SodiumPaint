@@ -286,20 +286,16 @@
                                     <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
                                 </Grid.LayoutTransform>
                                 <Grid Name="ImageContentLayer" ClipToBounds="True">
-                                    <!-- 2. 只有边框的层 -->
-                                <Image Name="PreviewImage" 
-                                     Stretch="Fill" 
-                                     Width="{Binding ElementName=BackgroundImage, Path=ActualWidth}"
-                                     Height="{Binding ElementName=BackgroundImage, Path=ActualHeight}"
-                                     HorizontalAlignment="Left" 
-                                     VerticalAlignment="Top" 
-                                     IsHitTestVisible="False" 
-                                     Visibility="Collapsed"
-                                     RenderOptions.BitmapScalingMode="Linear"/>
-                                <!-- 1. 基础图片 -->
+                               
                                 <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-
-                                <Image Name="GifPlayerImage"
+                                    <Image Name="WatermarkPreviewLayer" 
+                                   Stretch="Fill"
+                                   HorizontalAlignment="Left" 
+                                   VerticalAlignment="Top"
+                                   SnapsToDevicePixels="True"
+                                   IsHitTestVisible="False"
+                                   Visibility="Collapsed"  RenderOptions.BitmapScalingMode="Linear"/>
+                                    <Image Name="GifPlayerImage"
                                        Stretch="None"
                                        HorizontalAlignment="Left"
                                        VerticalAlignment="Top"

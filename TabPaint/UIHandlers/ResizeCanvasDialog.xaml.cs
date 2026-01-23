@@ -17,6 +17,8 @@ namespace TabPaint
         private readonly int _originalWidth;
         private readonly int _originalHeight;
         private readonly double _originalRatio;
+        public bool ApplyToAll => ApplyToAllCheckBox.IsChecked == true;
+        public bool IsAspectRatioLocked => AspectRatioToggle.IsChecked == true;
 
         // 防止事件递归标志
         private bool _isUpdating = false;

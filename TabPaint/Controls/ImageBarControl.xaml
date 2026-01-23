@@ -23,6 +23,9 @@
                 <Setter Property="Opacity" Value="1"/>
 
                 <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
                     <DataTrigger Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="True">
                         <DataTrigger.EnterActions>
                             <BeginStoryboard>
