@@ -111,6 +111,21 @@ namespace TabPaint.Controls
                 e.Handled = true;
             }
         }
+        // 定义事件
+        public static readonly RoutedEvent HelpClickEvent = EventManager.RegisterRoutedEvent(
+            "HelpClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(TitleBarControl));
+
+        public event RoutedEventHandler HelpClick
+        {
+            add => AddHandler(HelpClickEvent, value);
+            remove => RemoveHandler(HelpClickEvent, value);
+        }
+
+        // 触发事件
+        private void OnHelpClick(object sender, RoutedEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(HelpClickEvent));
+        }
 
         private void OnNewClick(object sender, RoutedEventArgs e) => NewClick?.Invoke(this, e);
         private void OnOpenClick(object sender, RoutedEventArgs e) => OpenClick?.Invoke(this, e);

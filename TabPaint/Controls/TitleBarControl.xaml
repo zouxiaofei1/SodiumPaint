@@ -101,6 +101,14 @@
                        Margin="0,0,10,0"/>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                <Button Width="40" Height="30" x:Name="HelpButton"
+            ToolTip="{DynamicResource L_TitleBar_Help}"
+            Click="OnHelpClick"
+            Style="{StaticResource TitleBarButtonStyle}"
+            Margin="0,0,4,0">
+                    <Path Data="{DynamicResource Help_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                </Button>
+                
                 <Button Width="40" Height="30" x:Name="ModeSwitchButton" 
                         ToolTip="{DynamicResource L_TitleBar_ToggleMode}" 
                         Click="OnModeSwitchClick" 

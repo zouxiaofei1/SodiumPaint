@@ -47,13 +47,22 @@
     <None Remove="Resources\Cursors\Closedhand.cur" />
     <None Remove="Resources\Cursors\Eyedropper.cur" />
     <None Remove="Resources\Cursors\Openhand.cur" />
+    <None Remove="Resources\help-1.gif" />
+    <None Remove="Resources\help-2.gif" />
+    <None Remove="Resources\help-3.gif" />
     <None Remove="Resources\TabPaint_64x64.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\help-3.gif" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\Cursors\Closedhand.cur" />
     <Resource Include="Resources\Cursors\Eyedropper.cur" />
     <Resource Include="Resources\Cursors\Openhand.cur" />
+    <Resource Include="Resources\help-1.gif" />
+    <Resource Include="Resources\help-2.gif" />
     <Resource Include="Resources\TabPaint.ico" />
   </ItemGroup>
 

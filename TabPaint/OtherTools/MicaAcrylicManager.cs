@@ -91,14 +91,12 @@ namespace TabPaint
 
             if (IsWin11())
             {
-
-                EnableMica(hwnd);
+                // 修复：传入当前 window 实例
+                EnableMica(hwnd, window);
             }
-        
             else
             {
                 DisableEffect(window);
-                window.Background = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
             }
         }
         public static void DisableEffect(Window window)
@@ -107,23 +105,26 @@ namespace TabPaint
 
             if (IsWin11())
             {
-
-                DisableMica(hwnd);
+                DisableMica(hwnd, window);
             }
-          
+
+            // 回退到普通背景
+            window.Background = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
         }
-        public static void DisableMica(IntPtr hwnd)
+
+        public static void DisableMica(IntPtr hwnd, Window window)
         {
-            ((MainWindow)System.Windows.Application.Current.MainWindow).Background = Application.Current.FindResource("ToolAccentSubtleSelectedBrush") as Brush;
 
             int backdropType = (int)DWMSBT.DWMSBT_NONE;
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
         }
-        private static void EnableMica(IntPtr hwnd)/// 启用 Win11 Mica 效果
+        private static void EnableMica(IntPtr hwnd, Window window)
         {
-            ((MainWindow)System.Windows.Application.Current.MainWindow).Background = new SolidColorBrush(Color.FromArgb(0, 255, 255, 255));
-            int cornerPref = 2; // 2 = rounded
-            DwmSetWindowAttribute(hwnd, (DWMWINDOWATTRIBUTE)33, ref cornerPref, sizeof(int)); // DWMWA_WINDOW_CORNER_PREFERENCE
+            // 关键：将当前窗口背景设为透明，Mica 才能透出来
+            window.Background = Brushes.Transparent;
+
+            int cornerPref = 2; // 圆角
+            DwmSetWindowAttribute(hwnd, (DWMWINDOWATTRIBUTE)33, ref cornerPref, sizeof(int));
 
             int backdropType = (int)DWMSBT.DWMSBT_MAINWINDOW;
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
@@ -131,7 +132,7 @@ namespace TabPaint
         [DllImport("dwmapi.dll")]
         private static extern int DwmIsCompositionEnabled(out bool enabled);
       
-        private static bool IsWin11()
+        public static bool IsWin11()
         {// 粗略判断：Win11 Version >= 22000
             var version = Environment.OSVersion.Version.Build;
             return version >= 22000;

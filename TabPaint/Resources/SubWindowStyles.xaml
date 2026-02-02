@@ -9,15 +9,16 @@
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Border"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="0">
+                      Background="{TemplateBinding Background}"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="0">
                         <ContentPresenter VerticalAlignment="Center"
-                                      HorizontalAlignment="Center"/>
+                                    HorizontalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -31,6 +32,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
     <Style x:Key="OtherCloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>

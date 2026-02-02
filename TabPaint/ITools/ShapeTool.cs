@@ -13,7 +13,9 @@ public class ShapeTool : ToolBase
     public override string Name => "Shape";
     public override System.Windows.Input.Cursor Cursor => _isManipulating ? null : System.Windows.Input.Cursors.Cross;
 
-    public enum ShapeType { Rectangle, Ellipse, Line, RoundedRectangle, Arrow }
+    // 1. 更新枚举，添加新形状
+    public enum ShapeType { Rectangle, Ellipse, Line, RoundedRectangle, Arrow, Triangle, Diamond, Pentagon, Star, Bubble }
+
     public ShapeType _currentShapeType = ShapeType.Rectangle;
     public ShapeType CurrentShapeType => _currentShapeType;
     private Point _startPoint;
@@ -21,10 +23,12 @@ public class ShapeTool : ToolBase
     private bool _isManipulating = false;
     private System.Windows.Shapes.Shape _previewShape;
     private int lag = 0;
+
+    // ... (SetCursor, SetShapeType, GetSelectTool, GiveUpSelection 方法保持不变) ...
+
     public override void SetCursor(ToolContext ctx)
     {
         System.Windows.Input.Mouse.OverrideCursor = null;
-
         if (ctx.ViewElement != null)
         {
             ctx.ViewElement.Cursor = this.Cursor;
@@ -42,25 +46,32 @@ public class ShapeTool : ToolBase
         return mw._tools.Select as SelectTool;
     }
 
+    public void GiveUpSelection(ToolContext ctx)
+    {
+        if (ctx == null) return;
+        GetSelectTool()?.CommitSelection(ctx, true);
+        GetSelectTool()?.Cleanup(ctx);
+    }
+
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
         var selectTool = GetSelectTool();
         var px = ctx.ToPixel(viewPos);
+
+        // ... (保持原有的操控模式判断逻辑) ...
         if (_isManipulating && selectTool != null)
         {
             if (!selectTool.HasActiveSelection)
             {
                 _isManipulating = false;
-                goto DrawingLogic; // 跳转到绘制逻辑
+                goto DrawingLogic;
             }
-
             bool hitHandle = selectTool.HitTestHandle(px, selectTool._selectionRect) != SelectTool.ResizeAnchor.None;
             bool hitContent = selectTool.IsPointInSelection(px);
 
             if (hitHandle || hitContent)
             {
-                // 转发事件给 SelectTool
                 selectTool.OnPointerDown(ctx, viewPos);
                 return;
             }
@@ -71,22 +82,17 @@ public class ShapeTool : ToolBase
                 selectTool.lag = 0;
                 _isManipulating = false;
                 lag = 1;
-
             }
         }
 
     DrawingLogic:
-      
-        if(lag> 0)
-        {
-            lag--;
-            return;
-        }
+        if (lag > 0) { lag--; return; }
+
         _startPoint = ctx.ToPixel(viewPos);
         _isDrawing = true;
         ctx.CapturePointer();
 
-        // 初始化预览形状
+        // 2. 初始化预览形状
         switch (_currentShapeType)
         {
             case ShapeType.Rectangle:
@@ -101,7 +107,13 @@ public class ShapeTool : ToolBase
             case ShapeType.Line:
                 _previewShape = new System.Windows.Shapes.Line();
                 break;
+            // 所有复杂形状都使用 Path
             case ShapeType.Arrow:
+            case ShapeType.Triangle:
+            case ShapeType.Diamond:
+            case ShapeType.Pentagon:
+            case ShapeType.Star:
+            case ShapeType.Bubble:
                 _previewShape = new System.Windows.Shapes.Path();
                 break;
         }
@@ -110,36 +122,21 @@ public class ShapeTool : ToolBase
         _previewShape.StrokeThickness = ctx.PenThickness;
         _previewShape.Fill = null;
 
-        // 初始位置设置（线和箭头不需要设置 Left/Top）
-        if (_currentShapeType != ShapeType.Line && _currentShapeType != ShapeType.Arrow)
+        // Line, Arrow 以及新的复杂形状是基于 Path Data 的，不需要设置 Canvas Left/Top，或者在 Update 时处理
+        if (_currentShapeType == ShapeType.Rectangle ||
+            _currentShapeType == ShapeType.RoundedRectangle ||
+            _currentShapeType == ShapeType.Ellipse)
         {
             Canvas.SetLeft(_previewShape, _startPoint.X);
             Canvas.SetTop(_previewShape, _startPoint.Y);
         }
 
         ctx.EditorOverlay.Children.Add(_previewShape);
-
-    }
-
-    public void GiveUpSelection(ToolContext ctx)
-    {
-        if (ctx == null) return;
-    
-        GetSelectTool()?.CommitSelection(ctx,true);
-        GetSelectTool()?.Cleanup(ctx);
-       // ctx.Undo.Undo();
-
     }
 
     public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        if (_isManipulating)
-        {
-            GetSelectTool()?.OnPointerMove(ctx, viewPos);
-            return;
-        }
-
-        // 2. 如果正在画新图形
+        if (_isManipulating) { GetSelectTool()?.OnPointerMove(ctx, viewPos); return; }
         if (!_isDrawing || _previewShape == null) return;
 
         var current = ctx.ToPixel(viewPos);
@@ -147,82 +144,12 @@ public class ShapeTool : ToolBase
 
         int w = (int)Math.Abs(current.X - _startPoint.X);
         int h = (int)Math.Abs(current.Y - _startPoint.Y);
-
         var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
         mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
     }
-
-    private BitmapSource RenderShapeToBitmapClipped(Point globalStart, Point globalEnd, Rect validBounds, Color color, double thickness, double dpiX, double dpiY)
-    {
-        // 位图的尺寸 = 交集矩形的尺寸 (保证不超过画布)
-        int pixelWidth = (int)Math.Ceiling(validBounds.Width);
-        int pixelHeight = (int)Math.Ceiling(validBounds.Height);
-
-        if (pixelWidth <= 0 || pixelHeight <= 0) return null;
-
-        DrawingVisual drawingVisual = new DrawingVisual();
-        using (DrawingContext dc = drawingVisual.RenderOpen())
-        {
-            dc.PushTransform(new TranslateTransform(-validBounds.X, -validBounds.Y));
-
-            Pen pen = new Pen(new SolidColorBrush(color), thickness);
-
-            // 线帽设置 (保持原逻辑)
-            if (_currentShapeType == ShapeType.Rectangle)
-            {
-                pen.LineJoin = PenLineJoin.Miter;
-                pen.StartLineCap = PenLineCap.Square;
-                pen.EndLineCap = PenLineCap.Square;
-            }
-            else
-            {
-                pen.LineJoin = PenLineJoin.Round;
-                pen.StartLineCap = PenLineCap.Round;
-                pen.EndLineCap = PenLineCap.Round;
-            }
-            pen.Freeze();
-            Point p1 = globalStart;
-            Point p2 = globalEnd;
-            Rect logicalRect = new Rect(
-                Math.Min(p1.X, p2.X),
-                Math.Min(p1.Y, p2.Y),
-                Math.Abs(p1.X - p2.X),
-                Math.Abs(p1.Y - p2.Y)
-            );
-
-            switch (_currentShapeType)
-            {
-                case ShapeType.Rectangle:
-                    dc.DrawRectangle(null, pen, logicalRect);
-                    break;
-                case ShapeType.RoundedRectangle:
-                    dc.DrawRoundedRectangle(null, pen, logicalRect, 20, 20);
-                    break;
-                case ShapeType.Ellipse:
-                    // 椭圆圆心
-                    dc.DrawEllipse(null, pen,
-                        new Point(logicalRect.X + logicalRect.Width / 2.0, logicalRect.Y + logicalRect.Height / 2.0),
-                        logicalRect.Width / 2.0, logicalRect.Height / 2.0);
-                    break;
-                case ShapeType.Line:
-                    dc.DrawLine(pen, globalStart, globalEnd);
-                    break;
-                case ShapeType.Arrow:
-                    var arrowGeo = BuildArrowGeometry(globalStart, globalEnd, Gethandlength(globalStart, globalEnd));
-                    dc.DrawGeometry(null, pen, arrowGeo);
-                    break;
-            }
-
-            dc.Pop(); // 弹出 Transform
-        }
-
-        RenderTargetBitmap bmp = new RenderTargetBitmap(pixelWidth, pixelHeight, dpiX, dpiY, PixelFormats.Pbgra32);
-        bmp.Render(drawingVisual);
-        bmp.Freeze();
-        return bmp;
-    }
     public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
+        // 1. 如果已经在操控模式（调整之前的图形），交给 SelectTool 处理
         if (_isManipulating)
         {
             GetSelectTool()?.OnPointerUp(ctx, viewPos);
@@ -235,23 +162,26 @@ public class ShapeTool : ToolBase
         _isDrawing = false;
         ctx.ReleasePointerCapture();
 
+        // 移除正在绘制的预览线框
         if (_previewShape != null)
         {
             ctx.EditorOverlay.Children.Remove(_previewShape);
             _previewShape = null;
         }
 
-        // 1. 计算逻辑包围盒 (鼠标拖拽的起止点)
+        // 计算图形区域
         var rawRect = MakeRect(_startPoint, endPoint);
         if (rawRect.Width <= 1 || rawRect.Height <= 1) return;
 
-        double arrowScale = Gethandlength(_startPoint, endPoint);
-        double padding = ctx.PenThickness / 2.0 + 2;
+        // 计算 Padding (箭头需要额外空间)
+        double arrowScale = 0;
         if (_currentShapeType == ShapeType.Arrow)
         {
-            padding = (ctx.PenThickness/  2.0 + arrowScale/2.0) + 2;
+            arrowScale = Gethandlength(_startPoint, endPoint);
         }
-        // 形状在全局坐标系下的完整矩形 (可能包含负坐标或超出画布)
+        double padding = ctx.PenThickness / 2.0 + 2 + arrowScale;
+
+        // 计算有效绘制区域
         Rect shapeGlobalBounds = new Rect(
             rawRect.X - padding,
             rawRect.Y - padding,
@@ -259,45 +189,77 @@ public class ShapeTool : ToolBase
             rawRect.Height + padding * 2
         );
         Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
-
         Rect validBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
 
         // 如果完全在画布外，直接不画
         if (validBounds == Rect.Empty || validBounds.Width <= 0 || validBounds.Height <= 0)
             return;
 
+        // 生成位图
         var shapeBitmap = RenderShapeToBitmapClipped(_startPoint, endPoint, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
 
         var selectTool = GetSelectTool();
         if (selectTool != null && shapeBitmap != null)
         {
-            // 插入图片，不扩充画布 (因为我们已经裁剪到画布内了)
+            // -----------------------------------------------------------------------
+            // 修改开始：根据 Ctrl 键决定行为
+            // -----------------------------------------------------------------------
+            bool isCtrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+
+            // 1. 先将生成的图片加载到 SelectTool 中 (这是通用步骤)
             selectTool.InsertImageAsSelection(ctx, shapeBitmap, false);
+
             int finalX = (int)validBounds.X;
             int finalY = (int)validBounds.Y;
 
+            // 设置 SelectTool 的位置数据，确保它知道图片在哪
             selectTool._selectionRect = new Int32Rect(finalX, finalY, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight);
             selectTool._originalRect = selectTool._selectionRect;
 
-            double uiScaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
-            double uiScaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
+            if (isCtrlPressed)
+            {
+                // === 模式 A: 按住 Ctrl -> 进入编辑模式 (原有逻辑) ===
 
-            ctx.SelectionPreview.Width = selectTool._selectionRect.Width * uiScaleX;
-            ctx.SelectionPreview.Height = selectTool._selectionRect.Height * uiScaleY;
+                // 计算 UI 缩放比例
+                double uiScaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
+                double uiScaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
 
-            // 设置变换：将选区移动到计算出的裁剪位置
-            var tg = new TransformGroup();
-            tg.Children.Add(new ScaleTransform(1, 1)); // 初始比例 1:1
-            tg.Children.Add(new TranslateTransform(finalX, finalY));
-            ctx.SelectionPreview.RenderTransform = tg;
+                // 设置预览层的大小
+                ctx.SelectionPreview.Width = selectTool._selectionRect.Width * uiScaleX;
+                ctx.SelectionPreview.Height = selectTool._selectionRect.Height * uiScaleY;
 
-            // 设置裁剪 (防止渲染溢出)
-            ctx.SelectionPreview.Clip = new RectangleGeometry(new Rect(0, 0, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight));
+                // 设置变换：将选区移动到计算出的裁剪位置
+                var tg = new TransformGroup();
+                tg.Children.Add(new ScaleTransform(1, 1)); // 初始比例 1:1
+                tg.Children.Add(new TranslateTransform(finalX, finalY));
+                ctx.SelectionPreview.RenderTransform = tg;
 
-            selectTool.RefreshOverlay(ctx);
+                // 设置裁剪 (防止渲染溢出)
+                ctx.SelectionPreview.Clip = new RectangleGeometry(new Rect(0, 0, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight));
 
-            // 进入操控模式
-            _isManipulating = true; selectTool.UpdateStatusBarSelectionSize();
+                // 显示选择框覆盖层
+                selectTool.RefreshOverlay(ctx);
+                selectTool.UpdateStatusBarSelectionSize();
+
+                // 标记为正在操控，阻止开始画下一个图形
+                _isManipulating = true;
+            }
+            else
+            {
+                // === 模式 B: 默认 -> 直接印在画布上，不显示选择框 ===
+
+                // 立即提交到画布 (true 表示记录到撤销栈)
+                selectTool.CommitSelection(ctx, true);
+
+                // 清理 SelectTool 的 UI (隐藏虚线框、控制手柄等)
+                selectTool.Cleanup(ctx);
+
+                // 确保标记为未操控，这样下次点击可以立即画新图
+                _isManipulating = false;
+
+                // 这是一个小优化：防止误触 SelectTool 的逻辑
+                selectTool.lag = 0;
+            }
         }
     }
 
@@ -305,17 +267,16 @@ public class ShapeTool : ToolBase
     {
         if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
-            // 只有在“操控模式”（形状刚画完，处于浮动选中状态）下才生效
             if (_isManipulating)
             {
                 var st = GetSelectTool();
                 if (st != null && st.HasActiveSelection)
                 {
                     st.Cleanup(ctx);
-                    ctx.Undo.Redo(); 
+                    ctx.Undo.Redo();
                     _isManipulating = false;
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
-                     e.Handled = true;
+                    e.Handled = true;
                     return;
                 }
             }
@@ -326,20 +287,93 @@ public class ShapeTool : ToolBase
             if (st != null)
             {
                 st.OnKeyDown(ctx, e);
-                if (!st.HasActiveSelection)
-                {
-                    _isManipulating = false;
-                }
+                if (!st.HasActiveSelection) _isManipulating = false;
                 return;
             }
         }
         base.OnKeyDown(ctx, e);
     }
 
-    private double Gethandlength(Point start, Point end)
+
+    // 3. 核心绘图逻辑：生成 Bitmap
+    private BitmapSource RenderShapeToBitmapClipped(Point globalStart, Point globalEnd, Rect validBounds, Color color, double thickness, double dpiX, double dpiY)
     {
-        return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2),0.5)*0.2;
+        int pixelWidth = (int)Math.Ceiling(validBounds.Width);
+        int pixelHeight = (int)Math.Ceiling(validBounds.Height);
+        if (pixelWidth <= 0 || pixelHeight <= 0) return null;
+
+        DrawingVisual drawingVisual = new DrawingVisual();
+        using (DrawingContext dc = drawingVisual.RenderOpen())
+        {
+            dc.PushTransform(new TranslateTransform(-validBounds.X, -validBounds.Y));
+            Pen pen = new Pen(new SolidColorBrush(color), thickness);
+
+            if (_currentShapeType == ShapeType.Rectangle || _currentShapeType == ShapeType.Diamond || _currentShapeType == ShapeType.Triangle)
+            {
+                pen.LineJoin = PenLineJoin.Miter;
+                pen.StartLineCap = PenLineCap.Square;
+                pen.EndLineCap = PenLineCap.Square;
+            }
+            else
+            {
+                pen.LineJoin = PenLineJoin.Round; pen.StartLineCap = PenLineCap.Round; pen.EndLineCap = PenLineCap.Round;
+            }
+            pen.Freeze();
+
+            Rect logicalRect = new Rect(
+                Math.Min(globalStart.X, globalEnd.X),
+                Math.Min(globalStart.Y, globalEnd.Y),
+                Math.Abs(globalStart.X - globalEnd.X),
+                Math.Abs(globalStart.Y - globalEnd.Y)
+            );
+
+            switch (_currentShapeType)
+            {
+                case ShapeType.Rectangle:
+                    dc.DrawRectangle(null, pen, logicalRect);
+                    break;
+                case ShapeType.RoundedRectangle:
+                    dc.DrawRoundedRectangle(null, pen, logicalRect, 20, 20);
+                    break;
+                case ShapeType.Ellipse:
+                    dc.DrawEllipse(null, pen,
+                        new Point(logicalRect.X + logicalRect.Width / 2.0, logicalRect.Y + logicalRect.Height / 2.0),
+                        logicalRect.Width / 2.0, logicalRect.Height / 2.0);
+                    break;
+                case ShapeType.Line:
+                    dc.DrawLine(pen, globalStart, globalEnd);
+                    break;
+                case ShapeType.Arrow:
+                    dc.DrawGeometry(null, pen, BuildArrowGeometry(globalStart, globalEnd, Gethandlength(globalStart, globalEnd)));
+                    break;
+
+                // 新增形状渲染
+                case ShapeType.Triangle:
+                    dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 3, -Math.PI / 2));
+                    break;
+                case ShapeType.Diamond:
+                    dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 4, 0)); // 菱形即旋转的矩形
+                    break;
+                case ShapeType.Pentagon:
+                    dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 5, -Math.PI / 2));
+                    break;
+                case ShapeType.Star:
+                    dc.DrawGeometry(null, pen, BuildStarGeometry(logicalRect));
+                    break;
+                case ShapeType.Bubble:
+                    dc.DrawGeometry(null, pen, BuildBubbleGeometry(logicalRect));
+                    break;
+            }
+            dc.Pop();
+        }
+
+        RenderTargetBitmap bmp = new RenderTargetBitmap(pixelWidth, pixelHeight, dpiX, dpiY, PixelFormats.Pbgra32);
+        bmp.Render(drawingVisual);
+        bmp.Freeze();
+        return bmp;
     }
+
+    // 4. 预览更新
     private void UpdatePreviewShape(Point start, Point end, double thickness)
     {
         double x = Math.Min(start.X, end.X);
@@ -350,58 +384,187 @@ public class ShapeTool : ToolBase
         if (_currentShapeType == ShapeType.Line)
         {
             var line = (System.Windows.Shapes.Line)_previewShape;
-            line.X1 = start.X; line.Y1 = start.Y;
-            line.X2 = end.X; line.Y2 = end.Y;
-        }
-        else if (_currentShapeType == ShapeType.Arrow)
-        {
-            var path = (System.Windows.Shapes.Path)_previewShape;
-            path.Data = BuildArrowGeometry(start, end, Gethandlength(start,end));
+            line.X1 = start.X; line.Y1 = start.Y; line.X2 = end.X; line.Y2 = end.Y;
         }
         else
         {
-            Canvas.SetLeft(_previewShape, x);
-            Canvas.SetTop(_previewShape, y);
-            _previewShape.Width = w;
-            _previewShape.Height = h;
+            // 对于 Path 类型的形状，我们需要重新生成 Data
+            if (_previewShape is System.Windows.Shapes.Path path)
+            {
+                Rect r = new Rect(x, y, w, h);
+                switch (_currentShapeType)
+                {
+                    case ShapeType.Arrow:
+                        path.Data = BuildArrowGeometry(start, end, Gethandlength(start, end));
+                        break;
+                    case ShapeType.Triangle:
+                        path.Data = BuildRegularPolygon(r, 3, -Math.PI / 2);
+                        break;
+                    case ShapeType.Diamond:
+                        path.Data = BuildRegularPolygon(r, 4, 0);
+                        break;
+                    case ShapeType.Pentagon:
+                        path.Data = BuildRegularPolygon(r, 5, -Math.PI / 2);
+                        break;
+                    case ShapeType.Star:
+                        path.Data = BuildStarGeometry(r);
+                        break;
+                    case ShapeType.Bubble:
+                        path.Data = BuildBubbleGeometry(r);
+                        break;
+                }
+            }
+            else
+            {
+                // 基础形状 (Rect, Ellipse)
+                Canvas.SetLeft(_previewShape, x);
+                Canvas.SetTop(_previewShape, y);
+                _previewShape.Width = w;
+                _previewShape.Height = h;
+            }
         }
     }
+
+    // --- 几何算法辅助方法 ---
+
+    private double Gethandlength(Point start, Point end)
+    {
+        return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2), 0.5) * 0.2;
+    }
+
+    // 构造箭头 (保持原样)
     private Geometry BuildArrowGeometry(Point start, Point end, double headLength)
     {
         Vector vec = end - start;
-        // 防止长度为0崩溃
         if (vec.LengthSquared < 0.001) vec = new Vector(0, 1);
-
         vec.Normalize();
         if (Double.IsNaN(vec.X)) vec = new Vector(1, 0);
 
         Vector backVec = -vec;
-
         double angle = 35;
         Matrix m1 = Matrix.Identity; m1.Rotate(angle);
         Matrix m2 = Matrix.Identity; m2.Rotate(-angle);
 
-        // 计算翅膀向量
         Vector wing1 = m1.Transform(backVec) * headLength;
         Vector wing2 = m2.Transform(backVec) * headLength;
-
-        // 翅膀的端点
         Point p1 = end + wing1;
         Point p2 = end + wing2;
-
 
         StreamGeometry geometry = new StreamGeometry();
         using (StreamGeometryContext ctx = geometry.Open())
         {
-            // 画线身
             ctx.BeginFigure(start, false, false);
-            ctx.LineTo(end, true, false); // 线身连到尖端
+            ctx.LineTo(end, true, false);
+            ctx.LineTo(p1, true, false);
+            ctx.BeginFigure(end, false, false);
+            ctx.LineTo(p2, true, false);
+        }
+        geometry.Freeze();
+        return geometry;
+    }
 
-            // 画箭头翅膀 (这里采用开放式箭头，如果想要闭合三角形，需要改逻辑)
-            ctx.LineTo(p1, true, false); // 连到一侧翅膀
+    // 构造正多边形 (三角形、菱形、五边形)
+    // startAngle: -PI/2 使得顶点朝上
+    private Geometry BuildRegularPolygon(Rect rect, int sides, double startAngle)
+    {
+        StreamGeometry geometry = new StreamGeometry();
+        using (StreamGeometryContext ctx = geometry.Open())
+        {
+            double centerX = rect.X + rect.Width / 2.0;
+            double centerY = rect.Y + rect.Height / 2.0;
+            double radiusX = rect.Width / 2.0;
+            double radiusY = rect.Height / 2.0;
 
-            ctx.BeginFigure(end, false, false); // 回到尖端
-            ctx.LineTo(p2, true, false); // 连到另一侧翅膀
+            for (int i = 0; i < sides; i++)
+            {
+                double angle = startAngle + 2 * Math.PI * i / sides;
+                double x = centerX + radiusX * Math.Cos(angle);
+                double y = centerY + radiusY * Math.Sin(angle);
+                Point pt = new Point(x, y);
+
+                if (i == 0) ctx.BeginFigure(pt, true, true);
+                else ctx.LineTo(pt, true, false);
+            }
+        }
+        geometry.Freeze();
+        return geometry;
+    }
+
+    // 构造五角星
+    private Geometry BuildStarGeometry(Rect rect)
+    {
+        StreamGeometry geometry = new StreamGeometry();
+        using (StreamGeometryContext ctx = geometry.Open())
+        {
+            double centerX = rect.X + rect.Width / 2.0;
+            double centerY = rect.Y + rect.Height / 2.0;
+            double radiusX = rect.Width / 2.0;
+            double radiusY = rect.Height / 2.0;
+            double innerRadiusRatio = 0.4; // 内圆比例
+
+            int numPoints = 5;
+            double angleStep = Math.PI / numPoints;
+            double currentAngle = -Math.PI / 2; // 顶点朝上
+
+            for (int i = 0; i < numPoints * 2; i++)
+            {
+                double rX = (i % 2 == 0) ? radiusX : radiusX * innerRadiusRatio;
+                double rY = (i % 2 == 0) ? radiusY : radiusY * innerRadiusRatio;
+
+                double x = centerX + rX * Math.Cos(currentAngle);
+                double y = centerY + rY * Math.Sin(currentAngle);
+                Point pt = new Point(x, y);
+
+                if (i == 0) ctx.BeginFigure(pt, true, true);
+                else ctx.LineTo(pt, true, false);
+
+                currentAngle += angleStep;
+            }
+        }
+        geometry.Freeze();
+        return geometry;
+    }
+
+    // 构造对话气泡
+    private Geometry BuildBubbleGeometry(Rect rect)
+    {
+        StreamGeometry geometry = new StreamGeometry();
+        using (StreamGeometryContext ctx = geometry.Open())
+        {
+            // 简单的圆角矩形 + 小尾巴
+            double radius = Math.Min(rect.Width, rect.Height) * 0.15;
+            double tailHeight = rect.Height * 0.2;
+            double bodyHeight = rect.Height - tailHeight;
+
+            // 主体矩形区域
+            Rect bodyRect = new Rect(rect.X, rect.Y, rect.Width, bodyHeight);
+
+            // 尾巴的起点 (右下角偏左一点)
+            Point tailStart = new Point(rect.X + rect.Width * 0.7, rect.Y + bodyHeight);
+            // 尾巴尖端
+            Point tailTip = new Point(rect.X + rect.Width * 0.7, rect.Y + rect.Height);
+            // 尾巴终点
+            Point tailEnd = new Point(rect.X + rect.Width * 0.5, rect.Y + bodyHeight);
+
+            // 绘制
+            ctx.BeginFigure(new Point(bodyRect.X + radius, bodyRect.Y), true, true);
+            // 上边
+            ctx.LineTo(new Point(bodyRect.Right - radius, bodyRect.Top), true, true);
+            ctx.ArcTo(new Point(bodyRect.Right, bodyRect.Top + radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
+            // 右边
+            ctx.LineTo(new Point(bodyRect.Right, bodyRect.Bottom - radius), true, true);
+            ctx.ArcTo(new Point(bodyRect.Right - radius, bodyRect.Bottom), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
+
+            // 底部带尾巴
+            ctx.LineTo(tailStart, true, true);
+            ctx.LineTo(tailTip, true, true);
+            ctx.LineTo(tailEnd, true, true);
+
+            ctx.LineTo(new Point(bodyRect.Left + radius, bodyRect.Bottom), true, true);
+            ctx.ArcTo(new Point(bodyRect.Left, bodyRect.Bottom - radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
+            // 左边
+            ctx.LineTo(new Point(bodyRect.Left, bodyRect.Top + radius), true, true);
+            ctx.ArcTo(new Point(bodyRect.Left + radius, bodyRect.Top), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
         }
         geometry.Freeze();
         return geometry;

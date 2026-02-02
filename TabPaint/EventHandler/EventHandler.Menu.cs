@@ -19,6 +19,45 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void OnHelpClick(object sender, RoutedEventArgs e)
+        {
+            s(1);
+            var helpPages = new List<HelpPage>();
+
+            try
+            {
+
+                helpPages.Add(new HelpPage
+                {
+                    Image = new BitmapImage(new Uri("pack://application:,,,/Resources/help-1.gif")),
+                    DescriptionKey = "L_Help_Desc_Welcome" // "欢迎使用TabPaint！按Tab键快速切换模式"
+                });
+
+                helpPages.Add(new HelpPage
+                {
+                    Image = new BitmapImage(new Uri("pack://application:,,,/Resources/help-2.gif")),
+                    DescriptionKey = "L_Help_Desc_Tools" // "右键展开小工具菜单，探索AI抠图等功能"
+                });
+
+                helpPages.Add(new HelpPage
+                {
+                    Image = new BitmapImage(new Uri("pack://application:,,,/Resources/help-3.gif")),
+                    DescriptionKey = "L_Help_Desc_Drag" // "支持拖拽图片到Word、桌面等任何地方"
+                });
+            }
+            catch (Exception ex)
+            {
+                // 防止图片丢失导致崩溃
+                System.Diagnostics.Debug.WriteLine("Load help images failed: " + ex.Message);
+            }
+
+            if (helpPages.Count > 0)
+            {
+                var helpWin = new HelpWindow(helpPages);
+                helpWin.Owner = this; // 设置为模态或子窗口
+                helpWin.ShowDialog();
+            }
+        }
         private void OnAppTitleBarLogoMiddleClick(object sender, RoutedEventArgs e)
         {
             if (_currentTabItem != null)

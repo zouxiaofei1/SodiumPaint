@@ -3,14 +3,14 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- SettingsWindow Navigation -->
-    <sys:String x:Key="L_Settings_Title">TabPaint Settings</sys:String>
+    <sys:String x:Key="L_Settings_Title">Settings</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
     <sys:String x:Key="L_Settings_Nav_Paint">Paint</sys:String>
     <sys:String x:Key="L_Settings_Nav_View">View</sys:String>
     <sys:String x:Key="L_Settings_Nav_Shortcuts">Shortcuts</sys:String>
     <sys:String x:Key="L_Settings_Nav_Advanced">Advanced</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">About</sys:String>
-
+    <sys:String x:Key="L_Settings_Toast_Saved">Settings Saved</sys:String>
     <!-- General Settings -->
     <sys:String x:Key="L_Settings_General_Title">General</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">Startup</sys:String>
@@ -105,6 +105,14 @@
     <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert">Invert</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">Auto levels</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">Resize</sys:String>
+    <sys:String x:Key="L_TitleBar_Help">Help</sys:String>
+    <sys:String x:Key="L_Help_Next">Next</sys:String>
+    <sys:String x:Key="L_Help_Prev">Previous</sys:String>
+    <sys:String x:Key="L_Help_Close">Close</sys:String>
+
+    <sys:String x:Key="L_Help_Desc_2">Press Tab to quickly switch between View Mode and Paint Mode.</sys:String>
+    <sys:String x:Key="L_Help_Desc_3">Break boundaries! Drag and drop images directly to Word, Desktop, or anywhere.</sys:String>
+    <sys:String x:Key="L_Help_Desc_1">Try now! Very simple painting tools and easy to learn.</sys:String>
 
     <!-- Advanced panel -->
     <sys:String x:Key="L_Settings_Advanced_Title">Advanced</sys:String>

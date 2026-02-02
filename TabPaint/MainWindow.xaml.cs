@@ -149,6 +149,7 @@ namespace TabPaint
             base.OnSourceInitialized(e); // 建议保留 base 调用
 
             MicaAcrylicManager.ApplyEffect(this);
+           
             MicaEnabled = true; var currentSettings = SettingsManager.Instance.Current;
             bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark)|| (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);

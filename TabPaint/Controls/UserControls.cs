@@ -143,6 +143,8 @@ namespace TabPaint
             AppTitleBar.ExitClick += OnExitClick;
             AppTitleBar.IconDragRequest += OnAppTitleBarIconDragRequest;
             AppTitleBar.LogoMiddleClick += OnAppTitleBarLogoMiddleClick;
+            AppTitleBar.HelpClick += OnHelpClick;
+
             // 注入到界面
             StatusBarHolder.Content = MyStatusBar;
 

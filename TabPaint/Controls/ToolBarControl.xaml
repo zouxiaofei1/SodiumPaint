@@ -275,6 +275,43 @@
                                     <Path x:Name="ArrowIcon" x:FieldModifier="public" Data="{DynamicResource Icon_Shape_Arrow}" Stretch="Uniform" Fill="Transparent"  Stroke="{DynamicResource IconFillBrush}"  StrokeThickness="1.5" StrokeLineJoin="Round"  StrokeEndLineCap="Round"   StrokeStartLineCap="Round" Width="16" Height="16"/>
                                 </MenuItem.Icon>
                             </MenuItem>
+
+                            <Separator Style="{StaticResource MenuSeparator}"/>
+
+                            <!-- 1. 三角形 Triangle -->
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Triangle}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Triangle">
+                                <MenuItem.Icon>
+                                    <Path Data="M 8,2 L 15,14 L 1,14 Z" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <!-- 2. 菱形 Diamond -->
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Diamond}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Diamond">
+                                <MenuItem.Icon>
+                                    <Path Data="M 8,1 L 15,8 L 8,15 L 1,8 Z" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <!-- 3. 五边形 Pentagon -->
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Pentagon}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Pentagon">
+                                <MenuItem.Icon>
+                                    <Path Data="M 8,1 L 15,6 L 12,15 L 4,15 L 1,6 Z" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <!-- 4. 五角星 Star -->
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Star}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Star">
+                                <MenuItem.Icon>
+                                    <Path Data="M 8,1 L 10,6 L 16,6 L 11,10 L 13,15 L 8,12 L 3,15 L 5,10 L 0,6 L 6,6 Z" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <!-- 5. 气泡 Bubble -->
+                            <MenuItem Header="{DynamicResource L_ToolBar_Shape_Bubble}" Style="{StaticResource SubMenuItemStyle}" Click="OnShapeStyleClick_Forward" Tag="Bubble">
+                                <MenuItem.Icon>
+                                    <Path Data="M 2,2 H 14 A 2,2 0 0 1 16,4 V 11 A 2,2 0 0 1 14,13 H 10 L 10,16 L 7,13 H 2 A 2,2 0 0 1 0,11 V 4 A 2,2 0 0 1 2,2 Z" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </StackPanel>
                     </Border>
                 </Popup>

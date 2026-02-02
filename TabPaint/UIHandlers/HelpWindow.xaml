@@ -1,0 +1,135 @@
+﻿<Window x:Class="TabPaint.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif" 
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Height="500" Width="800"
+        KeyDown="Window_KeyDown"
+        Deactivated="Window_Deactivated" 
+        ShowInTaskbar="False">
+    <!-- Deactivated 用于处理点击窗口外关闭 -->
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" CornerRadius="10" GlassFrameThickness="-1"/>
+    </WindowChrome.WindowChrome>
+
+    <Border Background="{DynamicResource GlassBackgroundLowBrush}" 
+            BorderBrush="{DynamicResource BorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="8"
+            ClipToBounds="True">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.5"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 1. 关闭按钮 (右上角) -->
+            <Button Grid.Row="0" HorizontalAlignment="Right" Width="40" Height="30" 
+                    Click="CloseButton_Click" Style="{StaticResource WindowCloseButtonStyle}"
+                    Margin="0,4,4,0" Panel.ZIndex="10">
+                <!-- ZIndex确保在最上层 -->
+                <Path Data="M0,0 L12,12 M12,0 L0,12" Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" StrokeThickness="1" Width="10" Height="10" Stretch="Uniform"/>
+            </Button>
+
+            <!-- 2. 已删除左上角的 "帮助" TextBlock -->
+
+            <!-- 3. 图片展示区 -->
+            <Grid Grid.Row="1" Margin="40,10,40,10">
+                <!-- 
+                     注意：
+                     1. 使用 gif:AnimationBehavior.SourceUri 绑定路径 
+                     2. AutoStart="False" 让我们在代码中手动控制延迟播放 
+                     3. RepeatBehavior="Forever" 循环播放
+                -->
+                <Image x:Name="MainImageDisplay" 
+                       gif:AnimationBehavior.SourceUri="{Binding CurrentImageUri}"
+                       gif:AnimationBehavior.AutoStart="False" 
+                       gif:AnimationBehavior.RepeatBehavior="Forever"
+                       Stretch="Uniform" 
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                <!-- 左右切换按钮 (逻辑保持不变) -->
+                <Grid HorizontalAlignment="Left" Width="60" Background="Transparent" MouseLeftButtonDown="PrevButton_Click" Cursor="Hand">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Opacity" Value="0"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="1"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Border Background="{DynamicResource ControlBackgroundBrush}" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Data="{DynamicResource ChevronLeft_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="12" Height="12"/>
+                    </Border>
+                </Grid>
+
+                <Grid HorizontalAlignment="Right" Width="60" Background="Transparent" MouseLeftButtonDown="NextButton_Click" Cursor="Hand">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Opacity" Value="0"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="1"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Border Background="{DynamicResource ControlBackgroundBrush}" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Data="{DynamicResource ChevronRight_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="12" Height="12"/>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- 4. 底部文字和圆点 -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,25">
+                <TextBlock Text="{Binding CurrentDescription}" 
+                           HorizontalAlignment="Center" 
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           TextWrapping="Wrap" TextAlignment="Center"
+                           Margin="50,0,50,15"/>
+
+                <ItemsControl ItemsSource="{Binding Indicators}" HorizontalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Height="6" CornerRadius="3" Margin="3" AnimationBehavior.HasAnimations="True">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource TextDisabledBrush}"/>
+                                        <Setter Property="Width" Value="6"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource AccentFillBrushPrimary}"/>
+                                                <Setter Property="Width" Value="20"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
