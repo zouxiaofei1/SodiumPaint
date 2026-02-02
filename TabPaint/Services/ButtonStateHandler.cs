@@ -313,7 +313,7 @@ namespace TabPaint
             });
         }
 
-        public void ShowTextToolbarFor(System.Windows.Controls.TextBox tb)
+        public void ShowTextToolbarFor(System.Windows.Controls.RichTextBox tb)
         {
             EnsureFontsLoaded();
             _activeTextBox = tb;
@@ -323,7 +323,7 @@ namespace TabPaint
             FontSizeBox.Text = tb.FontSize.ToString(CultureInfo.InvariantCulture);
             BoldBtn.IsChecked = tb.FontWeight == FontWeights.Bold;
             ItalicBtn.IsChecked = tb.FontStyle == FontStyles.Italic;
-            UnderlineBtn.IsChecked = tb.TextDecorations == TextDecorations.Underline;
+           // UnderlineBtn.IsChecked = tb.TextDecorations == TextDecorations.Underline;
         }
 
         public void HideTextToolbar()

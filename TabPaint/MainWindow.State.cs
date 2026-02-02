@@ -149,7 +149,7 @@ namespace TabPaint
             get => _zoomLevel;
             set { _zoomLevel = value; OnPropertyChanged(); }
         }
-        private System.Windows.Controls.TextBox? _activeTextBox;
+        private System.Windows.Controls.RichTextBox? _activeTextBox;
         private Stack<UndoAction> _undoStack = new Stack<UndoAction>();
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();

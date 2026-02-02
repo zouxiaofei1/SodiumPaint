@@ -2,8 +2,10 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -23,12 +25,12 @@ namespace TabPaint
             public override void Cleanup(ToolContext ctx)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                if (_textBox != null && !string.IsNullOrWhiteSpace(_textBox.Text)) CommitText(ctx);
+               // if (_richTextBox != null && !string.IsNullOrWhiteSpace(_richTextBox.Text)) CommitText(ctx);
 
-                if (_textBox != null && ctx.EditorOverlay.Children.Contains(_textBox))
+                if (_richTextBox != null && ctx.EditorOverlay.Children.Contains(_richTextBox))
                 {
-                    ctx.EditorOverlay.Children.Remove(_textBox);
-                    _textBox = null;
+                    ctx.EditorOverlay.Children.Remove(_richTextBox);
+                    _richTextBox = null;
                 }
                 if (ctx.SelectionOverlay != null)
                 {
@@ -49,9 +51,9 @@ namespace TabPaint
             }
             public void GiveUpText(ToolContext ctx)
             {
-                bool hastext = (_textBox != null && !string.IsNullOrWhiteSpace(_textBox.Text));
+              //  bool hastext = (_richTextBox != null && !string.IsNullOrWhiteSpace(_richTextBox.Text));
                 Cleanup(ctx);
-                if (hastext)
+                //if (hastext)
                 {
                     ctx.Undo.Undo();
                     ctx.Undo._redo.Pop();
@@ -92,17 +94,16 @@ namespace TabPaint
             public void DrawTextboxOverlay(ToolContext ctx)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                if (_textBox == null) return;
+                if (_richTextBox == null) return;
 
                 double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
 
-                // 获取 TextBox 坐标和尺寸
-                double x = Canvas.GetLeft(_textBox);
-                double y = Canvas.GetTop(_textBox);
-                double w = _textBox.ActualWidth;
-                double h = _textBox.ActualHeight;
+                double x = Canvas.GetLeft(_richTextBox);
+                double y = Canvas.GetTop(_richTextBox);
+                double w = _richTextBox.ActualWidth;
+                double h = _richTextBox.ActualHeight;
                 var rect = new Int32Rect((int)x, (int)y, (int)w, (int)h);
 
                 var outline = new System.Windows.Shapes.Rectangle  // 虚线框
@@ -141,12 +142,12 @@ namespace TabPaint
             // 判断是否点击到句柄
             private ResizeAnchor HitTestTextboxHandle(Point px)
             {
-                if (_textBox == null) return ResizeAnchor.None;
+                if (_richTextBox == null) return ResizeAnchor.None;
                 double size = 12 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
-                double x1 = Canvas.GetLeft(_textBox);
-                double y1 = Canvas.GetTop(_textBox);
-                double x2 = x1 + _textBox.ActualWidth;
-                double y2 = y1 + _textBox.ActualHeight;
+                double x1 = Canvas.GetLeft(_richTextBox);
+                double y1 = Canvas.GetTop(_richTextBox);
+                double x2 = x1 + _richTextBox.ActualWidth;
+                double y2 = y1 + _richTextBox.ActualHeight;
                 double mx = (x1 + x2) / 2;
                 double my = (y1 + y2) / 2;
 
@@ -179,7 +180,7 @@ namespace TabPaint
                 var px = ctx.ToPixel(viewPos);
 
                 // 1️⃣ 光标状态更新逻辑 (增加移动光标检测)
-                if (_textBox != null && !_resizing && !_dragging) // 如果没有在操作中，才检测光标
+                if (_richTextBox != null && !_resizing && !_dragging) // 如果没有在操作中，才检测光标
                 {
                     var anchor = HitTestTextboxHandle(px);
                     if (anchor != ResizeAnchor.None)
@@ -218,7 +219,7 @@ namespace TabPaint
                 }
 
                 // 2️⃣ 具体的交互逻辑
-                if (_textBox != null)
+                if (_richTextBox != null)
                 {
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
@@ -233,59 +234,59 @@ namespace TabPaint
                             case ResizeAnchor.TopLeft:
                                 {
                                     double newW = Math.Max(1, _startW - dx);
-                                    _textBox.Width = newW;
-                                    Canvas.SetLeft(_textBox, rightEdge - newW);
+                                    _richTextBox.Width = newW;
+                                    Canvas.SetLeft(_richTextBox, rightEdge - newW);
                                     double newH = Math.Max(1, _startH - dy);
-                                    _textBox.Height = newH;
-                                    Canvas.SetTop(_textBox, bottomEdge - newH);
+                                    _richTextBox.Height = newH;
+                                    Canvas.SetTop(_richTextBox, bottomEdge - newH);
                                 }
                                 break;
 
                             case ResizeAnchor.TopMiddle:
                                 {
                                     double newH = Math.Max(1, _startH - dy);
-                                    _textBox.Height = newH;
-                                    Canvas.SetTop(_textBox, bottomEdge - newH);
+                                    _richTextBox.Height = newH;
+                                    Canvas.SetTop(_richTextBox, bottomEdge - newH);
                                 }
                                 break;
 
                             case ResizeAnchor.TopRight:
                                 {
-                                    _textBox.Width = Math.Max(1, _startW + dx);
+                                    _richTextBox.Width = Math.Max(1, _startW + dx);
                                     double newH = Math.Max(1, _startH - dy);
-                                    _textBox.Height = newH;
-                                    Canvas.SetTop(_textBox, bottomEdge - newH);
+                                    _richTextBox.Height = newH;
+                                    Canvas.SetTop(_richTextBox, bottomEdge - newH);
                                 }
                                 break;
 
                             case ResizeAnchor.LeftMiddle:
                                 {
                                     double newW = Math.Max(1, _startW - dx);
-                                    _textBox.Width = newW;
-                                    Canvas.SetLeft(_textBox, rightEdge - newW);
+                                    _richTextBox.Width = newW;
+                                    Canvas.SetLeft(_richTextBox, rightEdge - newW);
                                 }
                                 break;
 
                             case ResizeAnchor.RightMiddle:
-                                _textBox.Width = Math.Max(1, _startW + dx);
+                                _richTextBox.Width = Math.Max(1, _startW + dx);
                                 break;
 
                             case ResizeAnchor.BottomLeft:
                                 {
                                     double newW = Math.Max(1, _startW - dx);
-                                    _textBox.Width = newW;
-                                    Canvas.SetLeft(_textBox, rightEdge - newW);
-                                    _textBox.Height = Math.Max(1, _startH + dy);
+                                    _richTextBox.Width = newW;
+                                    Canvas.SetLeft(_richTextBox, rightEdge - newW);
+                                    _richTextBox.Height = Math.Max(1, _startH + dy);
                                 }
                                 break;
 
                             case ResizeAnchor.BottomMiddle:
-                                _textBox.Height = Math.Max(1, _startH + dy);
+                                _richTextBox.Height = Math.Max(1, _startH + dy);
                                 break;
 
                             case ResizeAnchor.BottomRight:
-                                _textBox.Width = Math.Max(1, _startW + dx);
-                                _textBox.Height = Math.Max(1, _startH + dy);
+                                _richTextBox.Width = Math.Max(1, _startW + dx);
+                                _richTextBox.Height = Math.Max(1, _startH + dy);
                                 break;
                         }
                         DrawTextboxOverlay(ctx); // 实时重绘边框
@@ -293,8 +294,8 @@ namespace TabPaint
                     else if (_dragging)
                     {
                         // 移动 TextBox
-                        Canvas.SetLeft(_textBox, _startX + dx);
-                        Canvas.SetTop(_textBox, _startY + dy);
+                        Canvas.SetLeft(_richTextBox, _startX + dx);
+                        Canvas.SetTop(_richTextBox, _startY + dy);
 
                         // 实时重绘边框跟随移动
                         DrawTextboxOverlay(ctx);
@@ -308,14 +309,49 @@ namespace TabPaint
             {
                 MainWindow mw = ((MainWindow)System.Windows.Application.Current.MainWindow);
                 if (mw.IsViewMode) return;
-                if (_textBox != null)
-                {
-                    Point p = viewPos;
-                    double left = Canvas.GetLeft(_textBox);
-                    double top = Canvas.GetTop(_textBox);
 
-                    bool inside = p.X >= left && p.X <= left + _textBox.ActualWidth &&
-                                  p.Y >= top && p.Y <= top + _textBox.ActualHeight;
+                // 如果文本框存在，优先检测交互逻辑
+                if (_richTextBox != null)
+                {
+                    Point pixelPos = ctx.ToPixel(viewPos); // 转换为像素坐标用于检测
+
+                    // 1. 检测是否点击了【调整手柄】 (Resize)
+                    var anchor = HitTestTextboxHandle(pixelPos);
+                    if (anchor != ResizeAnchor.None)
+                    {
+                        _resizing = true;
+                        _currentAnchor = anchor;
+                        _startMouse = pixelPos; // 记录鼠标像素位置
+                        _startW = _richTextBox.ActualWidth;
+                        _startH = _richTextBox.ActualHeight;
+                        _startX = Canvas.GetLeft(_richTextBox);
+                        _startY = Canvas.GetTop(_richTextBox);
+
+                        // 捕获鼠标以保证拖动流畅
+                        if (ctx.EditorOverlay.IsHitTestVisible)
+                            ctx.EditorOverlay.CaptureMouse();
+                        return;
+                    }
+
+                    // 2. 检测是否点击了【边框区域】 (Move / Drag)
+                    if (IsInsideBorder(pixelPos))
+                    {
+                        _dragging = true;
+                        _startMouse = pixelPos;
+                        _startX = Canvas.GetLeft(_richTextBox);
+                        _startY = Canvas.GetTop(_richTextBox);
+
+                        if (ctx.EditorOverlay.IsHitTestVisible)
+                            ctx.EditorOverlay.CaptureMouse();
+                        return;
+                    }
+
+                    // 3. 检测是否点击了【文本框内部】 (Edit / Focus)
+                    double left = Canvas.GetLeft(_richTextBox);
+                    double top = Canvas.GetTop(_richTextBox);
+                    // 注意：这里用 viewPos 或 pixelPos 需保持一致，建议统一用 pixelPos 对比 Canvas 坐标
+                    bool inside = pixelPos.X >= left && pixelPos.X <= left + _richTextBox.ActualWidth &&
+                                  pixelPos.Y >= top && pixelPos.Y <= top + _richTextBox.ActualHeight;
 
                     if (inside)
                     {
@@ -326,28 +362,44 @@ namespace TabPaint
                     }
                     else
                     {
+                        // 4. 点击了【完全外部】 → 提交当前文本，准备创建新文本
                         CommitText(ctx);
-                        DeselectCurrentBox(ctx); if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
-                        ctx.EditorOverlay.IsHitTestVisible = false;
+                        // 只有当文本框确实被 Commit 销毁了，才继续下面的创建逻辑
+                        if (_richTextBox == null)
+                        {
+                            // 如果需要点击外部立即创建新框，可以在这里记录起点
+                            // 否则直接返回，等待下一次点击
+                            _startPos = viewPos;
+                            _dragging = true; // 这里的 dragging 是指“拖拽创建新框”
+                        }
                         return;
                     }
                 }
                 else
                 {
-                    // 没有编辑框 → 记录起点
+                    // 没有编辑框 → 记录起点，准备创建新框
                     _startPos = viewPos;
                     _dragging = true;
                 }
-
             }
+            private bool HasImagesOrTables(System.Windows.Controls.RichTextBox rtb)
+            {
+                // 简单遍历 Block 检查是否有 Table 或 BlockUIContainer
+                foreach (var block in rtb.Document.Blocks)
+                {
+                    if (block is Table || block is BlockUIContainer) return true;
+                }
+                return false;
+            }
+
             private bool IsInsideBorder(Point px)
             {
-                if (_textBox == null) return false;
+                if (_richTextBox == null) return false;
 
-                double x = Canvas.GetLeft(_textBox);
-                double y = Canvas.GetTop(_textBox);
-                double w = _textBox.ActualWidth;
-                double h = _textBox.ActualHeight;
+                double x = Canvas.GetLeft(_richTextBox);
+                double y = Canvas.GetTop(_richTextBox);
+                double w = _richTextBox.ActualWidth;
+                double h = _richTextBox.ActualHeight;
                 double borderThickness = Math.Max(5 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale, 10);
 
                 // 外矩形 (扩大边框宽度)
@@ -369,7 +421,7 @@ namespace TabPaint
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (mw._router.CurrentTool != mw._tools.Text) return;
-                if (_resizing || (_dragging && _textBox != null))
+                if (_resizing || (_dragging && _richTextBox != null))
                 {
                     _resizing = false;
                     _dragging = false;
@@ -381,153 +433,227 @@ namespace TabPaint
                     // 既然是拖动结束，就不需要执行下面的创建逻辑了，直接返回
                     return;
                 }
-                if (_dragging && _textBox == null)
-                {//创建新的文本框
-
-                    if (lag > 0)
-                    {
-                        lag -= 1;
-                        return;
-                    }
+                if (_dragging && _richTextBox == null)
+                {
+                    if (lag > 0) { lag -= 1; return; }
                     _dragging = false;
 
-                    _textBox = CreateTextBox(ctx, _startPos.X, _startPos.Y);
-                    _textBox.Width = 500;
-                    _textBox.MinHeight = 20;
-                    _textBox.Height = Double.NaN;
-                    // ⬇️ 通知主窗口显示状态栏
+                    _richTextBox = CreateRichTextBox(ctx, _startPos.X, _startPos.Y);
+                    _richTextBox.Width = 500;
+                    _richTextBox.MinHeight = 50;
+
+                    // 重要：将事件绑定到 RichTextBox
+                    SetupRichTextBoxEvents(ctx, _richTextBox);
 
                     ctx.EditorOverlay.Visibility = Visibility.Visible;
                     ctx.EditorOverlay.IsHitTestVisible = true;
                     Canvas.SetZIndex(ctx.EditorOverlay, 999);
-                    ctx.EditorOverlay.Children.Add(_textBox);
+                    ctx.EditorOverlay.Children.Add(_richTextBox);
 
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);
 
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_textBox);
-
-
-                    // 绘制虚线框和8个句柄 ⚡⚡
-                    _textBox.Loaded += (s, e) =>
-                    {
-                        DrawTextboxOverlay(ctx); // 已布局完成
-                    };
-
-                    ctx.EditorOverlay.PreviewMouseUp += (s, e) =>
-                    {
-                        Point pos = e.GetPosition(ctx.EditorOverlay);
-                        OnPointerUp(ctx, pos);
-                    };
-
-
-                    ctx.EditorOverlay.PreviewMouseMove += (s, e) =>
-                    {
-                        Point pos = e.GetPosition(ctx.EditorOverlay);
-                        OnPointerMove(ctx, pos);
-                    };
-                    ctx.EditorOverlay.PreviewMouseDown += (s, e) =>
-                    {
-                        Point pos = e.GetPosition(ctx.EditorOverlay); // 获取当前点击在 Overlay 上的位置
-                        Point pixelPos = ctx.ToPixel(pos);            // 转为画布像素坐标
-
-                        var anchor = HitTestTextboxHandle(pixelPos);
-
-                        // 1. 命中句柄 -> 缩放模式
-                        if (anchor != ResizeAnchor.None)
-                        {
-                            _resizing = true;
-                            _currentAnchor = anchor;
-                            _startMouse = pixelPos;             // 记录当前鼠标位置
-                            _startW = _textBox.ActualWidth;
-                            _startH = _textBox.ActualHeight;
-                            _startX = Canvas.GetLeft(_textBox);
-                            _startY = Canvas.GetTop(_textBox);
-
-                            ctx.EditorOverlay.CaptureMouse();   
-                            e.Handled = true;
-                        }
-                        // 2. 命中虚线边框 -> 移动模式
-                        else if (IsInsideBorder(pixelPos))
-                        {
-                            _dragging = true;
-                            _startMouse = pixelPos;         
-                            _startX = Canvas.GetLeft(_textBox); // 记录当前文本框位置
-                            _startY = Canvas.GetTop(_textBox);
-
-                            ctx.EditorOverlay.CaptureMouse(); 
-                            e.Handled = true;                   // 防止事件传给 TextBox 导致光标闪烁
-                        }
-                        else
-                        {
-                            OnPointerDown(ctx, pos);
-                        }
-                    };
-
-                    _textBox.PreviewKeyDown += (s, e) =>
-                    {
-                        //if (e.Key == Key.Delete)
-                        //{
-                        //    CommitText(ctx);
-                        //    ctx.EditorOverlay.Children.Remove(_textBox);
-                        //    _textBox = null;
-                        //    ctx.EditorOverlay.IsHitTestVisible = false;
-                        //    e.Handled = true;
-                        //}
-                    };
-
-                    _textBox.Focusable = true;
-                    _textBox.Loaded += (s, e) => _textBox.Focus();
+                    _richTextBox.Focus();
                 }
             }
+            private void SetupRichTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
+            {
+                rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); rtb.Focus(); };
+
+                // 只有当没有选中文本时，Delete 键才删除框
+                rtb.PreviewKeyDown += (s, e) =>
+                {
+                    if (e.Key == Key.Delete && rtb.Selection.IsEmpty && new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd).Text.Trim() == "")
+                    {
+                        // 逻辑：删除空框
+                        CleanUpUI(ctx);
+                        e.Handled = true;
+                    }
+                };
+
+                // 当内容变化时，可能需要更新选区框大小（如果我们要自适应高度）
+                rtb.TextChanged += (s, e) =>
+                {
+                    // 这里可以添加高度自适应逻辑
+                };
+            }
+
+            // 6. 核心：重写 CommitText (渲染位图)
+            public void CommitText(ToolContext ctx)
+            {
+                if (_richTextBox == null) return;
+
+                // ---------------------------------------------------------
+                // 1. 修复光标残留问题
+                // ---------------------------------------------------------
+                // 将光标颜色设为透明
+                _richTextBox.CaretBrush = Brushes.Transparent;
+                // 清空选区（防止蓝色的选中背景被画进去）
+                var end = _richTextBox.Document.ContentEnd;
+                _richTextBox.Selection.Select(end, end);
+                // 禁止获取焦点
+                _richTextBox.Focusable = false;
+                _richTextBox.IsReadOnly = true;
+
+                // 强制刷新布局，确保光标隐藏的状态被更新到视觉树上
+                _richTextBox.UpdateLayout();
+
+                // 检查是否有内容 (防止空框提交)
+                string plainText = new TextRange(_richTextBox.Document.ContentStart, _richTextBox.Document.ContentEnd).Text;
+                if (string.IsNullOrWhiteSpace(plainText) && !HasImagesOrTables(_richTextBox))
+                {
+                    CleanUpUI(ctx);
+                    lag = 2;
+                    return;
+                }
+
+                // 获取参数
+                double canvasLeft = Canvas.GetLeft(_richTextBox);
+                double canvasTop = Canvas.GetTop(_richTextBox);
+                int width = (int)Math.Ceiling(_richTextBox.ActualWidth);
+                int height = (int)Math.Ceiling(_richTextBox.ActualHeight);
+
+                // 安全检查
+                if (width <= 0 || height <= 0) { CleanUpUI(ctx); lag = 2; return; }
+
+                try
+                {
+                    // === 修改开始：使用 DrawingVisual 修正偏移 ===
+                    var rtbBitmap = new RenderTargetBitmap(width, height, 96d, 96d, PixelFormats.Pbgra32);
+
+                    var drawingVisual = new DrawingVisual();
+                    using (var context = drawingVisual.RenderOpen())
+                    {
+                        var brush = new VisualBrush(_richTextBox)
+                        {
+                            Stretch = Stretch.None,
+                            TileMode = TileMode.None,
+                            AlignmentX = AlignmentX.Left,
+                            AlignmentY = AlignmentY.Top
+                        };
+                        context.DrawRectangle(brush, null, new Rect(0, 0, width, height));
+                    }
+                    rtbBitmap.Render(drawingVisual);
+                    // === 修改结束 ===
+
+                    // 4. 计算“交集区域” (Intersection)
+                    int canvasW = ctx.Surface.Bitmap.PixelWidth;
+                    int canvasH = ctx.Surface.Bitmap.PixelHeight;
+
+                    // 计算目标矩形 (Canvas 坐标系)
+                    int destX = (int)Math.Max(0, canvasLeft);
+                    int destY = (int)Math.Max(0, canvasTop);
+                    int destRight = (int)Math.Min(canvasW, canvasLeft + width);
+                    int destBottom = (int)Math.Min(canvasH, canvasTop + height);
+
+                    int drawW = destRight - destX;
+                    int drawH = destBottom - destY;
+
+                    if (drawW <= 0 || drawH <= 0)
+                    {
+                        CleanUpUI(ctx);
+                        lag = 2;
+                        return;
+                    }
+
+                    int srcX = (int)(destX - canvasLeft);
+                    int srcY = (int)(destY - canvasTop);
+
+                    // 5. 提取像素
+                    int stride = drawW * 4;
+                    int bufferSize = drawH * stride;
+
+                    byte[] sourcePixels = new byte[bufferSize];
+                    byte[] destPixels = new byte[bufferSize];
+
+                    // 从 RTB 读取 (此时 rtbBitmap 已经是修正后的，(0,0)就是文字开始的地方)
+                    rtbBitmap.CopyPixels(new Int32Rect(srcX, srcY, drawW, drawH), sourcePixels, stride, 0);
+
+                    // 从 Canvas 读取
+                    var writeableBitmap = ctx.Surface.Bitmap;
+                    Int32Rect dirtyRect = new Int32Rect(destX, destY, drawW, drawH);
+                    writeableBitmap.CopyPixels(dirtyRect, destPixels, stride, 0);
+
+                    // 6. 混合
+                    double globalOpacityFactor = _richTextBox.Opacity;
+                    AlphaBlendBatch(sourcePixels, destPixels, drawW, drawH, stride, 0, globalOpacityFactor);
+
+                    // 7. 写回 Canvas
+                    ctx.Undo.BeginStroke();
+                    ctx.Undo.AddDirtyRect(dirtyRect);
+                    writeableBitmap.WritePixels(dirtyRect, destPixels, stride, 0);
+                    ctx.Undo.CommitStroke();
+                }
+
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("CommitText Error: " + ex.Message);
+                }
+                finally
+                {
+                    CleanUpUI(ctx);
+                    lag = 2;
+                }
+            }
+
+
             private void SelectCurrentBox()
             {
-                if (_textBox != null)
+                if (_richTextBox != null)
                 {
-                    Keyboard.Focus(_textBox);
-                    _textBox.Focus();
+                    Keyboard.Focus(_richTextBox);
+                    _richTextBox.Focus();
                 }
             }
 
             private void DeselectCurrentBox(ToolContext ctx)
             {
-                if (_textBox != null)
+                if (_richTextBox != null)
                 {
-                    ctx.EditorOverlay.Children.Remove(_textBox);
-                    _textBox = null;
+                    ctx.EditorOverlay.Children.Remove(_richTextBox);
+                    _richTextBox = null;
                 }
             }
-            private System.Windows.Controls.TextBox CreateTextBox(ToolContext ctx, double x, double y)
+            private System.Windows.Controls.RichTextBox CreateRichTextBox(ToolContext ctx, double x, double y)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
 
-                var tb = new System.Windows.Controls.TextBox
+                var rtb = new System.Windows.Controls.RichTextBox
                 {
-                    MaxLength = 100000,
-                    FontSize = 24, // 默认值，会被 ApplyTextSettings 覆盖
-                    AcceptsReturn = true,
-                    TextWrapping = TextWrapping.Wrap,
+                    FontSize = 24,
                     Foreground = new SolidColorBrush(ctx.PenColor),
                     Opacity = TabPaint.SettingsManager.Instance.Current.PenOpacity,
-                    // 初始透明
                     BorderBrush = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
-                    Background = Brushes.Transparent,
-                    Padding = new Thickness(5) // 给一点内边距好看
+                    Background = Brushes.Transparent, // 必须透明
+                    Padding = new Thickness(5),
+                    AcceptsReturn = true,
+                    AcceptsTab = true, // 允许制表符
+                                       // 关键：FlowDocument 设置
+                    Document = new FlowDocument()
+                    {
+                        PagePadding = new Thickness(0), // 去除文档默认边距
+                        LineHeight = 1, // 防止行距过大
+                    }
                 };
 
-                Canvas.SetLeft(tb, x);
-                Canvas.SetTop(tb, y);
+                // 移除原有的 TextWrapping 属性，FlowDocument 默认会自动换行，
+                // 但我们需要根据宽度调整。设置 PageWidth 可以强制换行，或者让它自适应。
+                rtb.Document.TextAlignment = TextAlignment.Left;
 
-                // 立即应用当前工具栏的设置
-                ApplyTextSettings(tb);
+                Canvas.SetLeft(rtb, x);
+                Canvas.SetTop(rtb, y);
 
-                return tb;
+                // 应用初始设置
+                ApplyTextSettings(rtb);
+
+                return rtb;
             }
-            public void ApplyTextSettings(System.Windows.Controls.TextBox tb)
+            public void ApplyTextSettings(System.Windows.Controls.RichTextBox tb)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (tb == null) return;
 
-                // 1. 字体与大小
+                // 1. 字体与大小 (这部分 RichTextBox 支持直接设置，会继承给内部元素)
                 if (mw.FontFamilyBox.SelectedValue != null)
                     tb.FontFamily = new FontFamily(mw.FontFamilyBox.SelectedValue.ToString());
 
@@ -538,30 +664,36 @@ namespace TabPaint
                 tb.FontWeight = (mw.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
                 tb.FontStyle = (mw.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
 
-                // 3. 装饰线 (下划线 + 删除线)
+                // 3. 装饰线 (下划线 + 删除线) - 需要作用于 TextRange ✨
                 var decors = new TextDecorationCollection();
                 if (mw.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
                 if (mw.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
-                tb.TextDecorations = decors;
 
-                // 4. 对齐
-                if (mw.AlignLeftBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Left;
-                else if (mw.AlignCenterBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Center;
-                else if (mw.AlignRightBtn.IsChecked == true) tb.TextAlignment = TextAlignment.Right;
+                // 获取整个文档的范围并应用装饰线
+                TextRange allText = new TextRange(tb.Document.ContentStart, tb.Document.ContentEnd);
+                allText.ApplyPropertyValue(Inline.TextDecorationsProperty, decors);
+
+                // 4. 对齐 - 作用于 Document ✨
+                if (mw.AlignLeftBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Left;
+                else if (mw.AlignCenterBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Center;
+                else if (mw.AlignRightBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Right;
+
+                // 5. 颜色与背景
                 tb.Foreground = mw.SelectedBrush;
                 if (mw.TextBackgroundBtn.IsChecked == true)
                     tb.Background = mw.BackgroundBrush;
                 else
                     tb.Background = Brushes.Transparent;
             }
+
             public void UpdateCurrentTextBoxAttributes()
             {
-                if (_textBox == null) return;
+                if (_richTextBox == null) return;
 
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                ApplyTextSettings(_textBox);
+                ApplyTextSettings(_richTextBox);
 
-                _textBox.UpdateLayout();
+                _richTextBox.UpdateLayout();
                 DrawTextboxOverlay(mw._ctx);
             }
             private void CleanUpUI(ToolContext ctx)
@@ -570,11 +702,11 @@ namespace TabPaint
                 mw.HideTextToolbar();
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-                if (ctx.EditorOverlay.Children.Contains(_textBox))
-                    ctx.EditorOverlay.Children.Remove(_textBox);
+                if (ctx.EditorOverlay.Children.Contains(_richTextBox))
+                    ctx.EditorOverlay.Children.Remove(_richTextBox);
 
                 mw.SetUndoRedoButtonState();
-                _textBox = null;
+                _richTextBox = null;
                 lag = 2;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
@@ -652,7 +784,7 @@ namespace TabPaint
                 }
             }
             // 1. 新增：将事件绑定逻辑提取为独立方法，避免重复代码
-            private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.TextBox tb)
+            private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox tb)
             {
                 // 绘制虚线框和句柄
                 tb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
@@ -663,7 +795,7 @@ namespace TabPaint
                     {
                         CommitText(ctx);
                         ctx.EditorOverlay.Children.Remove(tb);
-                        _textBox = null;
+                        _richTextBox = null;
                         ctx.EditorOverlay.IsHitTestVisible = false;
                         e.Handled = true;
                     }
@@ -680,25 +812,30 @@ namespace TabPaint
                 _resizing = false;
                 if (ctx.EditorOverlay.IsMouseCaptured) ctx.EditorOverlay.ReleaseMouseCapture();
 
-                if (_textBox != null) CommitText(ctx);
+                if (_richTextBox != null) CommitText(ctx);
                 Point px = ctx.ToPixel(viewPos);
-                _textBox = CreateTextBox(ctx, px.X, px.Y);
-                _textBox.Text = text; // 填入文字
+                _richTextBox = CreateRichTextBox(ctx, px.X, px.Y);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    var range = new TextRange(_richTextBox.Document.ContentStart, _richTextBox.Document.ContentEnd);
+                    range.Text = text;
+                }
 
-                _textBox.MaxWidth = 1000;
-                _textBox.Width = Double.NaN; // 让宽度自适应内容
-                _textBox.Height = Double.NaN;
+
+                _richTextBox.MaxWidth = 1000;
+                _richTextBox.Width = Double.NaN; // 让宽度自适应内容
+                _richTextBox.Height = Double.NaN;
 
                 // 显示 UI
                 ctx.EditorOverlay.Visibility = Visibility.Visible;
                 ctx.EditorOverlay.IsHitTestVisible = true;
                 Canvas.SetZIndex(ctx.EditorOverlay, 999);
-                ctx.EditorOverlay.Children.Add(_textBox);
+                ctx.EditorOverlay.Children.Add(_richTextBox);
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_textBox);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);
 
                 // 绑定关键事件（原本写在 OnPointerUp 里的那一大段）
-                SetupTextBoxEvents(ctx, _textBox);
+                SetupTextBoxEvents(ctx, _richTextBox);
 
                 ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp; // 防止重复订阅
                 ctx.EditorOverlay.PreviewMouseUp += Overlay_PreviewMouseUp;
@@ -709,7 +846,7 @@ namespace TabPaint
                 ctx.EditorOverlay.PreviewMouseDown -= Overlay_PreviewMouseDown;
                 ctx.EditorOverlay.PreviewMouseDown += Overlay_PreviewMouseDown;
 
-                _textBox.UpdateLayout();
+                _richTextBox.UpdateLayout();
                 DrawTextboxOverlay(ctx);
             }
             private void Overlay_PreviewMouseUp(object sender, MouseButtonEventArgs e)
@@ -741,10 +878,10 @@ namespace TabPaint
                     _resizing = true;
                     _currentAnchor = anchor;
                     _startMouse = pixelPos;
-                    _startW = _textBox.ActualWidth;
-                    _startH = _textBox.ActualHeight;
-                    _startX = Canvas.GetLeft(_textBox);
-                    _startY = Canvas.GetTop(_textBox);
+                    _startW = _richTextBox.ActualWidth;
+                    _startH = _richTextBox.ActualHeight;
+                    _startX = Canvas.GetLeft(_richTextBox);
+                    _startY = Canvas.GetTop(_richTextBox);
                     ctx.EditorOverlay.CaptureMouse();
                     e.Handled = true;
                 }
@@ -752,8 +889,8 @@ namespace TabPaint
                 {
                     _dragging = true;
                     _startMouse = pixelPos;
-                    _startX = Canvas.GetLeft(_textBox);
-                    _startY = Canvas.GetTop(_textBox);
+                    _startX = Canvas.GetLeft(_richTextBox);
+                    _startY = Canvas.GetTop(_richTextBox);
                     ctx.EditorOverlay.CaptureMouse();
                     e.Handled = true;
                 }
@@ -763,110 +900,110 @@ namespace TabPaint
                 }
             }
 
-            public void CommitText(ToolContext ctx)
-            {
-                if (_textBox == null) return;
-                if (string.IsNullOrWhiteSpace(_textBox.Text))
-                {
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
-                    ctx.SelectionOverlay.Children.Clear();
-                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-                    if (ctx.EditorOverlay.Children.Contains(_textBox))
-                        ctx.EditorOverlay.Children.Remove(_textBox);
-                    lag = 2;
-                    return;
-                }
-                double tweakX = 2.0;
-                double tweakY = 1.0;
-                // 1. 获取位置信息
-                double tbLeft = Canvas.GetLeft(_textBox);
-                double tbTop = Canvas.GetTop(_textBox);
-                double tbWidth = _textBox.ActualWidth;
-                double tbHeight = _textBox.ActualHeight;
-                var formattedText = new FormattedText(
-                    _textBox.Text,
-                    CultureInfo.CurrentCulture,
-                    System.Windows.FlowDirection.LeftToRight,
-                    new Typeface(_textBox.FontFamily, _textBox.FontStyle, _textBox.FontWeight, _textBox.FontStretch),
-                    _textBox.FontSize,
-                    _textBox.Foreground,
-                    96.0 // 强制 96 DPI，确保像素大小与逻辑大小 1:1
-                )
-                {
-                    MaxTextWidth = Math.Max(1, tbWidth - _textBox.Padding.Left - _textBox.Padding.Right),
-                    MaxTextHeight = double.MaxValue,
-                    Trimming = TextTrimming.None,
-                    TextAlignment = _textBox.TextAlignment
-                };
-                formattedText.SetTextDecorations(_textBox.TextDecorations);
+            //public void CommitText(ToolContext ctx)
+            //{
+            //    if (_richTextBox == null) return;
+            //    if (string.IsNullOrWhiteSpace(_richTextBox.Text))
+            //    {
+            //        ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
+            //        ctx.SelectionOverlay.Children.Clear();
+            //        ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+            //        if (ctx.EditorOverlay.Children.Contains(_richTextBox))
+            //            ctx.EditorOverlay.Children.Remove(_richTextBox);
+            //        lag = 2;
+            //        return;
+            //    }
+            //    double tweakX = 2.0;
+            //    double tweakY = 1.0;
+            //    // 1. 获取位置信息
+            //    double tbLeft = Canvas.GetLeft(_richTextBox);
+            //    double tbTop = Canvas.GetTop(_richTextBox);
+            //    double tbWidth = _richTextBox.ActualWidth;
+            //    double tbHeight = _richTextBox.ActualHeight;
+            //    var formattedText = new FormattedText(
+            //        _richTextBox.Text,
+            //        CultureInfo.CurrentCulture,
+            //        System.Windows.FlowDirection.LeftToRight,
+            //        new Typeface(_richTextBox.FontFamily, _richTextBox.FontStyle, _richTextBox.FontWeight, _richTextBox.FontStretch),
+            //        _richTextBox.FontSize,
+            //        _richTextBox.Foreground,
+            //        96.0 // 强制 96 DPI，确保像素大小与逻辑大小 1:1
+            //    )
+            //    {
+            //        MaxTextWidth = Math.Max(1, tbWidth - _richTextBox.Padding.Left - _richTextBox.Padding.Right),
+            //        MaxTextHeight = double.MaxValue,
+            //        Trimming = TextTrimming.None,
+            //        TextAlignment = _richTextBox.TextAlignment
+            //    };
+            //    formattedText.SetTextDecorations(_richTextBox.TextDecorations);
 
-                // 3. 渲染到 Visual
-                var visual = new DrawingVisual();
-                using (var dc = visual.RenderOpen())
-                {
-                    // 如果文本框有背景色，画背景
-                    if (_textBox.Background is SolidColorBrush bgBrush && bgBrush.Color.A > 0)
-                    {
-                        dc.DrawRectangle(bgBrush, null, new Rect(0, 0, tbWidth, tbHeight));
-                    }
+            //    // 3. 渲染到 Visual
+            //    var visual = new DrawingVisual();
+            //    using (var dc = visual.RenderOpen())
+            //    {
+            //        // 如果文本框有背景色，画背景
+            //        if (_richTextBox.Background is SolidColorBrush bgBrush && bgBrush.Color.A > 0)
+            //        {
+            //            dc.DrawRectangle(bgBrush, null, new Rect(0, 0, tbWidth, tbHeight));
+            //        }
 
-                    // 使用 Grayscale 渲染文本，避免 ClearType 在透明背景上产生彩色边缘
-                    TextOptions.SetTextRenderingMode(visual, TextRenderingMode.Grayscale);
-                    TextOptions.SetTextFormattingMode(visual, TextFormattingMode.Display);
+            //        // 使用 Grayscale 渲染文本，避免 ClearType 在透明背景上产生彩色边缘
+            //        TextOptions.SetTextRenderingMode(visual, TextRenderingMode.Grayscale);
+            //        TextOptions.SetTextFormattingMode(visual, TextFormattingMode.Display);
 
-                    dc.DrawText(formattedText, new Point(_textBox.Padding.Left + tweakX, _textBox.Padding.Top + tweakY));
-                }
+            //        dc.DrawText(formattedText, new Point(_richTextBox.Padding.Left + tweakX, _richTextBox.Padding.Top + tweakY));
+            //    }
 
-                int width = (int)Math.Ceiling(tbWidth);
-                int height = (int)Math.Ceiling(tbHeight);
-                if (width <= 0 || height <= 0) return;
-                var rtb = new RenderTargetBitmap(width, height, 96d, 96d, PixelFormats.Pbgra32);
-                rtb.Render(visual);
+            //    int width = (int)Math.Ceiling(tbWidth);
+            //    int height = (int)Math.Ceiling(tbHeight);
+            //    if (width <= 0 || height <= 0) return;
+            //    var rtb = new RenderTargetBitmap(width, height, 96d, 96d, PixelFormats.Pbgra32);
+            //    rtb.Render(visual);
 
-                int stride = width * 4;
-                byte[] sourcePixels = new byte[height * stride];
-                rtb.CopyPixels(sourcePixels, stride, 0);
-                int x = (int)tbLeft;
-                int y = (int)tbTop;
+            //    int stride = width * 4;
+            //    byte[] sourcePixels = new byte[height * stride];
+            //    rtb.CopyPixels(sourcePixels, stride, 0);
+            //    int x = (int)tbLeft;
+            //    int y = (int)tbTop;
 
-                var writeableBitmap = ctx.Surface.Bitmap; 
-                int canvasWidth = writeableBitmap.PixelWidth;
-                int canvasHeight = writeableBitmap.PixelHeight;
+            //    var writeableBitmap = ctx.Surface.Bitmap; 
+            //    int canvasWidth = writeableBitmap.PixelWidth;
+            //    int canvasHeight = writeableBitmap.PixelHeight;
 
-                // 计算实际可操作的矩形区域 (Clip)
-                int safeX = Math.Max(0, x);
-                int safeY = Math.Max(0, y);
-                int safeRight = Math.Min(canvasWidth, x + width);
-                int safeBottom = Math.Min(canvasHeight, y + height);
-                int safeW = safeRight - safeX;
-                int safeH = safeBottom - safeY;
+            //    // 计算实际可操作的矩形区域 (Clip)
+            //    int safeX = Math.Max(0, x);
+            //    int safeY = Math.Max(0, y);
+            //    int safeRight = Math.Min(canvasWidth, x + width);
+            //    int safeBottom = Math.Min(canvasHeight, y + height);
+            //    int safeW = safeRight - safeX;
+            //    int safeH = safeBottom - safeY;
 
-                if (safeW <= 0 || safeH <= 0)
-                {
-                    CleanUpUI(ctx);
-                    return;
-                }
-                byte[] destPixels = new byte[safeH * stride];
-                Int32Rect dirtyRect = new Int32Rect(safeX, safeY, safeW, safeH);
-                writeableBitmap.CopyPixels(dirtyRect, destPixels, stride, 0);
+            //    if (safeW <= 0 || safeH <= 0)
+            //    {
+            //        CleanUpUI(ctx);
+            //        return;
+            //    }
+            //    byte[] destPixels = new byte[safeH * stride];
+            //    Int32Rect dirtyRect = new Int32Rect(safeX, safeY, safeW, safeH);
+            //    writeableBitmap.CopyPixels(dirtyRect, destPixels, stride, 0);
 
-                int sourceOffsetX = safeX - x;
-                int sourceOffsetY = safeY - y;
-                int sourceStartIndex = sourceOffsetY * stride + sourceOffsetX * 4;
+            //    int sourceOffsetX = safeX - x;
+            //    int sourceOffsetY = safeY - y;
+            //    int sourceStartIndex = sourceOffsetY * stride + sourceOffsetX * 4;
 
-                double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-                AlphaBlendBatch(sourcePixels, destPixels, safeW, safeH, stride, sourceStartIndex, globalOpacityFactor);
+            //    double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+            //    AlphaBlendBatch(sourcePixels, destPixels, safeW, safeH, stride, sourceStartIndex, globalOpacityFactor);
 
-                // 8. 写回混合后的结果
-                ctx.Undo.BeginStroke();
-                ctx.Undo.AddDirtyRect(dirtyRect);
-                writeableBitmap.WritePixels(dirtyRect, destPixels, stride, 0);
-                ctx.Undo.CommitStroke();
+            //    // 8. 写回混合后的结果
+            //    ctx.Undo.BeginStroke();
+            //    ctx.Undo.AddDirtyRect(dirtyRect);
+            //    writeableBitmap.WritePixels(dirtyRect, destPixels, stride, 0);
+            //    ctx.Undo.CommitStroke();
 
-                // UI 清理
-                CleanUpUI(ctx);
-                lag = 2;
-            }
+            //    // UI 清理
+            //    CleanUpUI(ctx);
+            //    lag = 2;
+            //}
 
 
         }

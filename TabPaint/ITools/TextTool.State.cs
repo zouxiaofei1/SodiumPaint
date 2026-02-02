@@ -147,7 +147,7 @@ namespace TabPaint
             public override System.Windows.Input.Cursor Cursor => System.Windows.Input.Cursors.IBeam;
 
             private Int32Rect _textRect;
-            public System.Windows.Controls.TextBox _textBox;
+            public System.Windows.Controls.RichTextBox _richTextBox;
             private Point _startPos;
             private bool _dragging = false;
 

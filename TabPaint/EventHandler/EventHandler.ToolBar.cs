@@ -317,9 +317,9 @@ namespace TabPaint
                     _isTextBarDragging = true;
                     _textBarLastPoint = e.GetPosition(this); // 获取相对于窗口的坐标
                     TextEditBar.CaptureMouse(); 
-                    if (_tools?.Text is TextTool tt && tt._textBox != null)
+                    if (_tools?.Text is TextTool tt && tt._richTextBox != null)
                     {
-                        tt._textBox.Focus();
+                        tt._richTextBox.Focus();
                     }
                 }
             }

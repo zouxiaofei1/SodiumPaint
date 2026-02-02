@@ -68,7 +68,7 @@ namespace TabPaint
             if (isNext || isPrev)
             {
 
-                if (_router.CurrentTool is TextTool tx && tx._textBox != null) return false;
+                if (_router.CurrentTool is TextTool tx && tx._richTextBox != null) return false;
                 // 如果是第一次按下（而不是按住不放触发的重复事件），初始化时间
                 if (!_isNavigating)
                 {
@@ -197,7 +197,7 @@ namespace TabPaint
 
             if (Keyboard.Modifiers == ModifierKeys.Control)
             {
-                if (_router.CurrentTool is TextTool ttt && ttt._textBox != null && ttt._textBox.IsKeyboardFocused)
+                if (_router.CurrentTool is TextTool ttt && ttt._richTextBox != null && ttt._richTextBox.IsKeyboardFocused)
                 {
                     switch (e.Key)
                     {
@@ -213,7 +213,7 @@ namespace TabPaint
                 switch (e.Key)
                 {
                     case Key.Z:
-                        if (_router.CurrentTool is TextTool textTool && textTool._textBox != null)
+                        if (_router.CurrentTool is TextTool textTool && textTool._richTextBox != null)
                         {
                             textTool.GiveUpText(_ctx); // 只取消文本框，不撤销画布
                         }
@@ -284,7 +284,7 @@ namespace TabPaint
                         e.Handled = true;
                         break;
                     case Key.A:
-                        if (_router.CurrentTool is TextTool tx && tx._textBox != null) break;
+                        if (_router.CurrentTool is TextTool tx && tx._richTextBox != null) break;
                         if (_router.CurrentTool != _tools.Select) break;
                         _router.SetTool(_tools.Select);
                         SelectTool stSelectAll = _router.GetSelectTool();
@@ -715,7 +715,7 @@ namespace TabPaint
                 {
                     _activeTextBox.Focus();
                     // 将光标移到文字末尾
-                    _activeTextBox.SelectionStart = _activeTextBox.Text.Length;
+                   // _activeTextBox.SelectionStart = _activeTextBox.Text.Length;
                 }
                 e.Handled = true; // 阻止回车产生额外的换行或响铃
             }
