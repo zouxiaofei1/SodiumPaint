@@ -9,7 +9,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
+using System.Net.Http;
 //
 //TabPaint事件处理cs
 //menu及位于那一行的所有东西
@@ -21,7 +21,7 @@ namespace TabPaint
     {
         private void OnHelpClick(object sender, RoutedEventArgs e)
         {
-            s(1);
+            //s(1);
             var helpPages = new List<HelpPage>();
 
             try
@@ -29,33 +29,35 @@ namespace TabPaint
 
                 helpPages.Add(new HelpPage
                 {
-                    Image = new BitmapImage(new Uri("pack://application:,,,/Resources/help-1.gif")),
-                    DescriptionKey = "L_Help_Desc_Welcome" // "欢迎使用TabPaint！按Tab键快速切换模式"
+                    ImageUri = new Uri("pack://application:,,,/Resources/help-1.gif"),
+                    DescriptionKey = "L_Help_Desc_1"
                 });
 
                 helpPages.Add(new HelpPage
                 {
-                    Image = new BitmapImage(new Uri("pack://application:,,,/Resources/help-2.gif")),
-                    DescriptionKey = "L_Help_Desc_Tools" // "右键展开小工具菜单，探索AI抠图等功能"
+                    ImageUri =new Uri("pack://application:,,,/Resources/help-2.gif"),
+                    DescriptionKey = "L_Help_Desc_2"
                 });
 
                 helpPages.Add(new HelpPage
                 {
-                    Image = new BitmapImage(new Uri("pack://application:,,,/Resources/help-3.gif")),
-                    DescriptionKey = "L_Help_Desc_Drag" // "支持拖拽图片到Word、桌面等任何地方"
+                    ImageUri = new Uri("https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDNoM3Z.../cat-typing.gif"), // 替换为真实的 GIF 链接
+                    DescriptionKey = "L_Help_Desc_3" 
                 });
+          
+
+    if (helpPages.Count > 0)
+    {
+        var helpWin = new HelpWindow(helpPages);
+        helpWin.Owner = this; 
+        // 使用 Show 而不是 ShowDialog，这样 Deactivated 事件触发更加自然
+        // 如果使用 ShowDialog，点击主窗口可能只会闪烁而不是关闭帮助窗口
+        helpWin.Show();
+                }
             }
             catch (Exception ex)
             {
-                // 防止图片丢失导致崩溃
-                System.Diagnostics.Debug.WriteLine("Load help images failed: " + ex.Message);
-            }
-
-            if (helpPages.Count > 0)
-            {
-                var helpWin = new HelpWindow(helpPages);
-                helpWin.Owner = this; // 设置为模态或子窗口
-                helpWin.ShowDialog();
+                System.Diagnostics.Debug.WriteLine(ex);
             }
         }
         private void OnAppTitleBarLogoMiddleClick(object sender, RoutedEventArgs e)
@@ -65,7 +67,66 @@ namespace TabPaint
                 CloseTab(_currentTabItem);
             }
         }
+        private void OnSepiaClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sepia);
+        private void OnOilPaintingClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.OilPainting);
+        private void OnVignetteClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Vignette);
+        private void OnGlowClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Glow);
 
+        private enum FilterType { Sepia, OilPainting, Vignette, Glow }
+
+
+        private async void ApplyFilter(FilterType type)
+        {
+            if (_surface?.Bitmap == null) return;
+            _router.CleanUpSelectionandShape();
+
+            // 1. 推送撤销栈 (UI线程)
+            _undo.PushFullImageUndo();
+
+            var bmp = _surface.Bitmap;
+            int width = bmp.PixelWidth;
+            int height = bmp.PixelHeight;
+            int stride = bmp.BackBufferStride;
+
+            // 2. 【关键】在 UI 线程提取像素数据到内存数组
+            byte[] rawPixels = new byte[height * stride];
+            bmp.CopyPixels(rawPixels, stride, 0);
+
+            // 显示等待状态
+            // Cursor = Cursors.Wait; 
+
+            // 3. 启动后台任务，传入 byte[] 而不是 Bitmap
+            await Task.Run(() =>
+            {
+                switch (type)
+                {
+                    case FilterType.Sepia:
+                        ProcessSepia(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.Vignette:
+                        ProcessVignette(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.Glow:
+                        ProcessGlow(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.OilPainting:
+                        ProcessOilPaint(rawPixels, width, height, stride, 4, 10);
+                        break;
+                }
+            });
+
+            // 4. 【关键】回到 UI 线程，将处理后的数据写回 Bitmap
+            // WritePixels 不需要 Lock/Unlock，因为它内部会自动处理
+            bmp.WritePixels(new Int32Rect(0, 0, width, height), rawPixels, stride, 0);
+
+            // 5. 更新状态
+            CheckDirtyState();
+            NotifyCanvasChanged();
+            SetUndoRedoButtonState();
+            // Cursor = Cursors.Arrow;
+
+            ShowToast($"L_Toast_Effect_{type}");
+        }
         private void OnNewWindowClick(object sender, RoutedEventArgs e)
         {
             try

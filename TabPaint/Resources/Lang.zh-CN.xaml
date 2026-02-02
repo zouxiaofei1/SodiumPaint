@@ -365,7 +365,8 @@
     <sys:String x:Key="L_Color_Indigo" xmlns:sys="clr-namespace:System;assembly=mscorlib">靛青</sys:String>
     <sys:String x:Key="L_Color_DeepViolet" xmlns:sys="clr-namespace:System;assembly=mscorlib">深紫蓝</sys:String>
     <sys:String x:Key="L_Color_Coffee" xmlns:sys="clr-namespace:System;assembly=mscorlib">咖啡色</sys:String>
-
+    <sys:String x:Key="L_Loading"  xmlns:sys="clr-namespace:System;assembly=mscorlib">加载中...</sys:String>
+    <sys:String x:Key="L_LoadFailed"  xmlns:sys="clr-namespace:System;assembly=mscorlib">加载失败，请检查网络</sys:String>
     <!-- Common Buttons -->
     <sys:String x:Key="L_Common_Reset" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置</sys:String>
     <sys:String x:Key="L_Common_Cancel" xmlns:sys="clr-namespace:System;assembly=mscorlib">取消</sys:String>
@@ -609,7 +610,15 @@
     <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 处理中...</sys:String>
     <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">擦除完成!</sys:String>
     <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">擦除错误: {0}</sys:String>
-
+    <sys:String x:Key="L_Menu_Effect_Filter" xmlns:sys="clr-namespace:System;assembly=mscorlib">滤镜</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sepia" xmlns:sys="clr-namespace:System;assembly=mscorlib">怀旧</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Oil" xmlns:sys="clr-namespace:System;assembly=mscorlib">油画</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Vignette" xmlns:sys="clr-namespace:System;assembly=mscorlib">暗角</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">柔光</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sepia" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用怀旧滤镜</sys:String>
+    <sys:String x:Key="L_Toast_Effect_OilPainting" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用油画滤镜</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Vignette" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用暗角效果</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用柔光效果</sys:String>
     <!-- AI Eraser (Inpainting) -->
    
     <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>

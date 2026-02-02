@@ -91,6 +91,11 @@ namespace TabPaint
             MainMenu.SettingsClick += OnSettingsClick;
             MainMenu.NewTabClick += OnNewTabClick;
             MainMenu.DiscardAllClick += OnDiscardAllClick;
+            MainMenu.SepiaClick += OnSepiaClick;
+            MainMenu.OilPaintingClick += OnOilPaintingClick;
+            MainMenu.VignetteClick += OnVignetteClick;
+            MainMenu.GlowClick += OnGlowClick;
+
             // 注入到界面
             MenuBarHolder.Content = MainMenu;
 

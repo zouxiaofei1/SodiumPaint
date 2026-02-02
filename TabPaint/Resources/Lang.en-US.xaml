@@ -109,7 +109,9 @@
     <sys:String x:Key="L_Help_Next">Next</sys:String>
     <sys:String x:Key="L_Help_Prev">Previous</sys:String>
     <sys:String x:Key="L_Help_Close">Close</sys:String>
-
+    <sys:String x:Key="L_Loading">Loading...</sys:String>
+    <sys:String x:Key="L_LoadFailed">Failed to load image</sys:String> 
+    
     <sys:String x:Key="L_Help_Desc_2">Press Tab to quickly switch between View Mode and Paint Mode.</sys:String>
     <sys:String x:Key="L_Help_Desc_3">Break boundaries! Drag and drop images directly to Word, Desktop, or anywhere.</sys:String>
     <sys:String x:Key="L_Help_Desc_1">Try now! Very simple painting tools and easy to learn.</sys:String>
@@ -595,6 +597,15 @@
     <sys:String x:Key="L_Watermark_RandomOffset">Random Offset</sys:String>
     <sys:String x:Key="L_Toast_BatchStart">Batch processing started...</sys:String>
     <sys:String x:Key="L_Toast_BatchComplete">Batch processing complete.</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Filter">Filters</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sepia">Sepia</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Oil">Oil Painting</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Vignette">Vignette</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Glow">Glow</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sepia">Sepia filter applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_OilPainting">Oil painting filter applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Vignette">Vignette effect applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Glow">Glow effect applied</sys:String>
 
     <!-- AI Eraser -->
     <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading model...</sys:String>

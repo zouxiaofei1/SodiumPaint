@@ -14,17 +14,87 @@
         KeyDown="Window_KeyDown"
         Deactivated="Window_Deactivated" 
         ShowInTaskbar="False">
-    <!-- Deactivated 用于处理点击窗口外关闭 -->
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+            <!-- 反向 Boolean 转 Visibility -->
+            <Style x:Key="VisibleIfFalse" TargetType="FrameworkElement">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasError}" Value="True">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding HasError}" Value="False">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Fluent 风格的加载圈样式 (纯 XAML 实现) -->
+            <!-- 修复版：Fluent 风格加载圈 -->
+            <Style x:Key="FluentProgressRingStyle" TargetType="ProgressBar">
+                <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Width" Value="48"/>
+                <Setter Property="Height" Value="48"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ProgressBar">
+                            <Grid x:Name="TemplateRoot" 
+                                  SnapsToDevicePixels="true" 
+                                  RenderTransformOrigin="0.5,0.5">
+
+                                <!-- 旋转动画容器 -->
+                                <Grid.RenderTransform>
+                                    <RotateTransform x:Name="Rotation" Angle="0"/>
+                                </Grid.RenderTransform>
+
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Indeterminate">
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <!-- 匀速旋转，如果想要忽快忽慢的效果，可以把 EasingFunction 加回来 -->
+                                                <DoubleAnimation Storyboard.TargetName="Rotation"
+                                                                 Storyboard.TargetProperty="Angle"
+                                                                 From="0" To="360" Duration="0:0:1"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+
+                                <Path Stroke="{TemplateBinding Foreground}"
+                                      StrokeThickness="4"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Width="48" Height="48"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Data="M 24,4 A 20,20 0 1 1 4,24"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+        </ResourceDictionary>
+    </Window.Resources>
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" CornerRadius="10" GlassFrameThickness="-1"/>
     </WindowChrome.WindowChrome>
-
-    <Border Background="{DynamicResource GlassBackgroundLowBrush}" 
+    <!-- 1. 添加 MouseLeftButtonDown 实现拖动 -->
+    <!-- 为了让 Mica 透出来，背景色需要有一定的透明度，或者设为 Transparent -->
+    <Border Background="Transparent" 
             BorderBrush="{DynamicResource BorderBrush}" 
             BorderThickness="1" 
             CornerRadius="8"
-            ClipToBounds="True">
+            ClipToBounds="True"
+            MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
         <Border.Effect>
             <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.5"/>
         </Border.Effect>
@@ -36,33 +106,97 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 1. 关闭按钮 (右上角) -->
+            <!-- 关闭按钮 -->
             <Button Grid.Row="0" HorizontalAlignment="Right" Width="40" Height="30" 
                     Click="CloseButton_Click" Style="{StaticResource WindowCloseButtonStyle}"
                     Margin="0,4,4,0" Panel.ZIndex="10">
-                <!-- ZIndex确保在最上层 -->
                 <Path Data="M0,0 L12,12 M12,0 L0,12" Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" StrokeThickness="1" Width="10" Height="10" Stretch="Uniform"/>
             </Button>
 
-            <!-- 2. 已删除左上角的 "帮助" TextBlock -->
-
-            <!-- 3. 图片展示区 -->
+            <!-- 图片展示区 -->
             <Grid Grid.Row="1" Margin="40,10,40,10">
-                <!-- 
-                     注意：
-                     1. 使用 gif:AnimationBehavior.SourceUri 绑定路径 
-                     2. AutoStart="False" 让我们在代码中手动控制延迟播放 
-                     3. RepeatBehavior="Forever" 循环播放
-                -->
+
+                <!-- 2. 图片源绑定改为 DisplayUri -->
                 <Image x:Name="MainImageDisplay" 
-                       gif:AnimationBehavior.SourceUri="{Binding CurrentImageUri}"
+                       gif:AnimationBehavior.SourceUri="{Binding DisplayUri}"
                        gif:AnimationBehavior.AutoStart="False" 
                        gif:AnimationBehavior.RepeatBehavior="Forever"
                        Stretch="Uniform" 
                        RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                <!-- 左右切换按钮 (逻辑保持不变) -->
-                <Grid HorizontalAlignment="Left" Width="60" Background="Transparent" MouseLeftButtonDown="PrevButton_Click" Cursor="Hand">
+                <Grid Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" 
+                      Panel.ZIndex="5" 
+                      HorizontalAlignment="Center" 
+                      VerticalAlignment="Center">
+
+                    <!-- 卡片背景：适配深色/浅色模式 -->
+                    <Border Background="{DynamicResource ChromeMediumBrush}" 
+                            BorderBrush="{DynamicResource BorderLightBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8" 
+                            Padding="30,20">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                        </Border.Effect>
+
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                            <!-- 1. 加载中状态 (HasError = False 时显示) -->
+                            <StackPanel Style="{StaticResource VisibleIfFalse}">
+                                <ProgressBar IsIndeterminate="True" 
+                                             Style="{StaticResource FluentProgressRingStyle}"
+                                             HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding LoadingText}" 
+                                           Foreground="{DynamicResource TextSecondaryBrush}" 
+                                           FontSize="14"
+                                           HorizontalAlignment="Center" 
+                                           Margin="0,15,0,0"/>
+                            </StackPanel>
+
+                            <!-- 2. 错误状态 (HasError = True 时显示) -->
+                            <StackPanel MouseLeftButtonDown="Retry_Click"
+                                        Cursor="Hand"
+                                        Background="Transparent">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+
+                                <!-- 错误图标 -->
+                                <Path Data="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M13,17H11V15H13V17M13,13H11V7H13V13Z" 
+                                      Fill="{DynamicResource DangerBrush}"
+                                      Width="32" Height="32" Stretch="Uniform"
+                                      HorizontalAlignment="Center"/>
+
+                                <!-- 错误提示文本 -->
+                                <TextBlock Text="{Binding ErrorText}" 
+                                           Foreground="{DynamicResource TextPrimaryBrush}" 
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" 
+                                           Margin="0,10,0,0"/>
+
+                                <!-- 重试提示 -->
+                                <!-- 修改：去掉这里的事件绑定，因为父级已经处理了 -->
+                                <TextBlock Text="Click to retry" 
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+
+
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 左右切换按钮 -->
+                <Grid HorizontalAlignment="Left" Width="60" Background="Transparent" MouseLeftButtonDown="PrevButton_Click" Cursor="Hand" Panel.ZIndex="6">
                     <Grid.Style>
                         <Style TargetType="Grid">
                             <Setter Property="Opacity" Value="0"/>
@@ -78,7 +212,7 @@
                     </Border>
                 </Grid>
 
-                <Grid HorizontalAlignment="Right" Width="60" Background="Transparent" MouseLeftButtonDown="NextButton_Click" Cursor="Hand">
+                <Grid HorizontalAlignment="Right" Width="60" Background="Transparent" MouseLeftButtonDown="NextButton_Click" Cursor="Hand" Panel.ZIndex="6">
                     <Grid.Style>
                         <Style TargetType="Grid">
                             <Setter Property="Opacity" Value="0"/>
@@ -95,7 +229,7 @@
                 </Grid>
             </Grid>
 
-            <!-- 4. 底部文字和圆点 -->
+            <!-- 底部文字和圆点 (保持不变) -->
             <StackPanel Grid.Row="2" Margin="0,0,0,25">
                 <TextBlock Text="{Binding CurrentDescription}" 
                            HorizontalAlignment="Center" 
@@ -112,15 +246,28 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Height="6" CornerRadius="3" Margin="3" AnimationBehavior.HasAnimations="True">
+                            <Border x:Name="DotBorder" Height="6" CornerRadius="3" Margin="3">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="Background" Value="{DynamicResource TextDisabledBrush}"/>
                                         <Setter Property="Width" Value="6"/>
+                                        <Setter Property="Background" Value="{DynamicResource TextDisabledBrush}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Width" From="6" To="24" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
                                                 <Setter Property="Background" Value="{DynamicResource AccentFillBrushPrimary}"/>
-                                                <Setter Property="Width" Value="20"/>
+                                                <DataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Width" From="24" To="6" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>

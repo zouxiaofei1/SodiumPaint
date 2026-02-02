@@ -224,6 +224,21 @@ namespace TabPaint.Controls
         {
             RaiseEvent(new RoutedEventArgs(NewWindowClickEvent));
         }
+        // 在 MenuBarControl 类中添加
+        public static readonly RoutedEvent SepiaClickEvent = EventManager.RegisterRoutedEvent("SepiaClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent OilPaintingClickEvent = EventManager.RegisterRoutedEvent("OilPaintingClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent VignetteClickEvent = EventManager.RegisterRoutedEvent("VignetteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent GlowClickEvent = EventManager.RegisterRoutedEvent("GlowClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+
+        public event RoutedEventHandler SepiaClick { add { AddHandler(SepiaClickEvent, value); } remove { RemoveHandler(SepiaClickEvent, value); } }
+        public event RoutedEventHandler OilPaintingClick { add { AddHandler(OilPaintingClickEvent, value); } remove { RemoveHandler(OilPaintingClickEvent, value); } }
+        public event RoutedEventHandler VignetteClick { add { AddHandler(VignetteClickEvent, value); } remove { RemoveHandler(VignetteClickEvent, value); } }
+        public event RoutedEventHandler GlowClick { add { AddHandler(GlowClickEvent, value); } remove { RemoveHandler(GlowClickEvent, value); } }
+
+        private void OnSepiaClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SepiaClickEvent));
+        private void OnOilPaintingClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OilPaintingClickEvent));
+        private void OnVignetteClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(VignetteClickEvent));
+        private void OnGlowClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(GlowClickEvent));
 
     }
 }

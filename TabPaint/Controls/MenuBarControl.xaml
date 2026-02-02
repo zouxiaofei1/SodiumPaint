@@ -97,22 +97,58 @@
                             <Path Data="{DynamicResource Color_Temperature_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="{DynamicResource L_Menu_Effect_BW}" Style="{StaticResource Win11MenuItemStyle}" Click="OnBlackWhiteClick">
-                        <MenuItem.Icon>
-                            <Path Data="{DynamicResource Black_And_White_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="{DynamicResource L_Menu_Effect_Invert}" Style="{StaticResource Win11MenuItemStyle}" Click="OnInvertClick">
-                        <MenuItem.Icon>
-                            <Path Data="{DynamicResource Invert_Color_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
                     <MenuItem Header="{DynamicResource L_Menu_Effect_AutoLevels}" Style="{StaticResource Win11MenuItemStyle}" Click="OnAutoLevelsClick">
                         <MenuItem.Icon>
                             <Path Data="M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator Style="{StaticResource MenuSeparator}"/>
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_Filter}" Style="{StaticResource Win11MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <Path Data="{DynamicResource Filter_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+
+                        <!-- 怀旧 -->
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Sepia}" Style="{StaticResource Win11MenuItemStyle}" Click="OnSepiaClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Sepia_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        
+                    <MenuItem Header="{DynamicResource L_Menu_Effect_Oil}" Style="{StaticResource Win11MenuItemStyle}" Click="OnOilPaintingClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource OilPaint_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <!-- 暗角 -->
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Vignette}" Style="{StaticResource Win11MenuItemStyle}" Click="OnVignetteClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Vignette_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <!-- 发光 -->
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Glow}" Style="{StaticResource Win11MenuItemStyle}" Click="OnGlowClick">
+                                <MenuItem.Icon>
+                                <Path Data="{DynamicResource Glow_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                        <Separator Style="{StaticResource MenuSeparator}"/>
+
+                        <!-- 移动过来的黑白 -->
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_BW}" Style="{StaticResource Win11MenuItemStyle}" Click="OnBlackWhiteClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Black_And_White_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <!-- 移动过来的反色 -->
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Invert}" Style="{StaticResource Win11MenuItemStyle}" Click="OnInvertClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Invert_Color_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </MenuItem>
                     <MenuItem Header="{DynamicResource L_Menu_Effect_Resize}" Style="{StaticResource Win11MenuItemStyle}" Click="OnResizeCanvasClick">
                         <MenuItem.Icon>
                             <Path Data="{DynamicResource Resize_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Width="16" Height="16"/>

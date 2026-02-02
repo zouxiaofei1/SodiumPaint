@@ -2,144 +2,271 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Net.Http;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using XamlAnimatedGif; // 引用库
-
 namespace TabPaint
 {
-    // 修改数据模型，存储 Uri 
+    public class IndicatorItem : INotifyPropertyChanged
+    {
+        private bool _isActive;
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                _isActive = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsActive)));
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+    }
     public class HelpPage
     {
-        public Uri ImageUri { get; set; } // 换成 Uri 以支持 Gif 重载
+        public Uri ImageUri { get; set; }
         public string DescriptionKey { get; set; }
     }
 
-    public partial class HelpWindow : Window, INotifyPropertyChanged
-    {
-        private List<HelpPage> _pages;
-        private int _currentIndex = 0;
-        private DispatcherTimer _gifDelayTimer;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        // 绑定属性改为 Uri
-        public Uri CurrentImageUri => _pages.Count > 0 ? _pages[_currentIndex].ImageUri : null;
-        public string CurrentDescription => _pages.Count > 0 ? LocalizationManager.GetString(_pages[_currentIndex].DescriptionKey) : "";
-
-        public ObservableCollection<IndicatorItem> Indicators { get; set; } = new ObservableCollection<IndicatorItem>();
-
-        public HelpWindow(List<HelpPage> pages)
+        public partial class HelpWindow : Window, INotifyPropertyChanged
         {
-            InitializeComponent();
-            _pages = pages;
-            this.DataContext = this;
+            // ... 原有的字段保持不变 ...
+            private List<HelpPage> _pages;
+            private int _currentIndex = 0;
+            private DispatcherTimer _gifDelayTimer;
+            private static readonly HttpClient _httpClient = new HttpClient();
 
-            // 初始化圆点
-            foreach (var page in _pages)
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            // 图片显示源
+            private Uri _displayUri;
+            public Uri DisplayUri
             {
-                Indicators.Add(new IndicatorItem { IsActive = false });
+                get => _displayUri;
+                set { _displayUri = value; OnPropertyChanged(nameof(DisplayUri)); }
             }
 
-            // 初始化计时器
-            _gifDelayTimer = new DispatcherTimer();
-            _gifDelayTimer.Interval = TimeSpan.FromSeconds(1.0); // 1秒延迟
-            _gifDelayTimer.Tick += GifDelayTimer_Tick;
+            // 当前描述
+            public string CurrentDescription => _pages.Count > 0 ? LocalizationManager.GetString(_pages[_currentIndex].DescriptionKey) : "";
 
-            // 初始加载
-            UpdateUI();
+            // UI 状态控制：是否显示遮罩层（加载或错误）
+            private bool _isBusy;
+            public bool IsBusy
+            {
+                get => _isBusy;
+                set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); }
+            }
+
+            // UI 状态控制：是否出错
+            private bool _hasError;
+            public bool HasError
+            {
+                get => _hasError;
+                set { _hasError = value; OnPropertyChanged(nameof(HasError)); }
+            }
+
+            // 多语言文本绑定
+            public string LoadingText => LocalizationManager.GetString("L_Loading");
+            public string ErrorText => LocalizationManager.GetString("L_LoadFailed");
+
+            public ObservableCollection<IndicatorItem> Indicators { get; set; } = new ObservableCollection<IndicatorItem>();
+
+            public HelpWindow(List<HelpPage> pages)
+            {
+                InitializeComponent();
+                _pages = pages;
+                this.DataContext = this;
+
+              //  this.Loaded += (s, e) => MicaAcrylicManager.ApplyEffect(this);
+
+                foreach (var page in _pages)
+                    Indicators.Add(new IndicatorItem { IsActive = false });
+
+                _gifDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.0) };
+                _gifDelayTimer.Tick += GifDelayTimer_Tick;
+
+                _ = LoadCurrentPageAsync();
+            }
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            // 确保句柄已经准备好
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+
+            // 设置暗色模式标题栏
+            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+
+            MicaAcrylicManager.ApplyEffect(this);
+            if (!MicaAcrylicManager.IsWin11())
+            {
+                var chromeLow = FindResource("ChromeLowBrush") as Brush;
+               // SidebarBorder.Background = chromeLow;
+                // 同时设置主窗口背景
+                this.Background = FindResource("WindowBackgroundBrush") as Brush;
+            }
         }
-
-        private void UpdateUI()
-        {
-            if (_pages == null || _pages.Count == 0) return;
-
-            // 1. 更新数据绑定
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentImageUri)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentDescription)));
-
-            // 2. 更新圆点
-            for (int i = 0; i < Indicators.Count; i++)
+        private async Task LoadCurrentPageAsync()
             {
-                Indicators[i].IsActive = (i == _currentIndex);
+                if (_pages == null || _pages.Count == 0) return;
+
+                // 更新基本 UI
+                OnPropertyChanged(nameof(CurrentDescription));
+                // 刷新本地化文本
+                OnPropertyChanged(nameof(LoadingText));
+                OnPropertyChanged(nameof(ErrorText));
+
+                for (int i = 0; i < Indicators.Count; i++)
+                    Indicators[i].IsActive = (i == _currentIndex);
+
+                Uri rawUri = _pages[_currentIndex].ImageUri;
+
+                if (rawUri.Scheme == Uri.UriSchemeHttp || rawUri.Scheme == Uri.UriSchemeHttps)
+                {
+                    // 网络图片流程
+                    IsBusy = true;
+                    HasError = false;
+                    DisplayUri = null; // 清空旧图
+
+                    try
+                    {
+                        string localPath = await DownloadImageAsync(rawUri.ToString());
+                        DisplayUri = new Uri(localPath);
+                        IsBusy = false; // 下载成功，隐藏遮罩
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"下载失败: {ex.Message}");
+                        HasError = true; // 出错了，IsBusy 保持 true 以显示遮罩，但内容变为错误信息
+                    }
+                }
+                else
+                {
+                    // 本地图片流程
+                    IsBusy = false;
+                    HasError = false;
+                    DisplayUri = rawUri;
+                }
+
+                if (!IsBusy && !HasError)
+                {
+                    ResetGifAnimation();
+                }
             }
 
-            // 3. 处理 GIF 延迟播放逻辑
-            _gifDelayTimer.Stop(); // 先停止之前的计时
+            private async Task<string> DownloadImageAsync(string url)
+            {
+                string cacheDir = Path.Combine(Path.GetTempPath(), "TabPaintCache");
+                if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
 
-            // XamlAnimatedGif 可能需要一点时间加载新的 SourceUri
-            // 使用低优先级调度，确保 UI 绑定完成后再控制动画
-            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                string fileName = Path.GetFileName(new Uri(url).LocalPath);
+                if (string.IsNullOrEmpty(fileName)) fileName = "temp_" + url.GetHashCode() + ".gif";
+                string localFilePath = Path.Combine(cacheDir, fileName);
+
+                if (File.Exists(localFilePath))
+                    return localFilePath;
+
+                // 添加超时控制
+                using (var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30)))
+                {
+                    byte[] data = await _httpClient.GetByteArrayAsync(url, cts.Token);
+                    await File.WriteAllBytesAsync(localFilePath, data);
+                }
+
+                return localFilePath;
+            }
+
+            // 点击重试
+            private void Retry_Click(object sender, MouseButtonEventArgs e)
+            {
+           // MessageBox.Show("retry");
+                _ = LoadCurrentPageAsync();
+            }
+
+            // 辅助方法：简化 OnPropertyChanged
+            protected void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+
+            // ... 剩余的动画、拖动、按钮事件保持不变 ...
+            private void ResetGifAnimation()
+            {
+                _gifDelayTimer.Stop();
+                Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(() =>
+                {
+                    try
+                    {
+                        var controller = AnimationBehavior.GetAnimator(MainImageDisplay);
+                        if (controller != null)
+                        {
+                            controller.Rewind();
+                            controller.Pause();
+                            _gifDelayTimer.Start();
+                        }
+                    }
+                    catch { }
+                }));
+            }
+
+            private void GifDelayTimer_Tick(object sender, EventArgs e)
+            {
+                _gifDelayTimer.Stop();
+                try
+                {
+                    var controller = AnimationBehavior.GetAnimator(MainImageDisplay);
+                    if (controller != null) controller.Play();
+                }
+                catch { }
+            }
+
+            private void Next()
+            {
+                _currentIndex = (_currentIndex + 1) % _pages.Count;
+                _ = LoadCurrentPageAsync();
+            }
+
+            private void Previous()
+            {
+                _currentIndex = (_currentIndex - 1 + _pages.Count) % _pages.Count;
+                _ = LoadCurrentPageAsync();
+            }
+
+            private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+            {
+                if (e.ButtonState == MouseButtonState.Pressed) this.DragMove();
+            }
+
+            private void NextButton_Click(object sender, MouseButtonEventArgs e) => Next();
+            private void PrevButton_Click(object sender, MouseButtonEventArgs e) => Previous();
+            private void CloseButton_Click(object sender, RoutedEventArgs e) => this.Close();
+
+            private void Window_KeyDown(object sender, KeyEventArgs e)
+            {
+                if (e.Key == Key.Left) Previous();
+                else if (e.Key == Key.Right) Next();
+                else if (e.Key == Key.Escape) this.Close();
+            }
+
+            private void Window_Deactivated(object sender, EventArgs e)
             {
                 try
                 {
-                    // 获取当前图片的动画控制器
-                    var controller = AnimationBehavior.GetAnimator(MainImageDisplay);
-                    if (controller != null)
-                    {
-                        controller.Rewind(); // 倒带
-                        controller.Pause();  // 暂停 (UI上会显示第一帧)
-                        _gifDelayTimer.Start(); // 开始1秒计时
-                    }
+                    Dispatcher.BeginInvoke(new Action(() => { this.Close(); }));
                 }
-                catch
-                {
-                    // 普通图片没有 Controller，忽略异常
-                }
-            }));
-        }
-
-        private void GifDelayTimer_Tick(object sender, EventArgs e)
-        {
-            _gifDelayTimer.Stop();
-            try
-            {
-                var controller = AnimationBehavior.GetAnimator(MainImageDisplay);
-                if (controller != null)
-                {
-                    controller.Play(); // 1秒后开始播放
-                }
+                catch { }
             }
-            catch { }
         }
+    
 
-        private void Next()
-        {
-            _currentIndex = (_currentIndex + 1) % _pages.Count; // 循环
-            UpdateUI();
-        }
-
-        private void Previous()
-        {
-            _currentIndex = (_currentIndex - 1 + _pages.Count) % _pages.Count; // 循环
-            UpdateUI();
-        }
-
-        // --- 事件处理 ---
-
-        private void NextButton_Click(object sender, MouseButtonEventArgs e) => Next();
-        private void PrevButton_Click(object sender, MouseButtonEventArgs e) => Previous();
-        private void CloseButton_Click(object sender, RoutedEventArgs e) => this.Close();
-
-        // 3. ESC 关闭
-        private void Window_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Left) Previous();
-            else if (e.Key == Key.Right) Next();
-            else if (e.Key == Key.Escape) this.Close();
-        }
-
-        // 3. 点击窗口外部 (失去焦点) 关闭
-        private void Window_Deactivated(object sender, EventArgs e)
-        {
-            // 为了防止只是切个窗口就被关掉，可以判断一下 Owner 是否还活着
-            // 但通常 Deactivated 直接 Close 就能实现"轻弹窗"效果
-            try
-            {
-                this.Close();
-            }
-            catch { }
-        }
-    }
 }
