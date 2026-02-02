@@ -10,6 +10,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using XamlAnimatedGif; // 添加这一行
+using SkiaSharp;
+using SkiaSharp.Extended.Svg;
 
 //
 //图片加载队列机制
@@ -288,15 +290,27 @@ namespace TabPaint
             }
         }
 
-        private Task<(int Width, int Height)?> GetImageDimensionsAsync(byte[] imageBytes)
+        private Task<(int Width, int Height)?> GetImageDimensionsAsync(byte[] imageBytes, string filePath)
         {
             return Task.Run(() =>
             {
                 try
                 {
-                    using var ms = new System.IO.MemoryStream(imageBytes);
+                    string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
+                    if (ext == ".svg")
+                    {
+                        using var ms = new System.IO.MemoryStream(imageBytes);
+                        var svg = new SkiaSharp.Extended.Svg.SKSvg();
+                        svg.Load(ms);
+                        if (svg.Picture != null)
+                        {
+                            return ((int Width, int Height)?)((int)svg.CanvasSize.Width, (int)svg.CanvasSize.Height);
+                        }
+                    }
+
+                    using var msNormal = new System.IO.MemoryStream(imageBytes);
                     // 尝试读取元数据
-                    var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    var decoder = BitmapDecoder.Create(msNormal, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
 
                     // 确保至少有一帧
                     if (decoder.Frames != null && decoder.Frames.Count > 0)
@@ -310,6 +324,64 @@ namespace TabPaint
                     return null;
                 }
             });
+        }
+
+        internal BitmapImage DecodeSvg(byte[] imageBytes, CancellationToken token)
+        {
+            if (token.IsCancellationRequested) return null;
+            try
+            {
+                using var ms = new System.IO.MemoryStream(imageBytes);
+                var svg = new SkiaSharp.Extended.Svg.SKSvg();
+                svg.Load(ms);
+
+                if (svg.Picture == null) return null;
+
+                int width = (int)svg.CanvasSize.Width;
+                int height = (int)svg.CanvasSize.Height;
+
+                // 如果 SVG 没有定义尺寸，给个默认值
+                if (width <= 0) width = 800;
+                if (height <= 0) height = 600;
+
+                // 限制最大尺寸
+                const int maxSize = (int)AppConsts.MaxCanvasSize;
+                if (width > maxSize || height > maxSize)
+                {
+                    float scale = Math.Min((float)maxSize / width, (float)maxSize / height);
+                    width = (int)(width * scale);
+                    height = (int)(height * scale);
+                }
+
+                using var surface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));
+                var canvas = surface.Canvas;
+                canvas.Clear(SKColors.Transparent);
+
+                float scaleX = width / svg.CanvasSize.Width;
+                float scaleY = height / svg.CanvasSize.Height;
+                var matrix = SKMatrix.CreateScale(scaleX, scaleY);
+
+                canvas.DrawPicture(svg.Picture, ref matrix);
+                canvas.Flush();
+
+                using var image = surface.Snapshot();
+                using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                using var outMs = new System.IO.MemoryStream(data.ToArray());
+
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = outMs;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                return bitmap;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("SVG Decode Error: " + ex.Message);
+                return null;
+            }
         }
 
         private readonly object _lockObj = new object();
@@ -367,7 +439,7 @@ namespace TabPaint
                 await Dispatcher.InvokeAsync(() => this.FileSize = sizeString);
 
 
-                var dimensions = await GetImageDimensionsAsync(imageBytes);
+                var dimensions = await GetImageDimensionsAsync(imageBytes, filePath);
                 if (token.IsCancellationRequested) return;
                 if (dimensions == null)
                 {
@@ -423,8 +495,20 @@ namespace TabPaint
                 }
 
                 // 步骤 2: 并行启动中等预览图和完整图的解码任务
-                Task<BitmapImage> previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
-                Task<BitmapImage> fullResTask = Task.Run(() => DecodeFullResBitmap(imageBytes, token), token);
+                string extension = System.IO.Path.GetExtension(filePath)?.ToLower();
+                Task<BitmapImage> previewTask;
+                Task<BitmapImage> fullResTask;
+
+                if (extension == ".svg")
+                {
+                    previewTask = Task.Run(() => DecodeSvg(imageBytes, token), token);
+                    fullResTask = previewTask; // SVG 渲染比较耗时，预览和全图用同一个
+                }
+                else
+                {
+                    previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
+                    fullResTask = Task.Run(() => DecodeFullResBitmap(imageBytes, token), token);
+                }
 
                 // --- 阶段 0: (新增) 立即显示已缓存的缩略图 ---
                 bool isInitialLayoutSet = false;

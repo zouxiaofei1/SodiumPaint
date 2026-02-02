@@ -1,4 +1,12 @@
-﻿using System.Buffers;
+﻿//
+//App.xaml.cs
+//应用程序入口点，负责初始化设置、异常处理、单实例检测以及主窗口的启动。
+//
+//
+//App.xaml.cs
+//应用程序入口点，负责初始化设置、异常处理、单实例检测以及主窗口的启动。
+//
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices; // 必须引用，用于置顶窗口

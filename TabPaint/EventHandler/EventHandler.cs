@@ -1,4 +1,8 @@
 ﻿
+//
+//EventHandler.cs
+//主窗口的事件处理部分，主要负责全局快捷键监听、模式切换以及各级菜单功能的逻辑分发。
+//
 using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
 using System.IO;
@@ -10,9 +14,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-//
-//TabPaint事件处理cs
-//
 
 namespace TabPaint
 {

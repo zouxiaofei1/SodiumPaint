@@ -1,4 +1,8 @@
 ﻿
+//
+//EventHandler.Canvas.cs
+//画布相关的事件处理逻辑，包括自动裁剪、OCR、AI背景移除、超分重建以及各种图像滤镜的触发。
+//
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -13,9 +17,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.Media.Ocr;
 using static TabPaint.MainWindow;
-//
-//TabPaintCanvas画布事件处理cs
-//
 
 namespace TabPaint
 {

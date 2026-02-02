@@ -1,4 +1,8 @@
 ﻿
+//
+//EventHandler.ToolBar.cs
+//工具栏相关的逻辑处理，包括工具切换（画笔、选区等）、旋转翻转操作、颜色选择以及缩放控制。
+//
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows;
@@ -10,11 +14,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TabPaint.Controls;
-
-//
-//TabPaint事件处理cs
-//Toolbar包括上下两个工具栏！
-//
 
 namespace TabPaint
 {

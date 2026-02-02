@@ -1,3 +1,11 @@
+//
+//AppConsts.cs
+//项目全局常量定义，包含版本信息、Win32消息、UI参数、路径及AI模型配置等。
+//
+//
+//AppConsts.cs
+//项目全局常量定义，包含版本信息、Win32消息、UI参数、路径及AI模型配置等。
+//
 using System;
 using System.IO;
 
@@ -207,7 +215,7 @@ namespace TabPaint
         public const double DefaultPaintInterpolationThreshold = 200.0;
 
         // --- 文件过滤器与扩展名 ---
-        public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico";
-        public static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif", ".ico", ".tiff", ".heic", ".tif", ".jfif", ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr" };
+        public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico|{8} (*.svg)|*.svg";
+        public static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif", ".ico", ".tiff", ".heic", ".tif", ".jfif", ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr", ".svg" };
     }
 }

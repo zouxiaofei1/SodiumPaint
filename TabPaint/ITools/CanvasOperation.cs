@@ -1,4 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿//
+//CanvasOperation.cs
+//关于图片的一些操作方法，包括画布尺寸调整、旋转、翻转、像素颜色获取和自动裁剪等功能。
+//
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -12,11 +16,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
-
-//
-//关于图片的一些操作方法，
-//原来被大量放在Mainwindow.cs里
-//
 
 namespace TabPaint
 {

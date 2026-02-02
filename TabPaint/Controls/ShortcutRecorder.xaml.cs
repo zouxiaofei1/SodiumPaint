@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿//
+//ShortcutRecorder.xaml.cs
+//快捷键录制控件，用于在设置界面中捕获用户按下的键盘组合键并实时显示。
+//
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;

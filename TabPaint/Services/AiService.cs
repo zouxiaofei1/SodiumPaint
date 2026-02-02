@@ -1,4 +1,8 @@
-﻿using Microsoft.ML.OnnxRuntime;
+﻿//
+//AiService.cs
+//AI服务类，封装了基于ONNX Runtime的背景移除、超分辨率重建和智能图像填补等功能。
+//
+using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System;
 using System.Collections.Generic;

@@ -180,6 +180,13 @@ namespace TabPaint
         {
             try
             {
+                string ext = System.IO.Path.GetExtension(path)?.ToLower();
+                if (ext == ".svg")
+                {
+                    byte[] bytes = File.ReadAllBytes(path);
+                    return DecodeSvg(bytes, CancellationToken.None);
+                }
+
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad; 

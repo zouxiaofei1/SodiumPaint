@@ -1,4 +1,8 @@
-﻿using Microsoft.Win32;
+﻿//
+//CanvasSurface.cs
+//封装了对WriteableBitmap的底层操作，提供像素级的读写、直线绘制、区域提取和块数据写入功能。
+//
+using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -17,10 +21,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-
-//
-//TabPaint主程序
-//
 
 namespace TabPaint
 {

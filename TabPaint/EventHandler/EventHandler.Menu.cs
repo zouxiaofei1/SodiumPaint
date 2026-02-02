@@ -1,4 +1,8 @@
 ﻿
+//
+//EventHandler.Menu.cs
+//顶部菜单栏的详细逻辑实现，包括文件保存、另存为、帮助窗口弹出、效果滤镜执行以及批量处理功能。
+//
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -10,10 +14,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Net.Http;
-//
-//TabPaint事件处理cs
-//menu及位于那一行的所有东西
-//
 
 namespace TabPaint
 {

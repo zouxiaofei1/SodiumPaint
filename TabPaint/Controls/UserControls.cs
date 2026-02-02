@@ -1,4 +1,8 @@
-﻿using System;
+﻿//
+//UserControls.cs
+//负责在主窗口中延迟初始化并注入各个自定义控件（ImageBar、MenuBar、ToolBar等），并绑定相关事件。
+//
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;

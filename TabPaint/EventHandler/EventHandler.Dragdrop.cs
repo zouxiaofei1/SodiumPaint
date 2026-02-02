@@ -1,4 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿//
+//EventHandler.Dragdrop.cs
+//处理全局的文件拖拽和文本拖拽逻辑，支持将图片拖入标签栏或画布，以及将文本拖入创建文字图层。
+//
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -10,10 +14,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
-
-//
-//拖拽事件处理cs(目前只包括全局遮罩的那个)
-//
 
 namespace TabPaint
 {
@@ -359,12 +359,25 @@ namespace TabPaint
         {
             try
             {
-                BitmapImage bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri(filePath);
-                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 必须 OnLoad 才能解除文件占用
-                bitmap.EndInit();
-                bitmap.Freeze(); // 性能优化
+                BitmapSource bitmap;
+                string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
+                if (ext == ".svg")
+                {
+                    byte[] bytes = File.ReadAllBytes(filePath);
+                    bitmap = DecodeSvg(bytes, CancellationToken.None);
+                }
+                else
+                {
+                    BitmapImage bmi = new BitmapImage();
+                    bmi.BeginInit();
+                    bmi.UriSource = new Uri(filePath);
+                    bmi.CacheOption = BitmapCacheOption.OnLoad; // 必须 OnLoad 才能解除文件占用
+                    bmi.EndInit();
+                    bmi.Freeze(); // 性能优化
+                    bitmap = bmi;
+                }
+
+                if (bitmap == null) return;
 
                 // 切换到选择工具
                 _router.SetTool(_tools.Select);

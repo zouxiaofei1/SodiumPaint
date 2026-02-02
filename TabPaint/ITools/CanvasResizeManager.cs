@@ -1,4 +1,8 @@
-﻿using System;
+﻿//
+//CanvasResizeManager.cs
+//画布大小调整管理器，通过在画布边缘显示手柄并响应拖拽，实现对画布尺寸的直观交互式调整。
+//
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;

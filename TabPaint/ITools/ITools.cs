@@ -1,4 +1,8 @@
 ﻿
+//
+//ITools.cs
+//绘图工具接口与注册器，定义了工具的基本行为规范，并管理画笔、选区、文字等多种工具。
+//
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,9 +11,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using static TabPaint.MainWindow;
 
-//
-//工具管理器 ITools.cs
-//
 
 namespace TabPaint
 {

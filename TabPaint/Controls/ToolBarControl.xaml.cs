@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿//
+//ToolBarControl.xaml.cs
+//工具栏控件，包含画笔、选区、填充、文字等工具的选择按钮，以及颜色板和旋转镜像功能。
+//
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 

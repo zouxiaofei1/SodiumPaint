@@ -1,4 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿//
+//EventHandler.ImageBar.cs
+//标签栏相关的事件处理，包括标签切换、关闭、右键菜单功能（复制、文件夹打开）以及标签页排序逻辑。
+//
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -10,10 +14,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TabPaint.Windows;
 using static TabPaint.MainWindow;
-
-//
-//TabPaint事件处理cs
-//
 
 namespace TabPaint
 {

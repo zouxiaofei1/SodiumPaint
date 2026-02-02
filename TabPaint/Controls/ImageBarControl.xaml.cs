@@ -1,4 +1,12 @@
-﻿using System.Globalization;
+﻿//
+//ImageBarControl.xaml.cs
+//图片标签栏控件，负责显示已打开的图片缩略图、标签切换、关闭以及拖拽排序等交互。
+//
+//
+//ImageBarControl.xaml.cs
+//图片标签栏控件，负责显示已打开的图片缩略图、标签切换、关闭以及拖拽排序等交互。
+//
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;

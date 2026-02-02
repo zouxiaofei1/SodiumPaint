@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿//
+//StatusBarControl.xaml.cs
+//底部状态栏控件，显示图片尺寸、鼠标位置、缩放比例，并提供缩放控制和剪贴板监听开关。
+//
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;

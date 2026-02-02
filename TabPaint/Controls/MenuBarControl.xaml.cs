@@ -1,4 +1,12 @@
-﻿using System.Windows;
+﻿//
+//MenuBarControl.xaml.cs
+//顶部菜单栏控件，包含文件、编辑、效果等菜单项，以及最近打开文件列表的维护。
+//
+//
+//MenuBarControl.xaml.cs
+//顶部菜单栏控件，包含文件、编辑、效果等菜单项，以及最近打开文件列表的维护。
+//
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 

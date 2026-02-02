@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿//
+//TitleBarControl.xaml.cs
+//自定义标题栏控件，提供窗口最小化、最大化、关闭功能，以及模式切换和Logo菜单交互。
+//
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;

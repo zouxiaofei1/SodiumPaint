@@ -1,4 +1,8 @@
-﻿using System.ComponentModel;
+﻿//
+//AppSettings.cs
+//应用程序设置模型，包含语言、主题、快捷键、画笔参数及各种UI配置项的持久化结构。
+//
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;

@@ -1,11 +1,11 @@
 ﻿
+//
+//EyedropperTool.cs
+//取色工具实现，允许用户从画布上拾取颜色并自动更新当前前景色或背景色，随后切回上一个使用的工具。
+//
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
-
-//
-//取色工具
-//
 
 namespace TabPaint
 {

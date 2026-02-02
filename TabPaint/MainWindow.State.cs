@@ -1,4 +1,12 @@
-﻿using System.Collections.ObjectModel;
+﻿//
+//MainWindow.State.cs
+//MainWindow类的状态部分，包含各种字段、属性定义以及属性变更通知逻辑。
+//
+//
+//MainWindow.State.cs
+//MainWindow类的状态部分，包含各种字段、属性定义以及属性变更通知逻辑。
+//
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -14,9 +22,6 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
-//
-//TabPaint定义
-//
 
 namespace TabPaint
 {
