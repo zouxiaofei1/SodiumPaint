@@ -193,8 +193,8 @@ namespace TabPaint
         }
         private BitmapSource CreateWhiteThumbnail()  // 生成纯白缩略图
         {
-            int w = 100; int h = 60;
-            var bmp = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+            int w = AppConsts.DefaultThumbnailWidth; int h = AppConsts.DefaultThumbnailHeight;
+            var bmp = new RenderTargetBitmap(w, h, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Pbgra32);
             var visual = new DrawingVisual();
             using (var ctx = visual.RenderOpen())
             {
@@ -207,7 +207,7 @@ namespace TabPaint
 
         private byte[] ExtractRegionFromSnapshot(byte[] fullData, Int32Rect rect, int stride)
         {
-            int bytesPerPixel = 4;
+            const int bytesPerPixel = 4;
             byte[] region = new byte[rect.Height * rect.Width * bytesPerPixel];
 
             for (int row = 0; row < rect.Height; row++)
@@ -257,7 +257,7 @@ namespace TabPaint
         }
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)
         {
-            _bitmap = new WriteableBitmap(_bmpWidth, _bmpHeight, 96, 96, PixelFormats.Bgra32, null);
+            _bitmap = new WriteableBitmap(_bmpWidth, _bmpHeight, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
             BackgroundImage.Source = _bitmap;
 
             // 填充白色背景
@@ -387,7 +387,7 @@ namespace TabPaint
                         byte b = row[x * 4];
                         byte g = row[x * 4 + 1];
                         byte r = row[x * 4 + 2];
-                        byte gray = (byte)(r * 0.2126 + g * 0.7152 + b * 0.0722); 
+                        byte gray = (byte)(r * AppConsts.GrayWeightR + g * AppConsts.GrayWeightG + b * AppConsts.GrayWeightB); 
                         row[x * 4] = gray; // Blue
                         row[x * 4 + 1] = gray; // Green
                         row[x * 4 + 2] = gray; 

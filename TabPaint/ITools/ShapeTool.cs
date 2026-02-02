@@ -99,7 +99,7 @@ public class ShapeTool : ToolBase
                 _previewShape = new System.Windows.Shapes.Rectangle();
                 break;
             case ShapeType.RoundedRectangle:
-                _previewShape = new System.Windows.Shapes.Rectangle { RadiusX = 20, RadiusY = 20 };
+                _previewShape = new System.Windows.Shapes.Rectangle { RadiusX = AppConsts.ShapeToolRoundedRectRadius, RadiusY = AppConsts.ShapeToolRoundedRectRadius };
                 break;
             case ShapeType.Ellipse:
                 _previewShape = new System.Windows.Shapes.Ellipse();
@@ -333,7 +333,7 @@ public class ShapeTool : ToolBase
                     dc.DrawRectangle(null, pen, logicalRect);
                     break;
                 case ShapeType.RoundedRectangle:
-                    dc.DrawRoundedRectangle(null, pen, logicalRect, 20, 20);
+                    dc.DrawRoundedRectangle(null, pen, logicalRect, AppConsts.ShapeToolRoundedRectRadius, AppConsts.ShapeToolRoundedRectRadius);
                     break;
                 case ShapeType.Ellipse:
                     dc.DrawEllipse(null, pen,
@@ -500,7 +500,7 @@ public class ShapeTool : ToolBase
             double centerY = rect.Y + rect.Height / 2.0;
             double radiusX = rect.Width / 2.0;
             double radiusY = rect.Height / 2.0;
-            double innerRadiusRatio = 0.4; // 内圆比例
+            double innerRadiusRatio = AppConsts.ShapeToolStarInnerRadiusRatio; // 内圆比例
 
             int numPoints = 5;
             double angleStep = Math.PI / numPoints;
@@ -532,19 +532,19 @@ public class ShapeTool : ToolBase
         using (StreamGeometryContext ctx = geometry.Open())
         {
             // 简单的圆角矩形 + 小尾巴
-            double radius = Math.Min(rect.Width, rect.Height) * 0.15;
-            double tailHeight = rect.Height * 0.2;
+            double radius = Math.Min(rect.Width, rect.Height) * AppConsts.ShapeToolBubbleRadiusRatio;
+            double tailHeight = rect.Height * AppConsts.ShapeToolBubbleTailHeightRatio;
             double bodyHeight = rect.Height - tailHeight;
 
             // 主体矩形区域
             Rect bodyRect = new Rect(rect.X, rect.Y, rect.Width, bodyHeight);
 
             // 尾巴的起点 (右下角偏左一点)
-            Point tailStart = new Point(rect.X + rect.Width * 0.7, rect.Y + bodyHeight);
+            Point tailStart = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailStartRatio, rect.Y + bodyHeight);
             // 尾巴尖端
-            Point tailTip = new Point(rect.X + rect.Width * 0.7, rect.Y + rect.Height);
+            Point tailTip = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailStartRatio, rect.Y + rect.Height);
             // 尾巴终点
-            Point tailEnd = new Point(rect.X + rect.Width * 0.5, rect.Y + bodyHeight);
+            Point tailEnd = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailEndRatio, rect.Y + bodyHeight);
 
             // 绘制
             ctx.BeginFigure(new Point(bodyRect.X + radius, bodyRect.Y), true, true);

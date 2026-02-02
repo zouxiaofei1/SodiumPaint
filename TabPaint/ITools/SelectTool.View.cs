@@ -64,7 +64,7 @@ namespace TabPaint
                 var outlinePath = new System.Windows.Shapes.Path
                 {
                     Stroke = mw._darkBackgroundBrush, // 之后改成黑白相间
-                    StrokeThickness = invScale * 1.5, // 保持细线
+                    StrokeThickness = invScale * AppConsts.SelectToolOutlineThickness, // 保持细线
                     Data = geometry,
                     SnapsToDevicePixels = false // 避免缩放时的像素对齐抖动
                 };
@@ -73,7 +73,7 @@ namespace TabPaint
                 var whiteBase = new System.Windows.Shapes.Path
                 {
                     Stroke = Brushes.White,
-                    StrokeThickness = invScale * 1.5,
+                    StrokeThickness = invScale * AppConsts.SelectToolOutlineThickness,
                     Data = geometry,
                     SnapsToDevicePixels = false,
                     Opacity = 0.8
@@ -81,12 +81,12 @@ namespace TabPaint
                 overlay.Children.Add(whiteBase);
 
                 // 2. 顶层黑色虚线
-                outlinePath.StrokeDashArray = new DoubleCollection { 4, 4 }; // 4实4空
+                outlinePath.StrokeDashArray = new DoubleCollection { AppConsts.SelectToolDashLength, AppConsts.SelectToolDashLength }; // 4实4空
                 DoubleAnimation animation = new DoubleAnimation
                 {
                     From = 0,
-                    To = 8, // 必须是 DashArray 总和 (4+4) 的倍数
-                    Duration = new Duration(TimeSpan.FromSeconds(1)), // 1秒转一圈
+                    To = AppConsts.SelectToolAnimationTo, // 必须是 DashArray 总和 (4+4) 的倍数
+                    Duration = new Duration(TimeSpan.FromSeconds(AppConsts.SelectToolAnimationDurationSeconds)), // 1秒转一圈
                     RepeatBehavior = RepeatBehavior.Forever
                 };
                 outlinePath.BeginAnimation(System.Windows.Shapes.Shape.StrokeDashOffsetProperty, animation);
@@ -117,7 +117,7 @@ namespace TabPaint
             public Int32Rect GetSelectionRect() => _selectionRect;
             public ResizeAnchor HitTestHandle(Point px, Int32Rect rect)
             {
-                double size = 6 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale; // 句柄大小
+                double size = AppConsts.SelectToolHandleSize / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale; // 句柄大小
                 double x1 = rect.X;
                 double y1 = rect.Y;
                 double x2 = rect.X + rect.Width;
@@ -192,8 +192,8 @@ namespace TabPaint
                 var bitmap = ctx.Surface.Bitmap;
                 ctx.SelectionPreview.Stretch = System.Windows.Media.Stretch.Fill;
 
-                double scaleX = 96.0 / bitmap.DpiX;
-                double scaleY = 96.0 / bitmap.DpiY;
+                double scaleX = AppConsts.StandardDpi / bitmap.DpiX;
+                double scaleY = AppConsts.StandardDpi / bitmap.DpiY;
 
                 ctx.SelectionPreview.Width = _selectionRect.Width * scaleX;
                 ctx.SelectionPreview.Height = _selectionRect.Height * scaleY;

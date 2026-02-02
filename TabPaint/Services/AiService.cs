@@ -17,24 +17,24 @@ namespace TabPaint
 {
     public class AiService
     {
-        private const string BgRem_ModelUrl_HF = "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx";
-        private const string BgRem_ModelUrl_MS = "https://modelscope.cn/models/AI-ModelScope/RMBG-1.4/resolve/master/onnx/model.onnx";
-        private const string BgRem_ModelName = "rmbg-1.4.onnx";
-        private const string ExpectedMD5 = "8bb9b16ff49cda31e7784852873cfd0d";
+        private const string BgRem_ModelUrl_HF = AppConsts.BgRem_ModelUrl_HF;
+        private const string BgRem_ModelUrl_MS = AppConsts.BgRem_ModelUrl_MS;
+        private const string BgRem_ModelName = AppConsts.BgRem_ModelName;
+        private const string ExpectedMD5 = AppConsts.BgRem_ExpectedMD5;
 
         private readonly string _cacheDir;
 
-        private const string Sr_ModelUrl_HF = "https://modelscope.cn/models/AXERA-TECH/Real-ESRGAN/resolve/master/onnx/realesrgan-x4-256.onnx";
+        private const string Sr_ModelUrl_HF = AppConsts.Sr_ModelUrl_HF;
         // 备用源 (由于 github release 国内下载慢，建议替换为你自己的 OSS 地址或者国内镜像)
-        private const string Sr_ModelUrl_Mirror = "https://modelscope.cn/models/AXERA-TECH/Real-ESRGAN/resolve/master/onnx/realesrgan-x4-256.onnx";
-        private const string Sr_ModelName = "realesrgan-x4plus.onnx";
-        private const int TileSize = 256; // 切块大小，越小内存占用越低，但推理次数越多
-        private const int TileOverlap = 16; // 重叠区域，防止拼接缝隙
-        private const int ScaleFactor = 4;
-        private const string Inpaint_ModelUrl = "https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx";
-        private const string Inpaint_ModelUrl_Mirror = "https://modelscope.cn/models/codetrend/LaMa_Inpainting_Model_ONNX/resolve/master/lama_fp32.onnx";
-        private const string Inpaint_ModelName = "lama_fp32.onnx";
-        private const string Inpaint_MD5 = "2777748DC5275B27DAFC63C5D4F1F730";
+        private const string Sr_ModelUrl_Mirror = AppConsts.Sr_ModelUrl_Mirror;
+        private const string Sr_ModelName = AppConsts.Sr_ModelName;
+        private const int TileSize = AppConsts.Sr_TileSize; // 切块大小，越小内存占用越低，但推理次数越多
+        private const int TileOverlap = AppConsts.AiSrTileOverlap; // 重叠区域，防止拼接缝隙
+        private const int ScaleFactor = AppConsts.Sr_ScaleFactor;
+        private const string Inpaint_ModelUrl = AppConsts.Inpaint_ModelUrl;
+        private const string Inpaint_ModelUrl_Mirror = AppConsts.Inpaint_ModelUrl_Mirror;
+        private const string Inpaint_ModelName = AppConsts.Inpaint_ModelName;
+        private const string Inpaint_MD5 = AppConsts.Inpaint_ExpectedMD5;
         // 检查模型是否准备好
         public bool IsInpaintModelReady()
         {
@@ -48,7 +48,7 @@ namespace TabPaint
 
             using (var client = new HttpClient())
             {
-                client.Timeout = TimeSpan.FromMinutes(20);
+                client.Timeout = TimeSpan.FromMinutes(AppConsts.AiDownloadTimeoutMinutes);
                 // 复用之前的下载逻辑，MD5 暂时设为 null 跳过校验或自行计算
                 if (!await DownloadAndValidateAsync(client, Inpaint_ModelUrl, finalPath, null, progress))
                 {
@@ -60,8 +60,8 @@ namespace TabPaint
 
         public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
         {
-            int targetW = 512;
-            int targetH = 512;
+            int targetW = AppConsts.AiInpaintSize;
+            int targetH = AppConsts.AiInpaintSize;
 
             return await Task.Run(() =>
             {
@@ -327,13 +327,13 @@ namespace TabPaint
             {
                 case AiTaskType.RemoveBackground:
                     modelName = BgRem_ModelName;
-                    expectedMd5 = "8bb9b16ff49cda31e7784852873cfd0d";
+                    expectedMd5 = ExpectedMD5;
                     urlMain = BgRem_ModelUrl_HF;
                     urlMirror = BgRem_ModelUrl_MS;
                     break;
                 case AiTaskType.SuperResolution:
                     modelName = Sr_ModelName;
-                    expectedMd5 = "25C354305A32B59300A610BCD7846977";
+                    expectedMd5 = AppConsts.Sr_ExpectedMD5;
                     urlMain = Sr_ModelUrl_HF;
                     urlMirror = Sr_ModelUrl_Mirror;
                     break;
@@ -374,7 +374,7 @@ namespace TabPaint
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add("User-Agent", "TabPaint-Client/1.0");
-                client.Timeout = TimeSpan.FromMinutes(20); // 大模型下载给予充足时间
+                client.Timeout = TimeSpan.FromMinutes(AppConsts.AiDownloadTimeoutMinutes); // 大模型下载给予充足时间
 
                 // 尝试主链接
                 if (!await DownloadAndValidateAsync(client, primaryUrl, finalPath, expectedMd5, progress))
@@ -409,7 +409,7 @@ namespace TabPaint
                     using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
                         var totalRead = 0L;
-                        var buffer = new byte[8192]; // 8KB buffer
+                        var buffer = new byte[AppConsts.AiDownloadBufferSize]; // 8KB buffer
                         var isMoreToRead = true;
                         int lastReportedPercent = -1;
 
@@ -485,8 +485,8 @@ namespace TabPaint
 
         public async Task<byte[]> RunInferenceAsync(string modelPath, WriteableBitmap originalBmp)
         {
-            int targetW = 1024;
-            int targetH = 1024;
+            int targetW = AppConsts.AiInferenceSizeDefault;
+            int targetH = AppConsts.AiInferenceSizeDefault;
             var resized = new TransformedBitmap(originalBmp,
                 new ScaleTransform((double)targetW / originalBmp.PixelWidth, (double)targetH / originalBmp.PixelHeight));
             var wb = new WriteableBitmap(resized);

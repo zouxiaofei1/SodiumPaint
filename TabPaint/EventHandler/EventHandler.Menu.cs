@@ -293,12 +293,12 @@ namespace TabPaint
             }
             return lut;
         }
-        private void OnRecentFileClick(object sender, string filePath)
+        private async void OnRecentFileClick(object sender, string filePath)
         {
             if (File.Exists(filePath))
             {
                 string[] files = [filePath];
-                OpenFilesAsNewTabs(files);
+                await OpenFilesAsNewTabs(files);
 
                 UpdateImageBarSliderState();
             }
@@ -546,7 +546,7 @@ namespace TabPaint
         }
 
 
-        private void OnOpenClick(object sender, RoutedEventArgs e)
+        private async void OnOpenClick(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
@@ -556,7 +556,7 @@ namespace TabPaint
             if (dlg.ShowDialog() == true)
             {
                 string[] files= dlg.FileNames;
-                OpenFilesAsNewTabs(files);
+                await OpenFilesAsNewTabs(files);
                 foreach (var file in files)
                     SettingsManager.Instance.AddRecentFile(file);
                 UpdateImageBarSliderState();

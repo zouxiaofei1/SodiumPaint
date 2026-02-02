@@ -45,7 +45,7 @@ namespace TabPaint
             private double _startW, _startH, _startX, _startY;
             public int lag = 0;
             // 句柄尺寸
-            private const double HandleSize = 6;
+            private const double HandleSize = AppConsts.SelectToolHandleSize;
             private DispatcherTimer _tabSwitchTimer;
             private FileTabItem _pendingTab; // 当前正在倒计时的目标 Tab
                                              // private DateTime _hoverStartTime;
@@ -71,7 +71,7 @@ namespace TabPaint
                 if (_tabSwitchTimer == null)
                 {
                     _tabSwitchTimer = new DispatcherTimer();
-                    _tabSwitchTimer.Interval = TimeSpan.FromMilliseconds(50); // 每50ms检查一次
+                    _tabSwitchTimer.Interval = TimeSpan.FromMilliseconds(AppConsts.TabSwitchCheckIntervalMs); // 每50ms检查一次
                     _tabSwitchTimer.Tick += OnTabSwitchTimerTick;
                 }
             }
@@ -83,10 +83,10 @@ namespace TabPaint
                     return;
                 }
                 bool isCleanSelection = ctxForTimer.Undo.UndoCount <= 1 && ctxForTimer.Undo._redo.Count == 0;
-                double targetDelay = isCleanSelection ? 500 : 1000;
+                double targetDelay = isCleanSelection ? AppConsts.QuickDragDelayMs : AppConsts.SlowDragDelayMs;
                 double elapsed = (DateTime.Now - _hoverStartTime).TotalMilliseconds;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                if (elapsed > 200)
+                if (elapsed > AppConsts.HoverStartTimeThresholdMs)
                 {
                     // 1. 光标反馈
                     Mouse.OverrideCursor = Cursors.AppStarting;

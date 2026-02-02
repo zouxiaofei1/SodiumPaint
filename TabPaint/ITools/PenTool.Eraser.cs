@@ -130,8 +130,8 @@ public partial class PenTool : ToolBase
             var oldBmp = ctx.Surface.Bitmap;
             int origW = oldBmp.PixelWidth;
             int origH = oldBmp.PixelHeight;
-            int targetW = 512;
-            int targetH = 512;
+            int targetW = AppConsts.AiInpaintSize;
+            int targetH = AppConsts.AiInpaintSize;
 
             // 缩放原图到 512
             var scaledImg = new TransformedBitmap(oldBmp, new ScaleTransform((double)targetW / origW, (double)targetH / origH));
@@ -148,7 +148,7 @@ public partial class PenTool : ToolBase
            
             byte[] rawResultPixels = await aiService.RunInpaintingAsync(modelPath, imgBytes, maskBytes, origW, origH);
 
-            var result512 = new WriteableBitmap(targetW, targetH, 96, 96, PixelFormats.Bgra32, null);
+            var result512 = new WriteableBitmap(targetW, targetH, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
             result512.WritePixels(new Int32Rect(0, 0, targetW, targetH), rawResultPixels, targetW * 4, 0);
 
             var finalScaled = new TransformedBitmap(result512, new ScaleTransform((double)origW / targetW, (double)origH / targetH));

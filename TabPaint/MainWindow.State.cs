@@ -22,23 +22,23 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private const int WM_NCHITTEST = 0x0084;
-        private const int HTLEFT = 10;
-        private const int HTRIGHT = 11;
-        private const int HTTOP = 12;
-        private const int HTTOPLEFT = 13;
-        private const int HTTOPRIGHT = 14;
-        private const int HTBOTTOM = 15;
-        private const int HTBOTTOMLEFT = 16;
-        private const int HTBOTTOMRIGHT = 17;
+        private const int WM_NCHITTEST = AppConsts.WM_NCHITTEST;
+        private const int HTLEFT = AppConsts.HTLEFT;
+        private const int HTRIGHT = AppConsts.HTRIGHT;
+        private const int HTTOP = AppConsts.HTTOP;
+        private const int HTTOPLEFT = AppConsts.HTTOPLEFT;
+        private const int HTTOPRIGHT = AppConsts.HTTOPRIGHT;
+        private const int HTBOTTOM = AppConsts.HTBOTTOM;
+        private const int HTBOTTOMLEFT = AppConsts.HTBOTTOMLEFT;
+        private const int HTBOTTOMRIGHT = AppConsts.HTBOTTOMRIGHT;
 
 
-        private const double ZoomStep = 0.1; // 每次滚轮缩放步进
-        private const double ZoomTimes = 1.1;
-        private const double MinZoom = 0.05;
-        private const double MaxZoom = 50.0;
-        private const int WM_CLIPBOARDUPDATE = 0x031D;
-        private const int WM_MOUSEHWHEEL = 0x020E;
+        private const double ZoomStep = AppConsts.DefaultZoomStep; // 每次滚轮缩放步进
+        private const double ZoomTimes = AppConsts.ZoomTimes;
+        private const double MinZoom = AppConsts.MinZoom;
+        private const double MaxZoom = AppConsts.MaxZoom;
+        private const int WM_CLIPBOARDUPDATE = AppConsts.WM_CLIPBOARDUPDATE;
+        private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool AddClipboardFormatListener(IntPtr hwnd);
@@ -78,7 +78,7 @@ namespace TabPaint
         private int _currentImageIndex = -1;
         private bool _isEdited = false; // 标记当前画布是否被修改
         private string _currentFileName = LocalizationManager.GetString("L_Common_Untitled");
-        public string ProgramVersion { get; set; } = "v0.9.3.2-beta";
+        public string ProgramVersion { get; set; } = AppConsts.ProgramVersion;
 
         private bool _isFileSaved = true; // 是否有未保存修改
 
@@ -108,7 +108,7 @@ namespace TabPaint
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-        private double _penThickness = 5;
+        private double _penThickness = AppConsts.DefaultPenThickness;
         public double PenThickness
         {
             get => _penThickness;
@@ -153,7 +153,7 @@ namespace TabPaint
         private Stack<UndoAction> _undoStack = new Stack<UndoAction>();
         private List<Int32Rect> _currentDrawRegions = new List<Int32Rect>(); // 当前笔的区域记录
         private Stack<UndoAction> _redoStack = new Stack<UndoAction>();
-        string PicFilterString => string.Format("{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico",
+        string PicFilterString => string.Format(AppConsts.ImageFilterFormat,
             LocalizationManager.GetString("L_Main_Filter_AllImages"),
             LocalizationManager.GetString("L_Main_Filter_PNG"),
             LocalizationManager.GetString("L_Main_Filter_JPEG"),
@@ -187,16 +187,10 @@ namespace TabPaint
             // [新增] 记录该标签页所属的工作目录
             public string WorkDirectory { get; set; }
         }
-        public  string _dragTempDir = System.IO.Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "TabPaint", "Cache\\DragTemp");
+        public string _dragTempDir = AppConsts.DragTempDir;
 
-        private string _sessionPath = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "TabPaint", "session.json");
-        public readonly string _cacheDir = System.IO.Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "TabPaint", "Cache");
+        private string _sessionPath = AppConsts.SessionPath;
+        public readonly string _cacheDir = AppConsts.CacheDir;
         private System.Windows.Threading.DispatcherTimer _autoSaveTimer;
         public CanvasResizeManager _canvasResizer;
         private int _savedUndoPoint = 0;
@@ -206,8 +200,8 @@ namespace TabPaint
             get => _currentImageFullInfo;
             set { _currentImageFullInfo = value; OnPropertyChanged(nameof(CurrentImageFullInfo)); }
         }
-        private double _originalDpiX = 96.0;
-        private double _originalDpiY = 96.0;
+        private double _originalDpiX = AppConsts.StandardDpi;
+        private double _originalDpiY = AppConsts.StandardDpi;
         private bool _isFixedZoom = false;
         public bool IsFixedZoom
         {
@@ -226,7 +220,7 @@ namespace TabPaint
         private bool _isLoadingImage = true;//是否正在加载图像,false时不能画图
         private bool _programClosed = false;
         private string _workingPath;
-        public const string InternalClipboardFormat = "TabPaint_Internal_Copy_Marker";
+        public const string InternalClipboardFormat = AppConsts.InternalClipboardFormat;
         public bool _firstFittoWindowdone = false;
         public int PerformanceScore;
         public static readonly DependencyProperty IsViewModeProperty =
@@ -258,7 +252,7 @@ namespace TabPaint
         public TabPaint.Controls.StatusBarControl MyStatusBar;
 
         private DispatcherTimer _toastTimer;
-        private const int ToastDuration = 1500;
+        private const int ToastDuration = AppConsts.ToastDuration;
         public bool BlanketMode = false;
         private bool _isCurrentFileGif = false; // 标记当前文件是否为GIF
         private System.Windows.Threading.DispatcherTimer _deleteCommitTimer;
@@ -267,10 +261,10 @@ namespace TabPaint
         private int _lastDeletedTabIndex = -1;
         private bool _isDraggingBirdEye = false;
         private Brush _originalGridBrush; // 用于存储启动时 XAML 里定义的那个格子画刷
-        private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333"));
+        private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AppConsts.DarkBackgroundHex));
         public bool _currentFileExists = true; // 标记当前文件是否存在于磁盘
         private bool _hasUserManuallyZoomed = false;
-        public static ThumbnailCache GlobalThumbnailCache = new ThumbnailCache(10000); // 存300张
+        public static ThumbnailCache GlobalThumbnailCache = new ThumbnailCache(AppConsts.MaxThumbnailCacheCount);
         private bool _isUpdatingToolSettings = false;
         public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
     }

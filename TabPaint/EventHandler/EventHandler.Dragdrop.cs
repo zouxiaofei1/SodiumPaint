@@ -33,7 +33,7 @@ namespace TabPaint
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 Point pos = e.GetPosition(this);
-                if (pos.Y < 210&&pos.Y>100)
+                if (pos.Y < AppConsts.DragImageBarThresholdY && pos.Y > AppConsts.DragTitleBarThresholdY)
                 {
                     HideDragOverlay();
                     e.Effects = DragDropEffects.None;
@@ -52,7 +52,7 @@ namespace TabPaint
                 if (imageFiles != null && imageFiles.Length > 0)
                 {
                     Point pos = e.GetPosition(this); 
-                    if (pos.Y <= 100)
+                    if (pos.Y <= AppConsts.DragTitleBarThresholdY)
                     {
                         e.Effects = DragDropEffects.Move;
                         ShowDragOverlay(
@@ -73,7 +73,7 @@ namespace TabPaint
                         }
                         else
                         {
-                            if (pos.Y < 210)
+                            if (pos.Y < AppConsts.DragImageBarThresholdY)
                             {
                                 ShowDragOverlay(
                                 LocalizationManager.GetString("L_Drag_AddToList_Title"),
@@ -183,22 +183,22 @@ namespace TabPaint
                     Point pos = e.GetPosition(this);
 
                     // A. 标题栏区域 -> 切换工作区
-                    if (pos.Y <= 100)
+                    if (pos.Y <= AppConsts.DragTitleBarThresholdY)
                     {
                         await SwitchWorkspaceToNewFile(imageFiles[0]);
                     }
                     else
                     {
-                        // B-1. 多文件 -> 全部新建标签页
-                        if (imageFiles.Length > 1)  await OpenFilesAsNewTabs(imageFiles);
+                    // B-1. 多文件 -> 全部新建标签页
+                    if (imageFiles.Length > 1) await OpenFilesAsNewTabs(imageFiles);
 
-                        else
-                        {
-                            string filePath = imageFiles[0];
+                    else
+                    {
+                        string filePath = imageFiles[0];
 
-                            if (pos.Y < 200) await OpenFilesAsNewTabs(new string[] { filePath });
-                            else InsertImageToCanvas(filePath);
-                        }
+                        if (pos.Y < AppConsts.DragImageBarThresholdY) await OpenFilesAsNewTabs(new string[] { filePath });
+                        else InsertImageToCanvas(filePath);
+                    }
                     }
                 }
                 e.Handled = true;
@@ -293,7 +293,7 @@ namespace TabPaint
             // 获取窗口物理位置
             Point p1 = this.PointToScreen(new Point(0, 0));
             Point p2 = this.PointToScreen(new Point(this.ActualWidth, this.ActualHeight));
-            double padding = 5.0;
+            double padding = AppConsts.DragGlobalPadding;
 
             bool isInside = (cursorScreenPos.X >= p1.X - padding && cursorScreenPos.X <= p2.X + padding &&
                              cursorScreenPos.Y >= p1.Y - padding && cursorScreenPos.Y <= p2.Y + padding);

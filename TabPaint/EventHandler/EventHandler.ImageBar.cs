@@ -867,7 +867,7 @@ namespace TabPaint
                 // --- 3. 提交到剪贴板 ---
                 Clipboard.SetDataObject(dataObject, true);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ShowToast("L_Toast_CopyFailed");
             }

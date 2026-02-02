@@ -91,7 +91,7 @@ namespace TabPaint
             int selectedIndex = FileTabs.IndexOf(currentTab);
             if (selectedIndex < 0) return;
 
-            double itemWidth = 124;
+            double itemWidth = AppConsts.ImageBarItemWidth;
             double viewportWidth = MainImageBar.Scroller.ViewportWidth;
 
             // 如果窗口还没加载完，ViewportWidth 可能是 0，这时候滚动没意义且可能报错
@@ -247,7 +247,7 @@ namespace TabPaint
 
                 // 此时布局已自然完成，ActualWidth 可以直接读取
                 double btnWidth = MainImageBar.AddButton.ActualWidth;
-                if (btnWidth == 0) btnWidth = 46; // 给个保底值
+                if (btnWidth == 0) btnWidth = AppConsts.ImageBarAddButtonWidthFallback; // 给个保底值
 
                 double hiddenWidth = btnWidth
                                    + MainImageBar.AddButton.Margin.Left

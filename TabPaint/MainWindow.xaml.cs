@@ -90,7 +90,7 @@ namespace TabPaint
             if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath)))
             {
                 // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
-                OpenImageAndTabs(_currentFilePath, true);
+                await OpenImageAndTabs(_currentFilePath, true);
             }
             else
             {
@@ -180,7 +180,7 @@ namespace TabPaint
             {
 
                 _deleteCommitTimer = new System.Windows.Threading.DispatcherTimer();
-                _deleteCommitTimer.Interval = TimeSpan.FromSeconds(2); // 2秒
+                _deleteCommitTimer.Interval = TimeSpan.FromSeconds(AppConsts.DeleteCommitTimerSeconds); // 2秒
                 _deleteCommitTimer.Tick += (s, e) => CommitPendingDeletions();
                 StateChanged += MainWindow_StateChanged;
                 Select = new SelectTool();
@@ -217,9 +217,9 @@ namespace TabPaint
                     _router.OnPreviewKeyDown(s, e);
                 };
             
-                _ = Task.Delay(TimeSpan.FromSeconds(150)).ContinueWith(async _ =>
+            _ = Task.Delay(TimeSpan.FromSeconds(AppConsts.DragTempCleanupDelaySeconds)).ContinueWith(async _ =>
                 {
-                    CheckAndCleanDragTempAsync();
+                    await CheckAndCleanDragTempAsync();
                 }, TaskScheduler.Default);
             }
             catch (Exception ex)
@@ -310,9 +310,8 @@ namespace TabPaint
         }
         private bool IsImageFile(string path)
         {
-            string[] validExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif",".ico", ".tiff", ".gif", ".heic", ".tif", ".jfif",  ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr" };
             string ext = System.IO.Path.GetExtension(path)?.ToLower();
-            return validExtensions.Contains(ext);
+            return AppConsts.ImageExtensions.Contains(ext);
         }
 
         public async Task OpenFilesAsNewTabs(string[] files)
@@ -348,7 +347,7 @@ namespace TabPaint
                     else
                         FileTabs.Add(newTab);
 
-                    _ = newTab.LoadThumbnailAsync(100, 60);
+                    _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                     if (firstNewTab == null) firstNewTab = newTab;
                     addedCount++;
                 }
@@ -387,7 +386,7 @@ namespace TabPaint
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
-                zoomscale = fitScale * addscale * 0.9;
+                zoomscale = fitScale * addscale * AppConsts.FitToWindowMarginFactor;
 
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
@@ -421,7 +420,7 @@ namespace TabPaint
                     var bitmapSource = Clipboard.GetImage();
                     if (bitmapSource != null)
                     {
-                        string cacheDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "TabPaint_Cache");
+                        string cacheDir = AppConsts.CacheDir;
                         if (!System.IO.Directory.Exists(cacheDir)) System.IO.Directory.CreateDirectory(cacheDir);
 
                         string fileName = $"Paste_{DateTime.Now:yyyyMMdd_HHmmss}.png";
@@ -485,7 +484,7 @@ namespace TabPaint
                 }
 
                 // 异步加载缩略图
-                _ = newTab.LoadThumbnailAsync(100, 60);
+                _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
 
                 // 记录第一张新图，用于稍后跳转
                 if (firstNewTab == null) firstNewTab = newTab;
@@ -601,7 +600,7 @@ namespace TabPaint
             {
                 InfoToast.BeginAnimation(OpacityProperty, null);
 
-                DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(200));
+                DoubleAnimation fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(AppConsts.ToastFadeInMs));
                 fadeIn.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut };
                 InfoToast.BeginAnimation(OpacityProperty, fadeIn);
             }
@@ -613,7 +612,7 @@ namespace TabPaint
         {
             _toastTimer.Stop(); // 停止计时器
 
-            DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(500));
+            DoubleAnimation fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(AppConsts.ToastFadeOutMs));
             fadeOut.EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn };
 
             InfoToast.BeginAnimation(OpacityProperty, fadeOut);
@@ -627,9 +626,9 @@ namespace TabPaint
 
             var duration = (DateTime.Now - _navKeyPressStartTime).TotalMilliseconds;
 
-            if (duration < 5000) return 1;
-            if (duration < 10000) return 2;
-            if(PerformanceScore>8)  return 5; else return 3;
+            if (duration < AppConsts.NavGapLevel1Ms) return 1;
+            if (duration < AppConsts.NavGapLevel2Ms) return 2;
+            if(PerformanceScore > AppConsts.HighPerformanceThreshold)  return 5; else return 3;
         }
 
 
@@ -740,7 +739,7 @@ namespace TabPaint
                     FileTabs.Add(newTab);
 
                 // 异步加载缩略图
-                _ = newTab.LoadThumbnailAsync(100, 60);
+                _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
 
                 if (firstNewTab == null) firstNewTab = newTab;
                 addedCount++;

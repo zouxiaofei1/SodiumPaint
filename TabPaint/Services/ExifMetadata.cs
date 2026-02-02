@@ -58,7 +58,7 @@ namespace TabPaint
                         if (!string.IsNullOrEmpty(metadata.CameraModel)) device += metadata.CameraModel;
                         if (!string.IsNullOrEmpty(device)) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Device_Format"), device.Trim()));
 
-                        var expVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33434}");
+                        var expVal = TryGetQuery(metadata, AppConsts.ExifTagExposureTime);
                         if (expVal != null)
                         {
                             double seconds = ParseUnsignedRational(expVal);
@@ -71,17 +71,17 @@ namespace TabPaint
                             }
                         }
 
-                        var fVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=33437}");
+                        var fVal = TryGetQuery(metadata, AppConsts.ExifTagFNumber);
                         if (fVal != null)
                         {
                             double fNum = ParseUnsignedRational(fVal);
                             if (fNum > 0) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_FNumber_Format"), fNum));
                         }
 
-                        var iso = TryGetQuery(metadata, "/app1/ifd/exif/{uint=34855}");
+                        var iso = TryGetQuery(metadata, AppConsts.ExifTagIsoSpeed);
                         if (iso != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_ISO_Format"), iso));
 
-                        var biasVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37380}");
+                        var biasVal = TryGetQuery(metadata, AppConsts.ExifTagExposureBias);
                         if (biasVal != null)
                         {
                             double bias = ParseSignedRational(biasVal);
@@ -89,24 +89,24 @@ namespace TabPaint
                             string biasStr = bias == 0 ? "0" : (bias > 0 ? $"+{bias:0.##}" : $"{bias:0.##}");
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Bias_Format"), biasStr));
                         }
-                        var focalVal = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37386}");
+                        var focalVal = TryGetQuery(metadata, AppConsts.ExifTagFocalLength);
                         if (focalVal != null)
                         {
                             double focal = ParseUnsignedRational(focalVal);
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Focal_Format"), focal));
                         }
 
-                        var focal35 = TryGetQuery(metadata, "/app1/ifd/exif/{uint=41989}");
+                        var focal35 = TryGetQuery(metadata, AppConsts.ExifTagFocalLength35mm);
                         if (focal35 != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Focal35_Format"), focal35));
 
 
                         // 测光模式
-                        var meter = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37383}");
+                        var meter = TryGetQuery(metadata, AppConsts.ExifTagMeteringMode);
                         if (meter != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Metering_Format"), MapMeteringMode(meter)));
 
 
                         // 闪光灯
-                        var flash = TryGetQuery(metadata, "/app1/ifd/exif/{uint=37385}");
+                        var flash = TryGetQuery(metadata, AppConsts.ExifTagFlash);
                         if (flash != null)
                         {
                             bool isFlashOn = (Convert.ToInt32(flash) & 1) == 1;
@@ -123,7 +123,7 @@ namespace TabPaint
                             exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Date_Format"), metadata.DateTaken));
 
                         // 镜头信息
-                        var lens = TryGetQuery(metadata, "/app1/ifd/exif/{uint=42036}");
+                        var lens = TryGetQuery(metadata, AppConsts.ExifTagLensModel);
                         if (lens != null) exifSb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Lens_Format"), lens));
 
                         // 合并

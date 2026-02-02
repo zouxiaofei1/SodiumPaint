@@ -86,7 +86,7 @@ namespace TabPaint
 
                     System.Windows.Clipboard.SetDataObject(dataObj, true);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
             }
@@ -125,7 +125,6 @@ namespace TabPaint
 
             }
             private DateTime _hoverStartTime;
-            private FileTabItem _lastHoveredTab;
             private bool _isHoveringForSwitch = false;
             public void ForceDragState()
             {
@@ -365,8 +364,8 @@ namespace TabPaint
                 ctx.SelectionPreview.Source = previewBmp;
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
 
-                double dpiScaleX = 96.0 / ctx.Surface.Bitmap.DpiX;
-                double dpiScaleY = 96.0 / ctx.Surface.Bitmap.DpiY;
+                double dpiScaleX = AppConsts.StandardDpi / ctx.Surface.Bitmap.DpiX;
+                double dpiScaleY = AppConsts.StandardDpi / ctx.Surface.Bitmap.DpiY;
 
                 ctx.SelectionPreview.Width = _selectionRect.Width * dpiScaleX;
                 ctx.SelectionPreview.Height = _selectionRect.Height * dpiScaleY;
@@ -972,8 +971,8 @@ namespace TabPaint
 
                     // 获取当前画布的 DPI，确保 OCR 识别精度一致
                     var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                    double dpiX = mw._surface?.Bitmap.DpiX ?? 96;
-                    double dpiY = mw._surface?.Bitmap.DpiY ?? 96;
+                    double dpiX = mw._surface?.Bitmap.DpiX ?? AppConsts.StandardDpi;
+                    double dpiY = mw._surface?.Bitmap.DpiY ?? AppConsts.StandardDpi;
 
                     BitmapSource result = BitmapSource.Create(
                         _originalRect.Width,

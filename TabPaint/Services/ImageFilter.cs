@@ -30,9 +30,9 @@ namespace TabPaint
                             int g = row[x * 4 + 1];
                             int r = row[x * 4 + 2];
 
-                            int tr = (int)(0.393 * r + 0.769 * g + 0.189 * b);
-                            int tg = (int)(0.349 * r + 0.686 * g + 0.168 * b);
-                            int tb = (int)(0.272 * r + 0.534 * g + 0.131 * b);
+                            int tr = (int)(AppConsts.SepiaR1 * r + AppConsts.SepiaR2 * g + AppConsts.SepiaR3 * b);
+                            int tg = (int)(AppConsts.SepiaG1 * r + AppConsts.SepiaG2 * g + AppConsts.SepiaG3 * b);
+                            int tb = (int)(AppConsts.SepiaB1 * r + AppConsts.SepiaB2 * g + AppConsts.SepiaB3 * b);
 
                             row[x * 4 + 2] = (byte)Math.Min(255, tr);
                             row[x * 4 + 1] = (byte)Math.Min(255, tg);

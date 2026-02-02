@@ -140,12 +140,11 @@ namespace TabPaint.Controls
 
         public event DragEventHandler FileTabDrop;
         private void Internal_OnFileTabDrop(object sender, DragEventArgs e) => FileTabDrop?.Invoke(sender, e);
-
+        public event MouseWheelEventHandler FileTabsWheelScroll;
         public event DragEventHandler FileTabReorderDragOver;
         private void Internal_OnFileTabReorderDragOver(object sender, DragEventArgs e) => FileTabReorderDragOver?.Invoke(sender, e);
 
         // 滚动条与滑块
-        public event MouseWheelEventHandler FileTabsWheelScroll;
         private void Internal_OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
         {
             var scroller = sender as ScrollViewer;

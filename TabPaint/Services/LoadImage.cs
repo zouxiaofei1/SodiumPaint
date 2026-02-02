@@ -170,11 +170,7 @@ namespace TabPaint
             }
         }
         // 1. 在类级别定义支持的扩展名（静态只读，利用HashSet的哈希查找，极快）
-        private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-{
-    ".png", ".jpg", ".jpeg", ".tif", ".tiff",
-    ".gif", ".webp", ".bmp", ".ico", ".heic",".jfif",".avif",".exif",".jpe",".jxl",".heif",".hif",".dib",".wdp",".wmp",".jxr"
-};
+        private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(AppConsts.ImageExtensions, StringComparer.OrdinalIgnoreCase);
 
         // 2. 改为异步方法
         private async Task ScanFolderImagesAsync(string filePath)
@@ -236,7 +232,7 @@ namespace TabPaint
                 img.BeginInit();
                 img.CacheOption = BitmapCacheOption.OnLoad;
 
-                if (originalWidth > 480) img.DecodePixelWidth = 480;
+                if (originalWidth > AppConsts.PreviewDecodeWidth) img.DecodePixelWidth = AppConsts.PreviewDecodeWidth;
                
                 // 否则不设置 DecodePixelWidth（默认为0，即加载原图尺寸），避免小图报错或被拉伸
 
@@ -274,7 +270,7 @@ namespace TabPaint
                 img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
                 img.StreamSource = ms;
 
-                const int maxSize = 16384;
+                const int maxSize = (int)AppConsts.MaxCanvasSize;
                 if (originalWidth > maxSize || originalHeight > maxSize)
                 {
                     if (originalWidth >= originalHeight) img.DecodePixelWidth = maxSize;
@@ -382,7 +378,7 @@ namespace TabPaint
                 }
                 var (originalWidth, originalHeight) = dimensions.Value;
                 long totalPixels = (long)originalWidth * originalHeight;
-                bool showProgress = totalPixels > 2000000 * PerformanceScore;
+                bool showProgress = totalPixels > AppConsts.PerformanceScorePixelThreshold * PerformanceScore;
                 if (showProgress)
                 {
                     // 创建新的进度条控制源
@@ -413,12 +409,12 @@ namespace TabPaint
                     });
                 }
                 long _totalPixels = (long)originalWidth * originalHeight;
-                bool isHugeImage = _totalPixels > 10_000_000 * PerformanceScore; // 阈值：5000万像素 (约8K分辨率以上)
+                bool isHugeImage = _totalPixels > AppConsts.HugeImagePixelThreshold * PerformanceScore; // 阈值：5000万像素 (约8K分辨率以上)
                 if (isHugeImage)
                 {
                     try
                     {
-                        await Task.Delay(100, token);
+                        await Task.Delay(AppConsts.ImageLoadDelayHugeMs, token);
                     }
                     catch (TaskCanceledException)
                     {
@@ -497,7 +493,7 @@ namespace TabPaint
                 {
                     try
                     {
-                        await Task.Delay(50, token);
+                        await Task.Delay(AppConsts.ImageLoadDelayLazyMs, token);
                     }
                     catch (TaskCanceledException)
                     {
@@ -513,7 +509,7 @@ namespace TabPaint
                 {
                     if (token.IsCancellationRequested) return;
                     long currentMem = Process.GetCurrentProcess().PrivateMemorySize64;
-                    if (currentMem > 1024 * 1024 * 1024)
+                    if (currentMem > AppConsts.MemoryLimitForAggressiveRelease)
                     {
                         GC.Collect(2, GCCollectionMode.Forced, true);
                     }
@@ -662,8 +658,8 @@ namespace TabPaint
         {
             await Dispatcher.InvokeAsync(() =>
             {
-                int width = 2400;
-                int height = 1800;
+                int width = AppConsts.DefaultBlankCanvasWidth;
+                int height = AppConsts.DefaultBlankCanvasHeight;
                 _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
 
                 // 填充白色

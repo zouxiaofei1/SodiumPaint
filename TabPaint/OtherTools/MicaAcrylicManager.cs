@@ -123,8 +123,8 @@ namespace TabPaint
             // 关键：将当前窗口背景设为透明，Mica 才能透出来
             window.Background = Brushes.Transparent;
 
-            int cornerPref = 2; // 圆角
-            DwmSetWindowAttribute(hwnd, (DWMWINDOWATTRIBUTE)33, ref cornerPref, sizeof(int));
+            int cornerPref = AppConsts.DwmCornerPreferenceRounded; // 圆角
+            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE2, ref cornerPref, sizeof(int));
 
             int backdropType = (int)DWMSBT.DWMSBT_MAINWINDOW;
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
@@ -135,7 +135,7 @@ namespace TabPaint
         public static bool IsWin11()
         {// 粗略判断：Win11 Version >= 22000
             var version = Environment.OSVersion.Version.Build;
-            return version >= 22000;
+            return version >= AppConsts.Windows11BuildThreshold;
         }
      
     }

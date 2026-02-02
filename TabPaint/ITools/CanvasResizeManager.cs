@@ -21,7 +21,7 @@ namespace TabPaint
             BottomLeft, BottomMiddle, BottomRight
         }
 
-        private const double MaxCanvasSize = 16384.0;
+        private const double MaxCanvasSize = AppConsts.MaxCanvasSize;
         public class CanvasResizeManager
         {
             private readonly MainWindow _mainWindow;
@@ -231,8 +231,8 @@ namespace TabPaint
             private void ApplyResize(Rect newBounds)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                int newW = Math.Min(16384, (int)newBounds.Width);
-                int newH = Math.Min(16384, (int)newBounds.Height);
+                int newW = Math.Min((int)AppConsts.MaxCanvasSize, (int)newBounds.Width);
+                int newH = Math.Min((int)AppConsts.MaxCanvasSize, (int)newBounds.Height);
                 int offsetX = -(int)newBounds.X;
                 int offsetY = -(int)newBounds.Y;
 

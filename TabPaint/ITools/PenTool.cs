@@ -90,7 +90,7 @@ public partial class PenTool : ToolBase
             _circleGeometry = new EllipseGeometry();
             _squareGeometry = new RectangleGeometry();
 
-            Panel.SetZIndex(_brushCursor, 9999);
+            Panel.SetZIndex(_brushCursor, AppConsts.PenCursorZIndex);
         }
         _brushCursor.Visibility = Visibility.Visible;
         // 3. 添加到图层
@@ -143,22 +143,22 @@ public partial class PenTool : ToolBase
         }
         if (ctx.PenStyle == BrushStyle.Highlighter)
         {
-            _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(50, 255, 255, 0));
+            _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(AppConsts.HighlighterAlpha, 255, 255, 0));
             _brushCursor.Stroke = Brushes.Yellow;
-            _brushCursor.StrokeThickness = 1.0;
+            _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
         }else 
         if (ctx.PenStyle == BrushStyle.AiEraser)
         {
-            _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(100, 255, 0, 0));
+            _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(AppConsts.AiEraserCursorAlpha, 255, 0, 0));
             _brushCursor.Stroke = Brushes.Red;
-            _brushCursor.StrokeThickness = 1.0;
+            _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
         }
         // 3. 颜色更新 (保持原有的缓存逻辑)
         else if(ctx.PenStyle == BrushStyle.Eraser)
         {
             _brushCursor.Fill = Brushes.Transparent;
             _brushCursor.Stroke = Brushes.Black;
-            _brushCursor.StrokeThickness = 1.0;
+            _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
         }
         else
         {
@@ -180,10 +180,10 @@ public partial class PenTool : ToolBase
 
             _brushCursor.Fill = _cachedFillBrush;
 
-            if (globalOpacity < 0.3)
+            if (globalOpacity < AppConsts.PenLowOpacityThreshold)
             {
-                _brushCursor.Stroke = new SolidColorBrush(Color.FromArgb(100, 128, 128, 128));
-                _brushCursor.StrokeThickness = 0.5;
+                _brushCursor.Stroke = new SolidColorBrush(Color.FromArgb(AppConsts.PenLowOpacityStrokeAlpha, 128, 128, 128));
+                _brushCursor.StrokeThickness = AppConsts.PenLowOpacityStrokeThickness;
             }
             else
             {
@@ -206,7 +206,7 @@ public partial class PenTool : ToolBase
                 _maskImageOverlay = new Image
                 {
                     IsHitTestVisible = false,
-                    Opacity = 0.6 // 半透明显示
+                    Opacity = AppConsts.AiEraserMaskOpacity // 半透明显示
                 };
                 // 插入到 EditorOverlay 中，但在 Cursor 之下
                 ctx.EditorOverlay.Children.Insert(0, _maskImageOverlay);
@@ -217,7 +217,7 @@ public partial class PenTool : ToolBase
             int h = ctx.Surface.Bitmap.PixelHeight;
             if (_maskBitmap == null || _maskBitmap.PixelWidth != w || _maskBitmap.PixelHeight != h)
             {
-                _maskBitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+                _maskBitmap = new WriteableBitmap(w, h, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
                 _maskImageOverlay.Source = _maskBitmap;
 
                 // 确保 Image 控件填满画布

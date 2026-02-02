@@ -307,7 +307,7 @@ namespace TabPaint
                                 st.DeleteSelection(_ctx);
                             }
                             else if (SettingsManager.Instance.Current.EnableFileDeleteInPaintMode)
-                                if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < 2.0)
+                                if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < AppConsts.DoubleClickTimeThreshold)
                             {
                                 st.ResetLastDeleteTime();
                                     ShowToast("L_Toast_PressDeleteAgain");
@@ -463,13 +463,12 @@ namespace TabPaint
         // 状态变量
         private uint _lastClipboardSequenceNumber = 0;
         private DateTime _lastClipboardActionTime = DateTime.MinValue;
-        private const int CLIPBOARD_COOLDOWN_MS = 1000;
         // 计时器触发事件：真正的执行逻辑
 
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == WM_MOUSEHWHEEL)
+            if (msg == AppConsts.WM_MOUSEHWHEEL)
             {
                 if (ScrollContainer != null && !_isZoomAnimating)
                 {
@@ -483,7 +482,7 @@ namespace TabPaint
                     }
                 }
             }
-            if (msg == WM_CLIPBOARDUPDATE)
+            if (msg == AppConsts.WM_CLIPBOARDUPDATE)
             {
                 if (SettingsManager.Instance.Current.EnableClipboardMonitor)
                 {
@@ -497,7 +496,7 @@ namespace TabPaint
                     }
 
                     var timeSinceLast = (DateTime.Now - _lastClipboardActionTime).TotalMilliseconds;
-                    if (timeSinceLast < CLIPBOARD_COOLDOWN_MS)
+                    if (timeSinceLast < AppConsts.ClipboardCooldownMs)
                     {
                         _lastClipboardSequenceNumber = currentSeq;
                         return IntPtr.Zero;
@@ -507,12 +506,12 @@ namespace TabPaint
                     OnClipboardContentChanged();
                 }
             }
-            if (msg == WM_NCHITTEST)
+            if (msg == AppConsts.WM_NCHITTEST)
             {
                 if (_maximized)
                 {
                     handled = true;
-                    return (IntPtr)1; // HTCLIENT
+                    return (IntPtr)AppConsts.HTCLIENT; // HTCLIENT
                 }
 
                 var mousePos = PointFromScreen(new Point(
@@ -522,25 +521,25 @@ namespace TabPaint
                 double width = ActualWidth;
                 double height = ActualHeight;
 
-                int cornerArea = 16; // 角落区域大一点，方便对角线拖拽
-                int sideArea = 8;    // 侧边区域非常小，避让滚动条 (推荐4-6px)
+                int cornerArea = AppConsts.WindowCornerArea; // 角落区域大一点，方便对角线拖拽
+                int sideArea = AppConsts.WindowSideArea;    // 侧边区域非常小，避让滚动条 (推荐4-6px)
 
                 handled = true;
 
-                if (mousePos.Y <= cornerArea && mousePos.X <= cornerArea) return (IntPtr)HTTOPLEFT;
-                if (mousePos.Y <= cornerArea && mousePos.X >= width - cornerArea) return (IntPtr)HTTOPRIGHT;
+                if (mousePos.Y <= cornerArea && mousePos.X <= cornerArea) return (IntPtr)AppConsts.HTTOPLEFT;
+                if (mousePos.Y <= cornerArea && mousePos.X >= width - cornerArea) return (IntPtr)AppConsts.HTTOPRIGHT;
                 // 左下
-                if (mousePos.Y >= height - cornerArea && mousePos.X <= cornerArea) return (IntPtr)HTBOTTOMLEFT;
+                if (mousePos.Y >= height - cornerArea && mousePos.X <= cornerArea) return (IntPtr)AppConsts.HTBOTTOMLEFT;
                 // 右下 (这是最常用的调整区域，保持大范围)
-                if (mousePos.Y >= height - cornerArea && mousePos.X >= width - cornerArea) return (IntPtr)HTBOTTOMRIGHT;
+                if (mousePos.Y >= height - cornerArea && mousePos.X >= width - cornerArea) return (IntPtr)AppConsts.HTBOTTOMRIGHT;
 
 
-                if (mousePos.Y <= sideArea) return (IntPtr)HTTOP;
-                if (mousePos.Y >= height - sideArea) return (IntPtr)HTBOTTOM;
+                if (mousePos.Y <= sideArea) return (IntPtr)AppConsts.HTTOP;
+                if (mousePos.Y >= height - sideArea) return (IntPtr)AppConsts.HTBOTTOM;
 
-                if (mousePos.X <= sideArea) return (IntPtr)HTLEFT;
-                if (mousePos.X >= width - sideArea) return (IntPtr)HTRIGHT;
-                return (IntPtr)1; // HTCLIENT
+                if (mousePos.X <= sideArea) return (IntPtr)AppConsts.HTLEFT;
+                if (mousePos.X >= width - sideArea) return (IntPtr)AppConsts.HTRIGHT;
+                return (IntPtr)AppConsts.HTCLIENT; // HTCLIENT
             }
 
             return IntPtr.Zero;
@@ -568,10 +567,9 @@ namespace TabPaint
                         return ConvertDrawingBitmapToWPF(drawingBitmap);
                     }
                 }
-                catch (Exception ex)
-                {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_GDIReadFailed_Prefix"), ex.Message));
-                }
+            catch (Exception)
+            {
+            }
             }
             if (dataObj.GetDataPresent("Bitmap"))
             {
@@ -808,8 +806,6 @@ namespace TabPaint
         private bool _isZoomAnimating = false;
         private double _virtualScrollH;
         private double _virtualScrollV;
-        private const double ZoomLerpFactor = 1; // 插值系数 (0.1-0.5)，越小越平滑，越大越跟手
-        private const double ZoomSnapThreshold = 0.001; // 停止动画的阈值
         private void StartSmoothZoom(double targetScale, Point center)
         {
             try
@@ -837,7 +833,7 @@ namespace TabPaint
                     CompositionTarget.Rendering += OnZoomRendering;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -849,14 +845,14 @@ namespace TabPaint
             bool isEnding = false;
             double nextScale;
 
-            if (Math.Abs(delta) < ZoomSnapThreshold || Math.Abs(delta) < 0.00001)
+            if (Math.Abs(delta) < AppConsts.ZoomSnapThreshold || Math.Abs(delta) < 0.00001)
             {
                 nextScale = _targetZoomScale;
                 isEnding = true;
             }
             else
             {
-                nextScale = zoomscale + delta * ZoomLerpFactor / PerformanceScore;
+                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor / PerformanceScore;
             }
 
             double oldScale = zoomscale;

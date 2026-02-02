@@ -110,7 +110,7 @@ namespace TabPaint
                 {
                     Stroke = mw._darkBackgroundBrush,
                     StrokeDashArray = new DoubleCollection { 4, 4 },
-                    StrokeThickness = invScale * 1.5,
+                    StrokeThickness = invScale * AppConsts.TextToolOutlineThickness,
                     Width = rect.Width,
                     Height = rect.Height
                 };
@@ -143,7 +143,7 @@ namespace TabPaint
             private ResizeAnchor HitTestTextboxHandle(Point px)
             {
                 if (_richTextBox == null) return ResizeAnchor.None;
-                double size = 12 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double size = AppConsts.TextToolHandleHitTestSize / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
                 double x1 = Canvas.GetLeft(_richTextBox);
                 double y1 = Canvas.GetTop(_richTextBox);
                 double x2 = x1 + _richTextBox.ActualWidth;
@@ -400,7 +400,7 @@ namespace TabPaint
                 double y = Canvas.GetTop(_richTextBox);
                 double w = _richTextBox.ActualWidth;
                 double h = _richTextBox.ActualHeight;
-                double borderThickness = Math.Max(5 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale, 10);
+                double borderThickness = Math.Max(AppConsts.TextToolBorderThicknessMin / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale, AppConsts.TextToolBorderThicknessMax);
 
                 // 外矩形 (扩大边框宽度)
                 bool inOuter = px.X >= x - borderThickness &&
@@ -439,15 +439,15 @@ namespace TabPaint
                     _dragging = false;
 
                     _richTextBox = CreateRichTextBox(ctx, _startPos.X, _startPos.Y);
-                    _richTextBox.Width = 500;
-                    _richTextBox.MinHeight = 50;
+                    _richTextBox.Width = AppConsts.DefaultTextBoxWidth;
+                    _richTextBox.MinHeight = AppConsts.MinTextBoxHeight;
 
                     // 重要：将事件绑定到 RichTextBox
                     SetupRichTextBoxEvents(ctx, _richTextBox);
 
                     ctx.EditorOverlay.Visibility = Visibility.Visible;
                     ctx.EditorOverlay.IsHitTestVisible = true;
-                    Canvas.SetZIndex(ctx.EditorOverlay, 999);
+                    Canvas.SetZIndex(ctx.EditorOverlay, AppConsts.EditorOverlayZIndex);
                     ctx.EditorOverlay.Children.Add(_richTextBox);
 
                     ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);
@@ -619,13 +619,13 @@ namespace TabPaint
 
                 var rtb = new System.Windows.Controls.RichTextBox
                 {
-                    FontSize = 24,
+                    FontSize = AppConsts.DefaultFontSize,
                     Foreground = new SolidColorBrush(ctx.PenColor),
                     Opacity = TabPaint.SettingsManager.Instance.Current.PenOpacity,
                     BorderBrush = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
                     Background = Brushes.Transparent, // 必须透明
-                    Padding = new Thickness(5),
+                    Padding = new Thickness(AppConsts.TextToolPadding),
                     AcceptsReturn = true,
                     AcceptsTab = true, // 允许制表符
                                        // 关键：FlowDocument 设置
@@ -822,14 +822,14 @@ namespace TabPaint
                 }
 
 
-                _richTextBox.MaxWidth = 1000;
+                _richTextBox.MaxWidth = AppConsts.MaxTextBoxWidth;
                 _richTextBox.Width = Double.NaN; // 让宽度自适应内容
                 _richTextBox.Height = Double.NaN;
 
                 // 显示 UI
                 ctx.EditorOverlay.Visibility = Visibility.Visible;
                 ctx.EditorOverlay.IsHitTestVisible = true;
-                Canvas.SetZIndex(ctx.EditorOverlay, 999);
+                Canvas.SetZIndex(ctx.EditorOverlay, AppConsts.EditorOverlayZIndex);
                 ctx.EditorOverlay.Children.Add(_richTextBox);
 
                 ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);

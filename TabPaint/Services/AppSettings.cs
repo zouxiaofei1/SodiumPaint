@@ -39,8 +39,8 @@ namespace TabPaint
     }
     public class ToolSettingsModel
     {
-        public double Thickness { get; set; } = 5.0;
-        public double Opacity { get; set; } = 1.0;
+        public double Thickness { get; set; } = AppConsts.DefaultPenThickness;
+        public double Opacity { get; set; } = AppConsts.DefaultPenOpacity;
     }
 
     public class ShortcutItem
@@ -146,7 +146,7 @@ namespace TabPaint
         {
             var settings = TabPaint.SettingsManager.Instance.Current;
 
-            if (settings.WindowLeft == -10000 || settings.WindowTop == -10000) return;
+            if (settings.WindowLeft == AppConsts.UninitializedWindowPosition || settings.WindowTop == AppConsts.UninitializedWindowPosition) return; // Note: -10000 is used as a magic number for uninitialized position
             double virtualLeft = SystemParameters.VirtualScreenLeft;
             double virtualTop = SystemParameters.VirtualScreenTop;
             double virtualWidth = SystemParameters.VirtualScreenWidth;
@@ -168,8 +168,8 @@ namespace TabPaint
                 // 如果不在屏幕范围内（比如上次在副屏，现在副屏拔了），居中显示
                 this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
-            this.Width = Math.Max(settings.WindowWidth, 200);
-            this.Height = Math.Max(settings.WindowHeight, 200);
+            this.Width = Math.Max(settings.WindowWidth, AppConsts.WindowMinSize);
+            this.Height = Math.Max(settings.WindowHeight, AppConsts.WindowMinSize);
             if (settings.WindowState == (int)WindowState.Maximized)
             {
                 this.WindowState = WindowState.Maximized;
@@ -542,7 +542,7 @@ namespace TabPaint
             }
         }
 
-        private double _viewInterpolationThreshold = 160.0;
+        private double _viewInterpolationThreshold = AppConsts.DefaultViewInterpolationThreshold;
         [JsonPropertyName("view_interpolation_threshold")]
         public double ViewInterpolationThreshold
         {
@@ -571,7 +571,7 @@ namespace TabPaint
                 }
             }
         }
-        private double _paintInterpolationThreshold = 200.0;
+        private double _paintInterpolationThreshold = AppConsts.DefaultPaintInterpolationThreshold;
         [JsonPropertyName("paint_interpolation_threshold")]
         public double PaintInterpolationThreshold
         {
@@ -586,16 +586,16 @@ namespace TabPaint
             }
         }
         [JsonPropertyName("window_width")]
-        public double WindowWidth { get; set; } = 850; // 默认宽
+        public double WindowWidth { get; set; } = AppConsts.DefaultWindowWidth; // 默认宽
 
         [JsonPropertyName("window_height")]
-        public double WindowHeight { get; set; } = 700; // 默认高
+        public double WindowHeight { get; set; } = AppConsts.DefaultWindowHeight; // 默认高
 
         [JsonPropertyName("window_left")]
-        public double WindowLeft { get; set; } = -10000; // 默认无效值，用于判断是否是首次启动
+        public double WindowLeft { get; set; } = AppConsts.UninitializedWindowPosition; // 默认无效值，用于判断是否是首次启动
 
         [JsonPropertyName("window_top")]
-        public double WindowTop { get; set; } = -10000;
+        public double WindowTop { get; set; } = AppConsts.UninitializedWindowPosition;
 
         // 0: Normal, 1: Minimized, 2: Maximized
         [JsonPropertyName("window_state")]
@@ -694,7 +694,7 @@ namespace TabPaint
                 }
             }
         }
-        private string _themeAccentColor = "#0078D4"; // 默认蓝色
+        private string _themeAccentColor = AppConsts.DefaultThemeAccentColor; // 默认蓝色
 
         [JsonPropertyName("theme_accent_color")]
         public string ThemeAccentColor
