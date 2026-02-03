@@ -50,8 +50,6 @@ namespace TabPaint
     {
         var helpWin = new HelpWindow(helpPages);
         helpWin.Owner = this; 
-        // 使用 Show 而不是 ShowDialog，这样 Deactivated 事件触发更加自然
-        // 如果使用 ShowDialog，点击主窗口可能只会闪烁而不是关闭帮助窗口
         helpWin.Show();
                 }
             }
@@ -67,20 +65,44 @@ namespace TabPaint
                 CloseTab(_currentTabItem);
             }
         }
+        private void OnMosaicClick(object sender, RoutedEventArgs e)
+        {
+            // 打开窗口获取强度，范围 2 - 100
+            var dialog = new TabPaint.Windows.FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_Mosaic"), 10, 2, 100);
+            dialog.Owner = this;
+            dialog.ShowDialog();
+
+            if (dialog.IsConfirmed)
+            {
+                ApplyFilter(FilterType.Mosaic, dialog.ResultValue);
+            }
+        }
+
+        private void OnGaussianBlurClick(object sender, RoutedEventArgs e)
+        {
+            // 打开窗口获取强度（半径），范围 1 - 50
+            var dialog = new TabPaint.Windows.FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_GaussianBlur"), 5, 1, 50);
+            dialog.Owner = this;
+            dialog.ShowDialog();
+
+            if (dialog.IsConfirmed)
+            {
+                ApplyFilter(FilterType.GaussianBlur, dialog.ResultValue);
+            }
+        }
         private void OnSepiaClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sepia);
         private void OnOilPaintingClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.OilPainting);
         private void OnVignetteClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Vignette);
         private void OnGlowClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Glow);
 
-        private enum FilterType { Sepia, OilPainting, Vignette, Glow }
+        private enum FilterType { Sepia, OilPainting, Vignette, Glow, Sharpen, Brown, Mosaic, GaussianBlur }
 
-
-        private async void ApplyFilter(FilterType type)
+        private void OnSharpenClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sharpen);
+        private void OnBrownClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Brown);
+        private async void ApplyFilter(FilterType type, int strength = 0)
         {
             if (_surface?.Bitmap == null) return;
             _router.CleanUpSelectionandShape();
-
-            // 1. 推送撤销栈 (UI线程)
             _undo.PushFullImageUndo();
 
             var bmp = _surface.Bitmap;
@@ -88,14 +110,9 @@ namespace TabPaint
             int height = bmp.PixelHeight;
             int stride = bmp.BackBufferStride;
 
-            // 2. 【关键】在 UI 线程提取像素数据到内存数组
             byte[] rawPixels = new byte[height * stride];
             bmp.CopyPixels(rawPixels, stride, 0);
 
-            // 显示等待状态
-            // Cursor = Cursors.Wait; 
-
-            // 3. 启动后台任务，传入 byte[] 而不是 Bitmap
             await Task.Run(() =>
             {
                 switch (type)
@@ -112,14 +129,23 @@ namespace TabPaint
                     case FilterType.OilPainting:
                         ProcessOilPaint(rawPixels, width, height, stride, 4, 10);
                         break;
+                    case FilterType.Sharpen:
+                        ProcessSharpen(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.Brown:
+                        ProcessBrown(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.Mosaic:
+                        ProcessMosaic(rawPixels, width, height, stride, strength); // strength 即 blockSize
+                        break;
+                    case FilterType.GaussianBlur:
+                        ProcessGaussianBlur(rawPixels, width, height, stride, strength); // strength 即 radius
+                        break;
                 }
             });
 
-            // 4. 【关键】回到 UI 线程，将处理后的数据写回 Bitmap
-            // WritePixels 不需要 Lock/Unlock，因为它内部会自动处理
             bmp.WritePixels(new Int32Rect(0, 0, width, height), rawPixels, stride, 0);
 
-            // 5. 更新状态
             CheckDirtyState();
             NotifyCanvasChanged();
             SetUndoRedoButtonState();

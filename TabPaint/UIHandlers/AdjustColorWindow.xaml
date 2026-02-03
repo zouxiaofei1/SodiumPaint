@@ -4,22 +4,16 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TabPaint"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=presentationframework"
         mc:Ignorable="d"
         Title="{DynamicResource L_AdjustColor_Title}" 
-        Height="550" Width="900" MinWidth="700" MinHeight="500"
+        Height="420" Width="600" MinWidth="400" MinHeight="300"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
-        Background="Transparent"
-        FontFamily="Microsoft YaHei UI, Segoe UI, sans-serif"
-        TextOptions.TextFormattingMode="Ideal"
-        TextOptions.TextRenderingMode="ClearType">
+        Background="Transparent">
 
-    <!-- 窗口边框样式 -->
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32"  
-                      GlassFrameThickness="-1" 
-                      ResizeBorderThickness="4"
-                      CornerRadius="0"/>
+        <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
@@ -28,7 +22,6 @@
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- 简单的 TabItem 样式，如果没有全局样式的话，保证看起来协调 -->
             <Style TargetType="TabItem">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
@@ -38,11 +31,7 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="TabItem">
                             <Border Name="Border" Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,4,0">
-                                <ContentPresenter x:Name="ContentSite"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Center"
-                                                  ContentSource="Header"
-                                                  Margin="10,2"/>
+                                <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,2"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
@@ -61,153 +50,104 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <!-- 主容器 -->
-    <Border Background="{DynamicResource PanelBackgroundBrush}" 
-            BorderBrush="{DynamicResource BorderBrush}" 
-            BorderThickness="1">
+    <Border Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
         <Grid>
+            <!-- 调整行定义：标题栏、中间内容区、底部按钮栏 -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="32"/>
-                <!-- 标题栏 -->
                 <RowDefinition Height="*"/>
-                <!-- 内容区 -->
+                <RowDefinition Height="Auto"/>
+                <!-- 新增底部栏 -->
             </Grid.RowDefinitions>
 
             <!-- 1. 标题栏 -->
-            <Border Grid.Row="0" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1">
                 <Grid MouseLeftButtonDown="TitleBar_MouseDown">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
-                           Width="20" Height="20" Margin="10,0,8,0" 
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                    <TextBlock Grid.Column="1" Text="{DynamicResource L_AdjustColor_Title}" 
-                               VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
-
-                    <Button Grid.Column="2" Click="Cancel_Click" Width="32" Height="32" 
-                            WindowChrome.IsHitTestVisibleInChrome="True" 
-                            Background="Transparent" BorderThickness="0" Padding="0" 
-                            Style="{DynamicResource WindowCloseButtonStyle}"/>
+                    <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="10,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Grid.Column="1" Text="{DynamicResource L_AdjustBCE_Title}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Grid>
             </Border>
 
-            <!-- 2. 主内容区：左右分栏 -->
+            <!-- 2. 中间主要内容区：左右分栏 -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="320"/>
-                    <!-- 左侧控制面板 -->
+                    <ColumnDefinition Width="220"/>
                     <ColumnDefinition Width="*"/>
-                    <!-- 右侧预览 -->
                 </Grid.ColumnDefinitions>
 
                 <!-- 左侧：控件与直方图 -->
-                <Border Grid.Column="0" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource WindowBackgroundBrush}">
+                <Border Grid.Column="0" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource GlassBackgroundLowBrush}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
-                            <!-- TabControl -->
                             <RowDefinition Height="Auto"/>
-                            <!-- 直方图 -->
-                            <RowDefinition Height="Auto"/>
-                            <!-- 按钮栏 -->
+                            <!-- 底部按钮栏移走了 -->
                         </Grid.RowDefinitions>
 
-                        <!-- 上部：TabControl -->
+                        <!-- TabControl -->
                         <TabControl x:Name="AdjustTabControl" Grid.Row="0" Background="Transparent" BorderThickness="0" Margin="10,10,10,0">
-
                             <!-- Tab 1: 光效 (BCE) -->
                             <TabItem Header="{DynamicResource L_AdjustBCE_Tab_Light}">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,15,10,0">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource FluentScrollViewer}" Padding="10,15,10,0">
                                     <StackPanel Orientation="Vertical">
                                         <!-- 亮度 -->
                                         <Grid Margin="0,0,0,2">
                                             <TextBlock Text="{DynamicResource L_AdjustBCE_Brightness}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox x:Name="BrightnessBox" Style="{StaticResource NumberInputStyle}" Text="0"
-                                                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=BrightnessSlider}"/>
+                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="BrightnessBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=BrightnessSlider}"/>
                                         </Grid>
-                                        <Slider x:Name="BrightnessSlider" Minimum="-100" Maximum="100" Value="0"
-                                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                                ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted"
-                                                MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,16"/>
-
+                                        <Slider  Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="BrightnessSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                         <!-- 对比度 -->
                                         <Grid Margin="0,0,0,2">
                                             <TextBlock Text="{DynamicResource L_AdjustBCE_Contrast}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox x:Name="ContrastBox" Style="{StaticResource NumberInputStyle}" Text="0"
-                                                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ContrastSlider}"/>
+                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="ContrastBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ContrastSlider}"/>
                                         </Grid>
-                                        <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0"
-                                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                                ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted"
-                                                MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,16"/>
-
+                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                         <!-- 曝光 -->
                                         <Grid Margin="0,0,0,2">
                                             <TextBlock Text="{DynamicResource L_AdjustBCE_Exposure}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox x:Name="ExposureBox" Style="{StaticResource NumberInputStyle}" Text="0.0"
-                                                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ExposureSlider}"/>
+                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="ExposureBox" Text="0.0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ExposureSlider}"/>
                                         </Grid>
-                                        <Slider x:Name="ExposureSlider" Minimum="-2" Maximum="2" Value="0"
-                                                TickFrequency="0.1" IsSnapToTickEnabled="True"
-                                                ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted"
-                                                MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="ExposureSlider" Minimum="-2" Maximum="2" Value="0" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                     </StackPanel>
                                 </ScrollViewer>
                             </TabItem>
 
                             <!-- Tab 2: 色彩 (TTS) -->
                             <TabItem Header="{DynamicResource L_AdjustTTS_Tab_Color}">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,15,10,0">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource FluentScrollViewer}" Padding="10,15,10,0">
                                     <StackPanel Orientation="Vertical">
                                         <!-- 色温 -->
                                         <Grid Margin="0,0,0,2">
                                             <TextBlock Text="{DynamicResource L_AdjustTTS_Temperature}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox x:Name="TemperatureBox" Style="{StaticResource NumberInputStyle}" Text="0"
-                                                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TemperatureSlider}"/>
+                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="TemperatureBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TemperatureSlider}"/>
                                         </Grid>
-                                        <Slider x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0"
-                                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                                ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted"
-                                                MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,16"/>
-
+                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                         <!-- 色调 -->
                                         <Grid Margin="0,0,0,2">
                                             <TextBlock Text="{DynamicResource L_AdjustTTS_Tint}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox x:Name="TintBox" Style="{StaticResource NumberInputStyle}" Text="0"
-                                                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TintSlider}"/>
+                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="TintBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TintSlider}"/>
                                         </Grid>
-                                        <Slider x:Name="TintSlider" Minimum="-100" Maximum="100" Value="0"
-                                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                                ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted"
-                                                MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,16"/>
-
+                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TintSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                         <!-- 饱和度 -->
                                         <Grid Margin="0,0,0,2">
                                             <TextBlock Text="{DynamicResource L_AdjustTTS_Saturation}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox x:Name="SaturationBox" Style="{StaticResource NumberInputStyle}" Text="0"
-                                                     PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=SaturationSlider}"/>
+                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="SaturationBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=SaturationSlider}"/>
                                         </Grid>
-                                        <Slider x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0"
-                                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                                ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted"
-                                                MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                     </StackPanel>
                                 </ScrollViewer>
                             </TabItem>
-
                         </TabControl>
 
-                        <!-- 中部：直方图 (固定在底部上方) -->
+                        <!-- 直方图 (固定在底部) -->
                         <Border Grid.Row="1" Padding="20,5,20,10">
                             <Grid>
-                                <!-- 背景框，可选 -->
                                 <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Opacity="0.5" VerticalAlignment="Bottom"/>
-
                                 <Grid x:Name="HistogramGrid" VerticalAlignment="Bottom" Height="60" Opacity="0.9">
                                     <Grid.OpacityMask>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -215,20 +155,16 @@
                                             <GradientStop Offset="0.2" Color="Black"/>
                                         </LinearGradientBrush>
                                     </Grid.OpacityMask>
-
-                                    <!-- 红色通道 -->
                                     <Polyline x:Name="HistoRed" StrokeThickness="1" Fill="#66FF0000" Stroke="#88FF0000" Points="0,60 255,60">
                                         <Polyline.Effect>
                                             <BlurEffect Radius="2" RenderingBias="Performance"/>
                                         </Polyline.Effect>
                                     </Polyline>
-                                    <!-- 绿色通道 -->
                                     <Polyline x:Name="HistoGreen" StrokeThickness="1" Fill="#6600FF00" Stroke="#8800FF00" Points="0,60 255,60">
                                         <Polyline.Effect>
                                             <BlurEffect Radius="2" RenderingBias="Performance"/>
                                         </Polyline.Effect>
                                     </Polyline>
-                                    <!-- 蓝色通道 -->
                                     <Polyline x:Name="HistoBlue" StrokeThickness="1" Fill="#660000FF" Stroke="#880000FF" Points="0,60 255,60">
                                         <Polyline.Effect>
                                             <BlurEffect Radius="2" RenderingBias="Performance"/>
@@ -237,75 +173,50 @@
                                 </Grid>
                             </Grid>
                         </Border>
-
-                        <!-- 下部：按钮 -->
-                        <Border Grid.Row="2" 
-                                Background="{DynamicResource PanelBackgroundBrush}" 
-                                Padding="15,12" 
-                                BorderThickness="0,1,0,0" 
-                                BorderBrush="{DynamicResource BorderLightBrush}">
-                            <Grid>
-                                <!-- 左侧：重置按钮 -->
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                    <Button Content="{DynamicResource L_Common_Reset}" Width="60" Click="Reset_Click"/>
-                                </StackPanel>
-
-                                <!-- 右侧：确定/取消 -->
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <Button Content="{DynamicResource L_Common_OK}" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
-                                    <Button Content="{DynamicResource L_Common_Cancel}" Width="80" Click="Cancel_Click" IsCancel="True"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
                     </Grid>
                 </Border>
 
                 <!-- 右侧：实时预览区域 -->
-                <Border Grid.Column="1" Background="{DynamicResource PanelBackgroundBrush}" ClipToBounds="True">
+                <Border Grid.Column="1" Background="{DynamicResource GlassBackgroundLowBrush}" ClipToBounds="True">
                     <Grid>
-                        <!-- 将资源定义在 Grid 内部 -->
-                        <Grid.Resources>
-                            <!-- 棋盘格背景资源：用于表示透明部分 -->
-                            <DrawingBrush x:Key="CheckerBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
-                                <DrawingBrush.Drawing>
-                                    <DrawingGroup>
-                                        <GeometryDrawing Brush="#FF282828">
-                                            <GeometryDrawing.Geometry>
-                                                <RectangleGeometry Rect="0,0,20,20" />
-                                            </GeometryDrawing.Geometry>
-                                        </GeometryDrawing>
-                                        <GeometryDrawing Brush="#FF333333">
-                                            <GeometryDrawing.Geometry>
-                                                <GeometryGroup>
-                                                    <RectangleGeometry Rect="0,0,10,10" />
-                                                    <RectangleGeometry Rect="10,10,10,10" />
-                                                </GeometryGroup>
-                                            </GeometryDrawing.Geometry>
-                                        </GeometryDrawing>
-                                    </DrawingGroup>
-                                </DrawingBrush.Drawing>
-                            </DrawingBrush>
-                        </Grid.Resources>
+                        <!-- 1. 棋盘格背景：添加 Margin=5 -->
+                        <Border Background="{StaticResource CheckerboardBrush}" Margin="10"/>
 
-                        <!-- 1. 底层：棋盘格 Border -->
-                        <Border Background="{StaticResource CheckerBrush}"/>
-
-                        <!-- 2. 中层：实际预览图 -->
-                        <!-- RenderOptions.BitmapScalingMode="Fant" 保证缩放平滑 -->
+                        <!-- 2. 图片：添加 Margin=5 -->
                         <Image x:Name="PreviewImage" 
-               Stretch="Uniform" 
-               RenderOptions.BitmapScalingMode="Fant"
-               Margin="10"/>
+                               Stretch="Uniform" 
+                               RenderOptions.BitmapScalingMode="Fant"
+                               Margin="10"/>
 
-                        <!-- 3. 顶层：提示文字 -->
-                        <TextBlock Text="预览" 
-                   VerticalAlignment="Top" HorizontalAlignment="Left" 
-                   Margin="15,10" Opacity="0.5" Foreground="White" IsHitTestVisible="False"/>
+                        <!-- 3. “预览”字样：左上角，位于图片上方 -->
+                        <Border HorizontalAlignment="Left" VerticalAlignment="Top" 
+                                Background="#80000000" CornerRadius="4" Padding="6,2" Margin="10,10">
+                            <TextBlock Text="{DynamicResource L_Common_Preview}" 
+                                       Foreground="White" FontSize="12" IsHitTestVisible="False"/>
+                        </Border>
                     </Grid>
                 </Border>
-
-
             </Grid>
+
+            <!-- 3. 底部按钮栏：跨两列 -->
+            <Border Grid.Row="2" Grid.ColumnSpan="2"
+                    Background="{DynamicResource PanelBackgroundBrush}" 
+                    Padding="15,12" 
+                    BorderThickness="0,1,0,0" 
+                    BorderBrush="{DynamicResource BorderLightBrush}">
+                <Grid>
+                    <!-- 左侧：重置按钮 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Content="{DynamicResource L_Common_Reset}" Width="60" Click="Reset_Click"/>
+                    </StackPanel>
+
+                    <!-- 右侧：确定/取消 -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="{DynamicResource L_Common_OK}" Width="80" Margin="0,0,8,0" Click="Ok_Click" Style="{StaticResource AccentButtonStyle}" IsDefault="True"/>
+                        <Button Content="{DynamicResource L_Common_Cancel}" Width="80" Click="Cancel_Click" IsCancel="True"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Grid>
     </Border>
 </Window>

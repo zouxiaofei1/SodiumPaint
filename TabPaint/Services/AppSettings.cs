@@ -341,7 +341,21 @@ namespace TabPaint
                 }
             }
         }
+        private bool _enableIccColorCorrection = false;
 
+        [JsonPropertyName("enable_icc_color_correction")]
+        public bool EnableIccColorCorrection
+        {
+            get => _enableIccColorCorrection;
+            set
+            {
+                if (_enableIccColorCorrection != value)
+                {
+                    _enableIccColorCorrection = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         // 新增：当前工具的 Key，用于指示 PenThickness/Opacity 应该读写字典里的哪一项
         private string _currentToolKey = "Pen_Pencil";
         [JsonIgnore]

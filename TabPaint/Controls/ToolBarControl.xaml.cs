@@ -91,9 +91,22 @@ namespace TabPaint.Controls
             }
         }
 
-        /// <summary>
-        /// 更新形状分裂按钮左侧的图标
-        /// </summary>
+        public event RoutedEventHandler SelectMainClick;   // 对应主按钮点击
+        public event RoutedEventHandler SelectStyleClick;  // 对应下拉菜单点击
+        private void OnSelectMainButtonClick(object sender, RoutedEventArgs e)
+        {
+            SelectMainClick?.Invoke(this, e);
+        }
+
+        // 2. 下拉菜单项点击转发
+        private void OnSelectStyleClick_Forward(object sender, RoutedEventArgs e)
+        {
+            // 关闭 Popup (可选，根据你的交互需求)
+            SubMenuPopupSelect.IsOpen = false;
+
+            // 转发事件给 MainWindow
+            SelectStyleClick?.Invoke(sender, e);
+        }
         public void UpdateShapeIcon(string resourceKey)
         {
             var pathData = TryFindResource(resourceKey) as Geometry;

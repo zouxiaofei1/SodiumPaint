@@ -17,7 +17,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private Task<string> GetImageMetadataInfoAsync(byte[] imageBytes, string filePath, BitmapImage bitmap)
+        private Task<string> GetImageMetadataInfoAsync(byte[] imageBytes, string filePath, BitmapSource bitmap)
         {
             return Task.Run(() =>
             {

@@ -1,7 +1,4 @@
-//
-//AppConsts.cs
-//项目全局常量定义，包含版本信息、Win32消息、UI参数、路径及AI模型配置等。
-//
+
 //
 //AppConsts.cs
 //项目全局常量定义，包含版本信息、Win32消息、UI参数、路径及AI模型配置等。
@@ -11,13 +8,10 @@ using System.IO;
 
 namespace TabPaint
 {
-    /// <summary>
-    /// 项目全局常量定义，包含硬编码的配置值、Win32 消息、路径及 AI 模型信息等。
-    /// </summary>
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.3.2-beta";
+        public const string ProgramVersion = "v0.9.3.3";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;

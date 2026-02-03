@@ -24,26 +24,7 @@
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- 定义一个棋盘格画刷，用于展示透明背景 -->
-            <DrawingBrush x:Key="PreviewCheckerBoardBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
-                <DrawingBrush.Drawing>
-                    <DrawingGroup>
-                        <GeometryDrawing Brush="#FFF">
-                            <GeometryDrawing.Geometry>
-                                <RectangleGeometry Rect="0,0,20,20" />
-                            </GeometryDrawing.Geometry>
-                        </GeometryDrawing>
-                        <GeometryDrawing Brush="#EEE">
-                            <GeometryDrawing.Geometry>
-                                <GeometryGroup>
-                                    <RectangleGeometry Rect="0,0,10,10" />
-                                    <RectangleGeometry Rect="10,10,10,10" />
-                                </GeometryGroup>
-                            </GeometryDrawing.Geometry>
-                        </GeometryDrawing>
-                    </DrawingGroup>
-                </DrawingBrush.Drawing>
-            </DrawingBrush>
+          
         </ResourceDictionary>
     </Window.Resources>
 
@@ -235,7 +216,7 @@
                     <TextBlock Grid.Row="0" Text="{DynamicResource L_Common_Preview}" Margin="15,10" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold"/>
 
                     <!-- 预览容器 -->
-                    <Border Grid.Row="1" Margin="15,0,15,15" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Background="{StaticResource PreviewCheckerBoardBrush}">
+                    <Border Grid.Row="1" Margin="15,0,15,15" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Background="{StaticResource CheckerboardBrush}">
                         <!-- 这个Image控件将显示实时的效果 -->
                         <Image x:Name="ImgWindowPreview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>

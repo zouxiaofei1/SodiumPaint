@@ -148,6 +148,29 @@
                                 <Path Data="{DynamicResource Invert_Color_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                             </MenuItem.Icon>
                         </MenuItem>
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Sharpen}" Style="{StaticResource Win11MenuItemStyle}" Click="OnSharpenClick">
+                            <MenuItem.Icon>
+                                <Path Data="M12,2L1,21H23M12,6L19.53,19H4.47" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Brown}" Style="{StaticResource Win11MenuItemStyle}" Click="OnBrownClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Sepia_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_Mosaic}" Style="{StaticResource Win11MenuItemStyle}" Click="OnMosaicClick">
+                            <MenuItem.Icon>
+                                <Path Data="{DynamicResource Mosaic_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <!-- 高斯模糊 -->
+                        <MenuItem Header="{DynamicResource L_Menu_Effect_GaussianBlur}" Style="{StaticResource Win11MenuItemStyle}" Click="OnGaussianBlurClick">
+                            <MenuItem.Icon>
+                                <Path Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
                     <MenuItem Header="{DynamicResource L_Menu_Effect_Resize}" Style="{StaticResource Win11MenuItemStyle}" Click="OnResizeCanvasClick">
                         <MenuItem.Icon>

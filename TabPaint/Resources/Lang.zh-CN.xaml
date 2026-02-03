@@ -206,6 +206,8 @@
 
     <!-- ToolBar -->
     <sys:String x:Key="L_ToolBar_Tool_Select" xmlns:sys="clr-namespace:System;assembly=mscorlib">选择区域</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Lasso" xmlns:sys="clr-namespace:System;assembly=mscorlib">套索选择</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand" xmlns:sys="clr-namespace:System;assembly=mscorlib">魔棒</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Pen" xmlns:sys="clr-namespace:System;assembly=mscorlib">铅笔</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_PickColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">取颜色</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Eraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">橡皮擦</sys:String>
@@ -370,9 +372,7 @@
     <!-- Common Buttons -->
     <sys:String x:Key="L_Common_Reset" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置</sys:String>
     <sys:String x:Key="L_Common_Cancel" xmlns:sys="clr-namespace:System;assembly=mscorlib">取消</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。
-
-确定要继续吗？</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。确定要继续吗？</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">确认重置</sys:String>
     <sys:String x:Key="L_Settings_About_Help_ComingSoon" xmlns:sys="clr-namespace:System;assembly=mscorlib">帮助文档正在编写中，敬请期待！</sys:String>
@@ -387,7 +387,8 @@
     <sys:String x:Key="L_Help_Desc_2" xmlns:sys="clr-namespace:System;assembly=mscorlib">按 Tab 键可快速在“专注看图”和“自由绘图”模式间切换</sys:String>
     <sys:String x:Key="L_Help_Desc_3" xmlns:sys="clr-namespace:System;assembly=mscorlib">支持将图片直接拖拽至 Word、桌面或任何支持的地方</sys:String>
     <sys:String x:Key="L_Help_Desc_1" xmlns:sys="clr-namespace:System;assembly=mscorlib">极简的绘制功能，现在就试试看</sys:String>
-
+    <sys:String x:Key="L_Settings_Advanced_ICC_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">启用 ICC 配置文件校色</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">使用显示器的 ICC 配置文件进行色彩校正</sys:String>
     <!-- Toasts -->
     <sys:String x:Key="L_Toast_Deleted" xmlns:sys="clr-namespace:System;assembly=mscorlib">已删除 (Ctrl+Z 撤销)</sys:String>
     <sys:String x:Key="L_Toast_UndoDelete" xmlns:sys="clr-namespace:System;assembly=mscorlib">已撤销删除</sys:String>
@@ -610,6 +611,8 @@
     <sys:String x:Key="L_Watermark_RandomOffset" xmlns:sys="clr-namespace:System;assembly=mscorlib">随机偏移</sys:String>
     <sys:String x:Key="L_Toast_BatchStart" xmlns:sys="clr-namespace:System;assembly=mscorlib">开始批量添加水印...</sys:String>
     <sys:String x:Key="L_Toast_BatchComplete" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量处理已完成。</sys:String>
+
+
     <!-- AI Eraser -->
     <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型中...</sys:String>
     <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 处理中...</sys:String>
@@ -622,10 +625,23 @@
     <sys:String x:Key="L_Menu_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">柔光</sys:String>
     <sys:String x:Key="L_Toast_Effect_Sepia" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用怀旧滤镜</sys:String>
     <sys:String x:Key="L_Toast_Effect_OilPainting" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用油画滤镜</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Vignette" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用暗角效果</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用柔光效果</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Vignette" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用暗角</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用柔光</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">锐化</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">褐色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用锐化</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用褐色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用马赛克</sys:String>
+    <sys:String x:Key="L_Toast_Effect_GaussianBlur" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用高斯模糊</sys:String>
+    <sys:String x:Key="L_Update_Found_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">发现新版本</sys:String>
     <!-- AI Eraser (Inpainting) -->
-   
+    <sys:String x:Key="L_Filter_Strength_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整强度</sys:String>
+    <sys:String x:Key="L_Filter_Value" xmlns:sys="clr-namespace:System;assembly=mscorlib">数值</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">马赛克</sys:String>
+    <sys:String x:Key="L_Menu_Effect_GaussianBlur" xmlns:sys="clr-namespace:System;assembly=mscorlib">高斯模糊</sys:String>
+    <sys:String x:Key="L_Dialog_Strength" xmlns:sys="clr-namespace:System;assembly=mscorlib">强度</sys:String>
+    
+    
     <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>
 
     <!-- 统一 AI 状态描述 (如果之前没有) -->

@@ -13,6 +13,9 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 //设置窗口
 
@@ -21,14 +24,15 @@ namespace TabPaint
 {
     public partial class SettingsWindow : Window
     {
-        public string ProgramVersion { get; set; } = "v0.9.3";
+        public string ProgramVersion { get; set; } = "";
         private bool _isNavExpanded = true;
         private const double NAV_EXPANDED_WIDTH = 220;
         private const double NAV_COLLAPSED_WIDTH = 48;
         private DispatcherTimer _toastTimer;
         private bool _isToastVisible = false;
         private bool MicaEnabled = false;
-
+        private DispatcherTimer _updateToastTimer;
+        private string _latestVersionUrl = ""; // 用于存储点击跳转的地址
         public SettingsWindow()
         {
             InitializeComponent();
@@ -41,7 +45,12 @@ namespace TabPaint
                 SettingsManager.Instance.Current.PropertyChanged += Settings_PropertyChanged;
             }
 
-            this.Loaded += (s, e) => SetHighResIcon();
+            this.Loaded += (s, e) =>
+            {
+                SetHighResIcon();
+                CheckUpdateOnLoad(); // <--- 调用自动检查
+            };
+
             this.Unloaded += (s, e) =>
             {
                 if (SettingsManager.Instance.Current != null)
@@ -54,8 +63,211 @@ namespace TabPaint
             _toastTimer = new DispatcherTimer();
             _toastTimer.Interval = TimeSpan.FromSeconds(1); // Toast 显示时长
             _toastTimer.Tick += (s, args) => HideToast();
+
+            _updateToastTimer = new DispatcherTimer();
+            _updateToastTimer.Interval = TimeSpan.FromSeconds(5);
+            _updateToastTimer.Tick += (s, args) => HideUpdateToast();
         }
-    
+
+        private void ShowToast()
+        {
+            // 重置计时器，如果已经在显示，则延长显示时间
+            _toastTimer.Stop();
+
+            // 如果已经在显示，不需要重新跑动画，只需要重置时间
+            if (SavedToast.Visibility != Visibility.Visible)
+            {
+                AnimateShow(SavedToast);
+                _isToastVisible = true;
+            }
+
+            _toastTimer.Start();
+        }
+
+        private void HideToast()
+        {
+            _toastTimer.Stop();
+            _isToastVisible = false;
+            AnimateHide(SavedToast);
+        }
+
+        // ==================== Update Toast Logic ====================
+
+        private void ShowUpdateToast(string versionTag, string url)
+        {
+            _latestVersionUrl = url;
+
+            string title = LocalizationManager.GetString("L_Update_Found_Title") ?? "New Update Available";
+            TxtUpdateVer.Text = $"{versionTag} ready to download";
+
+            // 启用交互
+            UpdateToast.IsHitTestVisible = true;
+
+            _updateToastTimer.Stop();
+
+            if (UpdateToast.Visibility != Visibility.Visible)
+            {
+                AnimateShow(UpdateToast);
+            }
+
+            _updateToastTimer.Start();
+        }
+
+        private void HideUpdateToast()
+        {
+            _updateToastTimer.Stop();
+            UpdateToast.IsHitTestVisible = false;
+            AnimateHide(UpdateToast);
+        }
+
+        // 点击 Toast 的事件处理
+        private void UpdateToast_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(_latestVersionUrl))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(_latestVersionUrl) { UseShellExecute = true });
+                }
+                catch { }
+            }
+            // 调用新的隐藏方法
+            HideUpdateToast();
+        }
+
+
+
+
+        private static bool _hasCheckedUpdateThisSession = false;
+
+        private async void CheckUpdateOnLoad()
+        {
+            // 如果希望每次打开设置窗口都检查，请去掉下面这行判断
+            if (_hasCheckedUpdateThisSession) return;
+
+            await CheckForUpdatesAsync(isManual: false);
+            _hasCheckedUpdateThisSession = true;
+        }
+
+        private async Task CheckForUpdatesAsync(bool isManual)
+        {
+            try
+            {
+                string owner = "zouxiaofei1";
+                string repo = "TabPaint";
+                string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
+                string releaseUrl = $"https://github.com/{owner}/{repo}/releases/latest"; // 默认跳转地址
+
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("TabPaint-Client");
+                    client.Timeout = TimeSpan.FromSeconds(5);
+
+                    string jsonResponse = await client.GetStringAsync(apiUrl);
+                    var match = Regex.Match(jsonResponse, "\"tag_name\"\\s*:\\s*\"([^\"]+)\"");
+
+                    if (match.Success)
+                    {
+                        string latestVersionTag = match.Groups[1].Value;
+
+                        if (IsNewerVersion(ProgramVersion, latestVersionTag))
+                        {
+                            // === 修改点：发现新版本，调用 Toast ===
+                            ShowUpdateToast(latestVersionTag, releaseUrl);
+                        }
+                        else if (isManual)
+                        {
+                            // 手动检查且是最新版，依然可以用 MessageBox 提示，或者也做一个简单的 Toast
+                            FluentMessageBox.Show(
+                                LocalizationManager.GetString("L_Update_Latest_Desc") ?? "You are using the latest version.",
+                                LocalizationManager.GetString("L_Update_Latest_Title") ?? "Up to date",
+                                MessageBoxButton.OK);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (isManual)
+                {
+                    FluentMessageBox.Show($"Check update failed: {ex.Message}", "Error", MessageBoxButton.OK);
+                }
+                Debug.WriteLine("Update check failed: " + ex.Message);
+            }
+        }
+        private void AnimateShow(UIElement element)
+        {
+            if (element.Visibility == Visibility.Visible) return; // 已经在显示了
+
+            element.Visibility = Visibility.Visible;
+            element.Opacity = 0;
+
+            // 1. 透明度淡入
+            var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(250))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            element.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+            // 2. 位移滑入 (从右侧 50px 滑到 0)
+            // 获取 RenderTransform 中的 TranslateTransform
+            if (element is FrameworkElement fe && fe.RenderTransform is TranslateTransform trans)
+            {
+                trans.X = 50; // 初始位置在右侧
+                var slideIn = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                trans.BeginAnimation(TranslateTransform.XProperty, slideIn);
+            }
+        }
+
+        // 通用隐藏动画
+        private void AnimateHide(UIElement element)
+        {
+            if (element.Visibility == Visibility.Collapsed) return;
+
+            // 1. 透明度淡出
+            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
+            element.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+
+            // 2. 位移滑出 (向右滑出)
+            if (element is FrameworkElement fe && fe.RenderTransform is TranslateTransform trans)
+            {
+                var slideOut = new DoubleAnimation(50, TimeSpan.FromMilliseconds(200));
+
+                // 关键：动画结束后设置为 Collapsed，释放空间
+                slideOut.Completed += (s, e) =>
+                {
+                    element.Visibility = Visibility.Collapsed;
+                };
+
+                trans.BeginAnimation(TranslateTransform.XProperty, slideOut);
+            }
+            else
+            {
+                // 如果没有 Transform，直接隐藏
+                element.Visibility = Visibility.Collapsed;
+            }
+        }
+        
+       
+        private bool IsNewerVersion(string currentRaw, string latestRaw)
+        {
+            try
+            {
+                // 去掉 'v' 前缀并修剪空格
+                var current = Version.Parse(currentRaw.TrimStart('v', 'V').Trim());
+                var latest = Version.Parse(latestRaw.TrimStart('v', 'V').Trim());
+
+                return latest > current;
+            }
+            catch
+            {
+                // 解析失败（比如版本号格式不对），默认不提示更新
+                return false;
+            }
+        }
         private void SettingsWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             // 阈值设为 750 (可根据实际 UI 调整)
@@ -243,55 +455,7 @@ namespace TabPaint
             }
         }
 
-        private void ShowToast()
-        {
-            // 如果已经在显示，只需重置计时器，保持显示状态
-            if (_isToastVisible)
-            {
-                _toastTimer.Stop();
-                _toastTimer.Start();
-                return;
-            }
-
-            _isToastVisible = true;
-
-            // 进场动画 (从右侧滑入 或者 原地淡入)
-            // 这里使用 Margin 动画模拟从右侧划入，初始 Margin 设为 Right: -20
-
-            var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(250)) { EasingFunction = new CubicEase() };
-            SavedToast.BeginAnimation(UIElement.OpacityProperty, fadeIn);
-
-            // 修改 Margin 让它从稍微靠右的位置移入
-            // 假设目标位置是 Margin="0,30,30,0" (Top=30, Right=30)
-            var moveIn = new ThicknessAnimation(
-                new Thickness(0, 30, 10, 0), // 起始位置 (稍微偏右)
-                new Thickness(0, 30, 30, 0), // 结束位置 (正常位置)
-                TimeSpan.FromMilliseconds(250))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            SavedToast.BeginAnimation(FrameworkElement.MarginProperty, moveIn);
-
-            // 启动计时器，2秒后自动隐藏
-            _toastTimer.Stop();
-            _toastTimer.Start();
-        }
-
-        private void HideToast()
-        {
-            _toastTimer.Stop();
-            _isToastVisible = false;
-
-            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
-            SavedToast.BeginAnimation(UIElement.OpacityProperty, fadeOut);
-
-            // 向上浮动消失，或者向右滑出
-            var moveOut = new ThicknessAnimation(
-                new Thickness(0, 30, 30, 0),
-                new Thickness(0, 10, 30, 0), // 向上飘一点
-                TimeSpan.FromMilliseconds(300));
-            SavedToast.BeginAnimation(FrameworkElement.MarginProperty, moveOut);
-        }
+      
 
 
         #endregion
@@ -397,6 +561,25 @@ namespace TabPaint
         }
 
         #endregion
+
+        private void OnOpenUrlClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag != null)
+            {
+                string url = btn.Tag.ToString();
+                try
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    FluentMessageBox.Show($"{LocalizationManager.GetString("L_Toast_OpenUrlFailed")}: {ex.Message}",
+                                LocalizationManager.GetString("L_Common_Error"),
+                                MessageBoxButton.OK);
+                }
+            }
+        }
+
     }
 
     // 用于 GridLength 动画的辅助类

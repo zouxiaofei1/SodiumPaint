@@ -14,6 +14,258 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private void ProcessMosaic(byte[] pixels, int width, int height, int stride, int blockSize)
+        {
+            unsafe
+            {
+                fixed (byte* ptr = pixels)
+                {
+                    // 转换为 IntPtr 以便在 Lambda 中捕获
+                    IntPtr dataPtr = (IntPtr)ptr;
+
+                    Parallel.For(0, (height + blockSize - 1) / blockSize, by =>
+                    {
+                        // 在 Lambda 内部转回指针
+                        byte* basePtr = (byte*)dataPtr;
+
+                        int yStart = by * blockSize;
+                        int yEnd = Math.Min(yStart + blockSize, height);
+
+                        for (int bx = 0; bx < (width + blockSize - 1) / blockSize; bx++)
+                        {
+                            int xStart = bx * blockSize;
+                            int xEnd = Math.Min(xStart + blockSize, width);
+
+                            long sumB = 0, sumG = 0, sumR = 0;
+                            int count = 0;
+
+                            for (int y = yStart; y < yEnd; y++)
+                            {
+                                byte* row = basePtr + y * stride;
+                                for (int x = xStart; x < xEnd; x++)
+                                {
+                                    int offset = x * 4;
+                                    sumB += row[offset];
+                                    sumG += row[offset + 1];
+                                    sumR += row[offset + 2];
+                                    count++;
+                                }
+                            }
+
+                            if (count == 0) continue;
+
+                            byte avgB = (byte)(sumB / count);
+                            byte avgG = (byte)(sumG / count);
+                            byte avgR = (byte)(sumR / count);
+
+                            for (int y = yStart; y < yEnd; y++)
+                            {
+                                byte* row = basePtr + y * stride;
+                                for (int x = xStart; x < xEnd; x++)
+                                {
+                                    int offset = x * 4;
+                                    row[offset] = avgB;
+                                    row[offset + 1] = avgG;
+                                    row[offset + 2] = avgR;
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // 5. 实现 Gaussian Blur 算法 (使用分离卷积以提高性能)
+        private void ProcessGaussianBlur(byte[] pixels, int width, int height, int stride, int radius)
+        {
+            int kernelSize = radius * 2 + 1;
+            double[] kernel = new double[kernelSize];
+            double sigma = radius / 2.0;
+            if (sigma < 1) sigma = 1;
+            double twoSigmaSquare = 2.0 * sigma * sigma;
+            double sum = 0.0;
+            for (int i = 0; i < kernelSize; i++)
+            {
+                double x = i - radius;
+                kernel[i] = Math.Exp(-(x * x) / twoSigmaSquare);
+                sum += kernel[i];
+            }
+            for (int i = 0; i < kernelSize; i++) kernel[i] /= sum;
+
+            byte[] tempPixels = new byte[pixels.Length];
+            Array.Copy(pixels, tempPixels, pixels.Length);
+
+            unsafe
+            {
+                // --- 第一步：水平模糊 ---
+                fixed (byte* srcPtr = tempPixels)
+                fixed (byte* destPtr = pixels)
+                fixed (double* kPtr = kernel)
+                {
+                    IntPtr sAddr = (IntPtr)srcPtr;
+                    IntPtr dAddr = (IntPtr)destPtr;
+                    IntPtr kAddr = (IntPtr)kPtr;
+
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* sP = (byte*)sAddr;
+                        byte* dP = (byte*)dAddr;
+                        double* kernelP = (double*)kAddr;
+
+                        byte* srcRow = sP + y * stride;
+                        byte* destRow = dP + y * stride;
+
+                        for (int x = 0; x < width; x++)
+                        {
+                            double r = 0, g = 0, b = 0;
+                            for (int k = -radius; k <= radius; k++)
+                            {
+                                int px = x + k;
+                                if (px < 0) px = 0; else if (px >= width) px = width - 1;
+                                int off = px * 4;
+                                double weight = kernelP[k + radius];
+                                b += srcRow[off] * weight;
+                                g += srcRow[off + 1] * weight;
+                                r += srcRow[off + 2] * weight;
+                            }
+                            destRow[x * 4] = (byte)b;
+                            destRow[x * 4 + 1] = (byte)g;
+                            destRow[x * 4 + 2] = (byte)r;
+                            destRow[x * 4 + 3] = srcRow[x * 4 + 3];
+                        }
+                    });
+                }
+
+                // 同步中间结果
+                Array.Copy(pixels, tempPixels, pixels.Length);
+
+                // --- 第二步：垂直模糊 ---
+                fixed (byte* srcPtr = tempPixels)
+                fixed (byte* destPtr = pixels)
+                fixed (double* kPtr = kernel)
+                {
+                    IntPtr sAddr = (IntPtr)srcPtr;
+                    IntPtr dAddr = (IntPtr)destPtr;
+                    IntPtr kAddr = (IntPtr)kPtr;
+
+                    Parallel.For(0, width, x =>
+                    {
+                        byte* sP = (byte*)sAddr;
+                        byte* dP = (byte*)dAddr;
+                        double* kernelP = (double*)kAddr;
+
+                        for (int y = 0; y < height; y++)
+                        {
+                            double r = 0, g = 0, b = 0;
+                            for (int k = -radius; k <= radius; k++)
+                            {
+                                int py = y + k;
+                                if (py < 0) py = 0; else if (py >= height) py = height - 1;
+                                int off = py * stride + x * 4;
+                                double weight = kernelP[k + radius];
+                                b += sP[off] * weight;
+                                g += sP[off + 1] * weight;
+                                r += sP[off + 2] * weight;
+                            }
+                            int destOff = y * stride + x * 4;
+                            dP[destOff] = (byte)b;
+                            dP[destOff + 1] = (byte)g;
+                            dP[destOff + 2] = (byte)r;
+                            dP[destOff + 3] = sP[destOff + 3];
+                        }
+                    });
+                }
+            }
+        }
+
+        private void ProcessBrown(byte[] pixels, int width, int height, int stride)
+        {
+            unsafe
+            {
+                fixed (byte* ptr = pixels)
+                {
+                    IntPtr ptrHandle = (IntPtr)ptr;
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* row = (byte*)ptrHandle + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            byte b = row[x * 4];
+                            byte g = row[x * 4 + 1];
+                            byte r = row[x * 4 + 2];
+
+                            // 1. 标准灰度
+                            double gray = r * 0.299 + g * 0.587 + b * 0.114;
+
+                            // 2. 褐色调色 (R多, G中, B少)
+                            // Brown/Bronze look: R+=40, G+=10, B-=20 (基于灰度)
+                            double newR = gray + 35;
+                            double newG = gray + 8;
+                            double newB = gray - 20;
+
+                            row[x * 4 + 2] = (byte)Math.Clamp(newR, 0, 255); // R
+                            row[x * 4 + 1] = (byte)Math.Clamp(newG, 0, 255); // G
+                            row[x * 4] = (byte)Math.Clamp(newB, 0, 255); // B
+                        }
+                    });
+                }
+            }
+        }
+
+        private void ProcessSharpen(byte[] pixels, int width, int height, int stride)
+        {
+            // 锐化需要邻域像素，必须克隆源数据
+            byte[] srcPixels = (byte[])pixels.Clone();
+
+            unsafe
+            {
+                fixed (byte* destPtr = pixels)
+                fixed (byte* srcPtr = srcPixels)
+                {
+                    IntPtr destHandle = (IntPtr)destPtr;
+                    IntPtr srcHandle = (IntPtr)srcPtr;
+
+                    Parallel.For(1, height - 1, y => // 跳过边缘行
+                    {
+                        byte* pSrc = (byte*)srcHandle;
+                        byte* pDestRow = (byte*)destHandle + y * stride;
+
+                        for (int x = 1; x < width - 1; x++) // 跳过边缘列
+                        {
+                            // 核心像素位置
+                            int offset = y * stride + x * 4;
+
+                            // 定义卷积核：中心 9，周围 -1
+                            // 累加 B, G, R
+                            int sumB = 0, sumG = 0, sumR = 0;
+
+                            // 遍历 3x3 区域
+                            for (int ky = -1; ky <= 1; ky++)
+                            {
+                                for (int kx = -1; kx <= 1; kx++)
+                                {
+                                    int neighborOffset = (y + ky) * stride + (x + kx) * 4;
+                                    int kernelVal = 0; 
+                                    if((ky == 0 && kx == 0)) kernelVal= 5;
+                                    if(ky == 0 && (kx == -1 || kx ==1)) kernelVal= -1;
+                                    else if(kx ==0 && (ky == -1 || ky ==1)) kernelVal= -1;
+                                    sumB += pSrc[neighborOffset] * kernelVal;
+                                    sumG += pSrc[neighborOffset + 1] * kernelVal;
+                                    sumR += pSrc[neighborOffset + 2] * kernelVal;
+                                }
+                            }
+
+                            // 写入结果并截断到 0-255
+                            pDestRow[x * 4] = (byte)Math.Clamp(sumB, 0, 255);
+                            pDestRow[x * 4 + 1] = (byte)Math.Clamp(sumG, 0, 255);
+                            pDestRow[x * 4 + 2] = (byte)Math.Clamp(sumR, 0, 255);
+                            // Alpha 保持原样
+                            pDestRow[x * 4 + 3] = pSrc[offset + 3];
+                        }
+                    });
+                }
+            }
+        }
         private void ProcessSepia(byte[] pixels, int width, int height, int stride)
         {
             unsafe

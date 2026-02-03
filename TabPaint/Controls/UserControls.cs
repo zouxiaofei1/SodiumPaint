@@ -144,6 +144,10 @@ namespace TabPaint
             MainMenu.OilPaintingClick += OnOilPaintingClick;
             MainMenu.VignetteClick += OnVignetteClick;
             MainMenu.GlowClick += OnGlowClick;
+            MainMenu.SharpenClick += OnSharpenClick;
+            MainMenu.BrownClick += OnBrownClick;
+            MainMenu.MosaicClick += OnMosaicClick;
+            MainMenu.GaussianBlurClick += OnGaussianBlurClick;
 
             // 注入到界面
             MenuBarHolder.Content = MainMenu;
@@ -173,6 +177,8 @@ namespace TabPaint
             MainToolBar.ColorOneClick += OnColorOneClick;
             MainToolBar.ColorTwoClick += OnColorTwoClick;
             MainToolBar.ColorButtonClick += OnColorButtonClick;
+            MainToolBar.SelectMainClick += OnSelectMainClick;     // 点击左侧图标
+            MainToolBar.SelectStyleClick += OnSelectStyleClick;   // 点击下拉菜单项
 
             // 注入到界面
             ToolBarHolder.Content = MainToolBar;

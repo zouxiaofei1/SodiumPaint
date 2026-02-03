@@ -267,6 +267,8 @@
 
     <!-- ToolBar -->
     <sys:String x:Key="L_ToolBar_Tool_Select">Select area</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Lasso">Lasso Selection</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand">Magic Wand</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Pen">Pencil</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_PickColor">Pick color</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Eraser">Eraser</sys:String>
@@ -381,6 +383,8 @@
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">This operation will delete all caches, temporary files, and user configurations, and restore the software to its initial state. Are you sure you want to continue?</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">Are you sure you want to reset all shortcuts to their default settings? This operation cannot be undone.</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">Confirm Reset</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Title">Enable ICC Profile Correction</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Desc">Use monitor ICC profile for color correction. May slightly increase image loading time.</sys:String>
 
     <!-- Toasts -->
     <sys:String x:Key="L_Toast_Deleted">Deleted (Ctrl+Z to undo)</sys:String>
@@ -612,14 +616,24 @@
     <sys:String x:Key="L_Toast_Effect_OilPainting">Oil painting filter applied</sys:String>
     <sys:String x:Key="L_Toast_Effect_Vignette">Vignette effect applied</sys:String>
     <sys:String x:Key="L_Toast_Effect_Glow">Glow effect applied</sys:String>
-
-    <!-- AI Eraser -->
+    <sys:String x:Key="L_Menu_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Sharpen</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brown</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">Sharpen applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">Brown effect applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">Mosaic applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_GaussianBlur" xmlns:sys="clr-namespace:System;assembly=mscorlib">Gaussian blur applied</sys:String>
     <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading model...</sys:String>
     <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI Processing...</sys:String>
     <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser applied successfully!</sys:String>
     <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser error: {0}</sys:String>
     <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">The AI Eraser requires downloading a repair model (LaMa) for the first time, which is about 200MB. &#x0a;It will be verified via MD5 after downloading. Continue?</sys:String>
+    <sys:String x:Key="L_Update_Found_Title">New Update Found</sys:String>
 
+    <sys:String x:Key="L_Filter_Strength_Title">Adjust Intensity</sys:String>
+    <sys:String x:Key="L_Filter_Value">Value</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Mosaic">Mosaic</sys:String>
+    <sys:String x:Key="L_Menu_Effect_GaussianBlur">Gaussian Blur</sys:String>
+    <sys:String x:Key="L_Dialog_Strength">Intensity</sys:String>
     <!-- Unified AI Status (If not present) -->
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">Downloading repair model: {0:F1}%</sys:String>
 </ResourceDictionary>

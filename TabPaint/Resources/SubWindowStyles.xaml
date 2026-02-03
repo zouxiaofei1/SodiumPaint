@@ -32,7 +32,27 @@
             </Setter.Value>
         </Setter>
     </Style>
-
+    <DrawingBrush x:Key="CheckerboardBrush" TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <!-- 浅色格 -->
+                <GeometryDrawing Brush="{DynamicResource CheckerboardLightBrush}">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,20,20"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- 深色格 -->
+                <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="0,0,10,10"/>
+                            <RectangleGeometry Rect="10,10,10,10"/>
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
     <Style x:Key="OtherCloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
@@ -1425,4 +1445,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+    
+    
+    
 </ResourceDictionary>

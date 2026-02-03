@@ -248,5 +248,23 @@ namespace TabPaint.Controls
         private void OnVignetteClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(VignetteClickEvent));
         private void OnGlowClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(GlowClickEvent));
 
+        public static readonly RoutedEvent SharpenClickEvent = EventManager.RegisterRoutedEvent("SharpenClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent BrownClickEvent = EventManager.RegisterRoutedEvent("BrownClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+
+        public event RoutedEventHandler SharpenClick { add { AddHandler(SharpenClickEvent, value); } remove { RemoveHandler(SharpenClickEvent, value); } }
+        public event RoutedEventHandler BrownClick { add { AddHandler(BrownClickEvent, value); } remove { RemoveHandler(BrownClickEvent, value); } }
+
+        private void OnSharpenClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SharpenClickEvent));
+        private void OnBrownClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(BrownClickEvent));
+        // 在事件定义区域添加
+        public static readonly RoutedEvent MosaicClickEvent = EventManager.RegisterRoutedEvent("MosaicClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent GaussianBlurClickEvent = EventManager.RegisterRoutedEvent("GaussianBlurClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+
+        public event RoutedEventHandler MosaicClick { add { AddHandler(MosaicClickEvent, value); } remove { RemoveHandler(MosaicClickEvent, value); } }
+        public event RoutedEventHandler GaussianBlurClick { add { AddHandler(GaussianBlurClickEvent, value); } remove { RemoveHandler(GaussianBlurClickEvent, value); } }
+
+        private void OnMosaicClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(MosaicClickEvent));
+        private void OnGaussianBlurClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(GaussianBlurClickEvent));
+
     }
 }

@@ -5,6 +5,7 @@
 //
 using System.ComponentModel;
 using System.Drawing;
+using System.Resources;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -287,7 +288,7 @@ namespace TabPaint
                 case BrushStyle.Watercolor: resKey = "Watercolor_Image"; break;
                 case BrushStyle.Highlighter: resKey = "Highlighter_Image"; isPath = false; break; // Image
                 case BrushStyle.Mosaic: resKey = "Mosaic_Image"; break;
-                case BrushStyle.AiEraser: resKey = "Eraser_Image"; isPath = false; break;
+                case BrushStyle.AiEraser: resKey = "AIEraser_Image"; isPath = true; break;
                     // Pencil 和 Eraser 通常在基础工具栏有独立按钮，这里也可以不用处理，或者给个默认图标
             }
 
@@ -387,6 +388,98 @@ namespace TabPaint
                 TextMenu.TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
             }
         }
+        public enum SelectionType { Rectangle, Lasso, MagicWand }
+
+        // 2. 处理左侧主按钮点击
+        private void OnSelectMainClick(object sender, RoutedEventArgs e)
+        {
+            // 切换到选择工具，保持当前的选区模式
+            _router.SetTool(_tools.Select);
+        }
+
+        // 3. 处理下拉菜单点击
+        private void OnSelectStyleClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem item && item.Tag is string tag)
+            {
+                var selectTool = _tools.Select as SelectTool;
+                if (selectTool == null) return;
+
+                // 根据 Tag 切换模式
+                switch (tag)
+                {
+                    case "Rectangle":
+                        selectTool.SelectionType = SelectionType.Rectangle;
+                        break;
+                    case "Lasso":
+                        selectTool.SelectionType = SelectionType.Lasso;
+                        ShowToast(" (UI Only)");
+                        break;
+                    case "MagicWand": // 新增逻辑
+                        selectTool.SelectionType = SelectionType.MagicWand;
+                        ShowToast("Magic Wand Tool (UI Only)");
+                        break;
+                }
+
+                // 激活工具
+                _router.SetTool(_tools.Select);
+
+                // 关闭下拉菜单
+                MainToolBar.SubMenuPopupSelect.IsOpen = false;
+
+                // 触发 UI 刷新（高亮更新）
+                UpdateToolSelectionHighlight();
+
+                // 更新主按钮图标
+                UpdateSelectToolIcon(selectTool.SelectionType);
+            }
+        }
+
+        private void UpdateSelectToolIcon(SelectionType type)
+        {
+            // 获取 ContentControl
+            var iconHost = MainToolBar.CurrentSelectIconHost;
+            iconHost.Content = null;
+
+            if (type == SelectionType.MagicWand)
+            {
+                var wandPath = new System.Windows.Shapes.Path
+                {
+                    Data = TryFindResource("Wand_Image") as Geometry,
+                    Fill = (System.Windows.Media.Brush)FindResource("IconFillBrush"),
+                    // --- 核心修复 ---
+                    Stretch = System.Windows.Media.Stretch.Uniform,
+                    Width = 16,
+                    Height = 16
+                };
+                iconHost.Content = wandPath;
+            }
+            else if (type == SelectionType.Lasso)
+            {
+                var lassoPath = new System.Windows.Shapes.Path
+                {
+                    Data = TryFindResource("Lasso_Image") as Geometry,
+                    Stroke = (System.Windows.Media.Brush)FindResource("IconFillBrush"),
+                   
+                    Stretch = System.Windows.Media.Stretch.Uniform,
+                    Width = 16, // 统一为 16
+                    Height = 16
+                };
+                iconHost.Content = lassoPath;
+            }
+            else
+            {
+                // 恢复为矩形 Image
+                var rectImg = new System.Windows.Controls.Image
+                {
+                    Source = (ImageSource)FindResource("Select_Image"),
+                    Width = 16,
+                    Height = 16
+                };
+                iconHost.Content = rectImg;
+            }
+        }
+
         private void OnBrushMainClick(object sender, RoutedEventArgs e)
         {
             if (!(_router.CurrentTool is PenTool))

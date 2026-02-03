@@ -13,10 +13,18 @@ using System.Windows.Threading;
 
 namespace TabPaint
 {
+    public enum SelectionType
+    {
+        Rectangle,
+        Lasso
+    }
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+
         public partial class SelectTool : ToolBase
         {
+   
+            public SelectionType SelectionType { get; set; } = SelectionType.Rectangle;
             public bool IsPasted = false;
             public override string Name => "Select";
             private System.Windows.Input.Cursor _cachedCursor;

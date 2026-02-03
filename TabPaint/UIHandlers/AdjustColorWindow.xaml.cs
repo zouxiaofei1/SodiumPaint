@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
@@ -57,11 +58,33 @@ namespace TabPaint
             UpdateTextBoxes();
             UpdatePreview(); // 初始渲染
         }
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
 
-        // 创建适合预览大小的 Bitmap，提升性能
+            // 确保句柄已经准备好
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+
+            // 设置暗色模式标题栏
+            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+
+            MicaAcrylicManager.ApplyEffect(this);
+            if (!MicaAcrylicManager.IsWin11())
+            {
+                var chromeLow = FindResource("ChromeLowBrush") as Brush;
+            
+                // 同时设置主窗口背景
+                this.Background = FindResource("WindowBackgroundBrush") as Brush;
+            }
+        }
+
         private void CreatePreviewBitmaps(WriteableBitmap source)
         {
-            // 限制预览图最大边长，例如 1280，既清晰又快
             double maxDim = 1280;
             double scale = 1.0;
 
@@ -272,6 +295,7 @@ namespace TabPaint
 
         private unsafe void UpdateHistogramUnsafe(WriteableBitmap bmp)
         {
+            // 清空数组
             Array.Clear(_redCounts, 0, 256);
             Array.Clear(_greenCounts, 0, 256);
             Array.Clear(_blueCounts, 0, 256);
@@ -281,70 +305,133 @@ namespace TabPaint
             int height = bmp.PixelHeight;
             int stride = bmp.BackBufferStride;
 
-            // 简单采样 (步长) 优化性能，如果图很大，不用逐像素统计
+            // 性能优化：对于大图使用采样步长
             int step = 1;
-            if (width * height > 500000) step = 2;
+            if (width * height > 500000) step = 2; // 大于50万像素时，隔一个点采一次样
 
             for (int y = 0; y < height; y += step)
             {
                 byte* row = ptr + (y * stride);
                 for (int x = 0; x < width; x += step)
                 {
-                    _blueCounts[row[0]]++;
-                    _greenCounts[row[1]]++;
-                    _redCounts[row[2]]++;
+                    // [重要] 忽略完全透明的像素 (Alpha = 0)
+                    // 这能解决“透明背景导致直方图看起来是空的”问题
+                    if (row[3] > 0)
+                    {
+                        _blueCounts[row[0]]++;
+                        _greenCounts[row[1]]++;
+                        _redCounts[row[2]]++;
+                    }
                     row += 4 * step;
                 }
             }
 
-            // 找最大值
-            int max = 1;
+            int[] displayRed = SmoothHistogram(_redCounts);
+            int[] displayGreen = SmoothHistogram(_greenCounts);
+            int[] displayBlue = SmoothHistogram(_blueCounts);
+
+            // [修改] 找最大值 (使用平滑后的数据)
+            int max = 0;
             for (int i = 0; i < 256; i++)
             {
-                if (_redCounts[i] > max) max = _redCounts[i];
-                if (_greenCounts[i] > max) max = _greenCounts[i];
-                if (_blueCounts[i] > max) max = _blueCounts[i];
+                if (displayRed[i] > max) max = displayRed[i];
+                if (displayGreen[i] > max) max = displayGreen[i];
+                if (displayBlue[i] > max) max = displayBlue[i];
             }
 
-            // UI 更新需在主线程
+            // [保持不变] 稳定化 Max 值
+            int minStableMax = (width * height) / (step * step) / 50;
+            if (max < minStableMax) max = minStableMax;
+            if (max < 10) max = 10;
+
+            // UI 更新
             Dispatcher.Invoke(() =>
             {
-                UpdatePolyline(HistoRed, _redCounts, max);
-                UpdatePolyline(HistoGreen, _greenCounts, max);
-                UpdatePolyline(HistoBlue, _blueCounts, max);
+                // [修改] 传入平滑后的数组
+                UpdatePolyline(HistoRed, displayRed, max);
+                UpdatePolyline(HistoGreen, displayGreen, max);
+                UpdatePolyline(HistoBlue, displayBlue, max);
             });
         }
 
+        private int[] SmoothHistogram(int[] input)
+        {
+            int[] output = new int[input.Length];
+            // 使用简单的 [0.25, 0.5, 0.25] 权重核心进行平滑
+            // 也可以尝试更宽的核如 [1, 2, 4, 2, 1] / 10
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (i == 0)
+                {
+                    output[i] = (int)(input[i] * 0.75 + input[i + 1] * 0.25);
+                }
+                else if (i == input.Length - 1)
+                {
+                    output[i] = (int)(input[i - 1] * 0.25 + input[i] * 0.75);
+                }
+                else
+                {
+                    // 核心算法：当前点占50%，左右各占25%
+                    output[i] = (int)(input[i - 1] * 0.25 + input[i] * 0.5 + input[i + 1] * 0.25);
+                }
+            }
+            return output;
+        }
+
+
         private void UpdatePolyline(Polyline polyline, int[] counts, int maxVal)
         {
-            // 如果窗口刚打开，ActualWidth 可能是 0，取默认宽度
+            // 防止除以0
+            if (maxVal < 1) maxVal = 1;
+
+            // 获取控件实际尺寸
             double width = HistogramGrid.ActualWidth > 0 ? HistogramGrid.ActualWidth : 280;
-            double height = HistogramGrid.Height; // 60
+            double height = HistogramGrid.Height; // 通常是 60
 
             PointCollection points = new PointCollection(258);
-            points.Add(new Point(0, height)); // 左下
+            // 左下角起始点
+            points.Add(new Point(0, height));
 
             double stepX = width / 255.0;
 
+            // --- 核心修改：使用对数缩放 ---
+            // Log(x+1) 是为了处理 count=0 的情况
+            // 使用 Math.Log (自然对数) 或 Math.Log10 都可以，效果类似
+            double logMax = Math.Log(maxVal + 1);
+
             for (int i = 0; i < 256; i++)
             {
-                double val = (double)counts[i] / maxVal;
-                // 加一点对数缩放让暗部细节更明显 (可选)
-                // val = Math.Log10(val * 9 + 1); 
-                points.Add(new Point(i * stepX, height - (val * height)));
+                double count = counts[i];
+
+                // 只有当有像素时才计算高度
+                if (count > 0)
+                {
+                    double logVal = Math.Log(count + 1);
+
+                    // 归一化：当前对数值 / 最大对数值
+                    // 这样，即使 maxVal 很大，中间只有少量像素的部分也能显示出高度
+                    double normalizedHeight = logVal / logMax;
+
+                    // 绘制点
+                    points.Add(new Point(i * stepX, height - (normalizedHeight * height)));
+                }
+                else
+                {
+                    points.Add(new Point(i * stepX, height));
+                }
             }
 
-            points.Add(new Point(width, height)); // 右下
+            // 右下角结束点
+            points.Add(new Point(width, height));
             polyline.Points = points;
         }
+
 
         // --- 确定与取消 ---
 
         private void Ok_Click(object sender, RoutedEventArgs e)
         {
-            // 应用到原图（大图）
-            // 在关闭前做耗时操作，或者返回 DialogResult 后由主窗口做
-            // 这里选择在窗口内完成，比较封闭
             try
             {
                 Mouse.OverrideCursor = Cursors.Wait;
@@ -369,6 +456,11 @@ namespace TabPaint
         {
             DialogResult = false;
             Close();
+        }
+
+        private void NumberBox_Loaded(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

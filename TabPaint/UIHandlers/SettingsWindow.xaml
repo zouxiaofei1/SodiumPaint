@@ -1019,9 +1019,33 @@
                             </ComboBox>
                         </Grid>
 
-                        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+                   
 
-                        <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                                <Grid Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource L_Settings_Advanced_ICC_Title}"/>
+                                        <TextBlock Text="{DynamicResource L_Settings_Advanced_ICC_Desc}" 
+                                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- 绑定到新添加的 EnableIccColorCorrection 属性 -->
+                                    <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                                      IsChecked="{Binding Path=Current.EnableIccColorCorrection, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                                      VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+                                <!-- 插入点结束 -->
+
+                              
+                                <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <TextBlock Text="{DynamicResource L_Settings_Advanced_PixelThreshold_Desc}" 
                                    Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
@@ -1121,7 +1145,6 @@
                     </StackPanel>
 
                     <!-- 6. 关于页 -->
-                    <!-- 6. 关于页 -->
                     <StackPanel x:Name="AboutPanel" Visibility="Collapsed" Margin="24,24,44,24">
 
                         <!-- 顶部信息区域 -->
@@ -1218,64 +1241,101 @@
                                 </Style>
                             </StackPanel.Resources>
 
-                            <!-- GitHub 按钮 -->
-                                    <Button Cursor="Hand" Background="{DynamicResource GlassBackgroundMediumBrush}">
-                                <TextBlock>
-                <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint" RequestNavigate="Hyperlink_RequestNavigate">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
-                        <TextBlock Text="{DynamicResource L_Settings_About_Github}"/>
-                    </StackPanel>
-                </Hyperlink>
-            </TextBlock>
-                            </Button>
+                                    <Button Cursor="Hand" 
+        Background="{DynamicResource GlassBackgroundMediumBrush}"
+        Tag="https://github.com/zouxiaofei1/TabPaint" 
+        Click="OnOpenUrlClick">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                                            <TextBlock Text="{DynamicResource L_Settings_About_Github}"/>
+                                        </StackPanel>
+                                    </Button>
 
-                            <!-- 检查更新 按钮 -->
-                                    <Button Cursor="Hand" Background="{DynamicResource GlassBackgroundMediumBrush}">
-                                <TextBlock>
-                <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
-                        <TextBlock Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
-                    </StackPanel>
-                </Hyperlink>
-            </TextBlock>
-                            </Button>
+                                    <!-- 检查更新 按钮 -->
+                                    <Button Cursor="Hand" 
+        Background="{DynamicResource GlassBackgroundMediumBrush}"
+        Tag="https://github.com/zouxiaofei1/TabPaint/releases" 
+        Click="OnOpenUrlClick">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                                            <TextBlock Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
+                                        </StackPanel>
+                                    </Button>
 
-                            <!-- 帮助文档 按钮 -->
-                                    <Button Cursor="Hand" Background="{DynamicResource GlassBackgroundMediumBrush}">
-                                <TextBlock>
-                <Hyperlink NavigateUri="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" RequestNavigate="Hyperlink_RequestNavigate">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
-                        <TextBlock Text="{DynamicResource L_Settings_About_Help}"/>
-                    </StackPanel>
-                </Hyperlink>
-            </TextBlock>
-                            </Button>
+                                    <!-- 帮助文档 按钮 -->
+                                    <Button Cursor="Hand" 
+        Background="{DynamicResource GlassBackgroundMediumBrush}"
+        Tag="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" 
+        Click="OnOpenUrlClick">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Margin="0,1,8,0"/>
+                                            <TextBlock Text="{DynamicResource L_Settings_About_Help}"/>
+                                        </StackPanel>
+                                    </Button>
 
-                        </StackPanel>
+
+                                </StackPanel>
 
                     </StackPanel>
 
                 </Grid>
                     </ScrollViewer>
-                    <Border x:Name="SavedToast" 
-        Background="{DynamicResource ThemeAccentBrush}" 
-        HorizontalAlignment="Right" VerticalAlignment="Top" 
-        Margin="0,30,-300,0" Padding="16,10" CornerRadius="4"
-        Opacity="0" IsHitTestVisible="False">
-                        <!-- Margin 右侧设为负数或者通过动画控制 TranslateTransform 更好，
-         这里为了简单，初始状态 Opacity=0，位置在右上角 -->
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
-                        </Border.Effect>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                    <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" 
+            Margin="0,10,20,0" 
+            Panel.ZIndex="999">
 
+                        <!-- 1. 更新通知 (通常更重要，放在上面) -->
+                        <Border x:Name="UpdateToast"
+            Background="{DynamicResource ThemeAccentBrush}"
+            Padding="16,10" CornerRadius="4"
+            Visibility="Collapsed" 
+            Opacity="0"
+            Cursor="Hand"
+            MouseLeftButtonUp="UpdateToast_Click"
+            Margin="0,0,0,10">
+                            <!-- Margin-Bottom 用于两个Toast之间的间距 -->
+
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                            </Border.Effect>
+
+                            <!-- 添加变换组件，用于动画 -->
+                            <Border.RenderTransform>
+                                <TranslateTransform X="50"/>
+                            </Border.RenderTransform>
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" FontSize="16"/>
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource L_Update_Found_Title}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock x:Name="TxtUpdateVer" Text="New version available" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2. 保存通知 -->
+                        <Border x:Name="SavedToast" 
+            Background="{DynamicResource ThemeAccentBrush}" 
+            Padding="16,10" CornerRadius="4"
+            Visibility="Collapsed" 
+            Opacity="0" 
+            IsHitTestVisible="False">
+
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                            </Border.Effect>
+
+                            <!-- 添加变换组件，用于动画 -->
+                            <Border.RenderTransform>
+                                <TranslateTransform X="50"/>
+                            </Border.RenderTransform>
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Grid>
                 
         </Border>

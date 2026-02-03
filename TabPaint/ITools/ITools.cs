@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.UI.Text;
 using static TabPaint.MainWindow;
 
 
@@ -53,9 +54,18 @@ namespace TabPaint
             MainToolBar.ShapeMainButton.ClearValue(Control.BorderBrushProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
+
+            MainToolBar.SelectSplitButtonBorder.BorderBrush = Brushes.Transparent;
+            MainToolBar.SelectSplitButtonBorder.Background = Brushes.Transparent;
+            MainToolBar.SelectMainButton.ClearValue(Control.BackgroundProperty);
+            MainToolBar.SelectMainButton.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.SelectToggle.ClearValue(Control.BackgroundProperty);
+            MainToolBar.SelectToggle.ClearValue(Control.BorderBrushProperty);
+
+
             // 获取所有常规工具按钮
             var toolControls = new Control[] {
-        MainToolBar.PickColorButton, MainToolBar.EraserButton, MainToolBar.SelectButton,
+        MainToolBar.PickColorButton, MainToolBar.EraserButton,
         MainToolBar.FillButton, MainToolBar.TextButton, MainToolBar.PenButton
     };
 
@@ -66,7 +76,7 @@ namespace TabPaint
                 ctrl.ClearValue(Control.BackgroundProperty);
             }
             bool isBasicTool = !string.IsNullOrEmpty(currentToolTag);
-            if (!isBasicTool)
+            if (!isBasicTool || _router.CurrentTool is SelectTool)
             {
                 // 画刷工具高亮逻辑
                 if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
@@ -96,6 +106,24 @@ namespace TabPaint
                 {
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, null);
                 }
+                if (_router.CurrentTool is SelectTool selectTool)
+                {
+                    // 高亮整个外框
+                    MainToolBar.SelectSplitButtonBorder.BorderBrush = accentBrush;
+                    MainToolBar.SelectSplitButtonBorder.Background = accentSubtleBrush;
+
+                    // 高亮下拉箭头（如果需要）
+                    MainToolBar.SelectToggle.BorderBrush = accentBrush;
+                    MainToolBar.SelectToggle.Background = accentSubtleBrush;
+
+                    // 处理子菜单高亮
+                    string selectTag = selectTool.SelectionType == SelectionType.Lasso ? "Lasso" : "Rectangle";
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupSelect, selectTag);
+                }
+                else
+                {
+                    UpdateSubMenuHighlight(MainToolBar.SubMenuPopupSelect, null);
+                }
             }
             if (isBasicTool)
             {
@@ -115,7 +143,7 @@ namespace TabPaint
                     {
                         EyedropperTool => MainToolBar.PickColorButton,
                         FillTool => MainToolBar.FillButton,
-                        SelectTool => MainToolBar.SelectButton,
+                        //SelectTool => MainToolBar.Select,
                         TextTool => MainToolBar.TextButton,
                         PenTool when _ctx.PenStyle == BrushStyle.Eraser => MainToolBar.EraserButton,
                         PenTool when _ctx.PenStyle == BrushStyle.Pencil => MainToolBar.PenButton,

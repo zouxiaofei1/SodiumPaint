@@ -248,11 +248,161 @@ namespace TabPaint
                 return null;
             }
         }
+        private BitmapSource DecodeWithSkiaAndIcc(byte[] imageBytes)
+        {
+            try
+            {
+                using var ms = new MemoryStream(imageBytes);
+                using var codec = SKCodec.Create(ms);
+                if (codec == null) return null;
+
+                // --- 1. 准备色彩空间和参数 ---
+                using var srgbSpace = SKColorSpace.CreateSrgb();
+
+                // 强制使用 Bgra8888 + Premul Alpha
+                // 即使是 JPEG (不透明)，Premul 也会自动把 Alpha 填满为 255，避免透明问题
+                var info = new SKImageInfo(
+                    codec.Info.Width,
+                    codec.Info.Height,
+                    SKColorType.Bgra8888,
+                    SKAlphaType.Premul,
+                    srgbSpace);
+
+                // --- 2. 解码原始数据 ---
+                // 我们先解码到一个临时的 SKBitmap，这样方便后面做旋转处理
+                using var originalBitmap = new SKBitmap(info);
+
+                // 这一步 Skia 会同时完成：解码 + ICC转sRGB + 格式转Bgra + 填充Alpha
+                var result = codec.GetPixels(info, originalBitmap.GetPixels());
+
+                if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
+                {
+                    Debug.WriteLine($"Skia decode status: {result}");
+                    return null;
+                }
+
+                // --- 3. 处理旋转 (EXIF Orientation) ---
+                var origin = codec.EncodedOrigin;
+
+                // 如果不需要旋转，直接转换并返回
+                if (origin == SKEncodedOrigin.TopLeft)
+                {
+                    return SkiaBitmapToWpfSource(originalBitmap);
+                }
+
+                // --- 4. 需要旋转的情况 ---
+                // 计算旋转后的宽高
+                int newWidth = (origin == SKEncodedOrigin.RightTop || origin == SKEncodedOrigin.LeftBottom) ? info.Height : info.Width;
+                int newHeight = (origin == SKEncodedOrigin.RightTop || origin == SKEncodedOrigin.LeftBottom) ? info.Width : info.Height;
+
+                var rotatedInfo = info.WithSize(newWidth, newHeight);
+                using var rotatedBitmap = new SKBitmap(rotatedInfo);
+                using var canvas = new SKCanvas(rotatedBitmap);
+
+                // 清除画布（虽然全覆盖绘制不需要，但好习惯）
+                canvas.Clear(SKColors.Transparent);
+
+                // 坐标系变换
+                switch (origin)
+                {
+                    case SKEncodedOrigin.RightTop: // 90度
+                        canvas.Translate(newWidth, 0);
+                        canvas.RotateDegrees(90);
+                        break;
+                    case SKEncodedOrigin.BottomRight: // 180度
+                        canvas.Translate(newWidth, newHeight);
+                        canvas.RotateDegrees(180);
+                        break;
+                    case SKEncodedOrigin.LeftBottom: // 270度
+                        canvas.Translate(0, newHeight);
+                        canvas.RotateDegrees(270);
+                        break;
+                        // 其他镜像模式暂略，通常只需处理这几个
+                }
+
+                // 绘制原图到旋转后的画布
+                // Paint 设为 null 即可，不需要特殊的混合模式
+                using (var paint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High })
+                {
+                    canvas.DrawBitmap(originalBitmap, 0, 0, paint);
+                }
+                canvas.Flush();
+
+                // 转换回 WPF 对象
+                return SkiaBitmapToWpfSource(rotatedBitmap);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Skia ICC Decode Error: {ex.Message}");
+                return null;
+            }
+        }
 
 
-        private BitmapImage DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
+        private BitmapSource SkiaBitmapToWpfSource(SKBitmap skBitmap)
+        {
+            // 1. 创建 WPF 的 WriteableBitmap
+            var wb = new WriteableBitmap(skBitmap.Width, skBitmap.Height, 96, 96, PixelFormats.Bgra32, null);
+
+            wb.Lock();
+            try
+            {
+                // 2. 检查源数据信息
+                var info = skBitmap.Info;
+
+                // 3. 执行内存拷贝
+                // Skia 的 Bgra8888 内存布局与 WPF 的 Bgra32 完全一致，可以直接拷贝
+                unsafe
+                {
+                    // 获取源地址 (Skia)
+                    void* srcPtr = (void*)skBitmap.GetPixels();
+                    // 获取目标地址 (WPF)
+                    void* dstPtr = (void*)wb.BackBuffer;
+
+                    // 计算总字节数 (高度 * 步长)
+                    // 注意：使用 skBitmap.RowBytes 更安全，因为它包含了内存对齐的填充
+                    long bytesToCopy = (long)skBitmap.Height * skBitmap.RowBytes;
+
+                    // 执行拷贝
+                    Buffer.MemoryCopy(srcPtr, dstPtr, bytesToCopy, bytesToCopy);
+                }
+
+                // 4. 标记脏区，通知 WPF 更新画面
+                wb.AddDirtyRect(new Int32Rect(0, 0, skBitmap.Width, skBitmap.Height));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Bitmap Copy Error: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                wb.Unlock();
+            }
+
+            wb.Freeze();
+            return wb;
+        }
+
+
+
+
+        private BitmapSource DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
+            if (SettingsManager.Instance.Current.EnableIccColorCorrection)
+            {
+                try
+                {
+                    var skiaBitmap = DecodeWithSkiaAndIcc(imageBytes);
+                    if (skiaBitmap != null) return skiaBitmap;
+                }
+                catch (Exception ex)
+                {
+                    // 如果 Skia 解码失败（比如不支持的格式），回退到下面的 WPF 原生解码
+                    Debug.WriteLine($"Skia ICC Decode failed, falling back to WPF: {ex.Message}");
+                }
+            }
             try
             {
 
@@ -510,12 +660,12 @@ namespace TabPaint
                 // 步骤 2: 并行启动中等预览图和完整图的解码任务
                 string extension = System.IO.Path.GetExtension(filePath)?.ToLower();
                 Task<BitmapImage> previewTask;
-                Task<BitmapImage> fullResTask;
-               
+                Task<BitmapSource> fullResTask;
+
                 if (extension == ".svg")
                 {
                     previewTask = Task.Run(() => DecodeSvg(imageBytes, token), token);
-                    fullResTask = previewTask; // SVG 渲染比较耗时，预览和全图用同一个
+                    fullResTask = previewTask.ContinueWith(t => (BitmapSource)t.Result, TaskContinuationOptions.OnlyOnRanToCompletion);
                 }
                 else
                 {
