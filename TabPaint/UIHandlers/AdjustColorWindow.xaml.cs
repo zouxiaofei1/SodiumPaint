@@ -1,0 +1,374 @@
+﻿using System;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using System.Windows.Threading;
+
+namespace TabPaint
+{
+    public partial class AdjustColorWindow : Window
+    {
+        // 原始图像（用于最终应用）
+        private WriteableBitmap _originalFullBitmap;
+
+        // 预览用的低分辨率图像（源数据和显示数据）
+        private WriteableBitmap _previewSource;
+        private WriteableBitmap _previewTarget;
+
+        // 统计直方图数组
+        private readonly int[] _redCounts = new int[256];
+        private readonly int[] _greenCounts = new int[256];
+        private readonly int[] _blueCounts = new int[256];
+
+        // 防抖动计时器
+        private DispatcherTimer _updateTimer;
+        private bool _isUpdatingFromTextBox = false;
+
+        // 构造函数
+        // initialTab: 0 = BCE (Light), 1 = TTS (Color)
+        public AdjustColorWindow(WriteableBitmap fullBitmap, int initialTabIndex = 0)
+        {
+            InitializeComponent();
+            _originalFullBitmap = fullBitmap;
+
+            // 初始化预览图
+            CreatePreviewBitmaps(fullBitmap);
+
+            // 绑定预览图到右侧控件
+            PreviewImage.Source = _previewTarget;
+
+            // 设置初始 Tab
+            if (initialTabIndex > 0 && initialTabIndex < AdjustTabControl.Items.Count)
+            {
+                AdjustTabControl.SelectedIndex = initialTabIndex;
+            }
+
+            // 初始化计时器
+            _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) }; // 25fps 左右
+            _updateTimer.Tick += (s, e) => { _updateTimer.Stop(); UpdatePreview(); };
+
+            UpdateTextBoxes();
+            UpdatePreview(); // 初始渲染
+        }
+
+        // 创建适合预览大小的 Bitmap，提升性能
+        private void CreatePreviewBitmaps(WriteableBitmap source)
+        {
+            // 限制预览图最大边长，例如 1280，既清晰又快
+            double maxDim = 1280;
+            double scale = 1.0;
+
+            if (source.PixelWidth > maxDim || source.PixelHeight > maxDim)
+            {
+                scale = Math.Min(maxDim / source.PixelWidth, maxDim / source.PixelHeight);
+            }
+
+            int w = (int)(source.PixelWidth * scale);
+            int h = (int)(source.PixelHeight * scale);
+            if (w < 1) w = 1; if (h < 1) h = 1;
+
+            // 使用 RenderTargetBitmap 或 TransformedBitmap 缩放
+            var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.DrawImage(source, new Rect(0, 0, w, h));
+            }
+            rtb.Render(visual);
+
+            // 创建源备本和目标
+            _previewSource = new WriteableBitmap(rtb);
+            _previewTarget = _previewSource.Clone();
+        }
+
+        // --- 事件处理 ---
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left) this.DragMove();
+        }
+
+        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded) return;
+            if (!_isUpdatingFromTextBox) UpdateTextBoxes();
+            ThrottleUpdate();
+        }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            var box = sender as TextBox;
+            var slider = box?.Tag as Slider;
+            if (slider != null && double.TryParse(box.Text, out double val))
+            {
+                _isUpdatingFromTextBox = true;
+                // 限制范围
+                if (val < slider.Minimum) val = slider.Minimum;
+                if (val > slider.Maximum) val = slider.Maximum;
+                slider.Value = val;
+                _isUpdatingFromTextBox = false;
+            }
+        }
+
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e) =>
+            e.Handled = new Regex("[^0-9.-]+").IsMatch(e.Text);
+
+        private void Slider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Slider s) s.Value = 0;
+        }
+
+        private void Slider_DragStarted(object sender, DragStartedEventArgs e) { }
+        private void Slider_DragCompleted(object sender, DragCompletedEventArgs e) => ThrottleUpdate();
+
+        private void Reset_Click(object sender, RoutedEventArgs e)
+        {
+            // 暂停更新，一次性重置
+            _isUpdatingFromTextBox = true;
+            BrightnessSlider.Value = 0;
+            ContrastSlider.Value = 0;
+            ExposureSlider.Value = 0;
+            TemperatureSlider.Value = 0;
+            TintSlider.Value = 0;
+            SaturationSlider.Value = 0;
+            _isUpdatingFromTextBox = false;
+
+            UpdateTextBoxes();
+            ThrottleUpdate();
+        }
+
+        private void UpdateTextBoxes()
+        {
+            BrightnessBox.Text = BrightnessSlider.Value.ToString("F0");
+            ContrastBox.Text = ContrastSlider.Value.ToString("F0");
+            ExposureBox.Text = ExposureSlider.Value.ToString("F1");
+            TemperatureBox.Text = TemperatureSlider.Value.ToString("F0");
+            TintBox.Text = TintSlider.Value.ToString("F0");
+            SaturationBox.Text = SaturationSlider.Value.ToString("F0");
+        }
+
+        private void ThrottleUpdate()
+        {
+            if (!_updateTimer.IsEnabled) _updateTimer.Start();
+        }
+
+        // --- 核心图像处理 ---
+
+        private void UpdatePreview()
+        {
+            // 1. 从纯净源拷贝像素到目标
+            int stride = _previewSource.BackBufferStride;
+            int len = _previewSource.PixelHeight * stride;
+            _previewSource.CopyPixels(new Int32Rect(0, 0, _previewSource.PixelWidth, _previewSource.PixelHeight), _previewTarget.BackBuffer, len, stride);
+
+            // 2. 原地修改 _previewTarget
+            _previewTarget.Lock();
+            ProcessBitmapUnsafe(_previewTarget,
+                BrightnessSlider.Value, ContrastSlider.Value, ExposureSlider.Value,
+                TemperatureSlider.Value, TintSlider.Value, SaturationSlider.Value);
+
+            // 3. 更新直方图 (在 Lock 期间读取最快)
+            UpdateHistogramUnsafe(_previewTarget);
+
+            _previewTarget.AddDirtyRect(new Int32Rect(0, 0, _previewTarget.PixelWidth, _previewTarget.PixelHeight));
+            _previewTarget.Unlock();
+        }
+
+        // 静态处理函数，包含所有算法管线
+        private static unsafe void ProcessBitmapUnsafe(WriteableBitmap bmp,
+            double brightness, double contrast, double exposure,
+            double temp, double tint, double saturation)
+        {
+            // --- 预计算参数 ---
+
+            // TTS 参数
+            double tempAdj = temp / 2.0;
+            double tintAdj = tint / 2.0;
+            double satAdj = (saturation + 100.0) / 100.0;
+            bool hasTTS = (temp != 0 || tint != 0 || saturation != 0);
+
+            // BCE 参数
+            // 对比度公式: (val - 0.5) * contrast + 0.5
+            double ctFactor = (100.0 + contrast) / 100.0;
+            ctFactor *= ctFactor;
+            double expFactor = Math.Pow(2, exposure);
+            double brAdj = brightness;
+            bool hasBCE = (brightness != 0 || contrast != 0 || exposure != 0);
+
+            if (!hasTTS && !hasBCE) return; // 无变化
+
+            byte* basePtr = (byte*)bmp.BackBuffer;
+            int stride = bmp.BackBufferStride;
+            int width = bmp.PixelWidth;
+            int height = bmp.PixelHeight;
+
+            // 并行循环处理像素
+            Parallel.For(0, height, y =>
+            {
+                byte* row = basePtr + (y * stride);
+                for (int x = 0; x < width; x++)
+                {
+                    // BGRA 顺序
+                    double b = row[x * 4];
+                    double g = row[x * 4 + 1];
+                    double r = row[x * 4 + 2];
+                    // Alpha 不动
+
+                    // 1. 应用色温/色调/饱和度 (TTS)
+                    if (hasTTS)
+                    {
+                        // 色温/色调
+                        r += tempAdj;
+                        g += tintAdj;
+                        b -= tempAdj;
+
+                        // 饱和度
+                        if (saturation != 0)
+                        {
+                            // Rec.601 Luma
+                            double luma = 0.299 * r + 0.587 * g + 0.114 * b;
+                            r = luma + satAdj * (r - luma);
+                            g = luma + satAdj * (g - luma);
+                            b = luma + satAdj * (b - luma);
+                        }
+                    }
+
+                    // 2. 应用亮度/对比度/曝光 (BCE)
+                    if (hasBCE)
+                    {
+                        // 应用亮度
+                        r += brAdj;
+                        g += brAdj;
+                        b += brAdj;
+
+                        // 应用对比度 (归一化到 0..1 再还原)
+                        // 简化计算: r = (((r/255 - 0.5) * ct) + 0.5) * 255
+                        // 等价于: (r - 127.5) * ct + 127.5
+                        r = (r - 127.5) * ctFactor + 127.5;
+                        g = (g - 127.5) * ctFactor + 127.5;
+                        b = (b - 127.5) * ctFactor + 127.5;
+
+                        // 应用曝光
+                        r *= expFactor;
+                        g *= expFactor;
+                        b *= expFactor;
+                    }
+
+                    // 3. 钳制并回写
+                    row[x * 4 + 2] = (byte)(r < 0 ? 0 : (r > 255 ? 255 : r));
+                    row[x * 4 + 1] = (byte)(g < 0 ? 0 : (g > 255 ? 255 : g));
+                    row[x * 4] = (byte)(b < 0 ? 0 : (b > 255 ? 255 : b));
+                }
+            });
+        }
+
+        private unsafe void UpdateHistogramUnsafe(WriteableBitmap bmp)
+        {
+            Array.Clear(_redCounts, 0, 256);
+            Array.Clear(_greenCounts, 0, 256);
+            Array.Clear(_blueCounts, 0, 256);
+
+            byte* ptr = (byte*)bmp.BackBuffer;
+            int width = bmp.PixelWidth;
+            int height = bmp.PixelHeight;
+            int stride = bmp.BackBufferStride;
+
+            // 简单采样 (步长) 优化性能，如果图很大，不用逐像素统计
+            int step = 1;
+            if (width * height > 500000) step = 2;
+
+            for (int y = 0; y < height; y += step)
+            {
+                byte* row = ptr + (y * stride);
+                for (int x = 0; x < width; x += step)
+                {
+                    _blueCounts[row[0]]++;
+                    _greenCounts[row[1]]++;
+                    _redCounts[row[2]]++;
+                    row += 4 * step;
+                }
+            }
+
+            // 找最大值
+            int max = 1;
+            for (int i = 0; i < 256; i++)
+            {
+                if (_redCounts[i] > max) max = _redCounts[i];
+                if (_greenCounts[i] > max) max = _greenCounts[i];
+                if (_blueCounts[i] > max) max = _blueCounts[i];
+            }
+
+            // UI 更新需在主线程
+            Dispatcher.Invoke(() =>
+            {
+                UpdatePolyline(HistoRed, _redCounts, max);
+                UpdatePolyline(HistoGreen, _greenCounts, max);
+                UpdatePolyline(HistoBlue, _blueCounts, max);
+            });
+        }
+
+        private void UpdatePolyline(Polyline polyline, int[] counts, int maxVal)
+        {
+            // 如果窗口刚打开，ActualWidth 可能是 0，取默认宽度
+            double width = HistogramGrid.ActualWidth > 0 ? HistogramGrid.ActualWidth : 280;
+            double height = HistogramGrid.Height; // 60
+
+            PointCollection points = new PointCollection(258);
+            points.Add(new Point(0, height)); // 左下
+
+            double stepX = width / 255.0;
+
+            for (int i = 0; i < 256; i++)
+            {
+                double val = (double)counts[i] / maxVal;
+                // 加一点对数缩放让暗部细节更明显 (可选)
+                // val = Math.Log10(val * 9 + 1); 
+                points.Add(new Point(i * stepX, height - (val * height)));
+            }
+
+            points.Add(new Point(width, height)); // 右下
+            polyline.Points = points;
+        }
+
+        // --- 确定与取消 ---
+
+        private void Ok_Click(object sender, RoutedEventArgs e)
+        {
+            // 应用到原图（大图）
+            // 在关闭前做耗时操作，或者返回 DialogResult 后由主窗口做
+            // 这里选择在窗口内完成，比较封闭
+            try
+            {
+                Mouse.OverrideCursor = Cursors.Wait;
+
+                _originalFullBitmap.Lock();
+                ProcessBitmapUnsafe(_originalFullBitmap,
+                    BrightnessSlider.Value, ContrastSlider.Value, ExposureSlider.Value,
+                    TemperatureSlider.Value, TintSlider.Value, SaturationSlider.Value);
+                _originalFullBitmap.AddDirtyRect(new Int32Rect(0, 0, _originalFullBitmap.PixelWidth, _originalFullBitmap.PixelHeight));
+                _originalFullBitmap.Unlock();
+
+                DialogResult = true;
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+                Close();
+            }
+        }
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+    }
+}

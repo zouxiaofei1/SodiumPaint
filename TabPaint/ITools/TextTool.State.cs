@@ -46,25 +46,25 @@ namespace TabPaint
             // 1. 应用字体
             if (style.FontFamily != null)
             {
-                FontFamilyBox.SelectedValue = style.FontFamily;
+                TextMenu.FontFamilyBox.SelectedValue = style.FontFamily;
             }
 
             double fontSizeInPoints = style.FontSize * 72.0 / 96.0;
-            FontSizeBox.Text = Math.Round(fontSizeInPoints).ToString();
+            TextMenu.FontSizeBox.Text = Math.Round(fontSizeInPoints).ToString();
 
             // 3. 应用粗体/斜体
-            BoldBtn.IsChecked = (style.FontWeight >= FontWeights.Bold);
-            ItalicBtn.IsChecked = (style.FontStyle == FontStyles.Italic || style.FontStyle == FontStyles.Oblique);
+            TextMenu.BoldBtn.IsChecked = (style.FontWeight >= FontWeights.Bold);
+            TextMenu.ItalicBtn.IsChecked = (style.FontStyle == FontStyles.Italic || style.FontStyle == FontStyles.Oblique);
 
             // 4. 应用下划线/删除线
-            UnderlineBtn.IsChecked = false;
-            StrikeBtn.IsChecked = false;
+            TextMenu.UnderlineBtn.IsChecked = false;
+            TextMenu.StrikeBtn.IsChecked = false;
             if (style.TextDecorations != null)
             {
                 foreach (var dec in style.TextDecorations)
                 {
-                    if (dec.Location == TextDecorationLocation.Underline) UnderlineBtn.IsChecked = true;
-                    if (dec.Location == TextDecorationLocation.Strikethrough) StrikeBtn.IsChecked = true;
+                    if (dec.Location == TextDecorationLocation.Underline) TextMenu.UnderlineBtn.IsChecked = true;
+                    if (dec.Location == TextDecorationLocation.Strikethrough) TextMenu.StrikeBtn.IsChecked = true;
                 }
             }
 

@@ -21,7 +21,118 @@ namespace TabPaint
 
         public partial class TextTool : ToolBase
         {
-          
+            // 在 TextTool 类内部
+
+            // 在 TextTool 类内部
+
+            public void InsertTableIntoCurrentBox(int rows = 3, int cols = 3)
+            {
+                if (_richTextBox == null) return;
+
+                // 1. 构建表格对象
+                var table = new Table();
+                table.CellSpacing = 0;
+                // 表格边框颜色（黑色）
+                table.BorderBrush = Brushes.Black;
+                table.BorderThickness = new Thickness(1);
+
+                // 创建列
+                for (int x = 0; x < cols; x++) table.Columns.Add(new TableColumn());
+                table.RowGroups.Add(new TableRowGroup());
+
+                // 创建行和单元格
+                for (int r = 0; r < rows; r++)
+                {
+                    var row = new TableRow();
+                    table.RowGroups[0].Rows.Add(row);
+                    for (int c = 0; c < cols; c++)
+                    {
+                        // 单元格内容
+                        var cell = new TableCell(new Paragraph(new Run("Cell")));
+                        cell.BorderBrush = Brushes.Gray;
+                        cell.BorderThickness = new Thickness(0.5);
+                        cell.Padding = new Thickness(5);
+                        row.Cells.Add(cell);
+                    }
+                }
+
+                // 2. 核心修正：正确的插入逻辑
+                // Table 是一个 Block 级元素，不能直接插入到 Run (文本流) 中，必须插入到 Paragraph 之间
+
+                var selection = _richTextBox.Selection;
+                if (!selection.IsEmpty) selection.Text = ""; // 删除选中文本
+
+                TextPointer ptr = selection.Start;
+
+                // 如果光标在段落中，我们需要把段落拆开，或者在当前段落后插入
+                Paragraph curPara = ptr.Paragraph;
+
+                if (curPara != null)
+                {
+                    // 简单粗暴且安全的方法：在当前段落之后插入表格
+                    // (WPF 的富文本插入 Block 比较复杂，这是最不容易崩溃的写法)
+                    if (curPara.Parent is FlowDocument doc)
+                    {
+                        doc.Blocks.InsertAfter(curPara, table);
+                    }
+                    else if (curPara.Parent is Section sec)
+                    {
+                        sec.Blocks.InsertAfter(curPara, table);
+                    }
+                    else
+                    {
+                        // 如果在单元格或其他容器里，直接加到文档末尾保底
+                        _richTextBox.Document.Blocks.Add(table);
+                    }
+
+                    // 将光标移动到表格里，方便用户接着打字
+                    TextPointer cellPtr = table.RowGroups[0].Rows[0].Cells[0].ContentStart;
+                    _richTextBox.CaretPosition = cellPtr;
+                }
+                else
+                {
+                    _richTextBox.Document.Blocks.Add(table);
+                }
+
+                // 强制刷新界面
+                _richTextBox.Focus();
+            }
+
+
+            public void ApplySelectionAttributes()
+            {
+                if (_richTextBox == null) return;
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var selection = _richTextBox.Selection;
+
+                // 1. 上下标 (使用 BaselineAlignment)
+                if (mw.TextMenu.SubscriptBtn.IsChecked == true)
+                    selection.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Subscript);
+                else if (mw.TextMenu.SuperscriptBtn.IsChecked == true)
+                    selection.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Superscript);
+                else
+                    selection.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Baseline);
+
+                // 2. 高亮 (Text Background)
+                if (mw.TextMenu.HighlightBtn.IsChecked == true)
+                    selection.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
+                else
+                    selection.ApplyPropertyValue(TextElement.BackgroundProperty, null); // 清除高亮
+
+                // 3. 字体/粗体/斜体同步
+                selection.ApplyPropertyValue(TextElement.FontWeightProperty, (mw.TextMenu.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal);
+                selection.ApplyPropertyValue(TextElement.FontStyleProperty, (mw.TextMenu.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal);
+
+                // 4. 装饰线
+                var decors = new TextDecorationCollection();
+                if (mw.TextMenu.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
+                if (mw.TextMenu.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
+                selection.ApplyPropertyValue(Inline.TextDecorationsProperty, decors);
+
+                // 5. 调用 ApplyTextSettings 更新整体属性（如阴影、对齐）
+                ApplyTextSettings(_richTextBox);
+            }
+
             public override void Cleanup(ToolContext ctx)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -303,6 +414,20 @@ namespace TabPaint
                 }
             }
 
+            private void AutoFitContent(System.Windows.Controls.RichTextBox rtb)
+            {
+                if (rtb == null) return;
+
+                // 1. 解除显式的宽高限制，启用自适应
+                rtb.Width = double.NaN;
+                rtb.Height = double.NaN;
+
+                rtb.MinWidth = 50;
+                rtb.MaxWidth = AppConsts.MaxTextBoxWidth;
+
+                rtb.UpdateLayout();
+                DrawTextboxOverlay(((MainWindow)System.Windows.Application.Current.MainWindow)._ctx);
+            }
 
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
@@ -372,6 +497,7 @@ namespace TabPaint
                             _startPos = viewPos;
                             _dragging = true; // 这里的 dragging 是指“拖拽创建新框”
                         }
+                        lag = 2;
                         return;
                     }
                 }
@@ -473,7 +599,7 @@ namespace TabPaint
                 // 当内容变化时，可能需要更新选区框大小（如果我们要自适应高度）
                 rtb.TextChanged += (s, e) =>
                 {
-                    // 这里可以添加高度自适应逻辑
+                    AutoFitContent(rtb);
                 };
             }
 
@@ -652,35 +778,35 @@ namespace TabPaint
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (tb == null) return;
-
+                if (mw.TextMenu == null) return;
                 // 1. 字体与大小 (这部分 RichTextBox 支持直接设置，会继承给内部元素)
-                if (mw.FontFamilyBox.SelectedValue != null)
-                    tb.FontFamily = new FontFamily(mw.FontFamilyBox.SelectedValue.ToString());
+                if (mw.TextMenu.FontFamilyBox.SelectedValue != null)
+                    tb.FontFamily = new FontFamily(mw.TextMenu.FontFamilyBox.SelectedValue.ToString());
 
-                if (double.TryParse(mw.FontSizeBox.Text, out double size))
+                if (double.TryParse(mw.TextMenu.FontSizeBox.Text, out double size))
                     tb.FontSize = Math.Max(1, size);
 
                 // 2. 粗体/斜体
-                tb.FontWeight = (mw.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
-                tb.FontStyle = (mw.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
+                tb.FontWeight = (mw.TextMenu.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
+                tb.FontStyle = (mw.TextMenu.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
 
                 // 3. 装饰线 (下划线 + 删除线) - 需要作用于 TextRange ✨
                 var decors = new TextDecorationCollection();
-                if (mw.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
-                if (mw.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
+                if (mw.TextMenu.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
+                if (mw.TextMenu.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
 
                 // 获取整个文档的范围并应用装饰线
                 TextRange allText = new TextRange(tb.Document.ContentStart, tb.Document.ContentEnd);
                 allText.ApplyPropertyValue(Inline.TextDecorationsProperty, decors);
 
                 // 4. 对齐 - 作用于 Document ✨
-                if (mw.AlignLeftBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Left;
-                else if (mw.AlignCenterBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Center;
-                else if (mw.AlignRightBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Right;
+                if (mw.TextMenu.AlignLeftBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Left;
+                else if (mw.TextMenu.AlignCenterBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Center;
+                else if (mw.TextMenu.AlignRightBtn.IsChecked == true) tb.Document.TextAlignment = TextAlignment.Right;
 
                 // 5. 颜色与背景
                 tb.Foreground = mw.SelectedBrush;
-                if (mw.TextBackgroundBtn.IsChecked == true)
+                if (mw.TextMenu.TextBackgroundBtn.IsChecked == true)
                     tb.Background = mw.BackgroundBrush;
                 else
                     tb.Background = Brushes.Transparent;
@@ -784,25 +910,28 @@ namespace TabPaint
                 }
             }
             // 1. 新增：将事件绑定逻辑提取为独立方法，避免重复代码
-            private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox tb)
+            private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
                 // 绘制虚线框和句柄
-                tb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
-
-                tb.PreviewKeyDown += (s, e) =>
+                rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
+                rtb.SelectionChanged += (s, e) =>
+                {
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).SyncTextToolbarState(rtb);
+                };
+                rtb.PreviewKeyDown += (s, e) =>
                 {
                     if (e.Key == Key.Delete)
                     {
                         CommitText(ctx);
-                        ctx.EditorOverlay.Children.Remove(tb);
+                        ctx.EditorOverlay.Children.Remove(rtb);
                         _richTextBox = null;
                         ctx.EditorOverlay.IsHitTestVisible = false;
                         e.Handled = true;
                     }
                 };
 
-                tb.Focusable = true;
-                tb.Loaded += (s, e) => tb.Focus();
+                rtb.Focusable = true;
+                rtb.Loaded += (s, e) => rtb.Focus();
             }
 
             // 2. 新增：公共接口，用于外部调用（粘贴/拖拽）
@@ -899,113 +1028,6 @@ namespace TabPaint
                     OnPointerDown(ctx, pos);
                 }
             }
-
-            //public void CommitText(ToolContext ctx)
-            //{
-            //    if (_richTextBox == null) return;
-            //    if (string.IsNullOrWhiteSpace(_richTextBox.Text))
-            //    {
-            //        ((MainWindow)System.Windows.Application.Current.MainWindow).HideTextToolbar();
-            //        ctx.SelectionOverlay.Children.Clear();
-            //        ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-            //        if (ctx.EditorOverlay.Children.Contains(_richTextBox))
-            //            ctx.EditorOverlay.Children.Remove(_richTextBox);
-            //        lag = 2;
-            //        return;
-            //    }
-            //    double tweakX = 2.0;
-            //    double tweakY = 1.0;
-            //    // 1. 获取位置信息
-            //    double tbLeft = Canvas.GetLeft(_richTextBox);
-            //    double tbTop = Canvas.GetTop(_richTextBox);
-            //    double tbWidth = _richTextBox.ActualWidth;
-            //    double tbHeight = _richTextBox.ActualHeight;
-            //    var formattedText = new FormattedText(
-            //        _richTextBox.Text,
-            //        CultureInfo.CurrentCulture,
-            //        System.Windows.FlowDirection.LeftToRight,
-            //        new Typeface(_richTextBox.FontFamily, _richTextBox.FontStyle, _richTextBox.FontWeight, _richTextBox.FontStretch),
-            //        _richTextBox.FontSize,
-            //        _richTextBox.Foreground,
-            //        96.0 // 强制 96 DPI，确保像素大小与逻辑大小 1:1
-            //    )
-            //    {
-            //        MaxTextWidth = Math.Max(1, tbWidth - _richTextBox.Padding.Left - _richTextBox.Padding.Right),
-            //        MaxTextHeight = double.MaxValue,
-            //        Trimming = TextTrimming.None,
-            //        TextAlignment = _richTextBox.TextAlignment
-            //    };
-            //    formattedText.SetTextDecorations(_richTextBox.TextDecorations);
-
-            //    // 3. 渲染到 Visual
-            //    var visual = new DrawingVisual();
-            //    using (var dc = visual.RenderOpen())
-            //    {
-            //        // 如果文本框有背景色，画背景
-            //        if (_richTextBox.Background is SolidColorBrush bgBrush && bgBrush.Color.A > 0)
-            //        {
-            //            dc.DrawRectangle(bgBrush, null, new Rect(0, 0, tbWidth, tbHeight));
-            //        }
-
-            //        // 使用 Grayscale 渲染文本，避免 ClearType 在透明背景上产生彩色边缘
-            //        TextOptions.SetTextRenderingMode(visual, TextRenderingMode.Grayscale);
-            //        TextOptions.SetTextFormattingMode(visual, TextFormattingMode.Display);
-
-            //        dc.DrawText(formattedText, new Point(_richTextBox.Padding.Left + tweakX, _richTextBox.Padding.Top + tweakY));
-            //    }
-
-            //    int width = (int)Math.Ceiling(tbWidth);
-            //    int height = (int)Math.Ceiling(tbHeight);
-            //    if (width <= 0 || height <= 0) return;
-            //    var rtb = new RenderTargetBitmap(width, height, 96d, 96d, PixelFormats.Pbgra32);
-            //    rtb.Render(visual);
-
-            //    int stride = width * 4;
-            //    byte[] sourcePixels = new byte[height * stride];
-            //    rtb.CopyPixels(sourcePixels, stride, 0);
-            //    int x = (int)tbLeft;
-            //    int y = (int)tbTop;
-
-            //    var writeableBitmap = ctx.Surface.Bitmap; 
-            //    int canvasWidth = writeableBitmap.PixelWidth;
-            //    int canvasHeight = writeableBitmap.PixelHeight;
-
-            //    // 计算实际可操作的矩形区域 (Clip)
-            //    int safeX = Math.Max(0, x);
-            //    int safeY = Math.Max(0, y);
-            //    int safeRight = Math.Min(canvasWidth, x + width);
-            //    int safeBottom = Math.Min(canvasHeight, y + height);
-            //    int safeW = safeRight - safeX;
-            //    int safeH = safeBottom - safeY;
-
-            //    if (safeW <= 0 || safeH <= 0)
-            //    {
-            //        CleanUpUI(ctx);
-            //        return;
-            //    }
-            //    byte[] destPixels = new byte[safeH * stride];
-            //    Int32Rect dirtyRect = new Int32Rect(safeX, safeY, safeW, safeH);
-            //    writeableBitmap.CopyPixels(dirtyRect, destPixels, stride, 0);
-
-            //    int sourceOffsetX = safeX - x;
-            //    int sourceOffsetY = safeY - y;
-            //    int sourceStartIndex = sourceOffsetY * stride + sourceOffsetX * 4;
-
-            //    double globalOpacityFactor = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-            //    AlphaBlendBatch(sourcePixels, destPixels, safeW, safeH, stride, sourceStartIndex, globalOpacityFactor);
-
-            //    // 8. 写回混合后的结果
-            //    ctx.Undo.BeginStroke();
-            //    ctx.Undo.AddDirtyRect(dirtyRect);
-            //    writeableBitmap.WritePixels(dirtyRect, destPixels, stride, 0);
-            //    ctx.Undo.CommitStroke();
-
-            //    // UI 清理
-            //    CleanUpUI(ctx);
-            //    lag = 2;
-            //}
-
-
         }
     }
 }

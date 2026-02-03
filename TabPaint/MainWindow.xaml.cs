@@ -1,7 +1,4 @@
-﻿//
-//MainWindow.xaml.cs
-//主窗口的逻辑实现，负责界面交互、工具初始化、文件打开与标签管理等核心功能。
-//
+﻿
 //
 //MainWindow.xaml.cs
 //主窗口的逻辑实现，负责界面交互、工具初始化、文件打开与标签管理等核心功能。
@@ -16,6 +13,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -187,15 +185,6 @@ namespace TabPaint
                 StateChanged += MainWindow_StateChanged;
                 Select = new SelectTool();
                 this.Deactivated += MainWindow_Deactivated;
-                // 字体事件
-                FontFamilyBox.SelectionChanged += FontSettingChanged;
-                FontSizeBox.SelectionChanged += FontSettingChanged;
-                BoldBtn.Checked += FontSettingChanged;
-                BoldBtn.Unchecked += FontSettingChanged;
-                ItalicBtn.Checked += FontSettingChanged;
-                ItalicBtn.Unchecked += FontSettingChanged;
-                UnderlineBtn.Checked += FontSettingChanged;
-                UnderlineBtn.Unchecked += FontSettingChanged;
 
                 // Canvas 事件
                 CanvasWrapper.MouseDown += OnCanvasMouseDown;
@@ -966,6 +955,50 @@ namespace TabPaint
                 IsTransferringSelection = false;
                 _transferSelectionData = null;
             }
+        }
+        public void SyncTextToolbarState(RichTextBox rtb)
+        {
+            var selection = rtb.Selection;
+
+            // 字体粗细
+            var weight = selection.GetPropertyValue(TextElement.FontWeightProperty);
+            TextMenu.BoldBtn.IsChecked = (weight != DependencyProperty.UnsetValue) && ((FontWeight)weight == FontWeights.Bold);
+
+            // 斜体
+            var style = selection.GetPropertyValue(TextElement.FontStyleProperty);
+            TextMenu.ItalicBtn.IsChecked = (style != DependencyProperty.UnsetValue) && ((FontStyle)style == FontStyles.Italic);
+
+            // 下划线/删除线
+            var decor = selection.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection;
+            TextMenu.UnderlineBtn.IsChecked = false;
+            TextMenu.StrikeBtn.IsChecked = false;
+            if (decor != null)
+            {
+                // 简单判断，实际可能需要遍历
+                foreach (var d in decor)
+                {
+                    if (d.Location == TextDecorationLocation.Underline) TextMenu.UnderlineBtn.IsChecked = true;
+                    if (d.Location == TextDecorationLocation.Strikethrough) TextMenu.StrikeBtn.IsChecked = true;
+                }
+            }
+
+            // 上下标
+            var baseline = selection.GetPropertyValue(Inline.BaselineAlignmentProperty);
+            TextMenu.SubscriptBtn.IsChecked = false;
+            TextMenu.SuperscriptBtn.IsChecked = false;
+            if (baseline != DependencyProperty.UnsetValue)
+            {
+                var bl = (BaselineAlignment)baseline;
+                if (bl == BaselineAlignment.Subscript) TextMenu.SubscriptBtn.IsChecked = true;
+                if (bl == BaselineAlignment.Superscript) TextMenu.SuperscriptBtn.IsChecked = true;
+            }
+
+            // 高亮
+            var bg = selection.GetPropertyValue(TextElement.BackgroundProperty);
+            TextMenu.HighlightBtn.IsChecked = (bg != null && bg != DependencyProperty.UnsetValue && bg != Brushes.Transparent);
+
+            // 阴影 (阴影是整个框的属性，不是 Selection 的，所以不用在这里读 Selection，直接读 Effect)
+            TextMenu.ShadowBtn.IsChecked = (rtb.Effect is System.Windows.Media.Effects.DropShadowEffect);
         }
 
         private void UpdateImageBarVisibilityState()

@@ -5,7 +5,7 @@
         xmlns:controls="clr-namespace:TabPaint.Controls"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=presentationframework"
         
-        Title="{DynamicResource L_Settings_Title}" Height="600" Width="800"
+        Title="{DynamicResource L_Settings_Title}" Height="500" Width="520"
         MinHeight="350" MinWidth="520"
         WindowStyle="None" ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner"
@@ -1158,15 +1158,15 @@
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
 
                                     <!-- 开发者徽章 -->
-                                    <Border Background="#252525" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
+                                            <Border BorderBrush="{DynamicResource BorderLightBrush}"  Background="{DynamicResource GlassBackgroundMediumBrush}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{DynamicResource L_Settings_About_Developer}" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" FontSize="11"/>
                                             <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                    </Border>
+                                                </StackPanel> 
+                                            </Border>
 
                                     <!-- 版本号徽章 (使用不同的背景色，例如稍微亮一点或带一点品牌色，这里用深灰色示例) -->
-                                    <Border Background="#333333" CornerRadius="4" Padding="8,4">
+                                            <Border BorderBrush="{DynamicResource BorderLightBrush}" Background="{DynamicResource GlassBackgroundMediumBrush}" BorderThickness="1" CornerRadius="4" Padding="8,4">
                                         <StackPanel Orientation="Horizontal">
                                   
                                             <TextBlock Text="Ver." Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" FontSize="11"/>
@@ -1219,7 +1219,7 @@
                             </StackPanel.Resources>
 
                             <!-- GitHub 按钮 -->
-                            <Button Cursor="Hand">
+                                    <Button Cursor="Hand" Background="{DynamicResource GlassBackgroundMediumBrush}">
                                 <TextBlock>
                 <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint" RequestNavigate="Hyperlink_RequestNavigate">
                     <StackPanel Orientation="Horizontal">
@@ -1231,7 +1231,7 @@
                             </Button>
 
                             <!-- 检查更新 按钮 -->
-                            <Button Cursor="Hand">
+                                    <Button Cursor="Hand" Background="{DynamicResource GlassBackgroundMediumBrush}">
                                 <TextBlock>
                 <Hyperlink NavigateUri="https://github.com/zouxiaofei1/TabPaint/releases" RequestNavigate="Hyperlink_RequestNavigate">
                     <StackPanel Orientation="Horizontal">
@@ -1243,7 +1243,7 @@
                             </Button>
 
                             <!-- 帮助文档 按钮 -->
-                            <Button Cursor="Hand">
+                                    <Button Cursor="Hand" Background="{DynamicResource GlassBackgroundMediumBrush}">
                                 <TextBlock>
                 <Hyperlink NavigateUri="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" RequestNavigate="Hyperlink_RequestNavigate">
                     <StackPanel Orientation="Horizontal">

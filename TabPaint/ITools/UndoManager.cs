@@ -237,6 +237,26 @@ namespace TabPaint
                 UpdateUI();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
             }
+            public void PushExplicitImageUndo(WriteableBitmap oldBitmap)
+            {
+                if (oldBitmap == null) return;
+
+                // 1. 确定区域
+                Int32Rect rect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
+
+                // 2. 提取像素数据
+                int stride = oldBitmap.BackBufferStride;
+                byte[] pixels = new byte[stride * oldBitmap.PixelHeight];
+                oldBitmap.CopyPixels(pixels, stride, 0);
+
+                // 3. 创建撤销动作 (由于滤镜不改变尺寸，使用 Draw 类型即可)
+                _undo.Push(new UndoAction(rect, pixels, UndoActionType.Draw));
+
+                // 4. 清空重做链并更新 UI
+                _redo.Clear();
+                UpdateUI();
+            }
+
             public void PushFullImageUndo()
             { // ---------- 供整图操作调用 ----------
                 if (_surface?.Bitmap == null) return; /// 在整图变换(旋转/翻转/新建)之前，准备一个完整快照并保存redo像素

@@ -342,8 +342,6 @@ namespace TabPaint
 
         private void OnSaveAsClick(object sender, RoutedEventArgs e)
         {
-            // 1. 准备默认文件名
-            // 如果是新建的，DisplayName 会返回 "未命名 1"，如果是已有的，会返回原文件名
             string defaultName = _currentTabItem?.DisplayName ?? "image";
             if (!defaultName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                 defaultName += ".png";
@@ -428,36 +426,31 @@ namespace TabPaint
 
         private void OnUndoClick(object sender, RoutedEventArgs e) => Undo();
         private void OnRedoClick(object sender, RoutedEventArgs e) => Redo();
-        private async void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
+
+        private void OpenAdjustColorWindowSafe(int initialTabIndex)
         {
             if (_surface.Bitmap == null) return;
-
             _router.CleanUpSelectionandShape();
 
-            var dialog = new AdjustBCEWindow(_surface.Bitmap, WatermarkPreviewLayer)
+            var oldBitmapState = _surface.Bitmap.Clone();
+
+            var dialog = new AdjustColorWindow(_surface.Bitmap, initialTabIndex)
             {
                 Owner = this
             };
 
             if (dialog.ShowDialog() == true)
             {
-                _undo.PushFullImageUndo();
-
-                try
-                {
-                    dialog.ApplyToFullImage(_surface.Bitmap);
-
-                    // 6. 标记为脏并刷新状态
-                    CheckDirtyState();
-                    SetUndoRedoButtonState();
-                }
-                finally
-                {
-                }
+                _undo.PushExplicitImageUndo(oldBitmapState);
+                NotifyCanvasChanged();
+                CheckDirtyState();
+                SetUndoRedoButtonState();
             }
-            else
-            {
-            }
+        }
+
+        private async void OnBrightnessContrastExposureClick(object sender, RoutedEventArgs e)
+        {
+            OpenAdjustColorWindowSafe(0);
         }
 
 
@@ -564,35 +557,7 @@ namespace TabPaint
         }
         private void OnColorTempTintSaturationClick(object sender, RoutedEventArgs e)
         {
-            if (_surface.Bitmap == null) return;
-
-            _router.CleanUpSelectionandShape();
-
-            var oldBitmap = _surface.Bitmap;
-            var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
-            byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
-            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
-
-            var dialog = new AdjustTTSWindow(_surface.Bitmap, WatermarkPreviewLayer)
-            {
-                Owner = this
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                var newBitmap = _surface.Bitmap;
-                var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];
-                newBitmap.CopyPixels(undoRect, redoPixels, newBitmap.BackBufferStride, 0);
-
-                _undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
-
-                NotifyCanvasChanged();
-                SetUndoRedoButtonState();
-                CheckDirtyState();
-            }
-            else
-            {
-            }
+            OpenAdjustColorWindowSafe(1);
         }
 
         private void OnConvertToBlackAndWhiteClick(object sender, RoutedEventArgs e)

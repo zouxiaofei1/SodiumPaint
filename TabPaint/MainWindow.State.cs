@@ -2,10 +2,6 @@
 //MainWindow.State.cs
 //MainWindow类的状态部分，包含各种字段、属性定义以及属性变更通知逻辑。
 //
-//
-//MainWindow.State.cs
-//MainWindow类的状态部分，包含各种字段、属性定义以及属性变更通知逻辑。
-//
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -166,7 +162,8 @@ namespace TabPaint
             LocalizationManager.GetString("L_Main_Filter_BMP"),
             LocalizationManager.GetString("L_Main_Filter_GIF"),
             LocalizationManager.GetString("L_Main_Filter_TIFF"),
-            LocalizationManager.GetString("L_Main_Filter_ICO"));
+            LocalizationManager.GetString("L_Main_Filter_ICO"),
+            LocalizationManager.GetString("L_Main_Filter_SVG"));
         ITool LastTool;
         public bool useSecondColor = false;//是否使用备用颜色
         private bool _maximized = false;

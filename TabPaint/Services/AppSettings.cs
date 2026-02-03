@@ -326,6 +326,21 @@ namespace TabPaint
                 OnPropertyChanged();
             }
         }
+        private bool _isTextToolbarExpanded = false; 
+
+        [JsonPropertyName("is_text_toolbar_expanded")]
+        public bool IsTextToolbarExpanded
+        {
+            get => _isTextToolbarExpanded;
+            set
+            {
+                if (_isTextToolbarExpanded != value)
+                {
+                    _isTextToolbarExpanded = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         // 新增：当前工具的 Key，用于指示 PenThickness/Opacity 应该读写字典里的哪一项
         private string _currentToolKey = "Pen_Pencil";

@@ -564,7 +564,12 @@
     <sys:String x:Key="L_Text_AlignCenter" xmlns:sys="clr-namespace:System;assembly=mscorlib">居中</sys:String>
     <sys:String x:Key="L_Text_AlignRight" xmlns:sys="clr-namespace:System;assembly=mscorlib">右对齐</sys:String>
     <sys:String x:Key="L_Text_OpaqueBackground" xmlns:sys="clr-namespace:System;assembly=mscorlib">不透明背景</sys:String>
-
+    <sys:String x:Key="L_Text_Subscript" xmlns:sys="clr-namespace:System;assembly=mscorlib">下标</sys:String>
+    <sys:String x:Key="L_Text_Superscript" xmlns:sys="clr-namespace:System;assembly=mscorlib">上标</sys:String>
+    <sys:String x:Key="L_Text_Highlight" xmlns:sys="clr-namespace:System;assembly=mscorlib">高亮</sys:String>
+    <sys:String x:Key="L_Text_Shadow" xmlns:sys="clr-namespace:System;assembly=mscorlib">阴影特效</sys:String>
+    <sys:String x:Key="L_Text_InsertTable" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入表格</sys:String>
+    <sys:String x:Key="L_Common_Preview" xmlns:sys="clr-namespace:System;assembly=mscorlib">预览</sys:String>
     <!-- 补充到 Code Behind 错误提示 -->
     <sys:String x:Key="L_Toast_OpenUrlFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法打开链接</sys:String>
     <sys:String x:Key="L_Key_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">无</sys:String>

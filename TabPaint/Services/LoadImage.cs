@@ -11,8 +11,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using XamlAnimatedGif; // 添加这一行
 using SkiaSharp;
-using SkiaSharp.Extended.Svg;
-
+using Svg.Skia;
 //
 //图片加载队列机制
 //
@@ -297,30 +296,46 @@ namespace TabPaint
                 try
                 {
                     string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
+
+                    // --- 核心修改：针对 SVG 的处理逻辑 ---
                     if (ext == ".svg")
                     {
                         using var ms = new System.IO.MemoryStream(imageBytes);
-                        var svg = new SkiaSharp.Extended.Svg.SKSvg();
+                        using var svg = new SKSvg();
                         svg.Load(ms);
+
+                        // 检查是否加载成功
                         if (svg.Picture != null)
                         {
-                            return ((int Width, int Height)?)((int)svg.CanvasSize.Width, (int)svg.CanvasSize.Height);
-                        }
-                    }
+                            // 获取画布尺寸
+                            int w = (int)svg.Picture.CullRect.Width;
+                            int h = (int)svg.Picture.CullRect.Height;
 
+                            // 如果 SVG 自身没定义宽高（无限画布），给个默认值防止报错
+                            if (w <= 0) w = 800;
+                            if (h <= 0) h = 600;
+
+                            return ((int Width, int Height)?)(w, h);
+                        }
+                        // 如果 SkiaSharp 解析失败，返回 null
+                        return null;
+                    }
+                    // ------------------------------------
+
+                    // 普通图片的逻辑保持不变
                     using var msNormal = new System.IO.MemoryStream(imageBytes);
-                    // 尝试读取元数据
                     var decoder = BitmapDecoder.Create(msNormal, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
 
-                    // 确保至少有一帧
                     if (decoder.Frames != null && decoder.Frames.Count > 0)
                     {
                         return ((int Width, int Height)?)(decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
                     }
                     return null;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    // 可以在这里打个断点或者输出日志，看看是不是 SVG 格式真的有问题
+                    System.Diagnostics.Debug.WriteLine($"GetDimensions Error: {ex.Message}");
                     return null;
                 }
             });
@@ -332,13 +347,12 @@ namespace TabPaint
             try
             {
                 using var ms = new System.IO.MemoryStream(imageBytes);
-                var svg = new SkiaSharp.Extended.Svg.SKSvg();
+                using var svg = new SKSvg();
                 svg.Load(ms);
 
                 if (svg.Picture == null) return null;
-
-                int width = (int)svg.CanvasSize.Width;
-                int height = (int)svg.CanvasSize.Height;
+                int width = (int)svg.Picture.CullRect.Width;
+                int height = (int)svg.Picture.CullRect.Height;
 
                 // 如果 SVG 没有定义尺寸，给个默认值
                 if (width <= 0) width = 800;
@@ -356,9 +370,8 @@ namespace TabPaint
                 using var surface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));
                 var canvas = surface.Canvas;
                 canvas.Clear(SKColors.Transparent);
-
-                float scaleX = width / svg.CanvasSize.Width;
-                float scaleY = height / svg.CanvasSize.Height;
+                float scaleX = (float)width / svg.Picture.CullRect.Width;
+                float scaleY = (float)height / svg.Picture.CullRect.Height;
                 var matrix = SKMatrix.CreateScale(scaleX, scaleY);
 
                 canvas.DrawPicture(svg.Picture, ref matrix);
@@ -434,7 +447,7 @@ namespace TabPaint
                 // 步骤 1: 异步读取文件并快速获取最终尺寸
                 var imageBytes = await File.ReadAllBytesAsync(fileToRead, token);
                 if (token.IsCancellationRequested) return;
-
+              //  s(System.IO.Path.GetExtension(filePath)?.ToLower());
                 string sizeString = FormatFileSize(imageBytes.Length);
                 await Dispatcher.InvokeAsync(() => this.FileSize = sizeString);
 
@@ -498,7 +511,7 @@ namespace TabPaint
                 string extension = System.IO.Path.GetExtension(filePath)?.ToLower();
                 Task<BitmapImage> previewTask;
                 Task<BitmapImage> fullResTask;
-
+               
                 if (extension == ".svg")
                 {
                     previewTask = Task.Run(() => DecodeSvg(imageBytes, token), token);

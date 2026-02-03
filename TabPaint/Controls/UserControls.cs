@@ -26,6 +26,51 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        public TextToolControl TextMenu { get; private set; }
+
+        // 新增：延迟初始化文本工具栏
+        private void EnsureTextToolLoaded()
+        {
+          
+            if (TextMenu != null) return;
+            TextMenu = new TextToolControl();
+
+            TextMenu.FontFamilyCombo.SelectionChanged += FontSettingChanged;
+            TextMenu.FontFamilyCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+                new TextChangedEventHandler(FontSettingChanged));
+
+            TextMenu.FontSizeCombo.SelectionChanged += FontSettingChanged;
+            TextMenu.FontSizeCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
+                new TextChangedEventHandler(FontSettingChanged));
+            TextMenu.FontFamilyBox.SelectionChanged += FontSettingChanged;
+            TextMenu.FontSizeBox.SelectionChanged += FontSettingChanged;
+            TextMenu.TextEditBar.MouseDown += TextEditBar_MouseDown; // 绑定回 MainWindow 的旧方法
+            TextMenu.TextEditBar.MouseMove += TextEditBar_MouseMove;
+            TextMenu.TextEditBar.MouseUp += TextEditBar_MouseUp;
+
+            // 样式按钮
+            TextMenu.BoldButton.Click += FontSettingChanged;
+            TextMenu.ItalicButton.Click += FontSettingChanged;
+            TextMenu.UnderlineButton.Click += FontSettingChanged;
+            TextMenu.StrikeButton.Click += FontSettingChanged;
+
+            TextMenu.TextBackgroundButton.Click += FontSettingChanged;
+            TextMenu.SubscriptButton.Click += FontSettingChanged;
+            TextMenu.SuperscriptButton.Click += FontSettingChanged;
+            TextMenu.HighlightButton.Click += FontSettingChanged;
+            TextMenu.ShadowButton.Click += FontSettingChanged;
+
+            // 对齐
+            TextMenu.AlignLeftButton.Click += TextAlign_Click;
+            TextMenu.AlignCenterButton.Click += TextAlign_Click;
+            TextMenu.AlignRightButton.Click += TextAlign_Click;
+
+            // 表格
+            TextMenu.InsertTableButton.Click += InsertTable_Click;
+
+            // 注入界面
+            TextToolHolder.Content = TextMenu;
+        }
         private void InitializeLazyControls()
         {
             MainImageBar = new ImageBarControl();

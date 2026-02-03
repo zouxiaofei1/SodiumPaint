@@ -637,11 +637,24 @@ namespace TabPaint
             if (sender is ToggleButton btn && btn.Tag is string align)
             {
                 // 实现互斥
-                mw.AlignLeftBtn.IsChecked = (align == "Left");
-                mw.AlignCenterBtn.IsChecked = (align == "Center");
-                mw.AlignRightBtn.IsChecked = (align == "Right");
+                mw.TextMenu.AlignLeftBtn.IsChecked = (align == "Left");
+                mw.TextMenu.AlignCenterBtn.IsChecked = (align == "Center");
+                mw.TextMenu.AlignRightBtn.IsChecked = (align == "Right");
 
                 mw.FontSettingChanged(sender, null);
+            }
+        }
+        private void InsertTable_Click(object sender, RoutedEventArgs e)
+        {
+            if (_router.CurrentTool is TextTool textTool && textTool._richTextBox != null)
+            {
+                textTool.InsertTableIntoCurrentBox();
+            }
+            else
+            {
+                // 如果当前没有激活的文本框，可以提示用户先点击画布创建文本框
+                // 或者自动创建一个
+                ShowToast(LocalizationManager.GetString("L_Main_Toast_Info")); // "请先创建文本框"
             }
         }
 

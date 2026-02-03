@@ -189,7 +189,16 @@ namespace TabPaint
         {
             // 防止初始化时触发
             if (_tools == null || _router.CurrentTool != _tools.Text) return;
-            (_tools.Text as TextTool)?.UpdateCurrentTextBoxAttributes();
+            //(_tools.Text as TextTool)?.UpdateCurrentTextBoxAttributes();
+            if (_router.CurrentTool is TextTool textTool)
+            {
+                // 互斥逻辑：上下标不能同时存在
+                if (sender == TextMenu.SubscriptBtn && TextMenu.SubscriptBtn.IsChecked == true) TextMenu.SuperscriptBtn.IsChecked = false;
+                if (sender == TextMenu.SuperscriptBtn && TextMenu.SuperscriptBtn.IsChecked == true) TextMenu.SubscriptBtn.IsChecked = false;
+
+                textTool.ApplySelectionAttributes(); // 应用选区样式
+                textTool.UpdateCurrentTextBoxAttributes(); // 应用整体样式并重绘边框
+            }
         }
 
         private void OnColorOneClick(object sender, RoutedEventArgs e)
@@ -315,7 +324,7 @@ namespace TabPaint
                 {
                     _isTextBarDragging = true;
                     _textBarLastPoint = e.GetPosition(this); // 获取相对于窗口的坐标
-                    TextEditBar.CaptureMouse(); 
+                    TextMenu.TextEditBar.CaptureMouse(); 
                     if (_tools?.Text is TextTool tt && tt._richTextBox != null)
                     {
                         tt._richTextBox.Focus();
@@ -334,15 +343,15 @@ namespace TabPaint
                 double offsetY = currentPoint.Y - _textBarLastPoint.Y;
 
                 // 2. 预测新的 Transform 值
-                double proposedTransformX = TextBarDragTransform.X + offsetX;
-                double proposedTransformY = TextBarDragTransform.Y + offsetY;
+                double proposedTransformX = TextMenu.TextBarDragTransform.X + offsetX;
+                double proposedTransformY = TextMenu.TextBarDragTransform.Y + offsetY;
                 double windowWidth = this.ActualWidth;
                 double windowHeight = this.ActualHeight;
-                double barWidth = TextEditBar.ActualWidth;
-                double barHeight = TextEditBar.ActualHeight;
+                double barWidth = TextMenu.TextEditBar.ActualWidth;
+                double barHeight = TextMenu.TextEditBar.ActualHeight;
 
                 double initialLeft = (windowWidth - barWidth) / 2;
-                double initialTop = TextEditBar.Margin.Top;
+                double initialTop = TextMenu.TextEditBar.Margin.Top;
 
                 // 计算移动后的绝对位置 (Left, Top)
                 double absoluteLeft = initialLeft + proposedTransformX;
@@ -365,8 +374,8 @@ namespace TabPaint
                 {
                     proposedTransformY = windowHeight - DragSafetyMargin - initialTop;
                 }
-                TextBarDragTransform.X = proposedTransformX;
-                TextBarDragTransform.Y = proposedTransformY;
+                TextMenu.TextBarDragTransform.X = proposedTransformX;
+                TextMenu.TextBarDragTransform.Y = proposedTransformY;
                 _textBarLastPoint = currentPoint;
             }
         }
@@ -375,7 +384,7 @@ namespace TabPaint
             if (_isTextBarDragging)
             {
                 _isTextBarDragging = false;
-                TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
+                TextMenu.TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
             }
         }
         private void OnBrushMainClick(object sender, RoutedEventArgs e)
@@ -412,9 +421,9 @@ namespace TabPaint
 
         private void FontSizeBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (!double.TryParse(FontSizeBox.Text, out _))
+            if (!double.TryParse(TextMenu.FontSizeBox.Text, out _))
             {
-                FontSizeBox.Text = _activeTextBox.FontSize.ToString(); // 还原为当前有效字号
+                TextMenu.FontSizeBox.Text = _activeTextBox.FontSize.ToString(); // 还原为当前有效字号
             }
         }
     }

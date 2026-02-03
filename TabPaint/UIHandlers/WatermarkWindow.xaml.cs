@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading; // 需要引用
@@ -14,6 +15,8 @@ namespace TabPaint
 {
     public class WatermarkSettings
     {
+      
+
         public bool IsText { get; set; }
         public string Text { get; set; }
         public BitmapImage ImageSource { get; set; }
@@ -30,6 +33,7 @@ namespace TabPaint
 
     public partial class WatermarkWindow : Window
     {
+        public bool _isWindowLoaded = false;
         public bool ApplyToAll => ChkApplyToAll.IsChecked == true;
         private Image _previewLayer;
 
@@ -61,15 +65,37 @@ namespace TabPaint
             {
                 _previewLayer.Source = null;
                 _previewLayer.Visibility = Visibility.Visible;
-                // 确保预览层大小与底图一致（防止因为 Source 为 null 导致没尺寸）
                 _previewLayer.Width = _originalBitmap.PixelWidth;
                 _previewLayer.Height = _originalBitmap.PixelHeight;
             }
 
             InitializeFonts();
             InitializeCommonColors();
-            _isInitialized = true;
-            UpdatePreview();
+            this.Loaded += (s, e) =>
+            {
+                _isWindowLoaded = true;
+                _isInitialized = true;
+                UpdatePreview();
+            };
+        }
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            // 1. 应用 Mica 特效
+            MicaAcrylicManager.ApplyEffect(this);
+
+            // 2. 确保窗口标题栏按钮颜色适配深色/浅色模式
+            // 假设你的 ThemeManager 可以判断当前主题
+            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+
+            // 3. 确保 WPF 渲染层背景透明，让 DWM 特效透出来
+            var src = (HwndSource)PresentationSource.FromVisual(this);
+            if (src != null)
+            {
+                src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            }
         }
         protected override void OnClosed(EventArgs e)
         {
@@ -368,41 +394,66 @@ namespace TabPaint
         // --- 核心渲染 ---
         private void UpdatePreview()
         {
-            if (!_isInitialized || _originalBitmap == null || _previewLayer == null) return;
+            if (!_isInitialized || _originalBitmap == null) return;
 
             var settings = GetCurrentSettings();
 
-            // 1. 计算降采样比例 (限制最大边长为 1920，保证流畅度)
-            // 无论原图多大，预览图最大只渲染到 1080p 级别，这对预览来说足够了
-            double maxPreviewDimension = 1920;
-            double originalW = _originalBitmap.PixelWidth;
-            double originalH = _originalBitmap.PixelHeight;
-
-            double scale = 1.0;
-            if (originalW > maxPreviewDimension || originalH > maxPreviewDimension)
+            // === 1. 更新主窗口的覆盖层 (Overlay) ===
+            // 这里我们希望主窗口只显示水印，底图是透明的，因为主窗口已经显示了底图
+            // 限制最大边长为 1920，保证流畅度
+            if (_previewLayer != null)
             {
-                scale = Math.Min(maxPreviewDimension / originalW, maxPreviewDimension / originalH);
+                double maxOverlayDim = 1920;
+                double origW = _originalBitmap.PixelWidth;
+                double origH = _originalBitmap.PixelHeight;
+
+                double overlayScale = 1.0;
+                if (origW > maxOverlayDim || origH > maxOverlayDim)
+                {
+                    overlayScale = Math.Min(maxOverlayDim / origW, maxOverlayDim / origH);
+                }
+
+                // onlyWatermark = true (只画水印，不画底图)
+                var visualOverlay = CreateWatermarkVisual(_originalBitmap, settings, true, overlayScale);
+
+                int overlayW = (int)(origW * overlayScale);
+                int overlayH = (int)(origH * overlayScale);
+                if (overlayW < 1) overlayW = 1;
+                if (overlayH < 1) overlayH = 1;
+
+                var rtbOverlay = new RenderTargetBitmap(overlayW, overlayH, 96, 96, PixelFormats.Pbgra32);
+                rtbOverlay.Render(visualOverlay);
+                rtbOverlay.Freeze();
+                _previewLayer.Source = rtbOverlay;
             }
 
-            // 2. 传入 scale 参数生成 Visual
-            // onlyWatermark = true (透明底), renderScale = scale (缩小绘制)
-            var visual = CreateWatermarkVisual(_originalBitmap, settings, true, scale);
+            // === 2. 更新窗口内的实时预览 (Internal Preview) ===
+            if (_isWindowLoaded)
+            {
+                // 计算窗口内预览区域的合适尺寸
+                // 假设预览区域最大约 500x500 (右侧那列大概那么大)
+                double maxPreviewDim = 1200;
 
-            // 3. 创建缩小后的 RenderTargetBitmap
-            int scaledW = (int)(originalW * scale);
-            int scaledH = (int)(originalH * scale);
+                double w = _originalBitmap.PixelWidth;
+                double h = _originalBitmap.PixelHeight;
 
-            // 防止极其微小的图片出错
-            if (scaledW < 1) scaledW = 1;
-            if (scaledH < 1) scaledH = 1;
+                // 计算缩放比例，让原图适应预览框
+                double scale = Math.Min(maxPreviewDim / w, maxPreviewDim / h);
 
-            var rtb = new RenderTargetBitmap(scaledW, scaledH, 96, 96, PixelFormats.Pbgra32);
-            rtb.Render(visual);
-            rtb.Freeze();
+                // 生成包含底图的预览 (onlyWatermark = false)
+                var visualInternal = CreateWatermarkVisual(_originalBitmap, settings, false, scale);
 
-            // 4. 设置给 PreviewLayer
-            // WPF 会自动将这个小的 rtb 拉伸铺满设置了 Width/Height 的 Image 控件
-            _previewLayer.Source = rtb;
+                int scaledW = (int)(w * scale);
+                int scaledH = (int)(h * scale);
+                if (scaledW < 1) scaledW = 1;
+                if (scaledH < 1) scaledH = 1;
+
+                var rtbInternal = new RenderTargetBitmap(scaledW, scaledH, 96, 96, PixelFormats.Pbgra32);
+                rtbInternal.Render(visualInternal);
+                rtbInternal.Freeze();
+
+                ImgWindowPreview.Source = rtbInternal;
+            }
         }
 
 

@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -257,6 +258,7 @@ namespace TabPaint
         private void EnsureFontsLoaded()
         {
             if (_fontsLoaded) return;
+            if (TextMenu == null) return;
 
             System.Threading.Tasks.Task.Run(() =>
             {
@@ -294,11 +296,11 @@ namespace TabPaint
                 // 切回 UI 线程更新
                 Dispatcher.Invoke(() =>
                 {
-                    FontFamilyBox.ItemsSource = sortedFonts;
+                    TextMenu.FontFamilyBox.ItemsSource = sortedFonts;
 
                     // 设置显示路径（如果不用辅助类，直接绑定 List<FontFamily> 的话需要设置这个，用了辅助类则不需要或设为 DisplayName）
-                    FontFamilyBox.DisplayMemberPath = "DisplayName";
-                    FontFamilyBox.SelectedValuePath = "FontFamily"; // 选中后获取真正的 FontFamily 对象
+                    TextMenu.FontFamilyBox.DisplayMemberPath = "DisplayName";
+                    TextMenu.FontFamilyBox.SelectedValuePath = "FontFamily"; // 选中后获取真正的 FontFamily 对象
 
                     // 设置默认字体 (匹配中文名)
                     var defaultFont = sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("微软雅黑"))
@@ -306,7 +308,7 @@ namespace TabPaint
                                    ?? sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("宋体"))
                                    ?? sortedFonts.FirstOrDefault();
 
-                    FontFamilyBox.SelectedItem = defaultFont;
+                    TextMenu.FontFamilyBox.SelectedItem = defaultFont;
 
                     _fontsLoaded = true;
                 });
@@ -315,20 +317,33 @@ namespace TabPaint
 
         public void ShowTextToolbarFor(System.Windows.Controls.RichTextBox tb)
         {
+            EnsureTextToolLoaded();
             EnsureFontsLoaded();
             _activeTextBox = tb;
-            TextEditBar.Visibility = Visibility.Visible;
+            if (TextToolHolder != null)
+            {
+                TextToolHolder.Visibility = Visibility.Visible;
+            }
+            TextMenu.TextEditBar.Visibility = Visibility.Visible;
 
-            FontFamilyBox.SelectedItem = tb.FontFamily;
-            FontSizeBox.Text = tb.FontSize.ToString(CultureInfo.InvariantCulture);
-            BoldBtn.IsChecked = tb.FontWeight == FontWeights.Bold;
-            ItalicBtn.IsChecked = tb.FontStyle == FontStyles.Italic;
+            TextMenu.FontFamilyBox.SelectedItem = tb.FontFamily;
+            TextMenu.FontSizeBox.Text = tb.FontSize.ToString(CultureInfo.InvariantCulture);
+            TextMenu.BoldBtn.IsChecked = tb.FontWeight == FontWeights.Bold;
+            TextMenu.ItalicBtn.IsChecked = tb.FontStyle == FontStyles.Italic;
            // UnderlineBtn.IsChecked = tb.TextDecorations == TextDecorations.Underline;
         }
-
+        private bool HasTextDecoration(RichTextBox tb, TextDecorationCollection target)
+        {
+            // 这是一个简化检查，实际情况可能需要更复杂的判断
+            return tb.Selection.GetPropertyValue(Inline.TextDecorationsProperty) is TextDecorationCollection col
+                   && col.Count > 0
+                   && col[0].Location == target[0].Location;
+        }
         public void HideTextToolbar()
         {
-            TextEditBar.Visibility = Visibility.Collapsed;
+            if (TextToolHolder != null)
+                TextToolHolder.Visibility = Visibility.Collapsed;
+
             _activeTextBox = null;
         }
         private void SetRestoreIcon()

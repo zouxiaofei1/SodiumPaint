@@ -28,12 +28,14 @@
             CornerRadius="0"/>
     </WindowChrome.WindowChrome>
     <Window.Resources>
+    
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!-- 确保 App.xaml 或此处正确加载了 LightTheme.xaml -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
             <Style x:Key="RulerVisibilityStyle" TargetType="{x:Type local:Ruler}">
@@ -543,88 +545,14 @@
             <!-- #endregion -->
         </DockPanel>
 
-        <!-- #region 7. 悬浮面板 (Floating UI) -->
-        <!-- 文本编辑条 -->
-        <Border x:Name="TextEditBar" Visibility="Collapsed" MouseDown="TextEditBar_MouseDown" MouseMove="TextEditBar_MouseMove"
-                MouseUp="TextEditBar_MouseUp" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" 
-                Background="{DynamicResource ChromeLowBrush}" 
-                BorderBrush="{DynamicResource BorderLightBrush}" 
-                BorderThickness="1" CornerRadius="8" Padding="6">
-            <Border.RenderTransform>
-                <TranslateTransform x:Name="TextBarDragTransform" X="0" Y="0"/>
-            </Border.RenderTransform>
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.1"/>
-            </Border.Effect>
-            <StackPanel Orientation="Horizontal">
-                <!-- 字体选择 -->
-                <ComboBox x:Name="FontFamilyBox" 
-                          Style="{StaticResource FluentComboBoxStyle}" 
-                          Width="160" 
-                          IsEditable="True" 
-                          Background="{DynamicResource ControlBackgroundBrush}"
-                          SelectionChanged="FontSettingChanged" 
-                          TextBoxBase.TextChanged="FontSettingChanged">
-                </ComboBox>
-                <!-- 字号 -->
-                <ComboBox x:Name="FontSizeBox" Style="{StaticResource FluentComboBoxStyle}" Width="70" 
-                          IsEditable="True" Text="24"
-                          SelectionChanged="FontSettingChanged" TextBoxBase.TextChanged="FontSettingChanged">
-                    <System:Double>9</System:Double>
-                    <System:Double>10</System:Double>
-                    <System:Double>11</System:Double>
-                    <System:Double>12</System:Double>
-                    <System:Double>14</System:Double>
-                    <System:Double>18</System:Double>
-                    <System:Double>24</System:Double>
-                    <System:Double>36</System:Double>
-                    <System:Double>48</System:Double>
-                    <System:Double>64</System:Double>
-                    <System:Double>72</System:Double>
-                    <System:Double>96</System:Double>
-                </ComboBox>
-
-                <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="4,0,8,0"/>
-
-                <!-- 基础样式 -->
-                <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="{DynamicResource L_Text_Bold}">
-                    <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                </ToggleButton>
-                <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="{DynamicResource L_Text_Italic}">
-                    <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                </ToggleButton>
-                <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="{DynamicResource L_Text_Underline}">
-                    <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                </ToggleButton>
-                <ToggleButton x:Name="StrikeBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="{DynamicResource L_Text_Strike}">
-                    <TextBlock Text="S" TextDecorations="Strikethrough" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                </ToggleButton>
-
-                <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,8,0"/>
-
-                <!-- 对齐方式 -->
-                <ToggleButton x:Name="AlignLeftBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Left" IsChecked="True" ToolTip="{DynamicResource L_Text_AlignLeft}">
-                    <Path Data="M0,2 L14,2 M0,6 L10,6 M0,10 L14,10 M0,14 L10,14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                </ToggleButton>
-                <ToggleButton x:Name="AlignCenterBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Center" ToolTip="{DynamicResource L_Text_AlignCenter}">
-                    <Path Data="M0,2 L14,2 M2,6 L12,6 M0,10 L14,10 M2,14 L12,14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                </ToggleButton>
-                <ToggleButton x:Name="AlignRightBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="TextAlign_Click" Tag="Right" ToolTip="{DynamicResource L_Text_AlignRight}">
-                    <Path Data="M0,2 L14,2 M4,6 L14,6 M0,10 L14,10 M4,14 L14,14" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                </ToggleButton>
-
-                <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="8,0,8,0"/>
-
-                <!-- 背景填充 -->
-                <ToggleButton x:Name="TextBackgroundBtn" Style="{StaticResource FluentToggleButtonStyle}" Click="FontSettingChanged" ToolTip="{DynamicResource L_Text_OpaqueBackground}">
-                    <Grid>
-                        <Rectangle Width="14" Height="14" Fill="{DynamicResource ControlBackgroundBrush}" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1"/>
-                        <TextBlock Text="A" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    </Grid>
-                </ToggleButton>
-
-            </StackPanel>
-        </Border>
+        <!-- #region 7. 浮动层 (Floating Layers) -->
+        <ContentControl x:Name="TextToolHolder" 
+                        Visibility="Collapsed" 
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Top" 
+                        Margin="0,80,0,0" 
+                        Panel.ZIndex="200"
+                        IsTabStop="False"/>
 
         <!-- 粗细提示 -->
         <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">

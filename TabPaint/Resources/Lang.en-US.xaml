@@ -559,6 +559,12 @@
     <sys:String x:Key="L_Text_AlignCenter">Align Center</sys:String>
     <sys:String x:Key="L_Text_AlignRight">Align Right</sys:String>
     <sys:String x:Key="L_Text_OpaqueBackground">Opaque Background</sys:String>
+    <sys:String x:Key="L_Text_Subscript">Subscript</sys:String>
+    <sys:String x:Key="L_Text_Superscript">Superscript</sys:String>
+    <sys:String x:Key="L_Text_Highlight">Highlight</sys:String>
+    <sys:String x:Key="L_Text_Shadow">Shadow Effect</sys:String>
+    <sys:String x:Key="L_Text_InsertTable">Insert Table</sys:String>
+    <sys:String x:Key="L_Common_Preview">Preview</sys:String>
 
     <sys:String x:Key="L_Toast_OpenUrlFailed">Cannot open link</sys:String>
     <sys:String x:Key="L_Key_None">None</sys:String>
