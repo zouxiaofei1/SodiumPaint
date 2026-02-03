@@ -13,11 +13,7 @@ using System.Windows.Threading;
 
 namespace TabPaint
 {
-    public enum SelectionType
-    {
-        Rectangle,
-        Lasso
-    }
+
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
 
@@ -37,7 +33,9 @@ namespace TabPaint
             }
             public bool _selecting = false;
             public bool _draggingSelection = false;
-
+            private List<Point> _lassoPoints;
+            private Geometry? _selectionGeometry;
+            private byte[]? _selectionAlphaMap;
             private Point _startPixel;
             private Point _clickOffset;
             public Int32Rect _selectionRect;
@@ -55,8 +53,13 @@ namespace TabPaint
             // 句柄尺寸
             private const double HandleSize = AppConsts.SelectToolHandleSize;
             private DispatcherTimer _tabSwitchTimer;
-            private FileTabItem _pendingTab; // 当前正在倒计时的目标 Tab
-                                             // private DateTime _hoverStartTime;
+            private FileTabItem _pendingTab;
+            private int _wandTolerance = 8; // 当前容差
+            private Point _wandStartPoint; // 点击的起始点
+            private Color _wandStartColor; // 起始点的颜色
+            private bool _isWandAdjusting = false; // 是否正在拖拽调整容差
+            private bool[] _wandMaskBuffer; // 用于缓存全图的选中状态(bool)，避免重复申请内存
+
             public enum ResizeAnchor
             {
                 None,

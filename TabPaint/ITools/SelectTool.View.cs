@@ -17,7 +17,7 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
-            public void Cleanup(ToolContext ctx)//注意是小写!!!
+            public void Cleanup(ToolContext ctx)
             {
                 HidePreview(ctx);
                 ctx.SelectionOverlay.Children.Clear();
@@ -27,16 +27,22 @@ namespace TabPaint
                 {
                     mw._canvasResizer.SetHandleVisibility(true);
                 }
+
                 // 清空状态
                 _originalRect = new Int32Rect();
                 _selectionRect = new Int32Rect();
-                _selecting = false; IsPasted = false;
+                _selecting = false;
+                IsPasted = false;
                 _draggingSelection = false;
                 _resizing = false;
                 _currentAnchor = ResizeAnchor.None;
                 _selectionData = null;
+                _selectionAlphaMap = null;  // 添加
+                _selectionGeometry = null;  // 添加
+                _isWandAdjusting = false;   // 添加
                 lag = 0;
             }
+
             public void RefreshOverlay(ToolContext ctx)
             {
                 if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
@@ -57,59 +63,52 @@ namespace TabPaint
                 var overlay = ctx.SelectionOverlay;
                 overlay.ClipToBounds = false;
                 overlay.Children.Clear();
-               
-                var geometry = new RectangleGeometry(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
 
-                // 虚线框
-                var outlinePath = new System.Windows.Shapes.Path
+                double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width -
+                              (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
+
+                // ========== 套索模式：使用已有的 _selectionGeometry ==========
+                if (SelectionType == SelectionType.Lasso && _selectionGeometry != null)
                 {
-                    Stroke = mw._darkBackgroundBrush, // 之后改成黑白相间
-                    StrokeThickness = invScale * AppConsts.SelectToolOutlineThickness, // 保持细线
-                    Data = geometry,
-                    SnapsToDevicePixels = false // 避免缩放时的像素对齐抖动
-                };
-                double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width - (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
-
-                var whiteBase = new System.Windows.Shapes.Path
-                {
-                    Stroke = Brushes.White,
-                    StrokeThickness = invScale * AppConsts.SelectToolOutlineThickness,
-                    Data = geometry,
-                    SnapsToDevicePixels = false,
-                    Opacity = 0.8
-                };
-                overlay.Children.Add(whiteBase);
-
-                // 2. 顶层黑色虚线
-                outlinePath.StrokeDashArray = new DoubleCollection { AppConsts.SelectToolDashLength, AppConsts.SelectToolDashLength }; // 4实4空
-                DoubleAnimation animation = new DoubleAnimation
-                {
-                    From = 0,
-                    To = AppConsts.SelectToolAnimationTo, // 必须是 DashArray 总和 (4+4) 的倍数
-                    Duration = new Duration(TimeSpan.FromSeconds(AppConsts.SelectToolAnimationDurationSeconds)), // 1秒转一圈
-                    RepeatBehavior = RepeatBehavior.Forever
-                };
-                outlinePath.BeginAnimation(System.Windows.Shapes.Shape.StrokeDashOffsetProperty, animation);
-
-                overlay.Children.Add(outlinePath);
-
-                // 8个句柄
-                foreach (var p in GetHandlePositions(rect))
-                {
-                    var handle = new System.Windows.Shapes.Rectangle
-                    {
-                        Width = HandleSize * invScale,
-                        Height = HandleSize * invScale,
-                        Fill = Brushes.White,
-                        Stroke = mw._darkBackgroundBrush,
-                        StrokeThickness = invScale
-                    };
-                    RenderOptions.SetEdgeMode(handle, EdgeMode.Unspecified);  // 开抗锯齿混合
-                    outlinePath.SnapsToDevicePixels = false; // 让虚线自由落在亚像素
-                    Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2 + diff * 0.75);
-                    Canvas.SetTop(handle, p.Y - HandleSize * invScale / 2);
-                    overlay.Children.Add(handle);
+                    DrawIrregularContour(ctx, overlay, _selectionGeometry, rect, invScale, diff);
                 }
+                // ========== 魔棒模式：从 AlphaMap 生成轮廓 ==========
+                else if (SelectionType == SelectionType.MagicWand && _selectionAlphaMap != null && !_isWandAdjusting)
+                {
+                    // 生成轮廓 Geometry
+                    var wandGeometry = GeneratePixelEdgeGeometry(
+                        _selectionAlphaMap,
+                        rect.Width,
+                        rect.Height,
+                        rect.X,
+                        rect.Y);
+
+                    if (wandGeometry != null)
+                    {
+                        _selectionGeometry = wandGeometry; // 缓存起来供后续使用
+                        DrawIrregularContour(ctx, overlay, wandGeometry, rect, invScale, diff, false);
+                    }
+                    else
+                    {
+                        // 回退到矩形框
+                        DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
+                    }
+                }
+                // ========== 魔棒调整中：显示简化的矩形框（性能优化） ==========
+                else if (SelectionType == SelectionType.MagicWand && _isWandAdjusting)
+                {
+                    // 调整容差时只显示矩形框，避免频繁重算轮廓
+                 //   DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
+
+                    // 可选：显示半透明遮罩预览
+                    DrawWandPreviewMask(ctx, overlay, rect, invScale);
+                }
+                // ========== 矩形模式 ==========
+                else
+                {
+                    DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
+                }
+
                 ((MainWindow)Application.Current.MainWindow).UpdateSelectionScalingMode();
                 ctx.SelectionOverlay.IsHitTestVisible = false;
                 ctx.SelectionOverlay.Visibility = Visibility.Visible;
@@ -474,11 +473,41 @@ namespace TabPaint
 
             public bool IsPointInSelection(Point px)
             {
-                return px.X >= _selectionRect.X &&
-                       px.X < _selectionRect.X + _selectionRect.Width &&
-                       px.Y >= _selectionRect.Y &&
-                       px.Y < _selectionRect.Y + _selectionRect.Height;
+                // 1. 先检查包围盒
+                bool inRect = px.X >= _selectionRect.X &&
+                              px.X < _selectionRect.X + _selectionRect.Width &&
+                              px.Y >= _selectionRect.Y &&
+                              px.Y < _selectionRect.Y + _selectionRect.Height;
+
+                if (!inRect) return false;
+
+                // 2. 矩形选区：包围盒内即视为选中
+                if (SelectionType == SelectionType.Rectangle) return true;
+
+                // 3. 套索和魔棒：检查 AlphaMap
+                if (_selectionAlphaMap != null && _transformStep == 0)
+                {
+                    int localX = (int)(px.X - _selectionRect.X);
+                    int localY = (int)(px.Y - _selectionRect.Y);
+                    int stride = _selectionRect.Width * 4;
+
+                    int index = localY * stride + localX * 4 + 3; // Alpha 通道
+
+                    if (index >= 0 && index < _selectionAlphaMap.Length)
+                    {
+                        return _selectionAlphaMap[index] > 10;
+                    }
+                }
+
+                // 4. 如果已经变换过（缩放/移动），使用 Geometry 判断
+                if (_selectionGeometry != null && _transformStep > 0)
+                {
+                    return _selectionGeometry.FillContains(px);
+                }
+
+                return true;
             }
+
 
             private void ClearRect(ToolContext ctx, Int32Rect rect, Color color)
             {

@@ -27,9 +27,14 @@ namespace TabPaint
                     ctx.Undo.BeginStroke();
                     ctx.Undo.AddDirtyRect(_selectionRect);
 
-                    // 执行擦除
-                    ClearRect(ctx, _selectionRect, ctx.EraserColor);
-
+                    if (SelectionType == SelectionType.Lasso && _selectionAlphaMap != null)
+                    {
+                        ClearLassoRegion(ctx, _selectionRect, ctx.EraserColor);
+                    }
+                    else
+                    {
+                        ClearRect(ctx, _selectionRect, ctx.EraserColor);
+                    }
                     // 提交到 Undo 栈
                     ctx.Undo.CommitStroke();
                     ctx.IsDirty = true;
@@ -131,8 +136,9 @@ namespace TabPaint
                 if (_selectionData != null)
                 {
                     _hasLifted = true; // 视为已经浮起
-                    _draggingSelection = true; 
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    _draggingSelection = true;
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
                         var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                         _clickOffset = new Point(_selectionRect.Width / 2, _selectionRect.Height / 2);
                         Mouse.Capture(mw.CanvasWrapper);
@@ -141,7 +147,7 @@ namespace TabPaint
             }
             public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true)
             {
-               
+
                 // 1. 提交当前的选区（如果有）
                 if (_selectionData != null) CommitSelection(ctx);
 
@@ -211,7 +217,7 @@ namespace TabPaint
                     mw.UpdateSelectionScalingMode();
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
                     mw.NotifyCanvasSizeChanged(newW, newH);
-                   
+
                     // mw._canvasResizer.UpdateUI();
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
@@ -247,7 +253,7 @@ namespace TabPaint
 
             public void PasteSelection(ToolContext ctx, bool ins)
             {
-                
+
                 if (_selectionData != null) CommitSelection(ctx);
 
                 BitmapSource? sourceBitmap = null;
@@ -443,7 +449,7 @@ namespace TabPaint
 
 
                 ctx.Surface.ReplaceBitmap(newBitmap);
-                Cleanup(ctx); 
+                Cleanup(ctx);
                 ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
                 ctx.IsDirty = true;
                 ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(finalWidth, finalHeight);
@@ -457,17 +463,15 @@ namespace TabPaint
                 if (lag > 0) { lag--; return; }
                 if (ctx.Surface.Bitmap == null) return;
                 var px = ctx.ToPixel(viewPos);
-            
-                if (_selectionData != null)
+                bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+
+                if (_selectionData != null && !isShift)
                 {
                     // 判定点击位置是句柄还是框内
                     _currentAnchor = HitTestHandle(px, _selectionRect);
                     if (_currentAnchor != ResizeAnchor.None)
                     {
-                        if (_transformStep == 0) // 第一次缩放
-                        {
-                            _originalRect = _selectionRect;
-                        }
+                        if (_transformStep == 0) _originalRect = _selectionRect;
                         _transformStep++;
                         _resizing = true;
                         _startMouse = px;
@@ -477,25 +481,52 @@ namespace TabPaint
                         _startY = _selectionRect.Y;
                         ctx.ViewElement.CaptureMouse();
                         return;
-
                     }
                     else if (IsPointInSelection(px))
                     {
-                        if (_transformStep == 0) // 第一次拖动
-                        {
-                            _originalRect = _selectionRect;
-                        }
+                        if (_transformStep == 0)  _originalRect = _selectionRect;
                         _transformStep++;
                         _draggingSelection = true;
-                        double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width - (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
-
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
                         ctx.ViewElement.CaptureMouse();
                         return;
                     }
                 }
+                if (SelectionType == SelectionType.MagicWand)
+                {
+                    _selecting = true;
+                    _isWandAdjusting = true; // 标记开始调整容差
+                    _wandStartPoint = px;
+                    _startPixel = px; // 借用这个记录一下，方便计算距离
+                    _wandTolerance = 0; // 初始点击容差为 0
 
-                // 开始新框选
+                    // 记录点击点的颜色
+                    _wandStartColor = ((MainWindow)System.Windows.Application.Current.MainWindow).GetPixelColor((int)px.X, (int)px.Y);
+
+                    // 如果没有按 Shift，先清除旧选区 (视觉上)
+                    if (!isShift)
+                    {
+                        HidePreview(ctx);
+                        if (ctx.SelectionOverlay != null) ctx.SelectionOverlay.Children.Clear();
+                        _selectionData = null; // 逻辑清除
+                    }
+                    else
+                    {
+                    }
+
+                    // 立即执行一次容差为0的计算
+                    RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
+
+                    ctx.ViewElement.CaptureMouse();
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
+                    return;
+                }
+
+                if (SelectionType == SelectionType.Lasso)
+                {
+                    _lassoPoints = new List<Point>();
+                    _lassoPoints.Add(px);
+                }
 
                 _selecting = true;
                 _startPixel = px;
@@ -504,7 +535,7 @@ namespace TabPaint
                 ctx.ViewElement.CaptureMouse();
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
-            
+
             public bool _hasLifted = false;
             public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
@@ -541,7 +572,7 @@ namespace TabPaint
                     {
                         if (_pendingTab != null)
                         {
-                            ResetSwitchTimer(); 
+                            ResetSwitchTimer();
                         }
                     }
                 }
@@ -724,13 +755,50 @@ namespace TabPaint
                     return;
                 }
 
+                if (_selecting && SelectionType == SelectionType.MagicWand && _isWandAdjusting)
+                {
+                    // 计算鼠标拖拽距离，映射为容差 (例如 1px = 0.5 容差，最大 255)
+                    double dist = Math.Sqrt(Math.Pow(px.X - _startPixel.X, 2) + Math.Pow(px.Y - _startPixel.Y, 2));
+                    int newTolerance = (int)(dist / 2.0); // 灵敏度调节
+                    if (newTolerance > 255) newTolerance = 255;
 
+                    // 只有容差变化了才重算，节省性能
+                    if (newTolerance != _wandTolerance)
+                    {
+                        _wandTolerance = newTolerance;
+                        bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+                        RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
+
+                        // 状态栏提示当前容差
+                    //    var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                        mw.SelectionSize = $"{LocalizationManager.GetString("L_Tool_MagicWand")}: {_wandTolerance}";
+                    }
+                    return;
+                }
                 if (_selecting)// 框选逻辑
                 {
                     _hasLifted = false;
-                    _selectionRect = MakeRect(_startPixel, px);
-                    if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
-                        DrawOverlay(ctx, _selectionRect);
+                    if (SelectionType == SelectionType.Lasso)
+                    {
+                        var pxs = ctx.ToPixel(viewPos);
+                        // 简单过滤一下距离，避免点太密集
+                        if (_lassoPoints.Count > 0)
+                        {
+                            var last = _lassoPoints[_lassoPoints.Count - 1];
+                            if (Math.Abs(pxs.X - last.X) > 2 || Math.Abs(pxs.Y - last.Y) > 2)
+                            {
+                                _lassoPoints.Add(pxs);
+                                DrawLassoTrace(ctx); // 专门绘制轨迹的方法
+                            }
+                        }
+                    }
+                    else // 矩形逻辑 (保持原有)
+                    {
+                        var pxs = ctx.ToPixel(viewPos);
+                        _selectionRect = MakeRect(_startPixel, pxs);
+                        if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
+                            DrawOverlay(ctx, _selectionRect);
+                    }
                 }
 
                 else if (_draggingSelection) // 拖动逻辑
@@ -825,30 +893,274 @@ namespace TabPaint
 
                 UpdateStatusBarSelectionSize();
             }
-        public void UpdateStatusBarSelectionSize()
+            private void RunMagicWand(ToolContext ctx, Point startPt, int tolerance, bool union)
+            {
+                int w = ctx.Surface.Bitmap.PixelWidth;
+                int h = ctx.Surface.Bitmap.PixelHeight;
+                int startX = (int)startPt.X;
+                int startY = (int)startPt.Y;
+
+                if (startX < 0 || startX >= w || startY < 0 || startY >= h) return;
+
+                // 1. 准备全图 Mask (bool array)
+                // 如果是 Shift 追加模式，我们需要保留之前的选中状态
+                bool[] mask = new bool[w * h];
+
+                if (union && _selectionData != null && _selectionAlphaMap != null)
+                {
+                    // 将旧选区恢复到 mask 中
+                    int oldX = _selectionRect.X;
+                    int oldY = _selectionRect.Y;
+                    int oldW = _selectionRect.Width;
+                    int oldH = _selectionRect.Height;
+                    int oldStride = oldW * 4;
+                    for (int y = 0; y < oldH; y++)
+                    {
+                        for (int x = 0; x < oldW; x++)
+                        {
+                            int alphaIndex = y * oldStride + x * 4 + 3;
+                            if (alphaIndex < _selectionAlphaMap.Length && _selectionAlphaMap[alphaIndex] > 128)
+                            {
+                                int globalX = oldX + x;
+                                int globalY = oldY + y;
+                                if (globalX >= 0 && globalX < w && globalY >= 0 && globalY < h)
+                                {
+                                    mask[globalY * w + globalX] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. 执行泛洪填充 (BFS)
+                ctx.Surface.Bitmap.Lock();
+                try
+                {
+                    unsafe
+                    {
+                        byte* ptr = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                        int stride = ctx.Surface.Bitmap.BackBufferStride;
+
+                        // 获取目标颜色 (B, G, R, A)
+                        byte* startPx = ptr + startY * stride + startX * 4;
+                        byte targetB = startPx[0];
+                        byte targetG = startPx[1];
+                        byte targetR = startPx[2];
+                        byte targetA = startPx[3];
+
+                        Queue<int> q = new Queue<int>();
+                        q.Enqueue(startX + startY * w);
+
+                        // 如果起始点还没被选中，才开始Fill
+                        if (!mask[startX + startY * w])
+                        {
+                            mask[startX + startY * w] = true; // 标记访问
+
+                            // 4-邻域偏移
+                            int[] dx = { 0, 0, 1, -1 };
+                            int[] dy = { 1, -1, 0, 0 };
+
+                            while (q.Count > 0)
+                            {
+                                int curr = q.Dequeue();
+                                int cx = curr % w;
+                                int cy = curr / w;
+
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    int nx = cx + dx[i];
+                                    int ny = cy + dy[i];
+
+                                    if (nx >= 0 && nx < w && ny >= 0 && ny < h)
+                                    {
+                                        int nIdx = nx + ny * w;
+                                        if (!mask[nIdx]) // 未访问过
+                                        {
+                                            byte* currPtr = ptr + ny * stride + nx * 4;
+                                            byte b = currPtr[0];
+                                            byte g = currPtr[1];
+                                            byte r = currPtr[2];
+                                            byte a = currPtr[3];
+
+                                            // 颜色距离计算 (简单的曼哈顿距离或最大分量差)
+                                            // 这里使用各通道绝对差值均小于 tolerance (Box模型)，这在PS里比较常用
+                                            bool match = (Math.Abs(b - targetB) <= tolerance) &&
+                                                         (Math.Abs(g - targetG) <= tolerance) &&
+                                                         (Math.Abs(r - targetR) <= tolerance) &&
+                                                         (Math.Abs(a - targetA) <= tolerance);
+
+                                            if (match)
+                                            {
+                                                mask[nIdx] = true;
+                                                q.Enqueue(nIdx);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    ctx.Surface.Bitmap.Unlock();
+                }
+
+                // 3. 计算新的包围盒
+                int minX = w, maxX = 0, minY = h, maxY = 0;
+                bool hasSelection = false;
+                for (int y = 0; y < h; y++)
+                {
+                    for (int x = 0; x < w; x++)
+                    {
+                        if (mask[y * w + x])
+                        {
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                            hasSelection = true;
+                        }
+                    }
+                }
+
+                if (!hasSelection)
+                {
+                    Cleanup(ctx);
+                    return;
+                }
+
+                // 4. 生成 _selectionData 和 _selectionAlphaMap
+                int newW = maxX - minX + 1;
+                int newH = maxY - minY + 1;
+                _selectionRect = new Int32Rect(minX, minY, newW, newH);
+                _originalRect = _selectionRect;
+
+                // 提取原始像素数据
+                byte[] rawData = ctx.Surface.ExtractRegion(_selectionRect);
+
+                // 生成 AlphaMap (BGRA格式)
+                int mapStride = newW * 4;
+                _selectionAlphaMap = new byte[newH * mapStride];
+
+                for (int y = 0; y < newH; y++)
+                {
+                    for (int x = 0; x < newW; x++)
+                    {
+                        int globalX = minX + x;
+                        int globalY = minY + y;
+                        bool selected = mask[globalY * w + globalX];
+
+                        int pixelIdx = y * mapStride + x * 4;
+
+                        // 设置 AlphaMap: 选中则 Alpha=255, 否则 0
+                        _selectionAlphaMap[pixelIdx + 0] = 0; // B
+                        _selectionAlphaMap[pixelIdx + 1] = 0; // G
+                        _selectionAlphaMap[pixelIdx + 2] = 0; // R
+                        _selectionAlphaMap[pixelIdx + 3] = selected ? (byte)255 : (byte)0; // A
+
+                        // 同时处理 _selectionData：未选中区域设为透明
+                        if (!selected)
+                        {
+                            rawData[pixelIdx + 0] = 0;
+                            rawData[pixelIdx + 1] = 0;
+                            rawData[pixelIdx + 2] = 0;
+                            rawData[pixelIdx + 3] = 0;
+                        }
+                    }
+                }
+
+                _selectionData = rawData;
+                _hasLifted = false; // 魔棒刚选完，并未真正“提起来”（原图还在），直到用户拖动
+
+                // 5. 更新预览
+                CreatePreviewFromSelectionData(ctx);
+            }
+
+            public void UpdateStatusBarSelectionSize()
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {// 状态栏更新
                     ((MainWindow)System.Windows.Application.Current.MainWindow).SelectionSize =
-                        $"{_selectionRect.Width}×{_selectionRect.Height}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
+                        $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 });
             }
             private void LiftSelectionFromCanvas(ToolContext ctx)
             {
-                if (_hasLifted) return; // 如果已经抠过了，就别再抠了
+                if (_hasLifted) return;
 
-                // 1. 记录 Undo（确保撤销能恢复原画布的这个洞）
+                // 1. Undo 记录
                 ctx.Undo.BeginStroke();
                 ctx.Undo.AddDirtyRect(_originalRect);
                 ctx.Undo.CommitStroke();
 
-                // 2. 将原位置擦除为透明（或者背景色）
-                ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
+                // 2. 执行清除 (区分矩形模式和套索模式)
+                if (SelectionType == SelectionType.Lasso && _selectionAlphaMap != null)
+                {
+                    // 套索模式：精确清除
+                    ClearLassoRegion(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
+                }
+                else
+                {
+                    // 矩形模式：原有逻辑
+                    ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
+                }
 
-                // 3. 标记状态
                 _hasLifted = true;
             }
+            private void ClearLassoRegion(ToolContext ctx, Int32Rect rect, Color color)
+            {
+                var clearMode = SettingsManager.Instance.Current.SelectionClearMode;
+                ctx.Surface.Bitmap.Lock();
+                try
+                {
+                    unsafe
+                    {
+                        byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                        int stride = ctx.Surface.Bitmap.BackBufferStride;
+                        int maskStride = _selectionRect.Width * 4; // 遮罩的 stride
 
+                        // 预计算填充色
+                        byte tB = 0, tG = 0, tR = 0, tA = 0;
+                        bool writeAlpha = true;
+                        // ... (这里复用你 ClearRect 里关于 ClearMode 的 switch 判断逻辑) ...
+                        // 假设是 Transparent 模式:
+                        if (clearMode == SelectionClearMode.Transparent) { tB = 0; tG = 0; tR = 0; tA = 0; writeAlpha = true; }
+                        else if (clearMode == SelectionClearMode.White) { tB = 255; tG = 255; tR = 255; tA = 255; writeAlpha = true; }
+
+                        // 遍历区域
+                        for (int y = 0; y < rect.Height; y++)
+                        {
+                            // 注意边界检查，防止遮罩和实际rect尺寸微小差异导致越界
+                            if (y * maskStride >= _selectionAlphaMap.Length) break;
+
+                            byte* rowPtr = basePtr + (rect.Y + y) * stride + rect.X * 4;
+
+                            for (int x = 0; x < rect.Width; x++)
+                            {
+                                int maskIndex = y * maskStride + x * 4 + 3; // Alpha通道
+                                if (maskIndex < _selectionAlphaMap.Length)
+                                {
+                                    // 只有当遮罩显示“此处被选中”（Alpha > 128）时，才清除画布上的像素
+                                    if (_selectionAlphaMap[maskIndex] > 128)
+                                    {
+                                        rowPtr[0] = tB;
+                                        rowPtr[1] = tG;
+                                        rowPtr[2] = tR;
+                                        if (writeAlpha) rowPtr[3] = tA;
+                                    }
+                                }
+                                rowPtr += 4;
+                            }
+                        }
+                    }
+                    ctx.Surface.Bitmap.AddDirtyRect(rect);
+                }
+                finally
+                {
+                    ctx.Surface.Bitmap.Unlock();
+                }
+            }
             public override void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e)
             {
                 if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
@@ -865,10 +1177,10 @@ namespace TabPaint
                             e.Handled = true;
                             CopySelection(ctx);
                             break;
-                        //case Key.V:
-                        //    PasteSelection(ctx, false);
-                        //    e.Handled = true;
-                        //    break;
+                            //case Key.V:
+                            //    PasteSelection(ctx, false);
+                            //    e.Handled = true;
+                            //    break;
                     }
                 }
                 else
@@ -887,7 +1199,6 @@ namespace TabPaint
             {
                 if (_selectionData == null || _originalRect.Width == 0 || _originalRect.Height == 0) return;
 
-                // 1. 数据处理部分 (保持不变) ------------------------------
                 int oldW = _originalRect.Width;
                 int oldH = _originalRect.Height;
                 int stride = oldW * 4;
@@ -974,16 +1285,8 @@ namespace TabPaint
                     double dpiX = mw._surface?.Bitmap.DpiX ?? AppConsts.StandardDpi;
                     double dpiY = mw._surface?.Bitmap.DpiY ?? AppConsts.StandardDpi;
 
-                    BitmapSource result = BitmapSource.Create(
-                        _originalRect.Width,
-                        _originalRect.Height,
-                        dpiX,
-                        dpiY,
-                        PixelFormats.Bgra32,
-                        null,
-                        _selectionData,
-                        stride
-                    );
+                    BitmapSource result = BitmapSource.Create( _originalRect.Width,  _originalRect.Height, dpiX, dpiY,
+                        PixelFormats.Bgra32,  null,   _selectionData,stride  );
 
                     if (_selectionRect.Width != _originalRect.Width || _selectionRect.Height != _originalRect.Height)
                     {
@@ -998,9 +1301,127 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                   System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine("OCR 裁剪失败: " + ex.Message);
                     return null;
                 }
+            }
+            private void DrawLassoTrace(ToolContext ctx)
+            {
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                double invScale = 1 / mw.zoomscale;
+                var overlay = ctx.SelectionOverlay;
+                overlay.Children.Clear();
+
+                if (_lassoPoints == null || _lassoPoints.Count < 2) return;
+
+                // 构建路径几何
+                StreamGeometry geom = new StreamGeometry();
+                using (StreamGeometryContext gc = geom.Open())
+                {
+                    gc.BeginFigure(_lassoPoints[0], false, false);
+                    gc.PolyLineTo(_lassoPoints.Skip(1).ToList(), true, false);
+                }
+
+                var path = new System.Windows.Shapes.Path
+                {
+                    Stroke = Brushes.White,
+                    StrokeThickness = 2 * invScale,
+                    Data = geom,
+                    StrokeDashArray = new DoubleCollection { 4, 4 }
+                };
+                var pathBlack = new System.Windows.Shapes.Path
+                {
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 2 * invScale,
+                    Data = geom,
+                    StrokeDashArray = new DoubleCollection { 4, 4 },
+                    StrokeDashOffset = 4
+                };
+
+                overlay.Children.Add(path);
+                overlay.Children.Add(pathBlack);
+                overlay.Visibility = Visibility.Visible;
+            }
+
+            private void ProcessLassoSelection(ToolContext ctx)
+            {
+                if (_lassoPoints == null || _lassoPoints.Count < 3) { Cleanup(ctx); return; }
+
+                // 1. 计算包围盒
+                double minX = _lassoPoints.Min(p => p.X);
+                double minY = _lassoPoints.Min(p => p.Y);
+                double maxX = _lassoPoints.Max(p => p.X);
+                double maxY = _lassoPoints.Max(p => p.Y);
+
+                var rawRect = new Int32Rect((int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY));
+                _selectionRect = ClampRect(rawRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+
+                if (_selectionRect.Width <= 0 || _selectionRect.Height <= 0) { Cleanup(ctx); return; }
+
+                // 2. 提取原始矩形像素
+                byte[] rawData = ctx.Surface.ExtractRegion(_selectionRect);
+                if (rawData == null) return;
+
+                var localPoints = _lassoPoints.Select(p => new Point(p.X - _selectionRect.X, p.Y - _selectionRect.Y)).ToList();
+                StreamGeometry geom = new StreamGeometry();
+                using (StreamGeometryContext gc = geom.Open())
+                {
+                    gc.BeginFigure(localPoints[0], true, true);
+                    gc.PolyLineTo(localPoints.Skip(1).ToList(), true, true);
+                }
+                geom.Freeze();
+                _selectionGeometry = geom; // 保存下来用于 DrawOverlay
+
+                // 4. 生成遮罩 (用于数据处理和画布清除)
+                var visual = new DrawingVisual();
+                using (DrawingContext dc = visual.RenderOpen())
+                {
+                    // 绘制白色形状，背景透明
+                    dc.DrawGeometry(Brushes.White, null, geom);
+                }
+                var maskBmp = new RenderTargetBitmap(_selectionRect.Width, _selectionRect.Height, 96, 96, PixelFormats.Pbgra32);
+                maskBmp.Render(visual);
+
+                int stride = _selectionRect.Width * 4;
+                _selectionAlphaMap = new byte[_selectionRect.Height * stride];
+                maskBmp.CopyPixels(_selectionAlphaMap, stride, 0);
+
+                for (int i = 0; i < rawData.Length; i += 4)
+                {
+                    // 遮罩Alpha通道在 i+3
+                    if (_selectionAlphaMap[i + 3] < 128)
+                    {
+                        rawData[i + 0] = 0;
+                        rawData[i + 1] = 0;
+                        rawData[i + 2] = 0;
+                        rawData[i + 3] = 0;
+                    }
+                }
+
+                _selectionData = rawData;
+                _originalRect = _selectionRect;
+
+                CreatePreviewFromSelectionData(ctx);
+            }
+
+            private void CreatePreviewFromSelectionData(ToolContext ctx)
+            {
+                var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
+                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
+
+                previewBmp.WritePixels(new Int32Rect(0, 0, _selectionRect.Width, _selectionRect.Height),
+                                       _selectionData, _selectionRect.Width * 4, 0);
+
+                ctx.SelectionPreview.Source = previewBmp;
+                ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
+
+                SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
+                ((MainWindow)Application.Current.MainWindow).UpdateSelectionScalingMode();
+                ctx.SelectionPreview.Visibility = Visibility.Visible;
+                UpdateStatusBarSelectionSize();
+
+                DrawOverlay(ctx, _selectionRect);
+                ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
@@ -1008,39 +1429,59 @@ namespace TabPaint
                 if (lag > 0) { lag--; return; }
                 ctx.ViewElement.ReleaseMouseCapture();
                 var px = ctx.ToPixel(viewPos);
-
-                if (_selecting)
+                if (_selecting && SelectionType == SelectionType.MagicWand)
                 {
                     _selecting = false;
+                    _isWandAdjusting = false;
 
-                    // 1. 原始计算出的矩形（可能超出画布）
-                    var rawRect = MakeRect(_startPixel, px);
-                    _selectionRect = ClampRect(rawRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
-
-                    if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
+                    if (_selectionAlphaMap != null && _selectionRect.Width > 0 && _selectionRect.Height > 0)
                     {
-                        // 3. 提取数据 (因为上面已经Clamp过了，这里提取的数据量就是精确匹配 _selectionRect 的)
-                        _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
-
-                        // 4. 记录原始尺寸
                         _originalRect = _selectionRect;
-                        var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
-                            ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
-                        previewBmp.WritePixels(new Int32Rect(0, 0, _selectionRect.Width, _selectionRect.Height),
-                                               _selectionData, _selectionRect.Width * 4, 0);
+                        // 生成精确轮廓 Geometry（在后台或直接执行）
+                        // 对于小选区直接执行，大选区可考虑异步
+                        if (_selectionRect.Width * _selectionRect.Height < 500000) // 约 700x700
+                        {
+                            _selectionGeometry = GeneratePixelEdgeGeometry(
+                                _selectionAlphaMap,
+                                _selectionRect.Width,
+                                _selectionRect.Height,
+                                _selectionRect.X,
+                                _selectionRect.Y);
+                        }
 
-                        ctx.SelectionPreview.Source = previewBmp;
-                        ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
-
-                        SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
-                        ((MainWindow)Application.Current.MainWindow).UpdateSelectionScalingMode();
-                        ctx.SelectionPreview.Visibility = Visibility.Visible;
                         UpdateStatusBarSelectionSize();
+                        DrawOverlay(ctx, _selectionRect);
                     }
                     else
                     {
                         Cleanup(ctx);
+                    }
+                    ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
+                    return;
+                }
+                if (_selecting)
+                {
+                    _selecting = false;
+                    if (SelectionType == SelectionType.Lasso) ProcessLassoSelection(ctx);
+                    else
+                    {
+                        var rawRect = MakeRect(_startPixel, px);
+                        _selectionRect = ClampRect(rawRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+
+                        if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
+                        {
+                            // 3. 提取数据 (因为上面已经Clamp过了，这里提取的数据量就是精确匹配 _selectionRect 的)
+                            _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
+
+                            // 4. 记录原始尺寸
+                            _originalRect = _selectionRect;
+                            CreatePreviewFromSelectionData(ctx);
+                        }
+                        else
+                        {
+                            Cleanup(ctx);
+                        }
                     }
                 }
                 else if (_draggingSelection)
