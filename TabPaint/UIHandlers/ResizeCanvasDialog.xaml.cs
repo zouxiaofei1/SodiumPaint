@@ -8,7 +8,7 @@ namespace TabPaint
 {
     public partial class ResizeCanvasDialog : Window
     {
-        private const int MaxPixelSize = 16384;
+        private const int MaxPixelSize = (int)AppConsts.MaxCanvasSize;
         public int ImageWidth { get; private set; }
         public int ImageHeight { get; private set; }
         public bool IsCanvasResizeMode { get; private set; } // True=Canvas, False=Resample

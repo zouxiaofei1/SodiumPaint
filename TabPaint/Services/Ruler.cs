@@ -11,9 +11,9 @@ namespace TabPaint
 
     public class Ruler : FrameworkElement
     {
-        private const double SegmentHeight = 5; // 短刻度高度
-        private const double SegmentHeightMid = 10; // 中刻度高度
-        private const double SegmentHeightLong = 15; // 长刻度高度
+        private const double SegmentHeight = AppConsts.RulerSegmentHeight; // 短刻度高度
+        private const double SegmentHeightMid = AppConsts.RulerSegmentHeightMid; // 中刻度高度
+        private const double SegmentHeightLong = AppConsts.RulerSegmentHeightLong; // 长刻度高度
 
         // 依赖属性：缩放比例
         public static readonly DependencyProperty ZoomFactorProperty =

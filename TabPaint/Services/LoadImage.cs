@@ -204,15 +204,68 @@ namespace TabPaint
                 System.Diagnostics.Debug.WriteLine($"Scan Error: {ex.Message}");
             }
         }
-        private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
+        private int GetLargestFrameIndex(BitmapDecoder decoder)
+        {
+            if (decoder.Frames == null || decoder.Frames.Count == 0) return 0;
+            if (decoder.Frames.Count == 1) return 0;
+
+            int bestIndex = 0;
+            long maxArea = 0;
+            int maxBpp = 0;
+
+            for (int i = 0; i < decoder.Frames.Count; i++)
+            {
+                try
+                {
+                    var frame = decoder.Frames[i];
+                    long area = (long)frame.PixelWidth * frame.PixelHeight;
+                    int bpp = frame.Format.BitsPerPixel;
+
+                    // 优先比较面积，面积相同时比较颜色位深
+                    if (area > maxArea || (area == maxArea && bpp > maxBpp))
+                    {
+                        maxArea = area;
+                        maxBpp = bpp;
+                        bestIndex = i;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error evaluating frame {i}: {ex.Message}");
+                }
+            }
+            return bestIndex;
+        }
+
+        private BitmapSource DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
             try
             {
                 using var ms = new System.IO.MemoryStream(imageBytes);
 
-                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                int originalWidth = decoder.Frames[0].PixelWidth;
+                // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
+                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+                int frameIndex = GetLargestFrameIndex(decoder);
+                var frame = decoder.Frames[frameIndex];
+
+                if (decoder.Frames.Count > 1)
+                {
+                    // 对于多帧（如ICO），立即转换为 Bgra32 并手动拷贝像素，确保脱离流依赖并保留透明度
+                    var converted = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
+                    int w = converted.PixelWidth;
+                    int h = converted.PixelHeight;
+                    var stride = w * 4;
+                    byte[] pixels = new byte[stride * h];
+                    converted.CopyPixels(pixels, stride, 0);
+
+                    var wb = new WriteableBitmap(w, h, converted.DpiX, converted.DpiY, PixelFormats.Bgra32, null);
+                    wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+                    wb.Freeze();
+                    return wb;
+                }
+
+                int originalWidth = frame.PixelWidth;
 
                 // 重置流位置以供 BitmapImage 读取
                 ms.Position = 0;
@@ -359,10 +412,29 @@ namespace TabPaint
             try
             {
                 using var ms = new System.IO.MemoryStream(imageBytes);
-                // 先用解码器获取原始尺寸
-                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                int originalWidth = decoder.Frames[0].PixelWidth;
-                int originalHeight = decoder.Frames[0].PixelHeight;
+                // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
+                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+                int frameIndex = GetLargestFrameIndex(decoder);
+                var frame = decoder.Frames[frameIndex];
+
+                if (decoder.Frames.Count > 1)
+                {
+                    // 针对 ICO 等多帧格式，立即转换为 Bgra32 并手动拷贝像素，确保脱离流依赖并保留透明度
+                    var converted = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
+                    int w = converted.PixelWidth;
+                    int h = converted.PixelHeight;
+                    var stride = w * 4;
+                    byte[] pixels = new byte[stride * h];
+                    converted.CopyPixels(pixels, stride, 0);
+
+                    var wb = new WriteableBitmap(w, h, converted.DpiX, converted.DpiY, PixelFormats.Bgra32, null);
+                    wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+                    wb.Freeze();
+                    return wb;
+                }
+
+                int originalWidth = frame.PixelWidth;
+                int originalHeight = frame.PixelHeight;
 
                 ms.Position = 0; // 重置流位置以重新读取
 
@@ -406,8 +478,8 @@ namespace TabPaint
                         {
                             int w = (int)svg.Picture.CullRect.Width;  // 获取画布尺寸
                             int h = (int)svg.Picture.CullRect.Height;
-                            if (w <= 0) w = 800;
-                            if (h <= 0) h = 600;
+                            if (w <= 0) w = AppConsts.FallbackImageWidth;
+                            if (h <= 0) h = AppConsts.FallbackImageHeight;
 
                             return ((int Width, int Height)?)(w, h);
                         }
@@ -418,7 +490,8 @@ namespace TabPaint
 
                     if (decoder.Frames != null && decoder.Frames.Count > 0)
                     {
-                        return ((int Width, int Height)?)(decoder.Frames[0].PixelWidth, decoder.Frames[0].PixelHeight);
+                        int index = GetLargestFrameIndex(decoder);
+                        return ((int Width, int Height)?)(decoder.Frames[index].PixelWidth, decoder.Frames[index].PixelHeight);
                     }
                     return null;
                 }
@@ -431,7 +504,7 @@ namespace TabPaint
             });
         }
 
-        internal BitmapImage DecodeSvg(byte[] imageBytes, CancellationToken token)
+        internal BitmapSource DecodeSvg(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
             try
@@ -447,9 +520,9 @@ namespace TabPaint
                 float srcHeight = svg.Picture.CullRect.Height;
 
                 // 2. 如果 SVG 没有定义尺寸，给个默认值
-                if (srcWidth <= 0) srcWidth = 800;
-                if (srcHeight <= 0) srcHeight = 600;
-                const float minSide = 512f;
+                if (srcWidth <= 0) srcWidth = AppConsts.FallbackImageWidth;
+                if (srcHeight <= 0) srcHeight = AppConsts.FallbackImageHeight;
+                float minSide = AppConsts.SvgMinSide;
                 float scaleToMin = 1.0f;
                 if (srcWidth < minSide || srcHeight < minSide)
                 {
@@ -614,18 +687,18 @@ namespace TabPaint
 
                 // 步骤 2: 并行启动中等预览图和完整图的解码任务
                 string extension = System.IO.Path.GetExtension(filePath)?.ToLower();
-                Task<BitmapImage> previewTask;
+                Task<BitmapSource> previewTask;
                 Task<BitmapSource> fullResTask;
 
                 if (extension == ".svg")
                 {
-                    previewTask = Task.Run(() => DecodeSvg(imageBytes, token), token);
-                    fullResTask = previewTask.ContinueWith(t => (BitmapSource)t.Result, TaskContinuationOptions.OnlyOnRanToCompletion);
+                    previewTask = Task.Run<BitmapSource>(() => DecodeSvg(imageBytes, token), token);
+                    fullResTask = previewTask.ContinueWith(t => t.Result, TaskContinuationOptions.OnlyOnRanToCompletion);
                 }
                 else
                 {
-                    previewTask = Task.Run(() => DecodePreviewBitmap(imageBytes, token), token);
-                    fullResTask = Task.Run(() => DecodeFullResBitmap(imageBytes, token), token);
+                    previewTask = Task.Run<BitmapSource>(() => DecodePreviewBitmap(imageBytes, token), token);
+                    fullResTask = Task.Run<BitmapSource>(() => DecodeFullResBitmap(imageBytes, token), token);
                 }
 
                 // --- 阶段 0: (新增) 立即显示已缓存的缩略图 ---
@@ -822,7 +895,7 @@ namespace TabPaint
         private async Task SimulateProgressAsync(CancellationToken token, long totalPixels, Action<string> progressCallback)
         {
             // 1. 初始进度 (假设元数据和缩略图已完成)
-            double currentProgress = 5.0;
+            double currentProgress = AppConsts.ProgressStartPercent;
             string loadingFormat = LocalizationManager.GetString("L_Progress_Loading_Format");
             progressCallback(string.Format(loadingFormat, (int)currentProgress));
             int performanceScore = PerformanceScore; // 假设这是之前定义的全局静态变量
@@ -830,18 +903,18 @@ namespace TabPaint
 
             double scoreFactor = 0.5 + (performanceScore * 0.25);
             double estimatedMs = (totalPixels / 60000.0) / scoreFactor;
-            if (estimatedMs < 300) estimatedMs = 300;
-            int interval = 50;
+            if (estimatedMs < AppConsts.ProgressMinDurationMs) estimatedMs = AppConsts.ProgressMinDurationMs;
+            int interval = AppConsts.ProgressIntervalMs;
             double steps = estimatedMs / interval;
-            double incrementPerStep = (95.0 - currentProgress) / steps;
+            double incrementPerStep = (AppConsts.ProgressMaxPercent - currentProgress) / steps;
 
             try
             {
-                while (!token.IsCancellationRequested && currentProgress < 95.0)
+                while (!token.IsCancellationRequested && currentProgress < AppConsts.ProgressMaxPercent)
                 {
                     await Task.Delay(interval, token);
                     currentProgress += incrementPerStep;
-                    if (currentProgress > 99) currentProgress = 99;
+                    if (currentProgress > AppConsts.ProgressLimitPercent) currentProgress = AppConsts.ProgressLimitPercent;
 
                     // 回调更新 UI
                     progressCallback(string.Format(loadingFormat, (int)currentProgress));

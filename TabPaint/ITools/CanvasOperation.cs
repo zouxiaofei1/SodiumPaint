@@ -39,7 +39,7 @@ namespace TabPaint
             var newBitmap = new WriteableBitmap(newWidth, newHeight, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
             int newStride = newBitmap.BackBufferStride;
             byte[] whiteBg = new byte[newHeight * newStride];
-            for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = 255; // 简单的全白填充
+            for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = AppConsts.ColorComponentMax; // 简单的全白填充
             newBitmap.WritePixels(new Int32Rect(0, 0, newWidth, newHeight), whiteBg, newStride, 0);
 
             int destX = (newWidth - oldW) / 2;
@@ -153,7 +153,7 @@ namespace TabPaint
                 {
                     byte* ptr = (byte*)_bitmap.BackBuffer;
                     int stride = _bitmap.BackBufferStride;
-                    byte* pixel = ptr + y * stride + x * 4;
+                    byte* pixel = ptr + y * stride + x * AppConsts.BytesPerPixel;
                     // BGRA 格式
                     return Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]);
                 }
@@ -173,7 +173,7 @@ namespace TabPaint
             {
                 IntPtr pBackBuffer = _bitmap.BackBuffer;
                 int stride = _bitmap.BackBufferStride;
-                byte* p = (byte*)pBackBuffer + y * stride + x * 4;
+                byte* p = (byte*)pBackBuffer + y * stride + x * AppConsts.BytesPerPixel;
                 p[0] = color.B;
                 p[1] = color.G;
                 p[2] = color.R;
@@ -204,7 +204,7 @@ namespace TabPaint
 
         private byte[] ExtractRegionFromSnapshot(byte[] fullData, Int32Rect rect, int stride)
         {
-            const int bytesPerPixel = 4;
+            const int bytesPerPixel = AppConsts.BytesPerPixel;
             byte[] region = new byte[rect.Height * rect.Width * bytesPerPixel];
 
             for (int row = 0; row < rect.Height; row++)
@@ -238,14 +238,14 @@ namespace TabPaint
                 int stride = ctx.Surface.Bitmap.BackBufferStride;
                 for (int y = rect.Y; y < rect.Y + rect.Height; y++)
                 {
-                    byte* rowPtr = basePtr + y * stride + rect.X * 4;
+                    byte* rowPtr = basePtr + y * stride + rect.X * AppConsts.BytesPerPixel;
                     for (int x = 0; x < rect.Width; x++)
                     {
                         rowPtr[0] = color.B;
                         rowPtr[1] = color.G;
                         rowPtr[2] = color.R;
                         rowPtr[3] = color.A;
-                        rowPtr += 4;
+                        rowPtr += AppConsts.BytesPerPixel;
                     }
                 }
             }
@@ -279,10 +279,10 @@ namespace TabPaint
                     byte* row = (byte*)pBackBuffer + y * stride;
                     for (int x = 0; x < _bmpWidth; x++)
                     {
-                        row[x * 4 + 0] = 255; // B
-                        row[x * 4 + 1] = 255; // G
-                        row[x * 4 + 2] = 255; // R
-                        row[x * 4 + 3] = 255; // A
+                        row[x * AppConsts.BytesPerPixel + 0] = AppConsts.ColorComponentMax; // B
+                        row[x * AppConsts.BytesPerPixel + 1] = AppConsts.ColorComponentMax; // G
+                        row[x * AppConsts.BytesPerPixel + 2] = AppConsts.ColorComponentMax; // R
+                        row[x * AppConsts.BytesPerPixel + 3] = AppConsts.ColorComponentMax; // A
                     }
                 }
             }
@@ -377,17 +377,17 @@ namespace TabPaint
                 Parallel.For(0, height, y =>
                 {
                     byte* row = basePtr + y * stride;
-                    // 像素格式为 BGRA (4 bytes per pixel)
+                    // 像素格式为 BGRA
                     for (int x = 0; x < width; x++)
                     {
                         // 获取当前像素的 B, G, R 值
-                        byte b = row[x * 4];
-                        byte g = row[x * 4 + 1];
-                        byte r = row[x * 4 + 2];
+                        byte b = row[x * AppConsts.BytesPerPixel];
+                        byte g = row[x * AppConsts.BytesPerPixel + 1];
+                        byte r = row[x * AppConsts.BytesPerPixel + 2];
                         byte gray = (byte)(r * AppConsts.GrayWeightR + g * AppConsts.GrayWeightG + b * AppConsts.GrayWeightB); 
-                        row[x * 4] = gray; // Blue
-                        row[x * 4 + 1] = gray; // Green
-                        row[x * 4 + 2] = gray; 
+                        row[x * AppConsts.BytesPerPixel] = gray; // Blue
+                        row[x * AppConsts.BytesPerPixel + 1] = gray; // Green
+                        row[x * AppConsts.BytesPerPixel + 2] = gray; 
                     }
                 });
             }
@@ -419,7 +419,8 @@ namespace TabPaint
                     byte g = pixel[1];
                     byte r = pixel[2];
                     byte a = pixel[3];
-                    return a == 0 || (r == 255 && g == 255 && b == 255);
+                    byte max = AppConsts.ColorComponentMax;
+                    return a == 0 || (r == max && g == max && b == max);
                 }
 
                 int top = 0, bottom = height - 1, left = 0, right = width - 1;
@@ -431,7 +432,7 @@ namespace TabPaint
                     byte* rowPtr = basePtr + top * stride;
                     for (int x = 0; x < width; x++)
                     {
-                        if (!IsEmpty(rowPtr + x * 4)) { rowHasContent = true; break; }
+                        if (!IsEmpty(rowPtr + x * AppConsts.BytesPerPixel)) { rowHasContent = true; break; }
                     }
                     if (rowHasContent) break;
                 }
@@ -451,7 +452,7 @@ namespace TabPaint
                     byte* rowPtr = basePtr + bottom * stride;
                     for (int x = 0; x < width; x++)
                     {
-                        if (!IsEmpty(rowPtr + x * 4)) { rowHasContent = true; break; }
+                        if (!IsEmpty(rowPtr + x * AppConsts.BytesPerPixel)) { rowHasContent = true; break; }
                     }
                     if (rowHasContent) break;
                 }
@@ -462,7 +463,7 @@ namespace TabPaint
                     bool colHasContent = false;
                     for (int y = top; y <= bottom; y++)
                     {
-                        byte* pixel = basePtr + y * stride + left * 4;
+                        byte* pixel = basePtr + y * stride + left * AppConsts.BytesPerPixel;
                         if (!IsEmpty(pixel)) { colHasContent = true; break; }
                     }
                     if (colHasContent) break;
@@ -474,7 +475,7 @@ namespace TabPaint
                     bool colHasContent = false;
                     for (int y = top; y <= bottom; y++)
                     {
-                        byte* pixel = basePtr + y * stride + right * 4;
+                        byte* pixel = basePtr + y * stride + right * AppConsts.BytesPerPixel;
                         if (!IsEmpty(pixel)) { colHasContent = true; break; }
                     }
                     if (colHasContent) break;

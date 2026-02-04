@@ -14,7 +14,7 @@ namespace TabPaint
         private static readonly object _lock = new object();
         private readonly string _folderPath;        // 设定存储路径: AppData/Local/TabPaint/settings.json
         private readonly string _filePath;
-        private const int MaxRecentFiles = 10;
+        private const int MaxRecentFiles = AppConsts.MaxRecentFiles;
         // 当前的设置实例
         public AppSettings Current { get; private set; }
         private SettingsManager()

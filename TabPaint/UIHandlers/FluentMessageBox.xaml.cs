@@ -12,10 +12,10 @@ namespace TabPaint
         public MessageBoxResult Result { get; private set; } = MessageBoxResult.None;
 
         // SVG Path Data
-        private const string PathInfo = "M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M13,17H11V11H13V17M13,9H11V7H13V9Z";
-        private const string PathQuestion = "M12,2C17.52,2 22,6.48 22,12C22,17.52 17.52,22 12,22C6.48,22 2,17.52 2,12C2,6.48 6.48,2 12,2M11,19H13V17H11M12,5C10.6,5 9.27,5.57 8.5,6.5C7.94,7.2 7.7,8.08 7.75,9H9.72C9.72,8.65 10,8 11.2,7.7C12.4,7.4 13.5,8 13.7,9C13.88,10 13.25,10.5 12.6,11C11.66,11.73 11,12.5 11,14.5H13C13,13.29 13.55,12.7 14.4,12C15.5,11.16 16.5,10.2 16.27,8.2C16.06,6.42 14.5,5 12,5Z";
-        private const string PathWarning = "M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16";
-        private const string PathError = "M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z";
+        private const string PathInfo = AppConsts.PathInfo;
+        private const string PathQuestion = AppConsts.PathQuestion;
+        private const string PathWarning = AppConsts.PathWarning;
+        private const string PathError = AppConsts.PathError;
 
         private FluentMessageBox()
         {

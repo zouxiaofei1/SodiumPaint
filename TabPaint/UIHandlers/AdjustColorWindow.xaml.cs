@@ -196,12 +196,11 @@ namespace TabPaint
         // 静态处理函数，包含所有算法管线
         private static unsafe void ProcessBitmapUnsafe(WriteableBitmap bmp,
             double brightness, double contrast, double exposure,
-            double temp, double tint, double saturation)
+            double temp, double hueShift, double saturation)
         {
             double tempAdj = temp / 2.0;
-            double tintAdj = tint / 2.0;
             double satAdj = (saturation + 100.0) / 100.0;
-            bool hasTTS = (temp != 0 || tint != 0 || saturation != 0);
+            bool hasTTS = (temp != 0 || hueShift != 0 || saturation != 0);
 
             double ctFactor = (100.0 + contrast) / 100.0;
             ctFactor *= ctFactor;
@@ -226,25 +225,53 @@ namespace TabPaint
                     double b = row[x * 4];
                     double g = row[x * 4 + 1];
                     double r = row[x * 4 + 2];
+
                     if (hasTTS)
                     {
-                        // 色温/色调
+                        // 1. 色温 (简易模拟)
                         r += tempAdj;
-                        g += tintAdj;
                         b -= tempAdj;
 
-                        // 饱和度
-                        if (saturation != 0)
+                        // 2. 色相旋转 (Hue Rotation) & 饱和度
+                        if (hueShift != 0 || saturation != 0)
                         {
-                            // Rec.601 Luma
-                            double luma = 0.299 * r + 0.587 * g + 0.114 * b;
-                            r = luma + satAdj * (r - luma);
-                            g = luma + satAdj * (g - luma);
-                            b = luma + satAdj * (b - luma);
+                            // 转换为 HSL 或简易旋转矩阵
+                            // 这里使用旋转矩阵实现色相偏移，效率更高且效果对应彩虹条
+                            double h = hueShift * Math.PI / 180.0;
+                            double cosH = Math.Cos(h);
+                            double sinH = Math.Sin(h);
+
+                            // 色相旋转矩阵系数 (基于 Luma 保持)
+                            double r_r = 0.213 + cosH * 0.787 - sinH * 0.213;
+                            double r_g = 0.715 - cosH * 0.715 - sinH * 0.715;
+                            double r_b = 0.072 - cosH * 0.072 + sinH * 0.928;
+
+                            double g_r = 0.213 - cosH * 0.213 + sinH * 0.143;
+                            double g_g = 0.715 + cosH * 0.285 + sinH * 0.140;
+                            double g_b = 0.072 - cosH * 0.072 - sinH * 0.283;
+
+                            double b_r = 0.213 - cosH * 0.213 - sinH * 0.787;
+                            double b_g = 0.715 - cosH * 0.715 + sinH * 0.715;
+                            double b_b = 0.072 + cosH * 0.928 + sinH * 0.072;
+
+                            double nr = r * r_r + g * r_g + b * r_b;
+                            double ng = r * g_r + g * g_g + b * g_b;
+                            double nb = r * b_r + g * b_g + b * b_b;
+
+                            r = nr; g = ng; b = nb;
+
+                            // 饱和度 (在色相旋转后应用)
+                            if (saturation != 0)
+                            {
+                                double luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                                r = luma + satAdj * (r - luma);
+                                g = luma + satAdj * (g - luma);
+                                b = luma + satAdj * (b - luma);
+                            }
                         }
                     }
 
-                    // 2. 应用亮度/对比度/曝光 (BCE)
+                    // 3. 应用亮度/对比度/曝光 (BCE)
                     if (hasBCE)
                     {
                         // 应用亮度

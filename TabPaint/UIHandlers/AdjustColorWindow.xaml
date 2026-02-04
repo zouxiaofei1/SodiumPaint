@@ -74,6 +74,75 @@
                 </Setter>
             </Style>
 
+            <!-- Colored Slider Styles -->
+            <Style x:Key="ColorSliderBaseStyle" TargetType="Slider" BasedOn="{StaticResource Win11HorizontalSliderStyle}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Slider">
+                            <Border Background="Transparent" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                <Grid VerticalAlignment="Center" Margin="0,6">
+                                    <Border x:Name="TrackBackground" Background="{TemplateBinding Background}" Height="4" CornerRadius="2" VerticalAlignment="Center"/>
+                                    <Track x:Name="PART_Track">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static Slider.DecreaseLarge}" Template="{StaticResource TransparentRepeatButtonTemplate}"/>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource Win11SliderThumbStyle}" VerticalAlignment="Center"/>
+                                        </Track.Thumb>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static Slider.IncreaseLarge}" Template="{StaticResource TransparentRepeatButtonTemplate}"/>
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TemperatureSliderStyle" TargetType="Slider" BasedOn="{StaticResource ColorSliderBaseStyle}">
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#4A90E2" Offset="0"/>
+                            <GradientStop Color="#F5F5F5" Offset="0.5"/>
+                            <GradientStop Color="#D0021B" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TintSliderStyle" TargetType="Slider" BasedOn="{StaticResource ColorSliderBaseStyle}">
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#00FFFF" Offset="0"/>
+                            <GradientStop Color="#0000FF" Offset="0.16"/>
+                            <GradientStop Color="#FF00FF" Offset="0.33"/>
+                            <GradientStop Color="#FF0000" Offset="0.5"/>
+                            <GradientStop Color="#FFFF00" Offset="0.66"/>
+                            <GradientStop Color="#00FF00" Offset="0.83"/>
+                            <GradientStop Color="#00FFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="SaturationSliderStyle" TargetType="Slider" BasedOn="{StaticResource ColorSliderBaseStyle}">
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#808080" Offset="0"/>
+                            <GradientStop Color="#858595" Offset="0.2"/>
+                            <GradientStop Color="#8090B5" Offset="0.4"/>
+                            <GradientStop Color="#75B575" Offset="0.6"/>
+                            <GradientStop Color="#D0D070" Offset="0.8"/>
+                            <GradientStop Color="#FF0000" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- Window Entry Animation -->
             <Storyboard x:Key="WindowOnLoad">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.150">
@@ -188,19 +257,19 @@
                                                     <TextBlock Text="{DynamicResource L_AdjustTTS_Temperature}" Style="{StaticResource LabelStyle}"/>
                                                     <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="TemperatureBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TemperatureSlider}"/>
                                                 </Grid>
-                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <Slider Style="{StaticResource TemperatureSliderStyle}" x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                                 <!-- 色调 -->
                                                 <Grid Margin="0,0,0,2">
                                                     <TextBlock Text="{DynamicResource L_AdjustTTS_Tint}" Style="{StaticResource LabelStyle}"/>
                                                     <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="TintBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TintSlider}"/>
                                                 </Grid>
-                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TintSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <Slider Style="{StaticResource TintSliderStyle}" x:Name="TintSlider" Minimum="-180" Maximum="180" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                                 <!-- 饱和度 -->
                                                 <Grid Margin="0,0,0,2">
                                                     <TextBlock Text="{DynamicResource L_AdjustTTS_Saturation}" Style="{StaticResource LabelStyle}"/>
                                                     <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="SaturationBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=SaturationSlider}"/>
                                                 </Grid>
-                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <Slider Style="{StaticResource SaturationSliderStyle}" x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
                                             </StackPanel>
                                         </ScrollViewer>
                                     </TabItem>

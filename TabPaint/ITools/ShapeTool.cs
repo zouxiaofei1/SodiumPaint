@@ -393,7 +393,7 @@ public class ShapeTool : ToolBase
     }
     private double Gethandlength(Point start, Point end)
     {
-        return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2), 0.5) * 0.2;
+        return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2), 0.5) * AppConsts.ArrowHeadRatio;
     }
     private Geometry BuildArrowGeometry(Point start, Point end, double headLength)
     {
@@ -403,7 +403,7 @@ public class ShapeTool : ToolBase
         if (Double.IsNaN(vec.X)) vec = new Vector(1, 0);
 
         Vector backVec = -vec;
-        double angle = 35;
+        double angle = AppConsts.ArrowAngleDegrees;
         Matrix m1 = Matrix.Identity; m1.Rotate(angle);
         Matrix m2 = Matrix.Identity; m2.Rotate(-angle);
 

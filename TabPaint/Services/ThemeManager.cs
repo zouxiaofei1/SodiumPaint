@@ -12,8 +12,8 @@ namespace TabPaint
 
     public static class ThemeManager
     {
-        private const string RegistryKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
-        private const string RegistryValueName = "AppsUseLightTheme";
+        private const string RegistryKeyPath = AppConsts.RegistryKeyPathThemes;
+        private const string RegistryValueName = AppConsts.RegistryValueNameLightTheme;
 
         public static AppTheme CurrentAppliedTheme { get; private set; }
 
@@ -218,8 +218,8 @@ namespace TabPaint
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
-        private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
-        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE;
 
         public static bool SetWindowImmersiveDarkMode(Window window, bool enabled)
         {

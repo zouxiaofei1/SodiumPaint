@@ -162,9 +162,9 @@ public partial class PenTool : ToolBase
             else if (ctx.PenStyle == BrushStyle.GaussianBlur)
             {
                 // 青色半透明，代表水滴/模糊
-                _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(100, 0, 255, 255));
+                _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(AppConsts.GaussianBlurCursorAlpha, 0, 255, 255));
                 _brushCursor.Stroke = Brushes.Cyan;
-                _brushCursor.StrokeThickness = 1.0;
+                _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
             }
 
             else
@@ -298,8 +298,8 @@ public partial class PenTool : ToolBase
         if (ctx.PenStyle == BrushStyle.Calligraphy)
         {
             double distance = Math.Sqrt(Math.Pow(px.X - _lastPixel.X, 2) + Math.Pow(px.Y - _lastPixel.Y, 2));
-            double maxSpeed = 60.0;
-            float speedPressure = (float)Math.Clamp(1.0 - (distance / maxSpeed), 0.1, 1.0);
+            double maxSpeed = AppConsts.CalligraphyMaxSpeed;
+            float speedPressure = (float)Math.Clamp(1.0 - (distance / maxSpeed), AppConsts.CalligraphyMinPressure, 1.0);
             pressure = speedPressure;
         }
        ctx.Surface.Bitmap.Lock();

@@ -41,7 +41,7 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         private long _lastModeSwitchTick = 0;
-        private const long ModeSwitchCooldown = 200 * 10000;
+        private const long ModeSwitchCooldown = AppConsts.ModeSwitchCooldownTicks;
 
         private void TriggerModeChange()
         {

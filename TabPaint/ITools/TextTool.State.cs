@@ -142,7 +142,7 @@ namespace TabPaint
             private double _startW, _startH, _startX, _startY;
 
             // 句柄尺寸
-            private const double HandleSize = 6;
+            private const double HandleSize = AppConsts.SelectToolHandleSize;
             private int lag = 0;
             private bool _justDismissed = false; // 用于记录当前点击是否是为了销毁上一个文本框
 

@@ -13,46 +13,153 @@ namespace TabPaint
     {
         private static readonly Dictionary<Color, string> StandardColorNames = new Dictionary<Color, string>
         {
-            { Color.FromRgb(255, 255, 255), "L_Color_White" },
+            { Colors.White, "L_Color_White" },
+            { Colors.Snow, "L_Color_Snow" },
+            { Colors.Honeydew, "L_Color_Honeydew" },
+            { Colors.MintCream, "L_Color_MintCream" },
+            { Colors.Azure, "L_Color_Azure" },
+            { Colors.AliceBlue, "L_Color_AliceBlue" },
+            { Colors.GhostWhite, "L_Color_GhostWhite" },
+            { Colors.WhiteSmoke, "L_Color_WhiteSmoke" },
+            { Colors.Beige, "L_Color_Beige" },
+            { Colors.OldLace, "L_Color_OldLace" },
+            { Colors.FloralWhite, "L_Color_FloralWhite" },
+            { Colors.Ivory, "L_Color_Ivory" },
+            { Colors.AntiqueWhite, "L_Color_AntiqueWhite" },
+            { Colors.Linen, "L_Color_Linen" },
+            { Colors.LavenderBlush, "L_Color_LavenderBlush" },
+            { Colors.MistyRose, "L_Color_MistyRose" },
+            { Colors.Gainsboro, "L_Color_Gainsboro" },
+            { Colors.LightGray, "L_Color_LightGray" },
+            { Colors.Silver, "L_Color_Silver" },
+            { Colors.DarkGray, "L_Color_DarkGray" },
+            { Colors.Gray, "L_Color_Gray" },
+            { Colors.DimGray, "L_Color_DimGray" },
+            { Colors.LightSlateGray, "L_Color_LightSlateGray" },
+            { Colors.SlateGray, "L_Color_SlateGray" },
+            { Colors.DarkSlateGray, "L_Color_DarkSlateGray" },
+            { Colors.Black, "L_Color_Black" },
+            { Colors.IndianRed, "L_Color_IndianRed" },
+            { Colors.LightCoral, "L_Color_LightCoral" },
+            { Colors.Salmon, "L_Color_Salmon" },
+            { Colors.DarkSalmon, "L_Color_DarkSalmon" },
+            { Colors.LightSalmon, "L_Color_LightSalmon" },
+            { Colors.Crimson, "L_Color_Crimson" },
+            { Colors.Red, "L_Color_Red" },
+            { Colors.Firebrick, "L_Color_FireBrick" },
+            { Colors.DarkRed, "L_Color_DarkRed" },
+            { Colors.Pink, "L_Color_Pink" },
+            { Colors.LightPink, "L_Color_LightPink" },
+            { Colors.HotPink, "L_Color_HotPink" },
+            { Colors.DeepPink, "L_Color_DeepPink" },
+            { Colors.MediumVioletRed, "L_Color_MediumVioletRed" },
+            { Colors.PaleVioletRed, "L_Color_PaleVioletRed" },
+            { Colors.Coral, "L_Color_Coral" },
+            { Colors.Tomato, "L_Color_Tomato" },
+            { Colors.OrangeRed, "L_Color_OrangeRed" },
+            { Colors.DarkOrange, "L_Color_DarkOrange" },
+            { Colors.Orange, "L_Color_Orange" },
+            { Colors.Gold, "L_Color_Gold" },
+            { Colors.Yellow, "L_Color_Yellow" },
+            { Colors.LightYellow, "L_Color_LightYellow" },
+            { Colors.LemonChiffon, "L_Color_LemonChiffon" },
+            { Colors.PapayaWhip, "L_Color_PapayaWhip" },
+            { Colors.Moccasin, "L_Color_Moccasin" },
+            { Colors.PeachPuff, "L_Color_PeachPuff" },
+            { Colors.PaleGoldenrod, "L_Color_PaleGoldenrod" },
+            { Colors.Khaki, "L_Color_Khaki" },
+            { Colors.DarkKhaki, "L_Color_DarkKhaki" },
+            { Colors.Lavender, "L_Color_Lavender" },
+            { Colors.Thistle, "L_Color_Thistle" },
+            { Colors.Plum, "L_Color_Plum" },
+            { Colors.Violet, "L_Color_Violet" },
+            { Colors.Orchid, "L_Color_Orchid" },
+            { Colors.Magenta, "L_Color_Magenta" },
+            { Colors.MediumOrchid, "L_Color_MediumOrchid" },
+            { Colors.MediumPurple, "L_Color_MediumPurple" },
+            { Colors.BlueViolet, "L_Color_BlueViolet" },
+            { Colors.DarkViolet, "L_Color_DarkViolet" },
+            { Colors.DarkOrchid, "L_Color_DarkOrchid" },
+            { Colors.DarkMagenta, "L_Color_DarkMagenta" },
+            { Colors.Purple, "L_Color_Purple" },
+            { Colors.Indigo, "L_Color_Indigo" },
+            { Colors.SlateBlue, "L_Color_SlateBlue" },
+            { Colors.DarkSlateBlue, "L_Color_DarkSlateBlue" },
+            { Colors.GreenYellow, "L_Color_GreenYellow" },
+            { Colors.Chartreuse, "L_Color_Chartreuse" },
+            { Colors.LawnGreen, "L_Color_LawnGreen" },
+            { Colors.Lime, "L_Color_Lime" },
+            { Colors.LimeGreen, "L_Color_LimeGreen" },
+            { Colors.PaleGreen, "L_Color_PaleGreen" },
+            { Colors.LightGreen, "L_Color_LightGreen" },
+            { Colors.MediumSpringGreen, "L_Color_MediumSpringGreen" },
+            { Colors.SpringGreen, "L_Color_SpringGreen" },
+            { Colors.MediumSeaGreen, "L_Color_MediumSeaGreen" },
+            { Colors.SeaGreen, "L_Color_SeaGreen" },
+            { Colors.ForestGreen, "L_Color_ForestGreen" },
+            { Colors.Green, "L_Color_Green" },
+            { Colors.DarkGreen, "L_Color_DarkGreen" },
+            { Colors.YellowGreen, "L_Color_YellowGreen" },
+            { Colors.OliveDrab, "L_Color_OliveDrab" },
+            { Colors.Olive, "L_Color_Olive" },
+            { Colors.DarkOliveGreen, "L_Color_DarkOliveGreen" },
+            { Colors.MediumAquamarine, "L_Color_MediumAquamarine" },
+            { Colors.DarkSeaGreen, "L_Color_DarkSeaGreen" },
+            { Colors.LightSeaGreen, "L_Color_LightSeaGreen" },
+            { Colors.DarkCyan, "L_Color_DarkCyan" },
+            { Colors.Teal, "L_Color_Teal" },
+            { Colors.Cyan, "L_Color_Cyan" },
+            { Colors.LightCyan, "L_Color_LightCyan" },
+            { Colors.PaleTurquoise, "L_Color_PaleTurquoise" },
+            { Colors.Aquamarine, "L_Color_Aquamarine" },
+            { Colors.Turquoise, "L_Color_Turquoise" },
+            { Colors.MediumTurquoise, "L_Color_MediumTurquoise" },
+            { Colors.DarkTurquoise, "L_Color_DarkTurquoise" },
+            { Colors.CadetBlue, "L_Color_CadetBlue" },
+            { Colors.SteelBlue, "L_Color_SteelBlue" },
+            { Colors.LightSteelBlue, "L_Color_LightSteelBlue" },
+            { Colors.PowderBlue, "L_Color_PowderBlue" },
+            { Colors.LightBlue, "L_Color_LightBlue" },
+            { Colors.SkyBlue, "L_Color_SkyBlue" },
+            { Colors.LightSkyBlue, "L_Color_LightSkyBlue" },
+            { Colors.DeepSkyBlue, "L_Color_DeepSkyBlue" },
+            { Colors.DodgerBlue, "L_Color_DodgerBlue" },
+            { Colors.CornflowerBlue, "L_Color_CornflowerBlue" },
+            { Colors.MediumSlateBlue, "L_Color_MediumSlateBlue" },
+            { Colors.RoyalBlue, "L_Color_RoyalBlue" },
+            { Colors.Blue, "L_Color_Blue" },
+            { Colors.MediumBlue, "L_Color_MediumBlue" },
+            { Colors.DarkBlue, "L_Color_DarkBlue" },
+            { Colors.Navy, "L_Color_Navy" },
+            { Colors.MidnightBlue, "L_Color_MidnightBlue" },
+            { Colors.Cornsilk, "L_Color_Cornsilk" },
+            { Colors.BlanchedAlmond, "L_Color_BlanchedAlmond" },
+            { Colors.Bisque, "L_Color_Bisque" },
+            { Colors.NavajoWhite, "L_Color_NavajoWhite" },
+            { Colors.Wheat, "L_Color_Wheat" },
+            { Colors.BurlyWood, "L_Color_BurlyWood" },
+            { Colors.Tan, "L_Color_Tan" },
+            { Colors.RosyBrown, "L_Color_RosyBrown" },
+            { Colors.SandyBrown, "L_Color_SandyBrown" },
+            { Colors.Goldenrod, "L_Color_Goldenrod" },
+            { Colors.DarkGoldenrod, "L_Color_DarkGoldenrod" },
+            { Colors.Peru, "L_Color_Peru" },
+            { Colors.Chocolate, "L_Color_Chocolate" },
+            { Colors.SaddleBrown, "L_Color_SaddleBrown" },
+            { Colors.Sienna, "L_Color_Sienna" },
+            { Colors.Brown, "L_Color_Brown" },
+            { Colors.Maroon, "L_Color_Maroon" },
+            { Color.FromRgb(102, 51, 0), "L_Color_DeepBrown" },
+            { Color.FromRgb(0, 102, 102), "L_Color_RockCyan" },
+            { Color.FromRgb(62, 39, 35), "L_Color_Coffee" },
+            { Color.FromRgb(204, 255, 204), "L_Color_MintGreen" },
+            { Color.FromRgb(255, 204, 255), "L_Color_LightPink" },
             { Color.FromRgb(255, 204, 204), "L_Color_LightRed" },
             { Color.FromRgb(255, 229, 204), "L_Color_LightOrange" },
-            { Color.FromRgb(255, 255, 204), "L_Color_LightYellow" },
-            { Color.FromRgb(204, 255, 204), "L_Color_MintGreen" },
-            { Color.FromRgb(204, 255, 255), "L_Color_LightCyan" },
-            { Color.FromRgb(204, 229, 255), "L_Color_LightBlue" },
-            { Color.FromRgb(229, 204, 255), "L_Color_Lavender" },
-            { Color.FromRgb(255, 204, 255), "L_Color_LightPink" },
-            { Color.FromRgb(245, 222, 179), "L_Color_Wheat" },
-            { Color.FromRgb(192, 192, 192), "L_Color_Silver" },
-            { Color.FromRgb(255, 0, 0), "L_Color_Red" },
-            { Color.FromRgb(255, 128, 0), "L_Color_Orange" },
-            { Color.FromRgb(255, 255, 0), "L_Color_Yellow" },
-            { Color.FromRgb(0, 255, 0), "L_Color_Lime" },
-            { Color.FromRgb(0, 255, 255), "L_Color_Cyan" },
-            { Color.FromRgb(0, 128, 255), "L_Color_Azure" },
-            { Color.FromRgb(128, 0, 255), "L_Color_Violet" },
-            { Color.FromRgb(255, 0, 255), "L_Color_Magenta" },
-            { Color.FromRgb(210, 105, 30), "L_Color_Chocolate" },
-            { Color.FromRgb(128, 128, 128), "L_Color_Gray" },
             { Color.FromRgb(204, 0, 0), "L_Color_DeepRed" },
             { Color.FromRgb(204, 102, 0), "L_Color_DeepOrange" },
-            { Color.FromRgb(255, 215, 0), "L_Color_Gold" },
-            { Color.FromRgb(0, 128, 0), "L_Color_Green" },
-            { Color.FromRgb(0, 128, 128), "L_Color_Teal" },
-            { Color.FromRgb(0, 0, 255), "L_Color_Blue" },
-            { Color.FromRgb(128, 0, 128), "L_Color_Purple" },
-            { Color.FromRgb(199, 21, 133), "L_Color_DeepPink" },
-            { Color.FromRgb(160, 82, 45), "L_Color_Ochre" },
-            { Color.FromRgb(0, 0, 0), "L_Color_Black" },
-            { Color.FromRgb(128, 0, 0), "L_Color_Maroon" },
-            { Color.FromRgb(102, 51, 0), "L_Color_DeepBrown" },
-            { Color.FromRgb(128, 128, 0), "L_Color_Olive" },
-            { Color.FromRgb(0, 64, 0), "L_Color_ForestGreen" },
-            { Color.FromRgb(0, 64, 64), "L_Color_RockCyan" },
-            { Color.FromRgb(0, 0, 128), "L_Color_Navy" },
-            { Color.FromRgb(51, 0, 102), "L_Color_Indigo" },
-            { Color.FromRgb(75, 0, 130), "L_Color_DeepViolet" },
-            { Color.FromRgb(62, 39, 35), "L_Color_Coffee" }
+            { Color.FromRgb(153, 76, 0), "L_Color_Ochre" },
+            { Color.FromRgb(51, 0, 102), "L_Color_DeepViolet" }
         };
 
         private string GetFriendlyColorName(Color target)
@@ -60,12 +167,15 @@ namespace TabPaint
             Color bestMatch = Color.FromRgb(0, 0, 0);
             double minDiff = double.MaxValue;
 
+            // Only compare RGB for naming
+            Color rgbTarget = Color.FromRgb(target.R, target.G, target.B);
+
             foreach (var standard in StandardColorNames.Keys)
             {
                 // 使用欧几里得距离计算颜色相似度
-                double diff = Math.Pow(target.R - standard.R, 2) +
-                              Math.Pow(target.G - standard.G, 2) +
-                              Math.Pow(target.B - standard.B, 2);
+                double diff = Math.Pow(rgbTarget.R - standard.R, 2) +
+                              Math.Pow(rgbTarget.G - standard.G, 2) +
+                              Math.Pow(rgbTarget.B - standard.B, 2);
 
                 if (diff < minDiff)
                 {
@@ -76,13 +186,53 @@ namespace TabPaint
 
             string nameKey = StandardColorNames[bestMatch];
             string localizedName = LocalizationManager.GetString(nameKey);
+            string engName = TryGetResource(nameKey, "en-US") ?? nameKey;
 
-            // 如果差异较大，则显示“接近 [颜色名]”
-            if (minDiff > 500)
+            // Handle transparency logic
+            // 透明度 > 50 显示透明xx色, > 95 显示透明
+            double transparency = (1 - target.A / 255.0) * 100.0;
+            string finalZh, finalEn;
+
+            if (transparency > 95)
             {
-                return $"{localizedName} ";
+                finalZh = LocalizationManager.GetString("L_ColorPicker_Transparent");
+                finalEn = TryGetResource("L_ColorPicker_Transparent", "en-US") ?? "Transparent";
             }
-            return localizedName;
+            else if (transparency > 50)
+            {
+                string prefixZh = LocalizationManager.GetString("L_ColorPicker_TransparentPrefix");
+                string prefixEn = TryGetResource("L_ColorPicker_TransparentPrefix", "en-US") ?? "Transparent";
+                finalZh = $"{prefixZh}{localizedName}";
+                finalEn = $"{prefixEn} {engName}";
+            }
+            else
+            {
+                finalZh = localizedName;
+                finalEn = engName;
+            }
+
+            return $"{finalZh} / {finalEn}";
+        }
+
+        private static ResourceDictionary _enDict;
+        private string TryGetResource(string key, string culture = null)
+        {
+            if (string.IsNullOrEmpty(key)) return null;
+
+            if (culture == "en-US")
+            {
+                if (_enDict == null)
+                {
+                    try
+                    {
+                        _enDict = new ResourceDictionary { Source = new Uri("pack://application:,,,/Resources/Lang.en-US.xaml") };
+                    }
+                    catch { }
+                }
+                if (_enDict != null && _enDict.Contains(key)) return _enDict[key] as string;
+            }
+
+            return Application.Current.TryFindResource(key) as string;
         }
 
         protected override void OnSourceInitialized(EventArgs e)

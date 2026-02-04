@@ -26,8 +26,8 @@ namespace TabPaint
     {
         public string ProgramVersion { get; set; } = "";
         private bool _isNavExpanded = true;
-        private const double NAV_EXPANDED_WIDTH = 220;
-        private const double NAV_COLLAPSED_WIDTH = 48;
+        private const double NAV_EXPANDED_WIDTH = AppConsts.NavExpandedWidth;
+        private const double NAV_COLLAPSED_WIDTH = AppConsts.NavCollapsedWidth;
         private DispatcherTimer _toastTimer;
         private bool _isToastVisible = false;
         private bool MicaEnabled = false;

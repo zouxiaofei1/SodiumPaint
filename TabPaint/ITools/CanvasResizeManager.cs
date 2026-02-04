@@ -37,7 +37,7 @@ namespace TabPaint
             private Rectangle _previewBorder; // 拖拽时的虚线框
 
             // 样式配置
-            private const double HandleSize = 8.0;
+            private const double HandleSize = AppConsts.CanvasResizeHandleSize;
 
             public CanvasResizeManager(MainWindow window)
             {

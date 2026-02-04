@@ -95,6 +95,7 @@ namespace TabPaint
         public const int PenCursorZIndex = 9999;
         public const byte HighlighterAlpha = 50;
         public const byte AiEraserCursorAlpha = 100;
+        public const byte GaussianBlurCursorAlpha = 100;
         public const double PenLowOpacityThreshold = 0.3;
         public const byte PenLowOpacityStrokeAlpha = 100;
         public const double PenLowOpacityStrokeThickness = 0.5;
@@ -104,6 +105,7 @@ namespace TabPaint
         // --- 画布限制 ---
         public const double MaxCanvasSize = 16384.0;
         public const double StandardDpi = 96.0;
+        public const int BytesPerPixel = 4;
         public const int DefaultBlankCanvasWidth = 2400;
         public const int DefaultBlankCanvasHeight = 1800;
 
@@ -133,10 +135,15 @@ namespace TabPaint
         public const double SelectToolDashLength = 4.0;
         public const double SelectToolAnimationDurationSeconds = 1.0;
         public const double SelectToolAnimationTo = 8.0;
+        public const double CanvasResizeHandleSize = 8.0;
 
         // --- 图片栏参数 ---
         public const double ImageBarItemWidth = 124.0;
         public const double ImageBarAddButtonWidthFallback = 46.0;
+
+        // --- 导航栏参数 ---
+        public const double NavExpandedWidth = 220;
+        public const double NavCollapsedWidth = 48;
 
         // --- 选择与拖拽定时 (ms) ---
         public const int TabSwitchCheckIntervalMs = 50;
@@ -149,6 +156,12 @@ namespace TabPaint
         public const double DragTitleBarThresholdY = 100.0;
         public const double DragImageBarThresholdY = 210.0;
         public const double DragGlobalPadding = 5.0;
+
+        // --- 状态栏布局阈值 ---
+        public const double StatusBarThresholdFile = 950.0;
+        public const double StatusBarThresholdMouse = 800.0;
+        public const double StatusBarThresholdSelection = 650.0;
+        public const double StatusBarThresholdImage = 500.0;
 
         // --- AI 修复参数 ---
         public const int AiInpaintSize = 512;
@@ -207,6 +220,65 @@ namespace TabPaint
         // --- 渲染阈值 ---
         public const double DefaultViewInterpolationThreshold = 160.0;
         public const double DefaultPaintInterpolationThreshold = 200.0;
+
+        // --- 标尺参数 ---
+        public const double RulerSegmentHeight = 5;
+        public const double RulerSegmentHeightMid = 10;
+        public const double RulerSegmentHeightLong = 15;
+
+        // --- 消息框图标路径 (SVG) ---
+        public const string PathInfo = "M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M13,17H11V11H13V17M13,9H11V7H13V9Z";
+        public const string PathQuestion = "M12,2C17.52,2 22,6.48 22,12C22,17.52 17.52,22 12,22C6.48,22 2,17.52 2,12C2,6.48 6.48,2 12,2M11,19H13V17H11M12,5C10.6,5 9.27,5.57 8.5,6.5C7.94,7.2 7.7,8.08 7.75,9H9.72C9.72,8.65 10,8 11.2,7.7C12.4,7.4 13.5,8 13.7,9C13.88,10 13.25,10.5 12.6,11C11.66,11.73 11,12.5 11,14.5H13C13,13.29 13.55,12.7 14.4,12C15.5,11.16 16.5,10.2 16.27,8.2C16.06,6.42 14.5,5 12,5Z";
+        public const string PathWarning = "M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16";
+        public const string PathError = "M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z";
+
+        // --- 注册表与系统常量 ---
+        public const string RegistryKeyPathThemes = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+        public const string RegistryValueNameLightTheme = "AppsUseLightTheme";
+        public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
+        public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+        // --- 应用逻辑与限制 ---
+        public const int MaxRecentFiles = 10;
+        public const string VirtualFilePrefix = "::TABPAINT_NEW::";
+        public const string AppUniqueId = "TabPaint_App_Mutex_UUID_91823091";
+        public const long ModeSwitchCooldownTicks = 200 * 10000;
+        public const int ColorPickerZoomPixelSize = 15;
+        public const int FileTabPageSize = 10;
+        public const int AiUpscaleMaxLongSide = 4096;
+        public const int DefaultBorderThickness = 2;
+        public const int DefaultChromaKeyTolerance = 45;
+
+        // --- 加载与进度模拟参数 ---
+        public const float SvgMinSide = 512f;
+        public const int FallbackImageWidth = 800;
+        public const int FallbackImageHeight = 600;
+        public const double ProgressStartPercent = 5.0;
+        public const double ProgressMaxPercent = 95.0;
+        public const double ProgressLimitPercent = 99.0;
+        public const int ProgressIntervalMs = 50;
+        public const int ProgressMinDurationMs = 300;
+        public const int DragMoveThreshold = 50;
+
+        // --- 转换器与缩放参数 ---
+        public const double ConverterMaxDataValue = 5000.0;
+        public const double ConverterMaxSliderValue = 100.0;
+        public const double DynamicRangeMinSize = 1.0;
+        public const double DynamicRangeShapeMaxSize = 24.0;
+        public const double DynamicRangePenPencilMaxSize = 10.0;
+        public const double DynamicRangeDefaultMaxSize = 400.0;
+        public const double ZoomSliderMinReal = 0.1;
+        public const double ZoomSliderMaxReal = 16.0;
+
+        // --- 交互安全边距与图形参数 ---
+        public const double DragSafetyMargin = 50.0;
+        public const double ArrowHeadRatio = 0.2;
+        public const double ArrowAngleDegrees = 35.0;
+
+        // --- 笔刷特定逻辑参数 ---
+        public const double CalligraphyMaxSpeed = 60.0;
+        public const double CalligraphyMinPressure = 0.1;
+        public const byte ColorComponentMax = 255;
 
         // --- 文件过滤器与扩展名 ---
         public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico|{8} (*.svg)|*.svg";

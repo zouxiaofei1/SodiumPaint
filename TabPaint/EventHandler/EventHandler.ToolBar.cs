@@ -295,7 +295,7 @@ namespace TabPaint
         }
         private bool _isTextBarDragging = false;
         private System.Windows.Point _textBarLastPoint;
-        private const double DragSafetyMargin = 50.0;
+        private const double DragSafetyMargin = AppConsts.DragSafetyMargin;
 
         private void TextEditBar_MouseDown(object sender, MouseButtonEventArgs e)
         {

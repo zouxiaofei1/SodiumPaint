@@ -263,7 +263,7 @@ namespace TabPaint
         }
 
 
-        private const int PageSize = 10; // 每页标签数量（可调整）
+        private const int PageSize = AppConsts.FileTabPageSize; // 每页标签数量（可调整）
 
         public ObservableCollection<FileTabItem> FileTabs { get; }
             = new ObservableCollection<FileTabItem>();
@@ -273,11 +273,11 @@ namespace TabPaint
         private bool _isInitialLayoutComplete = false;
         private HashSet<string> _explicitlyClosedFiles = new HashSet<string>();
         private long _currentCanvasVersion = 0;
-        private const string VirtualFilePrefix = "::TABPAINT_NEW::";
+        private const string VirtualFilePrefix = AppConsts.VirtualFilePrefix;
 
         // 上次成功备份时的版本号
         private long _lastBackedUpVersion = -1;
         private FileTabItem _mouseDownTabItem;
-        private int _dragThreshold = 50;//判定拖拽的阈值（像素）
+        private int _dragThreshold = AppConsts.DragMoveThreshold;//判定拖拽的阈值（像素）
     }
 }

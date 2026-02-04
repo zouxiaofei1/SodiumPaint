@@ -87,8 +87,8 @@ namespace TabPaint
     }
     public class NonLinearConverter : IValueConverter
     {
-        private const double MaxDataValue = 5000.0;
-        private const double MaxSliderValue = 100.0;
+        private const double MaxDataValue = AppConsts.ConverterMaxDataValue;
+        private const double MaxSliderValue = AppConsts.ConverterMaxSliderValue;
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -206,15 +206,15 @@ namespace TabPaint
     }
     public class DynamicRangeConverter : IMultiValueConverter
     {
-        private const double MinSize = 1.0;
+        private const double MinSize = AppConsts.DynamicRangeMinSize;
         private double GetMaxSizeForKey(string key)
         {
-            if (string.IsNullOrEmpty(key)) return 400.0; // 默认
+            if (string.IsNullOrEmpty(key)) return AppConsts.DynamicRangeDefaultMaxSize; // 默认
          //   
-            if (key == "Shape") return 24.0; // ★ Shape 工具上限锁死为 24
-            if (key == "Pen_Pencil") return 10.0;
+            if (key == "Shape") return AppConsts.DynamicRangeShapeMaxSize; // ★ Shape 工具上限锁死为 24
+            if (key == "Pen_Pencil") return AppConsts.DynamicRangePenPencilMaxSize;
 
-            return 400.0; // 其他画笔默认 400
+            return AppConsts.DynamicRangeDefaultMaxSize; // 其他画笔默认 400
         }
 
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
@@ -296,8 +296,8 @@ namespace TabPaint
         }
         #endregion
 
-        private const double MinZoomReal = 0.1;  // 10%
-        private const double MaxZoomReal = 16.0; // 1600%
+        private const double MinZoomReal = AppConsts.ZoomSliderMinReal;  // 10%
+        private const double MaxZoomReal = AppConsts.ZoomSliderMaxReal; // 1600%
         private double ZoomToSlider(double realZoom)
         {
             // 越界保护

@@ -39,7 +39,7 @@ namespace TabPaint.Controls
     public partial class ImageBarControl : UserControl
     {
         private DispatcherTimer _closeTimer;
-        private const int WM_MOUSEHWHEEL = 0x020E;
+        private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
         public ImageBarControl()
         {
             InitializeComponent();

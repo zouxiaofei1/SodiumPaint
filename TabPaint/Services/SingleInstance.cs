@@ -8,7 +8,7 @@ namespace TabPaint
 {
     public static class SingleInstance
     {
-        private const string UniqueId = "TabPaint_App_Mutex_UUID_91823091";
+        private const string UniqueId = AppConsts.AppUniqueId;
         private static Mutex _mutex;
         private static CancellationTokenSource _pipeCts; // 用于停止管道监听
 

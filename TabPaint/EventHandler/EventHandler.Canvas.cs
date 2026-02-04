@@ -60,7 +60,7 @@ namespace TabPaint
             var bmp = _surface.Bitmap;
             int w = bmp.PixelWidth;
             int h = bmp.PixelHeight;
-            int borderSize = 2; // 边框厚度
+            int borderSize = AppConsts.DefaultBorderThickness; // 边框厚度
 
             // 如果图片太小，不足以画边框，直接返回
             if (w <= borderSize * 2 || h <= borderSize * 2)
@@ -249,7 +249,7 @@ namespace TabPaint
 
                 Color targetColor = GetPixelColor(x, y);
 
-                ApplyColorKey(targetColor, 45);
+                ApplyColorKey(targetColor, AppConsts.DefaultChromaKeyTolerance);
             }
             catch (Exception ex)
             {
@@ -427,7 +427,7 @@ namespace TabPaint
             try
             {
                 WriteableBitmap inputBmp = _surface.Bitmap;
-                const int MaxLongSide = 4096; // 限制长边最大 4096
+                const int MaxLongSide = AppConsts.AiUpscaleMaxLongSide; // 限制长边最大 4096
 
                 if (inputBmp.PixelWidth > MaxLongSide || inputBmp.PixelHeight > MaxLongSide)
                 {

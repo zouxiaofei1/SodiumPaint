@@ -14,7 +14,7 @@ namespace TabPaint
         private double _dpiX = 1.0;
         private double _dpiY = 1.0;
 
-        private const int ZoomPixelSize = 15;
+        private const int ZoomPixelSize = AppConsts.ColorPickerZoomPixelSize;
 
         public ColorPickerWindow()
         {

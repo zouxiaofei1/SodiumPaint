@@ -147,17 +147,17 @@ namespace TabPaint.Controls
         {
             double w = e.NewSize.Width;
 
-            Visibility fileVis = w > 950 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility fileVis = w > AppConsts.StatusBarThresholdFile ? Visibility.Visible : Visibility.Collapsed;
             StatusFileSize.Visibility = fileVis;
             SepFileSize.Visibility = fileVis;
-            Visibility mouseVis = w > 800 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility mouseVis = w > AppConsts.StatusBarThresholdMouse ? Visibility.Visible : Visibility.Collapsed;
             StatusMousePos.Visibility = mouseVis;
             SepMousePos.Visibility = mouseVis;
-            Visibility selVis = w > 650 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility selVis = w > AppConsts.StatusBarThresholdSelection ? Visibility.Visible : Visibility.Collapsed;
             StatusSelectionSize.Visibility = selVis;
             SepSelectionSize.Visibility = selVis;
 
-            Visibility imgVis = w > 500 ? Visibility.Visible : Visibility.Collapsed;
+            Visibility imgVis = w > AppConsts.StatusBarThresholdImage ? Visibility.Visible : Visibility.Collapsed;
             StatusImageSize.Visibility = imgVis;
             SepImageSize.Visibility = imgVis;
 

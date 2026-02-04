@@ -1,661 +1,766 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- SettingsWindow -->
-    <sys:String x:Key="L_Settings_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">设置</sys:String>
-    <sys:String x:Key="L_Settings_Nav_General" xmlns:sys="clr-namespace:System;assembly=mscorlib">通用</sys:String>
-    <sys:String x:Key="L_Settings_Nav_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">画图设置</sys:String>
-    <sys:String x:Key="L_Settings_Nav_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">看图设置</sys:String>
-    <sys:String x:Key="L_Settings_Nav_Shortcuts" xmlns:sys="clr-namespace:System;assembly=mscorlib">快捷键设置</sys:String>
-    <sys:String x:Key="L_Settings_Nav_Advanced" xmlns:sys="clr-namespace:System;assembly=mscorlib">高级</sys:String>
-    <sys:String x:Key="L_Settings_Nav_About" xmlns:sys="clr-namespace:System;assembly=mscorlib">关于</sys:String>
-    <sys:String x:Key="L_Settings_Toast_Saved" xmlns:sys="clr-namespace:System;assembly=mscorlib">设置已保存</sys:String>
+    <sys:String x:Key="L_Settings_Title">设置</sys:String>
+    <sys:String x:Key="L_Settings_Nav_General">通用</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Paint">画图设置</sys:String>
+    <sys:String x:Key="L_Settings_Nav_View">看图设置</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Shortcuts">快捷键设置</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Advanced">高级</sys:String>
+    <sys:String x:Key="L_Settings_Nav_About">关于</sys:String>
+    <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
     
-    
-    <sys:String x:Key="L_Settings_General_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">通用</sys:String>
-    <sys:String x:Key="L_Settings_General_Startup_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动</sys:String>
-    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">自动加载同文件夹图片</sys:String>
-    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开图片时，自动扫描并加载同级目录下的其他图片</sys:String>
-    <sys:String x:Key="L_Settings_General_StartInViewMode_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">默认进入看图模式</sys:String>
-    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">程序启动时自动隐藏工具栏，作为看图软件使用</sys:String>
+    <sys:String x:Key="L_Settings_General_Title">通用</sys:String>
+    <sys:String x:Key="L_Settings_General_Startup_Header">启动</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">自动加载同文件夹图片</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">打开图片时，自动扫描并加载同级目录下的其他图片</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Title">默认进入看图模式</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">程序启动时自动隐藏工具栏，作为看图软件使用</sys:String>
 
-    <sys:String x:Key="L_Settings_General_MouseWheel_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">鼠标滚轮操作</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">滑动鼠标滚轮时程序的响应</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto" xmlns:sys="clr-namespace:System;assembly=mscorlib">自动</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up" xmlns:sys="clr-namespace:System;assembly=mscorlib">上下滚动图片</sys:String>
-    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换图片</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Title">鼠标滚轮操作</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Desc">滑动鼠标滚轮时程序的响应</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">自动</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">上下滚动图片</sys:String>
+    <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">切换图片</sys:String>
 
-    <sys:String x:Key="L_Settings_General_Theme_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">外观主题</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换明亮或黑暗模式</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_System" xmlns:sys="clr-namespace:System;assembly=mscorlib">跟随系统</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_Light" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅色 (Light)</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_Dark" xmlns:sys="clr-namespace:System;assembly=mscorlib">深色 (Dark)</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Title">外观主题</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Desc">切换明亮或黑暗模式</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_System">跟随系统</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Light">浅色 (Light)</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Dark">深色 (Dark)</sys:String>
 
-    <sys:String x:Key="L_Settings_General_Accent_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">主题色</sys:String>
-    <sys:String x:Key="L_Settings_General_Accent_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">界面强调颜色与工具图标颜色</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Title">主题色</sys:String>
+    <sys:String x:Key="L_Settings_General_Accent_Desc">界面强调颜色与工具图标颜色</sys:String>
 
-    <sys:String x:Key="L_Settings_General_Language_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">界面语言</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换软件显示语言</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Option_Zh" xmlns:sys="clr-namespace:System;assembly=mscorlib">简体中文</sys:String>
-    <sys:String x:Key="L_Settings_General_Language_Option_En" xmlns:sys="clr-namespace:System;assembly=mscorlib">English</sys:String>
-    <sys:String x:Key="L_Ico_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">导出图标</sys:String>
-    <sys:String x:Key="L_Ico_AddSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加尺寸</sys:String>
-    <sys:String x:Key="L_Ico_Error_NoSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">请至少添加一个图标尺寸。</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开缓存目录</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">查看位于 AppData 的临时文件和缓存</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Title">界面语言</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Desc">切换软件显示语言</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
+    <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
+    <sys:String x:Key="L_Ico_Title">导出图标</sys:String>
+    <sys:String x:Key="L_Ico_AddSize">添加尺寸</sys:String>
+    <sys:String x:Key="L_Ico_Error_NoSize">请至少添加一个图标尺寸。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">打开缓存目录</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc">查看位于 AppData 的临时文件和缓存</sys:String>
     <!-- Paint panel -->
-    <sys:String x:Key="L_Settings_Paint_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">画图设置</sys:String>
-    <sys:String x:Key="L_Settings_Paint_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">编辑习惯</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">剪贴板图片自动弹出</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">当后台监听检测到剪贴板有新图片时，自动激活并置顶窗口</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">选区删除背景</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">使用 Delete 键删除选区时的填充方式</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent" xmlns:sys="clr-namespace:System;assembly=mscorlib">透明 (Transparent)</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">白色 (White)</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha" xmlns:sys="clr-namespace:System;assembly=mscorlib">仅填充颜色 (保留 Alpha)</sys:String>
-    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete 键删除当前图片</sys:String>
-    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
+    <sys:String x:Key="L_Settings_Paint_Title">画图设置</sys:String>
+    <sys:String x:Key="L_Settings_Paint_Habits_Header">编辑习惯</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">剪贴板图片自动弹出</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">当后台监听检测到剪贴板有新图片时，自动激活并置顶窗口</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">选区删除背景</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">使用 Delete 键删除选区时的填充方式</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明 (Transparent)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_White">白色 (White)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">仅填充颜色 (保留 Alpha)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 键删除当前图片</sys:String>
+    <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
 
     <!-- View panel -->
-    <sys:String x:Key="L_Settings_View_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">看图设置</sys:String>
-    <sys:String x:Key="L_Settings_View_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">交互习惯</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">鼠标滚轮功能</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">看图模式下，直接滚动滚轮时的操作</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放图片 (Zoom)</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Switch" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换图片 (Prev/Next)</sys:String>
-    <sys:String x:Key="L_Settings_View_Display_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">显示</sys:String>
-    <sys:String x:Key="L_Settings_View_DarkBg_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">使用深色背景</sys:String>
-    <sys:String x:Key="L_Settings_View_DarkBg_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">在图片周围显示深灰色背景</sys:String>
-    <sys:String x:Key="L_Settings_View_TransparentGrid_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">显示透明度网格</sys:String>
-    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">开启后透明区域显示灰白格子，关闭则显示纯白背景</sys:String>
+    <sys:String x:Key="L_Settings_View_Title">看图设置</sys:String>
+    <sys:String x:Key="L_Settings_View_Habits_Header">交互习惯</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Title">鼠标滚轮功能</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Desc">看图模式下，直接滚动滚轮时的操作</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">缩放图片 (Zoom)</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Switch">切换图片 (Prev/Next)</sys:String>
+    <sys:String x:Key="L_Settings_View_Display_Header">显示</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Title">使用深色背景</sys:String>
+    <sys:String x:Key="L_Settings_View_DarkBg_Desc">在图片周围显示深灰色背景</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Title">显示透明度网格</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">开启后透明区域显示灰白格子，关闭则显示纯白背景</sys:String>
 
     <!-- Shortcuts -->
-    <sys:String x:Key="L_Settings_Shortcuts_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">快捷键设置</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav" xmlns:sys="clr-namespace:System;assembly=mscorlib">视图与导航</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_ToggleMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换看图/画图模式</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_PrevImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">上一张图片</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_NextImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">下一张图片</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_FullScreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">全屏显示</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Minimize" xmlns:sys="clr-namespace:System;assembly=mscorlib">最小化窗口</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_RotateLeft" xmlns:sys="clr-namespace:System;assembly=mscorlib">向左旋转</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_RotateRight" xmlns:sys="clr-namespace:System;assembly=mscorlib">向右旋转</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_VFlip" xmlns:sys="clr-namespace:System;assembly=mscorlib">垂直翻转</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_HFlip" xmlns:sys="clr-namespace:System;assembly=mscorlib">水平翻转</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">基础绘图工具</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Select" xmlns:sys="clr-namespace:System;assembly=mscorlib">选择工具</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen" xmlns:sys="clr-namespace:System;assembly=mscorlib">铅笔</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eyedropper" xmlns:sys="clr-namespace:System;assembly=mscorlib">取色器</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">橡皮擦</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Fill" xmlns:sys="clr-namespace:System;assembly=mscorlib">填充工具</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Text" xmlns:sys="clr-namespace:System;assembly=mscorlib">文字工具</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">画刷</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_Shape" xmlns:sys="clr-namespace:System;assembly=mscorlib">形状</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_AdvancedTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">高级工具</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_ClipMonitor" xmlns:sys="clr-namespace:System;assembly=mscorlib">监听剪贴板开关</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_RemoveBg" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 移除背景</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_ChromaKey" xmlns:sys="clr-namespace:System;assembly=mscorlib">色差抠图</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_OCR" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 文字识别</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_ScreenPicker" xmlns:sys="clr-namespace:System;assembly=mscorlib">屏幕取色器</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_CopyHex" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制当前颜色 HEX</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_AutoCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">智能裁切空白边缘</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Tool_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片加边框</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_FileOps" xmlns:sys="clr-namespace:System;assembly=mscorlib">其他文件操作</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_OpenWorkspace" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开工作区</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_PasteNewTab" xmlns:sys="clr-namespace:System;assembly=mscorlib">粘贴为新标签页</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Group_Effects" xmlns:sys="clr-namespace:System;assembly=mscorlib">图像效果</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_BCE" xmlns:sys="clr-namespace:System;assembly=mscorlib">亮度/对比度/曝光</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_TTS" xmlns:sys="clr-namespace:System;assembly=mscorlib">色温/色调/饱和度</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">黑白</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert" xmlns:sys="clr-namespace:System;assembly=mscorlib">反色</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">自动色阶</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整大小</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Title">快捷键设置</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_ViewNav">视图与导航</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_ToggleMode">切换看图/画图模式</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PrevImage">上一张图片</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_NextImage">下一张图片</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_FullScreen">全屏显示</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Minimize">最小化窗口</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateLeft">向左旋转</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_RotateRight">向右旋转</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_VFlip">垂直翻转</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_HFlip">水平翻转</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_BasicTools">基础绘图工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Select">选择工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Pen">铅笔</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eyedropper">取色器</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Eraser">橡皮擦</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Fill">填充工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Text">文字工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Brush">画刷</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_Shape">形状</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_AdvancedTools">高级工具</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ClipMonitor">监听剪贴板开关</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_RemoveBg">AI 移除背景</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ChromaKey">色差抠图</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_OCR">OCR 文字识别</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_ScreenPicker">屏幕取色器</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_CopyHex">复制当前颜色 HEX</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AutoCrop">智能裁切空白边缘</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Tool_AddBorder">图片加边框</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_FileOps">其他文件操作</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_OpenWorkspace">打开工作区</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_PasteNewTab">粘贴为新标签页</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Group_Effects">图像效果</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BCE">亮度/对比度/曝光</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_TTS">色温/色调/饱和度</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_BW">黑白</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert">反色</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">自动色阶</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">调整大小</sys:String>
 
     <!-- Advanced panel -->
-    <sys:String x:Key="L_Settings_Advanced_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">高级</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Render_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">渲染与性能</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">重采样算法</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">用于图片保存或调整大小时</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">像素化阈值设置</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">看图模式</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">画图模式</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">交互习惯</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置工作区时不弹窗提示</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">清空所有标签页或重置工作区时跳过二次确认弹窗</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Maintenance_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">系统维护</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button" xmlns:sys="clr-namespace:System;assembly=mscorlib">清除所有缓存和设置</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset" xmlns:sys="clr-namespace:System;assembly=mscorlib">恢复出厂设置</sys:String>
-    <sys:String x:Key="L_Settings_ResetShortcuts" xmlns:sys="clr-namespace:System;assembly=mscorlib">恢复默认快捷键</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Title">高级</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Render_Header">渲染与性能</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Title">重采样算法</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">用于图片保存或调整大小时</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">像素化阈值设置</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">看图模式</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">画图模式</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Habits_Header">交互习惯</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">重置工作区时不弹窗提示</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">清空所有标签页或重置工作区时跳过二次确认弹窗</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">系统维护</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">清除所有缓存和设置</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset">恢复出厂设置</sys:String>
+    <sys:String x:Key="L_Settings_ResetShortcuts">恢复默认快捷键</sys:String>
 
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto" xmlns:sys="clr-namespace:System;assembly=mscorlib">自动 (Auto)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear" xmlns:sys="clr-namespace:System;assembly=mscorlib">双线性 (Bilinear)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant" xmlns:sys="clr-namespace:System;assembly=mscorlib">Fant (高质量)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality" xmlns:sys="clr-namespace:System;assembly=mscorlib">HighQuality</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自动 (Auto)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">双线性 (Bilinear)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant (高质量)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">HighQuality</sys:String>
 
     <!-- Common -->
-    <sys:String x:Key="L_Common_OK" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定</sys:String>
-    <sys:String x:Key="L_Common_Untitled" xmlns:sys="clr-namespace:System;assembly=mscorlib">未命名</sys:String>
+    <sys:String x:Key="L_Common_OK">确定</sys:String>
+    <sys:String x:Key="L_Common_Untitled">未命名</sys:String>
 
     <!-- MainWindow context menu (canvas) -->
-    <sys:String x:Key="L_Main_Ctx_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制</sys:String>
-    <sys:String x:Key="L_Main_Ctx_Cut" xmlns:sys="clr-namespace:System;assembly=mscorlib">剪切</sys:String>
-    <sys:String x:Key="L_Main_Ctx_Paste" xmlns:sys="clr-namespace:System;assembly=mscorlib">粘贴</sys:String>
-    <sys:String x:Key="L_Main_Ctx_FixedZoom" xmlns:sys="clr-namespace:System;assembly=mscorlib">固定缩放倍数</sys:String>
-    <sys:String x:Key="L_Main_Ctx_ShowRulers" xmlns:sys="clr-namespace:System;assembly=mscorlib">显示标尺</sys:String>
-    <sys:String x:Key="L_Main_Ctx_MiniTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">小工具</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 一键抠图 (RMBG)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey" xmlns:sys="clr-namespace:System;assembly=mscorlib">色差抠图 (去除背景)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_OCR" xmlns:sys="clr-namespace:System;assembly=mscorlib">提取图中文字 (OCR)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_ScreenPicker" xmlns:sys="clr-namespace:System;assembly=mscorlib">屏幕取色器</sys:String>
-    <sys:String x:Key="L_Main_Ctx_CopyHex" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制颜色代码 (#HEX)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AutoCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">智能裁切空白</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AddBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">一键加边框 (2px)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AI_SuperRes" xmlns:sys="clr-namespace:System;assembly=mscorlib">4x超分辨率</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Copy">复制</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Cut">剪切</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Paste">粘贴</sys:String>
+    <sys:String x:Key="L_Main_Ctx_FixedZoom">固定缩放倍数</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ShowRulers">显示标尺</sys:String>
+    <sys:String x:Key="L_Main_Ctx_MiniTools">小工具</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI 一键抠图 (RMBG)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">色差抠图 (去除背景)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_OCR">提取图中文字 (OCR)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_ScreenPicker">屏幕取色器</sys:String>
+    <sys:String x:Key="L_Main_Ctx_CopyHex">复制颜色代码 (#HEX)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AutoCrop">智能裁切空白</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框 (2px)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x超分辨率</sys:String>
     
-    
-    <sys:String x:Key="L_Main_Unit_Pixel" xmlns:sys="clr-namespace:System;assembly=mscorlib"> 像素</sys:String>
-    <sys:String x:Key="L_Main_Filter_AllImages" xmlns:sys="clr-namespace:System;assembly=mscorlib">所有图像文件</sys:String>
-    <sys:String x:Key="L_Main_Filter_PNG" xmlns:sys="clr-namespace:System;assembly=mscorlib">PNG 图片</sys:String>
-    <sys:String x:Key="L_Main_Filter_JPEG" xmlns:sys="clr-namespace:System;assembly=mscorlib">JPEG 图片</sys:String>
-    <sys:String x:Key="L_Main_Filter_WebP" xmlns:sys="clr-namespace:System;assembly=mscorlib">WebP 图片</sys:String>
-    <sys:String x:Key="L_Main_Filter_BMP" xmlns:sys="clr-namespace:System;assembly=mscorlib">BMP 位图</sys:String>
-    <sys:String x:Key="L_Main_Filter_GIF" xmlns:sys="clr-namespace:System;assembly=mscorlib">GIF 动图</sys:String>
-    <sys:String x:Key="L_Main_Filter_TIFF" xmlns:sys="clr-namespace:System;assembly=mscorlib">TIFF 图片</sys:String>
-    <sys:String x:Key="L_Main_Filter_ICO" xmlns:sys="clr-namespace:System;assembly=mscorlib">ICO 图标</sys:String>
+    <sys:String x:Key="L_Main_Unit_Pixel"> 像素</sys:String>
+    <sys:String x:Key="L_Main_Filter_AllImages">所有图像文件</sys:String>
+    <sys:String x:Key="L_Main_Filter_PNG">PNG 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_JPEG">JPEG 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_WebP">WebP 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_BMP">BMP 位图</sys:String>
+    <sys:String x:Key="L_Main_Filter_GIF">GIF 动图</sys:String>
+    <sys:String x:Key="L_Main_Filter_TIFF">TIFF 图片</sys:String>
+    <sys:String x:Key="L_Main_Filter_ICO">ICO 图标</sys:String>
 
-    <sys:String x:Key="L_Main_Toast_Info" xmlns:sys="clr-namespace:System;assembly=mscorlib">提示信息</sys:String>
-    <sys:String x:Key="L_Main_Drag_DropToOpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">拖放以打开</sys:String>
-    <sys:String x:Key="L_Main_Drag_ReleaseToConfirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">释放鼠标以确认</sys:String>
+    <sys:String x:Key="L_Main_Toast_Info">提示信息</sys:String>
+    <sys:String x:Key="L_Main_Drag_DropToOpen">拖放以打开</sys:String>
+    <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">释放鼠标以确认</sys:String>
 
     <!-- Top menu bar -->
-    <sys:String x:Key="L_Menu_File" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件</sys:String>
-    <sys:String x:Key="L_Menu_File_New" xmlns:sys="clr-namespace:System;assembly=mscorlib">新建</sys:String>
-    <sys:String x:Key="L_Menu_File_Open" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开</sys:String>
-    <sys:String x:Key="L_Menu_File_OpenFolder" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开新文件夹</sys:String>
-    <sys:String x:Key="L_Menu_File_NewWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开新窗口</sys:String>
-    <sys:String x:Key="L_Menu_File_Recent" xmlns:sys="clr-namespace:System;assembly=mscorlib">最近打开</sys:String>
-    <sys:String x:Key="L_Menu_File_Recent_Placeholder" xmlns:sys="clr-namespace:System;assembly=mscorlib">占位符</sys:String>
-    <sys:String x:Key="L_Menu_File_Save" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存</sys:String>
-    <sys:String x:Key="L_Menu_File_SaveAs" xmlns:sys="clr-namespace:System;assembly=mscorlib">另存为</sys:String>
-    <sys:String x:Key="L_Menu_File_Exit" xmlns:sys="clr-namespace:System;assembly=mscorlib">退出</sys:String>
+    <sys:String x:Key="L_Menu_File">文件</sys:String>
+    <sys:String x:Key="L_Menu_File_New">新建</sys:String>
+    <sys:String x:Key="L_Menu_File_Open">打开</sys:String>
+    <sys:String x:Key="L_Menu_File_OpenFolder">打开新文件夹</sys:String>
+    <sys:String x:Key="L_Menu_File_NewWindow">打开新窗口</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent">最近打开</sys:String>
+    <sys:String x:Key="L_Menu_File_Recent_Placeholder">占位符</sys:String>
+    <sys:String x:Key="L_Menu_File_Save">保存</sys:String>
+    <sys:String x:Key="L_Menu_File_SaveAs">另存为</sys:String>
+    <sys:String x:Key="L_Menu_File_Exit">退出</sys:String>
 
-    <sys:String x:Key="L_Menu_Edit" xmlns:sys="clr-namespace:System;assembly=mscorlib">编辑</sys:String>
-    <sys:String x:Key="L_Menu_Edit_Copy" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制</sys:String>
-    <sys:String x:Key="L_Menu_Edit_Cut" xmlns:sys="clr-namespace:System;assembly=mscorlib">剪切</sys:String>
-    <sys:String x:Key="L_Menu_Edit_Paste" xmlns:sys="clr-namespace:System;assembly=mscorlib">粘贴</sys:String>
+    <sys:String x:Key="L_Menu_Edit">编辑</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Copy">复制</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Cut">剪切</sys:String>
+    <sys:String x:Key="L_Menu_Edit_Paste">粘贴</sys:String>
 
-    <sys:String x:Key="L_Menu_Effect" xmlns:sys="clr-namespace:System;assembly=mscorlib">效果</sys:String>
-    <sys:String x:Key="L_Menu_Effect_BCE" xmlns:sys="clr-namespace:System;assembly=mscorlib">亮度/对比度/曝光</sys:String>
-    <sys:String x:Key="L_Menu_Effect_TTS" xmlns:sys="clr-namespace:System;assembly=mscorlib">色温/色调/饱和度</sys:String>
-    <sys:String x:Key="L_Menu_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">黑白</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Invert" xmlns:sys="clr-namespace:System;assembly=mscorlib">反色</sys:String>
-    <sys:String x:Key="L_Menu_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">自动色阶</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Resize" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整大小</sys:String>
+    <sys:String x:Key="L_Menu_Effect">效果</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BCE">亮度/对比度/曝光</sys:String>
+    <sys:String x:Key="L_Menu_Effect_TTS">色温/色调/饱和度</sys:String>
+    <sys:String x:Key="L_Menu_Effect_BW">黑白</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Invert">反色</sys:String>
+    <sys:String x:Key="L_Menu_Effect_AutoLevels">自动色阶</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Resize">调整大小</sys:String>
 
     <!-- Menu bar quick actions tooltips -->
-    <sys:String x:Key="L_ImgBar_ToggleView" xmlns:sys="clr-namespace:System;assembly=mscorlib">展开/收起</sys:String>
-    <sys:String x:Key="L_Menu_QA_Save" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存</sys:String>
-    <sys:String x:Key="L_Menu_QA_Undo" xmlns:sys="clr-namespace:System;assembly=mscorlib">撤销</sys:String>
-    <sys:String x:Key="L_Menu_QA_Redo" xmlns:sys="clr-namespace:System;assembly=mscorlib">重做</sys:String>
-    <sys:String x:Key="L_Menu_QA_NewTab" xmlns:sys="clr-namespace:System;assembly=mscorlib">新建标签页</sys:String>
-    <sys:String x:Key="L_Menu_QA_DiscardAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">放弃所有更改</sys:String>
-    <sys:String x:Key="L_Menu_QA_Settings" xmlns:sys="clr-namespace:System;assembly=mscorlib">设置</sys:String>
+    <sys:String x:Key="L_ImgBar_ToggleView">展开/收起</sys:String>
+    <sys:String x:Key="L_Menu_QA_Save">保存</sys:String>
+    <sys:String x:Key="L_Menu_QA_Undo">撤销</sys:String>
+    <sys:String x:Key="L_Menu_QA_Redo">重做</sys:String>
+    <sys:String x:Key="L_Menu_QA_NewTab">新建标签页</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardAll">放弃所有更改</sys:String>
+    <sys:String x:Key="L_Menu_QA_Settings">设置</sys:String>
 
     <!-- About -->
-    <sys:String x:Key="L_Settings_About_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">关于 TabPaint</sys:String>
-    <sys:String x:Key="L_Settings_About_Subtitle" xmlns:sys="clr-namespace:System;assembly=mscorlib">轻量级绘画与看图工具🖌️</sys:String>
-    <sys:String x:Key="L_Settings_About_Developer" xmlns:sys="clr-namespace:System;assembly=mscorlib">开发者: </sys:String>
-    <sys:String x:Key="L_Settings_About_Stack" xmlns:sys="clr-namespace:System;assembly=mscorlib">技术栈: </sys:String>
-    <sys:String x:Key="L_Settings_About_Github" xmlns:sys="clr-namespace:System;assembly=mscorlib">GitHub 主页</sys:String>
-    <sys:String x:Key="L_Settings_About_CheckUpdate" xmlns:sys="clr-namespace:System;assembly=mscorlib">检查更新</sys:String>
-    <sys:String x:Key="L_Settings_About_Help" xmlns:sys="clr-namespace:System;assembly=mscorlib">帮助文档</sys:String>
+    <sys:String x:Key="L_Settings_About_Title">关于 TabPaint</sys:String>
+    <sys:String x:Key="L_Settings_About_Subtitle">轻量级绘画与看图工具🖌️</sys:String>
+    <sys:String x:Key="L_Settings_About_Developer">开发者: </sys:String>
+    <sys:String x:Key="L_Settings_About_Stack">技术栈: </sys:String>
+    <sys:String x:Key="L_Settings_About_Github">GitHub 主页</sys:String>
+    <sys:String x:Key="L_Settings_About_CheckUpdate">检查更新</sys:String>
+    <sys:String x:Key="L_Settings_About_Help">帮助文档</sys:String>
 
     <!-- ToolBar -->
-    <sys:String x:Key="L_ToolBar_Tool_Select" xmlns:sys="clr-namespace:System;assembly=mscorlib">选择区域</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Select_Lasso" xmlns:sys="clr-namespace:System;assembly=mscorlib">套索选择</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand" xmlns:sys="clr-namespace:System;assembly=mscorlib">魔棒</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Pen" xmlns:sys="clr-namespace:System;assembly=mscorlib">铅笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_PickColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">取颜色</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Eraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">橡皮擦</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Fill" xmlns:sys="clr-namespace:System;assembly=mscorlib">填充</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Text" xmlns:sys="clr-namespace:System;assembly=mscorlib">文字</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_DrawTools" xmlns:sys="clr-namespace:System;assembly=mscorlib">绘图工具</sys:String>
-    <sys:String x:Key="L_ToolBar_Tool_Eyedropper" xmlns:sys="clr-namespace:System;assembly=mscorlib">取色器</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">画刷</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Round" xmlns:sys="clr-namespace:System;assembly=mscorlib">圆形笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Square" xmlns:sys="clr-namespace:System;assembly=mscorlib">方形笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Brush" xmlns:sys="clr-namespace:System;assembly=mscorlib">毛刷</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Calligraphy" xmlns:sys="clr-namespace:System;assembly=mscorlib">书写笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Spray" xmlns:sys="clr-namespace:System;assembly=mscorlib">喷枪</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Crayon" xmlns:sys="clr-namespace:System;assembly=mscorlib">蜡笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Watercolor" xmlns:sys="clr-namespace:System;assembly=mscorlib">水彩画笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Highlighter" xmlns:sys="clr-namespace:System;assembly=mscorlib">荧光笔</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">马赛克</sys:String>
-    <sys:String x:Key="L_ToolBar_Brush_Blur" xmlns:sys="clr-namespace:System;assembly=mscorlib">模糊</sys:String>
-    <sys:String x:Key="L_ToolBar_AIEraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">智能擦除</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape" xmlns:sys="clr-namespace:System;assembly=mscorlib">形状</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Rectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">矩形</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">圆角矩形</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Ellipse" xmlns:sys="clr-namespace:System;assembly=mscorlib">圆形</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Line" xmlns:sys="clr-namespace:System;assembly=mscorlib">直线</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Arrow" xmlns:sys="clr-namespace:System;assembly=mscorlib">箭头</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Triangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">三角形</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Diamond" xmlns:sys="clr-namespace:System;assembly=mscorlib">菱形</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Pentagon" xmlns:sys="clr-namespace:System;assembly=mscorlib">五边形</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Star" xmlns:sys="clr-namespace:System;assembly=mscorlib">五角星</sys:String>
-    <sys:String x:Key="L_ToolBar_Shape_Bubble" xmlns:sys="clr-namespace:System;assembly=mscorlib">气泡</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select">选择区域</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Lasso">套索选择</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand">魔棒</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Pen">铅笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_PickColor">取颜色</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eraser">橡皮擦</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Fill">填充</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Text">文字</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_DrawTools">绘图工具</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Eyedropper">取色器</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush">画刷</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Round">圆形笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Square">方形笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Brush">毛刷</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Calligraphy">书写笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Spray">喷枪</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Crayon">蜡笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Watercolor">水彩画笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Highlighter">荧光笔</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Mosaic">马赛克</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Blur">模糊</sys:String>
+    <sys:String x:Key="L_ToolBar_AIEraser">智能擦除</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape">形状</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Rectangle">矩形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle">圆角矩形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Ellipse">圆形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Line">直线</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Arrow">箭头</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Triangle">三角形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Diamond">菱形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Pentagon">五边形</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Star">五角星</sys:String>
+    <sys:String x:Key="L_ToolBar_Shape_Bubble">气泡</sys:String>
 
-    <sys:String x:Key="L_ToolBar_Crop" xmlns:sys="clr-namespace:System;assembly=mscorlib">裁剪选区</sys:String>
-    <sys:String x:Key="L_ToolBar_RotateFlip" xmlns:sys="clr-namespace:System;assembly=mscorlib">旋转/翻转</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_Left" xmlns:sys="clr-namespace:System;assembly=mscorlib">向左旋转90°(Ctrl + L)</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_Right" xmlns:sys="clr-namespace:System;assembly=mscorlib">向右旋转90°(Ctrl + R)</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_180" xmlns:sys="clr-namespace:System;assembly=mscorlib">旋转180°</sys:String>
-    <sys:String x:Key="L_ToolBar_Flip_Vertical" xmlns:sys="clr-namespace:System;assembly=mscorlib">垂直翻转</sys:String>
-    <sys:String x:Key="L_ToolBar_Flip_Horizontal" xmlns:sys="clr-namespace:System;assembly=mscorlib">水平翻转</sys:String>
-    <sys:String x:Key="L_ToolBar_CustomColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">自定义颜色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color1" xmlns:sys="clr-namespace:System;assembly=mscorlib">颜色1</sys:String>
-    <sys:String x:Key="L_ToolBar_Color2" xmlns:sys="clr-namespace:System;assembly=mscorlib">颜色2</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">白色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Silver" xmlns:sys="clr-namespace:System;assembly=mscorlib">银色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">正红</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Orange" xmlns:sys="clr-namespace:System;assembly=mscorlib">橙色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Yellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">正黄</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Lime" xmlns:sys="clr-namespace:System;assembly=mscorlib">酸橙绿</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Cyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">青色/天蓝</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_SkyBlue" xmlns:sys="clr-namespace:System;assembly=mscorlib">蔚蓝</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Violet" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫罗兰</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Magenta" xmlns:sys="clr-namespace:System;assembly=mscorlib">品红</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Chocolate" xmlns:sys="clr-namespace:System;assembly=mscorlib">巧克力色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Black" xmlns:sys="clr-namespace:System;assembly=mscorlib">黑色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Gray" xmlns:sys="clr-namespace:System;assembly=mscorlib">灰色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_DarkRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">深红</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_DarkOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">深橙</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Gold" xmlns:sys="clr-namespace:System;assembly=mscorlib">金色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯绿</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Teal" xmlns:sys="clr-namespace:System;assembly=mscorlib">水鸭青</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯蓝</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Purple" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫色</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Maroon" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫红</sys:String>
-    <sys:String x:Key="L_ToolBar_Color_Sienna" xmlns:sys="clr-namespace:System;assembly=mscorlib">赭石</sys:String>
+    <sys:String x:Key="L_ToolBar_Crop">裁剪选区</sys:String>
+    <sys:String x:Key="L_ToolBar_RotateFlip">旋转/翻转</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Left">向左旋转90°(Ctrl + L)</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Right">向右旋转90°(Ctrl + R)</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_180">旋转180°</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Vertical">垂直翻转</sys:String>
+    <sys:String x:Key="L_ToolBar_Flip_Horizontal">水平翻转</sys:String>
+    <sys:String x:Key="L_ToolBar_CustomColor">自定义颜色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color1">颜色1</sys:String>
+    <sys:String x:Key="L_ToolBar_Color2">颜色2</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_White">白色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Silver">银色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Red">正红</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Orange">橙色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Yellow">正黄</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Lime">酸橙绿</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Cyan">青色/天蓝</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_SkyBlue">蔚蓝</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Violet">紫罗兰</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Magenta">品红</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Chocolate">巧克力色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Black">黑色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gray">灰色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkRed">深红</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_DarkOrange">深橙</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Gold">金色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Green">纯绿</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Teal">水鸭青</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Blue">纯蓝</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Purple">紫色</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Maroon">紫红</sys:String>
+    <sys:String x:Key="L_ToolBar_Color_Sienna">赭石</sys:String>
 
     <!-- TitleBar -->
-    <sys:String x:Key="L_TitleBar_ExifInfo" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片Exif信息</sys:String>
-    <sys:String x:Key="L_TitleBar_ExifInfo_Details" xmlns:sys="clr-namespace:System;assembly=mscorlib">详细信息</sys:String>
-    <sys:String x:Key="L_TitleBar_ToggleMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换 画图/看图 模式</sys:String>
-    <sys:String x:Key="L_TitleBar_Minimize" xmlns:sys="clr-namespace:System;assembly=mscorlib">最小化</sys:String>
-    <sys:String x:Key="L_TitleBar_Maximize" xmlns:sys="clr-namespace:System;assembly=mscorlib">最大化</sys:String>
-    <sys:String x:Key="L_TitleBar_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">退出</sys:String>
+    <sys:String x:Key="L_TitleBar_ExifInfo">图片Exif信息</sys:String>
+    <sys:String x:Key="L_TitleBar_ExifInfo_Details">详细信息</sys:String>
+    <sys:String x:Key="L_TitleBar_ToggleMode">切换 画图/看图 模式</sys:String>
+    <sys:String x:Key="L_TitleBar_Minimize">最小化</sys:String>
+    <sys:String x:Key="L_TitleBar_Maximize">最大化</sys:String>
+    <sys:String x:Key="L_TitleBar_Close">退出</sys:String>
 
     <!-- AdjustBCEWindow -->
-    <sys:String x:Key="L_AdjustBCE_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整图像</sys:String>
-    <sys:String x:Key="L_AdjustBCE_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">亮度</sys:String>
-    <sys:String x:Key="L_AdjustBCE_Contrast" xmlns:sys="clr-namespace:System;assembly=mscorlib">对比度</sys:String>
-    <sys:String x:Key="L_AdjustBCE_Exposure" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Title">调整图像</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Brightness">亮度</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Contrast">对比度</sys:String>
+    <sys:String x:Key="L_AdjustBCE_Exposure">曝光</sys:String>
 
     <!-- AdjustTTSWindow -->
-    <sys:String x:Key="L_AdjustTTS_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">色彩调整</sys:String>
-    <sys:String x:Key="L_AdjustTTS_Temperature" xmlns:sys="clr-namespace:System;assembly=mscorlib">色温</sys:String>
-    <sys:String x:Key="L_AdjustTTS_Tint" xmlns:sys="clr-namespace:System;assembly=mscorlib">色调</sys:String>
-    <sys:String x:Key="L_AdjustTTS_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">饱和度</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Title">色彩调整</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Temperature">色温</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Tint">色调</sys:String>
+    <sys:String x:Key="L_AdjustTTS_Saturation">饱和度</sys:String>
 
     <!-- ResizeCanvasDialog -->
-    <sys:String x:Key="L_ResizeCanvas_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整画布大小</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode" xmlns:sys="clr-namespace:System;assembly=mscorlib">模式：</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放图片 (Resample)</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整画布 (Canvas)</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Width" xmlns:sys="clr-namespace:System;assembly=mscorlib">宽度</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Height" xmlns:sys="clr-namespace:System;assembly=mscorlib">高度</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio" xmlns:sys="clr-namespace:System;assembly=mscorlib">保持长宽比</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Info_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放: {0}%  |  原始: {1} x {2}</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：{0} x {1}</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：仅改变画布大小，不拉伸图像</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Desc_Resample" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放模式：拉伸/压缩图像内容</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸不能超过 {0}像素。</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸必须大于 0</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_OriginSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放：100% (原始大小)</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_ApplyToAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">应用到全部标签</sys:String>
-    <sys:String x:Key="L_Toast_BatchResizeStart" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在批量调整图片大小...</sys:String>
-    <sys:String x:Key="L_Toast_BatchResizeComplete" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量调整大小任务已完成</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Title">调整画布大小</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode">模式：</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Resample">缩放图片 (Resample)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas">调整画布 (Canvas)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Width">宽度</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Height">高度</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio">保持长宽比</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_Format">缩放: {0}%  |  原始: {1} x {2}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode">画布模式：{0} x {1}</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas">画布模式：仅改变画布大小，不拉伸图像</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Resample">缩放模式：拉伸/压缩图像内容</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_TooLarge">图片尺寸不能超过 {0}像素。</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize">尺寸必须大于 0</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_OriginSize">缩放：100% (原始大小)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_ApplyToAll">应用到全部标签</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeStart">正在批量调整图片大小...</sys:String>
+    <sys:String x:Key="L_Toast_BatchResizeComplete">批量调整大小任务已完成</sys:String>
 
     <!-- ModernColorPickerWindow -->
-    <sys:String x:Key="L_ColorPicker_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">编辑颜色</sys:String>
-    <sys:String x:Key="L_ColorPicker_Preview" xmlns:sys="clr-namespace:System;assembly=mscorlib">预览</sys:String>
-    <sys:String x:Key="L_ColorPicker_BasicColors" xmlns:sys="clr-namespace:System;assembly=mscorlib">基本颜色</sys:String>
-    <sys:String x:Key="L_ColorPicker_CustomColors" xmlns:sys="clr-namespace:System;assembly=mscorlib">自定义颜色</sys:String>
-    <sys:String x:Key="L_ColorPicker_AddCurrentColor" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加当前颜色</sys:String>
-    <sys:String x:Key="L_ColorPicker_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">红 (R)</sys:String>
-    <sys:String x:Key="L_ColorPicker_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">绿 (G)</sys:String>
-    <sys:String x:Key="L_ColorPicker_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">蓝 (B)</sys:String>
-    <sys:String x:Key="L_ColorPicker_Hue" xmlns:sys="clr-namespace:System;assembly=mscorlib">色调</sys:String>
-    <sys:String x:Key="L_ColorPicker_Saturation" xmlns:sys="clr-namespace:System;assembly=mscorlib">饱和度</sys:String>
-    <sys:String x:Key="L_ColorPicker_Brightness" xmlns:sys="clr-namespace:System;assembly=mscorlib">亮度</sys:String>
-    <sys:String x:Key="L_ColorPicker_Hex" xmlns:sys="clr-namespace:System;assembly=mscorlib">HEX (8位)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Title">编辑颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_Preview">预览</sys:String>
+    <sys:String x:Key="L_ColorPicker_BasicColors">基本颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_CustomColors">自定义颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_AddCurrentColor">添加当前颜色</sys:String>
+    <sys:String x:Key="L_ColorPicker_Red">红 (R)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Green">绿 (G)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Blue">蓝 (B)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hue">色调</sys:String>
+    <sys:String x:Key="L_ColorPicker_Saturation">饱和度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Brightness">亮度</sys:String>
+    <sys:String x:Key="L_ColorPicker_Hex">HEX (8位)</sys:String>
+    <sys:String x:Key="L_ColorPicker_Transparent">全透明</sys:String>
+    <sys:String x:Key="L_ColorPicker_TransparentPrefix">透明</sys:String>
 
-    <sys:String x:Key="L_Color_White" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯白</sys:String>
-    <sys:String x:Key="L_Color_LightRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅红</sys:String>
-    <sys:String x:Key="L_Color_LightOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅橙/皮肤</sys:String>
-    <sys:String x:Key="L_Color_LightYellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅黄</sys:String>
-    <sys:String x:Key="L_Color_MintGreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">薄荷绿</sys:String>
-    <sys:String x:Key="L_Color_LightCyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">浅青</sys:String>
-    <sys:String x:Key="L_Color_LightBlue" xmlns:sys="clr-namespace:System;assembly=mscorlib">淡蓝</sys:String>
-    <sys:String x:Key="L_Color_Lavender" xmlns:sys="clr-namespace:System;assembly=mscorlib">淡紫</sys:String>
-    <sys:String x:Key="L_Color_LightPink" xmlns:sys="clr-namespace:System;assembly=mscorlib">淡粉</sys:String>
-    <sys:String x:Key="L_Color_Wheat" xmlns:sys="clr-namespace:System;assembly=mscorlib">小麦色</sys:String>
+    <!-- 100+ Color Names -->
+    <sys:String x:Key="L_Color_White">纯白</sys:String>
+    <sys:String x:Key="L_Color_Snow">雪白</sys:String>
+    <sys:String x:Key="L_Color_Honeydew">蜜露色</sys:String>
+    <sys:String x:Key="L_Color_MintCream">薄荷膏色</sys:String>
+    <sys:String x:Key="L_Color_Azure">蔚蓝</sys:String>
+    <sys:String x:Key="L_Color_AliceBlue">爱丽丝蓝</sys:String>
+    <sys:String x:Key="L_Color_GhostWhite">幽灵白</sys:String>
+    <sys:String x:Key="L_Color_WhiteSmoke">白烟色</sys:String>
+    <sys:String x:Key="L_Color_Seashell">海贝色</sys:String>
+    <sys:String x:Key="L_Color_Beige">米色</sys:String>
+    <sys:String x:Key="L_Color_OldLace">旧蕾丝色</sys:String>
+    <sys:String x:Key="L_Color_FloralWhite">花卉白</sys:String>
+    <sys:String x:Key="L_Color_Ivory">象牙色</sys:String>
+    <sys:String x:Key="L_Color_AntiqueWhite">古董白</sys:String>
+    <sys:String x:Key="L_Color_Linen">亚麻色</sys:String>
+    <sys:String x:Key="L_Color_LavenderBlush">熏衣草红</sys:String>
+    <sys:String x:Key="L_Color_MistyRose">薄雾玫瑰</sys:String>
+    <sys:String x:Key="L_Color_Gainsboro">亮灰色</sys:String>
+    <sys:String x:Key="L_Color_LightGray">浅灰色</sys:String>
+    <sys:String x:Key="L_Color_Silver">银色</sys:String>
+    <sys:String x:Key="L_Color_DarkGray">深灰色</sys:String>
+    <sys:String x:Key="L_Color_Gray">灰色</sys:String>
+    <sys:String x:Key="L_Color_DimGray">暗灰色</sys:String>
+    <sys:String x:Key="L_Color_LightSlateGray">浅石板灰</sys:String>
+    <sys:String x:Key="L_Color_SlateGray">石板灰</sys:String>
+    <sys:String x:Key="L_Color_DarkSlateGray">深石板灰</sys:String>
+    <sys:String x:Key="L_Color_Black">纯黑</sys:String>
+    <sys:String x:Key="L_Color_IndianRed">印度红</sys:String>
+    <sys:String x:Key="L_Color_LightCoral">浅珊瑚红</sys:String>
+    <sys:String x:Key="L_Color_Salmon">鲑鱼色</sys:String>
+    <sys:String x:Key="L_Color_DarkSalmon">深鲑鱼色</sys:String>
+    <sys:String x:Key="L_Color_LightSalmon">浅鲑鱼色</sys:String>
+    <sys:String x:Key="L_Color_Crimson">深红/绯红</sys:String>
+    <sys:String x:Key="L_Color_Red">正红</sys:String>
+    <sys:String x:Key="L_Color_FireBrick">耐火砖红</sys:String>
+    <sys:String x:Key="L_Color_DarkRed">深红</sys:String>
+    <sys:String x:Key="L_Color_Pink">粉红</sys:String>
+    <sys:String x:Key="L_Color_HotPink">热粉红</sys:String>
+    <sys:String x:Key="L_Color_DeepPink">深粉红</sys:String>
+    <sys:String x:Key="L_Color_MediumVioletRed">中紫罗兰红</sys:String>
+    <sys:String x:Key="L_Color_PaleVioletRed">苍紫罗兰红</sys:String>
+    <sys:String x:Key="L_Color_Coral">珊瑚色</sys:String>
+    <sys:String x:Key="L_Color_Tomato">番茄红</sys:String>
+    <sys:String x:Key="L_Color_OrangeRed">橙红色</sys:String>
+    <sys:String x:Key="L_Color_DarkOrange">深橙色</sys:String>
+    <sys:String x:Key="L_Color_Orange">橙色</sys:String>
+    <sys:String x:Key="L_Color_Gold">金色</sys:String>
+    <sys:String x:Key="L_Color_Yellow">正黄</sys:String>
+    <sys:String x:Key="L_Color_LightYellow">浅黄色</sys:String>
+    <sys:String x:Key="L_Color_LemonChiffon">柠檬绸色</sys:String>
+    <sys:String x:Key="L_Color_PapayaWhip">番木瓜色</sys:String>
+    <sys:String x:Key="L_Color_Moccasin">鹿皮鞋色</sys:String>
+    <sys:String x:Key="L_Color_PeachPuff">桃色</sys:String>
+    <sys:String x:Key="L_Color_PaleGoldenrod">苍麒麟色</sys:String>
+    <sys:String x:Key="L_Color_Khaki">卡其色</sys:String>
+    <sys:String x:Key="L_Color_DarkKhaki">深卡其色</sys:String>
+    <sys:String x:Key="L_Color_Lavender">熏衣草色</sys:String>
+    <sys:String x:Key="L_Color_Thistle">蓟色</sys:String>
+    <sys:String x:Key="L_Color_Plum">李子色</sys:String>
+    <sys:String x:Key="L_Color_Violet">紫罗兰色</sys:String>
+    <sys:String x:Key="L_Color_Orchid">兰花色</sys:String>
+    <sys:String x:Key="L_Color_Magenta">品红色</sys:String>
+    <sys:String x:Key="L_Color_MediumOrchid">中兰花色</sys:String>
+    <sys:String x:Key="L_Color_MediumPurple">中紫色</sys:String>
+    <sys:String x:Key="L_Color_BlueViolet">蓝紫色</sys:String>
+    <sys:String x:Key="L_Color_DarkViolet">深紫罗兰色</sys:String>
+    <sys:String x:Key="L_Color_DarkOrchid">深兰花色</sys:String>
+    <sys:String x:Key="L_Color_DarkMagenta">深品红色</sys:String>
+    <sys:String x:Key="L_Color_Purple">紫色</sys:String>
+    <sys:String x:Key="L_Color_Indigo">靛蓝色</sys:String>
+    <sys:String x:Key="L_Color_SlateBlue">石板蓝</sys:String>
+    <sys:String x:Key="L_Color_DarkSlateBlue">深石板蓝</sys:String>
+    <sys:String x:Key="L_Color_GreenYellow">绿黄色</sys:String>
+    <sys:String x:Key="L_Color_Chartreuse">查特酒绿</sys:String>
+    <sys:String x:Key="L_Color_LawnGreen">草地绿</sys:String>
+    <sys:String x:Key="L_Color_Lime">酸橙色</sys:String>
+    <sys:String x:Key="L_Color_LimeGreen">酸橙绿</sys:String>
+    <sys:String x:Key="L_Color_PaleGreen">苍绿色</sys:String>
+    <sys:String x:Key="L_Color_LightGreen">浅绿色</sys:String>
+    <sys:String x:Key="L_Color_MediumSpringGreen">中春绿色</sys:String>
+    <sys:String x:Key="L_Color_SpringGreen">春绿色</sys:String>
+    <sys:String x:Key="L_Color_MediumSeaGreen">中海洋绿</sys:String>
+    <sys:String x:Key="L_Color_SeaGreen">海洋绿</sys:String>
+    <sys:String x:Key="L_Color_ForestGreen">森林绿</sys:String>
+    <sys:String x:Key="L_Color_Green">绿色</sys:String>
+    <sys:String x:Key="L_Color_DarkGreen">深绿色</sys:String>
+    <sys:String x:Key="L_Color_YellowGreen">黄绿色</sys:String>
+    <sys:String x:Key="L_Color_OliveDrab">橄榄褐色</sys:String>
+    <sys:String x:Key="L_Color_Olive">橄榄色</sys:String>
+    <sys:String x:Key="L_Color_DarkOliveGreen">深橄榄绿</sys:String>
+    <sys:String x:Key="L_Color_MediumAquamarine">中碧绿色</sys:String>
+    <sys:String x:Key="L_Color_DarkSeaGreen">深海洋绿</sys:String>
+    <sys:String x:Key="L_Color_LightSeaGreen">浅海洋绿</sys:String>
+    <sys:String x:Key="L_Color_DarkCyan">深青色</sys:String>
+    <sys:String x:Key="L_Color_Teal">水鸭色</sys:String>
+    <sys:String x:Key="L_Color_Cyan">青色</sys:String>
+    <sys:String x:Key="L_Color_LightCyan">浅青色</sys:String>
+    <sys:String x:Key="L_Color_PaleTurquoise">苍宝石蓝</sys:String>
+    <sys:String x:Key="L_Color_Aquamarine">碧绿色</sys:String>
+    <sys:String x:Key="L_Color_Turquoise">宝石蓝色</sys:String>
+    <sys:String x:Key="L_Color_MediumTurquoise">中宝石蓝</sys:String>
+    <sys:String x:Key="L_Color_DarkTurquoise">深宝石蓝</sys:String>
+    <sys:String x:Key="L_Color_CadetBlue">军服蓝</sys:String>
+    <sys:String x:Key="L_Color_SteelBlue">钢蓝色</sys:String>
+    <sys:String x:Key="L_Color_LightSteelBlue">浅钢蓝色</sys:String>
+    <sys:String x:Key="L_Color_PowderBlue">粉蓝色</sys:String>
+    <sys:String x:Key="L_Color_LightBlue">浅蓝色</sys:String>
+    <sys:String x:Key="L_Color_SkyBlue">天蓝色</sys:String>
+    <sys:String x:Key="L_Color_LightSkyBlue">浅天蓝色</sys:String>
+    <sys:String x:Key="L_Color_DeepSkyBlue">深天蓝色</sys:String>
+    <sys:String x:Key="L_Color_DodgerBlue">道奇蓝</sys:String>
+    <sys:String x:Key="L_Color_CornflowerBlue">矢车菊蓝</sys:String>
+    <sys:String x:Key="L_Color_MediumSlateBlue">中石板蓝</sys:String>
+    <sys:String x:Key="L_Color_RoyalBlue">品蓝/皇室蓝</sys:String>
+    <sys:String x:Key="L_Color_Blue">蓝色</sys:String>
+    <sys:String x:Key="L_Color_MediumBlue">中蓝色</sys:String>
+    <sys:String x:Key="L_Color_DarkBlue">深蓝色</sys:String>
+    <sys:String x:Key="L_Color_Navy">海军蓝</sys:String>
+    <sys:String x:Key="L_Color_MidnightBlue">午夜蓝</sys:String>
+    <sys:String x:Key="L_Color_Cornsilk">玉米丝色</sys:String>
+    <sys:String x:Key="L_Color_BlanchedAlmond">杏仁白</sys:String>
+    <sys:String x:Key="L_Color_Bisque">比斯开色</sys:String>
+    <sys:String x:Key="L_Color_NavajoWhite">纳瓦霍白</sys:String>
+    <sys:String x:Key="L_Color_Wheat">小麦色</sys:String>
+    <sys:String x:Key="L_Color_BurlyWood">硬木色</sys:String>
+    <sys:String x:Key="L_Color_Tan">茶色</sys:String>
+    <sys:String x:Key="L_Color_RosyBrown">褐玫瑰红</sys:String>
+    <sys:String x:Key="L_Color_SandyBrown">沙褐色</sys:String>
+    <sys:String x:Key="L_Color_Goldenrod">麒麟菊色</sys:String>
+    <sys:String x:Key="L_Color_DarkGoldenrod">深麒麟菊色</sys:String>
+    <sys:String x:Key="L_Color_Peru">秘鲁色</sys:String>
+    <sys:String x:Key="L_Color_Chocolate">巧克力色</sys:String>
+    <sys:String x:Key="L_Color_SaddleBrown">重褐色</sys:String>
+    <sys:String x:Key="L_Color_Sienna">赭色</sys:String>
+    <sys:String x:Key="L_Color_Brown">褐色</sys:String>
+    <sys:String x:Key="L_Color_Maroon">栗色</sys:String>
+    <sys:String x:Key="L_Color_DeepBrown">深褐</sys:String>
+    <sys:String x:Key="L_Color_RockCyan">深岩青</sys:String>
+    <sys:String x:Key="L_Color_Coffee">咖啡色</sys:String>
+    <sys:String x:Key="L_Color_MintGreen">薄荷绿</sys:String>
+    <sys:String x:Key="L_Color_LightPink">淡粉</sys:String>
+    <sys:String x:Key="L_Color_LightRed">浅红</sys:String>
+    <sys:String x:Key="L_Color_LightOrange">浅橙/皮肤</sys:String>
+    <sys:String x:Key="L_Color_DeepRed">深红</sys:String>
+    <sys:String x:Key="L_Color_DeepOrange">深橙</sys:String>
+    <sys:String x:Key="L_Color_Ochre">赭石</sys:String>
+    <sys:String x:Key="L_Color_DeepViolet">深紫蓝</sys:String>
 
-    <sys:String x:Key="L_Color_Silver" xmlns:sys="clr-namespace:System;assembly=mscorlib">银色</sys:String>
-    <sys:String x:Key="L_Color_Red" xmlns:sys="clr-namespace:System;assembly=mscorlib">正红</sys:String>
-    <sys:String x:Key="L_Color_Orange" xmlns:sys="clr-namespace:System;assembly=mscorlib">橙色</sys:String>
-    <sys:String x:Key="L_Color_Yellow" xmlns:sys="clr-namespace:System;assembly=mscorlib">正黄</sys:String>
-    <sys:String x:Key="L_Color_Lime" xmlns:sys="clr-namespace:System;assembly=mscorlib">酸橙绿</sys:String>
-    <sys:String x:Key="L_Color_Cyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">青色/天蓝</sys:String>
-    <sys:String x:Key="L_Color_Azure" xmlns:sys="clr-namespace:System;assembly=mscorlib">蔚蓝</sys:String>
-    <sys:String x:Key="L_Color_Violet" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫罗兰</sys:String>
-    <sys:String x:Key="L_Color_Magenta" xmlns:sys="clr-namespace:System;assembly=mscorlib">品红</sys:String>
-    <sys:String x:Key="L_Color_Chocolate" xmlns:sys="clr-namespace:System;assembly=mscorlib">巧克力色</sys:String>
-
-    <sys:String x:Key="L_Color_Gray" xmlns:sys="clr-namespace:System;assembly=mscorlib">灰色</sys:String>
-    <sys:String x:Key="L_Color_DeepRed" xmlns:sys="clr-namespace:System;assembly=mscorlib">深红</sys:String>
-    <sys:String x:Key="L_Color_DeepOrange" xmlns:sys="clr-namespace:System;assembly=mscorlib">深橙</sys:String>
-    <sys:String x:Key="L_Color_Gold" xmlns:sys="clr-namespace:System;assembly=mscorlib">金色</sys:String>
-    <sys:String x:Key="L_Color_Green" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯绿</sys:String>
-    <sys:String x:Key="L_Color_Teal" xmlns:sys="clr-namespace:System;assembly=mscorlib">水鸭青</sys:String>
-    <sys:String x:Key="L_Color_Blue" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯蓝</sys:String>
-    <sys:String x:Key="L_Color_Purple" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫色</sys:String>
-    <sys:String x:Key="L_Color_DeepPink" xmlns:sys="clr-namespace:System;assembly=mscorlib">紫红</sys:String>
-    <sys:String x:Key="L_Color_Ochre" xmlns:sys="clr-namespace:System;assembly=mscorlib">赭石</sys:String>
-
-    <sys:String x:Key="L_Color_Black" xmlns:sys="clr-namespace:System;assembly=mscorlib">纯黑</sys:String>
-    <sys:String x:Key="L_Color_Maroon" xmlns:sys="clr-namespace:System;assembly=mscorlib">栗色</sys:String>
-    <sys:String x:Key="L_Color_DeepBrown" xmlns:sys="clr-namespace:System;assembly=mscorlib">深褐</sys:String>
-    <sys:String x:Key="L_Color_Olive" xmlns:sys="clr-namespace:System;assembly=mscorlib">橄榄色</sys:String>
-    <sys:String x:Key="L_Color_ForestGreen" xmlns:sys="clr-namespace:System;assembly=mscorlib">深绿/森林</sys:String>
-    <sys:String x:Key="L_Color_RockCyan" xmlns:sys="clr-namespace:System;assembly=mscorlib">深岩青</sys:String>
-    <sys:String x:Key="L_Color_Navy" xmlns:sys="clr-namespace:System;assembly=mscorlib">海军蓝</sys:String>
-    <sys:String x:Key="L_Color_Indigo" xmlns:sys="clr-namespace:System;assembly=mscorlib">靛青</sys:String>
-    <sys:String x:Key="L_Color_DeepViolet" xmlns:sys="clr-namespace:System;assembly=mscorlib">深紫蓝</sys:String>
-    <sys:String x:Key="L_Color_Coffee" xmlns:sys="clr-namespace:System;assembly=mscorlib">咖啡色</sys:String>
-    <sys:String x:Key="L_Loading"  xmlns:sys="clr-namespace:System;assembly=mscorlib">加载中...</sys:String>
-    <sys:String x:Key="L_LoadFailed"  xmlns:sys="clr-namespace:System;assembly=mscorlib">加载失败，请检查网络</sys:String>
+    <sys:String x:Key="L_Loading">加载中...</sys:String>
+    <sys:String x:Key="L_LoadFailed">加载失败，请检查网络</sys:String>
     <!-- Common Buttons -->
-    <sys:String x:Key="L_Common_Reset" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置</sys:String>
-    <sys:String x:Key="L_Common_Cancel" xmlns:sys="clr-namespace:System;assembly=mscorlib">取消</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。确定要继续吗？</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。</sys:String>
-    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">确认重置</sys:String>
-    <sys:String x:Key="L_Settings_About_Help_ComingSoon" xmlns:sys="clr-namespace:System;assembly=mscorlib">帮助文档正在编写中，敬请期待！</sys:String>
-    <sys:String x:Key="L_Common_Error" xmlns:sys="clr-namespace:System;assembly=mscorlib">错误</sys:String>
-    <sys:String x:Key="L_Common_Tip" xmlns:sys="clr-namespace:System;assembly=mscorlib">提示</sys:String>
+    <sys:String x:Key="L_Common_Reset">重置</sys:String>
+    <sys:String x:Key="L_Common_Cancel">取消</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。确定要继续吗？</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">确认重置</sys:String>
+    <sys:String x:Key="L_Settings_About_Help_ComingSoon">帮助文档正在编写中，敬请期待！</sys:String>
+    <sys:String x:Key="L_Common_Error">错误</sys:String>
+    <sys:String x:Key="L_Common_Tip">提示</sys:String>
 
-    <sys:String x:Key="L_TitleBar_Help" xmlns:sys="clr-namespace:System;assembly=mscorlib">帮助</sys:String>
-    <sys:String x:Key="L_Help_Next" xmlns:sys="clr-namespace:System;assembly=mscorlib">下一页</sys:String>
-    <sys:String x:Key="L_Help_Prev" xmlns:sys="clr-namespace:System;assembly=mscorlib">上一页</sys:String>
-    <sys:String x:Key="L_Help_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭</sys:String>
+    <sys:String x:Key="L_TitleBar_Help">帮助</sys:String>
+    <sys:String x:Key="L_Help_Next">下一页</sys:String>
+    <sys:String x:Key="L_Help_Prev">上一页</sys:String>
+    <sys:String x:Key="L_Help_Close">关闭</sys:String>
     <!-- 帮助界面文本 -->
-    <sys:String x:Key="L_Help_Desc_2" xmlns:sys="clr-namespace:System;assembly=mscorlib">按 Tab 键可快速在“专注看图”和“自由绘图”模式间切换</sys:String>
-    <sys:String x:Key="L_Help_Desc_3" xmlns:sys="clr-namespace:System;assembly=mscorlib">支持将图片直接拖拽至 Word、桌面或任何支持的地方</sys:String>
-    <sys:String x:Key="L_Help_Desc_1" xmlns:sys="clr-namespace:System;assembly=mscorlib">极简的绘制功能，现在就试试看</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_ICC_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">启用 ICC 配置文件校色</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_ICC_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">使用显示器的 ICC 配置文件进行色彩校正</sys:String>
+    <sys:String x:Key="L_Help_Desc_2">按 Tab 键可快速在“专注看图”和“自由绘图”模式间切换</sys:String>
+    <sys:String x:Key="L_Help_Desc_3">支持将图片直接拖拽至 Word、桌面或任何支持的地方</sys:String>
+    <sys:String x:Key="L_Help_Desc_1">极简的绘制功能，现在就试试看</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Title">启用 ICC 配置文件校色</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Desc">使用显示器的 ICC 配置文件进行色彩校正</sys:String>
     <!-- Toasts -->
-    <sys:String x:Key="L_Toast_Deleted" xmlns:sys="clr-namespace:System;assembly=mscorlib">已删除 (Ctrl+Z 撤销)</sys:String>
-    <sys:String x:Key="L_Toast_UndoDelete" xmlns:sys="clr-namespace:System;assembly=mscorlib">已撤销删除</sys:String>
-    <sys:String x:Key="L_Toast_FirstImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">已回到第一张图片</sys:String>
-    <sys:String x:Key="L_Toast_LastImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">这是最后一张图片</sys:String>
-    <sys:String x:Key="L_Toast_NoContentToCrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">未检测到有效内容，无需裁剪</sys:String>
-    <sys:String x:Key="L_Toast_MinSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">已是最小尺寸</sys:String>
-    <sys:String x:Key="L_Toast_Copied" xmlns:sys="clr-namespace:System;assembly=mscorlib">已复制</sys:String>
-    <sys:String x:Key="L_Toast_PressDeleteAgain" xmlns:sys="clr-namespace:System;assembly=mscorlib">再次按下 Delete 删除文件</sys:String>
-    <sys:String x:Key="L_Toast_DragFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">拖拽失败: </sys:String>
-    <sys:String x:Key="L_Toast_Effect_Inverted" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用反色</sys:String>
-    <sys:String x:Key="L_Toast_Effect_AutoLevels" xmlns:sys="clr-namespace:System;assembly=mscorlib">已自动调整色阶</sys:String>
-    <sys:String x:Key="L_Toast_Effect_BW" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用黑白</sys:String>
-    <sys:String x:Key="L_Toast_FileNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件已不存在，无法定位文件夹。</sys:String>
-    <sys:String x:Key="L_Toast_PasteFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">粘贴图片失败: </sys:String>
-    <sys:String x:Key="L_Toast_DeleteFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除失败: </sys:String>
-    <sys:String x:Key="L_Toast_CopyFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">复制失败</sys:String>
-    <sys:String x:Key="L_Toast_NoImageData" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法获取该标签页的图像数据</sys:String>
-    <sys:String x:Key="L_Toast_InsertFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入失败: </sys:String>
-    <sys:String x:Key="L_Toast_CannotInsertImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法插入图片: </sys:String>
-    <sys:String x:Key="L_Toast_SizeTooSmallForBorder" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸过小，无法添加边框</sys:String>
-    <sys:String x:Key="L_Toast_NoSelection" xmlns:sys="clr-namespace:System;assembly=mscorlib">未选中图片区域</sys:String>
-    <sys:String x:Key="L_Toast_OCR_NoText" xmlns:sys="clr-namespace:System;assembly=mscorlib">未识别到文字</sys:String>
-    <sys:String x:Key="L_Toast_ImageTooLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 图片过大，已自动压缩显示</sys:String>
-    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">读取文件夹失败: </sys:String>
-    <sys:String x:Key="L_Toast_LoadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动加载失败:</sys:String>
+    <sys:String x:Key="L_Toast_Deleted">已删除 (Ctrl+Z 撤销)</sys:String>
+    <sys:String x:Key="L_Toast_UndoDelete">已撤销删除</sys:String>
+    <sys:String x:Key="L_Toast_FirstImage">已回到第一张图片</sys:String>
+    <sys:String x:Key="L_Toast_LastImage">这是最后一张图片</sys:String>
+    <sys:String x:Key="L_Toast_NoContentToCrop">未检测到有效内容，无需裁剪</sys:String>
+    <sys:String x:Key="L_Toast_MinSize">已是最小尺寸</sys:String>
+    <sys:String x:Key="L_Toast_Copied">已复制</sys:String>
+    <sys:String x:Key="L_Toast_PressDeleteAgain">再次按下 Delete 删除文件</sys:String>
+    <sys:String x:Key="L_Toast_DragFailed">拖拽失败: </sys:String>
+    <sys:String x:Key="L_Toast_Effect_Inverted">已应用反色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_AutoLevels">已自动调整色阶</sys:String>
+    <sys:String x:Key="L_Toast_Effect_BW">已应用黑白</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound">文件已不存在，无法定位文件夹。</sys:String>
+    <sys:String x:Key="L_Toast_PasteFailed">粘贴图片失败: </sys:String>
+    <sys:String x:Key="L_Toast_DeleteFailed">删除失败: </sys:String>
+    <sys:String x:Key="L_Toast_CopyFailed">复制失败</sys:String>
+    <sys:String x:Key="L_Toast_NoImageData">无法获取该标签页的图像数据</sys:String>
+    <sys:String x:Key="L_Toast_InsertFailed">插入失败: </sys:String>
+    <sys:String x:Key="L_Toast_CannotInsertImage">无法插入图片: </sys:String>
+    <sys:String x:Key="L_Toast_SizeTooSmallForBorder">图片尺寸过小，无法添加边框</sys:String>
+    <sys:String x:Key="L_Toast_NoSelection">未选中图片区域</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NoText">未识别到文字</sys:String>
+    <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 图片过大，已自动压缩显示</sys:String>
+    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">读取文件夹失败: </sys:String>
+    <sys:String x:Key="L_Toast_LoadFailed_Prefix">启动加载失败:</sys:String>
 
-    <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">已添加 2px 边框</sys:String>
-    <sys:String x:Key="L_Toast_CropFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">裁切失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_ColorCopied_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已复制颜色: {0}</sys:String>
-    <sys:String x:Key="L_Toast_ColorPicked_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已吸取颜色: #{0:X2}{1:X2}{2:X2}</sys:String>
-    <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">抠图失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_BorderAdded">已添加 2px 边框</sys:String>
+    <sys:String x:Key="L_Toast_CropFailed_Prefix">裁切失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorCopied_Format">已复制颜色: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ColorPicked_Format">已吸取颜色: #{0:X2}{1:X2}{2:X2}</sys:String>
+    <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix">抠图失败: {0}</sys:String>
 
-    <sys:String x:Key="L_Toast_Apply_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">应用成功</sys:String>
-    <sys:String x:Key="L_AI_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载中...</sys:String>
-    <sys:String x:Key="L_Toast_DownloadCancelled" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载取消</sys:String>
+    <sys:String x:Key="L_Toast_Apply_Success">应用成功</sys:String>
+    <sys:String x:Key="L_AI_Downloading">下载中...</sys:String>
+    <sys:String x:Key="L_Toast_DownloadCancelled">下载取消</sys:String>
 
-    <sys:String x:Key="L_Toast_OCR_VersionError" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 功能仅支持 Windows 10 (1803) 或更高版本。</sys:String>
-    <sys:String x:Key="L_Toast_OCR_Success_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">成功提取 {0} 个字符到剪切板！</sys:String>
-    <sys:String x:Key="L_Toast_OCR_InitFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 初始化失败，请检查系统设置中是否已安装对应语言的 OCR 数据包。</sys:String>
-    <sys:String x:Key="L_Toast_OCR_NotSupported" xmlns:sys="clr-namespace:System;assembly=mscorlib">当前系统不支持 OCR API。</sys:String>
-    <sys:String x:Key="L_Toast_OCR_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 错误: {0}</sys:String>
-    <sys:String x:Key="L_Toast_GDIReadFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">GDI+ 读取失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_ClipboardError_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">剪贴板访问错误: {0}</sys:String>
-    <sys:String x:Key="L_Toast_RestoreSelectionFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">恢复选区失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_MD5CheckFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">MD5校验失败，重新下载...</sys:String>
-    <sys:String x:Key="L_Toast_FullScreen_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">进入全屏模式</sys:String>
-    <sys:String x:Key="L_Toast_FullScreen_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">退出全屏模式</sys:String>
-    <sys:String x:Key="L_Toast_SaveFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_FileNotFound_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">找不到图片文件: {0}</sys:String>
-    <sys:String x:Key="L_Toast_Mode_View" xmlns:sys="clr-namespace:System;assembly=mscorlib">进入看图模式</sys:String>
-    <sys:String x:Key="L_Toast_Mode_Paint" xmlns:sys="clr-namespace:System;assembly=mscorlib">进入画图模式</sys:String>
-    <sys:String x:Key="L_Toast_SavedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已保存 {0} 张图片。</sys:String>
-    <sys:String x:Key="L_Toast_CleanedCount_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已清理 {0} 张未编辑图片</sys:String>
-    <sys:String x:Key="L_Toast_CleanupFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">清理失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法打开文件夹: {0}</sys:String>
-    <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">准备拖拽文件失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">启动拖拽失败: {0}</sys:String>
-    <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换工作区失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OCR_VersionError">OCR 功能仅支持 Windows 10 (1803) 或更高版本。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Success_Format">成功提取 {0} 个字符到剪切板！</sys:String>
+    <sys:String x:Key="L_Toast_OCR_InitFailed">OCR 初始化失败，请检查系统设置中是否已安装对应语言的 OCR 数据包。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_NotSupported">当前系统不支持 OCR API。</sys:String>
+    <sys:String x:Key="L_Toast_OCR_Error_Prefix">OCR 错误: {0}</sys:String>
+    <sys:String x:Key="L_Toast_GDIReadFailed_Prefix">GDI+ 读取失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_ClipboardError_Prefix">剪贴板访问错误: {0}</sys:String>
+    <sys:String x:Key="L_Toast_RestoreSelectionFailed_Prefix">恢复选区失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_MD5CheckFailed">MD5校验失败，重新下载...</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_On">进入全屏模式</sys:String>
+    <sys:String x:Key="L_Toast_FullScreen_Off">退出全屏模式</sys:String>
+    <sys:String x:Key="L_Toast_SaveFailed_Prefix">保存失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_FileNotFound_Format">找不到图片文件: {0}</sys:String>
+    <sys:String x:Key="L_Toast_Mode_View">进入看图模式</sys:String>
+    <sys:String x:Key="L_Toast_Mode_Paint">进入画图模式</sys:String>
+    <sys:String x:Key="L_Toast_SavedCount_Format">已保存 {0} 张图片。</sys:String>
+    <sys:String x:Key="L_Toast_CleanedCount_Format">已清理 {0} 张未编辑图片</sys:String>
+    <sys:String x:Key="L_Toast_CleanupFailed_Prefix">清理失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_OpenFolderFailed_Prefix">无法打开文件夹: {0}</sys:String>
+    <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix">准备拖拽文件失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_DragStartFailed_Prefix">启动拖拽失败: {0}</sys:String>
+    <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix">切换工作区失败: {0}</sys:String>
 
 
-    <sys:String x:Key="L_Load_Reason_Empty" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件为空，已创建空白画布</sys:String>
-    <sys:String x:Key="L_Load_Reason_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件头部损坏或格式不支持，已创建空白画布</sys:String>
-    <sys:String x:Key="L_Load_Reason_Corrupt" xmlns:sys="clr-namespace:System;assembly=mscorlib">文件损坏或格式不支持，已创建空白画布</sys:String>
-    <sys:String x:Key="L_Load_Info_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">[新建图像] 内存文件</sys:String>
-    <sys:String x:Key="L_Status_Unsaved" xmlns:sys="clr-namespace:System;assembly=mscorlib">未保存</sys:String>
-    <sys:String x:Key="L_Msg_ResetWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">放弃更改</sys:String>
-    <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要重置当前工作区吗？&#x0a;· 所有“未命名”的新建画布将被删除&#x0a;· 所有打开的图片将还原至磁盘文件状态&#x0a;· 撤销记录、所有临时缓存文件及会话记录将被清空</sys:String>
-    <sys:String x:Key="L_Msg_DeleteFile_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除文件</sys:String>
-    <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">确定要将文件 '{0}' 放入回收站吗？&#x0a;此操作不可撤销（取决于系统设置）。</sys:String>
-    <sys:String x:Key="L_Msg_SaveError_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败</sys:String>
-    <sys:String x:Key="L_Msg_SaveError_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}&#x0a;&#x0a;是否尝试【另存为】到其他位置？</sys:String>
-    <sys:String x:Key="L_Msg_UnsavedClose_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存提示</sys:String>
-    <sys:String x:Key="L_Msg_UnsavedClose_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片 {0} 尚未保存，是否保存？</sys:String>
-    <sys:String x:Key="L_Msg_SizeTooLarge_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸过大</sys:String>
-    <sys:String x:Key="L_Msg_SizeTooLarge_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片尺寸不能超过 {0}像素。</sys:String>
-    <sys:String x:Key="L_Msg_ResetFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置失败: {0}</sys:String>
+    <sys:String x:Key="L_Load_Reason_Empty">文件为空，已创建空白画布</sys:String>
+    <sys:String x:Key="L_Load_Reason_Header">文件头部损坏或格式不支持，已创建空白画布</sys:String>
+    <sys:String x:Key="L_Load_Reason_Corrupt">文件损坏或格式不支持，已创建空白画布</sys:String>
+    <sys:String x:Key="L_Load_Info_Memory">[新建图像] 内存文件</sys:String>
+    <sys:String x:Key="L_Status_Unsaved">未保存</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Title">放弃更改</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content">确定要重置当前工作区吗？&#x0a;· 所有“未命名”的新建画布将被删除&#x0a;· 所有打开的图片将还原至磁盘文件状态&#x0a;· 撤销记录、所有临时缓存文件及会话记录将被清空</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Title">删除文件</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content">确定要将文件 '{0}' 放入回收站吗？&#x0a;此操作不可撤销（取决于系统设置）。</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Title">保存失败</sys:String>
+    <sys:String x:Key="L_Msg_SaveError_Content">{0}&#x0a;&#x0a;是否尝试【另存为】到其他位置？</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Title">保存提示</sys:String>
+    <sys:String x:Key="L_Msg_UnsavedClose_Content">图片 {0} 尚未保存，是否保存？</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Title">尺寸过大</sys:String>
+    <sys:String x:Key="L_Msg_SizeTooLarge_Content">图片尺寸不能超过 {0}像素。</sys:String>
+    <sys:String x:Key="L_Msg_ResetFailed">重置失败: {0}</sys:String>
     <!-- File Size Formatting -->
-    <sys:String x:Key="L_Format_Size_B" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0} B</sys:String>
-    <sys:String x:Key="L_Format_Size_KB" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0:F1} KB</sys:String>
-    <sys:String x:Key="L_Format_Size_MB" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0:F2} MB</sys:String>
+    <sys:String x:Key="L_Format_Size_B">大小: {0} B</sys:String>
+    <sys:String x:Key="L_Format_Size_KB">大小: {0:F1} KB</sys:String>
+    <sys:String x:Key="L_Format_Size_MB">大小: {0:F2} MB</sys:String>
 
     <!-- OCR & AI Tools -->
-    <sys:String x:Key="L_OCR_Error_NoLangPack" xmlns:sys="clr-namespace:System;assembly=mscorlib">错误：未安装 OCR 语言包，请在 Windows 设置 -> 时间和语言 -> 语言中添加语言包。</sys:String>
-    <sys:String x:Key="L_OCR_Status_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在提取文字...</sys:String>
-    <sys:String x:Key="L_OCR_Failed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 识别失败: {0}</sys:String>
+    <sys:String x:Key="L_OCR_Error_NoLangPack">错误：未安装 OCR 语言包，请在 Windows 设置 -> 时间和语言 -> 语言中添加语言包。</sys:String>
+    <sys:String x:Key="L_OCR_Status_Processing">正在提取文字...</sys:String>
+    <sys:String x:Key="L_OCR_Failed_Prefix">OCR 识别失败: {0}</sys:String>
 
-    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">缺少必要组件</sys:String>
-    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。&#x0a;&#x0a;是否立即前往微软官网下载？</sys:String>
-    <sys:String x:Key="L_AI_Status_Preparing" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在准备 AI 模型...</sys:String>
-    <sys:String x:Key="L_AI_Status_Downloading_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型中: {0:F1}%</sys:String>
-    <sys:String x:Key="L_AI_Status_Thinking" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 正在思考...</sys:String>
-    <sys:String x:Key="L_AI_Error_DllNotFound" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法加载 AI 核心组件。&#x0a;这通常是因为系统缺少 C++ 运行库或 CPU 不支持 AVX 指令集。&#x0a;请尝试安装 VC++ Runtime。</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Title">缺少必要组件</sys:String>
+    <sys:String x:Key="L_AI_RMBG_MissingRuntime_Content">AI 抠图功能需要安装 [Visual C++ 2015-2022 Runtime] 运行库才能运行。&#x0a;&#x0a;是否立即前往微软官网下载？</sys:String>
+    <sys:String x:Key="L_AI_Status_Preparing">正在准备 AI 模型...</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Format">下载模型中: {0:F1}%</sys:String>
+    <sys:String x:Key="L_AI_Status_Thinking">AI 正在思考...</sys:String>
+    <sys:String x:Key="L_AI_Error_DllNotFound">无法加载 AI 核心组件。&#x0a;这通常是因为系统缺少 C++ 运行库或 CPU 不支持 AVX 指令集。&#x0a;请尝试安装 VC++ Runtime。</sys:String>
 
     <!-- Exif Info -->
-    <sys:String x:Key="L_Exif_Section_File" xmlns:sys="clr-namespace:System;assembly=mscorlib">[文件信息]</sys:String>
-    <sys:String x:Key="L_Exif_Path_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">路径: [内存文件] 未保存到磁盘</sys:String>
-    <sys:String x:Key="L_Exif_Path_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">路径: {0}</sys:String>
-    <sys:String x:Key="L_Exif_Size_MB_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小: {0:F2} MB</sys:String>
+    <sys:String x:Key="L_Exif_Section_File">[文件信息]</sys:String>
+    <sys:String x:Key="L_Exif_Path_Memory">路径: [内存文件] 未保存到磁盘</sys:String>
+    <sys:String x:Key="L_Exif_Path_Format">路径: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Size_MB_Format">大小: {0:F2} MB</sys:String>
 
-    <sys:String x:Key="L_Exif_Section_Canvas" xmlns:sys="clr-namespace:System;assembly=mscorlib">[画布信息]</sys:String>
-    <sys:String x:Key="L_Exif_Dim_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">尺寸: {0} × {1} px</sys:String>
-    <sys:String x:Key="L_Exif_BitDepth_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">位深: {0} bit</sys:String>
-    <sys:String x:Key="L_Exif_Dpi_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">DPI: {0:F0} × {1:F0}</sys:String>
-    <sys:String x:Key="L_Exif_PixelFormat_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">格式: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Section_Canvas">[画布信息]</sys:String>
+    <sys:String x:Key="L_Exif_Dim_Format">尺寸: {0} × {1} px</sys:String>
+    <sys:String x:Key="L_Exif_BitDepth_Format">位深: {0} bit</sys:String>
+    <sys:String x:Key="L_Exif_Dpi_Format">DPI: {0:F0} × {1:F0}</sys:String>
+    <sys:String x:Key="L_Exif_PixelFormat_Format">格式: {0}</sys:String>
 
-    <sys:String x:Key="L_Exif_Section_Photo" xmlns:sys="clr-namespace:System;assembly=mscorlib">[照片元数据]</sys:String>
-    <sys:String x:Key="L_Exif_Device_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">设备: {0}</sys:String>
-    <sys:String x:Key="L_Exif_ExpTime_Fraction_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光时间: 1/{0} 秒</sys:String>
-    <sys:String x:Key="L_Exif_ExpTime_Sec_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光时间: {0} 秒</sys:String>
-    <sys:String x:Key="L_Exif_FNumber_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">光圈值: f/{0:0.0}</sys:String>
-    <sys:String x:Key="L_Exif_ISO_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">ISO速度: ISO-{0}</sys:String>
-    <sys:String x:Key="L_Exif_Bias_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">曝光补偿: {0} EV</sys:String>
-    <sys:String x:Key="L_Exif_Focal_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">焦距: {0} mm</sys:String>
-    <sys:String x:Key="L_Exif_Focal35_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">35mm焦距: {0} mm</sys:String>
-    <sys:String x:Key="L_Exif_Metering_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">测光模式: {0}</sys:String>
-    <sys:String x:Key="L_Exif_Flash_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">闪光灯: {0}</sys:String>
-    <sys:String x:Key="L_Exif_Flash_On" xmlns:sys="clr-namespace:System;assembly=mscorlib">开启</sys:String>
-    <sys:String x:Key="L_Exif_Flash_Off" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭</sys:String>
-    <sys:String x:Key="L_Exif_Software_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">处理软件: {0}</sys:String>
-    <sys:String x:Key="L_Exif_Date_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">拍摄日期: {0}</sys:String>
-    <sys:String x:Key="L_Exif_Lens_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">镜头: {0}</sys:String>
-    <sys:String x:Key="L_Exif_Error_Parse" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法解析详细信息:</sys:String>
+    <sys:String x:Key="L_Exif_Section_Photo">[照片元数据]</sys:String>
+    <sys:String x:Key="L_Exif_Device_Format">设备: {0}</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Fraction_Format">曝光时间: 1/{0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_ExpTime_Sec_Format">曝光时间: {0} 秒</sys:String>
+    <sys:String x:Key="L_Exif_FNumber_Format">光圈值: f/{0:0.0}</sys:String>
+    <sys:String x:Key="L_Exif_ISO_Format">ISO速度: ISO-{0}</sys:String>
+    <sys:String x:Key="L_Exif_Bias_Format">曝光补偿: {0} EV</sys:String>
+    <sys:String x:Key="L_Exif_Focal_Format">焦距: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Focal35_Format">35mm焦距: {0} mm</sys:String>
+    <sys:String x:Key="L_Exif_Metering_Format">测光模式: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Format">闪光灯: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Flash_On">开启</sys:String>
+    <sys:String x:Key="L_Exif_Flash_Off">关闭</sys:String>
+    <sys:String x:Key="L_Exif_Software_Format">处理软件: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Date_Format">拍摄日期: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Lens_Format">镜头: {0}</sys:String>
+    <sys:String x:Key="L_Exif_Error_Parse">无法解析详细信息:</sys:String>
 
-    <sys:String x:Key="L_Exif_Meter_Unknown" xmlns:sys="clr-namespace:System;assembly=mscorlib">未知</sys:String>
-    <sys:String x:Key="L_Exif_Meter_Average" xmlns:sys="clr-namespace:System;assembly=mscorlib">平均测光</sys:String>
-    <sys:String x:Key="L_Exif_Meter_Center" xmlns:sys="clr-namespace:System;assembly=mscorlib">中央重点平均测光</sys:String>
-    <sys:String x:Key="L_Exif_Meter_Spot" xmlns:sys="clr-namespace:System;assembly=mscorlib">点测光</sys:String>
-    <sys:String x:Key="L_Exif_Meter_MultiSpot" xmlns:sys="clr-namespace:System;assembly=mscorlib">多点测光</sys:String>
-    <sys:String x:Key="L_Exif_Meter_Pattern" xmlns:sys="clr-namespace:System;assembly=mscorlib">模式测光</sys:String>
-    <sys:String x:Key="L_Exif_Meter_Partial" xmlns:sys="clr-namespace:System;assembly=mscorlib">部分测光</sys:String>
-    <sys:String x:Key="L_Exif_Meter_Other" xmlns:sys="clr-namespace:System;assembly=mscorlib">其他</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Unknown">未知</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Average">平均测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Center">中央重点平均测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Spot">点测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_MultiSpot">多点测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Pattern">模式测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Partial">部分测光</sys:String>
+    <sys:String x:Key="L_Exif_Meter_Other">其他</sys:String>
     <!-- New Additions for C# Logic -->
-    <sys:String x:Key="L_Save_Error_ReadOnly" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败：文件是只读的，或者您没有权限写入此位置。</sys:String>
-    <sys:String x:Key="L_Save_Error_InUse" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存失败：文件可能正在被占用。&#x0a;{0}</sys:String>
-    <sys:String x:Key="L_Save_Error_General" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存时发生错误：{0}</sys:String>
+    <sys:String x:Key="L_Save_Error_ReadOnly">保存失败：文件是只读的，或者您没有权限写入此位置。</sys:String>
+    <sys:String x:Key="L_Save_Error_InUse">保存失败：文件可能正在被占用。&#x0a;{0}</sys:String>
+    <sys:String x:Key="L_Save_Error_General">保存时发生错误：{0}</sys:String>
 
-    <sys:String x:Key="L_Selection_Size_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}×{1}像素</sys:String>
-    <sys:String x:Key="L_Selection_Drag_Jump" xmlns:sys="clr-namespace:System;assembly=mscorlib">跳转至: {0} {1} ({2:F1}s)</sys:String>
-    <sys:String x:Key="L_Selection_Drag_Quick" xmlns:sys="clr-namespace:System;assembly=mscorlib">(快速)</sys:String>
+    <sys:String x:Key="L_Selection_Size_Format">{0}×{1}像素</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Jump">跳转至: {0} {1} ({2:F1}s)</sys:String>
+    <sys:String x:Key="L_Selection_Drag_Quick">(快速)</sys:String>
 
-    <sys:String x:Key="L_Clipboard_InternalFormat" xmlns:sys="clr-namespace:System;assembly=mscorlib">TabPaintInternal</sys:String>
+    <sys:String x:Key="L_Clipboard_InternalFormat">TabPaintInternal</sys:String>
 
-    <sys:String x:Key="L_Drag_SwitchWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换工作区</sys:String>
-    <sys:String x:Key="L_Drag_SwitchWorkspace_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">将清空当前画布并打开新文件夹</sys:String>
-    <sys:String x:Key="L_Drag_BatchOpen_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量打开</sys:String>
-    <sys:String x:Key="L_Drag_BatchOpen_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">将 {0} 张图片作为新标签页打开</sys:String>
-    <sys:String x:Key="L_Drag_AddToList_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加到列表</sys:String>
-    <sys:String x:Key="L_Drag_AddToList_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">将图片作为新标签页加入</sys:String>
-    <sys:String x:Key="L_Drag_Insert_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入图片</sys:String>
-    <sys:String x:Key="L_Drag_Insert_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">在当前位置插入图片</sys:String>
-    <sys:String x:Key="L_Drag_InsertText_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入文字</sys:String>
-    <sys:String x:Key="L_Drag_InsertText_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">松开鼠标创建文本框</sys:String>
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Title">切换工作区</sys:String>
+    <sys:String x:Key="L_Drag_SwitchWorkspace_Desc">将清空当前画布并打开新文件夹</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Title">批量打开</sys:String>
+    <sys:String x:Key="L_Drag_BatchOpen_Desc">将 {0} 张图片作为新标签页打开</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Title">添加到列表</sys:String>
+    <sys:String x:Key="L_Drag_AddToList_Desc">将图片作为新标签页加入</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Title">插入图片</sys:String>
+    <sys:String x:Key="L_Drag_Insert_Desc">在当前位置插入图片</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Title">插入文字</sys:String>
+    <sys:String x:Key="L_Drag_InsertText_Desc">松开鼠标创建文本框</sys:String>
 
-    <sys:String x:Key="L_Mode_Switch_ToPaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换到画图模式 (Tab)</sys:String>
-    <sys:String x:Key="L_Mode_Switch_ToView" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换到看图模式 (Tab)</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToPaint">切换到画图模式 (Tab)</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToView">切换到看图模式 (Tab)</sys:String>
 
-    <sys:String x:Key="L_Menu_Recent_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">(无最近文件)</sys:String>
-    <sys:String x:Key="L_Menu_Recent_Clear" xmlns:sys="clr-namespace:System;assembly=mscorlib">清除最近文件列表</sys:String>
-    <sys:String x:Key="L_Stick_Close" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭</sys:String>
-    <sys:String x:Key="L_Stick_TopMost" xmlns:sys="clr-namespace:System;assembly=mscorlib">置顶显示</sys:String>
-    <sys:String x:Key="L_Stick_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">透明度</sys:String>
-    <sys:String x:Key="L_Stick_ResetScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">重置缩放</sys:String>
+    <sys:String x:Key="L_Menu_Recent_None">(无最近文件)</sys:String>
+    <sys:String x:Key="L_Menu_Recent_Clear">清除最近文件列表</sys:String>
+    <sys:String x:Key="L_Stick_Close">关闭</sys:String>
+    <sys:String x:Key="L_Stick_TopMost">置顶显示</sys:String>
+    <sys:String x:Key="L_Stick_Opacity">透明度</sys:String>
+    <sys:String x:Key="L_Stick_ResetScale">重置缩放</sys:String>
 
-    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">创建矩形选区以进行移动、裁剪或复制。 快捷键: Ctrl + 1&#x0a;支持拖拽至Word，浏览器，桌面等外部程序&#x0a;拖拽图片到画布可创建矩形选区</sys:String>
-    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve"  xmlns:sys="clr-namespace:System;assembly=mscorlib">截图后自动创建包含这张图片的新标签页</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve">创建矩形选区以进行移动、裁剪或复制。 快捷键: Ctrl + 1&#x0a;支持拖拽至Word，浏览器，桌面等外部程序&#x0a;拖拽图片到画布可创建矩形选区</sys:String>
+    <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve">截图后自动创建包含这张图片的新标签页</sys:String>
 
-    <sys:String x:Key="L_ImgBar_ClearUnedited" xmlns:sys="clr-namespace:System;assembly=mscorlib">关闭所有未编辑的图片</sys:String>
-    <sys:String x:Key="L_ImgBar_NewTabLeft" xmlns:sys="clr-namespace:System;assembly=mscorlib">在左侧新建</sys:String>
-    <sys:String x:Key="L_Ctx_StickImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">贴图 (StickImage)</sys:String>
-    <sys:String x:Key="L_Ctx_DeleteFile" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除文件 (Delete)</sys:String>
+    <sys:String x:Key="L_ImgBar_ClearUnedited">关闭所有未编辑的图片</sys:String>
+    <sys:String x:Key="L_ImgBar_NewTabLeft">在左侧新建</sys:String>
+    <sys:String x:Key="L_Ctx_StickImage">贴图 (StickImage)</sys:String>
+    <sys:String x:Key="L_Ctx_DeleteFile">删除文件 (Delete)</sys:String>
 
-    <!-- 补充到 TextEditBar 相关 -->
-    <sys:String x:Key="L_Text_Bold" xmlns:sys="clr-namespace:System;assembly=mscorlib">加粗</sys:String>
-    <sys:String x:Key="L_Text_Italic" xmlns:sys="clr-namespace:System;assembly=mscorlib">斜体</sys:String>
-    <sys:String x:Key="L_Text_Underline" xmlns:sys="clr-namespace:System;assembly=mscorlib">下划线</sys:String>
-    <sys:String x:Key="L_Text_Strike" xmlns:sys="clr-namespace:System;assembly=mscorlib">删除线</sys:String>
-    <sys:String x:Key="L_Text_AlignLeft" xmlns:sys="clr-namespace:System;assembly=mscorlib">左对齐</sys:String>
-    <sys:String x:Key="L_Text_AlignCenter" xmlns:sys="clr-namespace:System;assembly=mscorlib">居中</sys:String>
-    <sys:String x:Key="L_Text_AlignRight" xmlns:sys="clr-namespace:System;assembly=mscorlib">右对齐</sys:String>
-    <sys:String x:Key="L_Text_OpaqueBackground" xmlns:sys="clr-namespace:System;assembly=mscorlib">不透明背景</sys:String>
-    <sys:String x:Key="L_Text_Subscript" xmlns:sys="clr-namespace:System;assembly=mscorlib">下标</sys:String>
-    <sys:String x:Key="L_Text_Superscript" xmlns:sys="clr-namespace:System;assembly=mscorlib">上标</sys:String>
-    <sys:String x:Key="L_Text_Highlight" xmlns:sys="clr-namespace:System;assembly=mscorlib">高亮</sys:String>
-    <sys:String x:Key="L_Text_Shadow" xmlns:sys="clr-namespace:System;assembly=mscorlib">阴影特效</sys:String>
-    <sys:String x:Key="L_Text_InsertTable" xmlns:sys="clr-namespace:System;assembly=mscorlib">插入表格</sys:String>
-    <sys:String x:Key="L_Common_Preview" xmlns:sys="clr-namespace:System;assembly=mscorlib">预览</sys:String>
-    <!-- 补充到 Code Behind 错误提示 -->
-    <sys:String x:Key="L_Toast_OpenUrlFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">无法打开链接</sys:String>
-    <sys:String x:Key="L_Key_None" xmlns:sys="clr-namespace:System;assembly=mscorlib">无</sys:String>
+    <sys:String x:Key="L_Text_Bold">加粗</sys:String>
+    <sys:String x:Key="L_Text_Italic">斜体</sys:String>
+    <sys:String x:Key="L_Text_Underline">下划线</sys:String>
+    <sys:String x:Key="L_Text_Strike">删除线</sys:String>
+    <sys:String x:Key="L_Text_AlignLeft">左对齐</sys:String>
+    <sys:String x:Key="L_Text_AlignCenter">居中</sys:String>
+    <sys:String x:Key="L_Text_AlignRight">右对齐</sys:String>
+    <sys:String x:Key="L_Text_OpaqueBackground">不透明背景</sys:String>
+    <sys:String x:Key="L_Text_Subscript">下标</sys:String>
+    <sys:String x:Key="L_Text_Superscript">上标</sys:String>
+    <sys:String x:Key="L_Text_Highlight">高亮</sys:String>
+    <sys:String x:Key="L_Text_Shadow">阴影特效</sys:String>
+    <sys:String x:Key="L_Text_InsertTable">插入表格</sys:String>
+    <sys:String x:Key="L_Common_Preview">预览</sys:String>
+    <!-- 补充到 Code Code Code Code Code Code Code Behind 错误提示 -->
+    <sys:String x:Key="L_Toast_OpenUrlFailed">无法打开链接</sys:String>
+    <sys:String x:Key="L_Key_None">无</sys:String>
     <!-- InfoTextBlock & Progress -->
-    <sys:String x:Key="L_ResizeCanvas_LimitReached" xmlns:sys="clr-namespace:System;assembly=mscorlib">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
-    <sys:String x:Key="L_Info_CanvasMode_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">画布模式：{0} x {1}</sys:String>
-    <sys:String x:Key="L_Info_ResampleMode_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放: {0:P0}  |  原始: {1} x {2}</sys:String>
-    <sys:String x:Key="L_Info_DefaultScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放：100% (原始大小)</sys:String>
-    <sys:String x:Key="L_Progress_Loading_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在加载 {0}%</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
+    <sys:String x:Key="L_Info_CanvasMode_Format">画布模式：{0} x {1}</sys:String>
+    <sys:String x:Key="L_Info_ResampleMode_Format">缩放: {0:P0}  |  原始: {1} x {2}</sys:String>
+    <sys:String x:Key="L_Info_DefaultScale">缩放：100% (原始大小)</sys:String>
+    <sys:String x:Key="L_Progress_Loading_Format">正在加载 {0}%</sys:String>
 
     <!-- StatusBar Tooltips -->
-    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip" xmlns:sys="clr-namespace:System;assembly=mscorlib">监听剪切板 (Ctrl + Alt + P)</sys:String>
-    <sys:String x:Key="L_StatusBar_FitToWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">适应窗口大小</sys:String>
-    <sys:String x:Key="L_StatusBar_ZoomOut" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩小</sys:String>
-    <sys:String x:Key="L_StatusBar_ZoomIn" xmlns:sys="clr-namespace:System;assembly=mscorlib">放大</sys:String>
-    <sys:String x:Key="L_AI_Status_Upscaling_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在超分... {0:0}%</sys:String>
-    <sys:String x:Key="L_Toast_Upscale_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">超分辨率处理完成 (400%)</sys:String>
-    <sys:String x:Key="L_Toast_Upscale_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">超分失败: {0}</sys:String>
-    <sys:String x:Key="L_AI_Download_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型</sys:String>
-    <sys:String x:Key="L_AI_Download_RMBG_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用需要下载背景移除模型 (约 170MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
-    <sys:String x:Key="L_AI_Download_SR_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用需要下载超分辨率模型 (约 60MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Watermark" xmlns:sys="clr-namespace:System;assembly=mscorlib">水印</sys:String>
-    <sys:String x:Key="L_Watermark_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加水印</sys:String>
-    <sys:String x:Key="L_Watermark_Type" xmlns:sys="clr-namespace:System;assembly=mscorlib">水印类型</sys:String>
-    <sys:String x:Key="L_Watermark_ApplyToAll" xmlns:sys="clr-namespace:System;assembly=mscorlib">应用到所有</sys:String>
-    <sys:String x:Key="L_Watermark_TypeText" xmlns:sys="clr-namespace:System;assembly=mscorlib">文字</sys:String>
-    <sys:String x:Key="L_Watermark_TypeImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">图片</sys:String>
-    <sys:String x:Key="L_Watermark_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">内容</sys:String>
-    <sys:String x:Key="L_Watermark_FontSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">大小</sys:String>
-    <sys:String x:Key="L_Watermark_Color" xmlns:sys="clr-namespace:System;assembly=mscorlib">颜色</sys:String>
-    <sys:String x:Key="L_Watermark_DropImage" xmlns:sys="clr-namespace:System;assembly=mscorlib">拖拽图片到下方或点击选择</sys:String>
-    <sys:String x:Key="L_Watermark_ClickOrDrop" xmlns:sys="clr-namespace:System;assembly=mscorlib">点击或拖入</sys:String>
-    <sys:String x:Key="L_Watermark_ImageScale" xmlns:sys="clr-namespace:System;assembly=mscorlib">缩放</sys:String>
-    <sys:String x:Key="L_Watermark_Opacity" xmlns:sys="clr-namespace:System;assembly=mscorlib">透明度</sys:String>
-    <sys:String x:Key="L_Watermark_Angle" xmlns:sys="clr-namespace:System;assembly=mscorlib">旋转角度</sys:String>
-    <sys:String x:Key="L_Watermark_Rows" xmlns:sys="clr-namespace:System;assembly=mscorlib">垂直数量</sys:String>
-    <sys:String x:Key="L_Watermark_Cols" xmlns:sys="clr-namespace:System;assembly=mscorlib">水平数量</sys:String>
-    <sys:String x:Key="L_Watermark_RandomOffset" xmlns:sys="clr-namespace:System;assembly=mscorlib">随机偏移</sys:String>
-    <sys:String x:Key="L_Toast_BatchStart" xmlns:sys="clr-namespace:System;assembly=mscorlib">开始批量添加水印...</sys:String>
-    <sys:String x:Key="L_Toast_BatchComplete" xmlns:sys="clr-namespace:System;assembly=mscorlib">批量处理已完成。</sys:String>
+    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">监听剪切板 (Ctrl + Alt + P)</sys:String>
+    <sys:String x:Key="L_StatusBar_FitToWindow">适应窗口大小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomOut">缩小</sys:String>
+    <sys:String x:Key="L_StatusBar_ZoomIn">放大</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling_Format">正在超分... {0:0}%</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Success">超分辨率处理完成 (400%)</sys:String>
+    <sys:String x:Key="L_Toast_Upscale_Error_Prefix">超分失败: {0}</sys:String>
+    <sys:String x:Key="L_AI_Download_Title">下载模型</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content">首次使用需要下载背景移除模型 (约 170MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content">首次使用需要下载超分辨率模型 (约 60MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Watermark">水印</sys:String>
+    <sys:String x:Key="L_Watermark_Title">添加水印</sys:String>
+    <sys:String x:Key="L_Watermark_Type">水印类型</sys:String>
+    <sys:String x:Key="L_Watermark_ApplyToAll">应用到所有</sys:String>
+    <sys:String x:Key="L_Watermark_TypeText">文字</sys:String>
+    <sys:String x:Key="L_Watermark_TypeImage">图片</sys:String>
+    <sys:String x:Key="L_Watermark_Content">内容</sys:String>
+    <sys:String x:Key="L_Watermark_FontSize">大小</sys:String>
+    <sys:String x:Key="L_Watermark_Color">颜色</sys:String>
+    <sys:String x:Key="L_Watermark_DropImage">拖拽图片到下方或点击选择</sys:String>
+    <sys:String x:Key="L_Watermark_ClickOrDrop">点击或拖入</sys:String>
+    <sys:String x:Key="L_Watermark_ImageScale">缩放</sys:String>
+    <sys:String x:Key="L_Watermark_Opacity">透明度</sys:String>
+    <sys:String x:Key="L_Watermark_Angle">旋转角度</sys:String>
+    <sys:String x:Key="L_Watermark_Rows">垂直数量</sys:String>
+    <sys:String x:Key="L_Watermark_Cols">水平数量</sys:String>
+    <sys:String x:Key="L_Watermark_RandomOffset">随机偏移</sys:String>
+    <sys:String x:Key="L_Toast_BatchStart">开始批量添加水印...</sys:String>
+    <sys:String x:Key="L_Toast_BatchComplete">批量处理已完成。</sys:String>
 
 
     <!-- AI Eraser -->
-    <sys:String x:Key="L_AI_Eraser_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载模型中...</sys:String>
-    <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI 处理中...</sys:String>
-    <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">擦除完成!</sys:String>
-    <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">擦除错误: {0}</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Filter" xmlns:sys="clr-namespace:System;assembly=mscorlib">滤镜</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Sepia" xmlns:sys="clr-namespace:System;assembly=mscorlib">怀旧</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Oil" xmlns:sys="clr-namespace:System;assembly=mscorlib">油画</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Vignette" xmlns:sys="clr-namespace:System;assembly=mscorlib">暗角</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">柔光</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Sepia" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用怀旧滤镜</sys:String>
-    <sys:String x:Key="L_Toast_Effect_OilPainting" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用油画滤镜</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Vignette" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用暗角</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Glow" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用柔光</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">锐化</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">褐色</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Sharpen" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用锐化</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Brown" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用褐色</sys:String>
-    <sys:String x:Key="L_Toast_Effect_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用马赛克</sys:String>
-    <sys:String x:Key="L_Toast_Effect_GaussianBlur" xmlns:sys="clr-namespace:System;assembly=mscorlib">已应用高斯模糊</sys:String>
-    <sys:String x:Key="L_Update_Found_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">发现新版本</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Downloading">下载模型中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Processing">AI 处理中...</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Success">擦除完成!</sys:String>
+    <sys:String x:Key="L_AI_Eraser_Error_Prefix">擦除错误: {0}</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Filter">滤镜</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sepia">怀旧</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Oil">油画</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Vignette">暗角</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Glow">柔光</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sepia">已应用怀旧滤镜</sys:String>
+    <sys:String x:Key="L_Toast_Effect_OilPainting">已应用油画滤镜</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Vignette">已应用暗角</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Glow">已应用柔光</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sharpen">锐化</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Brown">褐色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sharpen">已应用锐化</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Brown">已应用褐色</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Mosaic">已应用马赛克</sys:String>
+    <sys:String x:Key="L_Toast_Effect_GaussianBlur">已应用高斯模糊</sys:String>
+    <sys:String x:Key="L_Update_Found_Title">发现新版本</sys:String>
     <!-- AI Eraser (Inpainting) -->
-    <sys:String x:Key="L_Filter_Strength_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整强度</sys:String>
-    <sys:String x:Key="L_Filter_Value" xmlns:sys="clr-namespace:System;assembly=mscorlib">数值</sys:String>
-    <sys:String x:Key="L_Menu_Effect_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">马赛克</sys:String>
-    <sys:String x:Key="L_Menu_Effect_GaussianBlur" xmlns:sys="clr-namespace:System;assembly=mscorlib">高斯模糊</sys:String>
-    <sys:String x:Key="L_Dialog_Strength" xmlns:sys="clr-namespace:System;assembly=mscorlib">强度</sys:String>
+    <sys:String x:Key="L_Filter_Strength_Title">调整强度</sys:String>
+    <sys:String x:Key="L_Filter_Value">数值</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Mosaic">马赛克</sys:String>
+    <sys:String x:Key="L_Menu_Effect_GaussianBlur">高斯模糊</sys:String>
+    <sys:String x:Key="L_Dialog_Strength">强度</sys:String>
     
-    
-    <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>
+    <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>
 
     <!-- 统一 AI 状态描述 (如果之前没有) -->
-    <sys:String x:Key="L_AI_Status_Downloading_Inpaint" xmlns:sys="clr-namespace:System;assembly=mscorlib">正在下载修复模型: {0:F1}%</sys:String>
+    <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下载修复模型: {0:F1}%</sys:String>
 
 </ResourceDictionary>
