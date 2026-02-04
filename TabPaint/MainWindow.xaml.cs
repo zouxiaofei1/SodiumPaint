@@ -11,8 +11,6 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -21,7 +19,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using TabPaint.Controls;
 using static TabPaint.MainWindow;
 
 
@@ -38,8 +35,8 @@ namespace TabPaint
             PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
             InitializeComponent();
             RestoreWindowBounds();
-          
-            if (SettingsManager.Instance.Current.StartInViewMode&& _currentFileExists)
+
+            if (SettingsManager.Instance.Current.StartInViewMode && _currentFileExists)
             {
                 IsViewMode = true;
                 ThicknessPanel.Visibility = Visibility.Collapsed;
@@ -52,7 +49,6 @@ namespace TabPaint
             Loaded += MainWindow_Loaded;
 
             InitializeAutoSave();
-
             this.Focusable = true;
         }
 
@@ -60,8 +56,6 @@ namespace TabPaint
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
             InitializeLazyControls();
-
-         
             if (IsViewMode) OnModeChanged(true, isSilent: true);
 
             MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
@@ -73,11 +67,9 @@ namespace TabPaint
                 double sliderVal = MyStatusBar.ZoomSliderControl.Value;
                 double targetScale = SliderToZoom(sliderVal);
 
-                SetZoom(targetScale,slient:true);
+                SetZoom(targetScale, slient: true);
             };
 
-
-           // SetBrushStyle(BrushStyle.Round);
             SetCropButtonState();
             _canvasResizer = new CanvasResizeManager(this); ;
             LoadSession();
@@ -87,39 +79,14 @@ namespace TabPaint
             }
 
 
-            if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath)))
-            {
-                // 直接 await，不要用 Task.Run，否则无法操作 UI 集合
-                await OpenImageAndTabs(_currentFilePath, true);
-            }
+            if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath))) await OpenImageAndTabs(_currentFilePath, true);
             else
             {
 
                 {
                     if (FileTabs.Count == 0)
                     {
-                        bool welcomeOpened = false;
-                        var settings = SettingsManager.Instance.Current;
-
-                        // 检查是否是第一次运行
-                        if (settings.IsFirstRun)
-                        {
-                            // 获取 exe 同级目录下的欢迎图片路径
-                            string welcomePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Welcome_zh_cn.jpg");
-
-                            if (File.Exists(welcomePath))
-                            {
-                                await OpenFilesAsNewTabs([welcomePath]);
-                                welcomeOpened = true;
-                                settings.IsFirstRun = false;
-                            }
-                        }
-                        // 如果没有打开欢迎页（文件不存在 或 不是第一次运行），则进入默认的空白模式
-                        if (!welcomeOpened)
-                        {
-                            BlanketMode = true;
-                            CreateNewTab(TabInsertPosition.AfterCurrent, true);
-                        }
+                        CreateNewTab(TabInsertPosition.AfterCurrent, true);
                     }
                     else
                     {
@@ -149,9 +116,9 @@ namespace TabPaint
             base.OnSourceInitialized(e); // 建议保留 base 调用
 
             MicaAcrylicManager.ApplyEffect(this);
-           
+
             MicaEnabled = true; var currentSettings = SettingsManager.Instance.Current;
-            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark)|| (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
+            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark) || (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
             InitializeClipboardMonitor();
 
@@ -207,11 +174,11 @@ namespace TabPaint
                     MainWindow_PreviewKeyDown(s, e);
                     _router.OnPreviewKeyDown(s, e);
                 };
-            
-            _ = Task.Delay(TimeSpan.FromSeconds(AppConsts.DragTempCleanupDelaySeconds)).ContinueWith(async _ =>
-                {
-                    await CheckAndCleanDragTempAsync();
-                }, TaskScheduler.Default);
+
+                _ = Task.Delay(TimeSpan.FromSeconds(AppConsts.DragTempCleanupDelaySeconds)).ContinueWith(async _ =>
+                    {
+                        await CheckAndCleanDragTempAsync();
+                    }, TaskScheduler.Default);
             }
             catch (Exception ex)
             {
@@ -274,7 +241,7 @@ namespace TabPaint
 
                 var firstImage = allFiles
                     .Where(f => IsImageFile(f))
-                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) // 确保按文件名顺序（如 1.jpg, 2.jpg）
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase) //自然语言顺序
                     .FirstOrDefault();
 
                 return firstImage; // 如果没找到，返回 null
@@ -399,10 +366,7 @@ namespace TabPaint
                     {
                         foreach (string file in dropList)
                         {
-                            if (IsImageFile(file))
-                            {
-                                filesToProcess.Add(file);
-                            }
+                            if (IsImageFile(file)) filesToProcess.Add(file);
                         }
                     }
                 }
@@ -442,16 +406,9 @@ namespace TabPaint
             if (_currentTabItem != null && !_currentTabItem.IsNew)
             {
                 int currentIndexInFiles = _imageFiles.IndexOf(_currentTabItem.FilePath);
-                if (currentIndexInFiles >= 0)
-                {
-                    insertIndex = currentIndexInFiles + 1;
-                }
-
+                if (currentIndexInFiles >= 0) insertIndex = currentIndexInFiles + 1;
                 int currentIndexInTabs = FileTabs.IndexOf(_currentTabItem);
-                if (currentIndexInTabs >= 0)
-                {
-                    uiInsertIndex = currentIndexInTabs + 1;
-                }
+                if (currentIndexInTabs >= 0) uiInsertIndex = currentIndexInTabs + 1;
             }
 
             FileTabItem firstNewTab = null;
@@ -465,14 +422,8 @@ namespace TabPaint
                 var newTab = new FileTabItem(file);
                 newTab.IsLoading = true;
 
-                if (uiInsertIndex + addedCount <= FileTabs.Count)
-                {
-                    FileTabs.Insert(uiInsertIndex + addedCount, newTab);
-                }
-                else
-                {
-                    FileTabs.Add(newTab);
-                }
+                if (uiInsertIndex + addedCount <= FileTabs.Count)FileTabs.Insert(uiInsertIndex + addedCount, newTab);
+                else FileTabs.Add(newTab);
 
                 // 异步加载缩略图
                 _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
@@ -517,27 +468,21 @@ namespace TabPaint
                     int targetCount = 20;   // 清理目标：清理到只剩20个
                     if (files.Length > maxFileCount)
                     {
-                        // 按创建时间升序排列（最旧的在前）
-                        var sortedFiles = files.OrderBy(f => f.CreationTime).ToList();
+                        var sortedFiles = files.OrderBy(f => f.CreationTime).ToList();// 按创建时间升序排列（最旧的在前）
                         int deleteCount = files.Length - targetCount;
 
                         int deleted = 0;
                         foreach (var file in sortedFiles)
                         {
                             if (deleted >= deleteCount) break;
-
                             try
                             {
-                                // 尝试删除，catch块忽略被占用的文件
-                                file.Delete();
+                                file.Delete(); // 尝试删除
                                 deleted++;
                             }
                             catch (IOException) { /* 文件可能被占用，跳过 */ }
                             catch (UnauthorizedAccessException) { /* 无权限，跳过 */ }
                         }
-
-                        // 可选：如果清理了文件，可以在 Output 输出调试信息
-                        System.Diagnostics.Debug.WriteLine($"[TabPaint] DragTemp cleaned. Removed {deleted} files.");
                     }
                 }
                 catch (Exception ex)
@@ -619,7 +564,7 @@ namespace TabPaint
 
             if (duration < AppConsts.NavGapLevel1Ms) return 1;
             if (duration < AppConsts.NavGapLevel2Ms) return 2;
-            if(PerformanceScore > AppConsts.HighPerformanceThreshold)  return 5; else return 3;
+            if (PerformanceScore > AppConsts.HighPerformanceThreshold) return 5; else return 3;
         }
 
 
@@ -641,8 +586,8 @@ namespace TabPaint
         }
         private void MoveImageIndex(int direction) // direction: 1 or -1
         {
-            if (_imageFiles.Count == 0 || _currentImageIndex < 0||FileTabs==null) return;
-            if (FileTabs.Count<2) return;
+            if (_imageFiles.Count == 0 || _currentImageIndex < 0 || FileTabs == null) return;
+            if (FileTabs.Count < 2) return;
             _router.CleanUpSelectionandShape();
             if (_isEdited && !string.IsNullOrEmpty(_currentFilePath))
             {
@@ -740,7 +685,7 @@ namespace TabPaint
             {
                 // 更新 Slider 范围
                 ImageFilesCount = _imageFiles.Count;
-                SetPreviewSlider(); 
+                SetPreviewSlider();
 
                 if (firstNewTab != null)
                 {

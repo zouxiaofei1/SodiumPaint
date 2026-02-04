@@ -23,12 +23,8 @@ namespace TabPaint
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                if (mw._canvasResizer != null)
-                {
-                    mw._canvasResizer.SetHandleVisibility(true);
-                }
-
-                // 清空状态
+                if (mw._canvasResizer != null)   mw._canvasResizer.SetHandleVisibility(true);
+        
                 _originalRect = new Int32Rect();
                 _selectionRect = new Int32Rect();
                 _selecting = false;
@@ -45,20 +41,14 @@ namespace TabPaint
 
             public void RefreshOverlay(ToolContext ctx)
             {
-                if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
-                {
-                    DrawOverlay(ctx, _selectionRect);
-                }
+                if (_selectionRect.Width > 0 && _selectionRect.Height > 0)   DrawOverlay(ctx, _selectionRect);
             }
 
 
             private void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                if (mw._canvasResizer != null)
-                {
-                    mw._canvasResizer.SetHandleVisibility(false);
-                }
+                if (mw._canvasResizer != null)  mw._canvasResizer.SetHandleVisibility(false);
                 double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.ClipToBounds = false;
@@ -67,12 +57,11 @@ namespace TabPaint
                 double diff = ((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width -
                               (int)((MainWindow)Application.Current.MainWindow).CanvasWrapper.RenderSize.Width;
 
-                // ========== 套索模式：使用已有的 _selectionGeometry ==========
                 if (SelectionType == SelectionType.Lasso && _selectionGeometry != null)
                 {
                     DrawIrregularContour(ctx, overlay, _selectionGeometry, rect, invScale, diff);
                 }
-                // ========== 魔棒模式：从 AlphaMap 生成轮廓 ==========
+
                 else if (SelectionType == SelectionType.MagicWand && _selectionAlphaMap != null && !_isWandAdjusting)
                 {
                     // 生成轮廓 Geometry
@@ -88,22 +77,12 @@ namespace TabPaint
                         _selectionGeometry = wandGeometry; // 缓存起来供后续使用
                         DrawIrregularContour(ctx, overlay, wandGeometry, rect, invScale, diff, false);
                     }
-                    else
-                    {
-                        // 回退到矩形框
-                        DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
-                    }
+                    else DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);// 回退到矩形框
                 }
-                // ========== 魔棒调整中：显示简化的矩形框（性能优化） ==========
                 else if (SelectionType == SelectionType.MagicWand && _isWandAdjusting)
                 {
-                    // 调整容差时只显示矩形框，避免频繁重算轮廓
-                 //   DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
-
-                    // 可选：显示半透明遮罩预览
                     DrawWandPreviewMask(ctx, overlay, rect, invScale);
                 }
-                // ========== 矩形模式 ==========
                 else
                 {
                     DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
@@ -166,24 +145,7 @@ namespace TabPaint
                 _currentAnchor = ResizeAnchor.None;
                 _selectionRect.Width = _selectionRect.Height = 0;
             }
-            private Rect GetWindowBoundsInPhysicalPixels(System.Windows.Window window)
-            {
-                var source = PresentationSource.FromVisual(window);
-                if (source == null || source.CompositionTarget == null)
-                {
-                    // Fallback for cases where the window is not yet fully rendered
-                    return new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight);
-                }
-                Matrix transform = source.CompositionTarget.TransformToDevice;
-                double dpiX = transform.M11; 
-                double dpiY = transform.M22; 
-                return new Rect(
-                    window.Left * dpiX,
-                    window.Top * dpiY,
-                    window.ActualWidth * dpiX,
-                    window.ActualHeight * dpiY
-                );
-            }
+
 
             private void SetPreviewPosition(ToolContext ctx, int pixelX, int pixelY)
             {
@@ -203,8 +165,6 @@ namespace TabPaint
                 double localX = pixelX * scaleX+diff*0.75 ;
                 double localY = pixelY * scaleY;
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(localX, localY);
-
-
             }
 
             private void StartDragDropOperation(ToolContext ctx)
@@ -257,18 +217,10 @@ namespace TabPaint
                     _selectionData = null;
                     ctx.IsDirty = true;
                 }
-                catch (Exception ex)
-                {
-                   // System.Diagnostics.Debug.WriteLine($"Drag-drop operation failed: {ex.Message}");
-                }
+                catch (Exception ex) { }
                 finally
                 {
-                    if (System.IO.File.Exists(tempFilePath))
-                    {
-                        // 建议延迟 5秒 (5000ms)，给接收方足够的时间读取文件
-                        DeleteFileWithDelay(tempFilePath, 5000);
-                    }
-
+                    if (System.IO.File.Exists(tempFilePath)) DeleteFileWithDelay(tempFilePath, 5000); // 延迟 5秒
                 }
             }
             private void DeleteFileWithDelay(string filePath, int delayMilliseconds)
@@ -278,19 +230,11 @@ namespace TabPaint
                 {
                     try
                     {
-                        // 1. 等待指定时间
+                        //等待指定时间删除
                         await Task.Delay(delayMilliseconds);
-
-                        // 2. 尝试删除
-                        if (System.IO.File.Exists(filePath))
-                        {
-                            System.IO.File.Delete(filePath);
-                           
-                        }
+                        if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
                     }
-                    catch (Exception ex)
-                    {
-                    }
+                    catch (Exception ex){}
                 });
             }
             private void ResetPreviewState(ToolContext ctx)
@@ -345,9 +289,7 @@ namespace TabPaint
                 // 3. 执行透明度混合写入 (Alpha Blending)
                 BlendPixels(ctx.Surface.Bitmap, _selectionRect.X, _selectionRect.Y, finalWidth, finalHeight, finalData, finalStride);
 
-                // 4. 清理现场
-
-                ctx.Undo.CommitStroke(shape ? UndoActionType.Draw : UndoActionType.Selection);
+                ctx.Undo.CommitStroke(shape ? UndoActionType.Draw : UndoActionType.Selection);   //清理
                 HidePreview(ctx); IsPasted = false;
                 _selectionData = null;
                 ctx.IsDirty = true;
@@ -396,15 +338,11 @@ namespace TabPaint
                                 byte srcG = sourcePixels[srcRowIndex + c * 4 + 1];
                                 byte srcR = sourcePixels[srcRowIndex + c * 4 + 2];
                                 byte srcA = sourcePixels[srcRowIndex + c * 4 + 3];
-
-                                // 优化：源像素全透明，无需操作，保留背景原样
                                 if (srcA == 0)
                                 {
                                     pTargetRow += 4;
                                     continue;
                                 }
-
-                                // 优化：源像素全不透明，直接覆盖
                                 if (srcA == 255)
                                 {
                                     pTargetRow[0] = srcB;
@@ -418,20 +356,12 @@ namespace TabPaint
                                     byte dstG = pTargetRow[1];
                                     byte dstR = pTargetRow[2];
                                     byte dstA = pTargetRow[3];
-
-                                    // 归一化 Alpha (0.0 - 1.0)
-                                    float sa = srcA / 255.0f;
+                                    float sa = srcA / 255.0f;       // 归一化 Alpha (0.0 - 1.0)
                                     float da = dstA / 255.0f;
-
-                                    // 计算最终 Alpha: a_out = as + ad * (1 - as)
-                                    float outA = sa + da * (1.0f - sa);
-
-                                    // 如果最终透明度为0（理论上不会进这里因为 srcA>0），直接跳过
+                                    float outA = sa + da * (1.0f - sa);    // 计算最终 Alpha: a_out = as + ad * (1 - as)
                                     if (outA > 0)
-                                    {
-
+                                    { // 如果最终透明度为0（理论上不会进这里因为 srcA>0），直接跳过
                                         float factorDest = da * (1.0f - sa);
-
                                         pTargetRow[0] = (byte)((srcB * sa + dstB * factorDest) / outA);
                                         pTargetRow[1] = (byte)((srcG * sa + dstG * factorDest) / outA);
                                         pTargetRow[2] = (byte)((srcR * sa + dstR * factorDest) / outA);
@@ -453,8 +383,6 @@ namespace TabPaint
                     targetBmp.Unlock();
                 }
             }
-
-
             private void HidePreview(ToolContext ctx)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -483,9 +411,7 @@ namespace TabPaint
 
                 // 2. 矩形选区：包围盒内即视为选中
                 if (SelectionType == SelectionType.Rectangle) return true;
-
-                // 3. 套索和魔棒：检查 AlphaMap
-                if (_selectionAlphaMap != null && _transformStep == 0)
+                if (_selectionAlphaMap != null && _transformStep == 0)    // 3. 套索和魔棒：检查 AlphaMap
                 {
                     int localX = (int)(px.X - _selectionRect.X);
                     int localY = (int)(px.Y - _selectionRect.Y);
@@ -498,17 +424,9 @@ namespace TabPaint
                         return _selectionAlphaMap[index] > 10;
                     }
                 }
-
-                // 4. 如果已经变换过（缩放/移动），使用 Geometry 判断
-                if (_selectionGeometry != null && _transformStep > 0)
-                {
-                    return _selectionGeometry.FillContains(px);
-                }
-
+                if (_selectionGeometry != null && _transformStep > 0) return _selectionGeometry.FillContains(px); // 4. 如果已经变换过（缩放/移动），使用 Geometry 判断
                 return true;
             }
-
-
             private void ClearRect(ToolContext ctx, Int32Rect rect, Color color)
             {
                 // 获取当前设置
@@ -519,26 +437,21 @@ namespace TabPaint
                 {
                     byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
                     int stride = ctx.Surface.Bitmap.BackBufferStride;
-
-                    // 预先计算好要写入的值，避免在循环中判断
-                    byte targetB = 0, targetG = 0, targetR = 0, targetA = 0;
+                    byte targetB = 0, targetG = 0, targetR = 0, targetA = 0; // 预先计算好要写入的值，避免在循环中判断
                     bool writeAlpha = true;
 
                     switch (clearMode)
                     {
-                        case SelectionClearMode.Transparent:
-                            // 全0
+                        case SelectionClearMode.Transparent:// 全0
                             targetB = 0; targetG = 0; targetR = 0; targetA = 0;
                             writeAlpha = true;
                             break;
                         case SelectionClearMode.White:
-                            // 全255
-                            targetB = 255; targetG = 255; targetR = 255; targetA = 255;
+                            targetB = 255; targetG = 255; targetR = 255; targetA = 255; // 全255
                             writeAlpha = true;
                             break;
                         case SelectionClearMode.PreserveAlpha:
-                            // 使用传入的 color (通常是背景色) 的RGB，但不改写 A
-                            targetB = color.B; targetG = color.G; targetR = color.R;
+                            targetB = color.B; targetG = color.G; targetR = color.R;    // 使用传入的 color (通常是背景色) 的RGB，但不改写 A
                             writeAlpha = false;
                             break;
                     }
@@ -561,19 +474,16 @@ namespace TabPaint
                         }
                         else
                         {
-                            // 模式：保留Alpha (只写RGB)
                             for (int x = 0; x < rect.Width; x++)
                             {
                                 rowPtr[0] = targetB;
                                 rowPtr[1] = targetG;
-                                rowPtr[2] = targetR;
-                                // rowPtr[3] = ... // 跳过 Alpha
+                                rowPtr[2] = targetR;// 跳过 Alpha
                                 rowPtr += 4;
                             }
                         }
                     }
                 }
-
                 // 标记脏区域以更新 UI
                 var pixelWidth = ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth;
                 var pixelHeight = ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight;

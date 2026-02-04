@@ -33,10 +33,7 @@ namespace TabPaint
             {
                 _currentFileExists = true;
             }
-            else
-            {
-                _currentFileExists = false;
-            }
+            else  _currentFileExists = false;
         }
         static public void RestoreWindow(System.Windows.Window window)
         {

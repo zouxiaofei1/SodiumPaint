@@ -50,26 +50,17 @@ namespace TabPaint
                         case BrushStyle.Brush: key = "Pen_Brush"; break;
                     }
                 }
-                else if (_router.CurrentTool is ShapeTool)
-                {
-                    key = "Shape";
-                }
-               
-
-                if (ThicknessSlider != null)
-                {
-                    ThicknessSlider.IsEnabled = !isPencil;
-
-                }
-
+                else if (_router.CurrentTool is ShapeTool)  key = "Shape";
+  
+                if (ThicknessSlider != null)  ThicknessSlider.IsEnabled = !isPencil;
                 SettingsManager.Instance.Current.CurrentToolKey = key;
 
                 _ctx.PenThickness = SettingsManager.Instance.Current.PenThickness;
             }
-            finally
-            {
-                _isUpdatingToolSettings = false;
-            }
+            finally   { _isUpdatingToolSettings = false;}
+         
+               
+            
         }
 
         public void UpdateCurrentColor(Color color, bool secondColor = false) // 更新前景色按钮颜色
@@ -123,22 +114,14 @@ namespace TabPaint
                 Width = _restoreBounds.Width;
                 Height = _restoreBounds.Height;
                 WindowState = WindowState.Normal;
-
-
             }
             AutoUpdateMaximizeIcon();
         }
 
         public void AutoUpdateMaximizeIcon()
         {
-            if(_maximized)
-            {
-                SetRestoreIcon();  // 切换到还原图标
-            }
-            else
-            {
-                SetMaximizeIcon();// 切换到最大化矩形图标
-            }
+            if(_maximized)SetRestoreIcon(); 
+            else SetMaximizeIcon();
         }
         private void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，所有画笔都是pen工具
@@ -189,13 +172,9 @@ namespace TabPaint
                 ThicknessPreview.RadiusY = size / 2;
             }
             if (_ctx.PenStyle == BrushStyle.Eraser)
-            {
-                ThicknessPreview.Stroke = Brushes.Black; // 橡皮擦用黑色虚线
-            }
+                ThicknessPreview.Stroke = Brushes.Black; 
             else
-            {
                 ThicknessPreview.Stroke = Brushes.Purple;
-            }
 
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;
@@ -273,19 +252,13 @@ namespace TabPaint
 
                     // 1. 尝试获取当前语言对应的名称 (中文系统下即获取中文名)
                     if (fontFamily.FamilyNames.ContainsKey(currentLang))
-                    {
                         name = fontFamily.FamilyNames[currentLang];
-                    }
                     // 2. 如果没有当前语言，尝试获取英文名称
                     else if (fontFamily.FamilyNames.ContainsKey(System.Windows.Markup.XmlLanguage.GetLanguage("en-us")))
-                    {
                         name = fontFamily.FamilyNames[System.Windows.Markup.XmlLanguage.GetLanguage("en-us")];
-                    }
                     // 3. 实在不行，就用 Source
                     else
-                    {
                         name = fontFamily.Source;
-                    }
 
                     fontItems.Add(new FontDisplayItem { DisplayName = name, FontFamily = fontFamily });
                 }
@@ -468,9 +441,8 @@ namespace TabPaint
         }
         private System.Drawing.Bitmap BitmapSourceToDrawingBitmap(BitmapSource source)
         {
-            using (MemoryStream outStream = new MemoryStream())
+            using (MemoryStream outStream = new MemoryStream())     // 使用 PNG 编码器作为中间桥梁，保留透明度
             {
-                // 使用 PNG 编码器作为中间桥梁，保留透明度
                 BitmapEncoder enc = new PngBitmapEncoder();
                 enc.Frames.Add(BitmapFrame.Create(source));
                 enc.Save(outStream);
@@ -530,7 +502,6 @@ namespace TabPaint
                 }
                 finally
                 {
-                    // 务必释放句柄
                     handle.Free();
                 }
 
@@ -552,8 +523,7 @@ namespace TabPaint
 
             if (ext == ".jpg" || ext == ".jpeg")
             {
-                // JPG 不支持透明，需要合成白底
-                saveSource = ConvertToWhiteBackground(saveSource);
+                saveSource = ConvertToWhiteBackground(saveSource);        // JPG 不支持透明，需要合成白底
                 encoder = new JpegBitmapEncoder { QualityLevel = 90 };
             }
             else if (ext == ".bmp")
@@ -565,20 +535,14 @@ namespace TabPaint
             {
                 encoder = new TiffBitmapEncoder();
             }
-            else // 默认 PNG
-            {
-                encoder = new PngBitmapEncoder();
-            }
+            else   encoder = new PngBitmapEncoder(); // 默认 PNG
 
             encoder.Frames.Add(BitmapFrame.Create(saveSource));
 
             // 4. 写入文件
             try
             {
-                using (FileStream fs = new FileStream(path, FileMode.Create))
-                {
-                    encoder.Save(fs);
-                }
+                using (FileStream fs = new FileStream(path, FileMode.Create)) encoder.Save(fs);
             }
             catch (UnauthorizedAccessException)
             {
@@ -602,8 +566,7 @@ namespace TabPaint
             }
 
             MarkAsSaved();
-            // 5. 更新对应标签页的缩略图
-            UpdateTabThumbnail(path);
+            UpdateTabThumbnail(path);  // 5. 更新对应标签页的缩略图
         }
 
         private void HandleSaveError(string message, string failedPath)
@@ -612,10 +575,7 @@ namespace TabPaint
                 string.Format(LocalizationManager.GetString("L_Msg_SaveError_Content"), message),
                 LocalizationManager.GetString("L_Msg_SaveError_Title"),
                 MessageBoxButton.YesNo);
-            if (result == MessageBoxResult.Yes)
-            {
-               OnSaveAsClick(null, null)    ;
-            }
+            if (result == MessageBoxResult.Yes)   OnSaveAsClick(null, null)    ;
         }
         private void UpdateSliderBarValue(double newScale)
         {

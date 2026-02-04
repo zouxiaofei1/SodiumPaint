@@ -37,12 +37,11 @@ namespace TabPaint
         public static void SendArgsToFirstInstance(string[] args)
         {
             if (args == null || args.Length == 0) return;
-            try
+            try    // 连接超时设短一点，如果连不上说明旧实例可能正在关闭中
             {
-                // 连接超时设短一点，如果连不上说明旧实例可能正在关闭中
                 using (var client = new NamedPipeClientStream(".", UniqueId, PipeDirection.Out))
                 {
-                    client.Connect(300); // 300ms 连不上就放弃
+                    client.Connect(300); 
                     using (var writer = new StreamWriter(client))
                     {
                         writer.WriteLine(args[0]);
@@ -50,9 +49,7 @@ namespace TabPaint
                     }
                 }
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
         public static void ListenForArgs(Action<string> onFileReceived)
         {
@@ -73,10 +70,7 @@ namespace TabPaint
                             using (var reader = new StreamReader(server))
                             {
                                 string filePath = await reader.ReadLineAsync();
-                                if (!string.IsNullOrEmpty(filePath))
-                                {
-                                    onFileReceived?.Invoke(filePath);
-                                }
+                                if (!string.IsNullOrEmpty(filePath))  onFileReceived?.Invoke(filePath);
                             }
                         }
                     }

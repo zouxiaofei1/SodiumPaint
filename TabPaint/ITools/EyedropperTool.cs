@@ -25,15 +25,8 @@ namespace TabPaint
                         var resourceInfo = System.Windows.Application.GetResourceStream(
                             new Uri("pack://application:,,,/Resources/Cursors/Eyedropper.cur"));
 
-                        if (resourceInfo != null)
-                        {
-                            _cachedCursor = new System.Windows.Input.Cursor(resourceInfo.Stream);
-                        }
-                        else
-                        {
-                            // 防止资源没找到导致后续空指针，回退到默认
-                            return System.Windows.Input.Cursors.Cross;
-                        }
+                        if (resourceInfo != null)  _cachedCursor = new System.Windows.Input.Cursor(resourceInfo.Stream);
+                        else  return System.Windows.Input.Cursors.Cross;
                     }
                     return _cachedCursor;
                 }

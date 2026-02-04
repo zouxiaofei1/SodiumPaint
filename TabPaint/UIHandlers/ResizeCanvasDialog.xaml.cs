@@ -35,14 +35,11 @@ namespace TabPaint
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            // 初始化 UI
+        { // 初始化 UI
             _isUpdating = true;
             WidthTextBox.Text = _originalWidth.ToString();
             HeightTextBox.Text = _originalHeight.ToString();
-
-            // Slider 默认在中间 (0 = 1.0x)
-            WidthSlider.Value = 0;
+            WidthSlider.Value = 0;     // Slider 默认在中间 (0 = 1.0x)
             HeightSlider.Value = 0;
 
             _isUpdating = false;
@@ -99,23 +96,16 @@ namespace TabPaint
                 }
                 else
                 {
-                    // 原始: "缩放: {scale:P0}  |  原始: {_originalWidth} x {_originalHeight}"
-                    // 注意：{0:P0} 会自动根据语言环境处理百分比格式
                     InfoTextBlock.Text = string.Format(
                         LocalizationManager.GetString("L_Info_ResampleMode_Format"),
                         scale,
                         _originalWidth,
                         _originalHeight);
                 }
-
-
                 InfoTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(136, 136, 136)); // 恢复灰色 #888888
             }
         }
-
-
-        // 统一处理宽度变更
-        private void OnWidthChanged(int newWidth, bool fromSlider)
+        private void OnWidthChanged(int newWidth, bool fromSlider)  // 统一处理宽度变更
         {
             if (_isUpdating) return;
             _isUpdating = true;
@@ -140,10 +130,7 @@ namespace TabPaint
             ImageWidth = newWidth;
             double scale = (double)newWidth / _originalWidth;
 
-            if (!fromSlider)
-            {
-                WidthSlider.Value = ScaleToSlider(scale);
-            }
+            if (!fromSlider)  WidthSlider.Value = ScaleToSlider(scale);
             WidthTextBox.Text = newWidth.ToString();
 
             UpdateInfoText();
@@ -168,9 +155,7 @@ namespace TabPaint
                 WidthTextBox.Text = calculatedWidth.ToString();
                 WidthSlider.Value = ScaleToSlider((double)calculatedWidth / _originalWidth);
             }
-
-            // 4. 更新高度相关 UI
-            ImageHeight = newHeight;
+            ImageHeight = newHeight;   // 4. 更新高度相关 UI
             double scale = (double)newHeight / _originalHeight;
 
             if (!fromSlider)
@@ -225,10 +210,7 @@ namespace TabPaint
             // 点击锁链时，立即根据当前宽度重新计算高度以对齐
             if (AspectRatioToggle.IsChecked == true)
             {
-                if (int.TryParse(WidthTextBox.Text, out int w))
-                {
-                    OnWidthChanged(w, false); // 强制触发一次同步
-                }
+                if (int.TryParse(WidthTextBox.Text, out int w)) OnWidthChanged(w, false); // 强制触发一次同步
             }
         }
 
@@ -238,14 +220,8 @@ namespace TabPaint
 
             IsCanvasResizeMode = ModeComboBox.SelectedIndex == 1;
 
-            if (IsCanvasResizeMode)
-            {
-                InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
-            }
-            else
-            {
-                InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
-            }
+            if (IsCanvasResizeMode)   InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
+            else   InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

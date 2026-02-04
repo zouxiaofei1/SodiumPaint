@@ -141,12 +141,9 @@ namespace TabPaint
                         if (centerOffset > MainImageBar.Scroller.ScrollableWidth) centerOffset = MainImageBar.Scroller.ScrollableWidth;
 
                         MainImageBar.Scroller.ScrollToHorizontalOffset(centerOffset);
-
                     }
                 }
-                catch (Exception ex)
-                {
-                }
+                catch (Exception ex)  { }
             }, System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
         private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)// 阻止边界反馈
@@ -167,8 +164,7 @@ namespace TabPaint
 
         public static void AggressiveMemoryRelease()
         {
-            // 先做标准的 GC 清理
-            ForceCleanup();
+            ForceCleanup(); // 先做标准的 GC 清理
 
             long memoryUsed = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
             if (memoryUsed > 1024 * 1024 * 1024)
@@ -227,10 +223,7 @@ namespace TabPaint
             }
             else
             {
-                if (_currentTabItem != null)
-                {
-                    _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
-                }
+                if (_currentTabItem != null) _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
             }
             UpdateImageBarSliderState();
             UpdateWindowTitle();

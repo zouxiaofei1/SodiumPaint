@@ -22,7 +22,6 @@ namespace TabPaint.Windows
                 TitleTextBlock.Text = title;
                 this.Title = title;
             }
-
             StrengthSlider.Minimum = min;
             StrengthSlider.Maximum = max;
             StrengthSlider.Value = initialValue;
@@ -36,9 +35,6 @@ namespace TabPaint.Windows
             if (e.ButtonState == MouseButtonState.Pressed)
                 this.DragMove();
         }
-
-        // --- 滑块与文本框联动 ---
-
         private void StrengthSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_isUpdatingFromCode) return;
@@ -67,24 +63,17 @@ namespace TabPaint.Windows
             ValueTextBox.Text = value.ToString();
             _isUpdatingFromCode = false;
         }
-
-        // --- 输入验证 ---
-
-        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)//输入验证
         {
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
-
-        // --- 按钮逻辑 ---
-
-        private void OK_Click(object sender, RoutedEventArgs e)
+        private void OK_Click(object sender, RoutedEventArgs e)//按钮逻辑
         {
             ResultValue = (int)StrengthSlider.Value;
             IsConfirmed = true;
             Close();
         }
-
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             IsConfirmed = false;

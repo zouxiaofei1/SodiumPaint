@@ -64,12 +64,7 @@ namespace TabPaint
                 int index = mergedDicts.IndexOf(oldDict);
                 mergedDicts[index] = newDict;
             }
-            else
-            {
-                mergedDicts.Add(newDict);
-            }
-
-            // 3. 记录当前主题状态
+            else  mergedDicts.Add(newDict);
             CurrentAppliedTheme = isDark ? AppTheme.Dark : AppTheme.Light;
 
             // 4. 图标字典重载 (保持原有逻辑)
@@ -81,12 +76,8 @@ namespace TabPaint
                 Application.Current.Resources.MergedDictionaries.Add(iconsDict);
             }
 
-            if (!IsWin11())
-            {
-                ApplyWin10FallbackBackground(isDark);
-            }
+            if (!IsWin11())   ApplyWin10FallbackBackground(isDark);
 
-            // 5. 刷新标题栏和强调色
             UpdateWindowStyle(isDark);
             RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
 
@@ -105,11 +96,7 @@ namespace TabPaint
             if (isDark)
             {
                 var win10DarkBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#202020"));
-
-
                 win10DarkBg.Freeze();
-
-                // 覆盖资源
                 if (resources.Contains("WindowBackgroundBrush")) resources.Remove("WindowBackgroundBrush");
                 resources["WindowBackgroundBrush"] = win10DarkBg;
 
@@ -157,8 +144,6 @@ namespace TabPaint
                 SetSolidBrush(resources, "ToolAccentSubtleSelectedBrush", baseColor, 0.15);
                 SetSolidBrush(resources, "ToolAccentSubtleHoverSelectedBrush", baseColor, 0.25);
 
-                // --- SystemAccent (滑块/复选框/RadioButton) ---
-                // 统一让系统控件也使用这个颜色
                 SetSolidBrush(resources, "SystemAccentBrush", baseColor);
                 SetSolidBrush(resources, "SystemAccentHoverBrush", hoverColor);
                 SetSolidBrush(resources, "SystemAccentPressedBrush", pressedColor);

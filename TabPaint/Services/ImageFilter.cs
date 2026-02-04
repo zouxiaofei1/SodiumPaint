@@ -2,9 +2,7 @@
 using System.ComponentModel;
 
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
+
 
 //
 //TabPaint主程序
@@ -20,12 +18,9 @@ namespace TabPaint
             {
                 fixed (byte* ptr = pixels)
                 {
-                    // 转换为 IntPtr 以便在 Lambda 中捕获
-                    IntPtr dataPtr = (IntPtr)ptr;
-
+                    IntPtr dataPtr = (IntPtr)ptr;    // 转换为 IntPtr 以便在 Lambda 中捕获
                     Parallel.For(0, (height + blockSize - 1) / blockSize, by =>
                     {
-                        // 在 Lambda 内部转回指针
                         byte* basePtr = (byte*)dataPtr;
 
                         int yStart = by * blockSize;
@@ -51,9 +46,7 @@ namespace TabPaint
                                     count++;
                                 }
                             }
-
                             if (count == 0) continue;
-
                             byte avgB = (byte)(sumB / count);
                             byte avgG = (byte)(sumG / count);
                             byte avgR = (byte)(sumR / count);
@@ -74,10 +67,8 @@ namespace TabPaint
                 }
             }
         }
-
-        // 5. 实现 Gaussian Blur 算法 (使用分离卷积以提高性能)
         private void ProcessGaussianBlur(byte[] pixels, int width, int height, int stride, int radius)
-        {
+        {  // 5. 实现 Gaussian Blur 算法 (使用分离卷积以提高性能)
             int kernelSize = radius * 2 + 1;
             double[] kernel = new double[kernelSize];
             double sigma = radius / 2.0;
@@ -94,11 +85,9 @@ namespace TabPaint
 
             byte[] tempPixels = new byte[pixels.Length];
             Array.Copy(pixels, tempPixels, pixels.Length);
-
             unsafe
             {
-                // --- 第一步：水平模糊 ---
-                fixed (byte* srcPtr = tempPixels)
+                fixed (byte* srcPtr = tempPixels)    // --- 第一步：水平模糊 ---
                 fixed (byte* destPtr = pixels)
                 fixed (double* kPtr = kernel)
                 {
@@ -135,12 +124,8 @@ namespace TabPaint
                         }
                     });
                 }
-
-                // 同步中间结果
-                Array.Copy(pixels, tempPixels, pixels.Length);
-
-                // --- 第二步：垂直模糊 ---
-                fixed (byte* srcPtr = tempPixels)
+                Array.Copy(pixels, tempPixels, pixels.Length);     // 同步中间结果
+                fixed (byte* srcPtr = tempPixels)    // --- 第二步：垂直模糊 ---
                 fixed (byte* destPtr = pixels)
                 fixed (double* kPtr = kernel)
                 {
@@ -177,7 +162,6 @@ namespace TabPaint
                 }
             }
         }
-
         private void ProcessBrown(byte[] pixels, int width, int height, int stride)
         {
             unsafe
@@ -193,12 +177,7 @@ namespace TabPaint
                             byte b = row[x * 4];
                             byte g = row[x * 4 + 1];
                             byte r = row[x * 4 + 2];
-
-                            // 1. 标准灰度
                             double gray = r * 0.299 + g * 0.587 + b * 0.114;
-
-                            // 2. 褐色调色 (R多, G中, B少)
-                            // Brown/Bronze look: R+=40, G+=10, B-=20 (基于灰度)
                             double newR = gray + 35;
                             double newG = gray + 8;
                             double newB = gray - 20;
@@ -214,7 +193,6 @@ namespace TabPaint
 
         private void ProcessSharpen(byte[] pixels, int width, int height, int stride)
         {
-            // 锐化需要邻域像素，必须克隆源数据
             byte[] srcPixels = (byte[])pixels.Clone();
 
             unsafe
@@ -232,14 +210,8 @@ namespace TabPaint
 
                         for (int x = 1; x < width - 1; x++) // 跳过边缘列
                         {
-                            // 核心像素位置
                             int offset = y * stride + x * 4;
-
-                            // 定义卷积核：中心 9，周围 -1
-                            // 累加 B, G, R
                             int sumB = 0, sumG = 0, sumR = 0;
-
-                            // 遍历 3x3 区域
                             for (int ky = -1; ky <= 1; ky++)
                             {
                                 for (int kx = -1; kx <= 1; kx++)
@@ -330,17 +302,12 @@ namespace TabPaint
 
         private void ProcessGlow(byte[] pixels, int width, int height, int stride)
         {
-            // 因为卷积需要读取原始邻域像素，我们必须拷贝一份作为“只读源”
             byte[] srcPixels = (byte[])pixels.Clone();
-
             unsafe
             {
-                // 目标数组(pixels)的指针
                 fixed (byte* destPtr = pixels)
                 {
                     IntPtr destHandle = (IntPtr)destPtr;
-
-                    // 源数组(srcPixels)的指针
                     fixed (byte* srcPtr = srcPixels)
                     {
                         IntPtr srcHandle = (IntPtr)srcPtr;
@@ -392,7 +359,6 @@ namespace TabPaint
                 }
             }
         }
-        // 4. 油画 (Oil Paint) - 需要源数据副本
         private void ProcessOilPaint(byte[] pixels, int width, int height, int stride, int radius, int intensityLevels)
         {
             byte[] srcPixels = (byte[])pixels.Clone();

@@ -121,10 +121,7 @@ namespace TabPaint
                 // 批量移除左侧
                 for (int i = 0; i < itemsToRemoveFromLeft; i++)
                 {
-                    if (FileTabs.Count > 0)
-                    {
-                        FileTabs.RemoveAt(0);
-                    }
+                    if (FileTabs.Count > 0)  FileTabs.RemoveAt(0);
                 }
                 double offsetCorrection = itemsToRemoveFromLeft * itemWidth;
                 MainImageBar.Scroller.ScrollToHorizontalOffset(currentOffset - offsetCorrection);
@@ -186,10 +183,7 @@ namespace TabPaint
                                 MainImageBar.Slider.Value = targetValue;
                             }
                         }
-                        else
-                        {
-                            MainImageBar.Slider.Value = 0;
-                        }
+                        else MainImageBar.Slider.Value = 0;
                     }
                 }
                 finally
@@ -324,12 +318,8 @@ namespace TabPaint
                 if (currentTab == null)
                 {
                     await RefreshTabPageAsync(index, true);
-                }
-                else
-                {
-                    // 如果已经在 Tab 里，可能只需要轻量切换
-                    await RefreshTabPageAsync(index, false);
-                }
+                } // 如果已经在 Tab 里，可能只需要轻量切换
+                else  await RefreshTabPageAsync(index, false);
 
                 // 确保 UI 同步
                 ScrollToTabCenter(currentTab ?? FileTabs.FirstOrDefault(t => t.FilePath == _imageFiles[index]));
@@ -415,17 +405,10 @@ namespace TabPaint
             // 2. 重置复位计时器（如果在200ms内连续滚动，锁会一直保持）
             _wheelLockTimer?.Stop();
             _wheelLockTimer?.Start();
-
-            if (e.Delta < 0)
-            {
-                // 向下滚，增加 Value
-                slider.Value = Math.Min(slider.Maximum, slider.Value + step);
-            }
-            else
-            {
-                // 向上滚，减少 Value
-                slider.Value = Math.Max(slider.Minimum, slider.Value - step);
-            }
+  // 向下滚，增加 Value
+            if (e.Delta < 0)  slider.Value = Math.Min(slider.Maximum, slider.Value + step);
+ 
+            else slider.Value = Math.Max(slider.Minimum, slider.Value - step); // 向上滚，减少 Value
          
             // 标记事件已处理，防止冒泡导致父容器(ScrollViewer)也跟着滚
             e.Handled = true;
@@ -460,10 +443,7 @@ namespace TabPaint
                         newTab.IsLoading = false;
                     }, TaskScheduler.FromCurrentSynchronizationContext());
                 }
-                else
-                {
-                    newTab.Thumbnail = GenerateBlankThumbnail();
-                }
+                else  newTab.Thumbnail = GenerateBlankThumbnail();
             }
             else
             {

@@ -16,9 +16,7 @@ namespace TabPaint
         public partial class SelectTool : ToolBase
         {
             public bool HasActiveSelection => _selectionData != null;
-
-            // 添加：执行删除选区的具体逻辑
-            public void DeleteSelection(ToolContext ctx)
+            public void DeleteSelection(ToolContext ctx)     // 添加：执行删除选区的具体逻辑
             {
                 if (_selectionData == null) return;
 
@@ -27,16 +25,9 @@ namespace TabPaint
                     ctx.Undo.BeginStroke();
                     ctx.Undo.AddDirtyRect(_selectionRect);
 
-                    if (SelectionType == SelectionType.Lasso && _selectionAlphaMap != null)
-                    {
-                        ClearLassoRegion(ctx, _selectionRect, ctx.EraserColor);
-                    }
-                    else
-                    {
-                        ClearRect(ctx, _selectionRect, ctx.EraserColor);
-                    }
-                    // 提交到 Undo 栈
-                    ctx.Undo.CommitStroke();
+                    if (SelectionType == SelectionType.Lasso && _selectionAlphaMap != null) ClearLassoRegion(ctx, _selectionRect, ctx.EraserColor);
+                    else ClearRect(ctx, _selectionRect, ctx.EraserColor);
+                    ctx.Undo.CommitStroke();  // 提交到 Undo 栈
                     ctx.IsDirty = true;
                 }
                 HidePreview(ctx);
@@ -63,7 +54,6 @@ namespace TabPaint
             {
                 LastSelectionDeleteTime = DateTime.MinValue;
             }
-
             private void CopyToSystemClipboard(ToolContext ctx)
             {
                 if (_selectionData == null) return;
@@ -91,11 +81,8 @@ namespace TabPaint
 
                     System.Windows.Clipboard.SetDataObject(dataObj, true);
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception)  {  }
             }
-
             public void CutSelection(ToolContext ctx, bool paste)
             {//paste = false ->delete , true->cut
                 if (_selectionData == null) SelectAll(ctx, true);
@@ -217,8 +204,6 @@ namespace TabPaint
                     mw.UpdateSelectionScalingMode();
                     ctx.Undo.PushTransformAction(oldRect, oldPixels, redoRect, redoPixels);
                     mw.NotifyCanvasSizeChanged(newW, newH);
-
-                    // mw._canvasResizer.UpdateUI();
                     mw.OnPropertyChanged("CanvasWidth");
                     mw.OnPropertyChanged("CanvasHeight");
                 }
@@ -231,12 +216,8 @@ namespace TabPaint
                 _selectionData = newData;
                 _selectionRect = new Int32Rect(0, 0, imgW, imgH);
                 _originalRect = _selectionRect;
-
-                // 这里直接使用 WriteableBitmap 包装归一化后的 bitmap，DPI 已经是正确的了
                 ctx.SelectionPreview.Source = new WriteableBitmap(sourceBitmap);
-
-                // 默认放在左上角 (0,0)
-                Canvas.SetLeft(ctx.SelectionPreview, 0);
+                Canvas.SetLeft(ctx.SelectionPreview, 0);  // 默认放在左上角 (0,0)
                 Canvas.SetTop(ctx.SelectionPreview, 0);
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
@@ -278,9 +259,8 @@ namespace TabPaint
                 }
 
                 // 统一处理获取到的位图
-                if (sourceBitmap != null)
+                if (sourceBitmap != null) // 调用上一步建议中提取的统一插入逻辑
                 {
-                    // 调用上一步建议中提取的统一插入逻辑
                     InsertImageAsSelection(ctx, sourceBitmap);
                 }
             }
@@ -296,7 +276,6 @@ namespace TabPaint
                     BitmapImage bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.UriSource = new Uri(path);
-                    // 必须使用 OnLoad，否则粘贴后如果删除/移动原文件，程序会崩溃或锁定文件
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze(); // 跨线程安全
@@ -321,9 +300,6 @@ namespace TabPaint
                     Array.Copy(_selectionData, _clipboardData, _selectionData.Length);
                 }
             }
-
-
-            // 替换 SelectTool 类中的 SelectAll 方法
             public void SelectAll(ToolContext ctx, bool cut = true)
             {
                 if (ctx.Surface?.Bitmap == null) return;
@@ -354,11 +330,7 @@ namespace TabPaint
                     ClearRect(ctx, _selectionRect, ctx.EraserColor);
                     _hasLifted = true; // 标记已经提起来了
                 }
-                else
-                {
-                    _hasLifted = false;
-                }
-
+                else _hasLifted = false;
                 // 创建预览位图
                 var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
                     ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
@@ -385,8 +357,6 @@ namespace TabPaint
                 DrawOverlay(ctx, _selectionRect);
                 ((MainWindow)System.Windows.Application.Current.MainWindow).SetCropButtonState();
             }
-
-
             public void CropToSelection(ToolContext ctx)
             {
                 if (_selectionData == null || _selectionRect.Width <= 0 || _selectionRect.Height <= 0) return;
@@ -458,7 +428,6 @@ namespace TabPaint
             }
             public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f) ////////////////////////////////////////////////////////////////////////////// 后面是鼠标键盘事件处理
             {
-
                 if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
                 if (lag > 0) { lag--; return; }
                 if (ctx.Surface.Bitmap == null) return;
@@ -510,11 +479,6 @@ namespace TabPaint
                         if (ctx.SelectionOverlay != null) ctx.SelectionOverlay.Children.Clear();
                         _selectionData = null; // 逻辑清除
                     }
-                    else
-                    {
-                    }
-
-                    // 立即执行一次容差为0的计算
                     RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
 
                     ctx.ViewElement.CaptureMouse();
@@ -570,10 +534,7 @@ namespace TabPaint
                     }
                     else
                     {
-                        if (_pendingTab != null)
-                        {
-                            ResetSwitchTimer();
-                        }
+                        if (_pendingTab != null)  ResetSwitchTimer();
                     }
                 }
                 else
@@ -608,11 +569,8 @@ namespace TabPaint
                             break;
                     }
                 }
-
-                // 缩放逻辑
-                // 缩放逻辑
                 if (_resizing)
-                {
+                {   // 缩放逻辑
                     if (!_hasLifted) LiftSelectionFromCanvas(ctx);
 
                     double fixedRight = _startX + _startW;
@@ -666,14 +624,8 @@ namespace TabPaint
                             _currentAnchor == ResizeAnchor.BottomLeft || _currentAnchor == ResizeAnchor.BottomRight)
                         {
                             // 取变化幅度较大的一边作为主导
-                            if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH))
-                            {
-                                proposedH = proposedW / aspectRatio;
-                            }
-                            else
-                            {
-                                proposedW = proposedH * aspectRatio;
-                            }
+                            if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH))  proposedH = proposedW / aspectRatio;
+                            else  proposedW = proposedH * aspectRatio;
                         }
                     }
 
@@ -712,9 +664,6 @@ namespace TabPaint
                     _selectionRect.Height = (int)proposedH;
                     _selectionRect.X = (int)finalX;
                     _selectionRect.Y = (int)finalY;
-
-
-                    // ---------------- 渲染部分 (Transform逻辑保持不变) ----------------
                     if (_originalRect.Width > 0 && _originalRect.Height > 0)
                     {
                         double scaleX = (double)_selectionRect.Width / _originalRect.Width;
@@ -768,9 +717,6 @@ namespace TabPaint
                         _wandTolerance = newTolerance;
                         bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
                         RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
-
-                        // 状态栏提示当前容差
-                    //    var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                         mw.SelectionSize = $"{LocalizationManager.GetString("L_Tool_MagicWand")}: {_wandTolerance}";
                     }
                     return;
@@ -800,13 +746,9 @@ namespace TabPaint
                             DrawOverlay(ctx, _selectionRect);
                     }
                 }
-
                 else if (_draggingSelection) // 拖动逻辑
                 {
-                    if (!_hasLifted)
-                    {
-                        LiftSelectionFromCanvas(ctx);
-                    }
+                    if (!_hasLifted)LiftSelectionFromCanvas(ctx);
                     var mainWindow = System.Windows.Application.Current.MainWindow;
                     if (mainWindow != null)
                     {
@@ -882,11 +824,7 @@ namespace TabPaint
                         if (ctx.SelectionPreview.Visibility != Visibility.Visible)
                             ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
-                    else
-                    {
-                        ctx.SelectionPreview.Clip = Geometry.Empty;
-                    }
-
+                    else ctx.SelectionPreview.Clip = Geometry.Empty;
                     DrawOverlay(ctx, tmprc);// 画布的尺寸
 
                 }
@@ -931,9 +869,7 @@ namespace TabPaint
                         }
                     }
                 }
-
-                // 2. 执行泛洪填充 (BFS)
-                ctx.Surface.Bitmap.Lock();
+                ctx.Surface.Bitmap.Lock();     // 2. 执行泛洪填充 (BFS)
                 try
                 {
                     unsafe
@@ -981,9 +917,6 @@ namespace TabPaint
                                             byte g = currPtr[1];
                                             byte r = currPtr[2];
                                             byte a = currPtr[3];
-
-                                            // 颜色距离计算 (简单的曼哈顿距离或最大分量差)
-                                            // 这里使用各通道绝对差值均小于 tolerance (Box模型)，这在PS里比较常用
                                             bool match = (Math.Abs(b - targetB) <= tolerance) &&
                                                          (Math.Abs(g - targetG) <= tolerance) &&
                                                          (Math.Abs(r - targetR) <= tolerance) &&
@@ -1058,10 +991,8 @@ namespace TabPaint
                         _selectionAlphaMap[pixelIdx + 1] = 0; // G
                         _selectionAlphaMap[pixelIdx + 2] = 0; // R
                         _selectionAlphaMap[pixelIdx + 3] = selected ? (byte)255 : (byte)0; // A
-
-                        // 同时处理 _selectionData：未选中区域设为透明
                         if (!selected)
-                        {
+                        {   // 同时处理 _selectionData：未选中区域设为透明
                             rawData[pixelIdx + 0] = 0;
                             rawData[pixelIdx + 1] = 0;
                             rawData[pixelIdx + 2] = 0;
@@ -1071,12 +1002,9 @@ namespace TabPaint
                 }
 
                 _selectionData = rawData;
-                _hasLifted = false; // 魔棒刚选完，并未真正“提起来”（原图还在），直到用户拖动
-
-                // 5. 更新预览
+                _hasLifted = false;
                 CreatePreviewFromSelectionData(ctx);
             }
-
             public void UpdateStatusBarSelectionSize()
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -1100,12 +1028,7 @@ namespace TabPaint
                     // 套索模式：精确清除
                     ClearLassoRegion(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
                 }
-                else
-                {
-                    // 矩形模式：原有逻辑
-                    ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
-                }
-
+                else  ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
                 _hasLifted = true;
             }
             private void ClearLassoRegion(ToolContext ctx, Int32Rect rect, Color color)
@@ -1123,8 +1046,6 @@ namespace TabPaint
                         // 预计算填充色
                         byte tB = 0, tG = 0, tR = 0, tA = 0;
                         bool writeAlpha = true;
-                        // ... (这里复用你 ClearRect 里关于 ClearMode 的 switch 判断逻辑) ...
-                        // 假设是 Transparent 模式:
                         if (clearMode == SelectionClearMode.Transparent) { tB = 0; tG = 0; tR = 0; tA = 0; writeAlpha = true; }
                         else if (clearMode == SelectionClearMode.White) { tB = 255; tG = 255; tR = 255; tA = 255; writeAlpha = true; }
 
@@ -1279,8 +1200,6 @@ namespace TabPaint
                 try
                 {
                     int stride = _originalRect.Width * 4;
-
-                    // 获取当前画布的 DPI，确保 OCR 识别精度一致
                     var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                     double dpiX = mw._surface?.Bitmap.DpiX ?? AppConsts.StandardDpi;
                     double dpiY = mw._surface?.Bitmap.DpiY ?? AppConsts.StandardDpi;
@@ -1370,9 +1289,7 @@ namespace TabPaint
                     gc.PolyLineTo(localPoints.Skip(1).ToList(), true, true);
                 }
                 geom.Freeze();
-                _selectionGeometry = geom; // 保存下来用于 DrawOverlay
-
-                // 4. 生成遮罩 (用于数据处理和画布清除)
+                _selectionGeometry = geom; 
                 var visual = new DrawingVisual();
                 using (DrawingContext dc = visual.RenderOpen())
                 {
@@ -1437,9 +1354,6 @@ namespace TabPaint
                     if (_selectionAlphaMap != null && _selectionRect.Width > 0 && _selectionRect.Height > 0)
                     {
                         _originalRect = _selectionRect;
-
-                        // 生成精确轮廓 Geometry（在后台或直接执行）
-                        // 对于小选区直接执行，大选区可考虑异步
                         if (_selectionRect.Width * _selectionRect.Height < 500000) // 约 700x700
                         {
                             _selectionGeometry = GeneratePixelEdgeGeometry(
@@ -1471,7 +1385,6 @@ namespace TabPaint
 
                         if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
                         {
-                            // 3. 提取数据 (因为上面已经Clamp过了，这里提取的数据量就是精确匹配 _selectionRect 的)
                             _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
 
                             // 4. 记录原始尺寸

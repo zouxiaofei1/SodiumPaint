@@ -115,7 +115,6 @@ namespace TabPaint.Behaviors
             element.SetValue(TimerProperty, timer);
             timer.Start();
         }
-
         private static void Element_MouseLeave(object sender, MouseEventArgs e)
         {
             var element = sender as FrameworkElement;

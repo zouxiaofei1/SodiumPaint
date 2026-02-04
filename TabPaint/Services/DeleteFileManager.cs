@@ -48,8 +48,7 @@ namespace TabPaint
             {
                 try
                 {
-                    // 只有真实存在的文件才进回收站
-                    if (!IsVirtualPath(tab.FilePath) && File.Exists(tab.FilePath))
+                    if (!IsVirtualPath(tab.FilePath) && File.Exists(tab.FilePath))   // 只有真实存在的文件才进回收站
                     {
                         Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
                             tab.FilePath,

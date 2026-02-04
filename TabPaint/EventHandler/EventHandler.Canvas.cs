@@ -48,10 +48,7 @@ namespace TabPaint
                     }
                 }
             }
-            catch
-            {
-                return true;
-            }
+            catch{ return true;}
             return false;
         }
 

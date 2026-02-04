@@ -31,39 +31,28 @@ namespace TabPaint
         public Uri ImageUri { get; set; }
         public string DescriptionKey { get; set; }
     }
-
-
         public partial class HelpWindow : Window, INotifyPropertyChanged
         {
-            // ... 原有的字段保持不变 ...
             private List<HelpPage> _pages;
             private int _currentIndex = 0;
             private DispatcherTimer _gifDelayTimer;
             private static readonly HttpClient _httpClient = new HttpClient();
 
             public event PropertyChangedEventHandler PropertyChanged;
-
-            // 图片显示源
-            private Uri _displayUri;
+            private Uri _displayUri; // 图片显示源
             public Uri DisplayUri
             {
                 get => _displayUri;
                 set { _displayUri = value; OnPropertyChanged(nameof(DisplayUri)); }
             }
-
-            // 当前描述
-            public string CurrentDescription => _pages.Count > 0 ? LocalizationManager.GetString(_pages[_currentIndex].DescriptionKey) : "";
-
-            // UI 状态控制：是否显示遮罩层（加载或错误）
-            private bool _isBusy;
+            public string CurrentDescription => _pages.Count > 0 ? LocalizationManager.GetString(_pages[_currentIndex].DescriptionKey) : "";  // 当前描述
+            private bool _isBusy; // UI 状态控制：是否显示遮罩层（加载或错误）
             public bool IsBusy
             {
                 get => _isBusy;
                 set { _isBusy = value; OnPropertyChanged(nameof(IsBusy)); }
             }
-
-            // UI 状态控制：是否出错
-            private bool _hasError;
+            private bool _hasError; // UI 状态控制：是否出错
             public bool HasError
             {
                 get => _hasError;
@@ -81,8 +70,6 @@ namespace TabPaint
                 InitializeComponent();
                 _pages = pages;
                 this.DataContext = this;
-
-              //  this.Loaded += (s, e) => MicaAcrylicManager.ApplyEffect(this);
 
                 foreach (var page in _pages)
                     Indicators.Add(new IndicatorItem { IsActive = false });
@@ -111,7 +98,6 @@ namespace TabPaint
             if (!MicaAcrylicManager.IsWin11())
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
-               // SidebarBorder.Background = chromeLow;
                 // 同时设置主窗口背景
                 this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
@@ -189,17 +175,12 @@ namespace TabPaint
             // 点击重试
             private void Retry_Click(object sender, MouseButtonEventArgs e)
             {
-           // MessageBox.Show("retry");
                 _ = LoadCurrentPageAsync();
             }
-
-            // 辅助方法：简化 OnPropertyChanged
             protected void OnPropertyChanged(string propertyName)
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
-
-            // ... 剩余的动画、拖动、按钮事件保持不变 ...
             private void ResetGifAnimation()
             {
                 _gifDelayTimer.Stop();
@@ -229,7 +210,6 @@ namespace TabPaint
                 }
                 catch { }
             }
-
             private void Next()
             {
                 _currentIndex = (_currentIndex + 1) % _pages.Count;
@@ -257,7 +237,6 @@ namespace TabPaint
                 else if (e.Key == Key.Right) Next();
                 else if (e.Key == Key.Escape) this.Close();
             }
-
             private void Window_Deactivated(object sender, EventArgs e)
             {
                 try

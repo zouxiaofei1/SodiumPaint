@@ -19,7 +19,6 @@ namespace TabPaint
         public static readonly DependencyProperty ZoomFactorProperty =
             DependencyProperty.Register("ZoomFactor", typeof(double), typeof(Ruler),
                 new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender));
-
         public double ZoomFactor
         {
             get { return (double)GetValue(ZoomFactorProperty); }
@@ -58,7 +57,6 @@ namespace TabPaint
             get { return (double)GetValue(MouseMarkerProperty); }
             set { SetValue(MouseMarkerProperty, value); }
         }
-
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
@@ -131,7 +129,6 @@ namespace TabPaint
 
                     if (Orientation == RulerOrientation.Horizontal)
                     {
-                        // 画刻度线 (使用 tickPen)
                         drawingContext.DrawLine(tickPen, new Point(screenPos, ActualHeight - tickHeight), new Point(screenPos, ActualHeight));
 
                         if (isMainTick)
@@ -142,15 +139,14 @@ namespace TabPaint
                                 FlowDirection.LeftToRight,
                                 typeface,
                                 10,
-                                textBrush, // <--- 【这里修改为 textBrush】
+                                textBrush, 
                                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
                             drawingContext.DrawText(text, new Point(screenPos + 2, 0));
                         }
                     }
                     else // Vertical
-                    {
-                        // 画刻度线 (使用 tickPen)
+                    { // 画刻度线 (使用 tickPen)
                         drawingContext.DrawLine(tickPen, new Point(ActualWidth - tickHeight, screenPos), new Point(ActualWidth, screenPos));
 
                         if (isMainTick)
@@ -161,7 +157,7 @@ namespace TabPaint
                                 FlowDirection.LeftToRight,
                                 typeface,
                                 10,
-                                textBrush, // <--- 【这里修改为 textBrush】
+                                textBrush, 
                                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
                             double xBase = ActualWidth - text.Height - 2;

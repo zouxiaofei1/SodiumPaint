@@ -57,14 +57,8 @@ namespace TabPaint
         {
             
             double scale = 1.0;
-            if (source.PixelHeight < 400 || source.PixelWidth < 400)
-            {
-                scale = 2.0; 
-            }
-            else
-            {
-                scale = 1.5;
-            }
+            if (source.PixelHeight < 400 || source.PixelWidth < 400) scale = 2.0; 
+            else scale = 1.5;
 
             if (scale > 1.0)
             {
@@ -121,10 +115,7 @@ namespace TabPaint
                                     bool currentIsCjk = currentWord.Text.Any(IsCjk);
                                     bool nextIsCjk = nextWord.Text.Any(IsCjk);
 
-                                    if (!currentIsCjk && !nextIsCjk)
-                                    {
-                                        sb.Append(" ");
-                                    }
+                                    if (!currentIsCjk && !nextIsCjk)  sb.Append(" ");
                                 }
                             }
                             sb.AppendLine(); 

@@ -1,8 +1,6 @@
 ﻿
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -21,22 +19,14 @@ namespace TabPaint
 
         public partial class TextTool : ToolBase
         {
-            // 在 TextTool 类内部
-
-            // 在 TextTool 类内部
-
             public void InsertTableIntoCurrentBox(int rows = 3, int cols = 3)
             {
                 if (_richTextBox == null) return;
-
-                // 1. 构建表格对象
                 var table = new Table();
                 table.CellSpacing = 0;
                 // 表格边框颜色（黑色）
                 table.BorderBrush = Brushes.Black;
                 table.BorderThickness = new Thickness(1);
-
-                // 创建列
                 for (int x = 0; x < cols; x++) table.Columns.Add(new TableColumn());
                 table.RowGroups.Add(new TableRowGroup());
 
@@ -48,16 +38,13 @@ namespace TabPaint
                     for (int c = 0; c < cols; c++)
                     {
                         // 单元格内容
-                        var cell = new TableCell(new Paragraph(new Run("Cell")));
+                        var cell = new TableCell(new Paragraph(new Run("")));
                         cell.BorderBrush = Brushes.Gray;
                         cell.BorderThickness = new Thickness(0.5);
                         cell.Padding = new Thickness(5);
                         row.Cells.Add(cell);
                     }
                 }
-
-                // 2. 核心修正：正确的插入逻辑
-                // Table 是一个 Block 级元素，不能直接插入到 Run (文本流) 中，必须插入到 Paragraph 之间
 
                 var selection = _richTextBox.Selection;
                 if (!selection.IsEmpty) selection.Text = ""; // 删除选中文本
@@ -69,8 +56,6 @@ namespace TabPaint
 
                 if (curPara != null)
                 {
-                    // 简单粗暴且安全的方法：在当前段落之后插入表格
-                    // (WPF 的富文本插入 Block 比较复杂，这是最不容易崩溃的写法)
                     if (curPara.Parent is FlowDocument doc)
                     {
                         doc.Blocks.InsertAfter(curPara, table);
@@ -79,22 +64,11 @@ namespace TabPaint
                     {
                         sec.Blocks.InsertAfter(curPara, table);
                     }
-                    else
-                    {
-                        // 如果在单元格或其他容器里，直接加到文档末尾保底
-                        _richTextBox.Document.Blocks.Add(table);
-                    }
-
-                    // 将光标移动到表格里，方便用户接着打字
+                    else _richTextBox.Document.Blocks.Add(table);
                     TextPointer cellPtr = table.RowGroups[0].Rows[0].Cells[0].ContentStart;
                     _richTextBox.CaretPosition = cellPtr;
                 }
-                else
-                {
-                    _richTextBox.Document.Blocks.Add(table);
-                }
-
-                // 强制刷新界面
+                else  _richTextBox.Document.Blocks.Add(table);
                 _richTextBox.Focus();
             }
 
@@ -136,7 +110,6 @@ namespace TabPaint
             public override void Cleanup(ToolContext ctx)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-               // if (_richTextBox != null && !string.IsNullOrWhiteSpace(_richTextBox.Text)) CommitText(ctx);
 
                 if (_richTextBox != null && ctx.EditorOverlay.Children.Contains(_richTextBox))
                 {
@@ -162,7 +135,6 @@ namespace TabPaint
             }
             public void GiveUpText(ToolContext ctx)
             {
-              //  bool hastext = (_richTextBox != null && !string.IsNullOrWhiteSpace(_richTextBox.Text));
                 Cleanup(ctx);
                 //if (hastext)
                 {
@@ -189,7 +161,7 @@ namespace TabPaint
                 double y2 = rect.Y + rect.Height;
                 double mx = (x1 + x2) / 2;
                 double my = (y1 + y2) / 2;
-                //s(rect);
+               
                 handles.Add(new Point(x1, y1)); // TL
                 handles.Add(new Point(mx, y1)); // TM
                 handles.Add(new Point(x2, y1)); // TR
@@ -474,7 +446,6 @@ namespace TabPaint
                     // 3. 检测是否点击了【文本框内部】 (Edit / Focus)
                     double left = Canvas.GetLeft(_richTextBox);
                     double top = Canvas.GetTop(_richTextBox);
-                    // 注意：这里用 viewPos 或 pixelPos 需保持一致，建议统一用 pixelPos 对比 Canvas 坐标
                     bool inside = pixelPos.X >= left && pixelPos.X <= left + _richTextBox.ActualWidth &&
                                   pixelPos.Y >= top && pixelPos.Y <= top + _richTextBox.ActualHeight;
 
@@ -487,13 +458,9 @@ namespace TabPaint
                     }
                     else
                     {
-                        // 4. 点击了【完全外部】 → 提交当前文本，准备创建新文本
                         CommitText(ctx);
-                        // 只有当文本框确实被 Commit 销毁了，才继续下面的创建逻辑
                         if (_richTextBox == null)
                         {
-                            // 如果需要点击外部立即创建新框，可以在这里记录起点
-                            // 否则直接返回，等待下一次点击
                             _startPos = viewPos;
                             _dragging = true; // 这里的 dragging 是指“拖拽创建新框”
                         }
@@ -555,8 +522,6 @@ namespace TabPaint
 
                     // 释放鼠标捕获，这样下次点击才能正常工作
                     ctx.EditorOverlay.ReleaseMouseCapture();
-                  
-                    // 既然是拖动结束，就不需要执行下面的创建逻辑了，直接返回
                     return;
                 }
                 if (_dragging && _richTextBox == null)
@@ -597,10 +562,8 @@ namespace TabPaint
                 };
 
                 // 当内容变化时，可能需要更新选区框大小（如果我们要自适应高度）
-                rtb.TextChanged += (s, e) =>
-                {
-                    AutoFitContent(rtb);
-                };
+                rtb.TextChanged += (s, e) => {  AutoFitContent(rtb);};
+               
             }
 
             // 6. 核心：重写 CommitText (渲染位图)
@@ -608,10 +571,6 @@ namespace TabPaint
             {
                 if (_richTextBox == null) return;
 
-                // ---------------------------------------------------------
-                // 1. 修复光标残留问题
-                // ---------------------------------------------------------
-                // 将光标颜色设为透明
                 _richTextBox.CaretBrush = Brushes.Transparent;
                 // 清空选区（防止蓝色的选中背景被画进去）
                 var end = _richTextBox.Document.ContentEnd;
@@ -619,11 +578,7 @@ namespace TabPaint
                 // 禁止获取焦点
                 _richTextBox.Focusable = false;
                 _richTextBox.IsReadOnly = true;
-
-                // 强制刷新布局，确保光标隐藏的状态被更新到视觉树上
                 _richTextBox.UpdateLayout();
-
-                // 检查是否有内容 (防止空框提交)
                 string plainText = new TextRange(_richTextBox.Document.ContentStart, _richTextBox.Document.ContentEnd).Text;
                 if (string.IsNullOrWhiteSpace(plainText) && !HasImagesOrTables(_richTextBox))
                 {
@@ -643,7 +598,6 @@ namespace TabPaint
 
                 try
                 {
-                    // === 修改开始：使用 DrawingVisual 修正偏移 ===
                     var rtbBitmap = new RenderTargetBitmap(width, height, 96d, 96d, PixelFormats.Pbgra32);
 
                     var drawingVisual = new DrawingVisual();
@@ -690,8 +644,6 @@ namespace TabPaint
 
                     byte[] sourcePixels = new byte[bufferSize];
                     byte[] destPixels = new byte[bufferSize];
-
-                    // 从 RTB 读取 (此时 rtbBitmap 已经是修正后的，(0,0)就是文字开始的地方)
                     rtbBitmap.CopyPixels(new Int32Rect(srcX, srcY, drawW, drawH), sourcePixels, stride, 0);
 
                     // 从 Canvas 读取
@@ -753,17 +705,13 @@ namespace TabPaint
                     Background = Brushes.Transparent, // 必须透明
                     Padding = new Thickness(AppConsts.TextToolPadding),
                     AcceptsReturn = true,
-                    AcceptsTab = true, // 允许制表符
-                                       // 关键：FlowDocument 设置
+                    AcceptsTab = true, 
                     Document = new FlowDocument()
                     {
                         PagePadding = new Thickness(0), // 去除文档默认边距
                         LineHeight = 1, // 防止行距过大
                     }
                 };
-
-                // 移除原有的 TextWrapping 属性，FlowDocument 默认会自动换行，
-                // 但我们需要根据宽度调整。设置 PageWidth 可以强制换行，或者让它自适应。
                 rtb.Document.TextAlignment = TextAlignment.Left;
 
                 Canvas.SetLeft(rtb, x);
@@ -779,18 +727,15 @@ namespace TabPaint
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
                 if (tb == null) return;
                 if (mw.TextMenu == null) return;
-                // 1. 字体与大小 (这部分 RichTextBox 支持直接设置，会继承给内部元素)
-                if (mw.TextMenu.FontFamilyBox.SelectedValue != null)
+               
+                if (mw.TextMenu.FontFamilyBox.SelectedValue != null) // 1. 字体与大小
                     tb.FontFamily = new FontFamily(mw.TextMenu.FontFamilyBox.SelectedValue.ToString());
 
                 if (double.TryParse(mw.TextMenu.FontSizeBox.Text, out double size))
                     tb.FontSize = Math.Max(1, size);
 
-                // 2. 粗体/斜体
-                tb.FontWeight = (mw.TextMenu.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;
+                tb.FontWeight = (mw.TextMenu.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal;     // 2. 粗体/斜体
                 tb.FontStyle = (mw.TextMenu.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal;
-
-                // 3. 装饰线 (下划线 + 删除线) - 需要作用于 TextRange ✨
                 var decors = new TextDecorationCollection();
                 if (mw.TextMenu.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
                 if (mw.TextMenu.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
@@ -864,8 +809,7 @@ namespace TabPaint
 
                             if (opacityScale == 255)
                             {
-                                // 满不透明度，直接读取
-                                srcB = pSrcRow[0];
+                                srcB = pSrcRow[0];// 满不透明度，直接读取
                                 srcG = pSrcRow[1];
                                 srcR = pSrcRow[2];
                                 srcA = rawSrcA;
@@ -894,8 +838,7 @@ namespace TabPaint
                             }
                             else
                             {
-                                // Alpha 混合: Out = Src + Dst * (1 - SrcA)
-                                int invAlpha = 255 - srcA;
+                                int invAlpha = 255 - srcA;// Alpha 混合: Out = Src + Dst * (1 - SrcA)
 
                                 pDstRow[0] = (byte)(srcB + (pDstRow[0] * invAlpha) / 255); // B
                                 pDstRow[1] = (byte)(srcG + (pDstRow[1] * invAlpha) / 255); // G
@@ -909,7 +852,6 @@ namespace TabPaint
                     }
                 }
             }
-            // 1. 新增：将事件绑定逻辑提取为独立方法，避免重复代码
             private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
                 // 绘制虚线框和句柄
@@ -933,8 +875,6 @@ namespace TabPaint
                 rtb.Focusable = true;
                 rtb.Loaded += (s, e) => rtb.Focus();
             }
-
-            // 2. 新增：公共接口，用于外部调用（粘贴/拖拽）
             public void SpawnTextBox(ToolContext ctx, Point viewPos, string text)
             {
                 _dragging = false;
@@ -962,8 +902,6 @@ namespace TabPaint
                 ctx.EditorOverlay.Children.Add(_richTextBox);
 
                 ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);
-
-                // 绑定关键事件（原本写在 OnPointerUp 里的那一大段）
                 SetupTextBoxEvents(ctx, _richTextBox);
 
                 ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp; // 防止重复订阅

@@ -17,197 +17,6 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
-            // ========== 轮廓追踪相关方法 ==========
-
-            /// <summary>
-            /// 从 AlphaMap 生成轮廓 Geometry（支持多区域和孔洞）
-            /// </summary>
-            private Geometry GenerateContourGeometry(byte[] alphaMap, int width, int height, int offsetX, int offsetY)
-            {
-                if (alphaMap == null || width <= 0 || height <= 0) return null;
-
-                // 1. 将 AlphaMap 转换为简单的 bool 数组
-                bool[,] mask = new bool[height, width];
-                int stride = width * 4;
-
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int idx = y * stride + x * 4 + 3; // Alpha 通道
-                        mask[y, x] = idx < alphaMap.Length && alphaMap[idx] > 128;
-                    }
-                }
-
-                // 2. 使用 Marching Squares 提取所有轮廓
-                var allContours = ExtractAllContours(mask, width, height);
-
-                if (allContours.Count == 0) return null;
-
-                // 3. 将轮廓转换为 Geometry
-                var geometryGroup = new GeometryGroup();
-                geometryGroup.FillRule = FillRule.EvenOdd; // 支持孔洞
-
-                foreach (var contour in allContours)
-                {
-                    if (contour.Count < 3) continue;
-
-                    var figure = new PathFigure();
-                    figure.StartPoint = new Point(contour[0].X + offsetX, contour[0].Y + offsetY);
-                    figure.IsClosed = true;
-                    figure.IsFilled = false;
-
-                    // 简化轮廓点（Douglas-Peucker 算法可选，这里用简单的跳点）
-                    var simplifiedPoints = SimplifyContour(contour, 1.0);
-
-                    var segments = new PolyLineSegment();
-                    for (int i = 1; i < simplifiedPoints.Count; i++)
-                    {
-                        segments.Points.Add(new Point(simplifiedPoints[i].X + offsetX, simplifiedPoints[i].Y + offsetY));
-                    }
-                    figure.Segments.Add(segments);
-
-                    var pathGeometry = new PathGeometry();
-                    pathGeometry.Figures.Add(figure);
-                    geometryGroup.Children.Add(pathGeometry);
-                }
-
-                geometryGroup.Freeze();
-                return geometryGroup;
-            }
-
-            /// <summary>
-            /// 提取所有轮廓（外轮廓和孔洞）
-            /// </summary>
-            private List<List<Point>> ExtractAllContours(bool[,] mask, int width, int height)
-            {
-                var contours = new List<List<Point>>();
-                bool[,] visited = new bool[height, width];
-
-                // 扫描所有边界点
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        // 找到一个边界点：当前点是选中的，且左边是未选中的（或在边界）
-                        if (mask[y, x] && !visited[y, x])
-                        {
-                            bool isEdge = (x == 0 || !mask[y, x - 1]);
-                            if (isEdge)
-                            {
-                                var contour = TraceContour(mask, visited, x, y, width, height);
-                                if (contour != null && contour.Count >= 3)
-                                {
-                                    contours.Add(contour);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return contours;
-            }
-
-            /// <summary>
-            /// Moore-Neighbor 轮廓追踪算法
-            /// </summary>
-            private List<Point> TraceContour(bool[,] mask, bool[,] visited, int startX, int startY, int width, int height)
-            {
-                var contour = new List<Point>();
-
-                // 8邻域方向：从右开始顺时针
-                // 0=右, 1=右下, 2=下, 3=左下, 4=左, 5=左上, 6=上, 7=右上
-                int[] dx = { 1, 1, 0, -1, -1, -1, 0, 1 };
-                int[] dy = { 0, 1, 1, 1, 0, -1, -1, -1 };
-
-                int x = startX;
-                int y = startY;
-                int dir = 4; // 初始方向：从左边进入（所以开始向左搜索）
-
-                int startDir = dir;
-                bool firstStep = true;
-
-                int maxIterations = width * height * 2; // 防止无限循环
-                int iterations = 0;
-
-                do
-                {
-                    contour.Add(new Point(x, y));
-                    visited[y, x] = true;
-
-                    // 从当前方向的逆时针方向开始搜索
-                    int searchDir = (dir + 5) % 8; // 逆时针回退3步
-                    bool found = false;
-
-                    for (int i = 0; i < 8; i++)
-                    {
-                        int checkDir = (searchDir + i) % 8;
-                        int nx = x + dx[checkDir];
-                        int ny = y + dy[checkDir];
-
-                        if (nx >= 0 && nx < width && ny >= 0 && ny < height && mask[ny, nx])
-                        {
-                            x = nx;
-                            y = ny;
-                            dir = checkDir;
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found) break;
-
-                    iterations++;
-                    if (iterations > maxIterations) break;
-
-                    // 检查是否回到起点
-                    if (!firstStep && x == startX && y == startY)
-                    {
-                        break;
-                    }
-                    firstStep = false;
-
-                } while (true);
-
-                return contour;
-            }
-
-            /// <summary>
-            /// 简化轮廓点（减少点数，提高渲染性能）
-            /// </summary>
-            private List<Point> SimplifyContour(List<Point> points, double tolerance)
-            {
-                if (points.Count <= 2) return points;
-
-                // 简单的角度过滤：移除共线点
-                var result = new List<Point> { points[0] };
-
-                for (int i = 1; i < points.Count - 1; i++)
-                {
-                    var prev = result[result.Count - 1];
-                    var curr = points[i];
-                    var next = points[i + 1];
-
-                    // 计算方向变化
-                    double dx1 = curr.X - prev.X;
-                    double dy1 = curr.Y - prev.Y;
-                    double dx2 = next.X - curr.X;
-                    double dy2 = next.Y - curr.Y;
-
-                    // 如果方向改变，保留该点
-                    if (Math.Abs(dx1 * dy2 - dy1 * dx2) > tolerance)
-                    {
-                        result.Add(curr);
-                    }
-                }
-
-                result.Add(points[points.Count - 1]);
-                return result;
-            }
-
-            /// <summary>
-            /// 更高效的轮廓生成（基于像素边缘）
-            /// </summary>
             private Geometry GeneratePixelEdgeGeometry(byte[] alphaMap, int width, int height, int offsetX, int offsetY)
             {
                 if (alphaMap == null || width <= 0 || height <= 0) return null;
@@ -277,10 +86,6 @@ namespace TabPaint
                 geometryGroup.Freeze();
                 return geometryGroup;
             }
-
-            /// <summary>
-            /// 将离散线段连接成连续路径
-            /// </summary>
             private List<List<Point>> ConnectSegments(List<(Point Start, Point End)> segments)
             {
                 var paths = new List<List<Point>>();
@@ -346,8 +151,6 @@ namespace TabPaint
                             }
                         }
                     }
-
-                    // 向前延伸
                     extended = true;
                     while (extended)
                     {
@@ -449,9 +252,6 @@ namespace TabPaint
                 DrawHandles(overlay, rect, invScale, diff);
             }
 
-            /// <summary>
-            /// 绘制矩形选区框
-            /// </summary>
             private void DrawRectangleOverlay(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff)
             {
                 var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
@@ -512,11 +312,7 @@ namespace TabPaint
                     overlay.Children.Add(handle);
                 }
             }
-
-            /// <summary>
-            /// 魔棒调整时显示半透明遮罩预览
-            /// </summary>
-            private void DrawWandPreviewMask(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale)
+            private void DrawWandPreviewMask(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale) /// 魔棒调整时显示半透明遮罩预览
             {
                 if (_selectionAlphaMap == null || rect.Width <= 0 || rect.Height <= 0) return;
 

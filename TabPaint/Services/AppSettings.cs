@@ -51,8 +51,6 @@ namespace TabPaint
     {
         public Key Key { get; set; }
         public ModifierKeys Modifiers { get; set; }
-
-        // 修改这个属性的 get 方法
         public string DisplayText
         {
             get
@@ -60,16 +58,11 @@ namespace TabPaint
                 if (Key == Key.None) return LocalizationManager.GetString("L_Key_None");
 
                 StringBuilder sb = new StringBuilder();
-
-                // 1. 处理修饰键 (Ctrl, Alt, Shift)
-                if ((Modifiers & ModifierKeys.Control) == ModifierKeys.Control) sb.Append("Ctrl + ");
+                if ((Modifiers & ModifierKeys.Control) == ModifierKeys.Control) sb.Append("Ctrl + "); // 1. 处理修饰键 (Ctrl, Alt, Shift)
                 if ((Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift) sb.Append("Shift + ");
                 if ((Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt) sb.Append("Alt + ");
                 if ((Modifiers & ModifierKeys.Windows) == ModifierKeys.Windows) sb.Append("Win + ");
-
-                // 2. 处理按键显示的转换逻辑
-                sb.Append(GetKeyDisplayName(Key));
-
+                sb.Append(GetKeyDisplayName(Key));// 2. 处理按键显示的转换逻辑
                 return sb.ToString();
             }
         }
@@ -77,17 +70,10 @@ namespace TabPaint
         private string GetKeyDisplayName(Key key)
         {
             // 处理主键盘区的数字键 D0 - D9
-            if (key >= Key.D0 && key <= Key.D9)
-            {
-                // Key.D0 的枚举值是 34，减去 34 即可得到数字 0
-                return ((int)key - (int)Key.D0).ToString();
-            }
+            if (key >= Key.D0 && key <= Key.D9) return ((int)key - (int)Key.D0).ToString();
 
             // 处理小键盘区的数字键 NumPad0 - NumPad9
-            if (key >= Key.NumPad0 && key <= Key.NumPad9)
-            {
-                return "Num " + ((int)key - (int)Key.NumPad0).ToString();
-            }
+            if (key >= Key.NumPad0 && key <= Key.NumPad9) return "Num " + ((int)key - (int)Key.NumPad0).ToString();
             switch (key)
             {
                 case Key.OemPlus: return "+";
@@ -113,8 +99,6 @@ namespace TabPaint
         private void SaveAppState()
         {
             var settings = TabPaint.SettingsManager.Instance.Current;
-
-            // --- 新增：保存窗口位置逻辑 ---
             if (this.WindowState == System.Windows.WindowState.Maximized)
             {
                 // 最大化时，保存还原后的坐标和尺寸
@@ -133,16 +117,9 @@ namespace TabPaint
                 settings.WindowWidth = this.Width;
                 settings.WindowState = (int)System.Windows.WindowState.Normal;
             }
-           // var settings = TabPaint.SettingsManager.Instance.Current;
-
-            if (_router?.CurrentTool != null)
-            {
-                settings.LastToolName = _router.CurrentTool.GetType().Name;
-            }
-            if (_ctx != null)
-            {
-                settings.LastBrushStyle = _ctx.PenStyle;
-            }
+            if (_router?.CurrentTool != null)    settings.LastToolName = _router.CurrentTool.GetType().Name;
+            if (_ctx != null)  settings.LastBrushStyle = _ctx.PenStyle;
+ 
             TabPaint.SettingsManager.Instance.Save();
         }
 
@@ -167,9 +144,9 @@ namespace TabPaint
                 this.Left = settings.WindowLeft;
                 this.Top = settings.WindowTop;
             }
-            else
+            else// 如果不在屏幕范围内（比如上次在副屏，现在副屏拔了），居中显示
             {
-                // 如果不在屏幕范围内（比如上次在副屏，现在副屏拔了），居中显示
+                
                 this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
             this.Width = Math.Max(settings.WindowWidth, AppConsts.WindowMinSize);
@@ -186,12 +163,8 @@ namespace TabPaint
             {
                 var settings = TabPaint.SettingsManager.Instance.Current;
 
-                // 1. 恢复笔刷大小 (这步其实会被后面的 SetTool -> UpdateGlobalToolSettingsKey 覆盖，但保留无妨)
-                if (_ctx != null)
-                {
-                    _ctx.PenThickness = settings.PenThickness;
-                }
-
+                // 1. 恢复笔刷大小
+                if (_ctx != null)_ctx.PenThickness = settings.PenThickness;
                 // 2. 准备目标工具
                 ITool targetTool = null;
                 BrushStyle targetStyle = settings.LastBrushStyle;
@@ -210,21 +183,16 @@ namespace TabPaint
                 }
 
                 // 3. 设置上下文样式
-                if (_ctx != null)
-                {
-                    _ctx.PenStyle = targetStyle;
-                }
+                if (_ctx != null)  _ctx.PenStyle = targetStyle;
                 if (_router != null)
                 {
 
                     if (settings.LastToolName == "PenTool")
                     {
-                      //  s("PenTool");
                         SetBrushStyle(_ctx.PenStyle); UpdateBrushSplitButtonIcon(_ctx.PenStyle);
                         UpdateGlobalToolSettingsKey(); 
                     }
                     else _router.SetTool(targetTool);
-                    //UpdateToolSelectionHighlight();
                 }
              
             }
@@ -253,7 +221,6 @@ namespace TabPaint
             }
         }
         private SelectionClearMode _selectionClearMode = SelectionClearMode.White; // 默认白底
-
         [JsonPropertyName("selection_clear_mode")]
         public SelectionClearMode SelectionClearMode
         {
@@ -356,7 +323,6 @@ namespace TabPaint
                 }
             }
         }
-        // 新增：当前工具的 Key，用于指示 PenThickness/Opacity 应该读写字典里的哪一项
         private string _currentToolKey = "Pen_Pencil";
         [JsonIgnore]
         public string CurrentToolKey
@@ -403,8 +369,6 @@ namespace TabPaint
                 }
             }
         }
-
-        // 修改：PenOpacity 变成读写字典的代理属性
         [JsonIgnore]
         public double PenOpacity
         {
@@ -430,10 +394,6 @@ namespace TabPaint
                 }
             }
         }
-
-        // ... (保留 ThemeMode, shortcuts 等其他代码) ...
-
-        // 初始化默认值
         private Dictionary<string, ToolSettingsModel> GetDefaultToolSettings()
         {
             var dict = new Dictionary<string, ToolSettingsModel>();
@@ -498,9 +458,6 @@ namespace TabPaint
             }
         }
         private bool _enableClipboardMonitor = false; // 默认关闭
-
-
-
         [JsonPropertyName("last_tool_name")]
         public string LastToolName { get; set; } = "PenTool"; // 默认为笔
 
@@ -527,7 +484,6 @@ namespace TabPaint
                 }
             }
         }
-
         private Dictionary<string, ShortcutItem> _shortcuts;
 
         [JsonPropertyName("shortcuts")]
@@ -559,7 +515,6 @@ namespace TabPaint
                 }
             }
         }
-
         private AppResamplingMode _resamplingMode = AppResamplingMode.Auto;
         [JsonPropertyName("resampling_mode")]
         public AppResamplingMode ResamplingMode
@@ -574,7 +529,6 @@ namespace TabPaint
                 }
             }
         }
-
         private double _viewInterpolationThreshold = AppConsts.DefaultViewInterpolationThreshold;
         [JsonPropertyName("view_interpolation_threshold")]
         public double ViewInterpolationThreshold
@@ -629,9 +583,7 @@ namespace TabPaint
 
         [JsonPropertyName("window_top")]
         public double WindowTop { get; set; } = AppConsts.UninitializedWindowPosition;
-
-        // 0: Normal, 1: Minimized, 2: Maximized
-        [JsonPropertyName("window_state")]
+        [JsonPropertyName("window_state")] // 0: Normal, 1: Minimized, 2: Maximized
         public int WindowState { get; set; } = 0;
 
         private bool _autoLoadFolderImages = true; // 默认值为 true，保持原有行为
@@ -742,8 +694,6 @@ namespace TabPaint
                 }
             }
         }
-
-
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
             var defaults = new Dictionary<string, ShortcutItem>

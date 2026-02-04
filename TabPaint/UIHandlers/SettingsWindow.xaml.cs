@@ -90,9 +90,6 @@ namespace TabPaint
             _isToastVisible = false;
             AnimateHide(SavedToast);
         }
-
-        // ==================== Update Toast Logic ====================
-
         private void ShowUpdateToast(string versionTag, string url)
         {
             _latestVersionUrl = url;
@@ -208,9 +205,6 @@ namespace TabPaint
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
             element.BeginAnimation(UIElement.OpacityProperty, fadeIn);
-
-            // 2. 位移滑入 (从右侧 50px 滑到 0)
-            // 获取 RenderTransform 中的 TranslateTransform
             if (element is FrameworkElement fe && fe.RenderTransform is TranslateTransform trans)
             {
                 trans.X = 50; // 初始位置在右侧
@@ -270,8 +264,6 @@ namespace TabPaint
         }
         private void SettingsWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // 阈值设为 750 (可根据实际 UI 调整)
-            // 如果窗口变小且当前是展开状态 -> 自动收起
             if (e.NewSize.Width < 750 && _isNavExpanded)
             {
                 SetSidebarState(false);
@@ -320,12 +312,7 @@ namespace TabPaint
 
             // 确保句柄已经准备好
             var hwnd = new WindowInteropHelper(this).Handle;
-            if (hwnd == IntPtr.Zero)
-            {
-                return;
-            }
-
-            // 设置暗色模式标题栏
+            if (hwnd == IntPtr.Zero)return;
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
 
@@ -356,7 +343,6 @@ namespace TabPaint
                 var bestFrame = decoder.Frames.OrderByDescending(f => f.Width).FirstOrDefault();
                 if (bestFrame != null)
                 {
-                    // 这里假设 About 页面里的图标还在
                     if (AppIcon != null) AppIcon.Source = bestFrame;
                 }
             }
@@ -579,10 +565,7 @@ namespace TabPaint
                 }
             }
         }
-
     }
-
-    // 用于 GridLength 动画的辅助类
     public class GridLengthAnimation : AnimationTimeline
     {
         public override Type TargetPropertyType => typeof(GridLength);

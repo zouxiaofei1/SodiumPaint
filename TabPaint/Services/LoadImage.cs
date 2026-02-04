@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
@@ -77,10 +76,7 @@ namespace TabPaint
                 if (current != null)                              // 对于虚拟文件，如果它有 BackupPath (例如从 Session 恢复的)，必须读 BackupPath
                     if (_activeSaveTasks.TryGetValue(current.Id, out Task? pendingSave))
                     {
-                        try
-                        {
-                            await pendingSave;
-                        }
+                        try { await pendingSave;  }
                         catch (Exception ex)
                         {
                             Debug.WriteLine("Wait save failed: " + ex.Message);
@@ -90,10 +86,8 @@ namespace TabPaint
                 // 等待结束后，重新检查 BackupPath，因为它刚刚被后台线程更新了！
                 if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
                 {
-                    if (File.Exists(current.BackupPath))
-                    {
-                        actualSourcePath = current.BackupPath;
-                    }
+                    if (File.Exists(current.BackupPath)) actualSourcePath = current.BackupPath;
+
                 }
                 await LoadImage(fileToLoad, actualSourcePath, lazyload);
 
@@ -172,8 +166,6 @@ namespace TabPaint
         }
         // 1. 在类级别定义支持的扩展名（静态只读，利用HashSet的哈希查找，极快）
         private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(AppConsts.ImageExtensions, StringComparer.OrdinalIgnoreCase);
-
-        // 2. 改为异步方法
         private async Task ScanFolderImagesAsync(string filePath)
         {
             try
@@ -204,7 +196,6 @@ namespace TabPaint
                 combinedFiles.AddRange(sortedFiles);
 
                 _imageFiles = combinedFiles;
-
                 _currentImageIndex = _imageFiles.IndexOf(filePath);
 
             }
@@ -213,9 +204,6 @@ namespace TabPaint
                 System.Diagnostics.Debug.WriteLine($"Scan Error: {ex.Message}");
             }
         }
-
-
-
         private BitmapImage DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
@@ -234,9 +222,6 @@ namespace TabPaint
                 img.CacheOption = BitmapCacheOption.OnLoad;
 
                 if (originalWidth > AppConsts.PreviewDecodeWidth) img.DecodePixelWidth = AppConsts.PreviewDecodeWidth;
-               
-                // 否则不设置 DecodePixelWidth（默认为0，即加载原图尺寸），避免小图报错或被拉伸
-
                 img.StreamSource = ms;
                 img.EndInit();
                 img.Freeze();
@@ -258,18 +243,12 @@ namespace TabPaint
 
                 // --- 1. 准备色彩空间和参数 ---
                 using var srgbSpace = SKColorSpace.CreateSrgb();
-
-                // 强制使用 Bgra8888 + Premul Alpha
-                // 即使是 JPEG (不透明)，Premul 也会自动把 Alpha 填满为 255，避免透明问题
                 var info = new SKImageInfo(
                     codec.Info.Width,
                     codec.Info.Height,
                     SKColorType.Bgra8888,
                     SKAlphaType.Premul,
                     srgbSpace);
-
-                // --- 2. 解码原始数据 ---
-                // 我们先解码到一个临时的 SKBitmap，这样方便后面做旋转处理
                 using var originalBitmap = new SKBitmap(info);
 
                 // 这一步 Skia 会同时完成：解码 + ICC转sRGB + 格式转Bgra + 填充Alpha
@@ -280,8 +259,6 @@ namespace TabPaint
                     Debug.WriteLine($"Skia decode status: {result}");
                     return null;
                 }
-
-                // --- 3. 处理旋转 (EXIF Orientation) ---
                 var origin = codec.EncodedOrigin;
 
                 // 如果不需要旋转，直接转换并返回
@@ -289,17 +266,12 @@ namespace TabPaint
                 {
                     return SkiaBitmapToWpfSource(originalBitmap);
                 }
-
-                // --- 4. 需要旋转的情况 ---
-                // 计算旋转后的宽高
                 int newWidth = (origin == SKEncodedOrigin.RightTop || origin == SKEncodedOrigin.LeftBottom) ? info.Height : info.Width;
                 int newHeight = (origin == SKEncodedOrigin.RightTop || origin == SKEncodedOrigin.LeftBottom) ? info.Width : info.Height;
 
                 var rotatedInfo = info.WithSize(newWidth, newHeight);
                 using var rotatedBitmap = new SKBitmap(rotatedInfo);
                 using var canvas = new SKCanvas(rotatedBitmap);
-
-                // 清除画布（虽然全覆盖绘制不需要，但好习惯）
                 canvas.Clear(SKColors.Transparent);
 
                 // 坐标系变换
@@ -319,9 +291,6 @@ namespace TabPaint
                         break;
                         // 其他镜像模式暂略，通常只需处理这几个
                 }
-
-                // 绘制原图到旋转后的画布
-                // Paint 设为 null 即可，不需要特殊的混合模式
                 using (var paint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High })
                 {
                     canvas.DrawBitmap(originalBitmap, 0, 0, paint);
@@ -349,26 +318,14 @@ namespace TabPaint
             {
                 // 2. 检查源数据信息
                 var info = skBitmap.Info;
-
-                // 3. 执行内存拷贝
-                // Skia 的 Bgra8888 内存布局与 WPF 的 Bgra32 完全一致，可以直接拷贝
                 unsafe
                 {
-                    // 获取源地址 (Skia)
-                    void* srcPtr = (void*)skBitmap.GetPixels();
-                    // 获取目标地址 (WPF)
+                    void* srcPtr = (void*)skBitmap.GetPixels();  // 获取源地址 (Skia)
                     void* dstPtr = (void*)wb.BackBuffer;
-
-                    // 计算总字节数 (高度 * 步长)
-                    // 注意：使用 skBitmap.RowBytes 更安全，因为它包含了内存对齐的填充
                     long bytesToCopy = (long)skBitmap.Height * skBitmap.RowBytes;
-
-                    // 执行拷贝
-                    Buffer.MemoryCopy(srcPtr, dstPtr, bytesToCopy, bytesToCopy);
+                    Buffer.MemoryCopy(srcPtr, dstPtr, bytesToCopy, bytesToCopy);  // 执行拷贝
                 }
-
-                // 4. 标记脏区，通知 WPF 更新画面
-                wb.AddDirtyRect(new Int32Rect(0, 0, skBitmap.Width, skBitmap.Height));
+                wb.AddDirtyRect(new Int32Rect(0, 0, skBitmap.Width, skBitmap.Height));//  标记脏区，通知 WPF 更新画面
             }
             catch (Exception ex)
             {
@@ -383,10 +340,6 @@ namespace TabPaint
             wb.Freeze();
             return wb;
         }
-
-
-
-
         private BitmapSource DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
@@ -405,9 +358,7 @@ namespace TabPaint
             }
             try
             {
-
                 using var ms = new System.IO.MemoryStream(imageBytes);
-
                 // 先用解码器获取原始尺寸
                 var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
                 int originalWidth = decoder.Frames[0].PixelWidth;
@@ -446,33 +397,22 @@ namespace TabPaint
                 try
                 {
                     string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
-
-                    // --- 核心修改：针对 SVG 的处理逻辑 ---
                     if (ext == ".svg")
                     {
                         using var ms = new System.IO.MemoryStream(imageBytes);
                         using var svg = new SKSvg();
                         svg.Load(ms);
-
-                        // 检查是否加载成功
-                        if (svg.Picture != null)
+                        if (svg.Picture != null)  // 检查是否加载成功
                         {
-                            // 获取画布尺寸
-                            int w = (int)svg.Picture.CullRect.Width;
+                            int w = (int)svg.Picture.CullRect.Width;  // 获取画布尺寸
                             int h = (int)svg.Picture.CullRect.Height;
-
-                            // 如果 SVG 自身没定义宽高（无限画布），给个默认值防止报错
                             if (w <= 0) w = 800;
                             if (h <= 0) h = 600;
 
                             return ((int Width, int Height)?)(w, h);
                         }
-                        // 如果 SkiaSharp 解析失败，返回 null
                         return null;
                     }
-                    // ------------------------------------
-
-                    // 普通图片的逻辑保持不变
                     using var msNormal = new System.IO.MemoryStream(imageBytes);
                     var decoder = BitmapDecoder.Create(msNormal, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
 
@@ -503,13 +443,9 @@ namespace TabPaint
                 if (svg.Picture == null) return null;
                 int width = (int)svg.Picture.CullRect.Width;
                 int height = (int)svg.Picture.CullRect.Height;
-
-                // 如果 SVG 没有定义尺寸，给个默认值
-                if (width <= 0) width = 800;
+                if (width <= 0) width = 800;     // 如果 SVG 没有定义尺寸，给个默认值
                 if (height <= 0) height = 600;
-
-                // 限制最大尺寸
-                const int maxSize = (int)AppConsts.MaxCanvasSize;
+                const int maxSize = (int)AppConsts.MaxCanvasSize;  // 限制最大尺寸
                 if (width > maxSize || height > maxSize)
                 {
                     float scale = Math.Min((float)maxSize / width, (float)maxSize / height);
@@ -597,7 +533,6 @@ namespace TabPaint
                 // 步骤 1: 异步读取文件并快速获取最终尺寸
                 var imageBytes = await File.ReadAllBytesAsync(fileToRead, token);
                 if (token.IsCancellationRequested) return;
-              //  s(System.IO.Path.GetExtension(filePath)?.ToLower());
                 string sizeString = FormatFileSize(imageBytes.Length);
                 await Dispatcher.InvokeAsync(() => this.FileSize = sizeString);
 
@@ -606,7 +541,6 @@ namespace TabPaint
                 if (token.IsCancellationRequested) return;
                 if (dimensions == null)
                 {
-                    // 方法1：直接调用错误处理（推荐）
                     await LoadBlankCanvasAsync(filePath, LocalizationManager.GetString("L_Load_Reason_Header"));
                     return;
 
@@ -703,9 +637,6 @@ namespace TabPaint
 
                     });
                 }
-
-
-
                 // --- 阶段 1: 等待 480p 预览图并更新 ---
                 var previewBitmap = await previewTask;
                 if (token.IsCancellationRequested || previewBitmap == null) return;
@@ -862,7 +793,6 @@ namespace TabPaint
             }
             finally
             {
-
                 // 清理进度条资源
                 progressCts?.Dispose();
             }

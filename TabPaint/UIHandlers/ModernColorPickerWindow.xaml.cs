@@ -122,10 +122,7 @@ namespace TabPaint
                     NewColorRect.Fill = new SolidColorBrush(c);
                 if (HexInput != null)
                     HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
-                if (SpectrumLayerGroup != null)
-                {
-                    SpectrumLayerGroup.Opacity = _currentAlpha / 255.0;
-                }
+                if (SpectrumLayerGroup != null) SpectrumLayerGroup.Opacity = _currentAlpha / 255.0;
                 // 更新数值输入框
                 if (Input1 != null && Input2 != null && Input3 != null && InputAlpha != null)
                 {
@@ -163,9 +160,7 @@ namespace TabPaint
                     // Alpha 255 在顶部(0)，0 在底部(h)
                     double alphaY = (1 - (_currentAlpha / 255.0)) * h;
                     Canvas.SetTop(AlphaCursor, Math.Clamp(alphaY, 0, h));
-
-                    // 动态更新滑块渐变色
-                    UpdateHueColorVisual();
+                    UpdateHueColorVisual(); // 动态更新滑块渐变色
                 }
             }
             finally
@@ -330,7 +325,6 @@ namespace TabPaint
             HueSliderGrid.CaptureMouse();
             UpdateHueFromMouse(e.GetPosition(HueSliderGrid), HueSliderGrid.ActualHeight);
         }
-
         private void Alpha_MouseMove(object sender, MouseEventArgs e)
         {
             if (_isDraggingAlpha)
@@ -347,7 +341,6 @@ namespace TabPaint
             var grid = sender as Grid;
             grid?.ReleaseMouseCapture();
         }
-
         private void UpdateAlphaFromMouse(Point p, double h)
         {
             if (h <= 0) return;
@@ -554,7 +547,6 @@ namespace TabPaint
             DialogResult = true;
             Close();
         }
-
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;

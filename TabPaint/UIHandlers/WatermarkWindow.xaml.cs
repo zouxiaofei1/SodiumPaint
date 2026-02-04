@@ -58,8 +58,6 @@ namespace TabPaint
             InitializeComponent();
             _targetBitmap = bitmapForPreview;
             _originalBitmap = bitmapForPreview.Clone();
-
-            // 1. 获取并初始化预览层
             _previewLayer = previewLayer;
             if (_previewLayer != null)
             {
@@ -81,16 +79,9 @@ namespace TabPaint
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-
-            // 1. 应用 Mica 特效
             MicaAcrylicManager.ApplyEffect(this);
-
-            // 2. 确保窗口标题栏按钮颜色适配深色/浅色模式
-            // 假设你的 ThemeManager 可以判断当前主题
             bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
-
-            // 3. 确保 WPF 渲染层背景透明，让 DWM 特效透出来
             var src = (HwndSource)PresentationSource.FromVisual(this);
             if (src != null)
             {
@@ -173,8 +164,6 @@ namespace TabPaint
             InitializeFonts();
             ComboCommonColors.SelectedIndex = 0;
             UpdateColorInternal(Colors.White, false);
-
-            // 恢复监听并刷新一次
             _isInitialized = true;
             UpdatePreview();
         }
@@ -184,7 +173,6 @@ namespace TabPaint
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {
-                // 强制 Alpha 为 255 (既然 Hex只允许RGB，我们这里的画笔就应保持不透明，透明度由滑块控制)
                 Color c = dlg.SelectedColor;
                 c.A = 255;
 
@@ -247,8 +235,6 @@ namespace TabPaint
         }
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            // 还原
-         //   RestoreOriginal();
             DialogResult = false;
             Close();
         }
@@ -283,8 +269,6 @@ namespace TabPaint
         {
             e.Handled = new Regex("[^0-9]+").IsMatch(e.Text);
         }
-
-        // --- 图片加载 ---
         private void Image_Drop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -325,8 +309,6 @@ namespace TabPaint
                 UpdatePreview();
             }
         }
-
-        // 2. HEX 输入框变化
         private void HexInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (!_isInitialized || _isUpdatingColor) return;
@@ -338,8 +320,6 @@ namespace TabPaint
                 // 确保以 # 开头
                 if (!hex.StartsWith("#")) hex = "#" + hex;
 
-                // 只处理 #RRGGBB (7位) 或 #RGB (4位)
-                // 即使输入了8位或9位，ColorConverter 也能解，但我们要强制 A=255
                 try
                 {
                     Color temp = (Color)ColorConverter.ConvertFromString(hex);
@@ -360,10 +340,7 @@ namespace TabPaint
                     UpdatePreview();
                 }
             }
-            catch
-            {
-                // 解析失败忽略
-            }
+            catch { }
         }
 
         // 内部更新颜色方法 (同时更新Hex文本和预览)
@@ -376,12 +353,7 @@ namespace TabPaint
             TxtHexColor.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
             RectColorPreview.Fill = new SolidColorBrush(color);
 
-            if (isCustom)
-            {
-                ComboCommonColors.SelectedIndex = -1;
-            }
-            // 如果不是自定义调用（例如来自下拉框），则不需要去动 ComboBox 的 Index
-
+            if (isCustom) ComboCommonColors.SelectedIndex = -1;
             _isUpdatingColor = false;
         }
 
@@ -397,10 +369,6 @@ namespace TabPaint
             if (!_isInitialized || _originalBitmap == null) return;
 
             var settings = GetCurrentSettings();
-
-            // === 1. 更新主窗口的覆盖层 (Overlay) ===
-            // 这里我们希望主窗口只显示水印，底图是透明的，因为主窗口已经显示了底图
-            // 限制最大边长为 1920，保证流畅度
             if (_previewLayer != null)
             {
                 double maxOverlayDim = 1920;
@@ -430,8 +398,6 @@ namespace TabPaint
             // === 2. 更新窗口内的实时预览 (Internal Preview) ===
             if (_isWindowLoaded)
             {
-                // 计算窗口内预览区域的合适尺寸
-                // 假设预览区域最大约 500x500 (右侧那列大概那么大)
                 double maxPreviewDim = 1200;
 
                 double w = _originalBitmap.PixelWidth;
@@ -463,9 +429,6 @@ namespace TabPaint
             int w = source.PixelWidth;
             int h = source.PixelHeight;
 
-            // 如果是降采样预览，我们实际上是在画板的一小部分上画，但逻辑坐标系保持原图大小
-            // 最简单的方法是使用 ScaleTransform
-
             if (settings.Rows < 1) settings.Rows = 1;
             if (settings.Cols < 1) settings.Cols = 1;
 
@@ -475,19 +438,10 @@ namespace TabPaint
             using (var dc = visual.RenderOpen())
             {
                 // === 关键修改：应用缩放变换 ===
-                if (renderScale != 1.0)
-                {
-                    dc.PushTransform(new ScaleTransform(renderScale, renderScale));
-                }
-
-                // 下面的逻辑完全使用原图尺寸 (w, h) 进行计算
-                // 因为 PushTransform 会自动帮我们缩小绘制结果
-
-                // 1. 只有非预览模式才画底图
-                if (!onlyWatermark)
-                {
-                    dc.DrawImage(source, new Rect(0, 0, w, h));
-                }
+                if (renderScale != 1.0) dc.PushTransform(new ScaleTransform(renderScale, renderScale));
+         
+                if (!onlyWatermark)  dc.DrawImage(source, new Rect(0, 0, w, h));
+                
 
                 if (settings.Opacity > 0)
                 {
@@ -539,12 +493,8 @@ namespace TabPaint
                     }
                     dc.Pop(); // Opacity
                 }
-
-                // === 关键修改：弹出缩放变换 ===
-                if (renderScale != 1.0)
-                {
-                    dc.Pop();
-                }
+                if (renderScale != 1.0)dc.Pop();
+                
             }
             return visual;
         }

@@ -197,44 +197,6 @@ namespace TabPaint
             return tensor;
         }
 
-        // 辅助方法：后处理
-        private WriteableBitmap PostProcessInpaint(Tensor<float> tensor, int w, int h) // 注意参数去掉了 origW, origH
-        {
-            // 这里 w 和 h 应该是模型输出的尺寸 (通常是 512x512)
-            // 强制使用 Tensor 的实际维度，防止传入错误
-            int tensorH = tensor.Dimensions[2];
-            int tensorW = tensor.Dimensions[3];
-
-            var wb = new WriteableBitmap(tensorW, tensorH, 96, 96, PixelFormats.Bgra32, null);
-            int stride = wb.BackBufferStride;
-            byte[] pixels = new byte[tensorH * stride];
-
-            Parallel.For(0, tensorH, y =>
-            {
-                for (int x = 0; x < tensorW; x++)
-                {
-                    // 注意：这里需要确保 tensor 索引不越界
-                    // LaMa 输出通常是 0-1 范围
-                    float r = Math.Clamp(tensor[0, 0, y, x], 0, 1);
-                    float g = Math.Clamp(tensor[0, 1, y, x], 0, 1);
-                    float b = Math.Clamp(tensor[0, 2, y, x], 0, 1);
-
-                    int offset = y * stride + x * 4;
-
-                    // 写入 BGRA
-                    pixels[offset + 0] = (byte)(b * 255);
-                    pixels[offset + 1] = (byte)(g * 255);
-                    pixels[offset + 2] = (byte)(r * 255);
-                    pixels[offset + 3] = 255; // 确保 Alpha 通道是不透明的
-                }
-            });
-
-            wb.WritePixels(new Int32Rect(0, 0, tensorW, tensorH), pixels, stride, 0);
-            // 不要在后台线程做 TransformedBitmap 缩放，直接返回结果
-            wb.Freeze(); // 冻结以便跨线程传递
-            return wb;
-        }
-
         public bool IsModelReady(AiTaskType taskType)
         {
             string modelName;
@@ -303,14 +265,8 @@ namespace TabPaint
             {
                 if (gpuId != 0)
                 {
-                    try
-                    {
-                        options.AppendExecutionProvider_DML(0);
-                    }
-                    catch
-                    {
-                        options.AppendExecutionProvider_CPU();
-                    }
+                    try  { options.AppendExecutionProvider_DML(0);}
+                    catch{ options.AppendExecutionProvider_CPU();}
                 }
                 else
                 {
@@ -350,8 +306,6 @@ namespace TabPaint
                 default:
                     throw new ArgumentException("Unknown Task Type");
             }
-
-            // --- 以下逻辑保持不变 (本地化策略、下载、校验) ---
             bool preferMirror = CultureInfo.CurrentCulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
             string primaryUrl = preferMirror ? urlMirror : urlMain;
             string secondaryUrl = preferMirror ? urlMain : urlMirror;
@@ -393,7 +347,6 @@ namespace TabPaint
 
             return finalPath;
         }
-
         private async Task<bool> DownloadAndValidateAsync(HttpClient client, string url, string destPath, string expectedMd5, IProgress<double> progress)
         {
             string tempPath = destPath + ".tmp"; // 使用临时文件
@@ -478,15 +431,10 @@ namespace TabPaint
                 {
                     var hash = md5.ComputeHash(stream);
                     var hashStr = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-
-                    // System.Diagnostics.Debug.WriteLine($"File: {Path.GetFileName(filePath)}, Hash: {hashStr}, Expected: {expectedMd5}");
-
                     return hashStr.Equals(expectedMd5.ToLowerInvariant());
                 }
             });
         }
-
-
         public async Task<byte[]> RunInferenceAsync(string modelPath, WriteableBitmap originalBmp)
         {
             int targetW = AppConsts.AiInferenceSizeDefault;
@@ -564,18 +512,13 @@ namespace TabPaint
                         var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor(session.InputMetadata.Keys.First(), tileTensor) };
                         using var results = session.Run(inputs);
                         var outputTensor = results.First().AsTensor<float>();
-
-                        // 4. 写回结果 (关键修改：传入 validW, validH)
-                        // 告诉函数：虽然 tensor 很大，但我只取 validW * ScaleFactor 这一部分
                         WriteTensorToPixels(outputTensor, outputPixels, x * ScaleFactor, y * ScaleFactor, validW, validH, outW, outH, outStride);
 
                         processedTiles++;
                         progress?.Report((double)processedTiles / totalTiles * 100);
                     }
                 }
-
             });
-
             // 4. 将像素写回 Bitmap
             outputBitmap.WritePixels(new Int32Rect(0, 0, outW, outH), outputPixels, outStride, 0);
 
@@ -613,7 +556,6 @@ namespace TabPaint
             });
             return tensor;
         }
-
         private void WriteTensorToPixels(Tensor<float> tensor, byte[] outPixels, int destX, int destY, int validW, int validH, int fullW, int fullH, int stride)
         {
             // 计算放大后的有效区域
@@ -650,7 +592,6 @@ namespace TabPaint
                 }
             });
         }
-
         private DenseTensor<float> PreprocessPixelsToTensor(byte[] pixels, int w, int h, int stride)
         {
             var tensor = new DenseTensor<float>(new[] { 1, 3, h, w });
@@ -675,40 +616,6 @@ namespace TabPaint
                 }
             });
 
-            return tensor;
-        }
-
-        private DenseTensor<float> Preprocess(WriteableBitmap bmp, int targetW, int targetH)
-        {
-            // 高质量缩放
-            var resized = new TransformedBitmap(bmp, new ScaleTransform((double)targetW / bmp.PixelWidth, (double)targetH / bmp.PixelHeight));
-            var wb = new WriteableBitmap(resized);
-
-            var tensor = new DenseTensor<float>(new[] { 1, 3, targetH, targetW });
-            int stride = wb.BackBufferStride;
-
-            wb.Lock();
-            unsafe
-            {
-                byte* ptr = (byte*)wb.BackBuffer;
-
-                // 使用 Parallel 加速预处理循环
-                Parallel.For(0, targetH, y =>
-                {
-                    for (int x = 0; x < targetW; x++)
-                    {
-                        int offset = y * stride + x * 4;
-                        float b = ptr[offset + 0] / 255.0f;
-                        float g = ptr[offset + 1] / 255.0f;
-                        float r = ptr[offset + 2] / 255.0f;
-
-                        tensor[0, 0, y, x] = r;
-                        tensor[0, 1, y, x] = g;
-                        tensor[0, 2, y, x] = b;
-                    }
-                });
-            }
-            wb.Unlock();
             return tensor;
         }
 

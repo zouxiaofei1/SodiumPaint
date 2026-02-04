@@ -57,10 +57,7 @@
                 <RowDefinition Height="32"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <!-- 新增底部栏 -->
             </Grid.RowDefinitions>
-
-            <!-- 1. 标题栏 -->
             <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1">
                 <Grid MouseLeftButtonDown="TitleBar_MouseDown">
                     <Grid.ColumnDefinitions>
@@ -86,10 +83,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
-                            <!-- 底部按钮栏移走了 -->
                         </Grid.RowDefinitions>
-
-                        <!-- TabControl -->
                         <TabControl x:Name="AdjustTabControl" Grid.Row="0" Background="Transparent" BorderThickness="0" Margin="10,10,10,0">
                             <!-- Tab 1: 光效 (BCE) -->
                             <TabItem Header="{DynamicResource L_AdjustBCE_Tab_Light}">
@@ -143,8 +137,6 @@
                                 </ScrollViewer>
                             </TabItem>
                         </TabControl>
-
-                        <!-- 直方图 (固定在底部) -->
                         <Border Grid.Row="1" Padding="20,5,20,10">
                             <Grid>
                                 <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Opacity="0.5" VerticalAlignment="Bottom"/>
@@ -179,16 +171,11 @@
                 <!-- 右侧：实时预览区域 -->
                 <Border Grid.Column="1" Background="{DynamicResource GlassBackgroundLowBrush}" ClipToBounds="True">
                     <Grid>
-                        <!-- 1. 棋盘格背景：添加 Margin=5 -->
                         <Border Background="{StaticResource CheckerboardBrush}" Margin="10"/>
-
-                        <!-- 2. 图片：添加 Margin=5 -->
                         <Image x:Name="PreviewImage" 
                                Stretch="Uniform" 
                                RenderOptions.BitmapScalingMode="Fant"
                                Margin="10"/>
-
-                        <!-- 3. “预览”字样：左上角，位于图片上方 -->
                         <Border HorizontalAlignment="Left" VerticalAlignment="Top" 
                                 Background="#80000000" CornerRadius="4" Padding="6,2" Margin="10,10">
                             <TextBlock Text="{DynamicResource L_Common_Preview}" 

@@ -31,27 +31,15 @@ namespace TabPaint
         // 防抖动计时器
         private DispatcherTimer _updateTimer;
         private bool _isUpdatingFromTextBox = false;
-
-        // 构造函数
-        // initialTab: 0 = BCE (Light), 1 = TTS (Color)
         public AdjustColorWindow(WriteableBitmap fullBitmap, int initialTabIndex = 0)
         {
             InitializeComponent();
             _originalFullBitmap = fullBitmap;
-
-            // 初始化预览图
             CreatePreviewBitmaps(fullBitmap);
-
-            // 绑定预览图到右侧控件
             PreviewImage.Source = _previewTarget;
 
-            // 设置初始 Tab
-            if (initialTabIndex > 0 && initialTabIndex < AdjustTabControl.Items.Count)
-            {
-                AdjustTabControl.SelectedIndex = initialTabIndex;
-            }
+            if (initialTabIndex > 0 && initialTabIndex < AdjustTabControl.Items.Count)AdjustTabControl.SelectedIndex = initialTabIndex;
 
-            // 初始化计时器
             _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) }; // 25fps 左右
             _updateTimer.Tick += (s, e) => { _updateTimer.Stop(); UpdatePreview(); };
 
@@ -64,12 +52,7 @@ namespace TabPaint
 
             // 确保句柄已经准备好
             var hwnd = new WindowInteropHelper(this).Handle;
-            if (hwnd == IntPtr.Zero)
-            {
-                return;
-            }
-
-            // 设置暗色模式标题栏
+            if (hwnd == IntPtr.Zero) return;
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
 
@@ -77,8 +60,6 @@ namespace TabPaint
             if (!MicaAcrylicManager.IsWin11())
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
-            
-                // 同时设置主窗口背景
                 this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
         }
@@ -88,11 +69,8 @@ namespace TabPaint
             double maxDim = 1280;
             double scale = 1.0;
 
-            if (source.PixelWidth > maxDim || source.PixelHeight > maxDim)
-            {
-                scale = Math.Min(maxDim / source.PixelWidth, maxDim / source.PixelHeight);
-            }
-
+            if (source.PixelWidth > maxDim || source.PixelHeight > maxDim) scale = Math.Min(maxDim / source.PixelWidth, maxDim / source.PixelHeight);
+     
             int w = (int)(source.PixelWidth * scale);
             int h = (int)(source.PixelHeight * scale);
             if (w < 1) w = 1; if (h < 1) h = 1;
@@ -182,9 +160,6 @@ namespace TabPaint
         {
             if (!_updateTimer.IsEnabled) _updateTimer.Start();
         }
-
-        // --- 核心图像处理 ---
-
         private void UpdatePreview()
         {
             // 1. 从纯净源拷贝像素到目标
@@ -210,16 +185,11 @@ namespace TabPaint
             double brightness, double contrast, double exposure,
             double temp, double tint, double saturation)
         {
-            // --- 预计算参数 ---
-
-            // TTS 参数
             double tempAdj = temp / 2.0;
             double tintAdj = tint / 2.0;
             double satAdj = (saturation + 100.0) / 100.0;
             bool hasTTS = (temp != 0 || tint != 0 || saturation != 0);
 
-            // BCE 参数
-            // 对比度公式: (val - 0.5) * contrast + 0.5
             double ctFactor = (100.0 + contrast) / 100.0;
             ctFactor *= ctFactor;
             double expFactor = Math.Pow(2, exposure);
@@ -243,9 +213,6 @@ namespace TabPaint
                     double b = row[x * 4];
                     double g = row[x * 4 + 1];
                     double r = row[x * 4 + 2];
-                    // Alpha 不动
-
-                    // 1. 应用色温/色调/饱和度 (TTS)
                     if (hasTTS)
                     {
                         // 色温/色调
@@ -271,10 +238,6 @@ namespace TabPaint
                         r += brAdj;
                         g += brAdj;
                         b += brAdj;
-
-                        // 应用对比度 (归一化到 0..1 再还原)
-                        // 简化计算: r = (((r/255 - 0.5) * ct) + 0.5) * 255
-                        // 等价于: (r - 127.5) * ct + 127.5
                         r = (r - 127.5) * ctFactor + 127.5;
                         g = (g - 127.5) * ctFactor + 127.5;
                         b = (b - 127.5) * ctFactor + 127.5;
@@ -314,8 +277,6 @@ namespace TabPaint
                 byte* row = ptr + (y * stride);
                 for (int x = 0; x < width; x += step)
                 {
-                    // [重要] 忽略完全透明的像素 (Alpha = 0)
-                    // 这能解决“透明背景导致直方图看起来是空的”问题
                     if (row[3] > 0)
                     {
                         _blueCounts[row[0]]++;
@@ -329,8 +290,6 @@ namespace TabPaint
             int[] displayRed = SmoothHistogram(_redCounts);
             int[] displayGreen = SmoothHistogram(_greenCounts);
             int[] displayBlue = SmoothHistogram(_blueCounts);
-
-            // [修改] 找最大值 (使用平滑后的数据)
             int max = 0;
             for (int i = 0; i < 256; i++)
             {
@@ -338,8 +297,6 @@ namespace TabPaint
                 if (displayGreen[i] > max) max = displayGreen[i];
                 if (displayBlue[i] > max) max = displayBlue[i];
             }
-
-            // [保持不变] 稳定化 Max 值
             int minStableMax = (width * height) / (step * step) / 50;
             if (max < minStableMax) max = minStableMax;
             if (max < 10) max = 10;
@@ -347,7 +304,6 @@ namespace TabPaint
             // UI 更新
             Dispatcher.Invoke(() =>
             {
-                // [修改] 传入平滑后的数组
                 UpdatePolyline(HistoRed, displayRed, max);
                 UpdatePolyline(HistoGreen, displayGreen, max);
                 UpdatePolyline(HistoBlue, displayBlue, max);
@@ -357,9 +313,6 @@ namespace TabPaint
         private int[] SmoothHistogram(int[] input)
         {
             int[] output = new int[input.Length];
-            // 使用简单的 [0.25, 0.5, 0.25] 权重核心进行平滑
-            // 也可以尝试更宽的核如 [1, 2, 4, 2, 1] / 10
-
             for (int i = 0; i < input.Length; i++)
             {
                 if (i == 0)
@@ -372,7 +325,6 @@ namespace TabPaint
                 }
                 else
                 {
-                    // 核心算法：当前点占50%，左右各占25%
                     output[i] = (int)(input[i - 1] * 0.25 + input[i] * 0.5 + input[i + 1] * 0.25);
                 }
             }
@@ -382,10 +334,7 @@ namespace TabPaint
 
         private void UpdatePolyline(Polyline polyline, int[] counts, int maxVal)
         {
-            // 防止除以0
             if (maxVal < 1) maxVal = 1;
-
-            // 获取控件实际尺寸
             double width = HistogramGrid.ActualWidth > 0 ? HistogramGrid.ActualWidth : 280;
             double height = HistogramGrid.Height; // 通常是 60
 
@@ -394,10 +343,6 @@ namespace TabPaint
             points.Add(new Point(0, height));
 
             double stepX = width / 255.0;
-
-            // --- 核心修改：使用对数缩放 ---
-            // Log(x+1) 是为了处理 count=0 的情况
-            // 使用 Math.Log (自然对数) 或 Math.Log10 都可以，效果类似
             double logMax = Math.Log(maxVal + 1);
 
             for (int i = 0; i < 256; i++)
@@ -409,27 +354,16 @@ namespace TabPaint
                 {
                     double logVal = Math.Log(count + 1);
 
-                    // 归一化：当前对数值 / 最大对数值
-                    // 这样，即使 maxVal 很大，中间只有少量像素的部分也能显示出高度
                     double normalizedHeight = logVal / logMax;
 
                     // 绘制点
                     points.Add(new Point(i * stepX, height - (normalizedHeight * height)));
                 }
-                else
-                {
-                    points.Add(new Point(i * stepX, height));
-                }
+                else points.Add(new Point(i * stepX, height));
             }
-
-            // 右下角结束点
             points.Add(new Point(width, height));
             polyline.Points = points;
         }
-
-
-        // --- 确定与取消 ---
-
         private void Ok_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -456,11 +390,6 @@ namespace TabPaint
         {
             DialogResult = false;
             Close();
-        }
-
-        private void NumberBox_Loaded(object sender, RoutedEventArgs e)
-        {
-
         }
     }
 }

@@ -29,7 +29,6 @@ namespace TabPaint
             }
             return false;
         }
-
         private bool HandleGlobalShortcuts(object sender, KeyEventArgs e)
         {
             // --- 自定义部分 ---
@@ -800,7 +799,6 @@ namespace TabPaint
             }
 
         }
-
         // 动画相关字段
         private double _targetZoomScale; // 动画最终要达到的缩放比例
         private Point _zoomCenter;       // 缩放中心（鼠标位置）
@@ -838,8 +836,6 @@ namespace TabPaint
             {
             }
         }
-
-
         private void OnZoomRendering(object sender, EventArgs e)
         {
             double delta = _targetZoomScale - zoomscale;
@@ -893,8 +889,6 @@ namespace TabPaint
                 CompositionTarget.Rendering -= OnZoomRendering;
             }
         }
-
-
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
             // 1. 处理 Shift + 滚轮 (水平滚动) - 优先级最高，保持不变
@@ -914,8 +908,8 @@ namespace TabPaint
 
             if (isViewMode && !isCtrl && wheelMode == MouseWheelMode.SwitchImage)
             {
-                e.Handled = true;
-                // 滚轮向下(Delta < 0) -> 下一张; 滚轮向上(Delta > 0) -> 上一张
+                e.Handled = true;      // 滚轮向下(Delta < 0) -> 下一张; 滚轮向上(Delta > 0) -> 上一张
+          
                 if (e.Delta < 0) ShowNextImage();
                 else ShowPrevImage();
                 return;

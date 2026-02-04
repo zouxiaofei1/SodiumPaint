@@ -267,15 +267,8 @@ namespace TabPaint
         }
         private void InsertTextToCanvas(Point viewPos, string text)
         {
-            // 1. 切换工具
             _router.SetTool(_tools.Text);
-
-            // 2. 调用上一轮我们在 TextTool 里写的 SpawnTextBox 方法
-            if (_router.CurrentTool is TextTool textTool)
-            {
-                // 确保 SpawnTextBox 方法已在 TextTool 中定义
-                textTool.SpawnTextBox(_ctx, viewPos, text);
-            }
+            if (_router.CurrentTool is TextTool textTool) textTool.SpawnTextBox(_ctx, viewPos, text);
         }
         private DispatcherTimer _dragWatchdog;
         private void DragWatchdog_Tick(object sender, EventArgs e)

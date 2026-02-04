@@ -27,7 +27,6 @@ namespace TabPaint
         {
             if (value is bool b)
             {
-                // 如果是 True，则隐藏 (Collapsed)；如果是 False，则显示 (Visible)
                 return b ? Visibility.Collapsed : Visibility.Visible;
             }
             return Visibility.Visible;
@@ -35,10 +34,7 @@ namespace TabPaint
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is Visibility v)
-            {
-                return v != Visibility.Visible;
-            }
+            if (value is Visibility v) return v != Visibility.Visible;
             return false;
         }
     }
@@ -68,10 +64,7 @@ namespace TabPaint
                     {
                         var uri = new Uri("pack://application:,,,/Resources/Cursors/Openhand.cur");
                         var resourceInfo = Application.GetResourceStream(uri);
-                        if (resourceInfo != null)
-                        {
-                            _cachedCursorOpen = new Cursor(resourceInfo.Stream);
-                        }
+                        if (resourceInfo != null)   _cachedCursorOpen = new Cursor(resourceInfo.Stream);
                     }
                     catch
                     {
@@ -157,10 +150,7 @@ namespace TabPaint
                 if (settings.ViewUseDarkCanvasBackground)
                 {
                     // 只有当前不是 Dark 时才切换，避免重复刷新
-                    if (ThemeManager.CurrentAppliedTheme != AppTheme.Dark)
-                    {
-                        ThemeManager.ApplyTheme(AppTheme.Dark);
-                    }
+                    if (ThemeManager.CurrentAppliedTheme != AppTheme.Dark)  ThemeManager.ApplyTheme(AppTheme.Dark);
                 }
                 RootWindow.MinHeight= 100;
                 RootWindow.MinWidth = 150;
@@ -207,7 +197,6 @@ namespace TabPaint
         }
         private void OnTitleBarModeSwitch(object sender, RoutedEventArgs e)
         {
-            // 1. 切换布尔值
     TriggerModeChange();
         }
 
@@ -215,10 +204,6 @@ namespace TabPaint
         {
             var window = (MainWindow)d;
             bool isView = (bool)e.NewValue;
-            if (isView)
-            {
-                // 比如: window.CancelCurrentOperation();
-            }
         }
 
     }

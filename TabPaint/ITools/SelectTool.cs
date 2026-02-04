@@ -26,10 +26,7 @@ namespace TabPaint
             private System.Windows.Input.Cursor _cachedCursor;
             public override System.Windows.Input.Cursor Cursor
             {
-                get
-                {
-                    return System.Windows.Input.Cursors.Cross;
-                }
+                get  { return System.Windows.Input.Cursors.Cross; }
             }
             public bool _selecting = false;
             public bool _draggingSelection = false;
@@ -59,7 +56,6 @@ namespace TabPaint
             private Color _wandStartColor; // 起始点的颜色
             private bool _isWandAdjusting = false; // 是否正在拖拽调整容差
             private bool[] _wandMaskBuffer; // 用于缓存全图的选中状态(bool)，避免重复申请内存
-
             public enum ResizeAnchor
             {
                 None,
@@ -72,10 +68,7 @@ namespace TabPaint
             {
                 System.Windows.Input.Mouse.OverrideCursor = null;
 
-                if (ctx.ViewElement != null)
-                {
-                    ctx.ViewElement.Cursor = this.Cursor;
-                }
+                if (ctx.ViewElement != null)   ctx.ViewElement.Cursor = this.Cursor;
             }
             private void EnsureTimer()
             {
@@ -123,7 +116,6 @@ namespace TabPaint
                 }
                 if (elapsed > targetDelay)
                 {
-
                     if (ctxForTimer != null) ctxForTimer.SelectionPreview.Opacity = 0.7; // 恢复默认拖拽透明度
                     Mouse.OverrideCursor = null;
 
@@ -141,7 +133,6 @@ namespace TabPaint
                     ResetSwitchTimer();
                 }
             }
-
             private void ResetSwitchTimer()
             {
                 if (_tabSwitchTimer != null && _tabSwitchTimer.IsEnabled)

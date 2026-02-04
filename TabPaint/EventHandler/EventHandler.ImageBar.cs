@@ -41,8 +41,6 @@ namespace TabPaint
             public Int32 X;
             public Int32 Y;
         };
-
-
         private void StickTabImage(FileTabItem tabItem)
         {
             if (tabItem == null) return;
@@ -179,9 +177,6 @@ namespace TabPaint
             UpdateImageBarSliderState();
             ShowToast(string.Format(LocalizationManager.GetString("L_Toast_CleanedCount_Format"), filesToRemove.Count));
         }
-
-
-
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
             CreateNewTab(TabInsertPosition.AtEnd, true); CheckFittoWindow();
@@ -252,9 +247,7 @@ namespace TabPaint
                             if (file.EndsWith(".onnx")) continue;
                             File.Delete(file);
                         }
-                        catch
-                        {
-                        }
+                        catch {}
                     }
                 }
             }
@@ -343,7 +336,6 @@ namespace TabPaint
                     ShowToast("L_Toast_FileNotFound");
                     return;
                 }
-
                 try
                 {
                     // 3. 使用 explorer.exe 的 /select 参数来打开文件夹并选中文件
@@ -738,7 +730,6 @@ namespace TabPaint
                 }
             }
         }
-
         private void OnTabDeleteClick(object sender, RoutedEventArgs e)
         {
             if (sender is MenuItem item && item.Tag is FileTabItem tab)
@@ -778,10 +769,7 @@ namespace TabPaint
                             Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
                     }
                 }
-                catch (Exception ex)
-                {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DeleteFailed"), ex.Message));
-                }
+                catch (Exception ex)  { ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DeleteFailed"), ex.Message));}
 
             }
         }

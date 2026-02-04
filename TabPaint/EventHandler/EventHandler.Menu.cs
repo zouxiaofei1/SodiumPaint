@@ -328,10 +328,7 @@ namespace TabPaint
 
                 UpdateImageBarSliderState();
             }
-            else
-            {
-                ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FileNotFound_Format"), filePath));
-            }
+            else   ShowToast(string.Format(LocalizationManager.GetString("L_Toast_FileNotFound_Format"), filePath));
         }
 
         private void OnClearRecentFilesClick(object sender, EventArgs e)
@@ -355,17 +352,12 @@ namespace TabPaint
             settingsWindow.Owner = this; // 设置主窗口为父窗口，实现模态
             settingsWindow.ShowDialog();
         }
-
-
-
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
             // 如果是空路径 OR 是虚拟路径，都视为"从未保存过"，走另存为
             if (string.IsNullOrEmpty(_currentFilePath) || IsVirtualPath(_currentFilePath)) OnSaveAsClick(sender, e);
             else SaveBitmap(_currentFilePath);
         }
-
-
         private void OnSaveAsClick(object sender, RoutedEventArgs e)
         {
             string defaultName = _currentTabItem?.DisplayName ?? "image";
@@ -392,15 +384,12 @@ namespace TabPaint
             {
                 string newPath = dlg.FileName;
                 SaveBitmap(newPath); // 实际保存文件
-
-                // 3. 更新状态
                 _currentFilePath = newPath;
                 _currentFileName = System.IO.Path.GetFileName(newPath);
 
                 if (_currentTabItem != null)
                 {
-                    // 这里会触发 FilePath 的 setter，进而自动触发 DisplayName 的通知
-                    _currentTabItem.FilePath = newPath;
+                    _currentTabItem.FilePath = newPath;   // 这里会触发 FilePath 的 setter，进而自动触发 DisplayName 的通知
 
                     if (_currentTabItem.IsNew)
                     {
@@ -413,7 +402,6 @@ namespace TabPaint
                     }
 
                     _currentImageIndex = _imageFiles.IndexOf(newPath);
-                   // s(_currentImageIndex);
                 }
 
                 _isFileSaved = true;
@@ -494,7 +482,6 @@ namespace TabPaint
                 _canvasResizer.UpdateUI();
             }
         }
-
         private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
         {
             MaximizeWindowHandler();
@@ -856,9 +843,6 @@ namespace TabPaint
         private async Task ApplyWatermarkToAllTabs(WatermarkSettings settings)
         {
             if (settings == null) return;
-
-            // 1. 获取需要处理的 Tab 数据
-            // 注意：不能在后台线程直接访问 FileTabs (ObservableCollection)，需要先在 UI 线程提取出数据副本
             string currentTabId = _currentTabItem?.Id;
 
             // 提取纯数据对象(DTO)以传入后台，避免跨线程访问 UI 对象
@@ -876,9 +860,6 @@ namespace TabPaint
             if (tasksInfo.Count == 0) return;
 
             ShowToast(LocalizationManager.GetString("L_Toast_BatchStart") ?? $"Processing {tasksInfo.Count} images...");
-
-            // 2. 准备并发控制
-            // 限制并发数为 CPU 核心数，避免创建过多 RenderTargetBitmap 耗尽显存/内存
             int maxDegreeOfParallelism = Environment.ProcessorCount;
             using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
             {

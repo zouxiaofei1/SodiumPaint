@@ -92,10 +92,8 @@ namespace TabPaint
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // 数据 -> Slider 位置 (开根号，为了让大数值被压缩)
             if (value is double dVal)
             {
-                // 公式：Slider = 100 * Sqrt(Data / 5000)
                 return MaxSliderValue * Math.Sqrt(dVal / MaxDataValue);
             }
             if (value is int iVal)

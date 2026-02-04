@@ -42,11 +42,7 @@ namespace TabPaint.Controls
 
         protected override void OnMouseEnter(MouseEventArgs e)
         {
-            if (_closeTimer.IsEnabled)
-            {
-                _closeTimer.Stop();
-            }
-
+            if (_closeTimer.IsEnabled)  _closeTimer.Stop();
             base.OnMouseEnter(e);
 
         }

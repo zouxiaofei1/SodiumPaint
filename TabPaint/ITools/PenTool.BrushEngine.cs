@@ -11,11 +11,7 @@ public partial class PenTool : ToolBase
 {
     private unsafe Int32Rect? DrawContinuousStrokeUnsafe(ToolContext ctx, Point from, float fromP, Point to, float toP, byte* buffer, int stride, int w, int h)
     {
-        if (IsLineBasedBrush(ctx.PenStyle))
-        {
-            return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
-        }
-
+        if (IsLineBasedBrush(ctx.PenStyle))  return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
         double dx = to.X - from.X;
         double dy = to.Y - from.Y;
         double length = Math.Sqrt(dx * dx + dy * dy);
@@ -68,7 +64,6 @@ public partial class PenTool : ToolBase
         if (!hit) return null;
         return new Int32Rect(minX, minY, maxX - minX, maxY - minY);
     }
-
     private unsafe Int32Rect? DrawBrushLineUnsafe(ToolContext ctx, Point p1, float p1Pressure, Point p2, float p2Pressure, byte* buffer, int stride, int w, int h)
     {
         switch (ctx.PenStyle)
@@ -114,7 +109,6 @@ public partial class PenTool : ToolBase
         }
         return null;
     }
-
     private unsafe Int32Rect? DrawBrushAtUnsafe(ToolContext ctx, Point px, byte* buffer, int stride, int w, int h)
     {
         switch (ctx.PenStyle)
@@ -253,7 +247,6 @@ public partial class PenTool : ToolBase
             if (e2 <= dx) { err += dx; y0 += sy; }
         }
     }
-
     private unsafe void DrawSquareStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h, bool isEraser)
     {
         int size = (int)ctx.PenThickness;

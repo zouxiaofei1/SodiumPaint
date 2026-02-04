@@ -199,9 +199,6 @@ namespace TabPaint
                                 if (ext == ".svg")
                                 {
                                     byte[] bytes = File.ReadAllBytes(targetPath);
-                                    // 注意：这里需要访问 MainWindow 的 DecodeSvg，
-                                    // 因为 DecodeSvg 是 MainWindow 的实例方法，
-                                    // 我们可以通过 Application.Current.MainWindow 获取实例
                                     var mw = System.Windows.Application.Current.Dispatcher.Invoke(() => (MainWindow)System.Windows.Application.Current.MainWindow);
                                     return mw.DecodeSvg(bytes, token);
                                 }

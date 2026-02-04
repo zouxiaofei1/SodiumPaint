@@ -24,8 +24,6 @@ public class ShapeTool : ToolBase
     private System.Windows.Shapes.Shape _previewShape;
     private int lag = 0;
 
-    // ... (SetCursor, SetShapeType, GetSelectTool, GiveUpSelection 方法保持不变) ...
-
     public override void SetCursor(ToolContext ctx)
     {
         System.Windows.Input.Mouse.OverrideCursor = null;
@@ -149,7 +147,6 @@ public class ShapeTool : ToolBase
     }
     public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        // 1. 如果已经在操控模式（调整之前的图形），交给 SelectTool 处理
         if (_isManipulating)
         {
             GetSelectTool()?.OnPointerUp(ctx, viewPos);
@@ -201,9 +198,6 @@ public class ShapeTool : ToolBase
         var selectTool = GetSelectTool();
         if (selectTool != null && shapeBitmap != null)
         {
-            // -----------------------------------------------------------------------
-            // 修改开始：根据 Ctrl 键决定行为
-            // -----------------------------------------------------------------------
             bool isCtrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
 
             // 1. 先将生成的图片加载到 SelectTool 中 (这是通用步骤)
@@ -211,53 +205,29 @@ public class ShapeTool : ToolBase
 
             int finalX = (int)validBounds.X;
             int finalY = (int)validBounds.Y;
-
-            // 设置 SelectTool 的位置数据，确保它知道图片在哪
             selectTool._selectionRect = new Int32Rect(finalX, finalY, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight);
             selectTool._originalRect = selectTool._selectionRect;
 
             if (isCtrlPressed)
             {
-                // === 模式 A: 按住 Ctrl -> 进入编辑模式 (原有逻辑) ===
-
-                // 计算 UI 缩放比例
                 double uiScaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
                 double uiScaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
-
-                // 设置预览层的大小
-                ctx.SelectionPreview.Width = selectTool._selectionRect.Width * uiScaleX;
+                ctx.SelectionPreview.Width = selectTool._selectionRect.Width * uiScaleX;  // 设置预览层的大小
                 ctx.SelectionPreview.Height = selectTool._selectionRect.Height * uiScaleY;
-
-                // 设置变换：将选区移动到计算出的裁剪位置
                 var tg = new TransformGroup();
                 tg.Children.Add(new ScaleTransform(1, 1)); // 初始比例 1:1
                 tg.Children.Add(new TranslateTransform(finalX, finalY));
                 ctx.SelectionPreview.RenderTransform = tg;
-
-                // 设置裁剪 (防止渲染溢出)
                 ctx.SelectionPreview.Clip = new RectangleGeometry(new Rect(0, 0, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight));
-
-                // 显示选择框覆盖层
                 selectTool.RefreshOverlay(ctx);
                 selectTool.UpdateStatusBarSelectionSize();
-
-                // 标记为正在操控，阻止开始画下一个图形
                 _isManipulating = true;
             }
             else
             {
-                // === 模式 B: 默认 -> 直接印在画布上，不显示选择框 ===
-
-                // 立即提交到画布 (true 表示记录到撤销栈)
                 selectTool.CommitSelection(ctx, true);
-
-                // 清理 SelectTool 的 UI (隐藏虚线框、控制手柄等)
                 selectTool.Cleanup(ctx);
-
-                // 确保标记为未操控，这样下次点击可以立即画新图
                 _isManipulating = false;
-
-                // 这是一个小优化：防止误触 SelectTool 的逻辑
                 selectTool.lag = 0;
             }
         }
@@ -424,15 +394,10 @@ public class ShapeTool : ToolBase
             }
         }
     }
-
-    // --- 几何算法辅助方法 ---
-
     private double Gethandlength(Point start, Point end)
     {
         return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2), 0.5) * 0.2;
     }
-
-    // 构造箭头 (保持原样)
     private Geometry BuildArrowGeometry(Point start, Point end, double headLength)
     {
         Vector vec = end - start;
@@ -462,10 +427,7 @@ public class ShapeTool : ToolBase
         geometry.Freeze();
         return geometry;
     }
-
-    // 构造正多边形 (三角形、菱形、五边形)
-    // startAngle: -PI/2 使得顶点朝上
-    private Geometry BuildRegularPolygon(Rect rect, int sides, double startAngle)
+    private Geometry BuildRegularPolygon(Rect rect, int sides, double startAngle) // 构造正多边形 
     {
         StreamGeometry geometry = new StreamGeometry();
         using (StreamGeometryContext ctx = geometry.Open())
@@ -489,9 +451,7 @@ public class ShapeTool : ToolBase
         geometry.Freeze();
         return geometry;
     }
-
-    // 构造五角星
-    private Geometry BuildStarGeometry(Rect rect)
+    private Geometry BuildStarGeometry(Rect rect) // 构造五角星
     {
         StreamGeometry geometry = new StreamGeometry();
         using (StreamGeometryContext ctx = geometry.Open())
@@ -524,45 +484,29 @@ public class ShapeTool : ToolBase
         geometry.Freeze();
         return geometry;
     }
-
-    // 构造对话气泡
-    private Geometry BuildBubbleGeometry(Rect rect)
+    private Geometry BuildBubbleGeometry(Rect rect)   // 构造对话气泡
     {
         StreamGeometry geometry = new StreamGeometry();
         using (StreamGeometryContext ctx = geometry.Open())
         {
-            // 简单的圆角矩形 + 小尾巴
             double radius = Math.Min(rect.Width, rect.Height) * AppConsts.ShapeToolBubbleRadiusRatio;
             double tailHeight = rect.Height * AppConsts.ShapeToolBubbleTailHeightRatio;
             double bodyHeight = rect.Height - tailHeight;
-
-            // 主体矩形区域
             Rect bodyRect = new Rect(rect.X, rect.Y, rect.Width, bodyHeight);
-
-            // 尾巴的起点 (右下角偏左一点)
             Point tailStart = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailStartRatio, rect.Y + bodyHeight);
-            // 尾巴尖端
             Point tailTip = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailStartRatio, rect.Y + rect.Height);
-            // 尾巴终点
             Point tailEnd = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailEndRatio, rect.Y + bodyHeight);
-
-            // 绘制
             ctx.BeginFigure(new Point(bodyRect.X + radius, bodyRect.Y), true, true);
-            // 上边
             ctx.LineTo(new Point(bodyRect.Right - radius, bodyRect.Top), true, true);
             ctx.ArcTo(new Point(bodyRect.Right, bodyRect.Top + radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-            // 右边
             ctx.LineTo(new Point(bodyRect.Right, bodyRect.Bottom - radius), true, true);
             ctx.ArcTo(new Point(bodyRect.Right - radius, bodyRect.Bottom), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-
-            // 底部带尾巴
             ctx.LineTo(tailStart, true, true);
             ctx.LineTo(tailTip, true, true);
             ctx.LineTo(tailEnd, true, true);
 
             ctx.LineTo(new Point(bodyRect.Left + radius, bodyRect.Bottom), true, true);
             ctx.ArcTo(new Point(bodyRect.Left, bodyRect.Bottom - radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-            // 左边
             ctx.LineTo(new Point(bodyRect.Left, bodyRect.Top + radius), true, true);
             ctx.ArcTo(new Point(bodyRect.Left + radius, bodyRect.Top), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
         }

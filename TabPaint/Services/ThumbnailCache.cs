@@ -6,8 +6,7 @@ namespace TabPaint
     // 简单的 LRU 缓存实现
     public class ThumbnailCache
     {
-        // 缓存容量：比如最多存 200 张缩略图 (100px宽的图大概几KB到几十KB，200张没压力)
-        private readonly int _capacity;
+        private readonly int _capacity;// 缓存容量
         private readonly ConcurrentDictionary<string, BitmapSource> _cache;
         private readonly ConcurrentQueue<string> _lruQueue;
 
@@ -21,26 +20,16 @@ namespace TabPaint
         public void Add(string key, BitmapSource bitmap)
         {
             if (string.IsNullOrEmpty(key) || bitmap == null) return;
-
-            // 如果已经有了，更新一下（简单起见，这里直接覆盖）
             if (_cache.ContainsKey(key))
             {
                 _cache[key] = bitmap;
                 return;
             }
-
-            // 检查容量
             if (_cache.Count >= _capacity)
             {
-                string oldKey;
-                // 尝试移除最老的
-                if (_lruQueue.TryDequeue(out oldKey))
-                {
-                    _cache.TryRemove(oldKey, out _);
-                }
+                string oldKey; // 尝试移除最老的
+                if (_lruQueue.TryDequeue(out oldKey))  _cache.TryRemove(oldKey, out _);
             }
-
-            // 加入新数据
             _cache[key] = bitmap;
             _lruQueue.Enqueue(key);
         }

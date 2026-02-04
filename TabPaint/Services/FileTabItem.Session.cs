@@ -29,10 +29,10 @@ namespace TabPaint
 
         private void TriggerBackgroundBackup()
         {
-      
+
             if (_currentTabItem == null) return;
             if (_surface?.Bitmap == null) return;
-         
+
             // 1. 基础检查
             if (_currentTabItem.IsDirty == false && !_currentTabItem.IsNew) return;
             if (_currentCanvasVersion == _lastBackedUpVersion &&
@@ -105,7 +105,6 @@ namespace TabPaint
                         {
                             targetTab.BackupPath = fullPath;
                             targetTab.LastBackupTime = DateTime.Now;
-                            // Debug.WriteLine($"Backup finished for {fileId}");
                         }
                     }, DispatcherPriority.Background);
                 }
@@ -127,14 +126,8 @@ namespace TabPaint
                     myCts.Dispose();
                 }
             }, token);
-            if (_activeSaveTasks.ContainsKey(fileId))
-            {
-                _activeSaveTasks[fileId] = saveTask;
-            }
-            else
-            {
-                _activeSaveTasks.Add(fileId, saveTask);
-            }
+            if (_activeSaveTasks.ContainsKey(fileId)) _activeSaveTasks[fileId] = saveTask;
+            else _activeSaveTasks.Add(fileId, saveTask);
 
             SaveSession();
         }
@@ -189,7 +182,7 @@ namespace TabPaint
 
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad; 
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.UriSource = new Uri(path);
                 bitmap.EndInit();
                 bitmap.Freeze();
@@ -327,7 +320,6 @@ namespace TabPaint
                 System.Diagnostics.Debug.WriteLine($"Thumbnail update failed: {ex.Message}");
             }
         }
-
         private async void AutoSaveTimer_Tick(object sender, EventArgs e)
         {
 
@@ -370,7 +362,6 @@ namespace TabPaint
                 return null;
             }
         }
-
         private BitmapSource GetCurrentCanvasSnapshot()
         {
             return GetCurrentCanvasSnapshotSafe();
@@ -467,14 +458,11 @@ namespace TabPaint
             }
             return candidate;
         }
-
         private void SaveSession()
         {
             // 1. 准备当前内存中的数据
             var currentSessionTabs = new List<SessionTabInfo>();
-
-            // 获取当前上下文目录：必须基于真实的物理文件路径
-            string currentContextDir = null;
+            string currentContextDir = null;  // 获取当前上下文目录：必须基于真实的物理文件路径
 
             // 优先从 _imageFiles 列表中找第一个真实的文件路径来确定当前“工作目录”
             string? firstRealFile = _imageFiles?.FirstOrDefault(f => !string.IsNullOrEmpty(f) && !IsVirtualPath(f));
@@ -496,7 +484,6 @@ namespace TabPaint
                 if (tab.IsDirty || tab.IsNew)
                 {
                     string? tabDir = null;
-
                     // 如果是真实文件，获取它的实际目录
                     if (!string.IsNullOrEmpty(tab.FilePath) && !IsVirtualPath(tab.FilePath))
                     {
@@ -507,11 +494,7 @@ namespace TabPaint
                         }
                         catch { tabDir = null; }
                     }
-                    if (string.IsNullOrEmpty(tabDir))
-                    {
-                        tabDir = currentContextDir;
-                    }
-
+                    if (string.IsNullOrEmpty(tabDir)) tabDir = currentContextDir;
                     currentSessionTabs.Add(new SessionTabInfo
                     {
                         Id = tab.Id,
@@ -527,9 +510,7 @@ namespace TabPaint
 
             var finalTabsToSave = new List<SessionTabInfo>();
             finalTabsToSave.AddRange(currentSessionTabs);
-
-            // 2. 合并旧 Session 数据
-            if (File.Exists(_sessionPath))
+            if (File.Exists(_sessionPath))  // 合并旧 Session 数据
             {
                 try
                 {
@@ -575,7 +556,6 @@ namespace TabPaint
                 LastViewedFile = _currentTabItem?.FilePath ?? (_imageFiles.Count > _currentImageIndex ? _imageFiles[_currentImageIndex] : null),
                 Tabs = finalTabsToSave
             };
-
             try
             {
                 string? dir = System.IO.Path.GetDirectoryName(_sessionPath);
@@ -626,8 +606,8 @@ namespace TabPaint
                                     tabDir = System.IO.Path.GetFullPath(tabDir);
                                 }
                                 catch (Exception ex) { }
-                                }
-                            if (string.Compare(tabDir, startupDir, StringComparison.OrdinalIgnoreCase) != 0&&!info.IsNew)
+                            }
+                            if (string.Compare(tabDir, startupDir, StringComparison.OrdinalIgnoreCase) != 0 && !info.IsNew)
                             {// 目录不匹配且不是新建文件，跳过
                                 continue;
                             }
@@ -664,24 +644,14 @@ namespace TabPaint
         }
         private void ResetDirtyTracker()
         {
-            // 1. 清空撤销栈
-            if (_undo != null)
-            {
-                _undo.ClearUndo();
-                _undo.ClearRedo();
-            }
 
-            // 2. 智能重置保存点
-            if (_currentTabItem != null && _currentTabItem.IsDirty)
-            {
-                _savedUndoPoint = -1;
-            }
+            if (_undo != null) { _undo.ClearUndo(); _undo.ClearRedo(); } // 1. 清空撤销栈
+            if (_currentTabItem != null && _currentTabItem.IsDirty) { _savedUndoPoint = -1; }// 2. 智能重置保存点
             else
             {
                 _savedUndoPoint = 0;
                 if (_currentTabItem != null) _currentTabItem.IsDirty = false;
             }
-
             SetUndoRedoButtonState();
         }
         enum TabInsertPosition
@@ -701,15 +671,15 @@ namespace TabPaint
                 IsNew = true,
                 UntitledNumber = availableNumber,
                 IsDirty = false,
-                   Id = $"Virtual_{availableNumber}",
-                    BackupPath = null
+                Id = $"Virtual_{availableNumber}",
+                BackupPath = null
             };
 
             newTab.Thumbnail = GenerateBlankThumbnail();
 
             // 3. 确定插入位置 (保持之前的逻辑)
             int listInsertIndex = _imageFiles.Count;
-           
+
             if (_currentTabItem != null)
             {
                 int currentListIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
@@ -726,19 +696,13 @@ namespace TabPaint
                 FileTabs.Insert(uiInsertIndex, newTab);
             if (tabposition == TabInsertPosition.AtEnd)
             {
-                FileTabs.Add(newTab); if (VisualTreeHelper.GetChildrenCount(MainImageBar.TabList) > 0)
-                {
-                    MainImageBar.Scroller.ScrollToRightEnd();
-                }
+                FileTabs.Add(newTab);
+                if (VisualTreeHelper.GetChildrenCount(MainImageBar.TabList) > 0) MainImageBar.Scroller.ScrollToRightEnd();
             }
             if (tabposition == TabInsertPosition.AtStart)
                 FileTabs.Insert(0, newTab);
+            if (switchto) SwitchToTab(newTab);
 
-            // 5. 切换逻辑
-            if (switchto)
-            {
-                SwitchToTab(newTab); // 建议封装一下切换逻辑
-            }
             UpdateImageBarVisibilityState();
             UpdateImageBarSliderState();
         }
@@ -783,8 +747,6 @@ namespace TabPaint
                 RestoreTransferredSelection();
             }
         }
-
-        // 放在 MainWindow 内部
         private void ResetCanvasView()
         {
             // 使用 Loaded 优先级，确保 ScrollViewer 已经感知到了新的图片尺寸
@@ -806,7 +768,6 @@ namespace TabPaint
         {
             try
             {
-                // 1. 虚拟路径处理 (新建文件)
                 if (tab.IsNew && IsVirtualPath(tab.FilePath))
                 {
                     var bmp = GetHighResImageForTab(tab);
@@ -878,7 +839,7 @@ namespace TabPaint
                             else
                                 encoder = new PngBitmapEncoder();
 
-                            encoder.Frames.Add(BitmapFrame.Create(bmp)); 
+                            encoder.Frames.Add(BitmapFrame.Create(bmp));
                             encoder.Save(fs);
                         }
                     }
@@ -993,7 +954,7 @@ namespace TabPaint
                                         IsDirty = info.IsDirty,
                                         BackupPath = info.BackupPath,
                                         UntitledNumber = info.UntitledNumber
-                                       
+
                                     };
                                     FileTabs.Add(tab);
                                     _ = tab.LoadThumbnailAsync(100, 60);
@@ -1014,9 +975,8 @@ namespace TabPaint
         {
             return !string.IsNullOrEmpty(path) && path.StartsWith(VirtualFilePrefix);
         }
-        private string GenerateVirtualPath()
+        private string GenerateVirtualPath()   // 格式： ::TABPAINT_NEW::{ID}
         {
-            // 格式： ::TABPAINT_NEW::{ID}
             return $"{VirtualFilePrefix}{GetNextAvailableUntitledNumber()}";
         }
     }

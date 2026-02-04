@@ -27,14 +27,8 @@ namespace TabPaint
 
                     // --- 1. 文件与画布信息 ---
                     sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_File"));
-                    if (IsVirtualPath(filePath))
-                    {
-                        sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
-                    }
-                    else
-                    {
-                        sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
-                    }
+                    if (IsVirtualPath(filePath))  sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
+                    else  sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
                     sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Size_MB_Format"), imageBytes.Length / 1024.0 / 1024.0));
                     sb.AppendLine();
 
@@ -147,9 +141,7 @@ namespace TabPaint
             try { if (metadata.ContainsQuery(query)) return metadata.GetQuery(query); } catch { }
             return null;
         }
-
-        // 解析无符号分数 (RATIONAL)
-        private double ParseUnsignedRational(object value)
+        private double ParseUnsignedRational(object value)    // 解析无符号分数 (RATIONAL)
         {
             if (value == null) return 0;
 

@@ -12,22 +12,16 @@ namespace TabPaint
     {
         private static SettingsManager _instance;
         private static readonly object _lock = new object();
-
-        // 设定存储路径: AppData/Local/TabPaint/settings.json
-        private readonly string _folderPath;
+        private readonly string _folderPath;        // 设定存储路径: AppData/Local/TabPaint/settings.json
         private readonly string _filePath;
         private const int MaxRecentFiles = 10;
         // 当前的设置实例
         public AppSettings Current { get; private set; }
-
-        // 私有构造函数
         private SettingsManager()
         {
             _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
             _filePath = Path.Combine(_folderPath, "settings.json");
-
-            // 初始化时尝试加载，如果失败则创建默认
-            Load();
+            Load(); // 初始化时尝试加载，如果失败则创建默认
         }
 
         // 单例访问点
@@ -39,10 +33,7 @@ namespace TabPaint
                 {
                     lock (_lock)
                     {
-                        if (_instance == null)
-                        {
-                            _instance = new SettingsManager();
-                        }
+                        if (_instance == null) _instance = new SettingsManager();
                     }
                 }
                 return _instance;
@@ -90,15 +81,10 @@ namespace TabPaint
         {
             try
             {
-                if (!Directory.Exists(_folderPath))
-                {
-                    Directory.CreateDirectory(_folderPath);
-                }
+                if (!Directory.Exists(_folderPath))  Directory.CreateDirectory(_folderPath);
 
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true // 格式化输出，方便人类阅读
-                };
+                var options = new JsonSerializerOptions{ WriteIndented = true  };
+
                 string jsonString = JsonSerializer.Serialize(Current, options);
                 File.WriteAllText(_filePath, jsonString);
             }
@@ -122,10 +108,7 @@ namespace TabPaint
             list.Insert(0, filePath);
 
             // 限制数量
-            if (list.Count > MaxRecentFiles)
-            {
-                list = list.Take(MaxRecentFiles).ToList();
-            }
+            if (list.Count > MaxRecentFiles) list = list.Take(MaxRecentFiles).ToList();
 
             Current.RecentFiles = list;
         }

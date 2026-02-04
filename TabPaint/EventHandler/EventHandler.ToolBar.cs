@@ -91,25 +91,6 @@ namespace TabPaint
                     shapeTool.SetShapeType(type);
                     _router.SetTool(shapeTool); UpdateShapeSplitButtonIcon(type);
                     UpdateToolSelectionHighlight();
-                    // 更新图标逻辑保持不变
-                    //switch (type)
-                    //{
-                    //    case ShapeTool.ShapeType.Rectangle:
-                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Rectangle");
-                    //        break;
-                    //    case ShapeTool.ShapeType.Ellipse:
-                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Ellipse");
-                    //        break;
-                    //    case ShapeTool.ShapeType.Line:
-                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Line");
-                    //        break;
-                    //    case ShapeTool.ShapeType.Arrow:
-                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_Arrow");
-                    //        break;
-                    //    case ShapeTool.ShapeType.RoundedRectangle:
-                    //        MainToolBar.CurrentShapeIcon.Data = (Geometry)FindResource("Icon_Shape_RoundedRect");
-                    //        break;
-                    //}
                 }
                 MainToolBar.ShapeToggle.IsChecked = false;
             }
@@ -125,8 +106,6 @@ namespace TabPaint
                 case ShapeTool.ShapeType.Line: resKey = "Icon_Shape_Line"; break;
                 case ShapeTool.ShapeType.Arrow: resKey = "Icon_Shape_Arrow"; break;
                 case ShapeTool.ShapeType.RoundedRectangle: resKey = "Icon_Shape_RoundedRect"; break;
-                // 新增形状：由于没有预定义资源Key，这里建议你在 Resources/Styles.xaml 中添加对应 Geometry
-                // 或者暂时全部使用 Shapes_Image (通用形状图标)
                 case ShapeTool.ShapeType.Triangle: resKey = "Icon_Shape_Triangle"; break; // 需在资源中定义
                 case ShapeTool.ShapeType.Diamond: resKey = "Icon_Shape_Diamond"; break;
                 case ShapeTool.ShapeType.Pentagon: resKey = "Icon_Shape_Pentagon"; break;

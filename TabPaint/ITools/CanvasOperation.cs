@@ -49,8 +49,8 @@ namespace TabPaint
             int copyW = oldW;
             int copyH = oldH;
 
-            // 如果新图比旧图小（裁剪），需要调整源起始点和复制大小
-            if (destX < 0)
+           
+            if (destX < 0) // 如果新图比旧图小（裁剪），需要调整源起始点和复制大小
             {
                 srcX = -destX;      // 源图左边被裁掉的部分
                 copyW = newWidth;   // 复制宽度等于新图宽度
@@ -62,7 +62,6 @@ namespace TabPaint
                 copyH = newHeight;
                 destY = 0;
             }
-
             // 确保不越界
             copyW = Math.Min(copyW, oldW - srcX);
             copyH = Math.Min(copyH, oldH - srcY);
@@ -125,8 +124,7 @@ namespace TabPaint
         private void RotateBitmap(int angle)
         {
             var mw = (MainWindow)Application.Current.MainWindow;
-            // 1. 检查当前工具是否为 SelectTool 且有活动选区
-            if (_tools.Select is SelectTool st && st.HasActiveSelection)
+            if (_tools.Select is SelectTool st && st.HasActiveSelection)  // 1. 检查当前工具是否为 SelectTool 且有活动选区
             {
                 // 调用选区旋转
                 st.RotateSelection(_ctx, angle);
@@ -562,7 +560,6 @@ namespace TabPaint
             }
             return rtb;
         }
-
         private void ApplyAutoCrop(Int32Rect cropRect)
         {
             var oldBitmap = _surface.Bitmap;

@@ -11,7 +11,6 @@ namespace TabPaint
         {
             InitializeComponent();
         }
-
         public static MessageBoxResult Show(string message, string title = "TabPaint", MessageBoxButton button = MessageBoxButton.OK, Window owner = null)
         {
             var msgBox = new FluentMessageBox();
@@ -80,7 +79,7 @@ namespace TabPaint
             }
             else if (BtnNo.Visibility == Visibility.Visible)
             {
-                Result = MessageBoxResult.No; // 或者 .None
+                Result = MessageBoxResult.No; 
             }
             else
             {
@@ -88,8 +87,6 @@ namespace TabPaint
             }
             Close();
         }
-
-        // 按钮响应
         private void BtnOk_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.OK; Close(); }
         private void BtnYes_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.Yes; Close(); }
         private void BtnNo_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.No; Close(); }

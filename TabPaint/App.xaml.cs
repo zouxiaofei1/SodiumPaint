@@ -33,7 +33,6 @@ namespace TabPaint
                 Debug.WriteLine(message);
             }
         }
-
         private void SetupExceptionHandling()
         {
             this.DispatcherUnhandledException += (s, e) =>
@@ -56,7 +55,6 @@ namespace TabPaint
                 e.SetObserved(); // 标记为已观察，防止程序崩溃
             };
         }
-
         private static void LogException(Exception ex, string source)
         {
             try
@@ -100,7 +98,6 @@ namespace TabPaint
                 Debug.WriteLine($"Failed to log crash: {logEx.Message}");
             }
         }
-
         private void ShutdownAppWithErrorMessage(Exception ex)
         {
             string msg = $"TabPaint 遇到错误需要关闭。\n\n错误信息: {ex.Message}\n\n日志已保存至: {LogDirectory}";
@@ -113,7 +110,6 @@ namespace TabPaint
 
             Environment.Exit(1);
         }
-
         protected override void OnStartup(StartupEventArgs e)
         {
             SetupExceptionHandling();
@@ -179,13 +175,13 @@ namespace TabPaint
             }
             else
             {
-#if DEBUG
-                  filePath = @"E:\dev\misc\0000.png"; //10图片
-                //         filePath = @"E:\dev\res\"; // 150+图片
-                //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
-                // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹
+//#if DEBUG
+//                  filePath = @"E:\dev\misc\0000.png"; //10图片
+//                //         filePath = @"E:\dev\res\"; // 150+图片
+//                //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
+//                // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹
 
-#endif
+//#endif
             }
             base.OnStartup(e); _mainWindow = new MainWindow(filePath);
             _mainWindow.CheckFilePathAvailibility(filePath);

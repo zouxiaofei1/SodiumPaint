@@ -44,10 +44,7 @@ namespace TabPaint
             if (style == null) return;
 
             // 1. 应用字体
-            if (style.FontFamily != null)
-            {
-                TextMenu.FontFamilyBox.SelectedValue = style.FontFamily;
-            }
+            if (style.FontFamily != null)  TextMenu.FontFamilyBox.SelectedValue = style.FontFamily;
 
             double fontSizeInPoints = style.FontSize * 72.0 / 96.0;
             TextMenu.FontSizeBox.Text = Math.Round(fontSizeInPoints).ToString();
@@ -84,20 +81,13 @@ namespace TabPaint
             public static TextStyleInfo ParseRtf(string rtfContent)
             {
                 if (string.IsNullOrEmpty(rtfContent)) return null;
-
-                // 1. 创建一个临时的 RichTextBox 用于解析
-                var rtb = new RichTextBox();
+                var rtb = new RichTextBox();      // 1. 创建一个临时的 RichTextBox 用于解析
                 var range = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd);
 
                 try
                 {
                     // 2. 加载 RTF 数据
-                    using (var stream = new MemoryStream(Encoding.Default.GetBytes(rtfContent)))
-                    {
-                        range.Load(stream, DataFormats.Rtf);
-                    }
-
-                    // 如果内容为空，返回 null
+                    using (var stream = new MemoryStream(Encoding.Default.GetBytes(rtfContent)))  range.Load(stream, DataFormats.Rtf);
                     if (range.IsEmpty) return null;
 
                     // 3. 获取纯文本
@@ -117,12 +107,7 @@ namespace TabPaint
                     FontStyle fontStyle = (fontStyleObj is FontStyle s) ? s : FontStyles.Normal;
 
                     // 如果获取不到颜色（比如 UnsetValue），给个默认黑色
-                    if (foreground == null || foreground == DependencyProperty.UnsetValue)
-                    {
-                        foreground = Brushes.Black;
-                    }
-
-
+                    if (foreground == null || foreground == DependencyProperty.UnsetValue)  foreground = Brushes.Black;
                     return new TextStyleInfo
                     {
                         Text = text,

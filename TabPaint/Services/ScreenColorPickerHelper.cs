@@ -29,9 +29,7 @@ namespace TabPaint
                 dpiY = source.CompositionTarget.TransformToDevice.M22;
                 return;
             }
-            // 默认值
-            dpiX = 1.0;
-            dpiY = 1.0;
+            dpiX = 1.0;  dpiY = 1.0;// 默认值
         }
 
         public static BitmapSource CaptureScreen(double dpiScaleX, double dpiScaleY)
@@ -51,9 +49,7 @@ namespace TabPaint
                 using (var bmpGraphics = Graphics.FromImage(screenBmp))
                 {
                     bmpGraphics.CopyFromScreen(
-                        (int)(screenLeft * dpiScaleX),
-                        (int)(screenTop * dpiScaleY),
-                        0, 0,
+                        (int)(screenLeft * dpiScaleX),  (int)(screenTop * dpiScaleY),0, 0,
                         screenBmp.Size);
 
                     // 转换为 WPF BitmapSource
@@ -67,7 +63,6 @@ namespace TabPaint
                 }
             }
         }
-
         // 直接通过 GDI 获取屏幕物理坐标的颜色
         public static System.Windows.Media.Color GetColorAtPhysical(int x, int y)
         {

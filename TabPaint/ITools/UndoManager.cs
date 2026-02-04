@@ -137,9 +137,6 @@ namespace TabPaint
                     mw.RestoreLastDeletedTab();
                     return; // 拦截成功，不再执行画布撤销
                 }
-                // ------------------------------------
-
-                // 下面是原有的画布撤销逻辑
                 if (_undo != null) // 确保 UndoManager 存在
                 {
                     ImageUndo();
@@ -240,7 +237,6 @@ namespace TabPaint
             public void PushExplicitImageUndo(WriteableBitmap oldBitmap)
             {
                 if (oldBitmap == null) return;
-
                 // 1. 确定区域
                 Int32Rect rect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
 
@@ -251,9 +247,7 @@ namespace TabPaint
 
                 // 3. 创建撤销动作 (由于滤镜不改变尺寸，使用 Draw 类型即可)
                 _undo.Push(new UndoAction(rect, pixels, UndoActionType.Draw));
-
-                // 4. 清空重做链并更新 UI
-                _redo.Clear();
+                _redo.Clear();  // 4. 清空重做链并更新 UI
                 UpdateUI();
             }
 
@@ -288,7 +282,6 @@ namespace TabPaint
                 }
                 return region;
             }
-
             public byte[] SafeExtractRegion(Int32Rect rect)
             {
                 // 检查合法范围，防止尺寸变化导致越界

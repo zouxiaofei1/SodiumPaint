@@ -51,16 +51,10 @@ namespace TabPaint
             double targetTop = logicalPos.Y + offset;
 
             // 如果靠右边缘，就往左显示
-            if (targetLeft + magSize > this.ActualWidth)
-            {
-                targetLeft = logicalPos.X - magSize - offset;
-            }
+            if (targetLeft + magSize > this.ActualWidth)targetLeft = logicalPos.X - magSize - offset;
             // 如果靠下边缘，就往上显示
-            if (targetTop + magSize > this.ActualHeight)
-            {
-                targetTop = logicalPos.Y - magSize - offset;
-            }
-
+            if (targetTop + magSize > this.ActualHeight)targetTop = logicalPos.Y - magSize - offset;
+            
             Canvas.SetLeft(Magnifier, targetLeft);
             Canvas.SetTop(Magnifier, targetTop);
             double halfSize = ZoomPixelSize / 2.0;
@@ -82,8 +76,7 @@ namespace TabPaint
                 try
                 {
                     var c = ScreenColorPickerHelper.GetColorAtPhysical(physicalX, physicalY);
-                    ColorText.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}\nRGB:{c.R},{c.G},{c.B}";
-                    // 可以动态改变文字背景色来增强对比度，或者保持半透明黑底
+                    ColorText.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}\nRGB:{c.R},{c.G},{c.B}";// 可以动态改变文字背景色来增强对比度，或者保持半透明黑底
                 }
                 catch { }
             }
@@ -106,10 +99,7 @@ namespace TabPaint
                     this.Close();
                     return;
                 }
-                catch
-                {
-                    // 忽略越界点击
-                }
+                catch{}
             }
             // 右键退出
             else if (e.RightButton == MouseButtonState.Pressed)

@@ -16,7 +16,6 @@ public partial class PenTool : ToolBase
     private TranslateTransform _cursorTransform; // 用于高性能移动
     private EllipseGeometry _circleGeometry;     // 缓存圆形
     private RectangleGeometry _squareGeometry;   // 缓存方形
-
     // 缓存的画刷，减少GC压力
     private SolidColorBrush _cachedFillBrush;
     private Color _lastColor;
@@ -191,7 +190,6 @@ public partial class PenTool : ToolBase
             }
         }
     }
-
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
@@ -218,30 +216,22 @@ public partial class PenTool : ToolBase
             if (_maskBitmap == null || _maskBitmap.PixelWidth != w || _maskBitmap.PixelHeight != h)
             {
                 _maskBitmap = new WriteableBitmap(w, h, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
-                _maskImageOverlay.Source = _maskBitmap;
-
-                // 确保 Image 控件填满画布
+                _maskImageOverlay.Source = _maskBitmap;// 确保 Image 控件填满画布
                 Canvas.SetLeft(_maskImageOverlay, 0);
                 Canvas.SetTop(_maskImageOverlay, 0);
                 _maskImageOverlay.Width = ctx.ViewElement.ActualWidth;
                 _maskImageOverlay.Height = ctx.ViewElement.ActualHeight;
             }
-
-            // 开始绘制流程
             ctx.CapturePointer();
             _drawing = true;
             _lastPixel = ctx.ToPixel(viewPos);
             _lastPressure = pressure;
-
-            // 绘制第一笔到 Mask 上
-            DrawMaskLine(ctx, _lastPixel, _lastPixel, pressure);
-            return; // *** 极其重要：直接返回，不执行后面画在主 Surface 上的逻辑 ***
+            DrawMaskLine(ctx, _lastPixel, _lastPixel, pressure); // 绘制第一笔到 Mask 上
+            return; 
         }
 
 
         if (ctx.PenStyle == BrushStyle.Calligraphy) pressure = 1.0f;
-
-        // --- 荧光笔遮罩初始化 ---
         int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
         if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
         {
@@ -249,11 +239,7 @@ public partial class PenTool : ToolBase
             _maskWidth = ctx.Surface.Width;
             _maskHeight = ctx.Surface.Height;
         }
-        else
-        {
-            Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
-        }
-
+        else  Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
         ctx.CapturePointer();
         var px = ctx.ToPixel(viewPos);
         ctx.Undo.BeginStroke();
@@ -269,14 +255,8 @@ public partial class PenTool : ToolBase
             int width = ctx.Surface.Bitmap.PixelWidth;
             int height = ctx.Surface.Bitmap.PixelHeight;
 
-            if (IsLineBasedBrush(ctx.PenStyle))
-            {
-                dirty = DrawBrushLineUnsafe(ctx, px, pressure, px, pressure, backBuffer, stride, width, height);
-            }
-            else
-            {
-                dirty = DrawBrushAtUnsafe(ctx, px, backBuffer, stride, width, height);
-            }
+            if (IsLineBasedBrush(ctx.PenStyle)) dirty = DrawBrushLineUnsafe(ctx, px, pressure, px, pressure, backBuffer, stride, width, height);
+            else  dirty = DrawBrushAtUnsafe(ctx, px, backBuffer, stride, width, height);
         }
         if (dirty.HasValue)
         {
@@ -303,7 +283,7 @@ public partial class PenTool : ToolBase
             DrawMaskLine(ctx, _lastPixel, px, pressure);
             _lastPixel = px;
             _lastPressure = pressure;
-            return; // *** 直接返回 ***
+            return;
         }
 
 
@@ -388,8 +368,6 @@ public partial class PenTool : ToolBase
             return;
         }
     }
-
-
     private static byte ClampColor(int value)
     {
         if (value < 0) return 0;
@@ -428,7 +406,6 @@ public partial class PenTool : ToolBase
         int height = Math.Max(0, bottom - top);
         return new Int32Rect(left, top, width, height);
     }
-
     private static Int32Rect LineBounds(Point p1, Point p2, int penRadius)
     {
         int expand = penRadius + 2;

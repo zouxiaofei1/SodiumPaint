@@ -54,8 +54,6 @@ namespace TabPaint
             DWMSBT_TRANSIENTWINDOW = 3,
             DWMSBT_TABBEDWINDOW = 4 // Acrylic
         }
-
-        // ===== Win10 Acrylic API =====
         [StructLayout(LayoutKind.Sequential)]
         private struct ACCENT_POLICY
         {

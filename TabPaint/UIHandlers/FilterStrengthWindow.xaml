@@ -19,8 +19,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- 极简滑块样式 (复用自 ResizeDialog) -->
             <Style x:Key="MinimalSliderStyle" TargetType="Slider">
                 <Setter Property="Focusable" Value="False"/>
                 <Setter Property="Template">
@@ -60,8 +58,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- TextBox 样式 -->
             <Style TargetType="TextBox">
                 <Setter Property="Height" Value="32"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -92,8 +88,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 主要按钮样式 -->
             <Style x:Key="PrimaryButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
@@ -117,8 +111,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 次要按钮样式 -->
             <Style x:Key="SecondaryButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
@@ -149,12 +141,9 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <!-- Window Chrome -->
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="40" ResizeBorderThickness="5" GlassFrameThickness="-1" CornerRadius="8"/>
     </WindowChrome.WindowChrome>
-
-    <!-- 主容器 -->
     <Border Background="{DynamicResource WindowBackgroundBrush}" 
             CornerRadius="8" 
             BorderBrush="{DynamicResource BorderMediumBrush}" 
@@ -162,14 +151,9 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
-                <!-- TitleBar -->
                 <RowDefinition Height="*"/>
-                <!-- Content -->
                 <RowDefinition Height="Auto"/>
-                <!-- Buttons -->
             </Grid.RowDefinitions>
-
-            <!-- 1. 标题栏 -->
             <Border Grid.Row="0" 
                     Background="{DynamicResource ChromeLowBrush}" 
                     CornerRadius="7,7,0,0" 
@@ -200,16 +184,12 @@
                             Click="CancelButton_Click"/>
                 </Grid>
             </Border>
-
-            <!-- 2. 控制区域 -->
             <Grid Grid.Row="1" Margin="24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="20"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-
-                <!-- 文本标签和输入框 -->
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -224,16 +204,12 @@
                              PreviewTextInput="NumberValidationTextBox"
                              TextChanged="ValueTextBox_TextChanged"/>
                 </Grid>
-
-                <!-- 滑块 -->
                 <Slider x:Name="StrengthSlider" Grid.Row="2" 
                         Style="{StaticResource MinimalSliderStyle}"
                         IsSnapToTickEnabled="True" 
                         TickFrequency="1"
                         ValueChanged="StrengthSlider_ValueChanged"/>
             </Grid>
-
-            <!-- 3. 底部按钮 -->
             <Border Grid.Row="2" 
                     Background="{DynamicResource ChromeLowBrush}" 
                     CornerRadius="0,0,7,7" 

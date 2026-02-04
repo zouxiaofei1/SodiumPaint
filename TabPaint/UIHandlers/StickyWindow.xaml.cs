@@ -28,17 +28,12 @@ namespace TabPaint.Windows
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // 允许拖动窗口
-            if (e.ButtonState == MouseButtonState.Pressed)
-            {
-                this.DragMove();
-            }
+            if (e.ButtonState == MouseButtonState.Pressed) this.DragMove();  // 拖动窗口
         }
 
         private void Window_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            // 双击关闭
-            this.Close();
+            this.Close();   // 双击关闭
         }
 
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -72,7 +67,7 @@ namespace TabPaint.Windows
             {
                 if (double.TryParse(item.Tag.ToString(), out double opacity))
                 {
-                    // 设置透明度
+                    //透明度
                     this.Opacity = opacity;
                 }
             }

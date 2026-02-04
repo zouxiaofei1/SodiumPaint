@@ -91,9 +91,6 @@
                 IsTabStop="False" Focusable="False"/>
             <!-- #endregion -->
 
-          
-                
-     
             <!-- #region 5. 底部状态栏 (StatusBar) -->
             <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
                 Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>

@@ -26,10 +26,7 @@ namespace TabPaint
                 Thread.CurrentThread.CurrentCulture = ci;
                 Thread.CurrentThread.CurrentUICulture = ci;
             }
-            catch
-            {
-                // ignore
-            }
+            catch   {   }
 
             var app = Application.Current;
             if (app == null) return;
