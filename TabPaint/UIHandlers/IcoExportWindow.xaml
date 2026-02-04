@@ -4,7 +4,7 @@
         Title="Export ICO" Height="380" Width="500"
         MinHeight="250" MinWidth="400"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
-        WindowStyle="None" AllowsTransparency="False" Background="Transparent">
+        AllowsTransparency="False" Background="Transparent">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
@@ -128,6 +128,8 @@
         </ResourceDictionary>
     </Window.Resources>
 
+
+
     <!-- 窗口边框与背景 -->
     <Border x:Name="RootBorder"  Background="Transparent" 
             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
@@ -139,89 +141,120 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
+            <!-- 背景装饰图形 -->
+            <Canvas IsHitTestVisible="False" Opacity="0.05">
+                <Path Fill="{DynamicResource SystemAccentBrush}" Data="M0,0 L200,0 A200,200 0 0 1 0,200 Z" Canvas.Top="-50" Canvas.Left="-50"/>
+                <Path Fill="{DynamicResource SystemAccentBrush}" Data="M100,100 A50,50 0 1 1 0,100 A50,50 0 1 1 100,100" Canvas.Bottom="20" Canvas.Right="40"/>
+            </Canvas>
+
             <!-- 1. TitleBar -->
-            <Grid Grid.Row="0" Height="32" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+            <Grid Grid.Row="0" Height="40" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                     <Image Source="pack://application:,,,/Resources/TabPaint.ico" 
-                           Width="20" Height="20" Margin="0,0,8,0"
+                           Width="20" Height="20" Margin="0,0,10,0"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                     <TextBlock Text="{DynamicResource L_Ico_Title}" 
                                Foreground="{DynamicResource TextPrimaryBrush}"
-                               VerticalAlignment="Center" FontWeight="SemiBold"/>
+                               FontSize="13" VerticalAlignment="Center" FontWeight="SemiBold"/>
                 </StackPanel>
-                <Button HorizontalAlignment="Right" Width="45" Height="32"
-                        Style="{StaticResource TitleBarButtonStyle}"
-                        Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                        Click="OnCancelClick"/>
+          
             </Grid>
 
             <!-- 2. 工具栏 -->
-            <Border Background="{DynamicResource GlassBackgroundLowBrush}" Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="12,8,12,10">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{DynamicResource L_Ico_AddSize}" VerticalAlignment="Center" 
-                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="SizeComboBox" Width="100" Height="28" Style="{DynamicResource FluentComboBoxStyle}" SelectedIndex="0">
-                        <ComboBoxItem Content="512 px"/>
-                        <ComboBoxItem Content="256 px"/>
-                        <ComboBoxItem Content="128 px"/>
-                        <ComboBoxItem Content="64 px"/>
-                        <ComboBoxItem Content="48 px"/>
-                        <ComboBoxItem Content="32 px"/>
-                        <ComboBoxItem Content="24 px"/>
-                        <ComboBoxItem Content="16 px"/>
-                    </ComboBox>
-                    <Button Content="+" Width="28" Height="28" Margin="8,0,0,0" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"
+            <Border Grid.Row="1" Padding="16,4,16,12">
+                <Border Style="{StaticResource SubWindowCardStyle}" Margin="0" Padding="8">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Fill="{DynamicResource SystemAccentBrush}" 
+                              Stretch="Uniform" Width="16" Height="16" Margin="4,0,12,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource L_Ico_AddSize}" Style="{StaticResource FluentLabelStyle}"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" FontWeight="Medium"/>
+                        <ComboBox x:Name="SizeComboBox" Width="120" Height="32" Style="{DynamicResource FluentComboBoxStyle}" SelectedIndex="0">
+                            <ComboBoxItem Content="512 px"/>
+                            <ComboBoxItem Content="256 px"/>
+                            <ComboBoxItem Content="128 px"/>
+                            <ComboBoxItem Content="64 px"/>
+                            <ComboBoxItem Content="48 px"/>
+                            <ComboBoxItem Content="32 px"/>
+                            <ComboBoxItem Content="24 px"/>
+                            <ComboBoxItem Content="16 px"/>
+                        </ComboBox>
+                        <Button Content="+" Width="28" Height="28" Margin="8,0,0,0" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"
                             Style="{DynamicResource Win11PrimaryButtonStyle}" Click="OnAddSizeClick"/>
-                </StackPanel>
+                    </StackPanel>
+                </Border>
             </Border>
 
             <!-- 3. 内容区 -->
-            <Grid Grid.Row="2" Margin="12">
+            <Grid Grid.Row="2" Margin="16,0,16,16">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="200"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <!-- 左侧：尺寸列表 -->
-                <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4"
-                        Background="{DynamicResource GlassBackgroundLowBrush}">
+                <Border Style="{StaticResource FluentCardStyle}" Padding="0">
                     <Grid>
-                        <Rectangle Fill="{DynamicResource CheckerboardDarkBrush}" Opacity="0.1" IsHitTestVisible="False"/>
-
-                        <!-- 修正后的 ListBox -->
                         <ListBox x:Name="SizeListBox"  
                              Background="Transparent" BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto"
-                             SelectionChanged="SizeListBox_SelectionChanged">
+                             SelectionChanged="SizeListBox_SelectionChanged"
+                             Padding="4">
 
-                            <!-- 关键修改：通过资源覆盖内部 ScrollViewer 的样式 -->
                             <ListBox.Resources>
                                 <Style TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource FluentScrollViewerStyle}"/>
                             </ListBox.Resources>
 
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource NavListBoxItemStyle}">
-                                    <Setter Property="Padding" Value="8"/>
+                                    <Setter Property="Padding" Value="8,6"/>
+                                    <Setter Property="Margin" Value="0,1"/>
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
                                 </Style>
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid>
+                                    <Grid x:Name="ItemGrid">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="18"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <Image Source="{Binding Image}" Width="24" Height="24" Margin="0,0,10,0"/>
+                                        <Border Width="32" Height="32" Background="{DynamicResource CheckerboardBrush}" CornerRadius="4" Margin="0,0,12,0">
+                                            <Image Source="{Binding Image}" Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border>
                                         <TextBlock Grid.Column="1" Text="{Binding DisplayText}" 
-                                               VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                               VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="Medium"/>
                                         <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                                            Style="{DynamicResource AccentButtonStyle}"  Foreground="{DynamicResource TextPrimaryBrush}"
-                                            Background="{DynamicResource SystemAccentBrush}" BorderThickness="0" 
-                                            Click="OnDeleteSizeClick" Tag="{Binding}" Height="18" FontSize="10"/>
+                                            Style="{DynamicResource TitleBarButtonStyle}"  Foreground="{DynamicResource TextSecondaryBrush}"
+                                            Click="OnDeleteSizeClick" Tag="{Binding}" Width="24" Height="24" FontSize="10"
+                                            x:Name="DelBtn" Opacity="0">
+                                            <Button.RenderTransform>
+                                                <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
+                                            </Button.RenderTransform>
+                                        </Button>
                                     </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="DelBtn" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
+                                                        <DoubleAnimation Storyboard.TargetName="DelBtn" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.15"/>
+                                                        <DoubleAnimation Storyboard.TargetName="DelBtn" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.15"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="DelBtn" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.1"/>
+                                                        <DoubleAnimation Storyboard.TargetName="DelBtn" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.8" Duration="0:0:0.1"/>
+                                                        <DoubleAnimation Storyboard.TargetName="DelBtn" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.8" Duration="0:0:0.1"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -230,17 +263,18 @@
 
 
                 <!-- 右侧：大图预览区域 -->
-                <Border Grid.Column="1" Margin="10,0,0,0" 
-                        Background="{DynamicResource GlassBackgroundLowBrush}"
-                        BorderBrush="{DynamicResource BorderLightBrush}" 
-                        BorderThickness="1" CornerRadius="4" ClipToBounds="True">
+                <Border Grid.Column="1" Margin="12,0,0,0" 
+                        Style="{StaticResource FluentCardStyle}" Padding="8" ClipToBounds="True">
 
                     <Grid>
                         <!-- 动态大小的背景棋盘格 -->
                         <Border x:Name="ImageBackgroundBorder" 
                                 HorizontalAlignment="Center" VerticalAlignment="Center"
                                 Background="{StaticResource CheckerboardBrush}"
-                                Visibility="Hidden">
+                                Visibility="Hidden" CornerRadius="4">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2" Color="Black"/>
+                            </Border.Effect>
                             <Rectangle Fill="{DynamicResource CheckerboardDarkBrush}" Opacity="0.1"/>
                         </Border>
 
@@ -248,7 +282,12 @@
                         <Image x:Name="LargePreviewImage" 
                                Stretch="Uniform" 
                                RenderOptions.BitmapScalingMode="NearestNeighbor"
-                               SizeChanged="LargePreviewImage_SizeChanged"/>
+                               SizeChanged="LargePreviewImage_SizeChanged"
+                               RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform>
+                                <ScaleTransform x:Name="PreviewTransform" ScaleX="1" ScaleY="1"/>
+                            </Image.RenderTransform>
+                        </Image>
 
                         <TextBlock x:Name="PreviewHintText" Text="{DynamicResource L_Ico_PreviewHint}" 
                                     VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -257,13 +296,14 @@
 
                         <!-- === 新增：左上角“预览”标签 === -->
                         <Border HorizontalAlignment="Left" VerticalAlignment="Top"
-                                Margin="0,0,0,0"
-                                Background="#99000000" 
-                                CornerRadius="0,0,4,0" IsHitTestVisible="False">
+                                Margin="4"
+                                Background="{DynamicResource SystemAccentBrush}" 
+                                CornerRadius="4" IsHitTestVisible="False" Opacity="0.8">
                             <TextBlock Text="{DynamicResource L_Common_Preview}" 
-                                       Margin="6,2,6,2"
-                                       Foreground="White" 
-                                       FontSize="11" 
+                                       Margin="8,2,8,2"
+                                       Foreground="{DynamicResource TextInverseBrush}" 
+                                       FontSize="10" 
+                                       FontWeight="Bold"
                                        VerticalAlignment="Center"/>
                         </Border>
                     </Grid>

@@ -119,7 +119,10 @@ namespace TabPaint
             }
             if (_router?.CurrentTool != null)    settings.LastToolName = _router.CurrentTool.GetType().Name;
             if (_ctx != null)  settings.LastBrushStyle = _ctx.PenStyle;
- 
+            if (MainImageBar != null)
+            {
+                settings.IsImageBarCompact = MainImageBar.IsCompactMode;
+            }
             TabPaint.SettingsManager.Instance.Save();
         }
 
@@ -181,7 +184,11 @@ namespace TabPaint
                         targetTool = _tools.Pen;
                         break;
                 }
-
+                if (MainImageBar != null)
+                {
+                    // 这里直接赋值，ImageBarControl 内部的 OnCompactModeChanged 会处理高度变化动画
+                    MainImageBar.IsCompactMode = settings.IsImageBarCompact;
+                }
                 // 3. 设置上下文样式
                 if (_ctx != null)  _ctx.PenStyle = targetStyle;
                 if (_router != null)
@@ -244,6 +251,21 @@ namespace TabPaint
                 {
                     _isFirstRun = value;
                     OnPropertyChanged(nameof(IsFirstRun));
+                }
+            }
+        }
+        private bool _isImageBarCompact = false; // 默认为 false (展开状态)
+
+        [JsonPropertyName("is_image_bar_compact")]
+        public bool IsImageBarCompact
+        {
+            get => _isImageBarCompact;
+            set
+            {
+                if (_isImageBarCompact != value)
+                {
+                    _isImageBarCompact = value;
+                    OnPropertyChanged();
                 }
             }
         }

@@ -6,19 +6,27 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Management;
 
 namespace TabPaint
 {
+    public class AiDownloadStatus
+    {
+        public double Percentage { get; set; }
+        public long BytesReceived { get; set; }
+        public long TotalBytes { get; set; } // 如果未知则为 -1
+        public double SpeedBytesPerSecond { get; set; }
+    }
     public class AiService
     {
         private const string BgRem_ModelUrl_HF = AppConsts.BgRem_ModelUrl_HF;
@@ -45,22 +53,6 @@ namespace TabPaint
             return File.Exists(Path.Combine(_cacheDir, Inpaint_ModelName));
         }
 
-        public async Task<string> PrepareInpaintModelAsync(IProgress<double> progress)
-        {
-            string finalPath = Path.Combine(_cacheDir, Inpaint_ModelName);
-            if (File.Exists(finalPath)) return finalPath;
-
-            using (var client = new HttpClient())
-            {
-                client.Timeout = TimeSpan.FromMinutes(AppConsts.AiDownloadTimeoutMinutes);
-                // 复用之前的下载逻辑，MD5 暂时设为 null 跳过校验或自行计算
-                if (!await DownloadAndValidateAsync(client, Inpaint_ModelUrl, finalPath, null, progress))
-                {
-                    throw new Exception("Failed to download Inpainting model.");
-                }
-            }
-            return finalPath;
-        }
 
         public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
         {
@@ -275,7 +267,7 @@ namespace TabPaint
             }
             return options;
         }
-        public async Task<string> PrepareModelAsync(AiTaskType taskType, IProgress<double> progress)
+        public async Task<string> PrepareModelAsync(AiTaskType taskType, IProgress<AiDownloadStatus> progress, System.Threading.CancellationToken token)
         {
             // --- 配置部分 ---
             string modelName;
@@ -332,64 +324,84 @@ namespace TabPaint
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add("User-Agent", "TabPaint-Client/1.0");
-                client.Timeout = TimeSpan.FromMinutes(AppConsts.AiDownloadTimeoutMinutes); // 大模型下载给予充足时间
+                client.Timeout = TimeSpan.FromMinutes(AppConsts.AiDownloadTimeoutMinutes);
 
-                // 尝试主链接
-                if (!await DownloadAndValidateAsync(client, primaryUrl, finalPath, expectedMd5, progress))
+                // 传入 token
+                if (!await DownloadAndValidateAsync(client, primaryUrl, finalPath, expectedMd5, progress, token))
                 {
-                    // 失败则尝试备用链接
-                    if (!await DownloadAndValidateAsync(client, secondaryUrl, finalPath, expectedMd5, progress))
+                    // 传入 token
+                    if (!await DownloadAndValidateAsync(client, secondaryUrl, finalPath, expectedMd5, progress, token))
                     {
                         throw new Exception(string.Format(LocalizationManager.GetString("L_AI_Error_DownloadFailed"), modelName));
                     }
                 }
             }
-
             return finalPath;
         }
-        private async Task<bool> DownloadAndValidateAsync(HttpClient client, string url, string destPath, string expectedMd5, IProgress<double> progress)
+        private async Task<bool> DownloadAndValidateAsync(HttpClient client, string url, string destPath, string expectedMd5, IProgress<AiDownloadStatus> progress, System.Threading.CancellationToken token)
         {
-            string tempPath = destPath + ".tmp"; // 使用临时文件
+            string tempPath = destPath + ".tmp";
 
             try
             {
-                // 如果有残留的临时文件，先删除
                 if (File.Exists(tempPath)) File.Delete(tempPath);
 
-                using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+                using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
                 {
                     if (!response.IsSuccessStatusCode) return false;
 
                     var totalBytes = response.Content.Headers.ContentLength ?? -1L;
 
-                    using (var contentStream = await response.Content.ReadAsStreamAsync())
+                    using (var contentStream = await response.Content.ReadAsStreamAsync(token))
                     using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
                         var totalRead = 0L;
-                        var buffer = new byte[AppConsts.AiDownloadBufferSize]; // 8KB buffer
+                        var buffer = new byte[AppConsts.AiDownloadBufferSize];
                         var isMoreToRead = true;
-                        int lastReportedPercent = -1;
+
+                        // 用于计算速度
+                        var stopwatch = Stopwatch.StartNew();
+                        long lastReportedBytes = 0;
+                        long lastReportedTime = 0;
 
                         do
                         {
-                            var read = await contentStream.ReadAsync(buffer, 0, buffer.Length);
+                            token.ThrowIfCancellationRequested();
+                            var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, token);
                             if (read == 0)
                             {
                                 isMoreToRead = false;
                             }
                             else
                             {
-                                await fileStream.WriteAsync(buffer, 0, read);
+                                await fileStream.WriteAsync(buffer, 0, read, token);
                                 totalRead += read;
 
-                                if (totalBytes != -1 && progress != null)
+                                // 限制更新频率，避免 UI 卡顿 (例如每 100ms 更新一次)
+                                if (progress != null)
                                 {
-                                    int percent = (int)((double)totalRead / totalBytes * 100);
-                                    // 减少 UI 更新频率，每 1% 更新一次即可
-                                    if (percent > lastReportedPercent)
+                                    long currentTime = stopwatch.ElapsedMilliseconds;
+                                    // 至少经过 100ms 或者下载完成了才更新
+                                    if (currentTime - lastReportedTime > 100 || !isMoreToRead)
                                     {
-                                        progress.Report((double)percent);
-                                        lastReportedPercent = percent;
+                                        double timeDiffSeconds = (currentTime - lastReportedTime) / 1000.0;
+                                        long bytesDiff = totalRead - lastReportedBytes;
+
+                                        // 防止除以零
+                                        double speed = timeDiffSeconds > 0 ? bytesDiff / timeDiffSeconds : 0;
+
+                                        var status = new AiDownloadStatus
+                                        {
+                                            BytesReceived = totalRead,
+                                            TotalBytes = totalBytes,
+                                            Percentage = totalBytes > 0 ? (double)totalRead / totalBytes * 100 : 0,
+                                            SpeedBytesPerSecond = speed
+                                        };
+
+                                        progress.Report(status);
+
+                                        lastReportedBytes = totalRead;
+                                        lastReportedTime = currentTime;
                                     }
                                 }
                             }
@@ -397,19 +409,25 @@ namespace TabPaint
                     }
                 }
 
-                // 下载完成，开始校验
+                // ... (MD5 校验和重命名代码保持不变) ...
                 if (await VerifyMd5Async(tempPath, expectedMd5))
                 {
                     if (File.Exists(destPath)) File.Delete(destPath);
-                    File.Move(tempPath, destPath); // 原子操作：重命名
+                    File.Move(tempPath, destPath);
                     return true;
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"[AI] Downloaded file MD5 mismatch.");
-                    File.Delete(tempPath); // 校验失败，删除临时文件
+                    File.Delete(tempPath);
                     return false;
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // 捕获取消异常，清理临时文件，然后重新抛出让上层知道是用户取消的
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+                throw;
             }
             catch (Exception ex)
             {
@@ -417,8 +435,8 @@ namespace TabPaint
                 try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
                 return false;
             }
+            return false;
         }
-
         private async Task<bool> VerifyMd5Async(string filePath, string expectedMd5)
         {
             if (string.IsNullOrEmpty(expectedMd5)) return true; // 如果未提供MD5，默认跳过校验（开发阶段用）

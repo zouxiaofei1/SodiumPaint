@@ -20,24 +20,37 @@
 
     <!-- 增加 PreviewMouseDoubleClick 用于监听背景双击 -->
     <Border x:Name="MainContainer"
+            
         Background="{DynamicResource GlassBackgroundMediumBrush}"
         VerticalAlignment="Top"
         ClipToBounds="False"
         Tag="{Binding ElementName=RootControl}">
+
         <Border.ContextMenu>
             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}"
-                 DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+             DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
 
-                <!-- 内部的 MenuItem 绑定现在可以正常工作了 -->
+                <!-- 切换视图模式 -->
                 <MenuItem Style="{StaticResource Win11MenuItemStyle}"
                   Header="{DynamicResource L_ImgBar_ToggleView}"
-                  Click="Internal_OnToggleViewModeClick"/>
+                  Click="Internal_OnToggleViewModeClick">
+                    <MenuItem.Icon>
+                        <!-- 使用与按钮相同的上下三角图标 -->
+                        <Path Data="M4,7 L10,1 L16,7 M4,11 L10,17 L16,11" 
+                      Stroke="{DynamicResource IconFillBrush}" 
+                      StrokeThickness="1"
+                      Stretch="Uniform" Width="14" Height="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
 
-                <Separator/>
+                
 
-                <!-- 注意：这里的 IsCompactMode 现在指向的是 RootControl -->
+                <!-- 保存所有 (仅Compact模式显示) -->
                 <MenuItem Header="{DynamicResource L_Menu_QA_Save}"
                   Click="Internal_OnSaveAllClick">
+                    <MenuItem.Icon>
+                        <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                    </MenuItem.Icon>
                     <MenuItem.Style>
                         <Style TargetType="MenuItem" BasedOn="{StaticResource Win11MenuItemStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -50,8 +63,12 @@
                     </MenuItem.Style>
                 </MenuItem>
 
+                <!-- 清除未编辑 (仅Compact模式显示) -->
                 <MenuItem Header="{DynamicResource L_ImgBar_ClearUnedited}"
-                      Click="Internal_OnClearUneditedClick">
+                  Click="Internal_OnClearUneditedClick">
+                    <MenuItem.Icon>
+                        <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                    </MenuItem.Icon>
                     <MenuItem.Style>
                         <Style TargetType="MenuItem" BasedOn="{StaticResource Win11MenuItemStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -64,9 +81,13 @@
                     </MenuItem.Style>
                 </MenuItem>
 
+                <!-- 丢弃所有 (仅Compact模式显示) -->
                 <MenuItem Header="{DynamicResource L_Menu_QA_DiscardAll}"
-                      Foreground="Red"
-                      Click="Internal_OnDiscardAllClick">
+                  Foreground="{DynamicResource DangerBrush}"
+                  Click="Internal_OnDiscardAllClick">
+                    <MenuItem.Icon>
+                        <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource DangerBrush}" Width="16" Height="16"/>
+                    </MenuItem.Icon>
                     <MenuItem.Style>
                         <Style TargetType="MenuItem" BasedOn="{StaticResource Win11MenuItemStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -80,80 +101,39 @@
                 </MenuItem>
             </ContextMenu>
         </Border.ContextMenu>
+
         <Border.Style>
             <Style TargetType="Border">
-                <Setter Property="Height" Value="5"/>
+                <!-- 默认高度 (Normal Mode) -->
+                <Setter Property="Height" Value="100"/>
                 <Setter Property="Opacity" Value="1"/>
+                <Setter Property="Visibility" Value="Visible"/>
 
                 <Style.Triggers>
-                    <!-- 1. 视图模式隐藏 -->
+                    <!-- 1. 视图模式 (全屏看图)：隐藏 -->
                     <DataTrigger Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True">
+                        <Setter Property="Height" Value="5"/>
+                        <!-- 保持 Visible 以便鼠标悬停触发，通过 Opacity 隐藏内容 -->
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
 
-                    <!-- 2. 普通模式下的强制显示 (非紧凑模式) -->
-                    <MultiDataTrigger>
-                        <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="False"/>
-                            <Condition Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="False"/>
-                            <Condition Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="False"/>
-                        </MultiDataTrigger.Conditions>
-                        <MultiDataTrigger.EnterActions>
-                            <BeginStoryboard x:Name="ExpandNormal">
-                                <Storyboard>
-                                    <!-- 直接写死 To="100" -->
-                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="100" Duration="0:0:0.2"/>
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </MultiDataTrigger.EnterActions>
-                    </MultiDataTrigger>
+                    <!-- 2. 紧凑模式 (Compact Mode)：高度变小 -->
+                    <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
+                        <Setter Property="Height" Value="45"/>
+                    </DataTrigger>
 
-                    <!-- 3. 紧凑模式下的强制显示 -->
-                    <MultiDataTrigger>
-                        <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="False"/>
-                            <Condition Binding="{Binding IsSingleTabMode, ElementName=RootControl}" Value="False"/>
-                            <Condition Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True"/>
-                        </MultiDataTrigger.Conditions>
-                        <MultiDataTrigger.EnterActions>
-                            <BeginStoryboard x:Name="ExpandCompact">
-                                <Storyboard>
-                                    <!-- 直接写死 To="45" -->
-                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="45" Duration="0:0:0.2"/>
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </MultiDataTrigger.EnterActions>
-                    </MultiDataTrigger>
-
-                    <!-- 4. 视图模式下的悬停展开 (如果是视图模式，通常建议展开成大的，方便预览) -->
+                    <!-- 3. 视图模式下的悬停逻辑 (可选，如果需要悬停弹出) -->
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
                             <Condition Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True"/>
                             <Condition Binding="{Binding IsPinned, ElementName=RootControl}" Value="False"/>
                         </MultiDataTrigger.Conditions>
-                        <MultiDataTrigger.EnterActions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <!-- 这里也可以根据 IsCompactMode 分支，但通常看图模式悬停建议弹出大的 -->
-                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="95" Duration="0:0:0.2" BeginTime="0:0:0.2"/>
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2" BeginTime="0:0:0.2"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </MultiDataTrigger.EnterActions>
-                        <MultiDataTrigger.ExitActions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="5" Duration="0:0:0.2"/>
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.01" Duration="0:0:0.2"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </MultiDataTrigger.ExitActions>
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Setter Property="Height" Value="100"/>
+                        <!-- 悬停时恢复高度 -->
+                        <Setter Property="Opacity" Value="1"/>
                     </MultiDataTrigger>
-
-                    <!-- ... 其他 Trigger (IsSingleTabMode等) 保持原样 ... -->
                 </Style.Triggers>
             </Style>
         </Border.Style>
@@ -178,35 +158,43 @@
         BorderBrush="{DynamicResource BorderBrush}"
         BorderThickness="0,0,1,0"
         Padding="0,0,2,0">
+                <!-- 去掉了原先导致整个栏隐藏的 Trigger -->
 
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Visibility" Value="Visible"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsViewMode, ElementName=RootControl}" Value="True">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <UniformGrid Columns="1" Rows="4" Height="110" Width="28">
-                    <Button ToolTip="{DynamicResource L_Menu_QA_Save}" Click="Internal_OnSaveAllClick" PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                <StackPanel Orientation="Vertical" Width="28">
+                    <!-- 这一组按钮在 Compact 模式下隐藏 -->
+                    <StackPanel x:Name="EditToolsPanel">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <Button ToolTip="{DynamicResource L_Menu_QA_Save}" Click="Internal_OnSaveAllClick" PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
+                            <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
+                        </Button>
+                        <Button ToolTip="{DynamicResource L_ImgBar_ClearUnedited}" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22"  >
+                            <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
+                        </Button>
+                        <Button ToolTip="{DynamicResource L_Menu_QA_DiscardAll}" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
+                            <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="14" Height="14"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- 切换按钮：永远显示 (Compact模式下是唯一显示的按钮) -->
+                    <Button ToolTip="{DynamicResource L_ImgBar_ToggleView}" Click="Internal_OnToggleViewModeClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22">
+                        <!-- 将 Path Data 修改为上下三角 -->
+                        <Path Data="M4,10 L10,4 L16,10 M4,14 L10,20 L16,14" 
+          Stroke="{DynamicResource IconFillBrush}" 
+          StrokeThickness="1.5"
+          Stretch="Uniform" 
+          Width="14" Height="14"/>
                     </Button>
-                    <Button ToolTip="{DynamicResource L_ImgBar_ClearUnedited}" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                    </Button>
-                    <Button ToolTip="{DynamicResource L_Menu_QA_DiscardAll}" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="16" Height="16"/>
-                    </Button>
-                    <!-- 新增：切换视图模式按钮 -->
-                    <Button ToolTip="{DynamicResource L_ImgBar_ToggleView}" Click="Internal_OnToggleViewModeClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="28">
-                        <Path Data="M3,3 L9,3 L9,9 L3,9 Z M11,3 L17,3 L17,9 L11,9 Z M3,11 L9,11 L9,17 L3,17 Z M11,11 L17,11 L17,17 L11,17 Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
-                    </Button>
-                </UniformGrid>
+
+                </StackPanel>
             </Border>
 
             <!-- 2. 图片标签列表 -->
@@ -250,11 +238,12 @@
                                             Click="Internal_OnFileTabClick" 
                                             PreviewMouseDown="Internal_OnFileTabPreviewMouseDown" 
                                             PreviewMouseMove="Internal_OnFileTabPreviewMouseMove" 
+                                                 MouseEnter="Internal_OnTabMouseEnter"
+                                         MouseLeave="Internal_OnTabMouseLeave"
                                             ToolTip="{Binding FileName}" Tag="{Binding}">
 
                                         <Button.ContextMenu>
                                             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}" >
-                                                <!-- ... 保留原有的 ContextMenu 内容 ... -->
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Copy}" Click="Internal_OnTabCopyClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
@@ -263,6 +252,29 @@
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Cut}" Click="Internal_OnTabCutClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                        
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Paste}" Click="Internal_OnTabPasteClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenFolder}" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_StickImage}" 
+          Click="Internal_OnTabStickImageClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource Open_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <Separator/>
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_TitleBar_Close}" Click="Internal_OnTabDeleteClick" Tag="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_DeleteFile}" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
@@ -280,14 +292,10 @@
                                                 </Border>
                                             </ControlTemplate>
                                         </Button.Template>
-
-                                        <!-- 核心布局修改 -->
                                         <Grid x:Name="ContentGrid">
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="*"/>
-                                                <!-- 图片 (Compact模式下隐藏) -->
                                                 <RowDefinition Height="Auto"/>
-                                                <!-- 文字 -->
                                             </Grid.RowDefinitions>
 
                                             <!-- 图片 -->
@@ -298,13 +306,18 @@
                                                        TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
 
                                             <!-- 编辑状态红点 -->
-                                            <Ellipse x:Name="DirtyDot" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" IsHitTestVisible="False" Visibility="Collapsed">
-                                                <Ellipse.Fill>
-                                                    <SolidColorBrush Color="{DynamicResource DangerBrush}"/>
-                                                    <!-- 修正：直接绑定到 Resource -->
-                                                </Ellipse.Fill>
+                                            <Ellipse x:Name="DirtyDot" 
+                                                 Width="8" Height="8" 
+                                                 HorizontalAlignment="Left" 
+                                                 VerticalAlignment="Top" 
+                                                 Margin="0,0,0,0" 
+                                                 IsHitTestVisible="False"
+                                                 Fill="{DynamicResource DangerBrush}">
+                                                <!-- 直接在这里绑定 Fill -->
+
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsDirty}" Value="True">
                                                                 <Setter Property="Visibility" Value="Visible"/>
@@ -313,6 +326,7 @@
                                                     </Style>
                                                 </Ellipse.Style>
                                             </Ellipse>
+
 
                                             <!-- 关闭按钮 (移动到 Grid 内部以便定位) -->
                                             <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-6,0" 
@@ -477,6 +491,30 @@
                     </Style>
                 </Slider.Resources>
             </Slider>
+
+            <Popup x:Name="LargePreviewPopup" 
+       Placement="Bottom" 
+       AllowsTransparency="True" 
+       StaysOpen="True" 
+       IsHitTestVisible="False" 
+       VerticalOffset="10" 
+       PopupAnimation="Fade">
+                <!-- ↑ 修改点 1：增加 VerticalOffset="10"，让弹窗离鼠标远一点点 -->
+
+                <Border Background="{DynamicResource GlassBackgroundHighBrush}" 
+            BorderBrush="{DynamicResource BorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="8" 
+            Padding="4" 
+            Margin="10"
+            IsHitTestVisible="False">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                    </Border.Effect>
+                    <!-- 这里显示高清预览图或缩略图 -->
+                    <Image x:Name="PopupPreviewImage" Height="200" Stretch="Uniform"/>
+                </Border>
+            </Popup>
         </Grid>
     </Border>
 </UserControl>

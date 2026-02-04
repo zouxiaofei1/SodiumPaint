@@ -615,7 +615,6 @@ namespace TabPaint
                             break;
                     }
 
-                    // 3. Shift 等比例修正 (仅针对四个角，边中点缩放通常不支持Shift或者是中心缩放逻辑较复杂)
                     if (isShiftDown && (_startH != 0))
                     {
                         double aspectRatio = (double)_startW / _startH;

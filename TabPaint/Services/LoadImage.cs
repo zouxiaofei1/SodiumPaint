@@ -441,24 +441,44 @@ namespace TabPaint
                 svg.Load(ms);
 
                 if (svg.Picture == null) return null;
-                int width = (int)svg.Picture.CullRect.Width;
-                int height = (int)svg.Picture.CullRect.Height;
-                if (width <= 0) width = 800;     // 如果 SVG 没有定义尺寸，给个默认值
-                if (height <= 0) height = 600;
-                const int maxSize = (int)AppConsts.MaxCanvasSize;  // 限制最大尺寸
-                if (width > maxSize || height > maxSize)
+
+                // 1. 获取 SVG 的原始设计尺寸
+                float srcWidth = svg.Picture.CullRect.Width;
+                float srcHeight = svg.Picture.CullRect.Height;
+
+                // 2. 如果 SVG 没有定义尺寸，给个默认值
+                if (srcWidth <= 0) srcWidth = 800;
+                if (srcHeight <= 0) srcHeight = 600;
+                const float minSide = 512f;
+                float scaleToMin = 1.0f;
+                if (srcWidth < minSide || srcHeight < minSide)
                 {
-                    float scale = Math.Min((float)maxSize / width, (float)maxSize / height);
-                    width = (int)(width * scale);
-                    height = (int)(height * scale);
+                    // 找出需要放大多少倍才能让最小边达到 512
+                    float scaleW = minSide / srcWidth;
+                    float scaleH = minSide / srcHeight;
+                    scaleToMin = Math.Max(scaleW, scaleH);
                 }
 
+                // 应用最小缩放
+                int width = (int)(srcWidth * scaleToMin);
+                int height = (int)(srcHeight * scaleToMin);
+                const int maxSize = (int)AppConsts.MaxCanvasSize;
+                if (width > maxSize || height > maxSize)
+                {
+                    float scaleDown = Math.Min((float)maxSize / width, (float)maxSize / height);
+                    width = (int)(width * scaleDown);
+                    height = (int)(height * scaleDown);
+                }
+
+                // 4. 开始绘图
                 using var surface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));
                 var canvas = surface.Canvas;
                 canvas.Clear(SKColors.Transparent);
-                float scaleX = (float)width / svg.Picture.CullRect.Width;
-                float scaleY = (float)height / svg.Picture.CullRect.Height;
-                var matrix = SKMatrix.CreateScale(scaleX, scaleY);
+
+                // 计算最终渲染时的缩放矩阵
+                float finalScaleX = (float)width / srcWidth;
+                float finalScaleY = (float)height / srcHeight;
+                var matrix = SKMatrix.CreateScale(finalScaleX, finalScaleY);
 
                 canvas.DrawPicture(svg.Picture, ref matrix);
                 canvas.Flush();
@@ -482,6 +502,7 @@ namespace TabPaint
                 return null;
             }
         }
+
 
         private readonly object _lockObj = new object();
         private async Task LoadImage(string filePath, string? sourcePath = null, bool lazyload = false)

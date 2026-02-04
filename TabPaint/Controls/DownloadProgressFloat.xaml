@@ -1,0 +1,122 @@
+﻿<UserControl x:Class="TabPaint.Controls.DownloadProgressFloat"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TabPaint.Controls"
+             mc:Ignorable="d" 
+             Visibility="Collapsed"
+             MouseDown="UserControl_MouseDown">
+
+    <UserControl.Resources>
+        <!-- 简单的关闭按钮样式 -->
+        <Style x:Key="TinyCloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <Path Data="M6,6 L14,14 M14,6 L6,14" 
+                                  Stroke="{DynamicResource TextSecondaryBrush}" 
+                                  StrokeThickness="1.5" 
+                                  Stretch="None"
+                                  HorizontalAlignment="Center" 
+                                  VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- 容器：使用 Mica 风格的半透明背景 -->
+    <Border CornerRadius="8" 
+            Background="{DynamicResource PanelBackgroundBrush}" 
+            BorderBrush="{DynamicResource BorderLightBrush}" 
+            BorderThickness="1"
+            Padding="12,10"
+            MinWidth="300" MaxWidth="400">
+        <!-- 稍微加宽一点 -->
+
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.15" Direction="270"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- 标题 -->
+                <RowDefinition Height="Auto"/>
+                <!-- 进度条 -->
+                <RowDefinition Height="Auto"/>
+                <!-- 详情信息 (新增) -->
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Row 0: 标题和百分比 -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="☁️" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TaskNameText" 
+                           Text="Downloading..." 
+                           FontWeight="SemiBold" FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           VerticalAlignment="Center"/>
+                <TextBlock x:Name="PercentageText" 
+                           Text="0%" 
+                           FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}" 
+                           Margin="8,0,0,0" 
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Row 0: 关闭按钮 -->
+            <Button Grid.Row="0" Grid.Column="1" 
+                    Style="{StaticResource TinyCloseButtonStyle}" 
+                    Click="CloseButton_Click"/>
+
+            <!-- Row 1: 进度条 -->
+            <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="4">
+                <Rectangle Fill="{DynamicResource BorderMediumBrush}" RadiusX="2" RadiusY="2" Opacity="0.3"/>
+                <Rectangle x:Name="ProgressBarFill" 
+                           HorizontalAlignment="Left" 
+                           Fill="{DynamicResource SystemAccentBrush}" 
+                           RadiusX="2" RadiusY="2" Width="0"/>
+            </Grid>
+
+            <!-- Row 2: 速度和大小信息 (新增) -->
+            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,6,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧：已下载/总大小 -->
+                <TextBlock x:Name="SizeInfoText" 
+                           Grid.Column="0"
+                           Text="0 MB / 0 MB" 
+                           FontSize="11" 
+                           Foreground="{DynamicResource TextTertiaryBrush}"/>
+
+                <!-- 右侧：速度 -->
+                <TextBlock x:Name="SpeedText" 
+                           Grid.Column="1"
+                           Text="0 KB/s" 
+                           FontSize="11" 
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           HorizontalAlignment="Right"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

@@ -110,8 +110,6 @@ namespace TabPaint
                 new ColorItem { Name = LocalizationManager.GetString("L_Color_Gray"), Color = Colors.Gray },
                 new ColorItem { Name = LocalizationManager.GetString("L_Color_Orange"), Color = Colors.Orange },
                 new ColorItem { Name = LocalizationManager.GetString("L_Color_Purple"), Color = Colors.Purple },
-                
-                // 添加“自定义”项，颜色值不重要，主要是作为占位符
                 new ColorItem { Name = LocalizationManager.GetString("L_ToolBar_CustomColor"), Color = Colors.Transparent, IsCustom = true }
     };
 

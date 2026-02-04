@@ -108,6 +108,10 @@ namespace TabPaint
 
             // 3. 注入到界面
             ImageBarHolder.Content = MainImageBar;
+            if (MainImageBar != null)
+            {
+                MainImageBar.IsCompactMode = SettingsManager.Instance.Current.IsImageBarCompact;
+            }
 
             MainMenu = new MenuBarControl();
 

@@ -683,28 +683,20 @@ namespace TabPaint
                                     }
                                     else
                                     {
-                                        // 采样模式 (Resample)
                                         int finalW, finalH;
 
                                         if (keepRatio)
                                         {
-                                            // 核心逻辑：按比例 -> 使用参考图片的缩放倍率
-                                            // 例如：第一张图从 1000->500 (0.5倍)，那么这张 2000 的图就变成 1000
                                             finalW = (int)Math.Round(bmp.PixelWidth * refScaleX);
                                             finalH = (int)Math.Round(bmp.PixelHeight * refScaleY); // 如果锁链开启，ScaleX应该等于ScaleY
-
-                                            // 防止无效尺寸
                                             finalW = Math.Max(1, finalW);
                                             finalH = Math.Max(1, finalH);
                                         }
                                         else
                                         {
-                                            // 未锁定比例 -> 强制拉伸到指定像素
                                             finalW = targetW;
                                             finalH = targetH;
                                         }
-
-                                        // 执行缩放
                                         resultBmp = new TransformedBitmap(bmp, new ScaleTransform(
                                             (double)finalW / bmp.PixelWidth,
                                             (double)finalH / bmp.PixelHeight));

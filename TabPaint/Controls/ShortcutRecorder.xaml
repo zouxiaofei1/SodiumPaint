@@ -17,12 +17,9 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-
-    <!-- 将原来的属性移动到 Style 中，以便使用 Trigger -->
     <Border x:Name="MainBorder" CornerRadius="4">
         <Border.Style>
             <Style TargetType="Border">
-                <!-- 1. 默认属性 & 增加高度 -->
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
                 <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
@@ -30,19 +27,12 @@
                 <Setter Property="MinHeight" Value="28"/>
                 <Setter Property="Margin" Value="1"/>
                 <Style.Triggers>
-                    <!-- 2. 选中/录制状态特效 -->
-                    <!-- 监听 UserControl 是否有键盘焦点 -->
                     <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                        <!-- 激活时的效果 -->
                         <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
-                        <!-- 或者使用你的强调色资源 -->
                         <Setter Property="BorderThickness" Value="1.5"/>
                         <!-- 边框变粗 -->
                         <Setter Property="Background" Value="{DynamicResource ChromeMediumBrush}"/>
-                        <!-- 背景略微变化 -->
                     </DataTrigger>
-
-                    <!-- 鼠标悬停效果 (可选，增加交互感) -->
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{DynamicResource ChromeLowBrush}"/>
                     </Trigger>

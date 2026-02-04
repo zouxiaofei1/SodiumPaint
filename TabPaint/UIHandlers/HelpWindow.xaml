@@ -6,19 +6,22 @@
         xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif" 
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        WindowStyle="None"
-        AllowsTransparency="True"
+        
+        ResizeMode="CanResize" 
+              WindowStyle="None"
+        AllowsTransparency="False"
         Background="Transparent"
-        Height="500" Width="800"
+        
+        Width="800" MaxWidth="800" MinWidth="800"
+        Height="500" MaxHeight="500" MinHeight="500"
+        
         KeyDown="Window_KeyDown"
-        Deactivated="Window_Deactivated" 
         ShowInTaskbar="False">
-
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+                <ResourceDictionary Source="/Resources/Icons/Icons.xaml"/>
+                <ResourceDictionary Source="/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
@@ -34,8 +37,7 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- Fluent 风格的加载圈样式 (纯 XAML 实现) -->
-            <!-- 修复版：Fluent 风格加载圈 -->
+            <!-- Fluent 风格的加载圈样式 -->
             <Style x:Key="FluentProgressRingStyle" TargetType="ProgressBar">
                 <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
                 <Setter Property="Background" Value="Transparent"/>
@@ -48,7 +50,6 @@
                                   SnapsToDevicePixels="true" 
                                   RenderTransformOrigin="0.5,0.5">
 
-                                <!-- 旋转动画容器 -->
                                 <Grid.RenderTransform>
                                     <RotateTransform x:Name="Rotation" Angle="0"/>
                                 </Grid.RenderTransform>
@@ -57,7 +58,6 @@
                                     <VisualStateGroup x:Name="CommonStates">
                                         <VisualState x:Name="Indeterminate">
                                             <Storyboard RepeatBehavior="Forever">
-                                                <!-- 匀速旋转，如果想要忽快忽慢的效果，可以把 EasingFunction 加回来 -->
                                                 <DoubleAnimation Storyboard.TargetName="Rotation"
                                                                  Storyboard.TargetProperty="Angle"
                                                                  From="0" To="360" Duration="0:0:1"/>
@@ -79,16 +79,16 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
         </ResourceDictionary>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" CornerRadius="10" GlassFrameThickness="-1"/>
+        <WindowChrome CaptionHeight="0" 
+                      ResizeBorderThickness="0" 
+                      CornerRadius="10" 
+                      GlassFrameThickness="-1"/>
     </WindowChrome.WindowChrome>
-    <!-- 1. 添加 MouseLeftButtonDown 实现拖动 -->
-    <!-- 为了让 Mica 透出来，背景色需要有一定的透明度，或者设为 Transparent -->
-    <Border Background="Transparent" 
+    <Border Background="{DynamicResource GlassBackgroundHighBrush}" 
             BorderBrush="{DynamicResource BorderBrush}" 
             BorderThickness="1" 
             CornerRadius="8"
@@ -96,7 +96,7 @@
             MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
         <Border.Effect>
-            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.5"/>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.3"/>
         </Border.Effect>
 
         <Grid>
@@ -106,42 +106,80 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 关闭按钮 -->
-            <Button Grid.Row="0" HorizontalAlignment="Right" Width="40" Height="30" 
-                    Click="CloseButton_Click" Style="{StaticResource WindowCloseButtonStyle}"
-                    Margin="0,4,4,0" Panel.ZIndex="10">
-                <Path Data="M0,0 L12,12 M12,0 L0,12" Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" StrokeThickness="1" Width="10" Height="10" Stretch="Uniform"/>
-            </Button>
+            <!-- 背景装饰图形 -->
+            <Grid IsHitTestVisible="False" Opacity="0.05" Grid.RowSpan="3">
+                <Path Data="M0,0 L100,0 L100,100 Z" Fill="{DynamicResource SystemAccentBrush}" 
+                      HorizontalAlignment="Left" VerticalAlignment="Top"
+                      Margin="-20,-20,0,0" Stretch="Uniform" Width="150" Height="150"/>
+                <Path Data="M50,0 A50,50 0 1 1 49.9,0" Fill="{DynamicResource SystemAccentBrush}" 
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                      Margin="0,0,-50,-50" Stretch="Uniform" Width="200" Height="200"/>
+            </Grid>
 
-            <!-- 图片展示区 -->
+            <!-- 关闭按钮 -->
+            <Button Grid.Row="0" HorizontalAlignment="Right"
+                    Click="CloseButton_Click" Style="{StaticResource WindowCloseButtonStyle}"
+                    Margin="0,0,0,0" Panel.ZIndex="10"/>
+
+            <!-- 内容区 -->
             <Grid Grid.Row="1" Margin="40,10,40,10">
 
-                <!-- 2. 图片源绑定改为 DisplayUri -->
+                <!-- 图片显示 -->
                 <Image x:Name="MainImageDisplay" 
                        gif:AnimationBehavior.SourceUri="{Binding DisplayUri}"
                        gif:AnimationBehavior.AutoStart="False" 
                        gif:AnimationBehavior.RepeatBehavior="Forever"
                        Stretch="Uniform" 
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                       RenderOptions.BitmapScalingMode="HighQuality">
+                    <Image.Effect>
+                        <DropShadowEffect BlurRadius="20" 
+                          ShadowDepth="5" 
+                          Direction="270" 
+                          Color="Black" 
+                          Opacity="0.4"/>
+                    </Image.Effect>
+                    <Image.Style>
+                        <Style TargetType="Image">
+                            <Style.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
 
+                <!-- 加载/错误遮罩 -->
                 <Grid Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" 
                       Panel.ZIndex="5" 
                       HorizontalAlignment="Center" 
                       VerticalAlignment="Center">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.15"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
 
-                    <!-- 卡片背景：适配深色/浅色模式 -->
-                    <Border Background="{DynamicResource ChromeMediumBrush}" 
-                            BorderBrush="{DynamicResource BorderLightBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8" 
-                            Padding="30,20">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
-                        </Border.Effect>
-
+                    <Border Style="{StaticResource FluentCardStyle}" 
+                            Padding="30,20"
+                            Background="{DynamicResource ChromeMediumBrush}">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                            <!-- 1. 加载中状态 (HasError = False 时显示) -->
+                            <!-- 1. 加载中 -->
                             <StackPanel Style="{StaticResource VisibleIfFalse}">
                                 <ProgressBar IsIndeterminate="True" 
                                              Style="{StaticResource FluentProgressRingStyle}"
@@ -153,7 +191,7 @@
                                            Margin="0,15,0,0"/>
                             </StackPanel>
 
-                            <!-- 2. 错误状态 (HasError = True 时显示) -->
+                            <!-- 2. 错误状态 -->
                             <StackPanel MouseLeftButtonDown="Retry_Click"
                                         Cursor="Hand"
                                         Background="Transparent">
@@ -168,68 +206,42 @@
                                     </Style>
                                 </StackPanel.Style>
 
-                                <!-- 错误图标 -->
                                 <Path Data="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M13,17H11V15H13V17M13,13H11V7H13V13Z" 
                                       Fill="{DynamicResource DangerBrush}"
                                       Width="32" Height="32" Stretch="Uniform"
                                       HorizontalAlignment="Center"/>
 
-                                <!-- 错误提示文本 -->
                                 <TextBlock Text="{Binding ErrorText}" 
                                            Foreground="{DynamicResource TextPrimaryBrush}" 
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center" 
                                            Margin="0,10,0,0"/>
 
-                                <!-- 重试提示 -->
-                                <!-- 修改：去掉这里的事件绑定，因为父级已经处理了 -->
                                 <TextBlock Text="Click to retry" 
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,4,0,0"/>
                             </StackPanel>
-
-
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <!-- 左右切换按钮 -->
-                <Grid HorizontalAlignment="Left" Width="60" Background="Transparent" MouseLeftButtonDown="PrevButton_Click" Cursor="Hand" Panel.ZIndex="6">
-                    <Grid.Style>
-                        <Style TargetType="Grid">
-                            <Setter Property="Opacity" Value="0"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Opacity" Value="1"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
-                    <Border Background="{DynamicResource ControlBackgroundBrush}" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Path Data="{DynamicResource ChevronLeft_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="12" Height="12"/>
-                    </Border>
-                </Grid>
+                <!-- 导航按钮 -->
+                <Button HorizontalAlignment="Left" Margin="10,0,0,0"
+                        Click="PrevButton_Click" Style="{StaticResource CircleNavButtonStyle}" Panel.ZIndex="6"
+                        VerticalAlignment="Center">
+                    <Path Data="{StaticResource ChevronLeft_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="12" Height="12"/>
+                </Button>
 
-                <Grid HorizontalAlignment="Right" Width="60" Background="Transparent" MouseLeftButtonDown="NextButton_Click" Cursor="Hand" Panel.ZIndex="6">
-                    <Grid.Style>
-                        <Style TargetType="Grid">
-                            <Setter Property="Opacity" Value="0"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Opacity" Value="1"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
-                    <Border Background="{DynamicResource ControlBackgroundBrush}" Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Path Data="{DynamicResource ChevronRight_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="12" Height="12"/>
-                    </Border>
-                </Grid>
+                <Button HorizontalAlignment="Right" Margin="0,0,10,0"
+                        Click="NextButton_Click" Style="{StaticResource CircleNavButtonStyle}" Panel.ZIndex="6"
+                        VerticalAlignment="Center">
+                    <Path Data="{StaticResource ChevronRight_Image}" Fill="{DynamicResource IconFillBrush}" Stretch="Uniform" Width="12" Height="12"/>
+                </Button>
             </Grid>
 
-            <!-- 底部文字和圆点 (保持不变) -->
+            <!-- 底部文字和圆点 -->
             <StackPanel Grid.Row="2" Margin="0,0,0,25">
                 <TextBlock Text="{Binding CurrentDescription}" 
                            HorizontalAlignment="Center" 
@@ -256,15 +268,23 @@
                                                 <DataTrigger.EnterActions>
                                                     <BeginStoryboard>
                                                         <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetProperty="Width" From="6" To="24" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Width" To="20" Duration="0:0:0.150">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <CircleEase EasingMode="EaseOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
                                                         </Storyboard>
                                                     </BeginStoryboard>
                                                 </DataTrigger.EnterActions>
-                                                <Setter Property="Background" Value="{DynamicResource AccentFillBrushPrimary}"/>
+                                                <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
                                                 <DataTrigger.ExitActions>
                                                     <BeginStoryboard>
                                                         <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetProperty="Width" From="24" To="6" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Width" To="6" Duration="0:0:0.150">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <CircleEase EasingMode="EaseOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
                                                         </Storyboard>
                                                     </BeginStoryboard>
                                                 </DataTrigger.ExitActions>

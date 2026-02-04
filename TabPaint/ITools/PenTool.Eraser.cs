@@ -79,82 +79,130 @@ public partial class PenTool : ToolBase
         var mw = (MainWindow)Application.Current.MainWindow;
         var aiService = new AiService(mw._cacheDir);
 
+        // 1. 初始化取消令牌源
+        var cts = new System.Threading.CancellationTokenSource();
+
+        // 定义取消事件的处理逻辑
+        EventHandler cancelHandler = (s, args) =>
+        {
+            if (!cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+                mw.ShowToast("L_Toast_DownloadCancelled"); // 提示已取消
+            }
+        };
+
         try
         {
+            // 2. 检查模型状态
             if (!aiService.IsModelReady(AiService.AiTaskType.Inpainting))
             {
                 var result = FluentMessageBox.Show(
-                    LocalizationManager.GetString("L_AI_Download_Inpaint_Content"), // 需在资源文件添加: "即将下载 AI 修复模型 (约 200MB)，是否继续？"
+                    LocalizationManager.GetString("L_AI_Download_Inpaint_Content"),
                     LocalizationManager.GetString("L_AI_Download_Title"),
                     MessageBoxButton.YesNo);
 
                 if (result != MessageBoxResult.Yes)
                 {
-                    CleanupMask(ctx); // 用户取消，清理遮罩
+                    CleanupMask(ctx);
                     return;
                 }
             }
+
+            // 3. 准备状态UI并绑定取消事件
             string oldStatus = mw.ImageSize;
             mw.ImageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
 
-            var dlProgress = new Progress<double>(p =>
+            // 绑定悬浮窗的取消事件
+            mw.DownloadProgressPopup.CancelRequested += cancelHandler;
+
+            // 4. 定义进度回调 (加入 CancellationToken 检查)
+            var dlProgress = new Progress<AiDownloadStatus>(status =>
             {
-                // 更新主窗口状态栏
-                mw.ImageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Downloading_Format"), p);
+                // 如果已经请求取消，不再更新UI，防止窗口再次弹出
+                if (cts.Token.IsCancellationRequested) return;
+
+                mw.ImageSize = LocalizationManager.GetString("L_AI_Downloading") +$"{status.Percentage:F0}% " ;
+                mw.DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
             });
-            string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.Inpainting, dlProgress);
 
-            // 4. 开始推理提示
+            // 5. 执行模型准备（传入 Token）
+            // 注意：PrepareModelAsync 必须已按照上一轮建议修改，增加了 CancellationToken 参数
+            string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.Inpainting, dlProgress, cts.Token);
+
+            // 下载完成后隐藏悬浮窗
+            mw.DownloadProgressPopup.Finish();
+
+            // 6. 开始推理阶段
             mw.ImageSize = LocalizationManager.GetString("L_AI_Eraser_Processing");
-            mw.ShowToast(LocalizationManager.GetString("L_AI_Eraser_Processing"));
+            mw.ShowToast("L_AI_Eraser_Processing");
+            mw.IsEnabled = false; // 锁定 UI
 
+            // --- 原有的推理逻辑 ---
             var oldBmp = ctx.Surface.Bitmap;
             int origW = oldBmp.PixelWidth;
             int origH = oldBmp.PixelHeight;
             int targetW = AppConsts.AiInpaintSize;
             int targetH = AppConsts.AiInpaintSize;
+
             var scaledImg = new TransformedBitmap(oldBmp, new ScaleTransform((double)targetW / origW, (double)targetH / origH));
             var wbImg = new WriteableBitmap(scaledImg);
             byte[] imgBytes = new byte[targetH * wbImg.BackBufferStride];
             wbImg.CopyPixels(imgBytes, wbImg.BackBufferStride, 0);
 
-            // 缩放 Mask 到 512
             var scaledMask = new TransformedBitmap(_maskBitmap, new ScaleTransform((double)targetW / origW, (double)targetH / origH));
             var wbMask = new WriteableBitmap(scaledMask);
             byte[] maskBytes = new byte[targetH * wbMask.BackBufferStride];
             wbMask.CopyPixels(maskBytes, wbMask.BackBufferStride, 0);
 
-           
+            // 执行推理
             byte[] rawResultPixels = await aiService.RunInpaintingAsync(modelPath, imgBytes, maskBytes, origW, origH);
 
+            // 处理并应用结果
             var result512 = new WriteableBitmap(targetW, targetH, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
             result512.WritePixels(new Int32Rect(0, 0, targetW, targetH), rawResultPixels, targetW * 4, 0);
 
             var finalScaled = new TransformedBitmap(result512, new ScaleTransform((double)origW / targetW, (double)origH / targetH));
             var finalWb = new WriteableBitmap(finalScaled);
 
+            // 撤销重做逻辑
             var undoRect = new Int32Rect(0, 0, origW, origH);
             byte[] undoPixels = new byte[origH * oldBmp.BackBufferStride];
             oldBmp.CopyPixels(undoPixels, oldBmp.BackBufferStride, 0);
-
             ctx.Surface.ReplaceBitmap(finalWb);
-
-            // 记录 Redo
             byte[] redoPixels = new byte[origH * finalWb.BackBufferStride];
             finalWb.CopyPixels(redoPixels, finalWb.BackBufferStride, 0);
             ctx.Undo.PushTransformAction(undoRect, undoPixels, undoRect, redoPixels);
 
             mw.NotifyCanvasChanged();
-            mw.ShowToast(LocalizationManager.GetString("L_AI_Eraser_Success"));
+            mw.ShowToast("L_AI_Eraser_Success");
             mw.ImageSize = oldStatus;
+        }
+        catch (OperationCanceledException)
+        {
+            // 处理用户主动取消
+            mw.DownloadProgressPopup.Finish();
+            mw.ImageSize = LocalizationManager.GetString("L_Main_Status_Ready"); // 恢复状态
         }
         catch (Exception ex)
         {
+            mw.DownloadProgressPopup.Finish();
             string errorFormat = LocalizationManager.GetString("L_AI_Eraser_Error_Prefix");
             mw.ShowToast(string.Format(errorFormat, ex.Message));
         }
-        finally  { CleanupMask(ctx);}
+        finally
+        {
+            // 7. 资源清理
+            mw.DownloadProgressPopup.CancelRequested -= cancelHandler; // 必须解除绑定
+            cts.Dispose(); // 释放令牌
+
+            mw.IsEnabled = true;
+            CleanupMask(ctx);
+            mw.Focus();
+        }
     }
+
+
     private void CleanupMask(ToolContext ctx)  // 清理遮罩层
     {
         if (_maskBitmap != null)

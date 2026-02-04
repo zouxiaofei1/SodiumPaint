@@ -4,15 +4,16 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="TabPaint Message" 
-        Height="Auto" Width="420"
+        Title="TabPaint" 
+        Height="Auto" Width="440"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         SizeToContent="Height"
-        AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False">
+        ShowInTaskbar="False"
+        Topmost="True">
+
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -20,87 +21,96 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
+
+    <!-- 启用 WindowChrome 以支持无边框窗口的系统行为 (阴影、Snap等) 且兼容 Mica -->
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32" ResizeBorderThickness="5" GlassFrameThickness="-1"/>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="-1" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
-    <Border Background="{DynamicResource ControlBackgroundBrush}" 
+    <!-- 
+       外层 Border：
+       Background 使用 GlassBackgroundLowBrush (约20%透明度)，
+       这样 Mica 效果能透过这层薄薄的背景显示出来。
+    -->
+    <Border Background="{DynamicResource GlassBackgroundMediumBrush}" 
             BorderBrush="{DynamicResource BorderBrush}" 
             BorderThickness="1" 
             CornerRadius="8"
-            Margin="10">
-        <Border.Effect>
-            <!-- 阴影效果 -->
-            <DropShadowEffect BlurRadius="20" ShadowDepth="5" Direction="270" Color="Black" Opacity="0.25"/>
-        </Border.Effect>
-        <Grid ClipToBounds="True">
+            MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <!-- 顶部间距/标题栏区域 -->
                 <RowDefinition Height="*"/>
+                <!-- 内容 -->
                 <RowDefinition Height="Auto"/>
+                <!-- 按钮 -->
             </Grid.RowDefinitions>
 
-            <!-- 设置外层Border的圆角遮罩，防止内部矩形背景覆盖圆角 -->
-            <Grid.OpacityMask>
-                <VisualBrush>
-                    <VisualBrush.Visual>
-                        <Border Background="Black" Width="{Binding ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType=Grid}}" Height="{Binding ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType=Grid}}" CornerRadius="7"/>
-                    </VisualBrush.Visual>
-                </VisualBrush>
-            </Grid.OpacityMask>
-            <Border Grid.Row="0" 
-                    Background="{DynamicResource SubtleHoverBrush}" 
-                    Height="32"
-                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- 标题文字 -->
-                    <TextBlock x:Name="TxtTitle" 
-                               Text="Title" 
-                               VerticalAlignment="Center" 
-                               Margin="24,0,0,0"
-                               FontWeight="SemiBold" 
-                               FontSize="12" 
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               IsHitTestVisible="False"/>
-                    <Button Grid.Column="1"
+            <!-- 标题 (可选，做得很淡，不占用交互空间) -->
+            <TextBlock x:Name="TxtTitle" 
+                       Grid.Row="0"
+                       Text="Title" 
+                       Margin="24,16,24,0"
+                       FontWeight="SemiBold" 
+                       FontSize="13" 
+                       Opacity="0.8"
+                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <Button Grid.Column="0"
                             Style="{StaticResource WindowCloseButtonStyle}"
-                            Click="BtnClose_Click"
+                            Click="BtnClose_Click"  HorizontalAlignment="Right"
                             WindowChrome.IsHitTestVisibleInChrome="True"/>
-                </Grid>
-            </Border>
-            <Border Grid.Row="0" VerticalAlignment="Bottom" Height="1" Background="{DynamicResource BorderBrush}" Opacity="0.5"/>
-
             <!-- ================= 内容区 ================= -->
-            <Grid Grid.Row="1" Margin="24,20,24,10">
+            <Grid Grid.Row="1" Margin="24,16,24,24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
+                    <!-- 图标列 -->
                     <ColumnDefinition Width="*"/>
+                    <!-- 文字列 -->
                 </Grid.ColumnDefinitions>
+
+                <!-- 图标容器 -->
+                <Viewbox x:Name="IconContainer" 
+         Grid.Column="0" 
+         Width="32" Height="32" 
+         VerticalAlignment="Top" 
+         Margin="0,2,16,0">
+
+                    <Path x:Name="IconPath" 
+          Fill="{DynamicResource SystemAccentBrush}" 
+          Stretch="Uniform"
+          Width="24" Height="24" />
+                    <!-- 增加：显式指定 Path 的原始视口大小 -->
+                </Viewbox>
+
+
                 <TextBlock x:Name="TxtMessage" 
                            Grid.Column="1"
                            Text="Message Content" 
                            TextWrapping="Wrap" 
                            FontSize="14" 
-                           LineHeight="20"
+                           LineHeight="22"
+                           VerticalAlignment="Center"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
+          
             </Grid>
 
             <!-- ================= 按钮区 ================= -->
+            <!-- 使用略微不同的背景色区分按钮区，增加层次感 -->
             <Border Grid.Row="2" 
-                    Background="{DynamicResource ControlAltBackgroundBrush}" 
-                    Padding="24,16,24,24">
+                    Background="{DynamicResource SubtleHoverBrush}" 
+                    BorderBrush="{DynamicResource BorderLightBrush}"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,8,8"
+                    Padding="24,16">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
 
-                    <Button x:Name="BtnYes" Content="Yes" Style="{DynamicResource Win11PrimaryButtonStyle}" Width="76" Height="32" Margin="8,0,0,0" Click="BtnYes_Click" Visibility="Collapsed"/>
-                    <Button x:Name="BtnOk" Content="OK" Style="{DynamicResource Win11PrimaryButtonStyle}" Width="76" Height="32" Margin="8,0,0,0" Click="BtnOk_Click" Visibility="Collapsed"/>
+                    <Button x:Name="BtnYes" Content="{DynamicResource L_Common_OK}" Style="{DynamicResource Win11PrimaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnYes_Click" Visibility="Collapsed"/>
+                    <Button x:Name="BtnOk" Content="{DynamicResource L_Common_OK}" Style="{DynamicResource Win11PrimaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnOk_Click" Visibility="Collapsed"/>
 
-                    <Button x:Name="BtnNo" Content="No" Style="{DynamicResource Win11SecondaryButtonStyle}" Width="76" Height="32" Margin="8,0,0,0" Click="BtnNo_Click" Visibility="Collapsed"/>
-                    <Button x:Name="BtnCancel" Content="Cancel" Style="{DynamicResource Win11SecondaryButtonStyle}" Width="76" Height="32" Margin="8,0,0,0" Click="BtnCancel_Click" Visibility="Collapsed"/>
+                    <Button x:Name="BtnNo" Content="{DynamicResource L_Common_Cancel}" Style="{DynamicResource Win11SecondaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnNo_Click" Visibility="Collapsed"/>
+                    <Button x:Name="BtnCancel" Content="{DynamicResource L_Common_Cancel}" Style="{DynamicResource Win11SecondaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnCancel_Click" Visibility="Collapsed"/>
 
                 </StackPanel>
             </Border>

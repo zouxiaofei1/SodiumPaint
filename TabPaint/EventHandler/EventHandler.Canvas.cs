@@ -403,6 +403,11 @@ namespace TabPaint
                 ShowToast("L_Error_MissingVCRedist");
                 return;
             }
+            DownloadProgressPopup.CancelRequested -= OnDownloadCancelRequested;
+            DownloadProgressPopup.CancelRequested += OnDownloadCancelRequested;
+
+            // 初始化 CancellationTokenSource
+            _downloadCts = new System.Threading.CancellationTokenSource();
             var aiService = new AiService(_cacheDir);
             if (!aiService.IsModelReady(AiService.AiTaskType.SuperResolution))
             {
@@ -418,8 +423,6 @@ namespace TabPaint
             var statusText = _imageSize;
             _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
             OnPropertyChanged(nameof(ImageSize));
-            this.IsEnabled = false;
-            this.Cursor = Cursors.Wait;
 
             try
             {
@@ -435,22 +438,20 @@ namespace TabPaint
                     int targetW = (int)(inputBmp.PixelWidth * scale);
                     int targetH = (int)(inputBmp.PixelHeight * scale);
 
-                    // 使用你现有的 ResampleBitmap 方法进行高质量缩放
-                    // 确保缩放后的图像是 WriteableBitmap 格式
                     var resampledSource = ResampleBitmap(inputBmp, targetW, targetH);
                     inputBmp = new WriteableBitmap(resampledSource);
                 }
-                // -----------------------
-
-                // 3. 准备模型
-                var dlProgress = new Progress<double>(p =>
+                var dlProgress = new Progress<AiDownloadStatus>(status =>
                 {
-                    _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Downloading_Format"), p);
+                    if (_downloadCts.IsCancellationRequested) return;
+
+                    ImageSize = LocalizationManager.GetString("L_AI_Downloading") + $"{status.Percentage:F0}% ";
                     OnPropertyChanged(nameof(ImageSize));
+                    DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
                 });
 
-                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.SuperResolution, dlProgress);
-
+                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.SuperResolution, dlProgress, _downloadCts.Token);
+                DownloadProgressPopup.Finish();
                 // 4. 执行推理
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
@@ -467,7 +468,12 @@ namespace TabPaint
                 // 5. 应用结果
                 ApplyUpscaleResult(resultBitmap);
                 GC.Collect(2, GCCollectionMode.Forced, true);
-                ShowToast("L_Toast_Upscale_Success");
+                ShowToast("L_Toast_Apply_Success");
+            }
+            catch (OperationCanceledException)
+            {
+               
+                DownloadProgressPopup.Finish();
             }
             catch (Exception ex)
             {
@@ -478,13 +484,25 @@ namespace TabPaint
             }
             finally
             {
-                this.IsEnabled = true;
-                this.Cursor = Cursors.Arrow;
+                _downloadCts?.Dispose();
+                _downloadCts = null;
                 if (_surface?.Bitmap != null)
                     _imageSize = $"{_surface.Bitmap.PixelWidth}×{_surface.Bitmap.PixelHeight}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
+
                 OnPropertyChanged(nameof(ImageSize));
                 NotifyCanvasChanged();
                 this.Focus();
+            }
+        }
+        private System.Threading.CancellationTokenSource _downloadCts;
+
+        // 通用的下载取消处理方法
+        private void OnDownloadCancelRequested(object sender, EventArgs e)
+        {
+            if (_downloadCts != null && !_downloadCts.IsCancellationRequested)
+            {
+                _downloadCts.Cancel();
+                ShowToast("L_Toast_DownloadCancelled"); 
             }
         }
 
@@ -526,8 +544,10 @@ namespace TabPaint
 
         private async void OnRemoveBackgroundClick(object sender, RoutedEventArgs e)
         {
+            // 1. 基础检查
             if (_surface?.Bitmap == null) return;
             _router.CleanUpSelectionandShape();
+
             if (!IsVcRedistInstalled())
             {
                 var result = FluentMessageBox.Show(
@@ -539,56 +559,72 @@ namespace TabPaint
                 {
                     Process.Start(new ProcessStartInfo
                     {
-                        FileName = "https://aka.ms/vs/17/release/vc_redist.x64.exe", // 微软官方直接下载链接
+                        FileName = "https://aka.ms/vs/17/release/vc_redist.x64.exe",
                         UseShellExecute = true
                     });
                 }
                 return;
             }
 
-             var aiService = new AiService(_cacheDir);
-                if (!aiService.IsModelReady(AiService.AiTaskType.RemoveBackground))
-                {
-                    var result = FluentMessageBox.Show(
-                        LocalizationManager.GetString("L_AI_Download_RMBG_Content"),
-                        LocalizationManager.GetString("L_AI_Download_Title"),
-                        MessageBoxButton.YesNo);
+            var aiService = new AiService(_cacheDir);
+            if (!aiService.IsModelReady(AiService.AiTaskType.RemoveBackground))
+            {
+                var result = FluentMessageBox.Show(
+                    LocalizationManager.GetString("L_AI_Download_RMBG_Content"),
+                    LocalizationManager.GetString("L_AI_Download_Title"),
+                    MessageBoxButton.YesNo);
 
-                    if (result != MessageBoxResult.Yes) return;
-                }
+                if (result != MessageBoxResult.Yes) return;
+            }
 
-                var statusText = _imageSize; // 暂存状态栏
-                _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
-                OnPropertyChanged(nameof(ImageSize));
+            // --- 新增：准备取消令牌和绑定事件 ---
+            DownloadProgressPopup.CancelRequested -= OnDownloadCancelRequested; // 先解绑防止重复
+            DownloadProgressPopup.CancelRequested += OnDownloadCancelRequested;
+            _downloadCts = new System.Threading.CancellationTokenSource();
+
+            var statusText = _imageSize; // 暂存状态栏文本
+            _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
+            OnPropertyChanged(nameof(ImageSize));
+
             try
             {
-   
-
-                // 2. 准备模型 (带进度)
-                var progress = new Progress<double>(p =>
+                var progress = new Progress<AiDownloadStatus>(status =>
                 {
-                    _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Downloading_Format"), p);
+                    // 如果已取消，则不再更新 UI，防止窗口再次弹起
+                    if (_downloadCts != null && _downloadCts.IsCancellationRequested) return;
+                    ImageSize = LocalizationManager.GetString("L_AI_Downloading") + $"{status.Percentage:F0}% ";
                     OnPropertyChanged(nameof(ImageSize));
+
+                    // 更新悬浮进度条详细信息
+                    DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
                 });
 
-                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.RemoveBackground, progress);
+                // 传入 _downloadCts.Token
+                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.RemoveBackground, progress, _downloadCts.Token);
 
+                // 下载完成
+                DownloadProgressPopup.Finish();
+
+                // 3. 执行推理
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
-
-                this.IsEnabled = false;
 
                 var resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap);
 
                 // 4. 应用结果并支持撤销
                 ApplyAiResult(resultPixels);
-
+                ShowToast("L_Toast_Apply_Success");
+            }
+            catch (OperationCanceledException)
+            {
+                // 处理用户主动取消
+                DownloadProgressPopup.Finish();
             }
             catch (Exception ex)
             {
                 if (ex is DllNotFoundException ||
-            ex.InnerException is DllNotFoundException ||
-            ex.Message.Contains("onnxruntime"))
+                    ex.InnerException is DllNotFoundException ||
+                    ex.Message.Contains("onnxruntime"))
                 {
                     ShowToast(LocalizationManager.GetString("L_AI_Error_DllNotFound"));
                 }
@@ -599,12 +635,16 @@ namespace TabPaint
             }
             finally
             {
-                this.IsEnabled = true;
+                // --- 清理逻辑 ---
+                _downloadCts?.Dispose();
+                _downloadCts = null;
                 _imageSize = statusText; // 恢复状态栏
                 OnPropertyChanged(nameof(ImageSize));
-                NotifyCanvasChanged(); this.Focus();
+                NotifyCanvasChanged();
+                this.Focus();
             }
         }
+
 
         private void ApplyAiResult(byte[] newPixels)
         {
@@ -649,8 +689,6 @@ namespace TabPaint
             }
             else
             {
-                // 如果当前没有激活的文本框，可以提示用户先点击画布创建文本框
-                // 或者自动创建一个
                 ShowToast(LocalizationManager.GetString("L_Main_Toast_Info")); // "请先创建文本框"
             }
         }

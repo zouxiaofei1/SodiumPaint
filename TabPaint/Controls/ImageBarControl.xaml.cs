@@ -2,10 +2,6 @@
 //ImageBarControl.xaml.cs
 //图片标签栏控件，负责显示已打开的图片缩略图、标签切换、关闭以及拖拽排序等交互。
 //
-//
-//ImageBarControl.xaml.cs
-//图片标签栏控件，负责显示已打开的图片缩略图、标签切换、关闭以及拖拽排序等交互。
-//
 using System.Globalization;
 using System.Runtime.InteropServices; // 用于处理底层消息
 using System.Windows;
@@ -15,6 +11,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop; // 用于 HwndSource
 using System.Windows.Media;
+using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
@@ -41,13 +38,141 @@ namespace TabPaint.Controls
     }
     public partial class ImageBarControl : UserControl
     {
+        private DispatcherTimer _closeTimer;
         private const int WM_MOUSEHWHEEL = 0x020E;
         public ImageBarControl()
         {
             InitializeComponent();
             this.Loaded += ImageBarControl_Loaded;
             this.Unloaded += ImageBarControl_Unloaded;
+
+            _hoverTimer = new DispatcherTimer();
+            _hoverTimer.Interval = TimeSpan.FromSeconds(0.5); // 设置为 0.5 秒
+            _hoverTimer.Tick += HoverTimer_Tick;
+            _closeTimer = new DispatcherTimer();
+            _closeTimer.Interval = TimeSpan.FromMilliseconds(100); // 100ms 缓冲期
+            _closeTimer.Tick += CloseTimer_Tick;
         }
+        private void Internal_OnTabMouseEnter(object sender, MouseEventArgs e)
+        {
+            if (!IsCompactMode) return;
+
+            var element = sender as FrameworkElement;
+            if (element == null) return;
+
+            _currentHoveredElement = element;
+
+            _closeTimer.Stop();
+            if (LargePreviewPopup.IsOpen)
+            {
+                _hoverTimer.Stop();
+                UpdatePreviewPopup();
+            }
+            else
+            {
+                // 只有当完全没开的时候，才开始 0.5s 计时
+                _hoverTimer.Stop();
+                _hoverTimer.Start();
+            }
+        }
+
+        // 4. 鼠标离开 Tab
+        private void Internal_OnTabMouseLeave(object sender, MouseEventArgs e)
+        {
+            _hoverTimer.Stop(); // 还没显示的就别显示了
+            _closeTimer.Start(); // 准备关闭
+        }
+
+        // 3. 关闭定时器触发
+        private void CloseTimer_Tick(object sender, EventArgs e)
+        {
+            // 先停止计时器
+            _closeTimer.Stop();
+
+            // 如果当前没有记录的悬停元素，直接关闭
+            if (_currentHoveredElement == null)
+            {
+                LargePreviewPopup.IsOpen = false;
+                return;
+            }
+            Point mousePos = Mouse.GetPosition(_currentHoveredElement);
+            bool isStillOver = mousePos.X >= 0 &&
+                               mousePos.X <= _currentHoveredElement.ActualWidth &&
+                               mousePos.Y >= 0 &&
+                               mousePos.Y <= _currentHoveredElement.ActualHeight;
+
+            if (isStillOver)
+            {
+                if (!LargePreviewPopup.IsOpen)
+                {
+                    // 极少数情况下如果被关了，这里可以救回来，但通常不需要
+                    LargePreviewPopup.IsOpen = true;
+                }
+                return;
+            }
+
+            // --- 只有当鼠标坐标真的跑出去了，才执行关闭 ---
+            LargePreviewPopup.IsOpen = false;
+            _currentHoveredElement = null;
+        }
+
+        // 5. 定时器触发（0.5s 后）
+        private void HoverTimer_Tick(object sender, EventArgs e)
+        {
+            _hoverTimer.Stop();
+            if (!IsCompactMode || _currentHoveredElement == null) return;
+
+            // 开启前也要把关闭计时器停掉，防止意外
+            _closeTimer.Stop();
+            UpdatePreviewPopup();
+        }
+
+        private void UpdatePreviewPopup()
+        {
+            if (_currentHoveredElement == null) return;
+
+            dynamic tabData = _currentHoveredElement.DataContext;
+            if (tabData != null && tabData.Thumbnail != null)
+            {
+                PopupPreviewImage.Source = tabData.Thumbnail;
+                LargePreviewPopup.PlacementTarget = _currentHoveredElement;
+
+                if (!LargePreviewPopup.IsOpen)
+                {
+                    LargePreviewPopup.IsOpen = true;
+                }
+                else
+                {
+                    // 修复：使用 Dispatcher 延后执行位置重算
+                    // 这确保了 PlacementTarget 属性在底层已经完全更新后，再命令 Popup 移动
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        try
+                        {
+                            var method = typeof(Popup).GetMethod("Reposition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (method != null)
+                            {
+                                method.Invoke(LargePreviewPopup, null);
+                            }
+                            else
+                            {
+                                // 备用 Hack：微动 Offset 触发重绘
+                                var currentOffset = LargePreviewPopup.HorizontalOffset;
+                                LargePreviewPopup.HorizontalOffset = currentOffset + 0.1;
+                                LargePreviewPopup.HorizontalOffset = currentOffset;
+                            }
+                        }
+                        catch
+                        {
+                            // 忽略潜在的反射异常
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Render);
+                }
+            }
+        }
+
+
+
         private void ImageBarControl_Loaded(object sender, RoutedEventArgs e)
         {
             // 获取当前窗口的句柄源
@@ -277,32 +402,20 @@ namespace TabPaint.Controls
             {
                 // 切换模式时调整容器的预期高度，以便动画正常工作
                 ctrl.DesiredHeight = (bool)e.NewValue ? 45.0 : 100.0;
-
-                // 如果当前正在显示，强制触发布局更新（可选）
                 ctrl.InvalidateVisual();
             }
         }
-
-        // --- 新增：切换视图按钮点击 ---
         private void Internal_OnToggleViewModeClick(object sender, RoutedEventArgs e)
         {
             IsCompactMode = !IsCompactMode;
         }
-
-        // --- 新增：背景双击切换 ---
-
-
         private void Internal_OnBackgroundMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ClickCount != 2) return;
 
             var dep = e.OriginalSource as DependencyObject;
             if (dep == null) return;
-
-            // 1) 点在 Tab 上：不切换（你的 FileTabItem 是数据模型，所以用 DataContext 判定）
             if (HasDataContext<FileTabItem>(dep)) return;
-
-            // 2) 点在交互控件上：不切换（避免双击按钮/滑块误触）
             if (FindAncestor<ButtonBase>(dep) != null) return;
             if (FindAncestor<Slider>(dep) != null) return;
             if (FindAncestor<Thumb>(dep) != null) return;
@@ -311,7 +424,8 @@ namespace TabPaint.Controls
             IsCompactMode = !IsCompactMode;
             e.Handled = true;
         }
-
+        private DispatcherTimer _hoverTimer;
+        private FrameworkElement _currentHoveredElement;
         private static bool HasDataContext<T>(DependencyObject d)
         {
             while (d != null)

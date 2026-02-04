@@ -55,7 +55,7 @@ namespace TabPaint
 
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
-            InitializeLazyControls();
+            InitializeLazyControls(); 
             if (IsViewMode) OnModeChanged(true, isSilent: true);
 
             MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>

@@ -49,7 +49,7 @@ namespace TabPaint
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-
+            
             // 确保句柄已经准备好
             var hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd == IntPtr.Zero) return;

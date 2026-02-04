@@ -1300,8 +1300,6 @@
                     <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" 
             Margin="0,10,20,0" 
             Panel.ZIndex="999">
-
-                        <!-- 1. 更新通知 (通常更重要，放在上面) -->
                         <Border x:Name="UpdateToast"
             Background="{DynamicResource ThemeAccentBrush}"
             Padding="16,10" CornerRadius="4"

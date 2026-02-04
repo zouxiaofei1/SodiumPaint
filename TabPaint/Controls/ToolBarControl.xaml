@@ -191,11 +191,7 @@
                                 <Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
                             </ContentControl>
                         </Button>
-
-                        <!-- 分割线：只有悬浮时才显现比较好看，或者一直显示淡淡的 -->
                         <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.4"/>
-
-                        <!-- 右半部分：应用透明样式 -->
                         <ToggleButton x:Name="BrushToggle" 
                                       Style="{StaticResource TransparentInnerButtonStyleToggle}"
                                       Width="16" Height="36">
@@ -204,13 +200,10 @@
                         </ToggleButton>
                     </StackPanel>
                 </Border>
-
-                <!-- Popup 部分保持不变 ... -->
                 <Popup x:Name="SubMenuPopupBrush" IsOpen="{Binding IsChecked, ElementName=BrushToggle, Mode=TwoWay}"
                        PlacementTarget="{Binding ElementName=BrushSplitButtonBorder}" 
                        Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
                        StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
-                    <!-- ... 内部菜单内容不变 ... -->
                     <Border Name="SubmenuBorderBrush" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel>
                             <MenuItem Header="{DynamicResource L_ToolBar_Brush_Round}" Style="{StaticResource SubMenuItemStyle}" Click="OnBrushStyleClick_Forward" Tag="Round">

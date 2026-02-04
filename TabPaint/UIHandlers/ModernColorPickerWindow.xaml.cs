@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,6 +11,86 @@ namespace TabPaint
 {
     public partial class ModernColorPickerWindow : Window
     {
+        private static readonly Dictionary<Color, string> StandardColorNames = new Dictionary<Color, string>
+        {
+            { Color.FromRgb(255, 255, 255), "L_Color_White" },
+            { Color.FromRgb(255, 204, 204), "L_Color_LightRed" },
+            { Color.FromRgb(255, 229, 204), "L_Color_LightOrange" },
+            { Color.FromRgb(255, 255, 204), "L_Color_LightYellow" },
+            { Color.FromRgb(204, 255, 204), "L_Color_MintGreen" },
+            { Color.FromRgb(204, 255, 255), "L_Color_LightCyan" },
+            { Color.FromRgb(204, 229, 255), "L_Color_LightBlue" },
+            { Color.FromRgb(229, 204, 255), "L_Color_Lavender" },
+            { Color.FromRgb(255, 204, 255), "L_Color_LightPink" },
+            { Color.FromRgb(245, 222, 179), "L_Color_Wheat" },
+            { Color.FromRgb(192, 192, 192), "L_Color_Silver" },
+            { Color.FromRgb(255, 0, 0), "L_Color_Red" },
+            { Color.FromRgb(255, 128, 0), "L_Color_Orange" },
+            { Color.FromRgb(255, 255, 0), "L_Color_Yellow" },
+            { Color.FromRgb(0, 255, 0), "L_Color_Lime" },
+            { Color.FromRgb(0, 255, 255), "L_Color_Cyan" },
+            { Color.FromRgb(0, 128, 255), "L_Color_Azure" },
+            { Color.FromRgb(128, 0, 255), "L_Color_Violet" },
+            { Color.FromRgb(255, 0, 255), "L_Color_Magenta" },
+            { Color.FromRgb(210, 105, 30), "L_Color_Chocolate" },
+            { Color.FromRgb(128, 128, 128), "L_Color_Gray" },
+            { Color.FromRgb(204, 0, 0), "L_Color_DeepRed" },
+            { Color.FromRgb(204, 102, 0), "L_Color_DeepOrange" },
+            { Color.FromRgb(255, 215, 0), "L_Color_Gold" },
+            { Color.FromRgb(0, 128, 0), "L_Color_Green" },
+            { Color.FromRgb(0, 128, 128), "L_Color_Teal" },
+            { Color.FromRgb(0, 0, 255), "L_Color_Blue" },
+            { Color.FromRgb(128, 0, 128), "L_Color_Purple" },
+            { Color.FromRgb(199, 21, 133), "L_Color_DeepPink" },
+            { Color.FromRgb(160, 82, 45), "L_Color_Ochre" },
+            { Color.FromRgb(0, 0, 0), "L_Color_Black" },
+            { Color.FromRgb(128, 0, 0), "L_Color_Maroon" },
+            { Color.FromRgb(102, 51, 0), "L_Color_DeepBrown" },
+            { Color.FromRgb(128, 128, 0), "L_Color_Olive" },
+            { Color.FromRgb(0, 64, 0), "L_Color_ForestGreen" },
+            { Color.FromRgb(0, 64, 64), "L_Color_RockCyan" },
+            { Color.FromRgb(0, 0, 128), "L_Color_Navy" },
+            { Color.FromRgb(51, 0, 102), "L_Color_Indigo" },
+            { Color.FromRgb(75, 0, 130), "L_Color_DeepViolet" },
+            { Color.FromRgb(62, 39, 35), "L_Color_Coffee" }
+        };
+
+        private string GetFriendlyColorName(Color target)
+        {
+            Color bestMatch = Color.FromRgb(0, 0, 0);
+            double minDiff = double.MaxValue;
+
+            foreach (var standard in StandardColorNames.Keys)
+            {
+                // 使用欧几里得距离计算颜色相似度
+                double diff = Math.Pow(target.R - standard.R, 2) +
+                              Math.Pow(target.G - standard.G, 2) +
+                              Math.Pow(target.B - standard.B, 2);
+
+                if (diff < minDiff)
+                {
+                    minDiff = diff;
+                    bestMatch = standard;
+                }
+            }
+
+            string nameKey = StandardColorNames[bestMatch];
+            string localizedName = LocalizationManager.GetString(nameKey);
+
+            // 如果差异较大，则显示“接近 [颜色名]”
+            if (minDiff > 500)
+            {
+                return $"{localizedName} ";
+            }
+            return localizedName;
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            MicaAcrylicManager.ApplyEffect(this);
+        }
+
         public Color SelectedColor { get; private set; }
         private enum ColorMode { RGB, HSV }
         private ColorMode _currentMode = ColorMode.RGB;
@@ -28,16 +109,30 @@ namespace TabPaint
             InitializeComponent();
             SelectedColor = initialColor;
 
-            // UI初始化
             OriginalColorRect.Fill = new SolidColorBrush(initialColor);
             RenderHueGradient();
             SetColorFromRgb(initialColor.R, initialColor.G, initialColor.B);
             LoadCustomColorsFromSettings();
-            this.MouseDown += (s, e) => {Keyboard.ClearFocus();};
+            this.MouseDown += (s, e) => { Keyboard.ClearFocus(); };
             this.KeyDown += (s, e) => { if (e.Key == Key.Escape) { this.Close(); } };
-            Loaded += (s, e) => UpdateUI();
+            Loaded += (s, e) =>
+            {
+                UpdateUI();
+                UpdateBasicColorTooltips();
+            };
         }
-     
+
+        private void UpdateBasicColorTooltips()
+        {
+            foreach (var child in BasicColorsGrid.Children)
+            {
+                if (child is Button btn && btn.Background is SolidColorBrush brush)
+                {
+                    btn.ToolTip = GetFriendlyColorName(brush.Color);
+                }
+            }
+        }
+
         private void LoadCustomColorsFromSettings()
         {
             var savedHexColors = SettingsManager.Instance.Current.CustomColors;
@@ -151,8 +246,8 @@ namespace TabPaint
                 {
                     double w = SpectrumBaseColor.ActualWidth;
                     double h = SpectrumBaseColor.ActualHeight;
-                    Canvas.SetLeft(ColorCursor, _currentSat * w);
-                    Canvas.SetTop(ColorCursor, (1 - _currentVal) * h);
+                    Canvas.SetLeft(CursorContainer, _currentSat * w);
+                    Canvas.SetTop(CursorContainer, (1 - _currentVal) * h);
                 }
                 if (AlphaSliderGrid.ActualHeight > 0)
                 {
@@ -230,9 +325,11 @@ namespace TabPaint
 
         private void Spectrum_MouseMove(object sender, MouseEventArgs e)
         {
+            var grid = sender as Grid;
+            if (grid == null) return;
+
             if (_isDraggingSpectrum)
             {
-                var grid = sender as Grid;
                 UpdateSpectrumFromMouse(e.GetPosition(grid), grid.ActualWidth, grid.ActualHeight);
             }
         }
@@ -241,6 +338,11 @@ namespace TabPaint
         {
             _isDraggingSpectrum = false;
             if (sender is IInputElement el) el.ReleaseMouseCapture();
+
+            if (ColorToolTipBorder != null)
+            {
+                ColorToolTipBorder.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateSpectrumFromMouse(Point p, double w, double h)
@@ -252,6 +354,16 @@ namespace TabPaint
             _currentVal = 1 - (y / h);
 
             UpdateUI();
+
+            // 动态更新 Tooltip 内容
+            if (ColorToolTipBorder != null)
+            {
+                var colorAtMouse = ColorFromHsv(_currentHue, _currentSat, _currentVal);
+                ColorToolTipText.Text = GetFriendlyColorName(colorAtMouse);
+
+                if (ColorToolTipBorder.Visibility != Visibility.Visible)
+                    ColorToolTipBorder.Visibility = Visibility.Visible;
+            }
         }
         #endregion
 
@@ -303,7 +415,7 @@ namespace TabPaint
 
         private void Alpha_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            e.Handled = true;  
+            e.Handled = true;
             _isDraggingAlpha = true;
 
             AlphaSliderGrid.CaptureMouse();
@@ -440,8 +552,8 @@ namespace TabPaint
                 {
                     double w = SpectrumBaseColor.ActualWidth;
                     double h = SpectrumBaseColor.ActualHeight;
-                    Canvas.SetLeft(ColorCursor, _currentSat * w);
-                    Canvas.SetTop(ColorCursor, (1 - _currentVal) * h);
+                    Canvas.SetLeft(CursorContainer, _currentSat * w);
+                    Canvas.SetTop(CursorContainer, (1 - _currentVal) * h);
                 }
                 if (HueSliderGrid.ActualHeight > 0)
                 {
@@ -484,8 +596,8 @@ namespace TabPaint
             if (_customColors.Contains(newColor)) return;
             _customColors.Insert(0, newColor); // 插入到最前面
 
-            if (_customColors.Count > 16)
-                _customColors.RemoveAt(16);
+            if (_customColors.Count > 18)
+                _customColors.RemoveAt(18);
 
             // 刷新 UI
             RenderCustomColors();
@@ -509,6 +621,7 @@ namespace TabPaint
 
         private void RenderCustomColors()
         {
+            if (CustomColorsGrid == null) return;
             for (int i = 0; i < CustomColorsGrid.Children.Count; i++)
             {
                 if (CustomColorsGrid.Children[i] is Grid slot)
@@ -521,21 +634,25 @@ namespace TabPaint
                         var c = _customColors[i];
                         var btn = new Button
                         {
-                            Style = (Style)FindResource("MiniColorSwatch"),
-
+                            Style = (Style)Resources["MiniColorSwatch"],
                             Background = new SolidColorBrush(c),
-                            ToolTip = $"#{c.R:X2}{c.G:X2}{c.B:X2}"
+                            ToolTip = GetFriendlyColorName(c)
                         };
-
+                        btn.Click += (s, e2) => {
+                            _currentAlpha = c.A;
+                            SetColorFromRgb(c.R, c.G, c.B);
+                            UpdateUI();
+                        };
                         slot.Children.Add(btn);
                     }
                     else
                     {
                         var dashedCircle = new System.Windows.Shapes.Ellipse
                         {
-                            Stroke = new SolidColorBrush(Color.FromRgb(187, 187, 187)),
+                            Stroke = (Brush)Application.Current.FindResource("BorderBrush"),
                             StrokeThickness = 1,
-                            StrokeDashArray = new DoubleCollection { 3, 2 }
+                            StrokeDashArray = new DoubleCollection { 3, 2 },
+                            Opacity = 0.5
                         };
                         slot.Children.Add(dashedCircle);
                     }

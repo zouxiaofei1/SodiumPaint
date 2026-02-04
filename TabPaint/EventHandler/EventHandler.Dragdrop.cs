@@ -273,7 +273,6 @@ namespace TabPaint
         private DispatcherTimer _dragWatchdog;
         private void DragWatchdog_Tick(object sender, EventArgs e)
         {
-            // 如果遮罩本来就是隐藏的，或者窗口关了，停止定时器
             if (!_isDragOverlayVisible || this.WindowState == WindowState.Minimized)
             {
                 _dragWatchdog.Stop();

@@ -104,12 +104,16 @@ namespace TabPaint.Windows
             if (!MicaAcrylicManager.IsWin11())
             {
                 // 获取应用资源中的背景色 (SubWindowStyles.xaml 里应该有 WindowBackgroundBrush)
-                var bgBrush = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
+                var bgBrush = Application.Current.TryFindResource("WindowBackgroundBrush") as Brush
+                              ?? Application.Current.TryFindResource("ControlBackgroundBrush") as Brush;
                 // 设置给 RootBorder，因为 Window Background 必须为 Transparent
                 RootBorder.Background = bgBrush ?? Brushes.White;
             }
+            else
+            {
+                RootBorder.Background = Brushes.Transparent;
+            }
         }
-        // 核心：添加尺寸并生成预览
         private void AddSize(int size)
         {
             if (SizeItems.Any(x => x.Size == size)) return;
@@ -147,7 +151,7 @@ namespace TabPaint.Windows
             return renderBitmap;
         }
 
-      
+
 
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {

@@ -79,7 +79,7 @@
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                     <Path Data="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z" Style="{StaticResource IconPathStyle}"/>
-                                    <TextBlock Text="{DynamicResource L_Watermark_Type}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock  Foreground="{DynamicResource TextSecondaryBrush}" Text="{DynamicResource L_Watermark_Type}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <RadioButton Content="{DynamicResource L_Watermark_TypeText}" IsChecked="True" x:Name="RadioText" GroupName="WMType" Checked="Mode_Checked" Margin="0,0,20,0" Style="{StaticResource ThemeRadioButtonStyle}"/>
@@ -96,7 +96,7 @@
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                     <Path Data="M2.5,4v3h5v12h3V7h5V4H2.5z M21.5,9h-9v3h3v7h3v-7h3V9z" Style="{StaticResource IconPathStyle}"/>
-                                    <TextBlock Text="{DynamicResource L_Watermark_Content}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock  Foreground="{DynamicResource TextSecondaryBrush}" Text="{DynamicResource L_Watermark_Content}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <TextBox x:Name="TxtContent" Text="TabPaint" Height="32" Padding="8,4" TextChanged="Input_TextChanged" Margin="0,0,0,12" Style="{StaticResource ModernTextBoxStyle}" Tag="水印文字"/>
@@ -181,7 +181,7 @@
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                     <Path Data="M4,10.5c-.83,0-1.5,.67-1.5,1.5s.67,1.5,1.5,1.5,1.5-.67,1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83,0-1.5,.67-1.5,1.5s.67,1.5,1.5,1.5,1.5-.67,1.5-1.5-.67-1.5-1.5-1.5zm0,12c-.83,0-1.5,.67-1.5,1.5s.67,1.5,1.5,1.5,1.5-.67,1.5-1.5-.67-1.5-1.5-1.5zm4-12h14v3H8V4.5zm0,12h14v3H8v-3zm0-6h14v3H8v-3z" Style="{StaticResource IconPathStyle}"/>
-                                    <TextBlock Text="{DynamicResource L_Menu_QA_Settings}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock  Foreground="{DynamicResource TextSecondaryBrush}" Text="{DynamicResource L_Menu_QA_Settings}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <Grid Margin="0,0,0,4">

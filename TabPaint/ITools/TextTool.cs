@@ -532,8 +532,6 @@ namespace TabPaint
                     _richTextBox = CreateRichTextBox(ctx, _startPos.X, _startPos.Y);
                     _richTextBox.Width = AppConsts.DefaultTextBoxWidth;
                     _richTextBox.MinHeight = AppConsts.MinTextBoxHeight;
-
-                    // 重要：将事件绑定到 RichTextBox
                     SetupRichTextBoxEvents(ctx, _richTextBox);
 
                     ctx.EditorOverlay.Visibility = Visibility.Visible;
@@ -565,8 +563,6 @@ namespace TabPaint
                 rtb.TextChanged += (s, e) => {  AutoFitContent(rtb);};
                
             }
-
-            // 6. 核心：重写 CommitText (渲染位图)
             public void CommitText(ToolContext ctx)
             {
                 if (_richTextBox == null) return;

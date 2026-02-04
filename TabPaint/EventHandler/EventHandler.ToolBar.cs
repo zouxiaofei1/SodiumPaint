@@ -427,7 +427,6 @@ namespace TabPaint
                 {
                     Data = TryFindResource("Wand_Image") as Geometry,
                     Fill = (System.Windows.Media.Brush)FindResource("IconFillBrush"),
-                    // --- 核心修复 ---
                     Stretch = System.Windows.Media.Stretch.Uniform,
                     Width = 16,
                     Height = 16

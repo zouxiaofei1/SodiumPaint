@@ -263,9 +263,6 @@ public class ShapeTool : ToolBase
         }
         base.OnKeyDown(ctx, e);
     }
-
-
-    // 3. 核心绘图逻辑：生成 Bitmap
     private BitmapSource RenderShapeToBitmapClipped(Point globalStart, Point globalEnd, Rect validBounds, Color color, double thickness, double dpiX, double dpiY)
     {
         int pixelWidth = (int)Math.Ceiling(validBounds.Width);

@@ -1209,9 +1209,7 @@
                         Padding="{TemplateBinding Padding}"
                         SnapsToDevicePixels="true"
                         CornerRadius="4">
-                        <!-- 这里的圆角是 Fluent 风格的关键 -->
                         <Grid>
-                            <!-- 左侧选中指示器 (Pill)，Win11 风格特征 -->
                             <Rectangle x:Name="Pill"
                                    HorizontalAlignment="Left"
                                    Width="3"

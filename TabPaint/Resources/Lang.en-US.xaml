@@ -18,7 +18,7 @@
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">Automatically scan and load other images in the same directory</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Title">Start in view mode</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">Hide toolbars on startup (useful as a default image viewer)</sys:String>
-
+    <sys:String x:Key="L_ImgBar_ToggleView" xmlns:sys="clr-namespace:System;assembly=mscorlib">Expand / Fold</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">Mouse wheel</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">Responds to mouse wheel scrolling</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">Auto</sys:String>

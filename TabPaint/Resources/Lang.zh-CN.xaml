@@ -192,6 +192,7 @@
     <sys:String x:Key="L_Menu_Effect_Resize" xmlns:sys="clr-namespace:System;assembly=mscorlib">调整大小</sys:String>
 
     <!-- Menu bar quick actions tooltips -->
+    <sys:String x:Key="L_ImgBar_ToggleView" xmlns:sys="clr-namespace:System;assembly=mscorlib">展开/收起</sys:String>
     <sys:String x:Key="L_Menu_QA_Save" xmlns:sys="clr-namespace:System;assembly=mscorlib">保存</sys:String>
     <sys:String x:Key="L_Menu_QA_Undo" xmlns:sys="clr-namespace:System;assembly=mscorlib">撤销</sys:String>
     <sys:String x:Key="L_Menu_QA_Redo" xmlns:sys="clr-namespace:System;assembly=mscorlib">重做</sys:String>
@@ -426,6 +427,11 @@
     <sys:String x:Key="L_Toast_ColorCopied_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已复制颜色: {0}</sys:String>
     <sys:String x:Key="L_Toast_ColorPicked_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">已吸取颜色: #{0:X2}{1:X2}{2:X2}</sys:String>
     <sys:String x:Key="L_Toast_RemoveBgFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">抠图失败: {0}</sys:String>
+
+    <sys:String x:Key="L_Toast_Apply_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">应用成功</sys:String>
+    <sys:String x:Key="L_AI_Downloading" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载中...</sys:String>
+    <sys:String x:Key="L_Toast_DownloadCancelled" xmlns:sys="clr-namespace:System;assembly=mscorlib">下载取消</sys:String>
+
     <sys:String x:Key="L_Toast_OCR_VersionError" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 功能仅支持 Windows 10 (1803) 或更高版本。</sys:String>
     <sys:String x:Key="L_Toast_OCR_Success_Format" xmlns:sys="clr-namespace:System;assembly=mscorlib">成功提取 {0} 个字符到剪切板！</sys:String>
     <sys:String x:Key="L_Toast_OCR_InitFailed" xmlns:sys="clr-namespace:System;assembly=mscorlib">OCR 初始化失败，请检查系统设置中是否已安装对应语言的 OCR 数据包。</sys:String>

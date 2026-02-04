@@ -118,7 +118,6 @@ namespace TabPaint
         }
         private static void EnableMica(IntPtr hwnd, Window window)
         {
-            // 关键：将当前窗口背景设为透明，Mica 才能透出来
             window.Background = Brushes.Transparent;
 
             int cornerPref = AppConsts.DwmCornerPreferenceRounded; // 圆角
