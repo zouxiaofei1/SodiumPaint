@@ -7,7 +7,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=presentationframework"
         mc:Ignorable="d"
         Title="{DynamicResource L_AdjustColor_Title}" 
-        Height="420" Width="600" MinWidth="400" MinHeight="300"
+        Height="450" Width="600" MinWidth="400" MinHeight="300"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Background="Transparent">
@@ -20,37 +20,92 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/Resources/Icons/Icons.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Tab Switching Animation -->
+            <Storyboard x:Key="TabFadeIn">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.4" To="1" Duration="0:0:0.150"/>
+                <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(TranslateTransform.Y)" From="10" To="0" Duration="0:0:0.150">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+
+            <!-- Modern TabItem Style -->
             <Style TargetType="TabItem">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
                 <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="Padding" Value="12,6"/>
+                <Setter Property="Margin" Value="0,0,4,0"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TabItem">
-                            <Border Name="Border" Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="Transparent" Margin="0,0,4,0">
-                                <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,2"/>
-                            </Border>
+                            <Grid x:Name="RootGrid" Background="Transparent">
+                                <Border Name="HoverBorder" Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="6" Opacity="0" Margin="2"/>
+                                <Border Name="SelectionIndicator" Background="{DynamicResource AccentBrush}" Height="3" VerticalAlignment="Bottom" Width="16" CornerRadius="1.5" Opacity="0" Margin="0,0,0,0"/>
+                                <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,8" ContentSource="Header">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                    <Setter TargetName="SelectionIndicator" Property="Opacity" Value="1"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsSelected" Value="False"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="HoverBorder" Property="Opacity" Value="0.5"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </MultiTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <!-- Window Entry Animation -->
+            <Storyboard x:Key="WindowOnLoad">
+                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.150">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(ScaleTransform.ScaleX)" From="0.95" To="1" Duration="0:0:0.150">
+                    <DoubleAnimation.EasingFunction>
+                        <BackEase Amplitude="0.3" EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(ScaleTransform.ScaleY)" From="0.95" To="1" Duration="0:0:0.150">
+                    <DoubleAnimation.EasingFunction>
+                        <BackEase Amplitude="0.3" EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+    <Window.RenderTransform>
+        <ScaleTransform CenterX="300" CenterY="210"/>
+    </Window.RenderTransform>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource WindowOnLoad}"/>
+        </EventTrigger>
+    </Window.Triggers>
+
+    <Border Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
         <Grid>
             <!-- 调整行定义：标题栏、中间内容区、底部按钮栏 -->
             <Grid.RowDefinitions>
@@ -73,93 +128,133 @@
             <!-- 2. 中间主要内容区：左右分栏 -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="240"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- 左侧：控件与直方图 -->
-                <Border Grid.Column="0" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource GlassBackgroundLowBrush}">
-                    <Grid>
+                <Border Grid.Column="0" BorderBrush="Transparent" BorderThickness="0" Background="{DynamicResource GlassBackgroundLowBrush}">
+                    <Grid Margin="12,8,8,8">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TabControl x:Name="AdjustTabControl" Grid.Row="0" Background="Transparent" BorderThickness="0" Margin="10,10,10,0">
-                            <!-- Tab 1: 光效 (BCE) -->
-                            <TabItem Header="{DynamicResource L_AdjustBCE_Tab_Light}">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource FluentScrollViewer}" Padding="10,15,10,0">
-                                    <StackPanel Orientation="Vertical">
-                                        <!-- 亮度 -->
-                                        <Grid Margin="0,0,0,2">
-                                            <TextBlock Text="{DynamicResource L_AdjustBCE_Brightness}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="BrightnessBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=BrightnessSlider}"/>
-                                        </Grid>
-                                        <Slider  Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="BrightnessSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
-                                        <!-- 对比度 -->
-                                        <Grid Margin="0,0,0,2">
-                                            <TextBlock Text="{DynamicResource L_AdjustBCE_Contrast}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="ContrastBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ContrastSlider}"/>
-                                        </Grid>
-                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
-                                        <!-- 曝光 -->
-                                        <Grid Margin="0,0,0,2">
-                                            <TextBlock Text="{DynamicResource L_AdjustBCE_Exposure}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="ExposureBox" Text="0.0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ExposureSlider}"/>
-                                        </Grid>
-                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="ExposureSlider" Minimum="-2" Maximum="2" Value="0" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </TabItem>
 
-                            <!-- Tab 2: 色彩 (TTS) -->
-                            <TabItem Header="{DynamicResource L_AdjustTTS_Tab_Color}">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource FluentScrollViewer}" Padding="10,15,10,0">
-                                    <StackPanel Orientation="Vertical">
-                                        <!-- 色温 -->
-                                        <Grid Margin="0,0,0,2">
-                                            <TextBlock Text="{DynamicResource L_AdjustTTS_Temperature}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="TemperatureBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TemperatureSlider}"/>
-                                        </Grid>
-                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
-                                        <!-- 色调 -->
-                                        <Grid Margin="0,0,0,2">
-                                            <TextBlock Text="{DynamicResource L_AdjustTTS_Tint}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="TintBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TintSlider}"/>
-                                        </Grid>
-                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TintSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
-                                        <!-- 饱和度 -->
-                                        <Grid Margin="0,0,0,2">
-                                            <TextBlock Text="{DynamicResource L_AdjustTTS_Saturation}" Style="{StaticResource LabelStyle}"/>
-                                            <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="SaturationBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=SaturationSlider}"/>
-                                        </Grid>
-                                        <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </TabItem>
-                        </TabControl>
-                        <Border Grid.Row="1" Padding="20,5,20,10">
+                        <!-- 调整卡片 -->
+                        <Border Grid.Row="0" Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.1" Direction="270"/>
+                            </Border.Effect>
+                            <Grid Margin="4,4,4,4">
+                                <TabControl x:Name="AdjustTabControl" Background="Transparent" BorderThickness="0" Margin="0" SelectionChanged="AdjustTabControl_SelectionChanged">
+                                    <!-- Tab 1: 光效 (BCE) -->
+                                    <TabItem Header="{DynamicResource L_AdjustBCE_Tab_Light}">
+                                        <ScrollViewer x:Name="BceScrollViewer" VerticalScrollBarVisibility="Auto" Style="{StaticResource FluentScrollViewer}" Padding="10,8,10,0">
+                                            <ScrollViewer.RenderTransform>
+                                                <TranslateTransform Y="0"/>
+                                            </ScrollViewer.RenderTransform>
+                                            <StackPanel Orientation="Vertical">
+                                                <!-- 亮度 -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <TextBlock Text="{DynamicResource L_AdjustBCE_Brightness}" Style="{StaticResource LabelStyle}"/>
+                                                    <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="BrightnessBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=BrightnessSlider}"/>
+                                                </Grid>
+                                                <Slider  Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="BrightnessSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <!-- 对比度 -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <TextBlock Text="{DynamicResource L_AdjustBCE_Contrast}" Style="{StaticResource LabelStyle}"/>
+                                                    <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="ContrastBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ContrastSlider}"/>
+                                                </Grid>
+                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="ContrastSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <!-- 曝光 -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <TextBlock Text="{DynamicResource L_AdjustBCE_Exposure}" Style="{StaticResource LabelStyle}"/>
+                                                    <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="ExposureBox" Text="0.0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=ExposureSlider}"/>
+                                                </Grid>
+                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="ExposureSlider" Minimum="-2" Maximum="2" Value="0" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </TabItem>
+
+                                    <!-- Tab 2: 色彩 (TTS) -->
+                                    <TabItem Header="{DynamicResource L_AdjustTTS_Tab_Color}">
+                                        <ScrollViewer x:Name="TtsScrollViewer" VerticalScrollBarVisibility="Auto" Style="{StaticResource FluentScrollViewer}" Padding="10,8,10,0">
+                                            <ScrollViewer.RenderTransform>
+                                                <TranslateTransform Y="0"/>
+                                            </ScrollViewer.RenderTransform>
+                                            <StackPanel Orientation="Vertical">
+                                                <!-- 色温 -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <TextBlock Text="{DynamicResource L_AdjustTTS_Temperature}" Style="{StaticResource LabelStyle}"/>
+                                                    <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right" x:Name="TemperatureBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TemperatureSlider}"/>
+                                                </Grid>
+                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TemperatureSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <!-- 色调 -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <TextBlock Text="{DynamicResource L_AdjustTTS_Tint}" Style="{StaticResource LabelStyle}"/>
+                                                    <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="TintBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=TintSlider}"/>
+                                                </Grid>
+                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="TintSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                                <!-- 饱和度 -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <TextBlock Text="{DynamicResource L_AdjustTTS_Saturation}" Style="{StaticResource LabelStyle}"/>
+                                                    <TextBox Width="60"  HorizontalContentAlignment="Right" HorizontalAlignment="Right"  x:Name="SaturationBox" Text="0" PreviewTextInput="NumberValidationTextBox" TextChanged="TextBox_TextChanged" Tag="{Binding ElementName=SaturationSlider}"/>
+                                                </Grid>
+                                                <Slider Style="{StaticResource Win11HorizontalSliderStyle}" x:Name="SaturationSlider" Minimum="-100" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged" Thumb.DragStarted="Slider_DragStarted" Thumb.DragCompleted="Slider_DragCompleted" MouseDoubleClick="Slider_MouseDoubleClick" Margin="0,0,0,5"/>
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </TabItem>
+                                </TabControl>
+                            </Grid>
+                        </Border>
+
+                        <!-- 直方图卡片 -->
+                        <Border Grid.Row="1" Margin="0,12,0,4" Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="12,8">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.1" Direction="270"/>
+                            </Border.Effect>
                             <Grid>
-                                <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Opacity="0.5" VerticalAlignment="Bottom"/>
-                                <Grid x:Name="HistogramGrid" VerticalAlignment="Bottom" Height="60" Opacity="0.9">
+                                <Grid x:Name="HistogramGrid" VerticalAlignment="Bottom" Height="60" Margin="0" ClipToBounds="True">
                                     <Grid.OpacityMask>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Offset="0" Color="Transparent"/>
-                                            <GradientStop Offset="0.2" Color="Black"/>
+                                            <GradientStop Offset="0.1" Color="Black"/>
                                         </LinearGradientBrush>
                                     </Grid.OpacityMask>
-                                    <Polyline x:Name="HistoRed" StrokeThickness="1" Fill="#66FF0000" Stroke="#88FF0000" Points="0,60 255,60">
+
+                                    <Polyline x:Name="HistoRed" StrokeThickness="1.2" Stroke="#CCFF4444" Points="0,70 255,70">
+                                        <Polyline.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Offset="0" Color="#66FF4444"/>
+                                                <GradientStop Offset="1" Color="#11FF4444"/>
+                                            </LinearGradientBrush>
+                                        </Polyline.Fill>
                                         <Polyline.Effect>
-                                            <BlurEffect Radius="2" RenderingBias="Performance"/>
+                                            <DropShadowEffect BlurRadius="5" Color="#FF4444" ShadowDepth="0" Opacity="0.4"/>
                                         </Polyline.Effect>
                                     </Polyline>
-                                    <Polyline x:Name="HistoGreen" StrokeThickness="1" Fill="#6600FF00" Stroke="#8800FF00" Points="0,60 255,60">
+
+                                    <Polyline x:Name="HistoGreen" StrokeThickness="1.2" Stroke="#CC44FF44" Points="0,70 255,70">
+                                        <Polyline.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Offset="0" Color="#6644FF44"/>
+                                                <GradientStop Offset="1" Color="#1144FF44"/>
+                                            </LinearGradientBrush>
+                                        </Polyline.Fill>
                                         <Polyline.Effect>
-                                            <BlurEffect Radius="2" RenderingBias="Performance"/>
+                                            <DropShadowEffect BlurRadius="5" Color="#44FF44" ShadowDepth="0" Opacity="0.4"/>
                                         </Polyline.Effect>
                                     </Polyline>
-                                    <Polyline x:Name="HistoBlue" StrokeThickness="1" Fill="#660000FF" Stroke="#880000FF" Points="0,60 255,60">
+
+                                    <Polyline x:Name="HistoBlue" StrokeThickness="1.2" Stroke="#CC4444FF" Points="0,70 255,70">
+                                        <Polyline.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Offset="0" Color="#664444FF"/>
+                                                <GradientStop Offset="1" Color="#114444FF"/>
+                                            </LinearGradientBrush>
+                                        </Polyline.Fill>
                                         <Polyline.Effect>
-                                            <BlurEffect Radius="2" RenderingBias="Performance"/>
+                                            <DropShadowEffect BlurRadius="5" Color="#4444FF" ShadowDepth="0" Opacity="0.4"/>
                                         </Polyline.Effect>
                                     </Polyline>
                                 </Grid>
@@ -170,16 +265,32 @@
 
                 <!-- 右侧：实时预览区域 -->
                 <Border Grid.Column="1" Background="{DynamicResource GlassBackgroundLowBrush}" ClipToBounds="True">
-                    <Grid>
-                        <Border Background="{StaticResource CheckerboardBrush}" Margin="10"/>
-                        <Image x:Name="PreviewImage" 
-                               Stretch="Uniform" 
-                               RenderOptions.BitmapScalingMode="Fant"
-                               Margin="10"/>
-                        <Border HorizontalAlignment="Left" VerticalAlignment="Top" 
-                                Background="#80000000" CornerRadius="4" Padding="6,2" Margin="10,10">
-                            <TextBlock Text="{DynamicResource L_Common_Preview}" 
-                                       Foreground="White" FontSize="12" IsHitTestVisible="False"/>
+                    <Grid Margin="8,8,12,12">
+                        <Border Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.15" Direction="270"/>
+                            </Border.Effect>
+                            <Grid Margin="8">
+                                <Border Background="{StaticResource CheckerboardBrush}" CornerRadius="8"/>
+                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                                    <Image x:Name="PreviewImage" 
+                                           Stretch="Uniform" 
+                                           RenderOptions.BitmapScalingMode="Fant"
+                                           Margin="2">
+                                        <Image.Effect>
+                                            <DropShadowEffect BlurRadius="15" Direction="0" ShadowDepth="0" Opacity="0.3"/>
+                                        </Image.Effect>
+                                    </Image>
+                                </Border>
+                                <Border HorizontalAlignment="Left" VerticalAlignment="Top" 
+                                        Background="#AA000000" CornerRadius="4" Padding="8,4" Margin="8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="6" Height="6" Fill="#4CAF50" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{DynamicResource L_Common_Preview}" 
+                                                   Foreground="White" FontSize="11" IsHitTestVisible="False"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Border>
@@ -187,7 +298,7 @@
 
             <!-- 3. 底部按钮栏：跨两列 -->
             <Border Grid.Row="2" Grid.ColumnSpan="2"
-                    Background="{DynamicResource PanelBackgroundBrush}" 
+                    Background="Transparent" 
                     Padding="15,12" 
                     BorderThickness="0,1,0,0" 
                     BorderBrush="{DynamicResource BorderLightBrush}">

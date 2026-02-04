@@ -38,7 +38,11 @@
     <sys:String x:Key="L_Settings_General_Language_Desc">Change the display language </sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Zh">简体中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
-
+    <sys:String x:Key="L_Ico_Title">Export Icon</sys:String>
+    <sys:String x:Key="L_Ico_AddSize">Add Size</sys:String>
+    <sys:String x:Key="L_Ico_Error_NoSize">Please add at least one icon size.</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">Open Cache Directory</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc">View temporary files and cache in AppData</sys:String>
     <!-- Paint panel -->
     <sys:String x:Key="L_Settings_Paint_Title">Paint</sys:String>
     <sys:String x:Key="L_Settings_Paint_Habits_Header">Editing</sys:String>
@@ -286,6 +290,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Watercolor">Watercolor</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Highlighter">Highlighter</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Mosaic">Mosaic</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Blur">Blur</sys:String>
     <sys:String x:Key="L_ToolBar_Shape">Shape</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Rectangle">Rectangle</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle">Rounded rectangle</sys:String>

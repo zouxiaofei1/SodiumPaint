@@ -1,0 +1,282 @@
+﻿<Window x:Class="TabPaint.Windows.IcoExportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Export ICO" Height="380" Width="500"
+        MinHeight="250" MinWidth="400"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        WindowStyle="None" AllowsTransparency="False" Background="Transparent">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- ================= Fluent UI ScrollBar Style Start ================= -->
+            <SolidColorBrush x:Key="ScrollBarTrackBackground" Color="Transparent"/>
+            <SolidColorBrush x:Key="ScrollBarThumb" Color="#888888"/>
+            <SolidColorBrush x:Key="ScrollBarThumbHover" Color="#666666"/>
+            <SolidColorBrush x:Key="ScrollBarThumbDragging" Color="#444444"/>
+
+            <Style x:Key="FluentScrollBarThumb" TargetType="{x:Type Thumb}">
+                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                <Setter Property="IsTabStop" Value="false"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Thumb}">
+                            <Border x:Name="rectangle"
+                                    Background="{StaticResource ScrollBarThumb}"
+                                    CornerRadius="3"
+                                    Height="{TemplateBinding Height}"
+                                    SnapsToDevicePixels="True"
+                                    Width="{TemplateBinding Width}"/>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="rectangle" Property="Background" Value="{StaticResource ScrollBarThumbHover}"/>
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="true">
+                                    <Setter TargetName="rectangle" Property="Background" Value="{StaticResource ScrollBarThumbDragging}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="FluentScrollBarStyle" TargetType="{x:Type ScrollBar}">
+                <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+                <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
+                <Setter Property="Background" Value="{StaticResource ScrollBarTrackBackground}"/>
+                <Setter Property="Width" Value="6"/>
+                <Setter Property="MinWidth" Value="6"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Grid x:Name="Bg" SnapsToDevicePixels="true">
+                                <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsEnabled}">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.LineUpCommand}" Opacity="0" Focusable="false" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.LineDownCommand}" Opacity="0" Focusable="false"/>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource FluentScrollBarThumb}"/>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto"/>
+                        <Setter Property="MinWidth" Value="0"/>
+                        <Setter Property="Height" Value="6"/>
+                        <Setter Property="MinHeight" Value="6"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                    <Grid x:Name="Bg" SnapsToDevicePixels="true">
+                                        <Track x:Name="PART_Track" IsEnabled="{TemplateBinding IsEnabled}">
+                                            <Track.DecreaseRepeatButton>
+                                                <RepeatButton Command="{x:Static ScrollBar.LineLeftCommand}" Opacity="0" Focusable="false"/>
+                                            </Track.DecreaseRepeatButton>
+                                            <Track.IncreaseRepeatButton>
+                                                <RepeatButton Command="{x:Static ScrollBar.LineRightCommand}" Opacity="0" Focusable="false"/>
+                                            </Track.IncreaseRepeatButton>
+                                            <Track.Thumb>
+                                                <Thumb Style="{StaticResource FluentScrollBarThumb}"/>
+                                            </Track.Thumb>
+                                        </Track>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- 应用到 ScrollViewer 的样式 -->
+            <Style x:Key="FluentScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                            <Grid x:Name="Grid" Background="{TemplateBinding Background}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanContentScroll="{TemplateBinding CanContentScroll}" CanHorizontallyScroll="False" CanVerticallyScroll="False" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Grid.Column="0" Margin="{TemplateBinding Padding}" Grid.Row="0"/>
+                                <ScrollBar x:Name="PART_VerticalScrollBar" AutomationProperties.AutomationId="VerticalScrollBar" Cursor="Arrow" Grid.Column="1" Maximum="{TemplateBinding ScrollableHeight}" Minimum="0" Grid.Row="0" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" ViewportSize="{TemplateBinding ViewportHeight}" Style="{StaticResource FluentScrollBarStyle}"/>
+                                <ScrollBar x:Name="PART_HorizontalScrollBar" AutomationProperties.AutomationId="HorizontalScrollBar" Cursor="Arrow" Grid.Column="0" Maximum="{TemplateBinding ScrollableWidth}" Minimum="0" Orientation="Horizontal" Grid.Row="1" Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" ViewportSize="{TemplateBinding ViewportWidth}" Style="{StaticResource FluentScrollBarStyle}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!-- ================= Fluent UI ScrollBar Style End ================= -->
+
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- 窗口边框与背景 -->
+    <Border x:Name="RootBorder"  Background="Transparent" 
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 1. TitleBar -->
+            <Grid Grid.Row="0" Height="32" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Image Source="pack://application:,,,/Resources/TabPaint.ico" 
+                           Width="20" Height="20" Margin="0,0,8,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="{DynamicResource L_Ico_Title}" 
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center" FontWeight="SemiBold"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" Width="45" Height="32"
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                        Click="OnCancelClick"/>
+            </Grid>
+
+            <!-- 2. 工具栏 -->
+            <Border Background="{DynamicResource GlassBackgroundLowBrush}" Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="12,8,12,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{DynamicResource L_Ico_AddSize}" VerticalAlignment="Center" 
+                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="SizeComboBox" Width="100" Height="28" Style="{DynamicResource FluentComboBoxStyle}" SelectedIndex="0">
+                        <ComboBoxItem Content="512 px"/>
+                        <ComboBoxItem Content="256 px"/>
+                        <ComboBoxItem Content="128 px"/>
+                        <ComboBoxItem Content="64 px"/>
+                        <ComboBoxItem Content="48 px"/>
+                        <ComboBoxItem Content="32 px"/>
+                        <ComboBoxItem Content="24 px"/>
+                        <ComboBoxItem Content="16 px"/>
+                    </ComboBox>
+                    <Button Content="+" Width="28" Height="28" Margin="8,0,0,0" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"
+                            Style="{DynamicResource Win11PrimaryButtonStyle}" Click="OnAddSizeClick"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. 内容区 -->
+            <Grid Grid.Row="2" Margin="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧：尺寸列表 -->
+                <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4"
+                        Background="{DynamicResource GlassBackgroundLowBrush}">
+                    <Grid>
+                        <Rectangle Fill="{DynamicResource CheckerboardDarkBrush}" Opacity="0.1" IsHitTestVisible="False"/>
+
+                        <!-- 修正后的 ListBox -->
+                        <ListBox x:Name="SizeListBox"  
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             SelectionChanged="SizeListBox_SelectionChanged">
+
+                            <!-- 关键修改：通过资源覆盖内部 ScrollViewer 的样式 -->
+                            <ListBox.Resources>
+                                <Style TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource FluentScrollViewerStyle}"/>
+                            </ListBox.Resources>
+
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource NavListBoxItemStyle}">
+                                    <Setter Property="Padding" Value="8"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="18"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Image Source="{Binding Image}" Width="24" Height="24" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding DisplayText}" 
+                                               VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                            Style="{DynamicResource AccentButtonStyle}"  Foreground="{DynamicResource TextPrimaryBrush}"
+                                            Background="{DynamicResource SystemAccentBrush}" BorderThickness="0" 
+                                            Click="OnDeleteSizeClick" Tag="{Binding}" Height="18" FontSize="10"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+
+                <!-- 右侧：大图预览区域 -->
+                <Border Grid.Column="1" Margin="10,0,0,0" 
+                        Background="{DynamicResource GlassBackgroundLowBrush}"
+                        BorderBrush="{DynamicResource BorderLightBrush}" 
+                        BorderThickness="1" CornerRadius="4" ClipToBounds="True">
+
+                    <Grid>
+                        <!-- 动态大小的背景棋盘格 -->
+                        <Border x:Name="ImageBackgroundBorder" 
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Background="{StaticResource CheckerboardBrush}"
+                                Visibility="Hidden">
+                            <Rectangle Fill="{DynamicResource CheckerboardDarkBrush}" Opacity="0.1"/>
+                        </Border>
+
+                        <!-- 预览图 -->
+                        <Image x:Name="LargePreviewImage" 
+                               Stretch="Uniform" 
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               SizeChanged="LargePreviewImage_SizeChanged"/>
+
+                        <TextBlock x:Name="PreviewHintText" Text="{DynamicResource L_Ico_PreviewHint}" 
+                                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Foreground="{DynamicResource TextSecondaryBrush}"
+                                    Visibility="Collapsed" IsHitTestVisible="False"/>
+
+                        <!-- === 新增：左上角“预览”标签 === -->
+                        <Border HorizontalAlignment="Left" VerticalAlignment="Top"
+                                Margin="0,0,0,0"
+                                Background="#99000000" 
+                                CornerRadius="0,0,4,0" IsHitTestVisible="False">
+                            <TextBlock Text="{DynamicResource L_Common_Preview}" 
+                                       Margin="6,2,6,2"
+                                       Foreground="White" 
+                                       FontSize="11" 
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 底部按钮 -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12,1,12,12" >
+                <Button Content="{DynamicResource L_Common_Cancel}" Width="80" Height="32" Margin="0,0,8,0"
+                        Style="{DynamicResource Win11SecondaryButtonStyle}" Click="OnCancelClick"/>
+                <Button Content="{DynamicResource L_Common_OK}" Width="80" Height="32"
+                        Style="{DynamicResource Win11PrimaryButtonStyle}" Click="OnSaveClick"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

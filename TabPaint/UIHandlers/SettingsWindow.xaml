@@ -1010,7 +1010,7 @@
                             <ComboBox Grid.Column="1" 
                                       Style="{StaticResource FluentComboBoxStyle}"
                                       SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
-                                      SelectedValuePath="Tag"
+                                      SelectedValuePath="Tag" 
                                       Height="30" VerticalContentAlignment="Center">
                                 <ComboBoxItem Content="{DynamicResource L_Settings_Advanced_Resampling_Option_Auto}" Tag="Auto"/>
                                 <ComboBoxItem Content="{DynamicResource L_Settings_Advanced_Resampling_Option_Bilinear}" Tag="Bilinear"/>
@@ -1124,6 +1124,23 @@
                         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
                         <TextBlock Text="{DynamicResource L_Settings_Advanced_Maintenance_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Content="{DynamicResource L_Settings_Advanced_OpenCache_Title}" Width="120" Height="32" 
+            HorizontalAlignment="Left" Click="OpenCacheFolder_Click"
+       
+             Style="{StaticResource Win11SecondaryButtonStyle}"
+            BorderThickness="1"/>
+
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Advanced_OpenCache_Desc}" 
+               VerticalAlignment="Center" Margin="15,0,0,0" 
+               Foreground="{DynamicResource TextTertiaryBrush}"/>
+                                </Grid>
+
+                                
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>

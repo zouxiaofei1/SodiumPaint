@@ -128,9 +128,102 @@ public partial class PenTool : ToolBase
             case BrushStyle.Mosaic:
                 DrawMosaicStrokeUnsafe(ctx, px, buffer, stride, w, h);
                 return LineBounds(px, px, (int)ctx.PenThickness + 5);
+            case BrushStyle.GaussianBlur:
+                DrawBlurStrokeUnsafe(ctx, px, buffer, stride, w, h);
+                float op = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                int kRad = 1 + (int)(op * 49);
+                return LineBounds(px, px, (int)ctx.PenThickness + kRad * 2 + 5);
         }
         return null;
     }
+    private unsafe void DrawBlurStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
+    {
+        int size = (int)ctx.PenThickness;
+        int r = size / 2;
+        if (r < 1) r = 1;
+        float opacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        int kernelRadius = 1 + (int)(opacity * 49);
+
+        int x = (int)p.X;
+        int y = (int)p.Y;
+
+        int sourceRectX = x - r - kernelRadius;
+        int sourceRectY = y - r - kernelRadius;
+        int sourceRectW = (r * 2) + (kernelRadius * 2);
+        int sourceRectH = (r * 2) + (kernelRadius * 2);
+
+        // 边界裁剪
+        int roiX = Math.Max(0, sourceRectX);
+        int roiY = Math.Max(0, sourceRectY);
+        int roiR = Math.Min(w, sourceRectX + sourceRectW);
+        int roiB = Math.Min(h, sourceRectY + sourceRectH);
+        int roiW = roiR - roiX;
+        int roiH = roiB - roiY;
+
+        if (roiW <= 0 || roiH <= 0) return;
+        long[,] satB = new long[roiH + 1, roiW + 1];
+        long[,] satG = new long[roiH + 1, roiW + 1];
+        long[,] satR = new long[roiH + 1, roiW + 1];
+        long[,] satA = new long[roiH + 1, roiW + 1];
+
+        // 填充积分图
+        for (int iy = 0; iy < roiH; iy++)
+        {
+            byte* srcRow = basePtr + (roiY + iy) * stride;
+            for (int ix = 0; ix < roiW; ix++)
+            {
+                byte* ptr = srcRow + (roiX + ix) * 4;
+
+                satB[iy + 1, ix + 1] = ptr[0] + satB[iy, ix + 1] + satB[iy + 1, ix] - satB[iy, ix];
+                satG[iy + 1, ix + 1] = ptr[1] + satG[iy, ix + 1] + satG[iy + 1, ix] - satG[iy, ix];
+                satR[iy + 1, ix + 1] = ptr[2] + satR[iy, ix + 1] + satR[iy + 1, ix] - satR[iy, ix];
+                satA[iy + 1, ix + 1] = ptr[3] + satA[iy, ix + 1] + satA[iy + 1, ix] - satA[iy, ix];
+            }
+        }
+        int paintXMin = Math.Max(0, x - r);
+        int paintYMin = Math.Max(0, y - r);
+        int paintXMax = Math.Min(w, x + r);
+        int paintYMax = Math.Min(h, y + r);
+
+        int rSq = r * r;
+
+        for (int py = paintYMin; py < paintYMax; py++)
+        {
+            byte* dstRow = basePtr + py * stride;
+            int dy = py - y;
+            int dySq = dy * dy;
+
+            for (int px = paintXMin; px < paintXMax; px++)
+            {
+                int dx = px - x;
+                if (dx * dx + dySq > rSq) continue;
+
+                int pixelIndex = py * w + px;
+                if (_currentStrokeMask[pixelIndex]) continue;
+                _currentStrokeMask[pixelIndex] = true;
+                int localX = px - roiX;
+                int localY = py - roiY;
+                int boxX1 = Math.Max(0, localX - kernelRadius);
+                int boxY1 = Math.Max(0, localY - kernelRadius);
+                int boxX2 = Math.Min(roiW, localX + kernelRadius + 1);
+                int boxY2 = Math.Min(roiH, localY + kernelRadius + 1);
+
+                int area = (boxX2 - boxX1) * (boxY2 - boxY1);
+                if (area <= 0) continue;
+                long sumB = satB[boxY2, boxX2] - satB[boxY1, boxX2] - satB[boxY2, boxX1] + satB[boxY1, boxX1];
+                long sumG = satG[boxY2, boxX2] - satG[boxY1, boxX2] - satG[boxY2, boxX1] + satG[boxY1, boxX1];
+                long sumR = satR[boxY2, boxX2] - satR[boxY1, boxX2] - satR[boxY2, boxX1] + satR[boxY1, boxX1];
+                long sumA = satA[boxY2, boxX2] - satA[boxY1, boxX2] - satA[boxY2, boxX1] + satA[boxY1, boxX1];
+
+                byte* dstPtr = dstRow + px * 4;
+                dstPtr[0] = (byte)(sumB / area);
+                dstPtr[1] = (byte)(sumG / area);
+                dstPtr[2] = (byte)(sumR / area);
+                dstPtr[3] = (byte)(sumA / area);
+            }
+        }
+    }
+
 
     private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
     {

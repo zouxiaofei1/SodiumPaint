@@ -15,7 +15,7 @@ namespace TabPaint
 {
     public class WatermarkSettings
     {
-      
+
 
         public bool IsText { get; set; }
         public string Text { get; set; }
@@ -256,8 +256,19 @@ namespace TabPaint
         private void Mode_Checked(object sender, RoutedEventArgs e)
         {
             if (!_isInitialized) return;
-            PanelText.Visibility = RadioText.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-            PanelImage.Visibility = RadioImage.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+            bool isText = RadioText.IsChecked == true;
+            PanelText.Visibility = isText ? Visibility.Visible : Visibility.Collapsed;
+            PanelImage.Visibility = !isText ? Visibility.Visible : Visibility.Collapsed;
+
+            // 播放切换动画
+            var sb = this.Resources["FadeInAnimation"] as System.Windows.Media.Animation.Storyboard;
+            if (sb != null)
+            {
+                if (isText) sb.Begin(PanelText);
+                else sb.Begin(PanelImage);
+            }
+
             UpdatePreview();
         }
 
@@ -439,9 +450,9 @@ namespace TabPaint
             {
                 // === 关键修改：应用缩放变换 ===
                 if (renderScale != 1.0) dc.PushTransform(new ScaleTransform(renderScale, renderScale));
-         
-                if (!onlyWatermark)  dc.DrawImage(source, new Rect(0, 0, w, h));
-                
+
+                if (!onlyWatermark) dc.DrawImage(source, new Rect(0, 0, w, h));
+
 
                 if (settings.Opacity > 0)
                 {
@@ -493,8 +504,8 @@ namespace TabPaint
                     }
                     dc.Pop(); // Opacity
                 }
-                if (renderScale != 1.0)dc.Pop();
-                
+                if (renderScale != 1.0) dc.Pop();
+
             }
             return visual;
         }

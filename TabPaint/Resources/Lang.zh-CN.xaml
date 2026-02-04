@@ -37,7 +37,11 @@
     <sys:String x:Key="L_Settings_General_Language_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">切换软件显示语言</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_Zh" xmlns:sys="clr-namespace:System;assembly=mscorlib">简体中文</sys:String>
     <sys:String x:Key="L_Settings_General_Language_Option_En" xmlns:sys="clr-namespace:System;assembly=mscorlib">English</sys:String>
-
+    <sys:String x:Key="L_Ico_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">导出图标</sys:String>
+    <sys:String x:Key="L_Ico_AddSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">添加尺寸</sys:String>
+    <sys:String x:Key="L_Ico_Error_NoSize" xmlns:sys="clr-namespace:System;assembly=mscorlib">请至少添加一个图标尺寸。</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">打开缓存目录</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc" xmlns:sys="clr-namespace:System;assembly=mscorlib">查看位于 AppData 的临时文件和缓存</sys:String>
     <!-- Paint panel -->
     <sys:String x:Key="L_Settings_Paint_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">画图设置</sys:String>
     <sys:String x:Key="L_Settings_Paint_Habits_Header" xmlns:sys="clr-namespace:System;assembly=mscorlib">编辑习惯</sys:String>
@@ -225,6 +229,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Watercolor" xmlns:sys="clr-namespace:System;assembly=mscorlib">水彩画笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Highlighter" xmlns:sys="clr-namespace:System;assembly=mscorlib">荧光笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Mosaic" xmlns:sys="clr-namespace:System;assembly=mscorlib">马赛克</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Blur" xmlns:sys="clr-namespace:System;assembly=mscorlib">模糊</sys:String>
     <sys:String x:Key="L_ToolBar_AIEraser" xmlns:sys="clr-namespace:System;assembly=mscorlib">智能擦除</sys:String>
     <sys:String x:Key="L_ToolBar_Shape" xmlns:sys="clr-namespace:System;assembly=mscorlib">形状</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Rectangle" xmlns:sys="clr-namespace:System;assembly=mscorlib">矩形</sys:String>

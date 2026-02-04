@@ -124,7 +124,7 @@ namespace TabPaint
             }
         }
  
-        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon, Highlighter, Mosaic, Calligraphy, AiEraser }
+        public enum BrushStyle { Round, Square, Brush, Spray, Pencil, Eraser, Watercolor, Crayon, Highlighter, Mosaic, Calligraphy, AiEraser, GaussianBlur }
         public enum UndoActionType
         {
             Draw,         // 普通绘图

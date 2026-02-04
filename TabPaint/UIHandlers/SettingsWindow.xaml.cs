@@ -145,7 +145,30 @@ namespace TabPaint
             await CheckForUpdatesAsync(isManual: false);
             _hasCheckedUpdateThisSession = true;
         }
+        private void OpenCacheFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 定位到 %LOCALAPPDATA%\TabPaint
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string cachePath = Path.Combine(localAppData, "TabPaint");
 
+                // 如果目录不存在，先创建它（防止打开报错）
+                if (!Directory.Exists(cachePath))
+                {
+                    Directory.CreateDirectory(cachePath);
+                }
+
+                // 使用资源管理器打开
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = cachePath,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)  {}
+        }
         private async Task CheckForUpdatesAsync(bool isManual)
         {
             try

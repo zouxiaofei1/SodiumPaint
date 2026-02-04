@@ -36,6 +36,7 @@ namespace TabPaint
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         { // 初始化 UI
+            MicaAcrylicManager.ApplyEffect(this);
             _isUpdating = true;
             WidthTextBox.Text = _originalWidth.ToString();
             HeightTextBox.Text = _originalHeight.ToString();
@@ -130,7 +131,7 @@ namespace TabPaint
             ImageWidth = newWidth;
             double scale = (double)newWidth / _originalWidth;
 
-            if (!fromSlider)  WidthSlider.Value = ScaleToSlider(scale);
+            if (!fromSlider) WidthSlider.Value = ScaleToSlider(scale);
             WidthTextBox.Text = newWidth.ToString();
 
             UpdateInfoText();
@@ -220,8 +221,8 @@ namespace TabPaint
 
             IsCanvasResizeMode = ModeComboBox.SelectedIndex == 1;
 
-            if (IsCanvasResizeMode)   InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
-            else   InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
+            if (IsCanvasResizeMode) InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
+            else InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

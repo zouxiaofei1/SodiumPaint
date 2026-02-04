@@ -159,8 +159,16 @@ public partial class PenTool : ToolBase
             _brushCursor.Stroke = Brushes.Black;
             _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
         }
-        else
-        {
+            else if (ctx.PenStyle == BrushStyle.GaussianBlur)
+            {
+                // 青色半透明，代表水滴/模糊
+                _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(100, 0, 255, 255));
+                _brushCursor.Stroke = Brushes.Cyan;
+                _brushCursor.StrokeThickness = 1.0;
+            }
+
+            else
+            {
             var appSettings = TabPaint.SettingsManager.Instance.Current;
             double globalOpacity = appSettings.PenOpacity;
             Color penColor = ctx.PenColor;

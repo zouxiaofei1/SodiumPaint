@@ -38,7 +38,7 @@ namespace TabPaint
             CreatePreviewBitmaps(fullBitmap);
             PreviewImage.Source = _previewTarget;
 
-            if (initialTabIndex > 0 && initialTabIndex < AdjustTabControl.Items.Count)AdjustTabControl.SelectedIndex = initialTabIndex;
+            if (initialTabIndex > 0 && initialTabIndex < AdjustTabControl.Items.Count) AdjustTabControl.SelectedIndex = initialTabIndex;
 
             _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) }; // 25fps 左右
             _updateTimer.Tick += (s, e) => { _updateTimer.Stop(); UpdatePreview(); };
@@ -64,13 +64,26 @@ namespace TabPaint
             }
         }
 
+        private void AdjustTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source is TabControl)
+            {
+                var sb = FindResource("TabFadeIn") as System.Windows.Media.Animation.Storyboard;
+                if (sb != null)
+                {
+                    if (AdjustTabControl.SelectedIndex == 0) sb.Begin(BceScrollViewer);
+                    else if (AdjustTabControl.SelectedIndex == 1) sb.Begin(TtsScrollViewer);
+                }
+            }
+        }
+
         private void CreatePreviewBitmaps(WriteableBitmap source)
         {
             double maxDim = 1280;
             double scale = 1.0;
 
             if (source.PixelWidth > maxDim || source.PixelHeight > maxDim) scale = Math.Min(maxDim / source.PixelWidth, maxDim / source.PixelHeight);
-     
+
             int w = (int)(source.PixelWidth * scale);
             int h = (int)(source.PixelHeight * scale);
             if (w < 1) w = 1; if (h < 1) h = 1;

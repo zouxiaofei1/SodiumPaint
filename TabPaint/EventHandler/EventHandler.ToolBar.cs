@@ -268,6 +268,7 @@ namespace TabPaint
                 case BrushStyle.Highlighter: resKey = "Highlighter_Image"; isPath = false; break; // Image
                 case BrushStyle.Mosaic: resKey = "Mosaic_Image"; break;
                 case BrushStyle.AiEraser: resKey = "AIEraser_Image"; isPath = true; break;
+                case BrushStyle.GaussianBlur: resKey = "Blur_Image"; isPath = true;  break;
                     // Pencil 和 Eraser 通常在基础工具栏有独立按钮，这里也可以不用处理，或者给个默认图标
             }
 

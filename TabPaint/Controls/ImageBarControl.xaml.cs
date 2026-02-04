@@ -7,13 +7,14 @@
 //图片标签栏控件，负责显示已打开的图片缩略图、标签切换、关闭以及拖拽排序等交互。
 //
 using System.Globalization;
+using System.Runtime.InteropServices; // 用于处理底层消息
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Interop; // 用于 HwndSource
-using System.Runtime.InteropServices; // 用于处理底层消息
+using System.Windows.Media;
 using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
@@ -249,7 +250,86 @@ namespace TabPaint.Controls
         {
             IsPinned = !IsPinned;
         }
+        public static readonly DependencyProperty IsCompactModeProperty =
+         DependencyProperty.Register("IsCompactMode", typeof(bool), typeof(ImageBarControl), new PropertyMetadata(false, OnCompactModeChanged));
+
+        public bool IsCompactMode
+        {
+            get { return (bool)GetValue(IsCompactModeProperty); }
+            set { SetValue(IsCompactModeProperty, value); }
+        }
+
+        // --- 新增：动态高度属性，用于动画绑定 ---
+        public double DesiredHeight
+        {
+            get { return (double)GetValue(DesiredHeightProperty); }
+            set { SetValue(DesiredHeightProperty, value); }
+        }
+
+        public static readonly DependencyProperty DesiredHeightProperty =
+            DependencyProperty.Register("DesiredHeight", typeof(double), typeof(ImageBarControl), new PropertyMetadata(100.0));
 
 
+        private static void OnCompactModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var ctrl = d as ImageBarControl;
+            if (ctrl != null)
+            {
+                // 切换模式时调整容器的预期高度，以便动画正常工作
+                ctrl.DesiredHeight = (bool)e.NewValue ? 45.0 : 100.0;
+
+                // 如果当前正在显示，强制触发布局更新（可选）
+                ctrl.InvalidateVisual();
+            }
+        }
+
+        // --- 新增：切换视图按钮点击 ---
+        private void Internal_OnToggleViewModeClick(object sender, RoutedEventArgs e)
+        {
+            IsCompactMode = !IsCompactMode;
+        }
+
+        // --- 新增：背景双击切换 ---
+
+
+        private void Internal_OnBackgroundMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount != 2) return;
+
+            var dep = e.OriginalSource as DependencyObject;
+            if (dep == null) return;
+
+            // 1) 点在 Tab 上：不切换（你的 FileTabItem 是数据模型，所以用 DataContext 判定）
+            if (HasDataContext<FileTabItem>(dep)) return;
+
+            // 2) 点在交互控件上：不切换（避免双击按钮/滑块误触）
+            if (FindAncestor<ButtonBase>(dep) != null) return;
+            if (FindAncestor<Slider>(dep) != null) return;
+            if (FindAncestor<Thumb>(dep) != null) return;
+            if (FindAncestor<ScrollBar>(dep) != null) return;
+
+            IsCompactMode = !IsCompactMode;
+            e.Handled = true;
+        }
+
+        private static bool HasDataContext<T>(DependencyObject d)
+        {
+            while (d != null)
+            {
+                if (d is FrameworkElement fe && fe.DataContext is T) return true;
+                d = VisualTreeHelper.GetParent(d);
+            }
+            return false;
+        }
+
+        private static T? FindAncestor<T>(DependencyObject d) where T : DependencyObject
+        {
+            while (d != null)
+            {
+                if (d is T t) return t;
+                d = VisualTreeHelper.GetParent(d);
+            }
+            return null;
+        }
     }
 }
