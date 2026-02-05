@@ -47,8 +47,16 @@ namespace TabPaint
 
             this.Loaded += (s, e) =>
             {
-                SetHighResIcon();
+                //SetHighResIcon();
                 CheckUpdateOnLoad(); // <--- 调用自动检查
+                    if (MainContent.Content == null)
+                { 
+                    if (NavListBox.Items.Count > 0)
+                    {
+                        NavListBox.SelectedIndex = 0;
+                        NavigateToPage("General");
+                    }
+                }
             };
 
             this.Unloaded += (s, e) =>
@@ -145,30 +153,7 @@ namespace TabPaint
             await CheckForUpdatesAsync(isManual: false);
             _hasCheckedUpdateThisSession = true;
         }
-        private void OpenCacheFolder_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // 定位到 %LOCALAPPDATA%\TabPaint
-                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                string cachePath = Path.Combine(localAppData, "TabPaint");
-
-                // 如果目录不存在，先创建它（防止打开报错）
-                if (!Directory.Exists(cachePath))
-                {
-                    Directory.CreateDirectory(cachePath);
-                }
-
-                // 使用资源管理器打开
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = cachePath,
-                    UseShellExecute = true,
-                    Verb = "open"
-                });
-            }
-            catch (Exception ex)  {}
-        }
+        
         private async Task CheckForUpdatesAsync(bool isManual)
         {
             try
@@ -357,23 +342,7 @@ namespace TabPaint
                 MicaEnabled = true;
             }
         }
-        private void SetHighResIcon()
-        {
-            try
-            {
-                var iconUri = new Uri("pack://application:,,,/Resources/TabPaint.ico");
-                var decoder = BitmapDecoder.Create(iconUri, BitmapCreateOptions.DelayCreation, BitmapCacheOption.OnLoad);
-                var bestFrame = decoder.Frames.OrderByDescending(f => f.Width).FirstOrDefault();
-                if (bestFrame != null)
-                {
-                    if (AppIcon != null) AppIcon.Source = bestFrame;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Icon load failed: " + ex.Message);
-            }
-        }
+
 
         #region Navigation & Window Logic
 
@@ -393,44 +362,87 @@ namespace TabPaint
         }
 
         private bool _isInternalChange = false;
+        private Dictionary<string, UserControl> _pages = new Dictionary<string, UserControl>();
+
         private void NavListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (GeneralPanel == null) return; // 尚未加载
+            // 1. 【关键修复】防止在 InitializeComponent 过程中控件尚未加载完成时触发
+            if (NavListBox == null || BottomListBox == null) return;
 
             if (_isInternalChange) return;
+
             System.Windows.Controls.ListBox source = sender as System.Windows.Controls.ListBox;
-            if (source.SelectedIndex == -1) return;
+            if (source == null || source.SelectedIndex == -1) return;
 
             _isInternalChange = true;
-            if (source == NavListBox) BottomListBox.SelectedIndex = -1;
-            else NavListBox.SelectedIndex = -1;
 
-            // 隐藏所有面板
-            GeneralPanel.Visibility = Visibility.Collapsed;
-            PaintPanel.Visibility = Visibility.Collapsed;
-            ViewPanel.Visibility = Visibility.Collapsed;
-            ShortcutPanel.Visibility = Visibility.Collapsed;
-            AdvancedPanel.Visibility = Visibility.Collapsed;
-            AboutPanel.Visibility = Visibility.Collapsed;
-
-            // 显示选中面板
-            if (source == NavListBox && NavListBox.SelectedItem is ListBoxItem item)
+            // 处理两个 ListBox 的互斥选中逻辑
+            if (source == NavListBox)
             {
-                string tag = item.Tag?.ToString();
+                BottomListBox.SelectedIndex = -1;
+            }
+            else
+            {
+                NavListBox.SelectedIndex = -1;
+            }
+
+            // 获取选中的 Tag
+            string tag = "";
+            if (source.SelectedItem is ListBoxItem item && item.Tag != null)
+            {
+                tag = item.Tag.ToString();
+            }
+
+            // 核心逻辑：根据 Tag 切换页面
+            NavigateToPage(tag);
+
+            _isInternalChange = false;
+        }
+
+
+        private void NavigateToPage(string tag)
+        {
+            UserControl page = null;
+
+            // 懒加载：如果缓存里没有，就创建新的
+            if (!_pages.ContainsKey(tag))
+            {
                 switch (tag)
                 {
-                    case "General": GeneralPanel.Visibility = Visibility.Visible; break;
-                    case "Paint": PaintPanel.Visibility = Visibility.Visible; break;
-                    case "View": ViewPanel.Visibility = Visibility.Visible; break;
-                    case "Shortcuts": ShortcutPanel.Visibility = Visibility.Visible; break;
-                    case "Advanced": AdvancedPanel.Visibility = Visibility.Visible; break;
+                    // 注意：这里需要你创建对应的 UserControl
+                    case "General": page = new Pages.GeneralPage(); break;
+                    case "Paint": page = new Pages.PaintPage(); break;
+                    case "View": page = new Pages.ViewPage(); break;
+                    case "Shortcuts": page = new Pages.ShortcutsPage(); break;
+
+                    case "Advanced":
+                        page = new Pages.AdvancedPage();
+                        break;
+                    case "About":
+                        page = new Pages.AboutPage();
+                        break;
+
+                    default:
+                        // 默认或者找不到时显示空白或 General
+                        // page = new Pages.GeneralPage(); 
+                        break;
+                }
+
+                if (page != null)
+                {
+                    _pages[tag] = page;
                 }
             }
-            else if (source == BottomListBox)
+            else
             {
-                AboutPanel.Visibility = Visibility.Visible;
+                page = _pages[tag];
             }
-            _isInternalChange = false;
+
+            // 将 SettingsWindow 的 MainContent 设置为对应的 Page
+            if (page != null)
+            {
+                MainContent.Content = page;
+            }
         }
 
         #endregion
@@ -469,125 +481,9 @@ namespace TabPaint
 
         #endregion
 
-        #region Helper Methods (Keep existing logic)
+      
 
-        private void FactoryReset_Click(object sender, RoutedEventArgs e)
-        {
-            var result = FluentMessageBox.Show(
-              LocalizationManager.GetString("L_Settings_Advanced_FactoryReset_Confirm"),
-              LocalizationManager.GetString("L_Settings_Advanced_FactoryReset"),
-              MessageBoxButton.YesNo);
 
-            if (result != MessageBoxResult.Yes) return;
-
-            try
-            {
-                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
-                string currentExe = Process.GetCurrentProcess().MainModule.FileName;
-                string tempBatPath = Path.Combine(Path.GetTempPath(), "tabpaint_reset.bat");
-
-                string batContent = $@"
-                        @echo off
-                        timeout /t 1 /nobreak > NUL
-                        rd /s /q ""{appDataPath}""
-                        start """" ""{currentExe}""
-                        del ""%~f0""
-                        ";
-                File.WriteAllText(tempBatPath, batContent);
-
-                ProcessStartInfo psi = new ProcessStartInfo
-                {
-                    FileName = tempBatPath,
-                    UseShellExecute = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
-                Process.Start(psi);
-                System.Windows.Application.Current.Shutdown();
-            }
-            catch (Exception ex)
-            {
-                FluentMessageBox.Show(
-                   string.Format(LocalizationManager.GetString("L_Msg_ResetFailed"), ex.Message),
-                   LocalizationManager.GetString("L_Common_Error"),
-                   MessageBoxButton.OK);
-            }
-        }
-
-        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.TextBox textBox)
-            {
-                if (double.TryParse(textBox.Text, out double value))
-                {
-                    if (value < 0) value = 0;
-                    if (value > 5000) value = 5000;
-                    textBox.Text = value.ToString("0");
-                    var binding = textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty);
-                    binding?.UpdateSource();
-                }
-                else
-                {
-                    textBox.Text = "0";
-                }
-            }
-        }
-
-        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
-        {
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
-        }
-
-        private void ResetShortcuts_Click(object sender, RoutedEventArgs e)
-        {
-            var result = FluentMessageBox.Show(
-              LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Confirm"),
-              LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Title"),
-              MessageBoxButton.YesNo
-            );
-
-            if (result == MessageBoxResult.Yes)
-            {
-                SettingsManager.Instance.Current.ResetShortcutsToDefault();
-            }
-        }
-
-        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
-        {
-            try
-            {
-                string url = e.Uri.AbsoluteUri;
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-                e.Handled = true;
-            }
-            catch (Exception ex)
-            {
-                FluentMessageBox.Show($"{LocalizationManager.GetString("L_Toast_OpenUrlFailed")}: {ex.Message}",
-                            LocalizationManager.GetString("L_Common_Error"),
-                            MessageBoxButton.OK);
-            }
-        }
-
-        #endregion
-
-        private void OnOpenUrlClick(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag != null)
-            {
-                string url = btn.Tag.ToString();
-                try
-                {
-                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    FluentMessageBox.Show($"{LocalizationManager.GetString("L_Toast_OpenUrlFailed")}: {ex.Message}",
-                                LocalizationManager.GetString("L_Common_Error"),
-                                MessageBoxButton.OK);
-                }
-            }
-        }
     }
     public class GridLengthAnimation : AnimationTimeline
     {

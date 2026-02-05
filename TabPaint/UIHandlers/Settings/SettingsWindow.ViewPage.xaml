@@ -1,0 +1,97 @@
+﻿<UserControl x:Class="TabPaint.Pages.ViewPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TabPaint"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="Transparent">
+
+    <StackPanel Margin="24">
+        <!-- 页面标题 -->
+        <TextBlock Text="{DynamicResource L_Settings_View_Title}" 
+                   FontSize="20" FontWeight="SemiBold" 
+                   Margin="0,0,0,20" 
+                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <!-- 1. 操作习惯 -->
+        <TextBlock Text="{DynamicResource L_Settings_View_Habits_Header}" 
+                   FontWeight="SemiBold" FontSize="16" 
+                   Margin="0,5,0,10" 
+                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_View_MouseWheel_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_View_MouseWheel_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" 
+                           FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <ComboBox Grid.Column="1" 
+                      Style="{DynamicResource FluentComboBoxStyle}"
+                      SelectedValue="{Binding Path=Current.ViewMouseWheelMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      SelectedValuePath="Tag"
+                      Height="30" VerticalContentAlignment="Center">
+                <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Zoom}" Tag="Zoom"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_View_MouseWheel_Switch}" Tag="SwitchImage"/>
+            </ComboBox>
+        </Grid>
+
+        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+
+        <!-- 2. 显示效果 -->
+        <TextBlock Text="{DynamicResource L_Settings_View_Display_Header}" 
+                   FontWeight="SemiBold" FontSize="16" 
+                   Margin="0,5,0,10" 
+                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <!-- 黑暗背景 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_View_DarkBg_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_View_DarkBg_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" 
+                           FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{DynamicResource FluentCheckBoxStyle}" 
+                      IsChecked="{Binding Path=Current.ViewUseDarkCanvasBackground, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- 透明网格 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_View_TransparentGrid_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_View_TransparentGrid_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" 
+                           FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{DynamicResource FluentCheckBoxStyle}" 
+                      IsChecked="{Binding Path=Current.ViewShowTransparentGrid, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
+        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+    </StackPanel>
+</UserControl>

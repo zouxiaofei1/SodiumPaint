@@ -1,0 +1,246 @@
+﻿<UserControl x:Class="TabPaint.Pages.GeneralPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TabPaint"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="400"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
+
+            <!-- 颜色选择块样式 -->
+            <Style TargetType="RadioButton" x:Key="ColorRadioStyle">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Margin" Value="0,0,10,5"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Grid>
+                                <!-- 选中时的外圈 -->
+                                <Border x:Name="SelectionBorder" 
+                                    CornerRadius="16" 
+                                    BorderThickness="2" 
+                                    BorderBrush="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Opacity="0"
+                                    Width="32" Height="32"/>
+                                <!-- 颜色主体 -->
+                                <Border Width="22" Height="22" CornerRadius="11" 
+                                    Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <!-- 选中时的勾 -->
+                                <Path x:Name="CheckMark" Data="M2,6 L5,9 L10,3" Stroke="White" StrokeThickness="2" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="Collapsed"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="SelectionBorder" Property="Opacity" Value="1"/>
+                                    <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="{DynamicResource L_Settings_General_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <TextBlock Text="{DynamicResource L_Settings_General_Startup_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <!-- 自动加载文件夹图片 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_General_AutoLoadFolderImages_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_AutoLoadFolderImages_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                      IsChecked="{Binding Path=Current.AutoLoadFolderImages, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- 以看图模式启动 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_General_StartInViewMode_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_StartInViewMode_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                      IsChecked="{Binding Path=Current.StartInViewMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
+        <Separator Margin="0,10,0,10" Background="{DynamicResource BorderLightBrush}"/>
+
+        <!-- 滚轮行为 (注：保留了原始代码的 ResamplingMode 绑定，虽然看起来可能与 ViewMode 重复，此处按原样迁移) -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_General_MouseWheel_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_MouseWheel_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <ComboBox Grid.Column="1" 
+                      Style="{StaticResource FluentComboBoxStyle}"
+                      SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      SelectedValuePath="Tag"
+                      Height="30" VerticalContentAlignment="Center">
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_MouseWheel_Option_Auto}" Tag="Auto"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_MouseWheel_Option_Up}" Tag="Up"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_MouseWheel_Option_Switch}" Tag="Switch"/>
+            </ComboBox>
+        </Grid>
+
+        <!-- 主题设置 -->
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_General_Theme_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_Theme_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <ComboBox Grid.Column="1" 
+                      Style="{StaticResource FluentComboBoxStyle}"
+                      SelectedValue="{Binding Path=Current.ThemeMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      SelectedValuePath="Tag"
+                      Height="30" VerticalContentAlignment="Center">
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Theme_Option_System}" Tag="System"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Theme_Option_Light}" Tag="Light"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Theme_Option_Dark}" Tag="Dark"/>
+            </ComboBox>
+        </Grid>
+
+        <!-- 强调色设置 -->
+        <Grid Margin="0,15,0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Top">
+                <TextBlock Text="{DynamicResource L_Settings_General_Accent_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_Accent_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <!-- 颜色选择区域 -->
+            <ItemsControl Grid.Column="1">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <!-- 蓝色 #0078D4 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 紫色 #9333EA -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 绿色 #107C10 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 红色 #D13438 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 品红 #E3008C -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 灰色 #505050 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 橙色 #FF8C00 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FF8C00"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FF8C00}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 青色 #00B294 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#00B294"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#00B294}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 靛蓝 #4F46E5 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#4F46E5"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#4F46E5}"
+                             Click="OnColorRadioClick"/>
+
+                <!-- 黄色 #FFB900 -->
+                <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
+                             IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
+                             Click="OnColorRadioClick"/>
+            </ItemsControl>
+        </Grid>
+
+        <!-- 语言设置 -->
+        <Separator Margin="0,15,0,10" Background="{DynamicResource BorderLightBrush}"/>
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_General_Language_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_General_Language_Desc}"
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <ComboBox Grid.Column="1"
+                      Style="{StaticResource FluentComboBoxStyle}"
+                      SelectedValue="{Binding Path=Current.Language, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      SelectedValuePath="Tag"
+                      Height="30" VerticalContentAlignment="Center">
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_Zh}" Tag="ChineseSimplified"/>
+                <ComboBoxItem Content="{DynamicResource L_Settings_General_Language_Option_En}" Tag="English"/>
+            </ComboBox>
+        </Grid>
+
+    </StackPanel>
+</UserControl>

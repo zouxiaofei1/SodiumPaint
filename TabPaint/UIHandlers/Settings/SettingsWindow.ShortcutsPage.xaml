@@ -1,0 +1,337 @@
+﻿<UserControl x:Class="TabPaint.Pages.ShortcutsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TabPaint"
+             xmlns:controls="clr-namespace:TabPaint.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="1500" d:DesignWidth="500"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <!-- 保持原有的 Margin -->
+    <StackPanel Margin="24,24,44,24">
+
+        <!-- 标题 -->
+        <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <StackPanel Margin="0,0,10,10">
+
+            <!-- 第一组：视图与导航 -->
+            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_ViewNav}" FontWeight="Bold" Margin="0,10,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_ToggleMode}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.ToggleMode], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_PrevImage}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.PrevImage], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_NextImage}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.NextImage], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_FullScreen}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.FullScreen], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Minimize}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.ToggleMinimize], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_RotateLeft}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.RotateLeft], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_RotateRight}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.RotateRight], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_VFlip}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.VerticalFlip], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_HFlip}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[View.HorizontalFlip], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 第二组：基础绘图工具 -->
+            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_BasicTools}" FontWeight="Bold" Margin="0,15,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Select}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToSelect], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Pen}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToPen], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Eyedropper}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToPick], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Eraser}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToEraser], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Fill}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToFill], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Text}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToText], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Brush}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToBrush], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_Shape}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.SwitchToShape], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 第三组：高级工具 -->
+            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_AdvancedTools}" FontWeight="Bold" Margin="0,15,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_ClipMonitor}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ClipMonitor], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 1. AI 移除背景 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_RemoveBg}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.RemoveBg], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 2. AI 绿幕抠图 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_ChromaKey}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ChromaKey], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 3. OCR 文字识别 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_OCR}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.OCR], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 4. 屏幕取色器 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_ScreenPicker}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.ScreenPicker], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 5. 复制 HEX 色值 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_CopyHex}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.CopyColorCode], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 6. 智能裁切空白 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_AutoCrop}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.AutoCrop], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 7. 图片加边框 -->
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Tool_AddBorder}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Tool.AddBorder], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 第四组：文件操作 -->
+            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_FileOps}" FontWeight="Bold" Margin="0,15,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_OpenWorkspace}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.OpenWorkspace], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_PasteNewTab}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[File.PasteNewTab], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+
+            <!-- 第五组：图像效果 -->
+            <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Group_Effects}" FontWeight="Bold" Margin="0,15,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_BCE}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Brightness], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_TTS}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Temperature], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_BW}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Grayscale], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_Invert}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Invert], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_AutoLevels}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.AutoLevels], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{DynamicResource L_Settings_Shortcuts_Effect_Resize}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <controls:ShortcutRecorder Grid.Column="1" CurrentItem="{Binding Path=Current.Shortcuts[Effect.Resize], Source={x:Static local:SettingsManager.Instance}}"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- 恢复默认快捷键按钮 -->
+        <Button Content="{DynamicResource L_Settings_ResetShortcuts}" 
+                HorizontalAlignment="Left" 
+                Foreground="{DynamicResource DangerBrush}" 
+                Background="Transparent" 
+                BorderThickness="0"
+                Click="ResetShortcuts_Click"
+                Cursor="Hand"
+                Style="{StaticResource Win11SecondaryButtonStyle}"
+                Margin="0,0,0,5"/>
+    </StackPanel>
+</UserControl>
