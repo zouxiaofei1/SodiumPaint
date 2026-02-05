@@ -19,6 +19,21 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private double GetDynamicImageBarThreshold()
+        {
+            if (MainImageBar == null || !MainImageBar.IsVisible)
+                return AppConsts.DragTitleBarThresholdY;
+            try
+            {
+                Point bottomPoint = MainImageBar.TranslatePoint(new Point(0, MainImageBar.ActualHeight), this);
+                return bottomPoint.Y;
+            }
+            catch
+            {
+                // 如果发生异常（如尚未加载完成），回退到旧常量或安全值
+                return AppConsts.DragImageBarThresholdY;
+            }
+        }
         private void OnGlobalDragOver(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
@@ -28,12 +43,13 @@ namespace TabPaint
                 e.Handled = true;
                 return;
             }
-        
+          //  a.s( GetDynamicImageBarThreshold());
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 Point pos = e.GetPosition(this);
-                if (pos.Y < AppConsts.DragImageBarThresholdY && pos.Y > AppConsts.DragTitleBarThresholdY)
+            
+                if (pos.Y < GetDynamicImageBarThreshold() && pos.Y > AppConsts.DragTitleBarThresholdY)
                 {
                     HideDragOverlay();
                     e.Effects = DragDropEffects.None;
@@ -41,58 +57,61 @@ namespace TabPaint
                     return;
                 }
             }
-   
+
             // 2. 检查是否有文件拖入
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] allFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
-                // 简单的图片过滤
                 var imageFiles = allFiles?.Where(f => IsImageFile(f)).ToArray();
 
                 if (imageFiles != null && imageFiles.Length > 0)
                 {
-                    Point pos = e.GetPosition(this); 
+                    Point pos = e.GetPosition(this);
+
+                    // 获取动态阈值
+                    double imgBarThreshold = GetDynamicImageBarThreshold();
+
                     if (pos.Y <= AppConsts.DragTitleBarThresholdY)
                     {
                         e.Effects = DragDropEffects.Move;
                         ShowDragOverlay(
-              LocalizationManager.GetString("L_Drag_SwitchWorkspace_Title"),
-              LocalizationManager.GetString("L_Drag_SwitchWorkspace_Desc")
-          );
+                            LocalizationManager.GetString("L_Drag_SwitchWorkspace_Title"),
+                            LocalizationManager.GetString("L_Drag_SwitchWorkspace_Desc")
+                        );
                     }
-                    // B. 其他区域 (菜单栏、工具栏、ImageBar、画布)
+                    // B. 其他区域
                     else
                     {
                         e.Effects = DragDropEffects.Copy;
                         if (imageFiles.Length > 1)
                         {
                             ShowDragOverlay(
-                      LocalizationManager.GetString("L_Drag_BatchOpen_Title"),
-                      string.Format(LocalizationManager.GetString("L_Drag_BatchOpen_Desc"), imageFiles.Length)
-                  );
+                                LocalizationManager.GetString("L_Drag_BatchOpen_Title"),
+                                string.Format(LocalizationManager.GetString("L_Drag_BatchOpen_Desc"), imageFiles.Length)
+                            );
                         }
                         else
                         {
-                            if (pos.Y < AppConsts.DragImageBarThresholdY)
+                            // 使用动态高度判断：如果在 ImageBar 范围内 -> 添加到列表
+                            if (pos.Y < imgBarThreshold)
                             {
                                 ShowDragOverlay(
-                                LocalizationManager.GetString("L_Drag_AddToList_Title"),
-                                LocalizationManager.GetString("L_Drag_AddToList_Desc")
-                            );
+                                    LocalizationManager.GetString("L_Drag_AddToList_Title"),
+                                    LocalizationManager.GetString("L_Drag_AddToList_Desc")
+                                );
                             }
-                            else
+                            else // 否则 -> 插入画布
                             {
                                 ShowDragOverlay(
-                             LocalizationManager.GetString("L_Drag_Insert_Title"),
-                             LocalizationManager.GetString("L_Drag_Insert_Desc")
-                         );
+                                    LocalizationManager.GetString("L_Drag_Insert_Title"),
+                                    LocalizationManager.GetString("L_Drag_Insert_Desc")
+                                );
                             }
                         }
                     }
                 }
                 else
                 {
-                    // 拖进来的不是图片
                     e.Effects = DragDropEffects.None;
                     HideDragOverlay();
                 }

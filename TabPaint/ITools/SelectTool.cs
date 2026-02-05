@@ -43,7 +43,7 @@ namespace TabPaint
             private int _clipboardWidth;
             private int _clipboardHeight;
             private ResizeAnchor _currentAnchor = ResizeAnchor.None;
-            private bool _resizing = false;
+            public bool _resizing = false;
             private Point _startMouse;
             private double _startW, _startH, _startX, _startY;
             public int lag = 0;

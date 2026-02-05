@@ -15,44 +15,85 @@
         MouseMove="Window_MouseMove"
         Loaded="ColorPickerWindow_Loaded">
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid>
-        <Image Name="ScreenShotImage" Stretch="Fill" />
+        <!-- 全屏截图层 -->
+        <Image x:Name="ScreenShotImage" Stretch="Fill"  RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
-        <Canvas Name="OverlayCanvas">
-            <Border Name="Magnifier" Width="120" Height="120" 
-                    BorderBrush="{DynamicResource SystemAccentBrush}" 
-                    BorderThickness="2" 
-                   
-                    Visibility="Collapsed">
+        <Canvas x:Name="OverlayCanvas">
+            <!-- 放大镜容器 -->
+            <Grid x:Name="MagnifierContainer" Visibility="Collapsed" Width="160" Height="160" RenderTransformOrigin="0.5,0.5">
+                <Grid.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="MagnifierScale" ScaleX="0.8" ScaleY="0.8" />
+                        <TranslateTransform x:Name="MagnifierTransform" />
+                    </TransformGroup>
+                </Grid.RenderTransform>
 
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
-                </Border.Effect>
+                <!-- 呼吸感阴影 -->
+                <Ellipse Fill="{DynamicResource SystemAccentBrush}" Opacity="0.15">
+                    <Ellipse.Effect>
+                        <BlurEffect Radius="20"/>
+                    </Ellipse.Effect>
+                </Ellipse>
 
-                <Grid ClipToBounds="True">
-                    <Rectangle RenderOptions.BitmapScalingMode="NearestNeighbor">
-                        <Rectangle.Fill>
+                <!-- 外层圆环：显示当前取色 -->
+                <Ellipse x:Name="OuterRing" StrokeThickness="5" Stroke="{DynamicResource SystemAccentBrush}" Fill="{DynamicResource ControlBackgroundBrush}"/>
+
+                <!-- 内部放大镜区域 -->
+                <Grid Margin="8">
+                    <Ellipse x:Name="MagnifierClip" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                        <Ellipse.Fill>
                             <VisualBrush Visual="{Binding ElementName=ScreenShotImage}" 
                                          x:Name="ZoomBrush"
                                          ViewboxUnits="Absolute"/>
-                        </Rectangle.Fill>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Grid Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <Ellipse Stroke="{DynamicResource SystemAccentBrush}" StrokeThickness="1" Opacity="0.3"/>
+                        <Rectangle Width="30" Height="1" Fill="{DynamicResource SystemAccentBrush}" VerticalAlignment="Center" Opacity="0.6"/>
+                        <Rectangle Width="1" Height="30" Fill="{DynamicResource SystemAccentBrush}" HorizontalAlignment="Center" Opacity="0.6"/>
+                    </Grid>
+                    <Rectangle Width="10" Height="10" 
+                               Stroke="{DynamicResource TextInverseBrush}" 
+                               StrokeThickness="1.5" 
+                               HorizontalAlignment="Center" 
+                               VerticalAlignment="Center"
+                               SnapsToDevicePixels="True">
+                        <Rectangle.Effect>
+                            <DropShadowEffect BlurRadius="2" ShadowDepth="0" Opacity="0.5"/>
+                        </Rectangle.Effect>
                     </Rectangle>
-                    <Rectangle Width="12" Height="12" 
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Stroke="{DynamicResource SystemAccentBrush}" 
-                               StrokeThickness="1" 
-                               SnapsToDevicePixels="True"/>
-                    <Border VerticalAlignment="Bottom" 
-                            Background="{DynamicResource TextPrimaryBrush}" 
-                            Opacity="0.75"
-                            Height="24">
-                        <TextBlock Name="ColorText" Text="#FFFFFF" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                   Foreground="{DynamicResource TextInverseBrush}" 
-                                   FontWeight="Bold" FontFamily="Consolas" FontSize="11"/>
-                    </Border>
                 </Grid>
-            </Border>
+
+                <!-- 颜色数值卡片：悬浮在放大镜下方 -->
+                <Border VerticalAlignment="Bottom" Height="50" Margin="0,0,0,-60"
+                        MinWidth="120" HorizontalAlignment="Center"
+                        Style="{DynamicResource SubWindowCardStyle}"
+                        Background="{DynamicResource ControlBackgroundBrush}"
+                        Padding="10,5" CornerRadius="8">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1"/>
+                    </Border.Effect>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="ColorTextHex" Text="#FFFFFF" 
+                                   HorizontalAlignment="Center" 
+                                   Foreground="{DynamicResource TextPrimaryBrush}" 
+                                   FontWeight="Bold" FontFamily="Consolas" FontSize="14"/>
+                        <TextBlock x:Name="ColorTextRgb" Text="RGB: 255, 255, 255" 
+                                   HorizontalAlignment="Center" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                                   FontFamily="Consolas" FontSize="10"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Canvas>
     </Grid>
 </Window>

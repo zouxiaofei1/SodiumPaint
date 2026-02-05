@@ -20,7 +20,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
-
+using TabPaint.Controls;
 
 namespace TabPaint
 {
@@ -899,6 +899,74 @@ namespace TabPaint
             {
                 IsTransferringSelection = false;
                 _transferSelectionData = null;
+            }
+        }
+        private void SelectionToolBar_CopyClick(object sender, RoutedEventArgs e)
+        {
+            if (_router.CurrentTool is SelectTool selectTool)
+            {
+                selectTool.CopySelection(_ctx);
+                ShowToast("L_Main_Ctx_Copy");
+            }
+        }
+
+        private void SelectionToolBar_AiRemoveBgClick(object sender, RoutedEventArgs e)
+        {
+            OnRemoveBackgroundClick(sender, e);
+            var toolbar = this.FindName("SelectionToolBar") as SelectionToolBar;
+            if (toolbar != null) toolbar.Visibility = Visibility.Collapsed;
+        }
+
+        private void SelectionToolBar_OcrClick(object sender, RoutedEventArgs e)
+        {
+            OnOcrClick(sender, e);
+            var toolbar = this.FindName("SelectionToolBar") as SelectionToolBar;
+            if (toolbar != null) toolbar.Visibility = Visibility.Collapsed;
+        }
+
+        public void UpdateSelectionToolBarPosition()
+        {
+            var toolbar = this.FindName("SelectionToolBar") as SelectionToolBar;
+            if (toolbar == null) return;
+
+            var selectTool = _router?.CurrentTool as SelectTool;
+            if (!IsViewMode && selectTool != null && selectTool.HasActiveSelection  )
+            {//&& !selectTool._selecting
+                Int32Rect rect = selectTool._selectionRect;
+                if (rect.Width <= 0 || rect.Height <= 0)
+                {
+                    toolbar.Visibility = Visibility.Collapsed;
+                    return;
+                }
+                Point p1 = _ctx.FromPixel(new Point(rect.X, rect.Y));
+                Point p2 = _ctx.FromPixel(new Point(rect.X + rect.Width, rect.Y + rect.Height));
+                // 获取相对于窗口根容器的坐标
+                Point rootPos = CanvasWrapper.TranslatePoint(p1, (UIElement)this.Content);
+                Point rootPosEnd = CanvasWrapper.TranslatePoint(p2, (UIElement)this.Content);
+                double selTop = rootPos.Y;
+                double selLeft = rootPos.X;
+                double selWidth = rootPosEnd.X - rootPos.X;
+                double toolbarHeight = 45; // 预估高度
+                double toolbarWidth = 140; // 预估宽度
+                double top = selTop - toolbarHeight - 10;
+                double left = selLeft + (selWidth - toolbarWidth) / 2;
+                if (top < 40) // 40 为标题栏高度左右
+                {
+                    top = rootPosEnd.Y + 10; // 如果上方放不下，放下方
+                }
+                if (top + toolbarHeight > this.ActualHeight - 20)
+                {
+                    top = this.ActualHeight - toolbarHeight - 20;
+                }
+                if (left < 10) left = 10;
+                if (left + toolbarWidth > this.ActualWidth - 10) left = this.ActualWidth - toolbarWidth - 10;
+
+                toolbar.Margin = new Thickness(left, top, 0, 0);
+                toolbar.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                toolbar.Visibility = Visibility.Collapsed;
             }
         }
         public void SyncTextToolbarState(RichTextBox rtb)

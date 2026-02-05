@@ -792,7 +792,7 @@ namespace TabPaint
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
 
 
-            UpdateRulerPositions();
+            UpdateRulerPositions(); UpdateSelectionToolBarPosition();
             if (IsViewMode && _startupFinished && !slient) 
             {
                 ShowToast(newScale.ToString("P0"));
@@ -871,7 +871,7 @@ namespace TabPaint
             if (IsViewMode) CheckBirdEyeVisibility();
             if (!IsViewMode) UpdateSelectionScalingMode();
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
-            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx); UpdateSelectionToolBarPosition();
             if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
             // 动画结束清理
             if (isEnding)

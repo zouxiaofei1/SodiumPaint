@@ -546,8 +546,11 @@ namespace TabPaint
         {
             // 1. 基础检查
             if (_surface?.Bitmap == null) return;
-            _router.CleanUpSelectionandShape();
-
+           // _router.CleanUpSelectionandShape();
+            var selectTool = _router.CurrentTool as SelectTool;
+            bool isSelectionMode = selectTool != null && selectTool.HasActiveSelection;
+            if (!isSelectionMode) _router.CleanUpSelectionandShape();
+        
             if (!IsVcRedistInstalled())
             {
                 var result = FluentMessageBox.Show(
@@ -604,15 +607,26 @@ namespace TabPaint
 
                 // 下载完成
                 DownloadProgressPopup.Finish();
-
-                // 3. 执行推理
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
 
-                var resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap);
+                byte[] resultPixels;
+                if (isSelectionMode)
+                {
+                    var cropBmp = selectTool.GetSelectionWriteableBitmap();
+                    if (cropBmp == null) return;
 
-                // 4. 应用结果并支持撤销
-                ApplyAiResult(resultPixels);
+                    int newW = cropBmp.PixelWidth;
+                    int newH = cropBmp.PixelHeight;
+                    resultPixels = await aiService.RunInferenceAsync(modelPath, cropBmp);
+                    selectTool.ReplaceSelectionData(_ctx, resultPixels, newW, newH);
+                }
+                else
+                {
+                    resultPixels = await aiService.RunInferenceAsync(modelPath, _surface.Bitmap);
+
+                    ApplyAiResult(resultPixels);
+                }
                 ShowToast("L_Toast_Apply_Success");
             }
             catch (OperationCanceledException)

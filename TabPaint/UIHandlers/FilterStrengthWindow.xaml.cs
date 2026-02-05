@@ -2,6 +2,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace TabPaint.Windows
 {
@@ -15,6 +17,7 @@ namespace TabPaint.Windows
         public FilterStrengthWindow(string title, int initialValue, int min, int max)
         {
             InitializeComponent();
+            //MicaAcrylicManager.ApplyEffect(this);
 
             // 如果传入了特定标题，覆盖默认标题
             if (!string.IsNullOrEmpty(title))
@@ -29,7 +32,18 @@ namespace TabPaint.Windows
             // 初始化文本框
             UpdateTextBox(initialValue);
         }
-
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            MicaAcrylicManager.ApplyEffect(this);
+            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+            var src = (HwndSource)PresentationSource.FromVisual(this);
+            if (src != null)
+            {
+                src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            }
+        }
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
@@ -78,6 +92,34 @@ namespace TabPaint.Windows
         {
             IsConfirmed = false;
             Close();
+        }
+        private void RootGrid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 如果点击的不是 TextBox，则强制将焦点转移给 Grid
+            if (!ValueTextBox.IsMouseOver)
+            {
+                RootGrid.Focus(); // 这里的 RootGrid 就是你在 XAML 里给 Grid 起的名字
+            }
+        }
+
+        private void BtnMinimize_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void BtnMaximize_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = (Button)sender;
+            if (this.WindowState == WindowState.Maximized)
+            {
+                this.WindowState = WindowState.Normal;
+                btn.Content = "\uE922";
+            }
+            else
+            {
+                this.WindowState = WindowState.Maximized;
+                btn.Content = "\uE923";
+            }
         }
     }
 }

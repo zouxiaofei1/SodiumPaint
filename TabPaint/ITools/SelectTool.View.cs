@@ -36,7 +36,7 @@ namespace TabPaint
                 _selectionAlphaMap = null;  // 添加
                 _selectionGeometry = null;  // 添加
                 _isWandAdjusting = false;   // 添加
-                lag = 0;
+                lag = 0; ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateSelectionToolBarPosition();
             }
 
             public void RefreshOverlay(ToolContext ctx)
@@ -253,7 +253,7 @@ namespace TabPaint
                 if (ctx == null) return;
                 CommitSelection(ctx);
                 Cleanup(ctx);
-                ctx.Undo.Undo();
+                ctx.Undo.Undo(); ((MainWindow)System.Windows.Application.Current.MainWindow).UpdateSelectionToolBarPosition();
             }
             public void CommitSelection(ToolContext ctx, bool shape = false)
             {
@@ -296,9 +296,11 @@ namespace TabPaint
                 lag = 1;
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
-                ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                mw.SetUndoRedoButtonState();
                 ResetPreviewState(ctx);
-                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
+                mw.NotifyCanvasChanged();
+                mw.UpdateSelectionToolBarPosition();
             }
             private void BlendPixels(WriteableBitmap targetBmp, int x, int y, int w, int h, byte[] sourcePixels, int sourceStride)
             {

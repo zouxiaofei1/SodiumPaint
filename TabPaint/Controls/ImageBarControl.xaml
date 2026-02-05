@@ -189,7 +189,7 @@
                         <!-- 将 Path Data 修改为上下三角 -->
                         <Path Data="M4,10 L10,4 L16,10 M4,14 L10,20 L16,14" 
           Stroke="{DynamicResource IconFillBrush}" 
-          StrokeThickness="1.5"
+          StrokeThickness="1.2"
           Stretch="Uniform" 
           Width="14" Height="14"/>
                     </Button>

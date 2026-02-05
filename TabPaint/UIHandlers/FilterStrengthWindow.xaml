@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="{DynamicResource L_Filter_Strength_Title}" 
-        Height="220" Width="400"
+        Height="220" Width="400" MinHeight="190" MinWidth="240"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize" 
+        ResizeMode="CanResize" 
         ShowInTaskbar="False"
         WindowStyle="None"
-        AllowsTransparency="True"
+        AllowsTransparency="False"
         Background="Transparent"
         FontFamily="Segoe UI Variable, Segoe UI, Microsoft YaHei UI">
 
@@ -19,119 +19,51 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <Style x:Key="MinimalSliderStyle" TargetType="Slider">
-                <Setter Property="Focusable" Value="False"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Slider">
-                            <Grid Background="Transparent" VerticalAlignment="Center" Height="20">
-                                <Border Name="Track" Height="4" CornerRadius="2" 
-                                        Background="{DynamicResource SliderTrackBackgroundBrush}" 
-                                        VerticalAlignment="Center"/>
-                                <Decorator Name="PART_SelectionRange"/>
-                                <Track Name="PART_Track">
-                                    <Track.Thumb>
-                                        <Thumb>
-                                            <Thumb.Template>
-                                                <ControlTemplate>
-                                                    <Grid>
-                                                        <Ellipse Width="18" Height="18" 
-                                                                 Fill="{DynamicResource SystemAccentPressedBrush}" 
-                                                                 Stroke="{DynamicResource SliderThumbStaticBrush}" 
-                                                                 StrokeThickness="1"/>
-                                                        <Ellipse x:Name="HoverState" Width="18" Height="18" 
-                                                                 Fill="Transparent" IsHitTestVisible="False"/>
-                                                    </Grid>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="HoverState" Property="Fill" Value="{DynamicResource IconHoverBrush}"/>
-                                                            <Setter TargetName="HoverState" Property="Opacity" Value="0.1"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Thumb.Template>
-                                        </Thumb>
-                                    </Track.Thumb>
-                                </Track>
-                            </Grid>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style TargetType="TextBox">
+
+            <!-- 标题栏按钮样式，对齐 SettingsWindow -->
+            <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="46"/>
                 <Setter Property="Height" Value="32"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Padding" Value="8,0"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
-                            <Border x:Name="border" CornerRadius="4" 
-                                    Background="{TemplateBinding Background}" 
-                                    BorderBrush="{TemplateBinding BorderBrush}" 
-                                    BorderThickness="{TemplateBinding BorderThickness}">
-                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource BorderMediumBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsKeyboardFocused" Value="true">
-                                    <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource SystemAccentBrush}"/>
-                                    <Setter Property="BorderThickness" TargetName="border" Value="2"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="border" CornerRadius="4" Background="{TemplateBinding Background}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource SystemAccentHoverBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource SystemAccentPressedBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
-                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                <Setter Property="Height" Value="32"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="border" CornerRadius="4" 
-                                    Background="{TemplateBinding Background}" 
-                                    BorderBrush="{TemplateBinding BorderBrush}" 
-                                    BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border x:Name="Border" Background="{TemplateBinding Background}">
+                                <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource ButtonHoverBrush}"/>
+                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource ButtonPressedBrush}"/>
+                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource SubtlePressedBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Border" Background="{TemplateBinding Background}">
+                                <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Border" Property="Background" Value="#C42B1C"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Border" Property="Background" Value="#A82417"/>
+                                    <Setter Property="Foreground" Value="#E6E6E6"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -142,89 +74,106 @@
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="40" ResizeBorderThickness="5" GlassFrameThickness="-1" CornerRadius="8"/>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="6" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
-    <Border Background="{DynamicResource WindowBackgroundBrush}" 
-            CornerRadius="8" 
-            BorderBrush="{DynamicResource BorderMediumBrush}" 
-            BorderThickness="1">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="40"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Border Grid.Row="0" 
-                    Background="{DynamicResource ChromeLowBrush}" 
-                    CornerRadius="7,7,0,0" 
-                    BorderBrush="{DynamicResource BorderLightBrush}" 
-                    BorderThickness="0,0,0,1" 
-                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <Grid Margin="10,4,14,4">
-                    <Image HorizontalAlignment="Left" 
-                           Source="pack://application:,,,/Resources/TabPaint.ico" 
-                           Width="20" Height="20" 
-                           Margin="4,0,12,0"
-                           VerticalAlignment="Center"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                    <TextBlock x:Name="TitleTextBlock" 
-                               Padding="32,0,0,0" 
-                               Text="{DynamicResource L_Filter_Strength_Title}" 
-                               FontSize="14" 
-                               FontWeight="SemiBold" 
-                               Foreground="{DynamicResource TextPrimaryBrush}" 
-                               VerticalAlignment="Center"/>
+    <Grid x:Name="RootGrid" 
+      Background="Transparent" 
+      MouseDown="RootGrid_MouseDown" 
+      Focusable="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-                    <Button HorizontalAlignment="Right" Content="✕" Width="32" Height="32"
-                            Style="{StaticResource SecondaryButtonStyle}" 
-                            Background="Transparent" 
-                            BorderThickness="0" 
-                            Foreground="{DynamicResource TextTertiaryBrush}"
-                            Click="CancelButton_Click"/>
-                </Grid>
-            </Border>
-            <Grid Grid.Row="1" Margin="24">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="20"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="{DynamicResource L_Dialog_Strength}" 
-                               VerticalAlignment="Center" 
-                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+        <!-- 标题栏 -->
+        <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                    <TextBox x:Name="ValueTextBox" Grid.Column="1" Width="60" 
-                             HorizontalAlignment="Right" 
-                             PreviewTextInput="NumberValidationTextBox"
-                             TextChanged="ValueTextBox_TextChanged"/>
-                </Grid>
-                <Slider x:Name="StrengthSlider" Grid.Row="2" 
-                        Style="{StaticResource MinimalSliderStyle}"
-                        IsSnapToTickEnabled="True" 
-                        TickFrequency="1"
-                        ValueChanged="StrengthSlider_ValueChanged"/>
-            </Grid>
-            <Border Grid.Row="2" 
-                    Background="{DynamicResource ChromeLowBrush}" 
-                    CornerRadius="0,0,7,7" 
-                    Padding="16,12">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{DynamicResource L_Common_OK}" 
-                            Width="80" IsDefault="True" 
-                            Style="{StaticResource PrimaryButtonStyle}" 
-                            Click="OK_Click"/>
-                    <Button Content="{DynamicResource L_Common_Cancel}" 
-                            Width="80" Margin="10,0,0,0" IsCancel="True" 
-                            Style="{StaticResource SecondaryButtonStyle}" 
-                            Click="CancelButton_Click"/>
-                </StackPanel>
-            </Border>
+            <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
+                   Width="18" Height="18" Margin="12,0,8,0" 
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+            <TextBlock x:Name="TitleTextBlock" Grid.Column="1" 
+                       Text="{DynamicResource L_Filter_Strength_Title}" 
+                       VerticalAlignment="Center" 
+                       Foreground="{DynamicResource TextSecondaryBrush}" 
+                       FontSize="12"/>
+
+            <!-- 右侧：控制按钮 -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="&#xE921;" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMinimize_Click"/>
+                <Button x:Name="BtnMaximize" Content="&#xE922;" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMaximize_Click"/>
+                <Button Content="&#xE8BB;" Style="{StaticResource TitleBarCloseButtonStyle}" Click="CancelButton_Click"/>
+            </StackPanel>
         </Grid>
-    </Border>
+
+        <!-- 内容区域 -->
+        <Grid Grid.Row="1" Margin="40,10">
+
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 强度数值显示和输入 -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 调色板/滑块图标 -->
+                        <Path x:Name="HeaderIcon" Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.34 14.85,5.08L14.47,2.42C14.43,2.18 14.22,2 13.97,2H9.97C9.72,2 9.51,2.18 9.47,2.42L9.09,5.08C8.47,5.34 7.9,5.66 7.38,6.05L4.89,5.05C4.67,4.97 4.4,5.05 4.28,5.27L2.28,8.73C2.16,8.95 2.21,9.22 2.4,9.37L4.51,11C4.47,11.34 4.44,11.67 4.44,12C4.44,12.33 4.47,12.65 4.51,12.97L2.4,14.63C2.21,14.78 2.16,15.05 2.28,15.27L4.28,18.73C4.4,18.95 4.67,19.03 4.89,18.95L7.38,17.95C7.9,18.34 8.47,18.66 9.09,18.92L9.47,21.58C9.51,21.82 9.72,22 9.97,22H13.97C14.22,22 14.43,21.82 14.47,21.58L14.85,18.92C15.47,18.66 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" 
+                              Fill="{DynamicResource SystemAccentBrush}" 
+                              Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0" 
+                              VerticalAlignment="Center"/>
+
+                        <TextBlock Grid.Column="1" Text="{DynamicResource L_Dialog_Strength}" 
+                                   Style="{StaticResource LabelStyle}"
+                                   FontSize="14" FontWeight="SemiBold"/>
+
+                        <TextBox x:Name="ValueTextBox" Grid.Column="2" Width="64" 
+                                 Style="{StaticResource ModernTextBoxStyle}"
+                                 FontSize="14" FontWeight="Bold"
+                                 PreviewTextInput="NumberValidationTextBox"
+                                 TextChanged="ValueTextBox_TextChanged"/>
+                    </Grid>
+
+                    <!-- 滑块交互区域 -->
+                    <Slider x:Name="StrengthSlider" Grid.Row="1"
+                            Style="{StaticResource Win11HorizontalSliderStyle}"
+                            IsSnapToTickEnabled="True" 
+                            TickFrequency="1"
+                            Height="32"
+                            VerticalAlignment="Center"
+                            ValueChanged="StrengthSlider_ValueChanged"/>
+                </Grid>
+     
+        </Grid>
+
+        <!-- 底部按钮 -->
+        <Border Grid.Row="2" 
+                Background="{DynamicResource GlassBackgroundMediumBrush}" 
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                Padding="24,16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{DynamicResource L_Common_OK}" 
+                        Width="84" Height="32" IsDefault="True" 
+                        Style="{StaticResource Win11PrimaryButtonStyle}" 
+                        Click="OK_Click"/>
+                <Button Content="{DynamicResource L_Common_Cancel}" 
+                        Width="84" Height="32" Margin="12,0,0,0" IsCancel="True" 
+                        Style="{StaticResource Win11SecondaryButtonStyle}" 
+                        Click="CancelButton_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
 </Window>

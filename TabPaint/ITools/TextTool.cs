@@ -547,9 +547,6 @@ namespace TabPaint
             private void SetupRichTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
                 rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); rtb.Focus(); };
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                mw.RemoveHandler(Window.PreviewMouseDownEvent, new MouseButtonEventHandler(OnGlobalMouseDown));
-                mw.AddHandler(Window.PreviewMouseDownEvent, new MouseButtonEventHandler(OnGlobalMouseDown), true);
                 rtb.PreviewKeyDown += (s, e) =>
                 {
                     if (e.Key == Key.Delete && rtb.Selection.IsEmpty && new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd).Text.Trim() == "")
@@ -764,7 +761,6 @@ namespace TabPaint
             private void CleanUpUI(ToolContext ctx)
             {
                 MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                mw.HideTextToolbar(); mw.RemoveHandler(Window.PreviewMouseDownEvent, new MouseButtonEventHandler(OnGlobalMouseDown));
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 if (ctx.EditorOverlay.Children.Contains(_richTextBox))
@@ -869,36 +865,7 @@ namespace TabPaint
                 rtb.Focusable = true;
                 rtb.Loaded += (s, e) => rtb.Focus();
             }// [新增] 处理全局点击逻辑
-            private void OnGlobalMouseDown(object sender, MouseButtonEventArgs e)
-            {
-           
-                if (_richTextBox == null) return;
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                var clickedElement = e.OriginalSource as DependencyObject;
-                if (IsVisualAncestor(_richTextBox, clickedElement)) return;
-                if (IsVisualAncestor(mw._ctx.SelectionOverlay, clickedElement)) return;
-                if (IsVisualAncestor(mw.TextToolHolder, clickedElement)) return;
-                if (IsVisualAncestor(mw.ToolPanelGrid, clickedElement)) return;
-                CommitText(mw._ctx);
-            }
 
-            // [新增] 辅助方法：判断 clicked 是否是 ancestor 的子元素
-            private bool IsVisualAncestor(DependencyObject ancestor, DependencyObject clicked)
-            {
-                if (ancestor == null || clicked == null) return false;
-
-                // 快速检查
-                if (ancestor == clicked) return true;
-
-                // 使用 WPF VisualTreeHelper 向上查找
-                DependencyObject parent = clicked;
-                while (parent != null)
-                {
-                    if (parent == ancestor) return true;
-                    parent = VisualTreeHelper.GetParent(parent);
-                }
-                return false;
-            }
 
             public void SpawnTextBox(ToolContext ctx, Point viewPos, string text)
             {
@@ -919,9 +886,6 @@ namespace TabPaint
                 _richTextBox.MaxWidth = AppConsts.MaxTextBoxWidth;
                 _richTextBox.Width = Double.NaN; // 让宽度自适应内容
                 _richTextBox.Height = Double.NaN;
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
-                mw.RemoveHandler(Window.PreviewMouseDownEvent, new MouseButtonEventHandler(OnGlobalMouseDown));
-                mw.AddHandler(Window.PreviewMouseDownEvent, new MouseButtonEventHandler(OnGlobalMouseDown), true);
                 // 显示 UI
                 ctx.EditorOverlay.Visibility = Visibility.Visible;
                 ctx.EditorOverlay.IsHitTestVisible = true;

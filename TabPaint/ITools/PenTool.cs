@@ -65,49 +65,70 @@ public partial class PenTool : ToolBase
     }
     public override void SetCursor(ToolContext ctx)
     {
-        // 1. 隐藏系统光标
-        if (ctx.ViewElement != null)
-        {
-            ctx.ViewElement.Cursor = System.Windows.Input.Cursors.None;
-        }
+        // 1. 初始化 Overlay 容器
         if (ctx.EditorOverlay != null)
         {
             ctx.EditorOverlay.ClipToBounds = false;
         }
+
         if (_brushCursor == null)
         {
+            // ... (原有的 _brushCursor 和几何体初始化代码) ...
             _brushCursor = new System.Windows.Shapes.Path
             {
-                IsHitTestVisible = false, // 穿透点击
-                SnapsToDevicePixels = false, // 动态移动时关闭Snap可能更流畅，视情况而定
-                UseLayoutRounding = false      
+                IsHitTestVisible = false,
+                SnapsToDevicePixels = false,
+                UseLayoutRounding = false
             };
             _cursorTransform = new TranslateTransform();
             _brushCursor.RenderTransform = _cursorTransform;
-
-            // 预先初始化几何体
             _circleGeometry = new EllipseGeometry();
             _squareGeometry = new RectangleGeometry();
-
             Panel.SetZIndex(_brushCursor, AppConsts.PenCursorZIndex);
         }
-        _brushCursor.Visibility = Visibility.Visible;
-        // 3. 添加到图层
+
+        // 2. 将光标添加到图层（如果尚未添加）
         if (!ctx.EditorOverlay.Children.Contains(_brushCursor))
         {
             ctx.EditorOverlay.Children.Add(_brushCursor);
         }
+
+        // 3. 核心：根据当前粗细初次设置系统光标状态
+        // 这里我们手动获取一次鼠标位置并触发更新
+        Point currentPos = System.Windows.Input.Mouse.GetPosition(ctx.ViewElement);
+        UpdateCursorVisual(ctx, currentPos);
     }
+
 
     private void UpdateCursorVisual(ToolContext ctx, Point viewPos)
     {
         if (_brushCursor == null || _cursorTransform == null) return;
-        if (_brushCursor.Visibility != Visibility.Visible)
-        {
-            _brushCursor.Visibility = Visibility.Visible;
-        }
+
         double size = ctx.PenThickness;
-        if (size < 1.0) size = 1.0;
+        const double MinCustomCursorSize = 4.0;
+
+        if (ctx.PenStyle == BrushStyle.Pencil || size < MinCustomCursorSize)
+        {
+            _brushCursor.Visibility = Visibility.Collapsed;
+            if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.Cross)
+            {
+                ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Cross;
+            }
+            return; 
+        }
+        else
+        {
+            if (_brushCursor.Visibility != Visibility.Visible)
+            {
+                _brushCursor.Visibility = Visibility.Visible;
+            }
+
+            if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.None)
+            {
+                ctx.ViewElement.Cursor = System.Windows.Input.Cursors.None;
+            }
+        }
+
         double halfSize = size / 2.0;
 
         _cursorTransform.X = viewPos.X - halfSize;

@@ -585,7 +585,10 @@
 
         <!-- 标题栏按钮样式 -->
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="ToolTipService.InitialShowDelay" Value="10" />
+        <Setter Property="ToolTipService.ShowDuration" Value="20000" />
+        <Setter Property="ToolTipService.BetweenShowDelay" Value="0" />
+        <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="FontSize" Value="14"/>
@@ -1085,237 +1088,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- ========================================================== -->
-    <!-- 2. Fluent 风格 ComboBox -->
-    <!-- ========================================================== -->
-    <ControlTemplate x:Key="FluentComboBoxToggleButton" TargetType="ToggleButton">
-        <Border x:Name="Border" 
-            CornerRadius="6" 
-            BorderBrush="{TemplateBinding BorderBrush}" 
-            BorderThickness="{TemplateBinding BorderThickness}" 
-            Background="{TemplateBinding Background}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="24"/>
-                </Grid.ColumnDefinitions>
-                <!-- 下拉小箭头 -->
-                <Path x:Name="Arrow" Grid.Column="1" 
-                      Fill="{DynamicResource TextSecondaryBrush}"  
-                      Stroke="{DynamicResource TextSecondaryBrush}" 
-                      HorizontalAlignment="Center" VerticalAlignment="Center" 
-                      Data="M0,0 L3.5,3.5 L7,0" StrokeThickness="1"/>
-            </Grid>
-        </Border>
-        <ControlTemplate.Triggers>
-            <!-- 悬停效果 -->
-            <Trigger Property="IsMouseOver" Value="true">
-                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
-                <!-- #F9F9F9 -> ButtonHoverBrush -->
-                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
-                <!-- #BDBDBD -> BorderMediumBrush -->
-            </Trigger>
-            <!-- 展开时的效果 -->
-            <Trigger Property="IsChecked" Value="true">
-                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
-                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
-            </Trigger>
-        </ControlTemplate.Triggers>
-    </ControlTemplate>
-
-    <ControlTemplate x:Key="FluentComboBoxTemplate" TargetType="ComboBox">
-        <Grid>
-            <!-- 背景层 -->
-            <ToggleButton Name="ToggleButton" 
-                      Template="{StaticResource FluentComboBoxToggleButton}" 
-                      Focusable="false" 
-                      BorderBrush="{TemplateBinding BorderBrush}"
-                      BorderThickness="{TemplateBinding BorderThickness}"
-                      Background="{TemplateBinding Background}"
-                      IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" 
-                      ClickMode="Press"/>
-
-            <!-- 内容显示区域 (非编辑状态) -->
-            <ContentPresenter Name="ContentSite" IsHitTestVisible="False" 
-                          Content="{TemplateBinding SelectionBoxItem}"
-                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                          Margin="10,0,24,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
-
-            <!-- 编辑框 -->
-            <TextBox x:Name="PART_EditableTextBox" 
-                 Style="{x:Null}" 
-                 BorderThickness="0" 
-                 Background="Transparent" 
-                 Foreground="{DynamicResource TextPrimaryBrush}"
-                 Padding="0"
-                 Margin="10,0,24,0"
-                 VerticalAlignment="Center" 
-                 VerticalContentAlignment="Center"
-                 Focusable="True" 
-                 HorizontalAlignment="Stretch"
-                 CaretBrush="{DynamicResource TextPrimaryBrush}"/>
-            <!-- Black -> TextPrimaryBrush -->
-
-            <!-- 下拉弹窗 -->
-            <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                    <Border x:Name="DropDownBorder" 
-                            Background="{DynamicResource WindowBackgroundBrush}" 
-                            BorderThickness="1" 
-                            BorderBrush="{DynamicResource BorderBrush}" 
-                            CornerRadius="6" Margin="0,4,0,4">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.1" Direction="270" Color="Black"/>
-                        </Border.Effect>
-                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
-                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
-            </Popup>
-        </Grid>
-        <ControlTemplate.Triggers>
-            <Trigger Property="IsEditable" Value="false">
-                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Collapsed"/>
-                <Setter TargetName="ContentSite" Property="Visibility" Value="Visible"/>
-            </Trigger>
-            <Trigger Property="IsEditable" Value="true">
-                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
-                <Setter TargetName="ContentSite" Property="Visibility" Value="Collapsed"/>
-            </Trigger>
-        </ControlTemplate.Triggers>
-    </ControlTemplate>
-
-    <Style x:Key="FluentComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
-        <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="Padding" Value="8,4"/>
-        <!-- 更宽的内边距，触控/鼠标友好 -->
-        <Setter Property="Margin" Value="4,2,4,2"/>
-        <!-- 项与项之间的间隔 -->
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
-                    <Border x:Name="bd"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        Padding="{TemplateBinding Padding}"
-                        SnapsToDevicePixels="true"
-                        CornerRadius="4">
-                        <Grid>
-                            <Rectangle x:Name="Pill"
-                                   HorizontalAlignment="Left"
-                                   Width="3"
-                                   Height="16"
-                                   Fill="{DynamicResource SystemAccentBrush}"
-                                   RadiusX="1.5" RadiusY="1.5"
-                                   Visibility="Collapsed"
-                                   Margin="-6,0,0,0"/>
-
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <!-- 1. 鼠标悬停 -->
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
-                        </Trigger>
-
-                        <!-- 2. 选中状态 -->
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
-                            <Setter TargetName="Pill" Property="Visibility" Value="Visible"/>
-                            <!-- 显示左侧蓝条 -->
-                        </Trigger>
-
-                        <!-- 3. 选中且鼠标悬停 (颜色稍微加深) -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsSelected" Value="True"/>
-                                <Condition Property="IsMouseOver" Value="True"/>
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemPressedBrush}"/>
-                        </MultiTrigger>
-
-                        <!-- 4. 禁用状态 -->
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-
-    <Style x:Key="FluentComboBoxStyle" TargetType="ComboBox">
-        <Setter Property="Height" Value="32"/>
-        <!-- 引用刚才定义的 Item 样式 -->
-        <Setter Property="ItemContainerStyle" Value="{StaticResource FluentComboBoxItemStyle}"/>
-
-        <Setter Property="Template" Value="{StaticResource FluentComboBoxTemplate}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-        <Setter Property="Margin" Value="0,0,8,0"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-
-    </Style>
-    <Style x:Key="FluentToggleButtonStyle" TargetType="ToggleButton">
-        <Setter Property="Width" Value="32"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource IconFillBrush}"/>
-        <!-- 添加前景颜色 -->
-        <Setter Property="Margin" Value="2,0"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ToggleButton">
-                    <Border x:Name="border" 
-                            Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
-                            BorderThickness="{TemplateBinding BorderThickness}" 
-                            CornerRadius="4">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
-                            <!-- #EAEAEA -> SubtleHoverBrush -->
-                            <Setter Property="Foreground" Value="{DynamicResource IconHoverBrush}"/>
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleSelectedBrush}"/>
-                            <!-- #E2E2E2 -> SubtleSelectedBrush -->
-                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
-                            <!-- 选中时高亮图标 -->
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- ========================================================== -->
-    <!-- 4. 滚动条样式 (重构) -->
-    <!-- ========================================================== -->
-
-    <!-- 滚动条按钮样式 -->
+  
     <Style x:Key="ScrollBarButton" TargetType="{x:Type RepeatButton}">
         <Setter Property="OverridesDefaultStyle" Value="true"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -1366,6 +1139,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
     <Style x:Key="FluentScrollBar" TargetType="{x:Type ScrollBar}">
         <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
         <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
@@ -1486,6 +1260,235 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <ControlTemplate x:Key="FluentComboBoxToggleButton" TargetType="ToggleButton">
+        <Border x:Name="Border" 
+            CornerRadius="6" 
+            BorderBrush="{TemplateBinding BorderBrush}" 
+            BorderThickness="{TemplateBinding BorderThickness}" 
+            Background="{TemplateBinding Background}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="24"/>
+                </Grid.ColumnDefinitions>
+                <!-- 下拉小箭头 -->
+                <Path x:Name="Arrow" Grid.Column="1" 
+                      Fill="{DynamicResource TextSecondaryBrush}"  
+                      Stroke="{DynamicResource TextSecondaryBrush}" 
+                      HorizontalAlignment="Center" VerticalAlignment="Center" 
+                      Data="M0,0 L3.5,3.5 L7,0" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <!-- 悬停效果 -->
+            <Trigger Property="IsMouseOver" Value="true">
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                <!-- #F9F9F9 -> ButtonHoverBrush -->
+                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+                <!-- #BDBDBD -> BorderMediumBrush -->
+            </Trigger>
+            <!-- 展开时的效果 -->
+            <Trigger Property="IsChecked" Value="true">
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
+                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="FluentComboBoxTemplate" TargetType="ComboBox">
+        <Grid>
+            <!-- 背景层 -->
+            <ToggleButton Name="ToggleButton" 
+                      Template="{StaticResource FluentComboBoxToggleButton}" 
+                      Focusable="false" 
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="{TemplateBinding BorderThickness}"
+                      Background="{TemplateBinding Background}"
+                      IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" 
+                      ClickMode="Press"/>
+
+            <!-- 内容显示区域 (非编辑状态) -->
+            <ContentPresenter Name="ContentSite" IsHitTestVisible="False" 
+                          Content="{TemplateBinding SelectionBoxItem}"
+                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                          Margin="10,0,24,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+
+            <!-- 编辑框 -->
+            <TextBox x:Name="PART_EditableTextBox" 
+                 Style="{x:Null}" 
+                 BorderThickness="0" 
+                 Background="Transparent" 
+                 Foreground="{DynamicResource TextPrimaryBrush}"
+                 Padding="0"
+                 Margin="10,0,24,0"
+                 VerticalAlignment="Center" 
+                 VerticalContentAlignment="Center"
+                 Focusable="True" 
+                 HorizontalAlignment="Stretch"
+                 CaretBrush="{DynamicResource TextPrimaryBrush}"/>
+            <!-- Black -> TextPrimaryBrush -->
+
+            <!-- 下拉弹窗 -->
+            <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                    <Border x:Name="DropDownBorder" 
+                            Background="{DynamicResource WindowBackgroundBrush}" 
+                            BorderThickness="1" 
+                            BorderBrush="{DynamicResource BorderBrush}" 
+                            CornerRadius="6" Margin="0,4,0,4">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.1" Direction="270" Color="Black"/>
+                        </Border.Effect>
+                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource  FluentScrollBar}"/>
+                            </ScrollViewer.Resources>
+                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Popup>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsEditable" Value="false">
+                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="ContentSite" Property="Visibility" Value="Visible"/>
+            </Trigger>
+            <Trigger Property="IsEditable" Value="true">
+                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="ContentSite" Property="Visibility" Value="Collapsed"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="FluentComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <!-- 更宽的内边距，触控/鼠标友好 -->
+        <Setter Property="Margin" Value="4,2,4,2"/>
+        <!-- 项与项之间的间隔 -->
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                    <Border x:Name="bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}"
+                        SnapsToDevicePixels="true"
+                        CornerRadius="4">
+                        <Grid>
+                            <Rectangle x:Name="Pill"
+                                   HorizontalAlignment="Left"
+                                   Width="3"
+                                   Height="16"
+                                   Fill="{DynamicResource SystemAccentBrush}"
+                                   RadiusX="1.5" RadiusY="1.5"
+                                   Visibility="Collapsed"
+                                   Margin="-6,0,0,0"/>
+
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 1. 鼠标悬停 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
+                        </Trigger>
+
+                        <!-- 2. 选中状态 -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
+                            <Setter TargetName="Pill" Property="Visibility" Value="Visible"/>
+                            <!-- 显示左侧蓝条 -->
+                        </Trigger>
+
+                        <!-- 3. 选中且鼠标悬停 (颜色稍微加深) -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemPressedBrush}"/>
+                        </MultiTrigger>
+
+                        <!-- 4. 禁用状态 -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style x:Key="FluentComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Height" Value="32"/>
+        <!-- 引用刚才定义的 Item 样式 -->
+        <Setter Property="ItemContainerStyle" Value="{StaticResource FluentComboBoxItemStyle}"/>
+
+        <Setter Property="Template" Value="{StaticResource FluentComboBoxTemplate}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
+    </Style>
+    <Style x:Key="FluentToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="ToolTipService.InitialShowDelay" Value="10" />
+        <Setter Property="ToolTipService.ShowDuration" Value="20000" />
+        <Setter Property="ToolTipService.BetweenShowDelay" Value="0" />
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource IconFillBrush}"/>
+        <!-- 添加前景颜色 -->
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
+                            <!-- #EAEAEA -> SubtleHoverBrush -->
+                            <Setter Property="Foreground" Value="{DynamicResource IconHoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleSelectedBrush}"/>
+                            <!-- #E2E2E2 -> SubtleSelectedBrush -->
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource SystemAccentBrush}"/>
+                            <!-- 选中时高亮图标 -->
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 
 
     <!-- ========================================================== -->

@@ -41,7 +41,7 @@
     <sys:String x:Key="L_Ico_Title">Export Icon</sys:String>
     <sys:String x:Key="L_Ico_AddSize">Add Size</sys:String>
     <sys:String x:Key="L_Ico_Error_NoSize">Please add at least one icon size.</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">Open Cache Directory</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">Cache Directory</sys:String>
     <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc">View temporary files and cache in AppData</sys:String>
     <!-- Paint panel -->
     <sys:String x:Key="L_Settings_Paint_Title">Paint</sys:String>
@@ -67,7 +67,7 @@
     <sys:String x:Key="L_Settings_View_DarkBg_Title">Use dark background</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Desc">Show dark gray background around the image</sys:String>
     <sys:String x:Key="L_Settings_View_TransparentGrid_Title">Show transparency grid</sys:String>
-    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">When enabled, transparent areas show a checkerboard; otherwise white</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">Show a checkerboard on transparent areas when enabled.</sys:String>
 
     <!-- Shortcuts -->
     <sys:String x:Key="L_Settings_Shortcuts_Title">Shortcuts</sys:String>
@@ -126,7 +126,7 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Title">Resampling</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">Used when saving or resizing images</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">Pixelation threshold</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">Above this zoom level, switch from linear interpolation to nearest-neighbor</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">Linear interpolation / nearest-neighbor switch zoom level</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">View mode</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">Paint mode</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Habits_Header">Interaction</sys:String>
@@ -508,7 +508,7 @@
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">Are you sure you want to reset all shortcuts to their default settings? This operation cannot be undone.</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">Confirm Reset</sys:String>
     <sys:String x:Key="L_Settings_Advanced_ICC_Title">Enable ICC Profile Correction</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_ICC_Desc">Use monitor ICC profile for color correction. May slightly increase image loading time.</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Desc">Use monitor ICC profile for color correction.</sys:String>
 
     <!-- Toasts -->
     <sys:String x:Key="L_Toast_Deleted">Deleted (Ctrl+Z to undo)</sys:String>

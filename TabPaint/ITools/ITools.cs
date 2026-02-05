@@ -380,7 +380,21 @@ namespace TabPaint
                 double sy = bmp.PixelHeight / ViewElement.ActualHeight;
                 return new Point(viewPos.X * sx, viewPos.Y * sy);
             }
+            public Point FromPixel(Point pixelPos)
+            {
+                if (!ViewElement.Dispatcher.CheckAccess())
+                {
+                    return (Point)ViewElement.Dispatcher.Invoke(() => FromPixel(pixelPos));
+                }
 
+                var bmp = Surface.Bitmap;
+                if (bmp == null || ViewElement.ActualWidth == 0 || ViewElement.ActualHeight == 0)
+                    return new Point(0, 0);
+
+                double sx = ViewElement.ActualWidth / bmp.PixelWidth;
+                double sy = ViewElement.ActualHeight / bmp.PixelHeight;
+                return new Point(pixelPos.X * sx, pixelPos.Y * sy);
+            }
             public void CapturePointer() { _captureElement?.CaptureMouse(); }
 
             public void ReleasePointerCapture() { _captureElement?.ReleaseMouseCapture(); }
