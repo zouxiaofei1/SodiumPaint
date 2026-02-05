@@ -3,19 +3,20 @@
 //顶部菜单栏控件，包含文件、编辑、效果等菜单项，以及最近打开文件列表的维护。
 //
 //
-//MenuBarControl.xaml.cs
-//顶部菜单栏控件，包含文件、编辑、效果等菜单项，以及最近打开文件列表的维护。
-//
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace TabPaint.Controls
 {
     public partial class MenuBarControl : UserControl
     {
         // ================== 事件定义 (Bubbling) ==================
-
+        private bool _isFileMenuLoaded = false;
+        private bool _isEditMenuLoaded = false;
+        private bool _isEffectMenuLoaded = false;
         // File Menu
         public static readonly RoutedEvent NewClickEvent = EventManager.RegisterRoutedEvent("NewClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent OpenClickEvent = EventManager.RegisterRoutedEvent("OpenClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
@@ -117,20 +118,241 @@ namespace TabPaint.Controls
 
         public event EventHandler<string> RecentFileClick;
         public event EventHandler ClearRecentFilesClick;
+
+        public event RoutedEventHandler NewTabClick;
+
+
+        private MenuItem CreateMenuItem(string headerResKey, string iconResKey, RoutedEventHandler clickHandler, string inputGesture = null)
+        {
+            var item = new MenuItem
+            {
+                // 尝试从资源字典获取字符串，如果失败则直接使用 Key (防止崩溃)
+                Header = TryGetResource(headerResKey) ?? headerResKey,
+                Style = (Style)FindResource("Win11MenuItemStyle")
+            };
+
+            if (!string.IsNullOrEmpty(inputGesture))
+            {
+                item.InputGestureText = inputGesture;
+            }
+
+            if (clickHandler != null)
+            {
+                item.Click += clickHandler;
+            }
+
+            // 创建图标 Path
+            if (!string.IsNullOrEmpty(iconResKey))
+            {
+                var iconGeometry = TryGetResource(iconResKey) as Geometry;
+                if (iconGeometry != null)
+                {
+                    var path = new Path
+                    {
+                        Data = iconGeometry,
+                        Stretch = Stretch.Uniform,
+                        Width = 16,
+                        Height = 16
+                    };
+
+                    // 特殊处理：如果是 Exit 图标，有些样式是 Stroke，有些是 Fill
+                    // 这里统一使用 IconFillBrush 填充，如果你的图标是线条型的，需要根据具体情况调整
+                    path.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+
+                    // 如果某些图标(如Exit/Resize)在XAML里是Stroke模式，可以在这里单独判断
+                    if (iconResKey == "Exit_Image" || iconResKey == "Resize_Image")
+                    {
+                        path.Fill = Brushes.Transparent;
+                        path.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
+                        path.StrokeThickness = 1.5;
+                        path.StrokeLineJoin = PenLineJoin.Round;
+                        path.StrokeEndLineCap = PenLineCap.Round;
+                        path.StrokeStartLineCap = PenLineCap.Round;
+                    }
+
+                    item.Icon = path;
+                }
+            }
+
+            return item;
+        }
+
+        private object TryGetResource(string key)
+        {
+            try { return FindResource(key); } catch { return null; }
+        }
+
+        // --- 1. 文件菜单加载逻辑 ---
         private void OnFileMenuOpened(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
             if (menuItem == null) return;
-            var header = menuItem.Header.ToString();
-            if (header == LocalizationManager.GetString("L_Menu_File"))
+
+            // 仅在第一次打开时加载静态项
+            if (!_isFileMenuLoaded)
             {
-                UpdateRecentFilesMenu();
+                menuItem.Items.Clear(); // 清除占位符
+
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_New", "NewFile_Image", OnNewClick, "Ctrl+N"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Open", "Open_Folder_Image", OnOpenClick, "Ctrl+O"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_OpenFolder", "Open_Folder_Image", OnOpenWorkspaceClick, "Ctrl+Shift+O"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_NewWindow", "New_Window_Image", OnNewWindowClick));
+
+                // 重新创建 RecentFilesMenuItem (因为我们在XAML里删除了它)
+                RecentFilesMenuItem = new MenuItem
+                {
+                    Header = TryGetResource("L_Menu_File_Recent"),
+                    Style = (Style)FindResource("Win11MenuItemStyle")
+                };
+
+                // 图标
+                var resetPath = new Path { Stretch = Stretch.Uniform, Width = 16, Height = 16 };
+                resetPath.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+                resetPath.SetResourceReference(Path.DataProperty, "Reset_Image");
+                RecentFilesMenuItem.Icon = resetPath;
+
+                menuItem.Items.Add(RecentFilesMenuItem);
+
+                menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "Ctrl+S"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_SaveAs", "Save_Button_Image", OnSaveAsClick));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Exit", "Exit_Image", OnExitClick));
+
+                _isFileMenuLoaded = true;
             }
+
+            // 每次打开都要刷新“最近文件”列表 (动态部分)
+            UpdateRecentFilesMenu();
         }
-        public event RoutedEventHandler NewTabClick;
 
+        // --- 2. 编辑菜单加载逻辑 ---
+        private void OnEditMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isEditMenuLoaded) return;
+            var menuItem = sender as MenuItem;
+            if (menuItem == null) return;
 
+            menuItem.Items.Clear();
 
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Copy", "Copy_Image", OnCopyClick, "Ctrl+C"));
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Cut", "Cut_Image", OnCutClick, "Ctrl+X"));
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Paste", "Paste_Image", OnPasteClick, "Ctrl+V"));
+
+            _isEditMenuLoaded = true;
+        }
+
+        // --- 3. 效果菜单加载逻辑 (重头戏) ---
+        private void OnEffectMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isEffectMenuLoaded) return;
+            var menuItem = sender as MenuItem;
+            if (menuItem == null) return;
+
+            menuItem.Items.Clear();
+
+            // 基础调整
+            var bceItem = CreateMenuItem("L_Menu_Effect_BCE", "Brightness_Image", OnBCEClick);
+            // 修正BCE图标样式 (原XAML是Stroke)
+            if (bceItem.Icon is Path p)
+            {
+                p.Fill = Brushes.Transparent;
+                p.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
+                p.StrokeThickness = 1.5;
+            }
+            menuItem.Items.Add(bceItem);
+
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_TTS", "Color_Temperature_Image", OnTTSClick));
+
+            // 自动色阶 (Icon是直接PathData，需要特殊处理或简化)
+            // 简单起见，这里假设你能接受通用处理，或者你可以在Resource里定义那个 PathData
+            // 如果 "AutoLevels_Image" 不在资源里，可以用代码画，或者简化处理。
+            // 这里假设你把那个 M5,5... 的路径放到了资源里叫 "AutoLevels_Path_Data"
+            // 或者直接在这里手写 Geometry：
+            var autoLevelsItem = CreateMenuItem("L_Menu_Effect_AutoLevels", null, OnAutoLevelsClick);
+            var alPath = new Path
+            {
+                Data = Geometry.Parse("M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z"),
+                Stretch = Stretch.Uniform,
+                Width = 16,
+                Height = 16
+            };
+            alPath.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+            autoLevelsItem.Icon = alPath;
+            menuItem.Items.Add(autoLevelsItem);
+
+            menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+            // --- 滤镜子菜单 ---
+            var filterItem = new MenuItem
+            {
+                Header = TryGetResource("L_Menu_Effect_Filter"),
+                Style = (Style)FindResource("Win11MenuItemStyle")
+            };
+            var filterIcon = new Path { Stretch = Stretch.Uniform, Width = 16, Height = 16 };
+            filterIcon.SetResourceReference(Path.DataProperty, "Filter_Image");
+            filterIcon.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+            filterItem.Icon = filterIcon;
+
+            // 填充滤镜子项
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sepia", "Sepia_Image", OnSepiaClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Oil", "OilPaint_Image", OnOilPaintingClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Vignette", "Vignette_Image", OnVignetteClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Glow", "Glow_Image", OnGlowClick));
+
+            filterItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_BW", "Black_And_White_Image", OnBlackWhiteClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Invert", "Invert_Color_Image", OnInvertClick));
+
+            // 锐化 (PathData 也是硬编码的)
+            var sharpenItem = CreateMenuItem("L_Menu_Effect_Sharpen", null, OnSharpenClick);
+            var shPath = new Path
+            {
+                Data = Geometry.Parse("M12,2L1,21H23M12,6L19.53,19H4.47"),
+                Stretch = Stretch.Uniform,
+                Width = 16,
+                Height = 16
+            };
+            shPath.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+            sharpenItem.Icon = shPath;
+            filterItem.Items.Add(sharpenItem);
+
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Brown", "Sepia_Image", OnBrownClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Mosaic", "Mosaic_Image", OnMosaicClick));
+
+            // 高斯模糊 (PathData 硬编码)
+            var blurItem = CreateMenuItem("L_Menu_Effect_GaussianBlur", null, OnGaussianBlurClick);
+            var blurPath = new Path
+            {
+                Data = Geometry.Parse("M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"),
+                Stretch = Stretch.Uniform,
+                Width = 16,
+                Height = 16
+            };
+            blurPath.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+            blurItem.Icon = blurPath;
+            filterItem.Items.Add(blurItem);
+
+            menuItem.Items.Add(filterItem);
+
+            // 画布调整
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick));
+            // 水印 (Stroke样式)
+            var wmItem = CreateMenuItem("L_Menu_Effect_Watermark", "Watermark_Image", OnWatermarkClick);
+            if (wmItem.Icon is Path wp)
+            {
+                wp.Fill = Brushes.Transparent;
+                wp.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
+                wp.StrokeThickness = 0.8;
+            }
+            menuItem.Items.Add(wmItem);
+
+            _isEffectMenuLoaded = true;
+        }
+
+        // ... (其余代码保持不变) ...
+        private MenuItem RecentFilesMenuItem;
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
             NewTabClick?.Invoke(this, e);

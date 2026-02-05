@@ -5,7 +5,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-
+using System.Windows.Shapes;
 namespace TabPaint.Controls
 {
     public partial class ToolBarControl : UserControl
@@ -51,7 +51,11 @@ namespace TabPaint.Controls
         public event RoutedEventHandler ColorButtonClick { add => AddHandler(ColorButtonClickEvent, value); remove => RemoveHandler(ColorButtonClickEvent, value); }
         public static readonly RoutedEvent BrushMainClickEvent = RegisterEvent("BrushMainClick");
         public event RoutedEventHandler BrushMainClick { add => AddHandler(BrushMainClickEvent, value); remove => RemoveHandler(BrushMainClickEvent, value); }
-
+        private bool _isSelectMenuLoaded = false;
+        private bool _isCollapsedToolsLoaded = false;
+        private bool _isBrushMenuLoaded = false;
+        private bool _isShapeMenuLoaded = false;
+        private bool _isRotateMenuLoaded = false;
         // 新增：当点击形状主按钮（左侧）时触发
         public static readonly RoutedEvent ShapeMainClickEvent = RegisterEvent("ShapeMainClick");
         public event RoutedEventHandler ShapeMainClick { add => AddHandler(ShapeMainClickEvent, value); remove => RemoveHandler(ShapeMainClickEvent, value); }
@@ -90,7 +94,183 @@ namespace TabPaint.Controls
                 }
             }
         }
+        private MenuItem CreateMenuItem(string headerKey, object iconSource, RoutedEventHandler clickHandler, string tag = null, bool isPathIcon = false, bool isStrokePath = false)
+        {
+            var item = new MenuItem
+            {
+                Header = TryFindResource(headerKey) ?? headerKey,
+                Style = (Style)FindResource("SubMenuItemStyle"),
+                Tag = tag
+            };
 
+            if (clickHandler != null) item.Click += clickHandler;
+
+            if (iconSource != null)
+            {
+                if (isPathIcon)
+                {
+                    var path = new System.Windows.Shapes.Path
+                    {
+                        Stretch = Stretch.Uniform,
+                        Width = 16,
+                        Height = 16
+                    };
+
+                    // 1. 设置 Geometry 数据
+                    if (iconSource is string keyOrData)
+                    {
+                        // 尝试作为资源 Key 查找
+                        var geoRes = TryFindResource(keyOrData) as Geometry;
+                        if (geoRes != null)
+                        {
+                            path.Data = geoRes;
+                        }
+                        else
+                        {
+                            // 如果找不到资源，则尝试作为 Path Data 字符串解析
+                            try
+                            {
+                                path.Data = Geometry.Parse(keyOrData);
+                            }
+                            catch { /* 忽略解析错误 */ }
+                        }
+                    }
+                    else if (iconSource is Geometry geo)
+                    {
+                        path.Data = geo;
+                    }
+
+                    // 2. 关键修复：设置样式 (Fill vs Stroke)
+                    if (isStrokePath)
+                    {
+                        // 描边模式（用于形状）：内容透明，边框使用图标色
+                        path.Fill = Brushes.Transparent;
+                        path.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
+                        path.StrokeThickness = 1.5;
+                        path.StrokeLineJoin = PenLineJoin.Round;
+                        path.StrokeEndLineCap = PenLineCap.Round;
+                        path.StrokeStartLineCap = PenLineCap.Round;
+                    }
+                    else
+                    {
+                        // 填充模式（用于普通图标）：填充使用图标色
+                        path.SetResourceReference(Shape.FillProperty, "IconFillBrush");
+                    }
+
+                    item.Icon = path;
+                }
+                else
+                {
+                    // 处理 Image 图标
+                    var img = new Image { Width = 16, Height = 16 };
+                    if (iconSource is string key)
+                        img.SetResourceReference(Image.SourceProperty, key);
+
+                    item.Icon = img;
+                }
+            }
+
+            return item;
+        }
+        // --- 1. 选区菜单加载 ---
+        private void OnSelectMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isSelectMenuLoaded) return;
+
+            StackPanelSelect.Children.Add(CreateMenuItem("L_ToolBar_Tool_Select", "Select_Image", OnSelectStyleClick_Forward, "Rectangle", isPathIcon: false));
+            StackPanelSelect.Children.Add(CreateMenuItem("L_ToolBar_Tool_Select_Lasso", "Lasso_Image", OnSelectStyleClick_Forward, "Lasso", isPathIcon: true));
+            StackPanelSelect.Children.Add(CreateMenuItem("L_ToolBar_Tool_Select_MagicWand", "Wand_Image", OnSelectStyleClick_Forward, "MagicWand", isPathIcon: true));
+
+            _isSelectMenuLoaded = true;
+        }
+
+        // --- 2. 折叠工具菜单加载 ---
+        private void OnCollapsedToolsOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isCollapsedToolsLoaded) return;
+
+            CollapsedMenuItems.Children.Add(CreateMenuItem("L_ToolBar_Tool_Select", "Select_Image", OnSelectClick_Forward, "SelectTool"));
+            CollapsedMenuItems.Children.Add(CreateMenuItem("L_ToolBar_Tool_Pen", "Pencil_Image", OnPenClick_Forward, "PenTool"));
+            CollapsedMenuItems.Children.Add(CreateMenuItem("L_ToolBar_Tool_Eyedropper", "Pick_Colour_Image", OnPickColorClick_Forward, "EyedropperTool"));
+            CollapsedMenuItems.Children.Add(CreateMenuItem("L_ToolBar_Tool_Eraser", "Eraser_Image", OnEraserClick_Forward, "EraserTool"));
+            CollapsedMenuItems.Children.Add(CreateMenuItem("L_ToolBar_Tool_Fill", "Fill_Bucket_Image", OnFillClick_Forward, "FillTool"));
+            CollapsedMenuItems.Children.Add(CreateMenuItem("L_ToolBar_Tool_Text", "Text_Image", OnTextClick_Forward, "TextTool"));
+
+            _isCollapsedToolsLoaded = true;
+        }
+
+        // --- 3. 画刷菜单加载 ---
+        private void OnBrushMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isBrushMenuLoaded) return;
+
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Round", "Brush_Normal_Image", OnBrushStyleClick_Forward, "Round", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Square", "Brush_Rect_Image", OnBrushStyleClick_Forward, "Square", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Brush", "Brush_Normal_Image", OnBrushStyleClick_Forward, "Brush", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Calligraphy", "Brush_Image", OnBrushStyleClick_Forward, "Calligraphy", false)); // 这是一个 Image
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Spray", "Paint_Spray_Image", OnBrushStyleClick_Forward, "Spray", true));
+
+            StackPanelBrush.Children.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Crayon", "Crayon_Image", OnBrushStyleClick_Forward, "Crayon", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Watercolor", "Watercolor_Image", OnBrushStyleClick_Forward, "Watercolor", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Highlighter", "Highlighter_Image", OnBrushStyleClick_Forward, "Highlighter", false)); // 这是一个 Image
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Mosaic", "Mosaic_Image", OnBrushStyleClick_Forward, "Mosaic", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Blur", "Blur_Image", OnBrushStyleClick_Forward, "GaussianBlur", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_AIEraser", "AIEraser_Image", OnBrushStyleClick_Forward, "AiEraser", true));
+
+            _isBrushMenuLoaded = true;
+        }
+
+        // --- 4. 形状菜单加载 (包含复杂的 Path Data) ---
+        private void OnShapeMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isShapeMenuLoaded) return;
+
+            // 基础形状 (Icon资源) -> isPathIcon=true, isStrokePath=true
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Rectangle", "Icon_Shape_Rectangle", OnShapeStyleClick_Forward, "Rectangle", true, true));
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_RoundedRectangle", "Icon_Shape_RoundedRect", OnShapeStyleClick_Forward, "RoundedRectangle", true, true));
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Ellipse", "Icon_Shape_Ellipse", OnShapeStyleClick_Forward, "Ellipse", true, true));
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Line", "Icon_Shape_Line", OnShapeStyleClick_Forward, "Line", true, true));
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Arrow", "Icon_Shape_Arrow", OnShapeStyleClick_Forward, "Arrow", true, true));
+
+            StackPanelShape.Children.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+            // 特殊形状 (Path String)
+            // 务必确保这里最后两个参数都是 TRUE
+            string triangleData = "M 8,2 L 15,14 L 1,14 Z";
+            string diamondData = "M 8,1 L 15,8 L 8,15 L 1,8 Z";
+            string pentagonData = "M 8,1 L 15,6 L 12,15 L 4,15 L 1,6 Z";
+            string starData = "M 8,1 L 10,6 L 16,6 L 11,10 L 13,15 L 8,12 L 3,15 L 5,10 L 0,6 L 6,6 Z";
+            string bubbleData = "M 2,2 H 14 A 2,2 0 0 1 16,4 V 11 A 2,2 0 0 1 14,13 H 10 L 10,16 L 7,13 H 2 A 2,2 0 0 1 0,11 V 4 A 2,2 0 0 1 2,2 Z";
+
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Triangle", triangleData, OnShapeStyleClick_Forward, "Triangle", true, true)); // True, True
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Diamond", diamondData, OnShapeStyleClick_Forward, "Diamond", true, true));   // True, True
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Pentagon", pentagonData, OnShapeStyleClick_Forward, "Pentagon", true, true)); // True, True
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Star", starData, OnShapeStyleClick_Forward, "Star", true, true));         // True, True
+            StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Bubble", bubbleData, OnShapeStyleClick_Forward, "Bubble", true, true));     // True, True
+
+            _isShapeMenuLoaded = true;
+        }
+
+
+        // --- 5. 旋转菜单加载 ---
+        private void OnRotateMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (_isRotateMenuLoaded) return;
+
+            StackPanelRotate.Children.Add(CreateMenuItem("L_ToolBar_Rotate_Left", "Rotate_Left_Image", OnRotateLeftClick_Forward, null, true));
+            StackPanelRotate.Children.Add(CreateMenuItem("L_ToolBar_Rotate_Right", "Rotate_Right_Image", OnRotateRightClick_Forward, null, true));
+            StackPanelRotate.Children.Add(CreateMenuItem("L_ToolBar_Rotate_180", "Spin180_Image", OnRotate180Click_Forward, null, false)); // Image
+
+            StackPanelRotate.Children.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+
+            // 翻转图标是 Stroke 风格的 Path
+            StackPanelRotate.Children.Add(CreateMenuItem("L_ToolBar_Flip_Vertical", "Flip_Vertical_Image", OnFlipVerticalClick_Forward, null, true, true));
+            StackPanelRotate.Children.Add(CreateMenuItem("L_ToolBar_Flip_Horizontal", "Flip_Horizontal_Image", OnFlipHorizontalClick_Forward, null, true, true));
+
+            _isRotateMenuLoaded = true;
+        }
         public event RoutedEventHandler SelectMainClick;   // 对应主按钮点击
         public event RoutedEventHandler SelectStyleClick;  // 对应下拉菜单点击
         private void OnSelectMainButtonClick(object sender, RoutedEventArgs e)
