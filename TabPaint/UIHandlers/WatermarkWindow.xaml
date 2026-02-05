@@ -113,7 +113,19 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="{DynamicResource L_Common_Font}" Style="{StaticResource LabelStyle}" Margin="0,0,0,4" FontSize="11" Opacity="0.7"/>
-                                        <ComboBox x:Name="ComboFontFamily" Height="32" SelectionChanged="Param_Changed_Combo" Style="{StaticResource FluentComboBoxStyle}"/>
+                                        <ComboBox x:Name="ComboFontFamily" 
+          Height="32" 
+          SelectionChanged="Param_Changed_Combo" 
+          Style="{StaticResource FluentComboBoxStyle}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding DisplayName}" 
+                       FontFamily="{Binding FontFamily}" 
+                       FontSize="14" 
+                       VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
                                     </StackPanel>
                                 </Grid>
 

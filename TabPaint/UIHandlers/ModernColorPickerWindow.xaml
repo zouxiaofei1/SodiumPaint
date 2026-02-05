@@ -155,14 +155,14 @@
                     <Button HorizontalAlignment="Right" Width="46" Height="32" Style="{StaticResource WindowCloseButtonStyle}" Click="CancelButton_Click" VerticalAlignment="Top" Margin="0,-4,-14,0"/>
                 </Grid>
             </Border>
-            <Grid Grid.Row="1" Background="{DynamicResource GlassBackgroundMediumBrush}" Height="340" Margin="0,0,0,0">
+            <Grid Grid.Row="1" Background="{DynamicResource GlassBackgroundMediumBrush}" Height="350" Margin="0,0,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="280"/>
                     <ColumnDefinition Width="45"/>
                     <ColumnDefinition Width="30"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" x:Name="SpectrumGrid" ClipToBounds="False" Cursor="Cross" Margin="24,10,0,10"
+                <Grid Grid.Column="0" x:Name="SpectrumGrid" Panel.ZIndex="10" ClipToBounds="False" Cursor="Cross" Margin="24,10,0,10"
                       MouseLeftButtonDown="Spectrum_MouseDown" MouseMove="Spectrum_MouseMove" MouseLeftButtonUp="Spectrum_MouseUp">
                     <Border CornerRadius="8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                         <Grid>

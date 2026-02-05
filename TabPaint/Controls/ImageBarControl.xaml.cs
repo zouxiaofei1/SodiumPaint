@@ -2,7 +2,9 @@
 //ImageBarControl.xaml.cs
 //图片标签栏控件，负责显示已打开的图片缩略图、标签切换、关闭以及拖拽排序等交互。
 //
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices; // 用于处理底层消息
 using System.Windows;
 using System.Windows.Controls;
@@ -11,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop; // 用于 HwndSource
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
 
@@ -47,11 +50,15 @@ namespace TabPaint.Controls
             this.Unloaded += ImageBarControl_Unloaded;
 
             _hoverTimer = new DispatcherTimer();
-            _hoverTimer.Interval = TimeSpan.FromSeconds(0.5); // 设置为 0.5 秒
+            _hoverTimer.Interval = TimeSpan.FromSeconds(0.2); // 设置为 0.5 秒
             _hoverTimer.Tick += HoverTimer_Tick;
             _closeTimer = new DispatcherTimer();
             _closeTimer.Interval = TimeSpan.FromMilliseconds(100); // 100ms 缓冲期
             _closeTimer.Tick += CloseTimer_Tick;
+
+            _highResTimer = new DispatcherTimer();
+            _highResTimer.Interval = TimeSpan.FromSeconds(0.3); // 悬浮显示后1秒触发
+            _highResTimer.Tick += HighResTimer_Tick;
         }
         private void Internal_OnTabMouseEnter(object sender, MouseEventArgs e)
         {
@@ -60,21 +67,28 @@ namespace TabPaint.Controls
             var element = sender as FrameworkElement;
             if (element == null) return;
 
+            // 如果切换了Tab，先取消之前的任务和定时器
+            if (_currentHoveredElement != element)
+            {
+                _highResTimer.Stop();
+                _previewCts?.Cancel();
+            }
+
             _currentHoveredElement = element;
 
             _closeTimer.Stop();
             if (LargePreviewPopup.IsOpen)
             {
                 _hoverTimer.Stop();
-                UpdatePreviewPopup();
+                UpdatePreviewPopup(); // 立即更新内容
             }
             else
             {
-                // 只有当完全没开的时候，才开始 0.5s 计时
                 _hoverTimer.Stop();
                 _hoverTimer.Start();
             }
         }
+
 
         // 4. 鼠标离开 Tab
         private void Internal_OnTabMouseLeave(object sender, MouseEventArgs e)
@@ -86,15 +100,15 @@ namespace TabPaint.Controls
         // 3. 关闭定时器触发
         private void CloseTimer_Tick(object sender, EventArgs e)
         {
-            // 先停止计时器
             _closeTimer.Stop();
 
-            // 如果当前没有记录的悬停元素，直接关闭
             if (_currentHoveredElement == null)
             {
-                LargePreviewPopup.IsOpen = false;
+                ClosePopupAndReset();
                 return;
             }
+
+            // ... (保留原有的坐标判断逻辑) ...
             Point mousePos = Mouse.GetPosition(_currentHoveredElement);
             bool isStillOver = mousePos.X >= 0 &&
                                mousePos.X <= _currentHoveredElement.ActualWidth &&
@@ -103,19 +117,21 @@ namespace TabPaint.Controls
 
             if (isStillOver)
             {
-                if (!LargePreviewPopup.IsOpen)
-                {
-                    // 极少数情况下如果被关了，这里可以救回来，但通常不需要
-                    LargePreviewPopup.IsOpen = true;
-                }
+                if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;
                 return;
             }
 
-            // --- 只有当鼠标坐标真的跑出去了，才执行关闭 ---
+            // --- 修改: 关闭时彻底清理 ---
+            ClosePopupAndReset();
+        }
+        private void ClosePopupAndReset()
+        {
             LargePreviewPopup.IsOpen = false;
             _currentHoveredElement = null;
+            _highResTimer.Stop();
+            _previewCts?.Cancel(); // 取消正在进行的后台加载
+            PopupPreviewImage.Source = null; // 释放内存引用
         }
-
         // 5. 定时器触发（0.5s 后）
         private void HoverTimer_Tick(object sender, EventArgs e)
         {
@@ -132,45 +148,169 @@ namespace TabPaint.Controls
             if (_currentHoveredElement == null) return;
 
             dynamic tabData = _currentHoveredElement.DataContext;
-            if (tabData != null && tabData.Thumbnail != null)
+            if (tabData != null)
             {
-                PopupPreviewImage.Source = tabData.Thumbnail;
+                // 1. 先显示已有的缩略图 (模糊/小图)
+                if (tabData.Thumbnail != null)
+                {
+                    PopupPreviewImage.Source = tabData.Thumbnail;
+                }
+                else
+                {
+                    // 如果连缩略图都没有，可以设置一个占位符或null
+                    PopupPreviewImage.Source = null;
+                }
+
+                // 2. 获取文件基本信息 (同步快速操作)
+                string filePath = tabData.FilePath;
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        var fi = new FileInfo(filePath);
+                        // 格式化文件大小
+                        PopupFileSizeText.Text = FormatFileSize(fi.Length);
+                        PopupDimensionsText.Text = "Loading..."; // 尺寸需要读取头部，稍后异步加载
+                    }
+                    catch
+                    {
+                        PopupFileSizeText.Text = "Unknown";
+                    }
+                }
+
+                // 3. 设置位置并打开
                 LargePreviewPopup.PlacementTarget = _currentHoveredElement;
 
                 if (!LargePreviewPopup.IsOpen)
                 {
                     LargePreviewPopup.IsOpen = true;
                 }
+
+                // 4. 启动高清图加载定时器 (1秒后触发)
+                _highResTimer.Stop();
+                _highResTimer.Start();
+
+                // 5. 修复位置 (原代码逻辑)
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        var method = typeof(Popup).GetMethod("Reposition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        method?.Invoke(LargePreviewPopup, null);
+                    }
+                    catch { }
+                }), System.Windows.Threading.DispatcherPriority.Render);
+            }
+        }
+        private async void HighResTimer_Tick(object sender, EventArgs e)
+        {
+            _highResTimer.Stop(); // 只触发一次
+
+            if (_currentHoveredElement == null) return;
+            dynamic tabData = _currentHoveredElement.DataContext;
+            string filePath = tabData?.FilePath;
+
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
+
+            // 取消上一次可能的任务
+            _previewCts?.Cancel();
+            _previewCts = new CancellationTokenSource();
+            var token = _previewCts.Token;
+
+            try
+            {
+                // 在后台线程加载图片信息和高清预览
+                var result = await Task.Run(() => LoadHighResPreviewInternal(filePath, token), token);
+
+                if (token.IsCancellationRequested) return;
+
+                // 回到UI线程更新界面
+                if (result.Image != null)
+                {
+                    PopupPreviewImage.Source = result.Image;
+                }
+                if (result.Width > 0 && result.Height > 0)
+                {
+                    PopupDimensionsText.Text = $"{result.Width} × {result.Height} px";
+                }
                 else
                 {
-                    // 修复：使用 Dispatcher 延后执行位置重算
-                    // 这确保了 PlacementTarget 属性在底层已经完全更新后，再命令 Popup 移动
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        try
-                        {
-                            var method = typeof(Popup).GetMethod("Reposition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                            if (method != null)
-                            {
-                                method.Invoke(LargePreviewPopup, null);
-                            }
-                            else
-                            {
-                                // 备用 Hack：微动 Offset 触发重绘
-                                var currentOffset = LargePreviewPopup.HorizontalOffset;
-                                LargePreviewPopup.HorizontalOffset = currentOffset + 0.1;
-                                LargePreviewPopup.HorizontalOffset = currentOffset;
-                            }
-                        }
-                        catch
-                        {
-                            // 忽略潜在的反射异常
-                        }
-                    }), System.Windows.Threading.DispatcherPriority.Render);
+                    PopupDimensionsText.Text = "Unknown Size";
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // 忽略取消
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"High res preview failed: {ex.Message}");
             }
         }
 
+        // 内部结构，用于传递后台任务结果
+        private struct PreviewResult
+        {
+            public BitmapSource Image;
+            public int Width;
+            public int Height;
+        }
+
+        // 后台加载逻辑
+        private PreviewResult LoadHighResPreviewInternal(string filePath, CancellationToken token)
+        {
+            var res = new PreviewResult();
+            try
+            {
+                using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    // 1. 读取尺寸 (BitmapDecoder 仅仅读取头部，非常快)
+                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
+                    if (decoder.Frames.Count > 0)
+                    {
+                        var frame = decoder.Frames[0];
+                        res.Width = frame.PixelWidth;
+                        res.Height = frame.PixelHeight;
+                    }
+
+                    // 2. 生成高清预览 (限制大小以优化性能，比如限制宽400)
+                    if (token.IsCancellationRequested) return res;
+
+                    // 重置流位置
+                    fs.Position = 0;
+
+                    var img = new BitmapImage();
+                    img.BeginInit();
+                    img.CacheOption = BitmapCacheOption.OnLoad; // 必须OnLoad，因为流会关闭
+                    img.StreamSource = fs;
+                    // 重要：设置解码高度/宽度，避免加载4K/8K原图占用巨大内存
+                    // 这里设置DecodePixelWidth=400，足够Popup清晰显示了
+                    img.DecodePixelWidth = 400;
+                    img.EndInit();
+                    img.Freeze(); // 必须冻结以便跨线程传递
+
+                    res.Image = img;
+                }
+            }
+            catch
+            {
+                // 加载失败 (例如格式不支持)
+            }
+            return res;
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            string[] suffixes = { "B", "KB", "MB", "GB" };
+            int counter = 0;
+            decimal number = (decimal)bytes;
+            while (Math.Round(number / 1024) >= 1)
+            {
+                number = number / 1024;
+                counter++;
+            }
+            return string.Format("{0:n1} {1}", number, suffixes[counter]);
+        }
 
 
         private void ImageBarControl_Loaded(object sender, RoutedEventArgs e)
@@ -341,7 +481,8 @@ namespace TabPaint.Controls
             return null;
         }
 
-
+        private DispatcherTimer _highResTimer; // 用于1秒后加载大图
+        private CancellationTokenSource _previewCts; // 用于取消正在进行的加载任务
 
         public static readonly DependencyProperty IsSingleTabModeProperty =
     DependencyProperty.Register("IsSingleTabMode", typeof(bool), typeof(ImageBarControl), new PropertyMetadata(false));

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -239,6 +240,13 @@ namespace TabPaint
         {
             base.OnSourceInitialized(e);
             MicaAcrylicManager.ApplyEffect(this);
+            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+            var src = (HwndSource)PresentationSource.FromVisual(this);
+            if (src != null)
+            {
+                src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            }
         }
 
         public Color SelectedColor { get; private set; }

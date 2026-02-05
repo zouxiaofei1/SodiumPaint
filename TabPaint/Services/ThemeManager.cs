@@ -211,8 +211,9 @@ namespace TabPaint
             foreach (Window window in Application.Current.Windows)
             {
                 SetWindowImmersiveDarkMode(window, isDark);
-                var bgBrush = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
+                var bgBrush = MicaAcrylicManager.IsWin11()? Brushes.Transparent: Application.Current.FindResource("WindowBackgroundBrush") as Brush;
                 window.Background = bgBrush;
+                
             }
         }
         [DllImport("dwmapi.dll")]

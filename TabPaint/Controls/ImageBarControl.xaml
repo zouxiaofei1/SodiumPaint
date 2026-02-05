@@ -493,28 +493,62 @@
             </Slider>
 
             <Popup x:Name="LargePreviewPopup" 
-       Placement="Bottom" 
-       AllowsTransparency="True" 
-       StaysOpen="True" 
-       IsHitTestVisible="False" 
-       VerticalOffset="10" 
-       PopupAnimation="Fade">
-                <!-- ↑ 修改点 1：增加 VerticalOffset="10"，让弹窗离鼠标远一点点 -->
+                   Placement="Bottom" 
+                   AllowsTransparency="True" 
+                   StaysOpen="True" 
+                   IsHitTestVisible="False" 
+                   VerticalOffset="10" 
+                   PopupAnimation="Fade">
 
                 <Border Background="{DynamicResource GlassBackgroundHighBrush}" 
-            BorderBrush="{DynamicResource BorderBrush}" 
-            BorderThickness="1" 
-            CornerRadius="8" 
-            Padding="4" 
-            Margin="10"
-            IsHitTestVisible="False">
+                        BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="1" 
+                        CornerRadius="8" 
+                        Padding="6" 
+                        Margin="10"
+                        IsHitTestVisible="False">
                     <Border.Effect>
-                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.4" Direction="270"/>
                     </Border.Effect>
-                    <!-- 这里显示高清预览图或缩略图 -->
-                    <Image x:Name="PopupPreviewImage" Height="200" Stretch="Uniform"/>
+
+                    <StackPanel Orientation="Vertical">
+                        <!-- 图片容器，增加最大宽高限制防止过大 -->
+                        <Border CornerRadius="4" ClipToBounds="True">
+                            <Image x:Name="PopupPreviewImage" MaxHeight="300" MaxWidth="400" Stretch="Uniform"/>
+                        </Border>
+
+                        <!-- 信息区 -->
+                        <Grid Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 尺寸信息 (例如: 1920x1080) -->
+                            <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                                <Path Data="M3,3 L3,13 L13,13 L13,3 Z M1,1 L15,1 L15,15 L1,15 Z" 
+                                      Fill="{DynamicResource TextSecondaryBrush}" 
+                                      Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" Opacity="0.7"/>
+                                <TextBlock x:Name="PopupDimensionsText" 
+                                           Text="Loading..." 
+                                           FontSize="11" 
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </StackPanel>
+
+                            <!-- 文件大小 (例如: 2.5 MB) -->
+                            <TextBlock x:Name="PopupFileSizeText" 
+                                       Grid.Column="1" 
+                                       Text="" 
+                                       FontSize="11" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Right"
+                                       Margin="8,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
                 </Border>
             </Popup>
+
         </Grid>
     </Border>
 </UserControl>

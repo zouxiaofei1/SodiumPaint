@@ -138,19 +138,7 @@
                           Color="Black" 
                           Opacity="0.4"/>
                     </Image.Effect>
-                    <Image.Style>
-                        <Style TargetType="Image">
-                            <Style.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.15"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Image.Style>
+                   
                 </Image>
 
                 <!-- 加载/错误遮罩 -->
