@@ -112,6 +112,16 @@ namespace TabPaint
         }
         protected override void OnStartup(StartupEventArgs e)
         {
+            // 启用分级 JIT 编译优化
+            try
+            {
+                string profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint", "Profiles");
+                if (!Directory.Exists(profileRoot)) Directory.CreateDirectory(profileRoot);
+                System.Runtime.ProfileOptimization.SetProfileRoot(profileRoot);
+                System.Runtime.ProfileOptimization.StartProfile("Startup.profile");
+            }
+            catch { }
+
             SetupExceptionHandling();
             //检查单实例
             if (!SingleInstance.IsFirstInstance())

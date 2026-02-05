@@ -716,6 +716,36 @@ namespace TabPaint
                 }
             }
         }
+
+        private int _performanceScore = -1;
+        [JsonPropertyName("performance_score")]
+        public int PerformanceScore
+        {
+            get => _performanceScore;
+            set
+            {
+                if (_performanceScore != value)
+                {
+                    _performanceScore = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private DateTime _lastBenchmarkDate = DateTime.MinValue;
+        [JsonPropertyName("last_benchmark_date")]
+        public DateTime LastBenchmarkDate
+        {
+            get => _lastBenchmarkDate;
+            set
+            {
+                if (_lastBenchmarkDate != value)
+                {
+                    _lastBenchmarkDate = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
             var defaults = new Dictionary<string, ShortcutItem>

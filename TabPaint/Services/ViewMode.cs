@@ -133,7 +133,7 @@ namespace TabPaint
                 _router.CleanUpSelectionandShape();
                 if (_router.CurrentTool is TextTool textTool) textTool.Cleanup(_ctx);
                 if (_router.CurrentTool is PenTool penTool) penTool.StopDrawing(_ctx);
-                MainImageBar.MainContainer.Height = 5;
+                if (MainImageBar != null && MainImageBar.MainContainer != null) MainImageBar.MainContainer.Height = 5;
                 if (_isCurrentFileGif)
                 {
                     BackgroundImage.Visibility = Visibility.Collapsed; // 隐藏静态图
@@ -160,7 +160,7 @@ namespace TabPaint
             else
             {
                 if (AppTitleBar != null) AppTitleBar.IsLogoMenuEnabled = false;
-                MainImageBar.MainContainer.Height = 100;
+                if (MainImageBar != null && MainImageBar.MainContainer != null) MainImageBar.MainContainer.Height = 100;
                 if (_isCurrentFileGif)
                 {
                     var controller = AnimationBehavior.GetAnimator(GifPlayerImage);

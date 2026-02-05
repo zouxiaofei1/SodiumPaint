@@ -40,47 +40,43 @@ namespace TabPaint
             else if (theme == AppTheme.Light) isDark = false;
             else isDark = IsSystemDark(); // System
 
+            AppTheme targetTheme = isDark ? AppTheme.Dark : AppTheme.Light;
+            
             // 2. 替换基础 ResourceDictionary (Light/Dark)
             string dictPath = isDark ? "Resources/DarkTheme.xaml" : "Resources/LightTheme.xaml";
             var dictUri = new Uri($"pack://application:,,,/{dictPath}", UriKind.Absolute);
             var mergedDicts = Application.Current.Resources.MergedDictionaries;
 
-            // 移除旧字典
-            ResourceDictionary oldDict = null;
-            foreach (var dict in mergedDicts)
+            // 查找现有主题字典
+            ResourceDictionary oldDict = mergedDicts.FirstOrDefault(d => d.Source != null &&
+                   (d.Source.OriginalString.Contains("LightTheme.xaml") ||
+                    d.Source.OriginalString.Contains("DarkTheme.xaml")));
+
+            // 如果主题没变且资源已加载，则跳过字典操作
+            bool themeChanged = (CurrentAppliedTheme != targetTheme) || (oldDict == null);
+
+            if (themeChanged)
             {
-                if (dict.Source != null &&
-                   (dict.Source.OriginalString.Contains("LightTheme.xaml") ||
-                    dict.Source.OriginalString.Contains("DarkTheme.xaml")))
+                var newDict = new ResourceDictionary() { Source = dictUri };
+                if (oldDict != null)
                 {
-                    oldDict = dict;
-                    break;
+                    int index = mergedDicts.IndexOf(oldDict);
+                    mergedDicts[index] = newDict;
                 }
+                else mergedDicts.Add(newDict);
+                CurrentAppliedTheme = targetTheme;
+
+                // 4. 图标字典重载 (仅在主题变化或初始化时执行)
+                var iconsUri = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
+                var existingIcons = mergedDicts.FirstOrDefault(d => d.Source == iconsUri);
+                if (existingIcons != null) mergedDicts.Remove(existingIcons);
+                mergedDicts.Add(new ResourceDictionary { Source = iconsUri });
             }
 
-            var newDict = new ResourceDictionary() { Source = dictUri };
-            if (oldDict != null)
-            {
-                int index = mergedDicts.IndexOf(oldDict);
-                mergedDicts[index] = newDict;
-            }
-            else  mergedDicts.Add(newDict);
-            CurrentAppliedTheme = isDark ? AppTheme.Dark : AppTheme.Light;
-
-            // 4. 图标字典重载 (保持原有逻辑)
-            var iconsDict = new ResourceDictionary();
-            iconsDict.Source = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
-            if (iconsDict != null && ((MainWindow)Application.Current.MainWindow) != null)
-            {
-                Application.Current.Resources.MergedDictionaries.Remove(iconsDict);
-                Application.Current.Resources.MergedDictionaries.Add(iconsDict);
-            }
-
-            if (!IsWin11())   ApplyWin10FallbackBackground(isDark);
+            if (!IsWin11()) ApplyWin10FallbackBackground(isDark);
 
             UpdateWindowStyle(isDark);
             RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
-
         }
         private static bool IsWin11()
         {

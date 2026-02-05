@@ -19,7 +19,7 @@ namespace TabPaint
     {
         private void UpdateToolSelectionHighlight()
         {
-            if (_router == null) return;
+            if (_router == null || MainToolBar == null) return;
 
             var accentBrush = Application.Current.FindResource("ToolAccentBrush") as Brush;
             var accentSubtleBrush = Application.Current.FindResource("ToolAccentSubtleSelectedBrush") as Brush;

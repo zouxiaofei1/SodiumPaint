@@ -345,7 +345,7 @@ namespace TabPaint
         }
         public void UpdateColorHighlight()
         {
-
+            if (MainToolBar == null) return;
             MainToolBar.ColorBtn1.Tag = !useSecondColor ? "True" : "False"; // 如果不是色2，那就是色1选中
             MainToolBar.ColorBtn2.Tag = useSecondColor ? "True" : "False";
         }
@@ -404,13 +404,15 @@ namespace TabPaint
 
         public void SetUndoRedoButtonState()
         {
+            if (MainMenu == null) return;
             UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
             UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
-
         }
 
         public void SetCropButtonState()
         {
+            if (MainToolBar == null || MainToolBar.CutImage == null || MainToolBar.CutImageIcon == null) return;
+
             bool hasSelection = _tools.Select is SelectTool st &&
                      _ctx.SelectionOverlay.Visibility != Visibility.Collapsed;
 
@@ -422,6 +424,7 @@ namespace TabPaint
 
         private void UpdateBrushAndButton(System.Windows.Controls.Button button, System.Windows.Shapes.Path image, bool isEnabled)
         {
+            if (button == null || image == null) return;
             button.IsEnabled = isEnabled;
             image.Fill = isEnabled ? Application.Current.FindResource("TextPrimaryBrush") as Brush : Brushes.Gray;
         }
@@ -619,11 +622,13 @@ namespace TabPaint
         }
         private void UpdateSliderBarValue(double newScale)
         {
-           
-            MyStatusBar.ZoomSliderControl.Value = newScale;
+            if (MyStatusBar != null)
+            {
+                MyStatusBar.ZoomSliderControl.Value = newScale;
+                MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
+            }
             ZoomLevel = newScale.ToString("P0");
-            MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
-            SetZoom(newScale,slient:true);
+            SetZoom(newScale, slient: true);
         }
     }
 }

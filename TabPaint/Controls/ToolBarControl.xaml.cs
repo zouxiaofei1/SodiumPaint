@@ -64,6 +64,39 @@ namespace TabPaint.Controls
         public ToolBarControl()
         {
             InitializeComponent();
+            this.Loaded += (s, e) => EnsureColorsLoaded();
+        }
+        private bool _isColorsLoaded = false;
+        private void EnsureColorsLoaded()
+        {
+            if (_isColorsLoaded || BasicColorsGrid == null) return;
+
+            string[] colors = {
+                "#FFFFFF", "#C0C0C0", "#FF0000", "#FF8000", "#FFFF00", "#00FF00", "#00FFFF", "#0080FF", "#8000FF", "#FF00FF", "#D2691E",
+                "#000000", "#808080", "#CC0000", "#CC6600", "#FFD700", "#008000", "#008080", "#0000FF", "#800080", "#C71585", "#A0522D"
+            };
+
+            string[] tooltips = {
+                "L_ToolBar_Color_White", "L_ToolBar_Color_Silver", "L_ToolBar_Color_Red", "L_ToolBar_Color_Orange", "L_ToolBar_Color_Yellow", "L_ToolBar_Color_Lime", "L_ToolBar_Color_Cyan", "L_ToolBar_Color_SkyBlue", "L_ToolBar_Color_Violet", "L_ToolBar_Color_Magenta", "L_ToolBar_Color_Chocolate",
+                "L_ToolBar_Color_Black", "L_ToolBar_Color_Gray", "L_ToolBar_Color_DarkRed", "L_ToolBar_Color_DarkOrange", "L_ToolBar_Color_Gold", "L_ToolBar_Color_Green", "L_ToolBar_Color_Teal", "L_ToolBar_Color_Blue", "L_ToolBar_Color_Purple", "L_ToolBar_Color_Maroon", "L_ToolBar_Color_Sienna"
+            };
+
+            var swatchStyle = FindResource("ColorSwatch") as Style;
+
+            for (int i = 0; i < colors.Length; i++)
+            {
+                var btn = new Button
+                {
+                    Style = swatchStyle,
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[i])),
+                    ToolTip = TryFindResource(tooltips[i]) ?? tooltips[i]
+                };
+                btn.Click += Swatch_Click;
+                BasicColorsGrid.Children.Add(btn);
+            }
+
+            _isColorsLoaded = true;
+            UpdateColorPaletteVisibility();
         }
         public void UpdateBrushIcon(string resourceKey, bool isPathData)
         {

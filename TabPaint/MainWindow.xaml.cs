@@ -32,7 +32,7 @@ namespace TabPaint
             _workingPath = path;
             _currentFilePath = path;
             CheckFilePathAvailibility(_currentFilePath);
-            PerformanceScore = QuickBenchmark.EstimatePerformanceScore();
+            // PerformanceScore 移至 Loaded 异步加载
             InitializeComponent();
             RestoreWindowBounds();
 
@@ -58,19 +58,21 @@ namespace TabPaint
             InitializeLazyControls(); 
             if (IsViewMode) OnModeChanged(true, isSilent: true);
 
-            MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
+            // 由于 MyStatusBar 和 MainToolBar 现在是分帧加载的，这里需要延迟初始化依赖它们的逻辑
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (_isInternalZoomUpdate)
+                if (MyStatusBar != null)
                 {
-                    return;
+                    MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
+                    {
+                        if (_isInternalZoomUpdate) return;
+                        double targetScale = SliderToZoom(MyStatusBar.ZoomSliderControl.Value);
+                        SetZoom(targetScale, slient: true);
+                    };
                 }
-                double sliderVal = MyStatusBar.ZoomSliderControl.Value;
-                double targetScale = SliderToZoom(sliderVal);
+                SetCropButtonState();
+            }), DispatcherPriority.Loaded);
 
-                SetZoom(targetScale, slient: true);
-            };
-
-            SetCropButtonState();
             _canvasResizer = new CanvasResizeManager(this); ;
             LoadSession();
             if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
@@ -94,17 +96,6 @@ namespace TabPaint
                     }
                 }
             }
-            await Task.Run(() =>
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    var iconsDict = new ResourceDictionary();
-                    iconsDict.Source = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
-
-                    // 把图标合并到全局资源中
-                    Application.Current.Resources.MergedDictionaries.Add(iconsDict);
-                }, System.Windows.Threading.DispatcherPriority.Background);
-            });
 
             RestoreAppState();
             InitializeScrollPosition();
@@ -141,8 +132,19 @@ namespace TabPaint
         {
 
             await Task.Yield();
+            
+            // 异步加载性能评分，避免阻塞 UI
+            _ = Task.Run(() =>
+            {
+                int score = QuickBenchmark.EstimatePerformanceScore();
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    PerformanceScore = score;
+                }));
+            });
 
             this.Focus();
+
             try
             {
 
