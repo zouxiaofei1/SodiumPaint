@@ -8,13 +8,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="30" d:DesignWidth="800">
 
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </UserControl.Resources>
+
     <Border Height="28" Background="{DynamicResource GlassBackgroundLowBrush}" VerticalAlignment="Top" HorizontalAlignment="Stretch" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown" AllowDrop="True">
 
         <Grid>
@@ -23,71 +17,8 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Image Grid.Column="0" x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="8,0,8,0"    PreviewMouseMove="OnAppIconPreviewMouseMove"  PreviewMouseLeftButtonDown="OnAppIconPreviewMouseDown" MouseDown="OnAppIconMouseDown">
-                <Image.ContextMenu>
-                    <ContextMenu x:Name="LogoContextMenu" Style="{StaticResource Win11ContextMenuStyle}" Background="{DynamicResource ControlBackgroundBrush}">
-                        <MenuItem Header="{DynamicResource L_Menu_File_New}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+N" Click="OnNewClick">
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="{DynamicResource L_Menu_File_Open}" Style="{StaticResource Win11MenuItemStyle}"   InputGestureText="Ctrl+O" Click="OnOpenClick">
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="{DynamicResource L_Menu_File_OpenFolder}"  Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Shift+O" Click="OnOpenWorkspaceClick">
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator Style="{StaticResource MenuSeparator}"/>
-                        <MenuItem Header="{DynamicResource L_TitleBar_ExifInfo}" Style="{StaticResource Win11MenuItemStyle}">
-                            <MenuItem.IsEnabled>
-                                <Binding Path="PlacementTarget.DataContext.CurrentImageFullInfo" RelativeSource="{RelativeSource AncestorType=ContextMenu}"/>
-                            </MenuItem.IsEnabled>
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource Info_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="0.8" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                            <MenuItem StaysOpenOnClick="True">
-                                <MenuItem.Template>
-                                    <ControlTemplate TargetType="MenuItem">
-                                        <Border Background="{DynamicResource ChromeLowBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Padding="8" MaxWidth="350">
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="*"/>
-                                                </Grid.RowDefinitions>
-                                                <TextBlock Text="{DynamicResource L_TitleBar_ExifInfo_Details}" FontWeight="Bold" Margin="0,0,0,6" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                <Separator Grid.Row="0" VerticalAlignment="Bottom" Background="{DynamicResource BorderBrush}"/>
-                                                <ScrollViewer Grid.Row="1" MaxHeight="400" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0">
-                                                    <TextBlock Text="{Binding Path=PlacementTarget.DataContext.CurrentImageFullInfo, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                                                               FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                </ScrollViewer>
-                                            </Grid>
-                                        </Border>
-                                    </ControlTemplate>
-                                </MenuItem.Template>
-                            </MenuItem>
-                        </MenuItem>
-                        <Separator Style="{StaticResource MenuSeparator}"/>
-                        <MenuItem Style="{StaticResource Win11MenuItemStyle}"   Header="{DynamicResource L_Menu_File_Save}" InputGestureText="Ctrl+S" Click="OnSaveClick">
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="{DynamicResource L_Menu_File_SaveAs}" Click="OnSaveAsClick">
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource Save_Button_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Style="{StaticResource Win11MenuItemStyle}"  Header="{DynamicResource L_Menu_File_Exit}" Click="OnExitClick">
-                            <MenuItem.Icon>
-                                <Path Data="{DynamicResource Exit_Image}" Stretch="Uniform" Fill="Transparent" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Width="16" Height="16"/>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                    </ContextMenu>
-                </Image.ContextMenu>
+            <Image Grid.Column="0" x:Name="AppIcon" Width="20" Height="20" Margin="8,0,8,0"    PreviewMouseMove="OnAppIconPreviewMouseMove"  PreviewMouseLeftButtonDown="OnAppIconPreviewMouseDown" MouseDown="OnAppIconMouseDown">
+        
             </Image>
 
             <TextBlock Grid.Column="1" 

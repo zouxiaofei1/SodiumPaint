@@ -790,6 +790,24 @@ namespace TabPaint
         }
         private void OnScrollContainerMouseUp(object sender, MouseButtonEventArgs e)
         {
+            // 1. 处理右键菜单加载
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                // 如果菜单还没加载过，进行加载
+                if (ScrollContainer.ContextMenu == null)
+                {
+                    LoadCanvasContextMenu();
+                }
+
+                // 再次检查（因为加载可能失败），如果成功则打开
+                if (ScrollContainer.ContextMenu != null)
+                {
+                    ScrollContainer.ContextMenu.PlacementTarget = ScrollContainer; // 确保定位准确
+                    ScrollContainer.ContextMenu.IsOpen = true;
+                }
+            }
+
+            // ... 下面保留你原有的平移、画图结束逻辑 ...
             if (_isPanning)
             {
                 _isPanning = false;
@@ -800,13 +818,103 @@ namespace TabPaint
             if (_isLoadingImage) return;
             if (!IsViewMode)
             {
-                // 确保画图模式下没有残留的 OverrideCursor
                 if (Mouse.OverrideCursor != null) Mouse.OverrideCursor = null;
-
                 Point pos = e.GetPosition(CanvasWrapper);
                 _router.ViewElement_MouseUp(pos, e);
             }
         }
+        private void LoadCanvasContextMenu()
+        {
+            try
+            {
+                // 1. 动态读取独立的资源字典文件
+                // 【注意】请确保 CanvasMenu.xaml 的“生成操作”是 "Page" 或 "Resource"
+                // 路径格式：/程序集名称;component/文件夹/文件名.xaml
+                // 假设你的文件在根目录或 Resources 目录下，请根据实际情况修改字符串
+                var resourceUri = new Uri("pack://application:,,,/Controls/ContextMenus/CanvasMenu.xaml");
+                var dictionary = new ResourceDictionary { Source = resourceUri };
+
+                // 2. 从字典中提取 ContextMenu (Key 必须与 XAML 中的 x:Key 一致)
+                var menu = dictionary["MainImageCtxMenu"] as ContextMenu;
+
+                if (menu != null)
+                {
+                    // 3. 递归遍历所有项进行事件绑定
+                    foreach (var item in menu.Items)
+                    {
+                        BindCanvasMenuEvents(item);
+                    }
+
+                    // 4. 赋值给控件
+                    ScrollContainer.ContextMenu = menu;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"主菜单加载失败: {ex.Message}");
+                // 可以在这里加一个 MessageBox 提示调试
+            }
+        }
+        // 辅助方法：递归绑定事件
+        private void BindCanvasMenuEvents(object item)
+        {
+            // 情况 A: 标准 MenuItem
+            if (item is MenuItem menuItem)
+            {
+                // 先解绑防止重复（虽然懒加载只执行一次，但为了安全）
+                menuItem.Click -= OnCanvasMenuClickDispatcher;
+
+                // 根据 Tag 绑定通用处理函数，或者直接绑定具体函数
+                // 这里为了代码整洁，我们使用 Switch 匹配 Tag
+                if (menuItem.Tag != null)
+                {
+                    switch (menuItem.Tag.ToString())
+                    {
+                        case "Copy": menuItem.Click += OnCopyClick; break;
+                        case "Cut": menuItem.Click += OnCutClick; break;
+                        case "Paste": menuItem.Click += OnPasteClick; break;
+
+                        // --- 小工具 ---
+                        case "RemoveBackground": menuItem.Click += OnRemoveBackgroundClick; break;
+                        case "ChromaKey": menuItem.Click += OnChromaKeyClick; break;
+                        case "Ocr": menuItem.Click += OnOcrClick; break;
+                        case "ScreenColorPicker": menuItem.Click += OnScreenColorPickerClick; break;
+                        case "CopyColorCode": menuItem.Click += OnCopyColorCodeClick; break;
+                        case "AutoCrop": menuItem.Click += OnAutoCropClick; break;
+                        case "AddBorder": menuItem.Click += OnAddBorderClick; break;
+                        case "AiUpscale": menuItem.Click += OnAiUpscaleClick; break;
+                        case "AiOcr": menuItem.Click += OnAiOcrClick; break;
+                    }
+                }
+
+                // 递归：如果 MenuItem 下面还有子菜单 (Items)
+                if (menuItem.Items.Count > 0)
+                {
+                    foreach (var subItem in menuItem.Items)
+                    {
+                        BindCanvasMenuEvents(subItem);
+                    }
+                }
+            }
+            // 情况 B: 自定义控件 DelayedMenuItem (重要！你的小工具都在这里面)
+            else if (item is TabPaint.Controls.DelayedMenuItem delayedItem)
+            {
+                foreach (var subItem in delayedItem.Items)
+                {
+                    BindCanvasMenuEvents(subItem);
+                }
+            }
+        }
+
+        // 可选：如果你不想上面写那么多 +=，可以用这个通用分发器，
+        // 但上面的 switch += 方式性能更好且更直观。
+        private void OnCanvasMenuClickDispatcher(object sender, RoutedEventArgs e)
+        {
+            // 这里的代码已经在上面的 BindCanvasMenuEvents 里用 += 具体方法 替代了，
+            // 所以这个方法其实可以不需要，除非你希望所有菜单走同一个入口打印日志。
+        }
+
+
         private bool _isDragOverlayVisible = false;
 
         public void UpdateSelectionScalingMode()

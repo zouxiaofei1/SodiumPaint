@@ -10,9 +10,7 @@
 
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
+
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>

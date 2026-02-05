@@ -5,6 +5,7 @@
 //
 using Microsoft.VisualBasic.FileIO;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -13,6 +14,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Windows.Media.Streaming.Adaptive;
 
 
 namespace TabPaint
@@ -712,8 +714,6 @@ namespace TabPaint
                 if (_activeTextBox != null)
                 {
                     _activeTextBox.Focus();
-                    // 将光标移到文字末尾
-                   // _activeTextBox.SelectionStart = _activeTextBox.Text.Length;
                 }
                 e.Handled = true; // 阻止回车产生额外的换行或响铃
             }
@@ -748,7 +748,7 @@ namespace TabPaint
         }
         private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false, bool slient = false)
         {
-
+      
             double oldScale = zoomscale;
             // 1. 计算最小缩放比例限制
             double minrate = 1.0;
@@ -797,7 +797,7 @@ namespace TabPaint
             {
                 ShowToast(newScale.ToString("P0"));
             }
-
+          
         }
         // 动画相关字段
         private double _targetZoomScale; // 动画最终要达到的缩放比例
@@ -821,13 +821,13 @@ namespace TabPaint
                 if (Math.Abs(_targetZoomScale - zoomscale) < 0.0001) return;
 
                 _zoomCenter = center;
-
+ a.s("StartSmoothZoom");
                 if (!_isZoomAnimating)
                 {
                     // 动画开始前，先以当前 UI 的真实位置作为起点
                     _virtualScrollH = ScrollContainer.HorizontalOffset;
                     _virtualScrollV = ScrollContainer.VerticalOffset;
-
+                    a.s("startanimate");
                     _isZoomAnimating = true;
                     CompositionTarget.Rendering += OnZoomRendering;
                 }
@@ -838,6 +838,9 @@ namespace TabPaint
         }
         private void OnZoomRendering(object sender, EventArgs e)
         {
+
+            var t = new TimeRecorder();
+            t.Toggle();
             double delta = _targetZoomScale - zoomscale;
             bool isEnding = false;
             double nextScale;
@@ -846,10 +849,11 @@ namespace TabPaint
             {
                 nextScale = _targetZoomScale;
                 isEnding = true;
+                StopSmoothZoom();return;
             }
             else
             {
-                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor / PerformanceScore;
+                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor /Math.Max(1, (PerformanceScore/2));
             }
 
             double oldScale = zoomscale;
@@ -862,22 +866,25 @@ namespace TabPaint
 
             _virtualScrollH = (_virtualScrollH + _zoomCenter.X) * scaleRatio - _zoomCenter.X;
             _virtualScrollV = (_virtualScrollV + _zoomCenter.Y) * scaleRatio - _zoomCenter.Y;
-       
+          
             ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
-            ScrollContainer.ScrollToVerticalOffset(_virtualScrollV); 
+            ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
+          
             UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
             _canvasResizer.UpdateUI();
+
+
+
             if (IsViewMode) CheckBirdEyeVisibility();
             if (!IsViewMode) UpdateSelectionScalingMode();
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx); UpdateSelectionToolBarPosition();
             if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
-            // 动画结束清理
-            if (isEnding)
-            {
-                StopSmoothZoom();
-            }
+          
+           
+            t.Toggle(true);
+
         }
 
 
@@ -891,6 +898,7 @@ namespace TabPaint
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
+            a.s("OnMouseWheelZoom");
             // 1. 处理 Shift + 滚轮 (水平滚动) - 优先级最高，保持不变
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
@@ -926,7 +934,7 @@ namespace TabPaint
                 // 计算缩放系数
                 double deltaFactor = e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes;
                 double targetScale = currentBase * deltaFactor;
-
+              
                 // 启动平滑缩放
                 StartSmoothZoom(targetScale, mousePos);
             }

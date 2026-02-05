@@ -30,10 +30,7 @@
     <Window.Resources>
     
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <!-- 确保 App.xaml 或此处正确加载了 LightTheme.xaml -->
-                <ResourceDictionary Source="pack://application:,,,/Resources/Styles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
+     
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
@@ -146,111 +143,7 @@
                                   PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  
                                   PreviewMouseUp="OnScrollContainerMouseUp" MouseDoubleClick="OnScrollContainerDoubleClick" 
                                   AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
-                        <ScrollViewer.ContextMenu>
-                            <ContextMenu Style="{StaticResource Win11ContextMenuStyle}">
-                                <MenuItem Header="{DynamicResource L_Main_Ctx_Copy}" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Click="OnCopyClick">
-                                    <MenuItem.Icon>
-                                        <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="{DynamicResource L_Main_Ctx_Cut}" InputGestureText="Ctrl+X" Style="{StaticResource Win11MenuItemStyle}" Click="OnCutClick">
-                                    <MenuItem.Icon>
-                                        <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="{DynamicResource L_Main_Ctx_Paste}" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Click="OnPasteClick">
-                                    <MenuItem.Icon>
-                                        <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-
-                                <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
-                                <MenuItem Header="{DynamicResource L_Main_Ctx_FixedZoom}" 
-                                          IsCheckable="True" 
-                                          Style="{StaticResource Win11MenuItemStyle}"
-                                          DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-                                          IsChecked="{Binding IsFixedZoom, Mode=TwoWay}">
-                                    <MenuItem.Icon>
-                                        <Path Data="{DynamicResource Pin_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                       <MenuItem Header="{DynamicResource L_Main_Ctx_ShowRulers}" IsCheckable="True" 
-          Style="{StaticResource Win11MenuItemStyle}"
-          DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
-          IsChecked="{Binding ShowRulers, Mode=TwoWay}">
-                                    <MenuItem.Icon>
-                                        <TextBlock Text="📏" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <Separator Style="{StaticResource Win11MenuSeparatorStyle}"/>
-
-                                <!-- 二级菜单：小工具 -->
-                                <controls:DelayedMenuItem x:Name="miniTools" 
-                          Header="{DynamicResource L_Main_Ctx_MiniTools}" 
-                          Style="{StaticResource Win11MenuItemStyle}"
-                          CloseDelay="300">
-                                    <MenuItem.Icon>
-                                        <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
-                                    </MenuItem.Icon>
-
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AI_RemoveBg}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Click="OnRemoveBackgroundClick">
-                                        <MenuItem.Icon>
-                                            <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
-
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AI_ChromaKey}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2"  Click="OnChromaKeyClick">
-                                        <MenuItem.Icon>
-                                            <Path Data="{DynamicResource ChromaKey_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_OCR}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Click="OnOcrClick">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_ScreenPicker}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Click="OnScreenColorPickerClick">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_CopyHex}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"  Click="OnCopyColorCodeClick">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="🎨" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AutoCrop}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"  Click="OnAutoCropClick">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AddBorder}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7" Click="OnAddBorderClick">
-                                        <MenuItem.Icon>
-                                            <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="1.5" Width="14" Height="14" CornerRadius="1"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_AI_SuperRes}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+8" Click="OnAiUpscaleClick">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="🔍" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Header="{DynamicResource L_Main_Ctx_OCR}" 
-          Style="{StaticResource Win11MenuItemStyle}" 
-          InputGestureText="Ctrl+Alt+9" 
-          Click="OnAiOcrClick">
-                                        <MenuItem.Icon>
-                                            <!-- 可以换一个图标 -->
-                                            <TextBlock Text="🅰️" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-
-                                </controls:DelayedMenuItem>
-                            </ContextMenu>
-                        </ScrollViewer.ContextMenu>
+                      
 
                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" ClipToBounds="False">
                             <Grid Name="CanvasWrapper" ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">

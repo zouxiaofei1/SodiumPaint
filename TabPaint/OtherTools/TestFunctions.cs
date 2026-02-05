@@ -316,7 +316,7 @@ namespace TabPaint
         {
             private Stopwatch _stopwatch;
 
-            public void Toggle()
+            public void Toggle(bool slient = false)
             {
                 if (_stopwatch == null)
                 {
@@ -326,7 +326,10 @@ namespace TabPaint
                 else if (_stopwatch.IsRunning)
                 {
                     _stopwatch.Stop();
-                    s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
+                    if(!slient)
+                        s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
+                    else
+                       a.s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒"); ;
                 }
                 else
                 {

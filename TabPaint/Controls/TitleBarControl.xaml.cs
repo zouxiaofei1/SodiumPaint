@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace TabPaint.Controls
 {
@@ -30,11 +31,30 @@ namespace TabPaint.Controls
 
         public TitleBarControl()
         {
-            InitializeComponent(); 
+            InitializeComponent(); this.Loaded += TitleBarControl_Loaded;
             UpdateModeIcon(false);
         }
         public event MouseButtonEventHandler TitleBarMouseDown;
+        private async void TitleBarControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Loaded -= TitleBarControl_Loaded; // 避免重复执行
 
+            // 放到后台线程去加载和解码
+            var imageSource = await Task.Run(() =>
+            {
+                var uri = new Uri("pack://application:,,,/Resources/TabPaint.ico");
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = uri;
+                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 关键：立即加载到内存
+                bitmap.EndInit();
+                bitmap.Freeze(); // 关键：冻结对象，使其可以跨线程访问
+                return bitmap;
+            });
+
+            // 回到 UI 线程赋值
+            AppIcon.Source = imageSource;
+        }
 
         private void OnMinimizeClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(MinimizeClickEvent));
         private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(MaximizeRestoreClickEvent));
@@ -107,6 +127,12 @@ namespace TabPaint.Controls
             // 原有逻辑：处理左键菜单 (增加 Left 按钮判断)
             if (e.ChangedButton == MouseButton.Left && IsLogoMenuEnabled)
             {
+                if (AppIcon.ContextMenu == null)
+                {
+                    LoadLogoContextMenu();
+                }
+
+                // 确保加载成功后再打开
                 if (AppIcon.ContextMenu != null)
                 {
                     AppIcon.ContextMenu.PlacementTarget = AppIcon;
@@ -115,6 +141,64 @@ namespace TabPaint.Controls
                 e.Handled = true;
             }
         }
+        private void LoadLogoContextMenu()
+        {
+            try
+            {
+                // 1. 动态读取独立的资源字典文件
+                // 注意：Uri 路径要根据你的实际项目结构调整，例如 "/TabPaint;component/Resources/TitleBarMenu.xaml"
+                var resourceUri = new Uri("pack://application:,,,/Controls/ContextMenus/TitleBarMenu.xaml");
+                var dictionary = new ResourceDictionary { Source = resourceUri };
+
+                // 2. 从字典中提取 ContextMenu
+                var menu = dictionary["LogoContextMenu"] as ContextMenu;
+
+                if (menu != null)
+                {
+                    // 简单粗暴的重新挂载事件方法：
+                    foreach (var item in menu.Items)
+                    {
+                        if (item is MenuItem menuItem)
+                        {
+                            BindMenuEvents(menuItem);
+                        }
+                    }
+
+                    // 4. 赋值给控件
+                    AppIcon.ContextMenu = menu;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载菜单失败: {ex.Message}");
+            }
+        }
+
+        // 辅助方法：重新连接事件（因为分离的 XAML 找不到 CodeBehind 的事件处理方法）
+        private void BindMenuEvents(MenuItem item)
+        {
+            // 如果你在 XAML 里写了 Click="OnNewClick"，动态加载时会报错或无效，
+            // 因为分离的 ResourceDictionary 没有 CodeBehind 类。
+            // 建议：去 TitleBarMenu.xaml 把 Click="..." 删掉，改用 Tag 标识，在这里统一绑定。
+
+            // 示例：假设你在 XAML 里给新建菜单项加了 Tag="New"
+            if (item.Tag?.ToString() == "New") item.Click += OnNewClick;
+            else if (item.Tag?.ToString() == "Open") item.Click += OnOpenClick;
+            else if (item.Tag?.ToString() == "Save") item.Click += OnSaveClick;
+            else if (item.Tag?.ToString() == "SaveAs") item.Click += OnSaveAsClick;
+            else if (item.Tag?.ToString() == "Exit") item.Click += OnExitClick;
+            else if (item.Tag?.ToString() == "OpenFolder") item.Click += OnOpenWorkspaceClick;
+
+            // 递归处理子菜单
+            foreach (var subItem in item.Items)
+            {
+                if (subItem is MenuItem subMenuItem)
+                {
+                    BindMenuEvents(subMenuItem);
+                }
+            }
+        }
+
         // 定义事件
         public static readonly RoutedEvent HelpClickEvent = EventManager.RegisterRoutedEvent(
             "HelpClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(TitleBarControl));
