@@ -230,6 +230,7 @@ namespace TabPaint
             double newScale = e.NewZoom;
             zoomscale = Math.Clamp(newScale, MinZoom, MaxZoom);
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
+           
             UpdateSliderBarValue(zoomscale);
 
         }
@@ -271,7 +272,7 @@ namespace TabPaint
                 case BrushStyle.GaussianBlur: resKey = "Blur_Image"; isPath = true;  break;
                     // Pencil 和 Eraser 通常在基础工具栏有独立按钮，这里也可以不用处理，或者给个默认图标
             }
-
+            if(MainToolBar!=null)
             MainToolBar.UpdateBrushIcon(resKey, isPath);
         }
 

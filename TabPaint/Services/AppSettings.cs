@@ -254,7 +254,7 @@ namespace TabPaint
                 }
             }
         }
-        private bool _isImageBarCompact = false; // 默认为 false (展开状态)
+        private bool _isImageBarCompact = true; // 默认为 false (展开状态)
 
         [JsonPropertyName("is_image_bar_compact")]
         public bool IsImageBarCompact

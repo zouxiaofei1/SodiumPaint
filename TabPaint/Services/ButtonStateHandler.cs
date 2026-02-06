@@ -620,7 +620,7 @@ namespace TabPaint
                 MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes)   OnSaveAsClick(null, null)    ;
         }
-        private void UpdateSliderBarValue(double newScale)
+        private void UpdateSliderBarValue(double newScale,bool needsetzoom=true)
         {
             if (MyStatusBar != null)
             {
@@ -628,7 +628,8 @@ namespace TabPaint
                 MyStatusBar.ZoomComboBox.Text = newScale.ToString("P0");
             }
             ZoomLevel = newScale.ToString("P0");
-            SetZoom(newScale, slient: true);
+           // a.s("setzoom");
+           SetZoom(newScale, slient: true);
         }
     }
 }

@@ -48,6 +48,9 @@ namespace TabPaint
             // 每次缩放或画布改变大小时调用此方法刷新 UI
             public void UpdateUI()
             {
+                var t = new TimeRecorder();
+                t.Toggle();
+
                 _overlay.Children.Clear();
              
                 if(((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source==null) return;
@@ -90,6 +93,7 @@ namespace TabPaint
 
                     _overlay.Children.Add(rect);
                 }
+                t.Toggle(true); 
             }
 
             private void OnHandleDown(object sender, MouseButtonEventArgs e)

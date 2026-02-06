@@ -583,9 +583,9 @@ namespace TabPaint
                 ResetEditorState(filePath);
 
                 // 5. 适配窗口
-                FitToWindow();
+                FitToWindow(needcanvasUpdateUI: false);
                 CenterImage();
-                _canvasResizer.UpdateUI();
+              //  _canvasResizer.UpdateUI();
 
                 // 6. GIF 特殊处理
                 HandleGifAnimation(physicalPath);
@@ -608,7 +608,7 @@ namespace TabPaint
 
             if (isPreview)
             {
-                FitToWindow();
+               if(_startupFinished) FitToWindow(needcanvasUpdateUI:false);
                 CenterImage();
                 BackgroundImage.InvalidateVisual();
             }
@@ -743,11 +743,10 @@ namespace TabPaint
                 AnimationBehavior.SetSourceUri(GifPlayerImage, null);
                 GifPlayerImage.Visibility = Visibility.Collapsed;
                 BackgroundImage.Visibility = Visibility.Visible;
-                FitToWindow(1);
-                CenterImage();
-                _canvasResizer.UpdateUI();
-                SetPreviewSlider();
                 if (!string.IsNullOrEmpty(reason)) ShowToast(reason);
+                FitToWindow(needcanvasUpdateUI:false);
+                CenterImage();
+          
             });
         }
 

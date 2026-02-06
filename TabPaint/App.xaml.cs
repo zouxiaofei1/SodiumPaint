@@ -101,7 +101,7 @@ namespace TabPaint
         private void ShutdownAppWithErrorMessage(Exception ex)
         {
             string msg = $"TabPaint 遇到错误需要关闭。\n\n错误信息: {ex.Message}\n\n日志已保存至: {LogDirectory}";
-            MessageBox.Show(msg, "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error);
+            FluentMessageBox.Show(msg, "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error,null, LogDirectory);
 
             try
             {

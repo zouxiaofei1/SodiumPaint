@@ -12,6 +12,7 @@ namespace TabPaint
 
     public static class ThemeManager
     {
+        public static bool IsLazyIconsLoaded { get; private set; } = false;
         private const string RegistryKeyPath = AppConsts.RegistryKeyPathThemes;
         private const string RegistryValueName = AppConsts.RegistryValueNameLightTheme;
 
@@ -67,16 +68,42 @@ namespace TabPaint
                 CurrentAppliedTheme = targetTheme;
 
                 // 4. 图标字典重载 (仅在主题变化或初始化时执行)
-                var iconsUri = new Uri("pack://application:,,,/Resources/Icons/Icons.xaml");
-                var existingIcons = mergedDicts.FirstOrDefault(d => d.Source == iconsUri);
-                if (existingIcons != null) mergedDicts.Remove(existingIcons);
-                mergedDicts.Add(new ResourceDictionary { Source = iconsUri });
+                if(!IsLazyIconsLoaded)
+                {
+                    ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
+                   // IsLazyIconsLoaded
+                }
+                else
+                {
+                    ReloadIconDictionary("Resources/Icons/Icons.xaml");
+                }
             }
 
             if (!IsWin11()) ApplyWin10FallbackBackground(isDark);
 
             UpdateWindowStyle(isDark);
             RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
+        }
+        private static void ReloadIconDictionary(string path)
+        {
+            var uri = new Uri($"pack://application:,,,/{path}");
+            var mergedDicts = Application.Current.Resources.MergedDictionaries;
+            var existing = mergedDicts.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.EndsWith(path)); // 使用 EndsWith 更稳健
+
+            if (existing != null) mergedDicts.Remove(existing);
+            mergedDicts.Add(new ResourceDictionary { Source = uri });
+        }
+
+        // 新增：公开方法供 MainWindow 调用以加载 Lazy Icons
+        public static void LoadLazyIcons()
+        {
+            if (IsLazyIconsLoaded) return;
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                ReloadIconDictionary("Resources/Icons/Icons.xaml");
+                IsLazyIconsLoaded = true;
+            }, System.Windows.Threading.DispatcherPriority.Background); // 使用 Background 优先级，不阻塞 UI
         }
         private static bool IsWin11()
         {

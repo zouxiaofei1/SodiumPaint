@@ -443,20 +443,19 @@
                         Margin="0,80,0,0" 
                         Panel.ZIndex="200"
                         IsTabStop="False"/>
-        
-        <controls:DownloadProgressFloat x:Name="DownloadProgressPopup" 
-                                        HorizontalAlignment="Center" 
-                                        VerticalAlignment="Bottom" 
-                                        Margin="0,0,0,60" 
-                                        Panel.ZIndex="150"/>
-        <controls:SelectionToolBar x:Name="SelectionToolBar"
-                                   Visibility="Collapsed"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Top"
-                                   Panel.ZIndex="300"
-                                   CopyClick="SelectionToolBar_CopyClick"
-                                   AiRemoveBgClick="SelectionToolBar_AiRemoveBgClick"
-                                   OcrClick="SelectionToolBar_OcrClick"/>
+
+        <ContentControl x:Name="DownloadProgressHolder"
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Bottom" 
+                        Margin="0,0,0,60" 
+                        Panel.ZIndex="150"
+                        IsTabStop="False" Focusable="False"/>
+        <ContentControl x:Name="SelectionToolHolder"
+                        Visibility="Collapsed"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Panel.ZIndex="300"
+                        IsTabStop="False" Focusable="False"/>
         <!-- 粗细提示 -->
         <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
             <TextBlock x:Name="ThicknessTipText" Foreground="{DynamicResource TextInverseBrush}" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>

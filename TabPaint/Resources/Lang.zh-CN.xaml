@@ -132,6 +132,7 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">HighQuality</sys:String>
 
     <!-- Common -->
+    <sys:String x:Key="L_Common_OpenLogFolder">日志文件夹</sys:String>
     <sys:String x:Key="L_Common_OK">确定</sys:String>
     <sys:String x:Key="L_Common_Untitled">未命名</sys:String>
 

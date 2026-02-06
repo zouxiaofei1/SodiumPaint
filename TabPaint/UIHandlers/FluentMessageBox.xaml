@@ -105,7 +105,12 @@
                     CornerRadius="0,0,8,8"
                     Padding="24,16">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-
+                    <Button x:Name="BtnOpenLog" 
+            Content="{DynamicResource L_Common_OpenLogFolder}" 
+            Style="{DynamicResource Win11SecondaryButtonStyle}" 
+            MinWidth="100" Height="32" Margin="0,0,8,0" 
+            Click="BtnOpenLog_Click" 
+            Visibility="Collapsed"/>
                     <Button x:Name="BtnYes" Content="{DynamicResource L_Common_OK}" Style="{DynamicResource Win11PrimaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnYes_Click" Visibility="Collapsed"/>
                     <Button x:Name="BtnOk" Content="{DynamicResource L_Common_OK}" Style="{DynamicResource Win11PrimaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnOk_Click" Visibility="Collapsed"/>
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -64,11 +65,23 @@ namespace TabPaint
             return null;
         }
 
-        public static MessageBoxResult Show(string message, string title = "TabPaint", MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Information, Window owner = null)
+        private string _logFolderPath = null;
+
+        // 2. 修改 Show 方法签名，增加 logFolderPath 参数
+        public static MessageBoxResult Show(string message, string title = "TabPaint", MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Information, Window owner = null, string logFolderPath = null)
         {
             var msgBox = new FluentMessageBox();
             msgBox.TxtTitle.Text = title;
             msgBox.TxtMessage.Text = message;
+
+            // 保存日志路径
+            msgBox._logFolderPath = logFolderPath;
+
+            // 如果传递了路径，显示按钮
+            if (!string.IsNullOrEmpty(logFolderPath))
+            {
+                msgBox.BtnOpenLog.Visibility = Visibility.Visible;
+            }
 
             if (owner != null)
             {
@@ -87,6 +100,26 @@ namespace TabPaint
             return msgBox.Result;
         }
 
+        private void BtnOpenLog_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(_logFolderPath) && System.IO.Directory.Exists(_logFolderPath))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = _logFolderPath,
+                        UseShellExecute = true,
+                        Verb = "open"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // 如果打开文件夹失败，可以用 Debug 记录一下，但不要在崩溃处理里再弹窗了，容易死循环
+                    Debug.WriteLine("Failed to open log directory: " + ex.Message);
+                }
+            }
+        }
         private void SetupIcon(MessageBoxImage icon)
         {
             if (icon == MessageBoxImage.None)

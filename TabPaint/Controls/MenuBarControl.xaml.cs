@@ -179,9 +179,9 @@ namespace TabPaint.Controls
 
         private object TryGetResource(string key)
         {
-            try { return FindResource(key); } catch { return null; }
+            // TryFindResource 在找不到键时返回 null，而不是抛出异常
+            return this.TryFindResource(key);
         }
-
         // --- 1. 文件菜单加载逻辑 ---
         private void OnFileMenuOpened(object sender, RoutedEventArgs e)
         {
@@ -263,12 +263,6 @@ namespace TabPaint.Controls
             menuItem.Items.Add(bceItem);
 
             menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_TTS", "Color_Temperature_Image", OnTTSClick));
-
-            // 自动色阶 (Icon是直接PathData，需要特殊处理或简化)
-            // 简单起见，这里假设你能接受通用处理，或者你可以在Resource里定义那个 PathData
-            // 如果 "AutoLevels_Image" 不在资源里，可以用代码画，或者简化处理。
-            // 这里假设你把那个 M5,5... 的路径放到了资源里叫 "AutoLevels_Path_Data"
-            // 或者直接在这里手写 Geometry：
             var autoLevelsItem = CreateMenuItem("L_Menu_Effect_AutoLevels", null, OnAutoLevelsClick);
             var alPath = new Path
             {

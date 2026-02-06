@@ -55,7 +55,10 @@ namespace TabPaint
 
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
-            InitializeLazyControls(); 
+            InitializeLazyControls(); Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ThemeManager.LoadLazyIcons();
+            }), DispatcherPriority.Background);
             if (IsViewMode) OnModeChanged(true, isSilent: true);
 
             // 由于 MyStatusBar 和 MainToolBar 现在是分帧加载的，这里需要延迟初始化依赖它们的逻辑
@@ -67,7 +70,7 @@ namespace TabPaint
                     {
                         if (_isInternalZoomUpdate) return;
                         double targetScale = SliderToZoom(MyStatusBar.ZoomSliderControl.Value);
-                        SetZoom(targetScale, slient: true);
+                        //SetZoom(targetScale, slient: true);
                     };
                 }
                 SetCropButtonState();
@@ -99,7 +102,8 @@ namespace TabPaint
 
             RestoreAppState();
             InitializeScrollPosition();
-            if (BlanketMode) FitToWindow(); _startupFinished = true;
+            //if (BlanketMode) FitToWindow();
+            _startupFinished = true;
 
         }
         protected override void OnSourceInitialized(EventArgs e)
@@ -331,12 +335,12 @@ namespace TabPaint
         }
 
 
-        private void FitToWindow(double addscale = 1)
+        private void FitToWindow(double addscale = 1,bool needcanvasUpdateUI=true)
         {
             if (SettingsManager.Instance.Current.IsFixedZoom && _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
-
+                a.s("fit to window start");
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
                 double viewWidth = ScrollContainer.ViewportWidth;
@@ -351,7 +355,7 @@ namespace TabPaint
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
 
-                _canvasResizer.UpdateUI();
+                if(needcanvasUpdateUI)_canvasResizer.UpdateUI();//关掉可以节省2-5ms
                 _firstFittoWindowdone = true;
             }
         }
@@ -1023,62 +1027,72 @@ namespace TabPaint
         private void SelectionToolBar_AiRemoveBgClick(object sender, RoutedEventArgs e)
         {
             OnRemoveBackgroundClick(sender, e);
-            var toolbar = this.FindName("SelectionToolBar") as SelectionToolBar;
-            if (toolbar != null) toolbar.Visibility = Visibility.Collapsed;
+            // 修改为控制 Holder 的可见性
+            if (SelectionToolHolder != null) SelectionToolHolder.Visibility = Visibility.Collapsed;
         }
 
         private void SelectionToolBar_OcrClick(object sender, RoutedEventArgs e)
         {
             OnOcrClick(sender, e);
-            var toolbar = this.FindName("SelectionToolBar") as SelectionToolBar;
-            if (toolbar != null) toolbar.Visibility = Visibility.Collapsed;
+            // 修改为控制 Holder 的可见性
+            if (SelectionToolHolder != null) SelectionToolHolder.Visibility = Visibility.Collapsed;
         }
 
         public void UpdateSelectionToolBarPosition()
         {
-            var toolbar = this.FindName("SelectionToolBar") as SelectionToolBar;
-            if (toolbar == null) return;
-
+            // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
             var selectTool = _router?.CurrentTool as SelectTool;
-            if (!IsViewMode && selectTool != null && selectTool.HasActiveSelection  )
-            {//&& !selectTool._selecting
+            if (_selectionToolBar == null && (selectTool == null || !selectTool.HasActiveSelection))
+            {
+                return;
+            }
+
+            // 确保控件已加载 (访问属性会触发加载)
+            var toolbar = this.SelectionToolBar;
+            var holder = this.SelectionToolHolder; // 引用 XAML 中的 ContentControl
+
+            if (!IsViewMode && selectTool != null && selectTool.HasActiveSelection)
+            {
                 Int32Rect rect = selectTool._selectionRect;
                 if (rect.Width <= 0 || rect.Height <= 0)
                 {
-                    toolbar.Visibility = Visibility.Collapsed;
+                    holder.Visibility = Visibility.Collapsed;
                     return;
                 }
+
                 Point p1 = _ctx.FromPixel(new Point(rect.X, rect.Y));
                 Point p2 = _ctx.FromPixel(new Point(rect.X + rect.Width, rect.Y + rect.Height));
-                // 获取相对于窗口根容器的坐标
+
                 Point rootPos = CanvasWrapper.TranslatePoint(p1, (UIElement)this.Content);
                 Point rootPosEnd = CanvasWrapper.TranslatePoint(p2, (UIElement)this.Content);
+
                 double selTop = rootPos.Y;
                 double selLeft = rootPos.X;
                 double selWidth = rootPosEnd.X - rootPos.X;
-                double toolbarHeight = 45; // 预估高度
-                double toolbarWidth = 140; // 预估宽度
+
+                // 注意：这里可能需要硬编码或测量实际宽度，因为第一次显示时 ActualWidth 可能为 0
+                double toolbarHeight = 45;
+                double toolbarWidth = 140;
+
                 double top = selTop - toolbarHeight - 10;
                 double left = selLeft + (selWidth - toolbarWidth) / 2;
-                if (top < 40) // 40 为标题栏高度左右
-                {
-                    top = rootPosEnd.Y + 10; // 如果上方放不下，放下方
-                }
-                if (top + toolbarHeight > this.ActualHeight - 20)
-                {
-                    top = this.ActualHeight - toolbarHeight - 20;
-                }
+
+                if (top < 40) top = rootPosEnd.Y + 10;
+                if (top + toolbarHeight > this.ActualHeight - 20) top = this.ActualHeight - toolbarHeight - 20;
+
                 if (left < 10) left = 10;
                 if (left + toolbarWidth > this.ActualWidth - 10) left = this.ActualWidth - toolbarWidth - 10;
 
-                toolbar.Margin = new Thickness(left, top, 0, 0);
-                toolbar.Visibility = Visibility.Visible;
+                // 关键修改：设置 Holder 的 Margin
+                holder.Margin = new Thickness(left, top, 0, 0);
+                holder.Visibility = Visibility.Visible;
             }
             else
             {
-                toolbar.Visibility = Visibility.Collapsed;
+                holder.Visibility = Visibility.Collapsed;
             }
         }
+
         public void SyncTextToolbarState(RichTextBox rtb)
         {
             var selection = rtb.Selection;

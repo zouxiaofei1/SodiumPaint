@@ -26,51 +26,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        public TextToolControl TextMenu { get; private set; }
-
-        // 新增：延迟初始化文本工具栏
-        private void EnsureTextToolLoaded()
-        {
-          
-            if (TextMenu != null) return;
-            TextMenu = new TextToolControl();
-
-            TextMenu.FontFamilyCombo.SelectionChanged += FontSettingChanged;
-            TextMenu.FontFamilyCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
-                new TextChangedEventHandler(FontSettingChanged));
-
-            TextMenu.FontSizeCombo.SelectionChanged += FontSettingChanged;
-            TextMenu.FontSizeCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent,
-                new TextChangedEventHandler(FontSettingChanged));
-            TextMenu.FontFamilyBox.SelectionChanged += FontSettingChanged;
-            TextMenu.FontSizeBox.SelectionChanged += FontSettingChanged;
-            TextMenu.TextEditBar.MouseDown += TextEditBar_MouseDown; // 绑定回 MainWindow 的旧方法
-            TextMenu.TextEditBar.MouseMove += TextEditBar_MouseMove;
-            TextMenu.TextEditBar.MouseUp += TextEditBar_MouseUp;
-
-            // 样式按钮
-            TextMenu.BoldButton.Click += FontSettingChanged;
-            TextMenu.ItalicButton.Click += FontSettingChanged;
-            TextMenu.UnderlineButton.Click += FontSettingChanged;
-            TextMenu.StrikeButton.Click += FontSettingChanged;
-
-            TextMenu.TextBackgroundButton.Click += FontSettingChanged;
-            TextMenu.SubscriptButton.Click += FontSettingChanged;
-            TextMenu.SuperscriptButton.Click += FontSettingChanged;
-            TextMenu.HighlightButton.Click += FontSettingChanged;
-            TextMenu.ShadowButton.Click += FontSettingChanged;
-
-            // 对齐
-            TextMenu.AlignLeftButton.Click += TextAlign_Click;
-            TextMenu.AlignCenterButton.Click += TextAlign_Click;
-            TextMenu.AlignRightButton.Click += TextAlign_Click;
-
-            // 表格
-            TextMenu.InsertTableButton.Click += InsertTable_Click;
-
-            // 注入界面
-            TextToolHolder.Content = TextMenu;
-        }
+    
         private void InitializeLazyControls()
         {
             // 第一帧：加载 ImageBar
@@ -223,37 +179,7 @@ namespace TabPaint
             UpdateUIStatus(zoomscale);
         }
 
-        private void InitializeDragWatchdog()
-        {
-            _dragWatchdog = new DispatcherTimer();
-            _dragWatchdog.Interval = TimeSpan.FromMilliseconds(200);
-            _dragWatchdog.Tick += DragWatchdog_Tick;
-        }
-        private void OnAppTitleBarIconDragRequest(object sender, MouseButtonEventArgs e)
-        {
-            // 1. 基础检查：单图模式且当前有 Tab
-            if (MainImageBar.IsSingleTabMode && _currentTabItem != null)
-            {
-                try
-                {
-                    string dragFilePath = PrepareDragFilePath(_currentTabItem);
-
-                    if (!string.IsNullOrEmpty(dragFilePath) && File.Exists(dragFilePath))
-                    {
-                        // 3. 构建拖拽数据
-                        var dataObject = new DataObject(DataFormats.FileDrop, new string[] { dragFilePath });
-
-                        // 4. 执行拖拽
-                        // 使用 Copy | Move，允许复制到桌面或其他文件夹
-                        DragDrop.DoDragDrop(AppTitleBar, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragFailed"), ex.Message));
-                }
-            }
-        }
+      
 
     }
 }

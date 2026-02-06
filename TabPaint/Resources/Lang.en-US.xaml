@@ -143,6 +143,7 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">HighQuality</sys:String>
 
     <!-- Common Strings -->
+    <sys:String x:Key="L_Common_OpenLogFolder">Open Folder</sys:String>
     <sys:String x:Key="L_Common_OK">OK</sys:String>
     <sys:String x:Key="L_Common_Untitled">Untitled</sys:String>
     <sys:String x:Key="L_Common_Reset">Reset</sys:String>
