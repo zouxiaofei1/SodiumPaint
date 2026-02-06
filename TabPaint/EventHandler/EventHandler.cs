@@ -748,7 +748,8 @@ namespace TabPaint
         }
         private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false, bool slient = false)
         {
-      
+      try
+            { 
             double oldScale = zoomscale;
             // 1. 计算最小缩放比例限制
             double minrate = 1.0;
@@ -797,7 +798,10 @@ namespace TabPaint
             {
                 ShowToast(newScale.ToString("P0"));
             }
-          
+            }
+            catch (Exception)
+            {
+            }
         }
         // 动画相关字段
         private double _targetZoomScale; // 动画最终要达到的缩放比例

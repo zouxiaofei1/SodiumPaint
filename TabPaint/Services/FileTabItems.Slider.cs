@@ -291,7 +291,9 @@ namespace TabPaint
         private System.Windows.Threading.DispatcherTimer _sliderDebounceTimer;
         private void InitDebounceTimer()
         {
-            _sliderDebounceTimer = new System.Windows.Threading.DispatcherTimer();
+          
+            _sliderDebounceTimer = new System.Windows.Threading.DispatcherTimer(); 
+       
             _sliderDebounceTimer.Interval = TimeSpan.FromMilliseconds(10);
             _sliderDebounceTimer.Tick += OnSliderDebounceTick;
         }

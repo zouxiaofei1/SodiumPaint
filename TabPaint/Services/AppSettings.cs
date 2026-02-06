@@ -127,37 +127,16 @@ namespace TabPaint
         }
 
         private void RestoreWindowBounds()
-        {
+        { 
             var settings = TabPaint.SettingsManager.Instance.Current;
-
-            if (settings.WindowLeft == AppConsts.UninitializedWindowPosition || settings.WindowTop == AppConsts.UninitializedWindowPosition) return; // Note: -10000 is used as a magic number for uninitialized position
-            double virtualLeft = SystemParameters.VirtualScreenLeft;
-            double virtualTop = SystemParameters.VirtualScreenTop;
-            double virtualWidth = SystemParameters.VirtualScreenWidth;
-            double virtualHeight = SystemParameters.VirtualScreenHeight;
-
-            // 只要窗口的左上角在虚拟屏幕范围内，就认为是可见的
-            bool isVisible = (settings.WindowLeft >= virtualLeft &&
-                              settings.WindowLeft < (virtualLeft + virtualWidth) &&
-                              settings.WindowTop >= virtualTop &&
-                              settings.WindowTop < (virtualTop + virtualHeight));
-
-            if (isVisible)
-            {
-                this.Left = settings.WindowLeft;
-                this.Top = settings.WindowTop;
-            }
-            else// 如果不在屏幕范围内（比如上次在副屏，现在副屏拔了），居中显示
-            {
-                
-                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            }
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;//功能砍了，不再支持记忆上次的窗口位置，统一从屏幕中心启动
             this.Width = Math.Max(settings.WindowWidth, AppConsts.WindowMinSize);
             this.Height = Math.Max(settings.WindowHeight, AppConsts.WindowMinSize);
             if (settings.WindowState == (int)WindowState.Maximized)
             {
                 this.WindowState = WindowState.Maximized;
             }
+          
         }
 
         private void RestoreAppState()
@@ -638,7 +617,6 @@ namespace TabPaint
                 }
             }
         }
-        // 在 AppSettings 类中添加以下代码（建议放在其他 bool 属性附近）
 
         private bool _skipResetConfirmation = false; // 默认需要确认
 
@@ -748,6 +726,7 @@ namespace TabPaint
         }
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
+          
             var defaults = new Dictionary<string, ShortcutItem>
     {
         // 1. 全局/视图功能

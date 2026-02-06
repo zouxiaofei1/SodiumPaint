@@ -5,15 +5,24 @@ using System.Text.Json;
 using System.Windows.Forms;
 using System.Windows.Threading;
 using static TabPaint.MainWindow;
-
+using System.Text.Json.Serialization;
 namespace TabPaint
 {
+    [JsonSerializable(typeof(AppSettings))]
+    [JsonSerializable(typeof(List<string>))]
+    [JsonSerializable(typeof(Dictionary<string, ToolSettingsModel>))]
+    [JsonSerializable(typeof(Dictionary<string, ShortcutItem>))]
+    public partial class AppSettingsJsonContext : JsonSerializerContext
+    {
+    }
     public class SettingsManager
     {
         private static SettingsManager _instance;
         private static readonly object _lock = new object();
         private readonly string _folderPath;        // 设定存储路径: AppData/Local/TabPaint/settings.json
         private readonly string _filePath;
+        private readonly string _binPath;
+        private const int BinaryVersion = 1; // 二进制版本号，如果结构发生重大变化需递增
         private const int MaxRecentFiles = AppConsts.MaxRecentFiles;
         // 当前的设置实例
         public AppSettings Current { get; private set; }
@@ -21,6 +30,7 @@ namespace TabPaint
         {
             _folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
             _filePath = Path.Combine(_folderPath, "settings.json");
+            _binPath = Path.Combine(_folderPath, "settings.bin");
             Load(); // 初始化时尝试加载，如果失败则创建默认
         }
 
@@ -39,40 +49,67 @@ namespace TabPaint
                 return _instance;
             }
         }
+        public async Task InitializeAsync()
+        {
+            await Task.Run(() =>
+            {
+                Load(); // 在后台线程执行繁重的 I/O 和 JSON 解析
+            });
+        }
 
         // 加载设置
         public void Load()
         {
-            if (!Directory.Exists(_folderPath))
+            Directory.CreateDirectory(_folderPath);
+            
+            bool loaded = false;
+         
+            // 1. 尝试从二进制文件加载 (性能优化：< 3ms)
+            if (File.Exists(_binPath))
             {
-                Directory.CreateDirectory(_folderPath);
+                bool useBin = true;
+                if (File.Exists(_filePath))
+                {
+                    var binInfo = new FileInfo(_binPath);
+                    var jsonInfo = new FileInfo(_filePath);
+                    // 如果 JSON 比 BIN 新，说明用户可能手动编辑了 JSON，此时不使用 BIN
+                    if (jsonInfo.LastWriteTime > binInfo.LastWriteTime) useBin = false;
+                }
+
+                if (useBin && LoadBinary())
+                {
+                    loaded = true;
+                }
             }
 
-            if (File.Exists(_filePath))
+
+            // 2. 如果二进制加载不可用或失败，回退到 JSON 加载
+            if (!loaded)
             {
-                try
+                if (File.Exists(_filePath))
                 {
-                    string jsonString = File.ReadAllText(_filePath);
-                    // 允许注释，格式化宽松
-                    var options = new JsonSerializerOptions
+                    try
                     {
-                        PropertyNameCaseInsensitive = true,
-                        ReadCommentHandling = JsonCommentHandling.Skip
-                    };
-                    Current = JsonSerializer.Deserialize<AppSettings>(jsonString, options);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[Settings] Load failed: {ex.Message}. Using defaults.");
-                    // 加载失败（如文件损坏），回滚到默认设置
-                    Current = new AppSettings();
+                        using (FileStream stream = File.OpenRead(_filePath))
+                        {
+                            Current = JsonSerializer.Deserialize(stream, AppSettingsJsonContext.Default.AppSettings);
+                        }
+                        loaded = true;
+                        // 加载 JSON 成功后，立即异步或同步转换一份 .bin 供下次快速启动
+                        SaveBinary();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[Settings] JSON Load failed: {ex.Message}. Using defaults.");
+                    }
                 }
             }
-            else
+
+            // 3. 兜底逻辑：如果都没有成功，则创建默认设置
+            if (!loaded)
             {
-                // 文件不存在，使用默认值
                 Current = new AppSettings();
-                Save(); // 立即创建文件
+                Save(); // 初始化时同时创建 .json 和 .bin
             }
         }
 
@@ -81,12 +118,15 @@ namespace TabPaint
         {
             try
             {
-                if (!Directory.Exists(_folderPath))  Directory.CreateDirectory(_folderPath);
+                if (!Directory.Exists(_folderPath)) Directory.CreateDirectory(_folderPath);
 
-                var options = new JsonSerializerOptions{ WriteIndented = true  };
-
+                // 1. 写入 JSON (保证可读性和备份)
+                var options = new JsonSerializerOptions { WriteIndented = true };
                 string jsonString = JsonSerializer.Serialize(Current, options);
                 File.WriteAllText(_filePath, jsonString);
+
+                // 2. 写入二进制 (保证下次启动速度)
+                SaveBinary();
             }
             catch (Exception ex)
             {
@@ -118,6 +158,180 @@ namespace TabPaint
             Save();
         }
 
-       
+        private void SaveBinary()
+        {
+        
+            try
+            {
+                using (var stream = File.Create(_binPath))
+                using (var writer = new BinaryWriter(stream))
+                {
+                    writer.Write(BinaryVersion);
+                    
+                    // 基础属性
+                    writer.Write((int)Current.Language);
+                    writer.Write((int)Current.SelectionClearMode);
+                    writer.Write(Current.IsFirstRun);
+                    writer.Write(Current.IsImageBarCompact);
+                    writer.Write(Current.StartInViewMode);
+                    writer.Write((int)Current.ViewMouseWheelMode);
+                    writer.Write(Current.IsTextToolbarExpanded);
+                    writer.Write(Current.EnableIccColorCorrection);
+                    writer.Write((int)Current.ThemeMode);
+                    writer.Write(Current.IsFixedZoom);
+                    writer.Write(Current.EnableClipboardMonitor);
+                    writer.Write(Current.LastToolName ?? "");
+                    writer.Write((int)Current.LastBrushStyle);
+                    writer.Write(Current.ShowRulers);
+                    writer.Write((int)Current.ResamplingMode);
+                    writer.Write(Current.ViewInterpolationThreshold);
+                    writer.Write(Current.PaintInterpolationThreshold);
+                    writer.Write(Current.WindowWidth);
+                    writer.Write(Current.WindowHeight);
+                    writer.Write(Current.WindowLeft);
+                    writer.Write(Current.WindowTop);
+                    writer.Write(Current.WindowState);
+                    writer.Write(Current.AutoLoadFolderImages);
+                    writer.Write(Current.ViewShowTransparentGrid);
+                    writer.Write(Current.SkipResetConfirmation);
+                    writer.Write(Current.AutoPopupOnClipboardImage);
+                    writer.Write(Current.EnableFileDeleteInPaintMode);
+                    writer.Write(Current.ViewUseDarkCanvasBackground);
+                    writer.Write(Current.ThemeAccentColor ?? "");
+                    writer.Write(Current.PerformanceScore);
+                    writer.Write(Current.LastBenchmarkDate.Ticks);
+
+                    // RecentFiles
+                    var recentFiles = Current.RecentFiles ?? new List<string>();
+                    writer.Write(recentFiles.Count);
+                    foreach (var file in recentFiles) writer.Write(file ?? "");
+
+                    // CustomColors
+                    var customColors = Current.CustomColors ?? new List<string>();
+                    writer.Write(customColors.Count);
+                    foreach (var color in customColors) writer.Write(color ?? "");
+
+                    // PerToolSettings
+                    var perToolSettings = Current.PerToolSettings ?? new Dictionary<string, ToolSettingsModel>();
+                    writer.Write(perToolSettings.Count);
+                    foreach (var kvp in perToolSettings)
+                    {
+                        writer.Write(kvp.Key);
+                        writer.Write(kvp.Value.Thickness);
+                        writer.Write(kvp.Value.Opacity);
+                    }
+
+                    // Shortcuts
+                    var shortcuts = Current.Shortcuts ?? new Dictionary<string, ShortcutItem>();
+                    writer.Write(shortcuts.Count);
+                    foreach (var kvp in shortcuts)
+                    {
+                        writer.Write(kvp.Key);
+                        writer.Write((int)kvp.Value.Key);
+                        writer.Write((int)kvp.Value.Modifiers);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Settings] SaveBinary failed: {ex.Message}");
+            }
+        }
+
+        private bool LoadBinary()
+        {
+            if (!File.Exists(_binPath)) return false;
+
+            try
+            {
+                
+                using (var stream = File.OpenRead(_binPath))
+                using (var reader = new BinaryReader(stream))
+                {
+                    if (reader.ReadInt32() != BinaryVersion) return false;
+
+                    var settings = new AppSettings(); 
+                    settings.Language = (AppLanguage)reader.ReadInt32();
+                    settings.SelectionClearMode = (SelectionClearMode)reader.ReadInt32();
+                    settings.IsFirstRun = reader.ReadBoolean();
+                    settings.IsImageBarCompact = reader.ReadBoolean();
+                    settings.StartInViewMode = reader.ReadBoolean();
+                    settings.ViewMouseWheelMode = (MouseWheelMode)reader.ReadInt32();
+                    settings.IsTextToolbarExpanded = reader.ReadBoolean();
+                    settings.EnableIccColorCorrection = reader.ReadBoolean();
+                    settings.ThemeMode = (AppTheme)reader.ReadInt32();
+                    settings.IsFixedZoom = reader.ReadBoolean();
+                    settings.EnableClipboardMonitor = reader.ReadBoolean();
+                    settings.LastToolName = reader.ReadString();
+                    settings.LastBrushStyle = (BrushStyle)reader.ReadInt32();
+                    settings.ShowRulers = reader.ReadBoolean();
+                    settings.ResamplingMode = (AppResamplingMode)reader.ReadInt32();
+                    settings.ViewInterpolationThreshold = reader.ReadDouble();
+                    settings.PaintInterpolationThreshold = reader.ReadDouble();
+                    settings.WindowWidth = reader.ReadDouble();
+                    settings.WindowHeight = reader.ReadDouble();
+                    settings.WindowLeft = reader.ReadDouble();
+                    settings.WindowTop = reader.ReadDouble();
+                    settings.WindowState = reader.ReadInt32();
+                    settings.AutoLoadFolderImages = reader.ReadBoolean();
+                    settings.ViewShowTransparentGrid = reader.ReadBoolean();
+                    settings.SkipResetConfirmation = reader.ReadBoolean();
+                    settings.AutoPopupOnClipboardImage = reader.ReadBoolean();
+                    settings.EnableFileDeleteInPaintMode = reader.ReadBoolean();
+                    settings.ViewUseDarkCanvasBackground = reader.ReadBoolean();
+                    settings.ThemeAccentColor = reader.ReadString();
+                    settings.PerformanceScore = reader.ReadInt32();
+                    settings.LastBenchmarkDate = new DateTime(reader.ReadInt64());
+                   
+                    // RecentFiles
+                    int recentCount = reader.ReadInt32();
+                    var recentFiles = new List<string>(recentCount);
+                    for (int i = 0; i < recentCount; i++) recentFiles.Add(reader.ReadString());
+                    settings.RecentFiles = recentFiles;
+
+                    // CustomColors
+                    int colorCount = reader.ReadInt32();
+                    var customColors = new List<string>(colorCount);
+                    for (int i = 0; i < colorCount; i++) customColors.Add(reader.ReadString());
+                    settings.CustomColors = customColors;
+
+                    // PerToolSettings
+                    int toolCount = reader.ReadInt32();
+                    var perToolSettings = new Dictionary<string, ToolSettingsModel>(toolCount);
+                    for (int i = 0; i < toolCount; i++)
+                    {
+                        var key = reader.ReadString();
+                        perToolSettings[key] = new ToolSettingsModel
+                        {
+                            Thickness = reader.ReadDouble(),
+                            Opacity = reader.ReadDouble()
+                        };
+                    }
+                    settings.PerToolSettings = perToolSettings;
+
+                    // Shortcuts
+                    int shortcutCount = reader.ReadInt32();
+                    var shortcuts = new Dictionary<string, ShortcutItem>(shortcutCount);
+                    for (int i = 0; i < shortcutCount; i++)
+                    {
+                        var key = reader.ReadString();
+                        shortcuts[key] = new ShortcutItem
+                        {
+                            Key = (System.Windows.Input.Key)reader.ReadInt32(),
+                            Modifiers = (System.Windows.Input.ModifierKeys)reader.ReadInt32()
+                        };
+                    }
+                    settings.Shortcuts = shortcuts;
+
+                    Current = settings;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Settings] LoadBinary failed: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

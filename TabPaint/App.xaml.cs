@@ -101,7 +101,7 @@ namespace TabPaint
         private void ShutdownAppWithErrorMessage(Exception ex)
         {
             string msg = $"TabPaint 遇到错误需要关闭。\n\n错误信息: {ex.Message}\n\n日志已保存至: {LogDirectory}";
-            FluentMessageBox.Show(msg, "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error,null, LogDirectory);
+            FluentMessageBox.Show(msg, "程序崩溃", MessageBoxButton.OK, MessageBoxImage.Error, null, LogDirectory);
 
             try
             {
@@ -111,27 +111,36 @@ namespace TabPaint
             Environment.Exit(1);
         }
         protected override void OnStartup(StartupEventArgs e)
-        {
+        {//680ms
+       
+            // 1. 立即启动配置预加载（并行）
+            var settingsTask = Task.Run(() => SettingsManager.Instance);
+
             // 启用分级 JIT 编译优化
             try
             {
                 string profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint", "Profiles");
-                if (!Directory.Exists(profileRoot)) Directory.CreateDirectory(profileRoot);
+                Directory.CreateDirectory(profileRoot);
                 System.Runtime.ProfileOptimization.SetProfileRoot(profileRoot);
                 System.Runtime.ProfileOptimization.StartProfile("Startup.profile");
-            }
+            }//4ms
             catch { }
-
-            SetupExceptionHandling();
+ 
+            SetupExceptionHandling();//0.9ms
             //检查单实例
-            if (!SingleInstance.IsFirstInstance())
+         
+            if (!SingleInstance.IsFirstInstance())//0.3ms
             {
                 SingleInstance.SendArgsToFirstInstance(e.Args);
                 Environment.Exit(0);
                 return;
-            }
-            SingleInstance.ListenForArgs((filePath) =>
-           {     Current.Dispatcher.Invoke(() =>
+            } 
+          
+            _ = Task.Run(() =>//创建线程池，10ms
+            {
+                SingleInstance.ListenForArgs((filePath) =>
+            {
+                Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     if (_mainWindow != null)
                     {
@@ -146,7 +155,7 @@ namespace TabPaint
                             {
                                 var newTab = new FileTabItem(filePath)
                                 {
-                                    IsNew = false,
+                                    IsNew = false, 
                                     IsDirty = false
                                 };
 
@@ -169,44 +178,46 @@ namespace TabPaint
                     }
                 });
             });
-            var currentSettings = SettingsManager.Instance.Current;
-            LocalizationManager.ApplyLanguage(currentSettings.Language);
-            currentSettings.PropertyChanged += Settings_PropertyChanged;
-            AppTheme targetTheme = currentSettings.ThemeMode;
-            // --- 原有的启动逻辑 ---
-            string filePath = "";
+            });
+            // 1. 获取启动路径并检查其有效性（一次性检查）
+
+  
+            string filePath = "";//<0.1ms
+            bool fileExists = false;
             if (e.Args is { Length: > 0 })
             {
                 string inputPath = e.Args[0];
                 if (System.IO.File.Exists(inputPath) || System.IO.Directory.Exists(inputPath))
                 {
                     filePath = inputPath;
+                    fileExists = true;
                 }
             }
-            else
-            {
-//#if DEBUG
-//                  filePath = @"E:\dev\misc\0000.png"; //10图片
-//                //         filePath = @"E:\dev\res\"; // 150+图片
-//                //    filePath = @"E:\dev\res\camera\"; // 1000+4k照片
-//                // filePath = @"E:\dev\res\pic\"; // 7000+图片文件夹
+          
+            // 等待配置加载完成
+            var settingsManager = settingsTask.Result;
+            var currentSettings = settingsManager.Current; //15ms
+         
+            LocalizationManager.ApplyLanguage(currentSettings.Language);//2ms
 
-//#endif
-            }
-            base.OnStartup(e); _mainWindow = new MainWindow(filePath);
-            _mainWindow.CheckFilePathAvailibility(filePath);
-   
-            if (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _mainWindow._currentFileExists)
+            currentSettings.PropertyChanged += Settings_PropertyChanged;
+           
+            AppTheme targetTheme = currentSettings.ThemeMode;//<0.1ms
+            if (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && fileExists)
             {
                 targetTheme = AppTheme.Dark;
             }
-            ThemeManager.ApplyTheme(targetTheme);
 
 
+            // 在创建 MainWindow 之前应用主题，避免 InitializeComponent 时的资源浪费
+            ThemeManager.ApplyTheme(targetTheme);  //2ms
 
+            // 3. 创建并启动主窗口
+            base.OnStartup(e);//<0.1ms
+            _mainWindow = new MainWindow(filePath, fileExists);//240ms
+                _mainWindow.Show();//340ms
+         
 
-
-            _mainWindow.Show();
         }
         private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {

@@ -75,7 +75,7 @@ namespace TabPaint
         }
 
         private async Task RefreshTabPageAsync(int centerIndex, bool refresh = false)
-        {
+        {if (MainImageBar == null) return;
             if (_imageFiles == null || _imageFiles.Count == 0) return;
 
             if (refresh)

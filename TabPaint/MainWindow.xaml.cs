@@ -27,14 +27,16 @@ namespace TabPaint
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
 
-        public MainWindow(string path)
+        public MainWindow(string path, bool? fileExists = null)
         {
+            
             _workingPath = path;
-            _currentFilePath = path;
-            CheckFilePathAvailibility(_currentFilePath);
-            // PerformanceScore 移至 Loaded 异步加载
-            InitializeComponent();
-            RestoreWindowBounds();
+            _currentFilePath = path;  
+            if (fileExists.HasValue) _currentFileExists = fileExists.Value;//<0.1ms
+            else CheckFilePathAvailibility(_currentFilePath);
+        InitializeComponent();  //220ms
+          
+            RestoreWindowBounds();//0.3ms
 
             if (SettingsManager.Instance.Current.StartInViewMode && _currentFileExists)
             {
@@ -44,18 +46,21 @@ namespace TabPaint
             }
             this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
-            InitDebounceTimer();
-            InitWheelLockTimer();
+      
+            
+            InitDebounceTimer();//0.3ms
+            InitWheelLockTimer(); //0.4ms
             Loaded += MainWindow_Loaded;
 
-            InitializeAutoSave();
             this.Focusable = true;
         }
 
 
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
-            InitializeLazyControls(); Dispatcher.BeginInvoke(new Action(() =>
+            InitializeAutoSave();
+            InitializeLazyControls();
+            Dispatcher.BeginInvoke(new Action(() =>
             {
                 ThemeManager.LoadLazyIcons();
             }), DispatcherPriority.Background);
@@ -75,10 +80,12 @@ namespace TabPaint
                 }
                 SetCropButtonState();
             }), DispatcherPriority.Loaded);
+            
+            _canvasResizer = new CanvasResizeManager(this);//0.2ms
 
-            _canvasResizer = new CanvasResizeManager(this); ;
-            LoadSession();
-            if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))
+
+            LoadSession(); //8ms
+           if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))//0.2ms
             {
                 _currentFilePath = FindFirstImageInDirectory(_currentFilePath);
             }
@@ -100,7 +107,15 @@ namespace TabPaint
                 }
             }
 
-            RestoreAppState();
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                RestoreAppState();
+            }), DispatcherPriority.Loaded);
+            this.Dispatcher.InvokeAsync(() =>
+            {
+                ThemeManager.StartSystemThemeMonitoring();
+            }, DispatcherPriority.ApplicationIdle);
+
             InitializeScrollPosition();
             //if (BlanketMode) FitToWindow();
             _startupFinished = true;
@@ -108,20 +123,25 @@ namespace TabPaint
         }
         protected override void OnSourceInitialized(EventArgs e)
         {
-            base.OnSourceInitialized(e); // 建议保留 base 调用
+            //Dispatcher.BeginInvoke(new Action(() =>
+            //{
+                base.OnSourceInitialized(e); //17ms
+                                            
+                MicaAcrylicManager.ApplyEffect(this);
 
-            MicaAcrylicManager.ApplyEffect(this);
-
-            MicaEnabled = true; var currentSettings = SettingsManager.Instance.Current;
+            MicaEnabled = true; var currentSettings = SettingsManager.Instance.Current;//共0.7ms
             bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark) || (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
-            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
-            InitializeClipboardMonitor();
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark); 
+
+
+            InitializeClipboardMonitor(); //共0.4ms
 
             var src = (HwndSource)PresentationSource.FromVisual(this);
             if (src != null)
             {
                 src.CompositionTarget.BackgroundColor = Colors.Transparent;
-            }// 初始化 Mica
+            }
+            //}), DispatcherPriority.Loaded);
         }
         private void MainWindow_Activated(object sender, EventArgs e)
         {
@@ -133,25 +153,22 @@ namespace TabPaint
             }
         }
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-
-            await Task.Yield();
-            
-            // 异步加载性能评分，避免阻塞 UI
-            _ = Task.Run(() =>
-            {
-                int score = QuickBenchmark.EstimatePerformanceScore();
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    PerformanceScore = score;
-                }));
-            });
-
-            this.Focus();
-
+        {//共5ms
             try
             {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _ = Task.Run(() =>
+                    {
+                        int score = QuickBenchmark.EstimatePerformanceScore();
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            PerformanceScore = score;
+                        }));
+                    });
+                }), DispatcherPriority.ApplicationIdle);
 
+                this.Focus(); 
                 _deleteCommitTimer = new System.Windows.Threading.DispatcherTimer();
                 _deleteCommitTimer.Interval = TimeSpan.FromSeconds(AppConsts.DeleteCommitTimerSeconds); // 2秒
                 _deleteCommitTimer.Tick += (s, e) => CommitPendingDeletions();
@@ -184,7 +201,7 @@ namespace TabPaint
                 _ = Task.Delay(TimeSpan.FromSeconds(AppConsts.DragTempCleanupDelaySeconds)).ContinueWith(async _ =>
                     {
                         await CheckAndCleanDragTempAsync();
-                    }, TaskScheduler.Default);
+                    }, TaskScheduler.Default); 
             }
             catch (Exception ex)
             {
@@ -192,12 +209,14 @@ namespace TabPaint
             }
             finally
             {
+               
 
                 _isInitialLayoutComplete = true;
                 if (FileTabs.Count > 0)
                 { // 模拟触发一次滚动检查
                     OnFileTabsScrollChanged(MainImageBar.Scroller, null);
                 }
+             
             }
         }
         private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)

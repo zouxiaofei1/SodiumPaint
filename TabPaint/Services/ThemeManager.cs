@@ -1,12 +1,13 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Forms;
-
+using static TabPaint.MainWindow;
 namespace TabPaint
 {
 
@@ -21,9 +22,21 @@ namespace TabPaint
         // 监听系统颜色改变
         static ThemeManager()
         {
-            SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
         }
-
+        public static void StartSystemThemeMonitoring()
+        {
+            try
+            {
+                // 确保不重复订阅（虽然 SystemEvents 允许多播，但在这种场景下我们防一手）
+                SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+                SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
+            }
+            catch (Exception ex)
+            {
+                // 记录日志，系统事件挂钩失败不应导致程序崩溃
+                Debug.WriteLine($"Failed to subscribe to SystemEvents: {ex.Message}");
+            }
+        }
         private static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
             if (e.Category == UserPreferenceCategory.General &&
@@ -35,43 +48,51 @@ namespace TabPaint
 
         public static void ApplyTheme(AppTheme theme)
         {
-            // 1. 确定实际要应用的主题 (Light 或 Dark)
+           
             bool isDark = false;
             if (theme == AppTheme.Dark) isDark = true;
+
             else if (theme == AppTheme.Light) isDark = false;
-            else isDark = IsSystemDark(); // System
+            else isDark = IsSystemDark(); // 1.8ms
 
-            AppTheme targetTheme = isDark ? AppTheme.Dark : AppTheme.Light;
-            
-            // 2. 替换基础 ResourceDictionary (Light/Dark)
-            string dictPath = isDark ? "Resources/DarkTheme.xaml" : "Resources/LightTheme.xaml";
-            var dictUri = new Uri($"pack://application:,,,/{dictPath}", UriKind.Absolute);
+            AppTheme targetTheme = isDark ? AppTheme.Dark : AppTheme.Light; 
+
+            // 1. 检查主题是否真的需要变更
             var mergedDicts = Application.Current.Resources.MergedDictionaries;
+            ResourceDictionary oldDict = null;
+            
+            // 快速查找现有主题字典
+            for (int i = 0; i < mergedDicts.Count; i++)
+            {
+                var d = mergedDicts[i];
+                if (d.Source != null && (d.Source.OriginalString.EndsWith("LightTheme.xaml") || d.Source.OriginalString.EndsWith("DarkTheme.xaml")))
+                {
+                    oldDict = d;
+                    break;
+                }
+            }
 
-            // 查找现有主题字典
-            ResourceDictionary oldDict = mergedDicts.FirstOrDefault(d => d.Source != null &&
-                   (d.Source.OriginalString.Contains("LightTheme.xaml") ||
-                    d.Source.OriginalString.Contains("DarkTheme.xaml")));
-
-            // 如果主题没变且资源已加载，则跳过字典操作
             bool themeChanged = (CurrentAppliedTheme != targetTheme) || (oldDict == null);
-
+   
             if (themeChanged)
             {
+                string dictPath = isDark ? "Resources/DarkTheme.xaml" : "Resources/LightTheme.xaml";
+                var dictUri = new Uri($"pack://application:,,,/{dictPath}", UriKind.Absolute);
                 var newDict = new ResourceDictionary() { Source = dictUri };
+
                 if (oldDict != null)
                 {
                     int index = mergedDicts.IndexOf(oldDict);
                     mergedDicts[index] = newDict;
                 }
                 else mergedDicts.Add(newDict);
+                
                 CurrentAppliedTheme = targetTheme;
 
-                // 4. 图标字典重载 (仅在主题变化或初始化时执行)
+                // 2. 图标字典处理
                 if(!IsLazyIconsLoaded)
                 {
                     ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
-                   // IsLazyIconsLoaded
                 }
                 else
                 {
@@ -79,9 +100,12 @@ namespace TabPaint
                 }
             }
 
+            // 更新窗口样式和背景
+            UpdateWindowStyle(isDark);
+           
             if (!IsWin11()) ApplyWin10FallbackBackground(isDark);
 
-            UpdateWindowStyle(isDark);
+            // 强调色更新涉及 UI 资源，必须在 UI 线程执行。4ms 耗时较低，直接执行以确保界面一致性。
             RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
         }
         private static void ReloadIconDictionary(string path)
@@ -236,7 +260,6 @@ namespace TabPaint
                 SetWindowImmersiveDarkMode(window, isDark);
                 var bgBrush = MicaAcrylicManager.IsWin11()? Brushes.Transparent: Application.Current.FindResource("WindowBackgroundBrush") as Brush;
                 window.Background = bgBrush;
-                
             }
         }
         [DllImport("dwmapi.dll")]
