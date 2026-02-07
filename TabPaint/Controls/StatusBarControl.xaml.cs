@@ -33,6 +33,9 @@ namespace TabPaint.Controls
 
         public static readonly RoutedEvent ZoomSelectionChangedEvent = EventManager.RegisterRoutedEvent(
             "ZoomSelectionChanged", RoutingStrategy.Bubble, typeof(SelectionChangedEventHandler), typeof(StatusBarControl));
+        public static readonly RoutedEvent FavoriteClickEvent = EventManager.RegisterRoutedEvent(
+            "FavoriteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(StatusBarControl));
+
         public event RoutedEventHandler ClipboardMonitorClick
         {
             add { AddHandler(ClipboardMonitorClickEvent, value); }
@@ -58,8 +61,15 @@ namespace TabPaint.Controls
             add { AddHandler(ZoomSelectionChangedEvent, value); }
             remove { RemoveHandler(ZoomSelectionChangedEvent, value); }
         }
+        public event RoutedEventHandler FavoriteClick
+        {
+            add { AddHandler(FavoriteClickEvent, value); }
+            remove { RemoveHandler(FavoriteClickEvent, value); }
+        }
+
         public ComboBox ZoomComboBox => ZoomMenu;
         public ToggleButton ClipboardToggle => ClipboardMonitorToggle;
+        public ToggleButton FavToggle => FavoriteToggle; 
         public Slider ZoomSliderControl => ZoomSlider;
 
 
@@ -72,6 +82,15 @@ namespace TabPaint.Controls
             RaiseEvent(new RoutedEventArgs(ClipboardMonitorClickEvent));
         }
 
+        private void OnFavoriteToggleClick(object sender, RoutedEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(FavoriteClickEvent));
+        }
+
+        public void SetFavoriteToggleState(bool isChecked)
+        {
+            FavoriteToggle.IsChecked = isChecked;
+        }
         private void OnFitToWindowClick(object sender, RoutedEventArgs e)
         {
             RaiseEvent(new RoutedEventArgs(FitToWindowClickEvent));

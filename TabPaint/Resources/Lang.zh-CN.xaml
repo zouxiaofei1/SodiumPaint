@@ -707,6 +707,7 @@
     <sys:String x:Key="L_StatusBar_ZoomIn">放大</sys:String>
     <sys:String x:Key="L_AI_Status_Upscaling_Format">正在超分... {0:0}%</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Success">超分辨率处理完成 (400%)</sys:String>
+    <sys:String x:Key="L_StatusBar_Favorite_ToolTip">收藏</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Error_Prefix">超分失败: {0}</sys:String>
     <sys:String x:Key="L_AI_Download_Title">下载模型</sys:String>
     <sys:String x:Key="L_AI_Download_RMBG_Content">首次使用需要下载背景移除模型 (约 170MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>

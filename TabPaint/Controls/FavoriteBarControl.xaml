@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="TabPaint.Controls.FavoriteBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TabPaint.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="400">
+    <Grid Background="{DynamicResource GlassBackgroundHighBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4" Visibility="Collapsed">
+            <Grid>
+                <TextBlock Text="{DynamicResource L_StatusBar_Favorite_ToolTip}" 
+                           FontWeight="Bold" VerticalAlignment="Center" 
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="CloseBtn" Click="OnCloseClick" Style="{StaticResource RoundedMenuButtonStyle}" Width="24" Height="24">
+                        <Path Data="M0,0 L8,8 M8,0 L0,8" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1.5" Stretch="Uniform" Width="10" Height="10"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="6">
+            <WrapPanel x:Name="FavoriteWrapPanel" Margin="4" AllowDrop="True" 
+                       Drop="OnWrapPanelDrop" DragOver="OnWrapPanelDragOver"
+                       Background="Transparent">
+                <!-- Favorite items will be added here -->
+            </WrapPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -706,6 +706,7 @@
     <!-- StatusBar Tooltips -->
     <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">Monitor Clipboard (Ctrl + Alt + P)</sys:String>
     <sys:String x:Key="L_StatusBar_FitToWindow">Fit to Window</sys:String>
+    <sys:String x:Key="L_StatusBar_Favorite_ToolTip">Image Favorites</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomOut">Zoom Out</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomIn">Zoom In</sys:String>
     <sys:String x:Key="L_AI_Status_Upscaling_Format">Upscaling... {0:0}%</sys:String>

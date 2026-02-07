@@ -11,7 +11,7 @@ namespace TabPaint
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.4.2";
+        public const string ProgramVersion = "v0.9.4.3";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;
@@ -65,6 +65,7 @@ namespace TabPaint
         // --- 目录与路径 ---
         public static readonly string AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
         public static readonly string CacheDir = Path.Combine(AppDataFolder, "Cache");
+        public static readonly string FavoriteDir = Path.Combine(CacheDir, "Favorite");
         public static readonly string DragTempDir = Path.Combine(CacheDir, "DragTemp");
         public static readonly string SessionPath = Path.Combine(AppDataFolder, "session.json");
         public static readonly string ClipboardCacheDir = Path.Combine(CacheDir, "Clipboard");
@@ -279,7 +280,16 @@ namespace TabPaint
         public const double CalligraphyMaxSpeed = 60.0;
         public const double CalligraphyMinPressure = 0.1;
         public const byte ColorComponentMax = 255;
-
+        public static bool IsSupportedImage(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            string ext = Path.GetExtension(path).ToLower();
+            foreach (var s in ImageExtensions)
+            {
+                if (s == ext) return true;
+            }
+            return false;
+        }
         // --- 文件过滤器与扩展名 ---
         public const string ImageFilterFormat = "{0}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.avif;*.ico;*.heic;*.jfif;*.exif;*.jpe;*.jxl;*.heif;*.hif;*.dib;*.wdp;*.wmp;*.jxr;*.svg|{1} (*.png)|*.png|{2} (*.jpg;*.jpeg)|*.jpg;*.jpeg|{3} (*.webp)|*.webp|{4} (*.bmp)|*.bmp|{5} (*.gif)|*.gif|{6} (*.tif;*.tiff)|*.tif;*.tiff|{7} (*.ico)|*.ico|{8} (*.svg)|*.svg";
         public static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".avif", ".ico", ".tiff", ".heic", ".tif", ".jfif", ".exif", ".jpe", ".jxl", ".heif", ".hif", ".dib", ".wdp", ".wmp", ".jxr", ".svg" };

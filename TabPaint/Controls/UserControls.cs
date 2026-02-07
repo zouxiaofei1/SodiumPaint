@@ -160,6 +160,7 @@ namespace TabPaint
         {
             MyStatusBar = new StatusBarControl();
             MyStatusBar.ClipboardMonitorClick += ClipboardMonitorToggle_Click;
+            MyStatusBar.FavoriteClick += (s, e) => ToggleFavoriteWindow();
             MyStatusBar.FitToWindowClick += FitToWindow_Click;
             MyStatusBar.ZoomOutClick += ZoomOut_Click;
             MyStatusBar.ZoomInClick += ZoomIn_Click;

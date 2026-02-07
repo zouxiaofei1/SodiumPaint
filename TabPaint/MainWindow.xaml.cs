@@ -4,13 +4,17 @@
 //主窗口的逻辑实现，负责界面交互、工具初始化、文件打开与标签管理等核心功能。
 //
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -19,13 +23,22 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using static TabPaint.MainWindow;
 using TabPaint.Controls;
+using static TabPaint.MainWindow;
 
 namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        public static readonly RoutedEvent FavoriteClickEvent = EventManager.RegisterRoutedEvent(
+            "FavoriteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MainWindow));
+
+        public event RoutedEventHandler FavoriteClick
+        {
+            add { AddHandler(FavoriteClickEvent, value); }
+            remove { RemoveHandler(FavoriteClickEvent, value); }
+        }
+
         public static MainWindow GetCurrentInstance()
         {
             // 优先返回当前激活的 MainWindow
@@ -188,6 +201,20 @@ namespace TabPaint
         {//共5ms
             try
             {
+                var bar = this.FindName("FavoriteBar") as FavoriteBarControl;
+                var popup = this.FindName("FavoritePopup") as Popup;
+                if (bar != null && popup != null)
+                {
+                    bar.CloseRequested += (s, ev) => popup.IsOpen = false;
+                    bar.ImageSelected += async (path) =>
+                    {
+                        if (AppConsts.IsSupportedImage(path))
+                        {
+                            await OpenFilesAsNewTabs(new string[] { path });
+                            popup.IsOpen = false;
+                        }
+                    };
+                }
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     _ = Task.Run(() =>
@@ -1261,6 +1288,29 @@ namespace TabPaint
                 MainImageBar.IsSingleTabMode = isSingle;
                 CheckFittoWindow();
             }
+        }
+        private UIHandlers.FavoriteWindow _favoriteWindow;
+        public void ToggleFavoriteWindow()
+        {
+            if (_favoriteWindow == null)
+            {
+                _favoriteWindow = new UIHandlers.FavoriteWindow(this);
+                _favoriteWindow.FavoriteContent.ImageSelected += async (path) =>
+                {
+                    if (AppConsts.IsSupportedImage(path))
+                    {
+                        await OpenFilesAsNewTabs(new string[] { path });
+                    }
+                };
+                _favoriteWindow.IsVisibleChanged += (s, e) =>
+                {
+                    if (MyStatusBar != null)
+                    {
+                        MyStatusBar.SetFavoriteToggleState(_favoriteWindow.IsVisible);
+                    }
+                };
+            }
+            _favoriteWindow.ToggleVisibility();
         }
     }
 }

@@ -115,7 +115,16 @@
                     </Grid>
                 </ToggleButton>
 
-
+                <ToggleButton x:Name="FavoriteToggle"
+                             Width="24" Height="24"
+                             Margin="4,0,0,0" Padding="0"
+                             ToolTip="{DynamicResource L_StatusBar_Favorite_ToolTip}"
+                             Style="{StaticResource RoundedMenuToggleButtonStyle}"
+                             Click="OnFavoriteToggleClick">
+                    <Path Data="{DynamicResource Icon_Shape_Star}" Stretch="Uniform" 
+                         Fill="{DynamicResource IconFillBrush}" 
+                         Width="16" Height="16"/>
+                </ToggleButton>
                 <!-- 适应窗口按钮 -->
                 <Button Width="24" Height="24" ToolTip="{DynamicResource L_StatusBar_FitToWindow}" Margin="4,0,6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
                     <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" 
