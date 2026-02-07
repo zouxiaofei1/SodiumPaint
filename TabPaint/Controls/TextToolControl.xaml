@@ -142,7 +142,7 @@
             <ToggleButton x:Name="MoreToolsBtn" 
                           Style="{StaticResource FluentToggleButtonStyle}"
                           IsChecked="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current.IsTextToolbarExpanded, Mode=TwoWay}"
-                          ToolTip="Expand/Collapse tools"
+                          ToolTip="{DynamicResource L_Text_ExpandCollapse}"
                           Width="24" Height="30">
                 <Grid>
                     <Path Data="M8,4 L12,10 L8,16" 

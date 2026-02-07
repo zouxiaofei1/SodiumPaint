@@ -15,42 +15,276 @@
             </ResourceDictionary.MergedDictionaries>
             <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
 
-            <!-- 颜色选择块样式 -->
             <Style TargetType="RadioButton" x:Key="ColorRadioStyle">
-                <Setter Property="Width" Value="32"/>
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="Margin" Value="0,0,10,5"/>
+                <Setter Property="Width" Value="40"/>
+                <Setter Property="Height" Value="40"/>
+                <Setter Property="Margin" Value="0,0,6,5"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="RadioButton">
-                            <Grid>
+                            <Grid Width="40" Height="40"
+                      HorizontalAlignment="Center" VerticalAlignment="Center">
+
                                 <!-- 选中时的外圈 -->
                                 <Border x:Name="SelectionBorder" 
-                                    CornerRadius="16" 
-                                    BorderThickness="2" 
-                                    BorderBrush="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
-                                    Opacity="0"
-                                    Width="32" Height="32"/>
-                                <!-- 颜色主体 -->
-                                <Border Width="22" Height="22" CornerRadius="11" 
-                                    Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <!-- 选中时的勾 -->
-                                <Path x:Name="CheckMark" Data="M2,6 L5,9 L10,3" Stroke="White" StrokeThickness="2" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Visibility="Collapsed"/>
+                            CornerRadius="16" 
+                            BorderThickness="2" 
+                            BorderBrush="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                            Opacity="0"
+                            Width="32" Height="32"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                    </Border.RenderTransform>
+                                </Border>
+
+                                <!-- 颜色主体圆 -->
+                                <Border x:Name="ColorCircle" Width="22" Height="22" CornerRadius="11" 
+                            Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="CircleScale" ScaleX="1" ScaleY="1"/>
+                                    </Border.RenderTransform>
+                                </Border>
+
+                                <!-- 选中勾 ★核心修复★ -->
+                                <Canvas Width="12" Height="10" 
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path x:Name="CheckMark"
+                              Data="M1,5.5 L4.5,9 L11,1.5"
+                              Stroke="White" StrokeThickness="1.8"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              Fill="Transparent"
+                              Opacity="0"
+                              RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <ScaleTransform x:Name="CheckScale" ScaleX="0.5" ScaleY="0.5"
+                                                CenterX="6" CenterY="5"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Canvas>
+
+                                <!-- 深色勾影子（确保在浅色如黄色/灰色上也能看到） -->
+                                <Canvas Width="12" Height="10" 
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path x:Name="CheckMarkShadow"
+                              Data="M1,5.5 L4.5,9 L11,1.5"
+                              Stroke="#40000000" StrokeThickness="3"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              Fill="Transparent"
+                              Opacity="0"
+                              RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <ScaleTransform x:Name="CheckShadowScale" ScaleX="0.5" ScaleY="0.5"
+                                                CenterX="6" CenterY="5"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Canvas>
                             </Grid>
+
                             <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="SelectionBorder" Property="Opacity" Value="1"/>
-                                    <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+
+                                <!-- ===== 悬浮 ===== -->
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard x:Name="HoverEnter_BSB">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
                                 </Trigger>
+
+                                <!-- ===== 按下 ===== -->
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard x:Name="PressEnter_BSB">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.85" Duration="0:0:0.08">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.85" Duration="0:0:0.08">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="8" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CircleScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.15" Duration="0:0:0.15">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="8" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+
+                                <!-- ===== 选中 ===== -->
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <!-- 外圈淡入 -->
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="1" Duration="0:0:0.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                     Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)"
+                                                     From="0.6" To="1" Duration="0:0:0.25">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                     Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)"
+                                                     From="0.6" To="1" Duration="0:0:0.25">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+
+                                                <!-- 勾影子淡入 -->
+                                                <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="1" Duration="0:0:0.2"
+                                                     BeginTime="0:0:0.06"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     From="0.3" To="1" Duration="0:0:0.3"
+                                                     BeginTime="0:0:0.05">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     From="0.3" To="1" Duration="0:0:0.3"
+                                                     BeginTime="0:0:0.05">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+
+                                                <!-- 勾淡入 -->
+                                                <DoubleAnimation Storyboard.TargetName="CheckMark" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="1" Duration="0:0:0.2"
+                                                     BeginTime="0:0:0.08"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     From="0.3" To="1" Duration="0:0:0.3"
+                                                     BeginTime="0:0:0.05">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     From="0.3" To="1" Duration="0:0:0.3"
+                                                     BeginTime="0:0:0.05">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase Oscillations="1" Springiness="6" EasingMode="EaseOut"/>
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="SelectionBorder" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckMark" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.1"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckMarkShadow" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.1"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.5" Duration="0:0:0.1"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.5" Duration="0:0:0.1"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.5" Duration="0:0:0.1"/>
+                                                <DoubleAnimation Storyboard.TargetName="CheckShadowScale" 
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.5" Duration="0:0:0.1"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
+
         </ResourceDictionary>
     </UserControl.Resources>
 

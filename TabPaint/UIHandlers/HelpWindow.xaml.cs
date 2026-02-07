@@ -92,7 +92,7 @@ namespace TabPaint
             if (!MicaAcrylicManager.IsWin11())
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
-                this.Background = FindResource("WindowBackgroundBrush") as Brush;
+                //this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
         }
         private async Task LoadCurrentPageAsync()

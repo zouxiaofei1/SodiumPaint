@@ -688,6 +688,7 @@
     <sys:String x:Key="L_Text_Highlight">高亮</sys:String>
     <sys:String x:Key="L_Text_Shadow">阴影特效</sys:String>
     <sys:String x:Key="L_Text_InsertTable">插入表格</sys:String>
+    <sys:String x:Key="L_Text_ExpandCollapse">展开/收起工具栏</sys:String>
     <sys:String x:Key="L_Common_Preview">预览</sys:String>
     <!-- 补充到 Code Code Code Code Code Code Code Behind 错误提示 -->
     <sys:String x:Key="L_Toast_OpenUrlFailed">无法打开链接</sys:String>

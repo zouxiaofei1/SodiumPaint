@@ -324,7 +324,7 @@ namespace TabPaint
                 }
             }
         }
-        private string _currentToolKey = "Pen_Pencil";
+        private string _currentToolKey = "Pen_Round";
         [JsonIgnore]
         public string CurrentToolKey
         {
@@ -351,7 +351,7 @@ namespace TabPaint
                 {
                     return settings.Thickness;
                 }
-                return 5.0; // Fallback
+                return 25.0; // Fallback
             }
             set
             {
@@ -401,12 +401,12 @@ namespace TabPaint
 
             // 为每种笔刷样式预设值
             dict["Pen_Pencil"] = new ToolSettingsModel { Thickness = 1.0, Opacity = 1.0 };
-            dict["Pen_Round"] = new ToolSettingsModel { Thickness = 5.0, Opacity = 1.0 };
-            dict["Pen_Square"] = new ToolSettingsModel { Thickness = 10.0, Opacity = 1.0 };
+            dict["Pen_Round"] = new ToolSettingsModel { Thickness = 25.0, Opacity = 1.0 };
+            dict["Pen_Square"] = new ToolSettingsModel { Thickness = 25.0, Opacity = 1.0 };
             dict["Pen_Highlighter"] = new ToolSettingsModel { Thickness = 20.0, Opacity = 0.5 }; // 荧光笔默认半透明
-            dict["Pen_Eraser"] = new ToolSettingsModel { Thickness = 20.0, Opacity = 1.0 };
+            dict["Pen_Eraser"] = new ToolSettingsModel { Thickness = 25.0, Opacity = 1.0 };
             dict["Pen_Watercolor"] = new ToolSettingsModel { Thickness = 30.0, Opacity = 0.8 };
-            dict["Pen_Crayon"] = new ToolSettingsModel { Thickness = 15.0, Opacity = 1.0 };
+            dict["Pen_Crayon"] = new ToolSettingsModel { Thickness = 25.0, Opacity = 1.0 };
             dict["Pen_Spray"] = new ToolSettingsModel { Thickness = 40.0, Opacity = 0.8 };
             dict["Pen_Mosaic"] = new ToolSettingsModel { Thickness = 20.0, Opacity = 1.0 };
             dict["Pen_Brush"] = new ToolSettingsModel { Thickness = 8.0, Opacity = 1.0 };
@@ -463,7 +463,7 @@ namespace TabPaint
         public string LastToolName { get; set; } = "PenTool"; // 默认为笔
 
         [JsonPropertyName("last_brush_style")]
-        public BrushStyle LastBrushStyle { get; set; } = BrushStyle.Pencil; // 默认为铅笔
+        public BrushStyle LastBrushStyle { get; set; } = BrushStyle.Round; 
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)

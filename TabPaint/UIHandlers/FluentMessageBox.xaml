@@ -21,20 +21,14 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-
-    <!-- 启用 WindowChrome 以支持无边框窗口的系统行为 (阴影、Snap等) 且兼容 Mica -->
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="-1" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
-    <!-- 
-       外层 Border：
-       Background 使用 GlassBackgroundLowBrush (约20%透明度)，
-       这样 Mica 效果能透过这层薄薄的背景显示出来。
-    -->
     <Border Background="{DynamicResource GlassBackgroundMediumBrush}" 
             BorderBrush="{DynamicResource BorderBrush}" 
             BorderThickness="1" 
+            Name="FluentMsgboxRootBorder"
             CornerRadius="8"
             MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
@@ -99,9 +93,11 @@
             <!-- ================= 按钮区 ================= -->
             <!-- 使用略微不同的背景色区分按钮区，增加层次感 -->
             <Border Grid.Row="2" 
+                    
                     Background="{DynamicResource SubtleHoverBrush}" 
                     BorderBrush="{DynamicResource BorderLightBrush}"
                     BorderThickness="0,1,0,0"
+                      Name="FluentSecondBorder"
                     CornerRadius="0,0,8,8"
                     Padding="24,16">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

@@ -87,6 +87,11 @@ namespace TabPaint
         {
             InitializeAutoSave();
             InitializeLazyControls();
+           UpdateDwmBorderColor();
+
+            // 窗口激活/失活时切换颜色
+            this.Activated += (s, e) => UpdateDwmBorderColor(); 
+            this.Deactivated += (s, e) => UpdateDwmBorderColor();
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 ThemeManager.LoadLazyIcons();
@@ -836,7 +841,27 @@ namespace TabPaint
                 if (RenderOptions.GetBitmapScalingMode(BackgroundImage) != BitmapScalingMode.Linear) RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
             }
         }
+        public void UpdateDwmBorderColor()
+        {
+            if (!IsLoaded) return;
 
+            if (this.IsActive)
+            {
+                var accentBrush = FindResource("SystemAccentPressedBrush") as SolidColorBrush;
+                if (accentBrush != null)
+                {
+                    DwmBorderHelper.SetBorderColor(this, accentBrush.Color);
+                }
+            }
+            else
+            {
+                var borderBrush = FindResource("BorderMediumBrush") as SolidColorBrush;
+                if (borderBrush != null)
+                {
+                    DwmBorderHelper.SetBorderColor(this, borderBrush.Color);
+                }
+            }
+        }
         private void OnScrollContainerMouseMove(object sender, MouseEventArgs e)
         {
             if (_isPanning)

@@ -6,14 +6,14 @@
         xmlns:local="clr-namespace:TabPaint"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=presentationframework"
         mc:Ignorable="d"
-        Title="{DynamicResource L_AdjustColor_Title}" 
+        Title="{DynamicResource L_AdjustTTS_Title}" 
         Height="450" Width="600" MinWidth="400" MinHeight="300"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize"
+        ResizeMode="CanResize" WindowStyle="None"
         Background="Transparent">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
+        <WindowChrome CaptionHeight="0" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
@@ -174,27 +174,47 @@
         </EventTrigger>
     </Window.Triggers>
 
-    <Border Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+    <Border Background="Transparent" 
+         CornerRadius="12" 
+         BorderBrush="{DynamicResource BorderLightBrush}" 
+         BorderThickness="1" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
         <Grid>
-            <!-- 调整行定义：标题栏、中间内容区、底部按钮栏 -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="32"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1">
-                <Grid MouseLeftButtonDown="TitleBar_MouseDown">
+
+            <Border Grid.Row="0" BorderThickness="0,0,0,1" Background="Transparent">
+                <Grid >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" Width="20" Height="20" Margin="10,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Grid.Column="1" Text="{DynamicResource L_AdjustBCE_Title}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                    <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
+                        Width="20" Height="20" Margin="12,0,8,0" 
+                        RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                    <TextBlock Grid.Column="1" Text="{DynamicResource L_AdjustTTS_Title}" 
+                            VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+
+                        <Button Width="48" Height="30" ToolTip="{DynamicResource L_TitleBar_Close}" Click="OnCloseClick" Style="{StaticResource WindowCloseButtonStyle}">
+                            <Viewbox Width="10" Height="10">
+                                <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                           StrokeThickness="1" 
+                           Data="M0,0 L12,12 M12,0 L0,12"/>
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- 2. 中间主要内容区：左右分栏 -->
+    <!-- 2. 中间主要内容区：左右分栏 -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="240"/>

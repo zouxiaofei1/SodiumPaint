@@ -270,5 +270,16 @@ namespace TabPaint
             this.SetDialogResultSafe(false);
             this.Close();
         }
+
+        private void OnCloseClick(object sender, RoutedEventArgs e)
+        {
+            this.SetDialogResultSafe(false);
+            this.Close();
+        }
+
+        private void OnMaximizeRestoreClick(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

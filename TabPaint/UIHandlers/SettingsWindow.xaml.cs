@@ -329,8 +329,7 @@ namespace TabPaint
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
                 SidebarBorder.Background = chromeLow;
-                // 同时设置主窗口背景
-                this.Background = FindResource("WindowBackgroundBrush") as Brush;
+              //  this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
         }
         private void SettingsWindow_Activated(object sender, EventArgs e)

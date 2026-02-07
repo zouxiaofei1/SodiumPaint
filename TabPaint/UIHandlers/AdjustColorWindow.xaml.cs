@@ -60,7 +60,7 @@ namespace TabPaint
             if (!MicaAcrylicManager.IsWin11())
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
-                this.Background = FindResource("WindowBackgroundBrush") as Brush;
+                //this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
         }
 
@@ -427,6 +427,17 @@ namespace TabPaint
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            this.SetDialogResultSafe(false);
+            Close();
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed) this.DragMove();
+        }
+
+        private void OnCloseClick(object sender, RoutedEventArgs e)
         {
             this.SetDialogResultSafe(false);
             Close();

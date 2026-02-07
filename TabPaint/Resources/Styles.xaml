@@ -247,28 +247,29 @@
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
 
-        <!-- 增加阴影效果 (之前可能写在 Popup 或 Border 上) -->
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="HasDropShadow" Value="True"/>
 
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
                     <!-- ✅ 正确：直接写 Border，不要外包 Popup -->
-                    <Border CornerRadius="8" 
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        Padding="{TemplateBinding Padding}">
+                    <Border Padding="8" Background="Transparent">
+                        <Border CornerRadius="8" 
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
 
-                        <!-- 加上滚动条以防菜单太长 -->
-                        <ScrollViewer Style="{DynamicResource FluentScrollViewer}" VerticalScrollBarVisibility="Auto">
-                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
-                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                        </ScrollViewer>
+                            <!-- ✅ 阴影放在内层 Border 上 -->
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" 
+                                              Opacity="0.15" Direction="270" Color="Black"/>
+                            </Border.Effect>
+                            <ScrollViewer Style="{DynamicResource FluentScrollViewer}" 
+                                      VerticalScrollBarVisibility="Auto">
+                                <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                            </ScrollViewer>
+                        </Border>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -352,29 +353,35 @@
 
                         <!-- 子菜单弹出层 -->
                         <Popup x:Name="PART_Popup"
-                           AllowsTransparency="True"
-                           Focusable="False"
-                           HorizontalOffset="-2" 
-                           VerticalOffset="-4"
-                           IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                           Placement="Right"
-                           PopupAnimation="{DynamicResource {x:Static SystemParameters.MenuPopupAnimationKey}}">
+       AllowsTransparency="True"
+       Focusable="False"
+       HorizontalOffset="-2" 
+       VerticalOffset="-4"
+       IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+       Placement="Right"
+       PopupAnimation="{DynamicResource {x:Static SystemParameters.MenuPopupAnimationKey}}">
 
-                            <Border Background="{DynamicResource ChromeLowBrush}" 
-                                BorderBrush="{DynamicResource BorderLightBrush}" 
-                                BorderThickness="1" 
-                                CornerRadius="8" 
-                                Padding="2"  TextElement.Foreground="{DynamicResource TextPrimaryBrush}">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
-                                </Border.Effect>
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" PanningMode="Both">
-                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
-                                                Grid.IsSharedSizeScope="True" 
-                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                                </ScrollViewer>
+                            <!-- ✅ 外层透明容器 -->
+                            <Border Padding="8" Background="Transparent">
+                                <Border Background="{DynamicResource ChromeLowBrush}" 
+                BorderBrush="{DynamicResource BorderLightBrush}" 
+                BorderThickness="1" 
+                CornerRadius="8" 
+                Padding="2"  
+                TextElement.Foreground="{DynamicResource TextPrimaryBrush}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="16" ShadowDepth="4" 
+                                  Opacity="0.15" Direction="270" Color="Black"/>
+                                    </Border.Effect>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" PanningMode="Both">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
+                                Grid.IsSharedSizeScope="True" 
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    </ScrollViewer>
+                                </Border>
                             </Border>
                         </Popup>
+
                     </Grid>
 
                     <ControlTemplate.Triggers>

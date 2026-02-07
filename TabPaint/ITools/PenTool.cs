@@ -65,7 +65,7 @@ public partial class PenTool : ToolBase
     }
     public override void SetCursor(ToolContext ctx)
     {
-        // 1. 初始化 Overlay 容器
+        if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
         if (ctx.EditorOverlay != null)
         {
             ctx.EditorOverlay.ClipToBounds = false;
@@ -73,7 +73,6 @@ public partial class PenTool : ToolBase
 
         if (_brushCursor == null)
         {
-            // ... (原有的 _brushCursor 和几何体初始化代码) ...
             _brushCursor = new System.Windows.Shapes.Path
             {
                 IsHitTestVisible = false,
@@ -93,8 +92,6 @@ public partial class PenTool : ToolBase
             ctx.EditorOverlay.Children.Add(_brushCursor);
         }
 
-        // 3. 核心：根据当前粗细初次设置系统光标状态
-        // 这里我们手动获取一次鼠标位置并触发更新
         Point currentPos = System.Windows.Input.Mouse.GetPosition(ctx.ViewElement);
         UpdateCursorVisual(ctx, currentPos);
     }
@@ -301,7 +298,15 @@ public partial class PenTool : ToolBase
 
     public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        // 优先更新光标，确保视觉流畅
+        if ((MainWindow.GetCurrentInstance()).IsViewMode)
+        {
+            if (_brushCursor != null)
+            {
+                _brushCursor.Visibility = Visibility.Collapsed;
+            }
+            return;
+        }
+
         UpdateCursorVisual(ctx, viewPos);
         
         if (!_drawing) return;

@@ -121,5 +121,11 @@ namespace TabPaint.Windows
                 btn.Content = "\uE923";
             }
         }
+
+        private void OnCloseClick(object sender, RoutedEventArgs e)
+        {
+            IsConfirmed = false;
+            Close();
+        }
     }
 }

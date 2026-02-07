@@ -13,12 +13,119 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 //
 //TabPaint主程序
 //
 
 namespace TabPaint
 {
+    public static class NoiseTextureGenerator
+    {
+        private static ImageBrush _cachedLightNoise;
+        private static ImageBrush _cachedDarkNoise;
+
+        public static ImageBrush CreateNoiseBrush(bool isDark, int size = 64, double opacity = 0.03)
+        {
+            // 使用缓存避免重复生成
+            if (isDark && _cachedDarkNoise != null) return _cachedDarkNoise;
+            if (!isDark && _cachedLightNoise != null) return _cachedLightNoise;
+
+            var bitmap = new WriteableBitmap(size, size, 96, 96, PixelFormats.Bgra32, null);
+            var pixels = new byte[size * size * 4];
+            var rng = new Random(42); // 固定种子，保证每次一致
+
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                byte color = isDark ? (byte)255 : (byte)0;
+                byte alpha = (byte)rng.Next(0, (int)(255 * opacity));
+
+                pixels[i + 0] = color; // B
+                pixels[i + 1] = color; // G
+                pixels[i + 2] = color; // R
+                pixels[i + 3] = alpha; // A
+            }
+
+            bitmap.WritePixels(new Int32Rect(0, 0, size, size), pixels, size * 4, 0);
+            bitmap.Freeze();
+
+            var brush = new ImageBrush(bitmap)
+            {
+                TileMode = TileMode.Tile,
+                Stretch = Stretch.None,
+                ViewportUnits = BrushMappingMode.Absolute,
+                Viewport = new Rect(0, 0, size, size),
+                Opacity = 1.0 // alpha 已经编码在像素里了
+            };
+            brush.Freeze();
+
+            if (isDark) _cachedDarkNoise = brush;
+            else _cachedLightNoise = brush;
+
+            return brush;
+        }
+
+        public static void ClearCache()
+        {
+            _cachedLightNoise = null;
+            _cachedDarkNoise = null;
+        }
+    }
+    public static class DwmBorderHelper
+    {
+        [DllImport("dwmapi.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        private static extern void DwmSetWindowAttribute(
+            IntPtr hwnd,
+            int attribute,
+            ref uint pvAttribute,
+            int cbAttribute);
+
+        // DWMWA_BORDER_COLOR = 34 (Win11 22H2+)
+        private const int DWMWA_BORDER_COLOR = 34;
+        public static void SetBorderColor(Window window, Color color)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(window).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                // DWM 使用 COLORREF 格式: 0x00BBGGRR
+                uint colorRef = (uint)(color.R | (color.G << 8) | (color.B << 16));
+                DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorRef, sizeof(uint));
+            }
+            catch
+            {
+                // Win10 或旧版 Win11 不支持，静默忽略
+            }
+        }
+        public static void SetDefaultBorderColor(Window window)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(window).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                uint colorDefault = 0xFFFFFFFF;
+                DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorDefault, sizeof(uint));
+            }
+            catch { }
+        }
+        public static void HideBorder(Window window)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(window).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                uint colorNone = 0xFFFFFFFE;
+                DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorNone, sizeof(uint));
+            }
+            catch { }
+        }
+    }
+
     public static class WindowHelper
     {
         private static readonly DependencyProperty LocalModalResultProperty =
@@ -100,18 +207,44 @@ namespace TabPaint
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null || parameter == null) return false;
-            return value.ToString().Equals(parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+
+            string stored = NormalizeColor(value.ToString());
+            string param = NormalizeColor(parameter.ToString());
+
+            return stored.Equals(param, StringComparison.OrdinalIgnoreCase);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if ((bool)value)
+            if (value is bool b && b)
             {
-                return parameter.ToString();
+                // 统一存储为6位格式
+                return NormalizeColor(parameter.ToString());
             }
             return Binding.DoNothing;
         }
+
+        /// <summary>
+        /// 将颜色字符串统一为 "#RRGGBB" 6位格式（去掉Alpha通道）
+        /// "#FF0078D4" -> "#0078D4"
+        /// "#0078D4"   -> "#0078D4"
+        /// </summary>
+        private static string NormalizeColor(string color)
+        {
+            if (string.IsNullOrEmpty(color)) return string.Empty;
+
+            color = color.Trim();
+
+            // #AARRGGBB (9字符) -> #RRGGBB
+            if (color.Length == 9 && color.StartsWith("#"))
+            {
+                return "#" + color.Substring(3);
+            }
+
+            return color;
+        }
     }
+
     public class ZoomToInverseValueConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

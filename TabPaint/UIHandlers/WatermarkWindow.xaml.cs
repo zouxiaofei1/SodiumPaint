@@ -588,5 +588,15 @@ namespace TabPaint
             return rtb;
         }
 
+        private void OnCloseClick(object sender, RoutedEventArgs e)
+        {
+            this.SetDialogResultSafe(false);
+            Close();
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left) DragMove();
+        }
     }
 }

@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Export ICO" Height="380" Width="500"
         MinHeight="250" MinWidth="400"
-        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize" WindowStyle="None"
         AllowsTransparency="False" Background="Transparent">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
+        <WindowChrome CaptionHeight="0" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
@@ -148,17 +148,47 @@
             </Canvas>
 
             <!-- 1. TitleBar -->
-            <Grid Grid.Row="0" Height="40" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <Image Source="pack://application:,,,/Resources/TabPaint.ico" 
-                           Width="20" Height="20" Margin="0,0,10,0"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Text="{DynamicResource L_Ico_Title}" 
-                               Foreground="{DynamicResource TextPrimaryBrush}"
-                               FontSize="13" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                </StackPanel>
-          
-            </Grid>
+            <Border Background="Transparent" 
+         CornerRadius="12" 
+         BorderBrush="{DynamicResource BorderLightBrush}" 
+         BorderThickness="1" MouseLeftButtonDown="TitleBar_MouseDown">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="32"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Background="Transparent">
+                        <Grid >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
+                        Width="20" Height="20" Margin="12,0,8,0" 
+                        RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                            <TextBlock Grid.Column="1" Text="{DynamicResource L_Ico_Title}" 
+                            VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+
+                                <Button Width="48" Height="30" ToolTip="{DynamicResource L_TitleBar_Close}" Click="OnCloseClick" Style="{StaticResource WindowCloseButtonStyle}">
+                                    <Viewbox Width="10" Height="10">
+                                        <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                           StrokeThickness="1" 
+                           Data="M0,0 L12,12 M12,0 L0,12"/>
+                                    </Viewbox>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
 
             <!-- 2. 工具栏 -->
             <Border Grid.Row="1" Padding="16,4,16,12">

@@ -19,62 +19,11 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- 标题栏按钮样式，对齐 SettingsWindow -->
-            <Style x:Key="TitleBarButtonStyle" TargetType="Button">
-                <Setter Property="Width" Value="46"/>
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Border" Background="{TemplateBinding Background}">
-                                <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" 
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource SubtlePressedBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Border" Background="{TemplateBinding Background}">
-                                <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" 
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Border" Property="Background" Value="#C42B1C"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Border" Property="Background" Value="#A82417"/>
-                                    <Setter Property="Foreground" Value="#E6E6E6"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32" ResizeBorderThickness="6" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False"/>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
     <Grid x:Name="RootGrid" 
@@ -87,31 +36,44 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 -->
-        <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
 
-            <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
-                   Width="18" Height="18" Margin="12,0,8,0" 
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="32"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-            <TextBlock x:Name="TitleTextBlock" Grid.Column="1" 
-                       Text="{DynamicResource L_Filter_Strength_Title}" 
-                       VerticalAlignment="Center" 
-                       Foreground="{DynamicResource TextSecondaryBrush}" 
-                       FontSize="12"/>
+            <Border Grid.Row="0" BorderThickness="0,0,0,1" Background="Transparent"  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-            <!-- 右侧：控制按钮 -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="&#xE921;" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMinimize_Click"/>
-                <Button x:Name="BtnMaximize" Content="&#xE922;" Style="{StaticResource TitleBarButtonStyle}" Click="BtnMaximize_Click"/>
-                <Button Content="&#xE8BB;" Style="{StaticResource TitleBarCloseButtonStyle}" Click="CancelButton_Click"/>
-            </StackPanel>
-        </Grid>
+                            <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
+                        Width="20" Height="20" Margin="12,0,8,0" 
+                        RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                            <TextBlock Grid.Column="1" x:Name="TitleTextBlock" Text="{DynamicResource L_Filter_Strength_Title}" 
+                            VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+
+                                <Button Width="48" Height="30" ToolTip="{DynamicResource L_TitleBar_Close}" Click="OnCloseClick" Style="{StaticResource WindowCloseButtonStyle}">
+                                    <Viewbox Width="10" Height="10">
+                                        <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                           StrokeThickness="1" 
+                           Data="M0,0 L12,12 M12,0 L0,12"/>
+                                    </Viewbox>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+       
 
         <!-- 内容区域 -->
         <Grid Grid.Row="1" Margin="40,10">

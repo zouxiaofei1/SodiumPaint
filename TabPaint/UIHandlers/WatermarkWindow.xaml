@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="{DynamicResource L_Watermark_Title}" Height="700" Width="850"
         MinWidth="500" MinHeight="500"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterOwner" WindowStyle="None"
         ResizeMode="CanResize"
         Background="Transparent"
         FontFamily="Microsoft YaHei UI, Segoe UI, sans-serif"
@@ -15,7 +15,7 @@
         TextOptions.TextRenderingMode="ClearType">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
+        <WindowChrome CaptionHeight="0" GlassFrameThickness="-1" ResizeBorderThickness="6" CornerRadius="0" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
@@ -45,21 +45,45 @@
             </Grid.RowDefinitions>
 
             <!-- 1. 标题栏 -->
-            <Border Grid.Row="0" BorderBrush="{DynamicResource GlassBackgroundHighBrush}" BorderThickness="0,0,0,1" Background="Transparent">
-                <Grid MouseLeftButtonDown="TitleBar_MouseDown">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+            <Border Background="Transparent" 
+         CornerRadius="12" 
+         BorderBrush="{DynamicResource BorderLightBrush}" 
+         BorderThickness="1" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="32"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
-                           Width="20" Height="20" Margin="12,0,8,0" 
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Background="Transparent">
+                        <Grid >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="1" Text="{DynamicResource L_Watermark_Title}" 
-                               VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <Image Grid.Column="0" Source="pack://application:,,,/Resources/TabPaint.ico" 
+                        Width="20" Height="20" Margin="12,0,8,0" 
+                        RenderOptions.BitmapScalingMode="HighQuality"/>
 
+                            <TextBlock Grid.Column="1" Text="{DynamicResource L_Watermark_Title}" 
+                            VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+
+                                <Button Width="48" Height="30" ToolTip="{DynamicResource L_TitleBar_Close}" Click="OnCloseClick" Style="{StaticResource WindowCloseButtonStyle}">
+                                    <Viewbox Width="10" Height="10">
+                                        <Path Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                           StrokeThickness="1" 
+                           Data="M0,0 L12,12 M12,0 L0,12"/>
+                                    </Viewbox>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
 

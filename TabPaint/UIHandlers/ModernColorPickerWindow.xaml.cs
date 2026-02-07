@@ -807,7 +807,7 @@ namespace TabPaint
                     {
                         var dashedCircle = new System.Windows.Shapes.Ellipse
                         {
-                            Stroke = (Brush)Application.Current.FindResource("BorderBrush"),
+                            Stroke = (Brush)Application.Current.FindResource("TextSecondaryBrush"),
                             StrokeThickness = 1,
                             StrokeDashArray = new DoubleCollection { 3, 2 },
                             Opacity = 0.5

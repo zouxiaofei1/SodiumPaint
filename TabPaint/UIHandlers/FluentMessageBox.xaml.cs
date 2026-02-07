@@ -17,12 +17,19 @@ namespace TabPaint
         private const string PathQuestion = AppConsts.PathQuestion;
         private const string PathWarning = AppConsts.PathWarning;
         private const string PathError = AppConsts.PathError;
-
+        private static readonly bool _isWin11 = MicaAcrylicManager.IsWin11();
         private string _logFolderPath = null;
 
         private FluentMessageBox()
         {
-            InitializeComponent();
+        
+
+            InitializeComponent();  
+            if (!_isWin11)
+            {
+                FluentMsgboxRootBorder.CornerRadius =new CornerRadius(0);
+                FluentSecondBorder.CornerRadius = new CornerRadius(0);
+            }
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -54,17 +61,13 @@ namespace TabPaint
             }
             return null;
         }
-
-        // =====================================================
-        // ★ 核心改动：静态 Show 方法使用局部模态
-        // =====================================================
         public static MessageBoxResult Show(
-            string message,
-            string title = "TabPaint",
-            MessageBoxButton button = MessageBoxButton.OK,
-            MessageBoxImage icon = MessageBoxImage.Information,
-            Window owner = null,
-            string logFolderPath = null)
+     string message,
+     string title = "TabPaint",
+     MessageBoxButton button = MessageBoxButton.OK,
+     MessageBoxImage icon = MessageBoxImage.Information,
+     Window owner = null,
+     string logFolderPath = null)
         {
             var msgBox = new FluentMessageBox();
             msgBox.TxtTitle.Text = title;
@@ -82,32 +85,55 @@ namespace TabPaint
             if (owner != null)
             {
                 msgBox.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-
-                // ★ 使用局部模态：只阻塞 owner，不影响其他主窗口
                 ShowOwnerModal(msgBox, owner);
             }
             else
             {
-                // 无 owner 时居中屏幕，使用普通 ShowDialog
-                // （此时没有特定窗口需要保护，ShowDialog 是安全的）
-                msgBox.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                msgBox.ShowDialog();
+                // ★ 改动：不用 ShowDialog()，改用同样的非模态+DispatcherFrame 方式
+                // 找到当前活动窗口作为逻辑 owner
+                Window activeOwner = GetActiveWindow();
+                if (activeOwner != null)
+                {
+                    msgBox.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                    ShowOwnerModal(msgBox, activeOwner);
+                }
+                else
+                {
+                    msgBox.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    ShowNoOwnerModal(msgBox);
+                }
             }
 
             return msgBox.Result;
         }
 
-        // =====================================================
-        // ★ 内置的局部模态实现（针对 MessageBox 场景优化）
-        // =====================================================
+        private static Window GetActiveWindow()
+        {
+            foreach (Window w in Application.Current.Windows)
+            {
+                if (w.IsActive && w is not FluentMessageBox)
+                    return w;
+            }
+            return Application.Current.MainWindow;
+        }
+
         private static void ShowOwnerModal(FluentMessageBox dialog, Window owner)
         {
-            dialog.Owner = owner;
+            try
+            {
+                dialog.Owner = owner;
+            }
+            catch
+            {
+                // Owner 设置失败时（如 owner 未显示），退回无 owner 模式
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+
+            // ★ 只禁用这一个 owner 窗口
             owner.IsEnabled = false;
 
             var frame = new DispatcherFrame();
 
-            // 防止 Owner 关闭时子窗口悬空
             CancelEventHandler ownerClosing = null;
             ownerClosing = (s, e) =>
             {
@@ -121,18 +147,28 @@ namespace TabPaint
                 owner.Closing -= ownerClosing;
                 owner.IsEnabled = true;
                 if (owner.IsVisible)
-                    owner.Activate(); frame.Continue = false;
+                {
+                    owner.Activate();
+                    owner.Focus();
+                }
+                frame.Continue = false;
             };
 
-            // 非模态显示，但通过 DispatcherFrame 同步等待
             dialog.Show();
             Dispatcher.PushFrame(frame);
         }
+        private static void ShowNoOwnerModal(FluentMessageBox dialog)
+        {
+            var frame = new DispatcherFrame();
 
-        // =====================================================
-        // 按钮事件：不再设置 DialogResult，直接 Close()
-        // （Result 属性已经在 Close 之前赋值了）
-        // =====================================================
+            dialog.Closed += (s, e) =>
+            {
+                frame.Continue = false;
+            };
+
+            dialog.Show();
+            Dispatcher.PushFrame(frame);
+        }
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
             if (BtnCancel.Visibility == Visibility.Visible) Result = MessageBoxResult.Cancel;

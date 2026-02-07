@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 
@@ -94,7 +95,8 @@ namespace TabPaint
             }
             else
             {
-                DisableEffect(window);
+                ApplyFallbackBackground(window);
+                //      DisableEffect(window);
             }
         }
         public static void DisableEffect(Window window)
@@ -108,6 +110,76 @@ namespace TabPaint
 
             // 回退到普通背景
             window.Background = Application.Current.FindResource("WindowBackgroundBrush") as Brush;
+        }
+        private static void ApplyFallbackBackground(Window window)
+        {
+            bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
+
+            // 基础渐变色
+            LinearGradientBrush gradient;
+            if (isDark)
+            {
+                gradient = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromRgb(0x20, 0x20, 0x20), 0.0),
+                new GradientStop(Color.FromRgb(0x1C, 0x1E, 0x24), 0.5),
+                new GradientStop(Color.FromRgb(0x1A, 0x1A, 0x22), 1.0),
+            }
+                };
+            }
+            else
+            {
+                gradient = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromRgb(0xF9, 0xF9, 0xF9), 0.0),
+                new GradientStop(Color.FromRgb(0xF3, 0xF3, 0xF8), 0.5),
+                new GradientStop(Color.FromRgb(0xEF, 0xEF, 0xF4), 1.0),
+            }
+                };
+            }
+            gradient.Freeze();
+
+            // 设置基础背景
+            window.Background = gradient;
+
+            // 叠加噪点纹理（通过在窗口 Grid 最底层添加一个 Rectangle）
+            // 需要窗口的根元素是 Grid
+            if (window.Content is Grid rootGrid)
+            {
+                // 检查是否已经添加过
+                const string NOISE_TAG = "Win10NoiseOverlay";
+                var existing = rootGrid.Children.OfType<System.Windows.Shapes.Rectangle>()
+                    .FirstOrDefault(r => r.Tag as string == NOISE_TAG);
+
+                if (existing != null)
+                {
+                    existing.Fill = NoiseTextureGenerator.CreateNoiseBrush(isDark);
+                }
+                else
+                {
+                    var noiseRect = new System.Windows.Shapes.Rectangle
+                    {
+                        Tag = NOISE_TAG,
+                        Fill = NoiseTextureGenerator.CreateNoiseBrush(isDark),
+                        IsHitTestVisible = false,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        VerticalAlignment = VerticalAlignment.Stretch,
+                    };
+                    // 插入到最底层
+                    Grid.SetRowSpan(noiseRect, Math.Max(1, rootGrid.RowDefinitions.Count));
+                    Grid.SetColumnSpan(noiseRect, Math.Max(1, rootGrid.ColumnDefinitions.Count));
+                    Panel.SetZIndex(noiseRect, -1);
+                    rootGrid.Children.Insert(0, noiseRect);
+                }
+            }
         }
 
         public static void DisableMica(IntPtr hwnd, Window window)

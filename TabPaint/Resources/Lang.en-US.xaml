@@ -693,6 +693,7 @@
     <sys:String x:Key="L_Text_Highlight">Highlight</sys:String>
     <sys:String x:Key="L_Text_Shadow">Shadow Effect</sys:String>
     <sys:String x:Key="L_Text_InsertTable">Insert Table</sys:String>
+    <sys:String x:Key="L_Text_ExpandCollapse">Expand/Collapse ToolBar</sys:String>
     <sys:String x:Key="L_Common_Preview">Preview</sys:String>
 
     <sys:String x:Key="L_Toast_OpenUrlFailed">Cannot open link</sys:String>

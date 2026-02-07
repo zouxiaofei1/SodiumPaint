@@ -106,7 +106,6 @@ namespace TabPaint.Windows
                 // 获取应用资源中的背景色 (SubWindowStyles.xaml 里应该有 WindowBackgroundBrush)
                 var bgBrush = Application.Current.TryFindResource("WindowBackgroundBrush") as Brush
                               ?? Application.Current.TryFindResource("ControlBackgroundBrush") as Brush;
-                // 设置给 RootBorder，因为 Window Background 必须为 Transparent
                 RootBorder.Background = bgBrush ?? Brushes.White;
             }
             else
@@ -204,6 +203,12 @@ namespace TabPaint.Windows
         }
 
         private void OnCancelClick(object sender, RoutedEventArgs e)
+        {
+            IsConfirmed = false;
+            Close();
+        }
+
+        private void OnCloseClick(object sender, RoutedEventArgs e)
         {
             IsConfirmed = false;
             Close();
