@@ -62,7 +62,7 @@ namespace TabPaint
         }
         private void OnPickColorClick(object s, RoutedEventArgs e)
         {
-            LastTool = ((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool;
+            LastTool = (MainWindow.GetCurrentInstance())._router.CurrentTool;
             _router.SetTool(_tools.Eyedropper);
         }
 
@@ -394,11 +394,9 @@ namespace TabPaint
                         break;
                     case "Lasso":
                         selectTool.SelectionType = SelectionType.Lasso;
-                        ShowToast(" (UI Only)");
                         break;
                     case "MagicWand": // 新增逻辑
                         selectTool.SelectionType = SelectionType.MagicWand;
-                        ShowToast("Magic Wand Tool (UI Only)");
                         break;
                 }
 

@@ -164,7 +164,7 @@ namespace TabPaint
             {
                 hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
             }
-            MainWindow mw = ((MainWindow)Application.Current.MainWindow);
+            MainWindow mw = (MainWindow.GetCurrentInstance());
             UpdateAccentResources(hexColor);
         }
 

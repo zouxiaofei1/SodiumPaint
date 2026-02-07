@@ -40,7 +40,7 @@ public class ShapeTool : ToolBase
 
     private SelectTool GetSelectTool()
     {
-        var mw = (MainWindow)Application.Current.MainWindow;
+        var mw = MainWindow.GetCurrentInstance();
         return mw._tools.Select as SelectTool;
     }
 
@@ -53,7 +53,7 @@ public class ShapeTool : ToolBase
 
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
+        if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
         var selectTool = GetSelectTool();
         var px = ctx.ToPixel(viewPos);
 
@@ -142,7 +142,7 @@ public class ShapeTool : ToolBase
 
         int w = (int)Math.Abs(current.X - _startPoint.X);
         int h = (int)Math.Abs(current.Y - _startPoint.Y);
-        var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+        var mw = MainWindow.GetCurrentInstance();
         mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
     }
     public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
@@ -245,7 +245,7 @@ public class ShapeTool : ToolBase
                     st.Cleanup(ctx);
                     ctx.Undo.Redo();
                     _isManipulating = false;
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                    (MainWindow.GetCurrentInstance()).SetUndoRedoButtonState();
                     e.Handled = true;
                     return;
                 }

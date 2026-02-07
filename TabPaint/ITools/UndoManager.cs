@@ -72,7 +72,7 @@ namespace TabPaint
             public int UndoCount => _undo.Count;
             private void UpdateUI()
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 mw.SetUndoRedoButtonState(); // 更新按钮可用性
                 mw.CheckDirtyState();        // 更新红点状态
                 mw.UpdateWindowTitle();
@@ -111,14 +111,14 @@ namespace TabPaint
                     _preStrokeSnapshot = null;
                     return;
                 }
-                var combined = ClampRect(CombineRects(_strokeRects), ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
+                var combined = ClampRect(CombineRects(_strokeRects), (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth, (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight);
 
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
                 _undo.Push(new UndoAction(combined, region, undoActionType));
                 UpdateUI();
                 _preStrokeSnapshot = null;
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
+                (MainWindow.GetCurrentInstance()).NotifyCanvasChanged();
             }
 
             public void internalUndoAction(UndoAction action)
@@ -131,7 +131,7 @@ namespace TabPaint
             // ---------- 撤销 / 重做 ----------
             public void Undo()
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 if (mw._deleteCommitTimer.IsEnabled && mw._pendingDeletionTabs.Count > 0)
                 {
                     mw.RestoreLastDeletedTab();
@@ -144,7 +144,7 @@ namespace TabPaint
             }
             public void ImageUndo()
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
 
     
 
@@ -218,7 +218,7 @@ namespace TabPaint
                         action.RedoPixels
                     ));
                     var wb = new WriteableBitmap(action.RedoRect.Width, action.RedoRect.Height,
-                            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiX, ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
+                            (MainWindow.GetCurrentInstance())._ctx.Surface.Bitmap.DpiX, (MainWindow.GetCurrentInstance())._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
                     wb.WritePixels(action.RedoRect, action.RedoPixels, wb.BackBufferStride, 0);
                     // 替换主位图
                     _surface.ReplaceBitmap(wb);
@@ -232,7 +232,7 @@ namespace TabPaint
                 }
 
                 UpdateUI();
-                ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasChanged();
+                (MainWindow.GetCurrentInstance()).NotifyCanvasChanged();
             }
             public void PushExplicitImageUndo(WriteableBitmap oldBitmap)
             {

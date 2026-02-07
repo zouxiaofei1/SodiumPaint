@@ -613,13 +613,38 @@ namespace TabPaint
                 byte[] resultPixels;
                 if (isSelectionMode)
                 {
-                    var cropBmp = selectTool.GetSelectionWriteableBitmap();
-                    if (cropBmp == null) return;
+                    // ========== 关键修改：区分规则选区和不规则选区 ==========
+                    if (selectTool.IsIrregularSelection)
+                    {
+                        // --- 套索/魔棒模式：送完整包围盒像素给 AI ---
+                        var boundingBoxBmp = selectTool.GetSelectionBoundingBoxBitmap(_ctx);
+                        if (boundingBoxBmp == null)
+                        {
+                            // 回退：使用裁剪后的位图
+                            boundingBoxBmp = selectTool.GetSelectionWriteableBitmap();
+                        }
+                        if (boundingBoxBmp == null) return;
 
-                    int newW = cropBmp.PixelWidth;
-                    int newH = cropBmp.PixelHeight;
-                    resultPixels = await aiService.RunInferenceAsync(modelPath, cropBmp);
-                    selectTool.ReplaceSelectionData(_ctx, resultPixels, newW, newH);
+                        int newW = boundingBoxBmp.PixelWidth;
+                        int newH = boundingBoxBmp.PixelHeight;
+
+                        // AI 推理：输入完整矩形区域
+                        resultPixels = await aiService.RunInferenceAsync(modelPath, boundingBoxBmp);
+
+                        // 将 AI 结果与套索 mask 做交集
+                        selectTool.ReplaceSelectionDataWithMask(_ctx, resultPixels, newW, newH);
+                    }
+                    else
+                    {
+                        // --- 矩形选区模式：保持原有逻辑 ---
+                        var cropBmp = selectTool.GetSelectionWriteableBitmap();
+                        if (cropBmp == null) return;
+
+                        int newW = cropBmp.PixelWidth;
+                        int newH = cropBmp.PixelHeight;
+                        resultPixels = await aiService.RunInferenceAsync(modelPath, cropBmp);
+                        selectTool.ReplaceSelectionData(_ctx, resultPixels, newW, newH);
+                    }
                 }
                 else
                 {
@@ -684,7 +709,7 @@ namespace TabPaint
 
         private void TextAlign_Click(object sender, RoutedEventArgs e)
         {
-            var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+            var mw = MainWindow.GetCurrentInstance();
             if (sender is ToggleButton btn && btn.Tag is string align)
             {
                 // 实现互斥

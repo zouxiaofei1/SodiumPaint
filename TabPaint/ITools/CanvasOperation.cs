@@ -117,13 +117,13 @@ namespace TabPaint
             _surface.ReplaceBitmap(_bitmap);
 
             _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. newBitmap.PixelWidth Undo 栈 ---
-            ((MainWindow)System.Windows.Application.Current.MainWindow).NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
+            (MainWindow.GetCurrentInstance()).NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
             SetUndoRedoButtonState();
         }
 
         private void RotateBitmap(int angle)
         {
-            var mw = (MainWindow)Application.Current.MainWindow;
+            var mw = MainWindow.GetCurrentInstance();
             if (_tools.Select is SelectTool st && st.HasActiveSelection)  // 1. 检查当前工具是否为 SelectTool 且有活动选区
             {
                 // 调用选区旋转

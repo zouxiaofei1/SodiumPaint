@@ -245,9 +245,9 @@ namespace TabPaint.Controls
         private void Window_DoubleClick(object sender, MouseButtonEventArgs e)
         {
             Point relativePoint = e.GetPosition(this);
-            if (relativePoint.Y < 60 && relativePoint.X > 20 && !((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode)
+            if (relativePoint.Y < 60 && relativePoint.X > 20 && !MainWindow.GetCurrentInstance().IsViewMode)
             {
-                ((MainWindow)System.Windows.Application.Current.MainWindow).MaximizeWindowHandler();
+                (MainWindow.GetCurrentInstance()).MaximizeWindowHandler();
 
                 e.Handled = true;
             }

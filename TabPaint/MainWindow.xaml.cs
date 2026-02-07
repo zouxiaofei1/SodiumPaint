@@ -26,6 +26,33 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        public static MainWindow GetCurrentInstance()
+        {
+            // 优先返回当前激活的 MainWindow
+            foreach (Window w in Application.Current.Windows)
+            {
+                if (w is MainWindow mw && mw.IsActive) return mw;
+            }
+            // 如果没有激活的（比如在后台线程调用），返回最后获得焦点的
+            return _lastFocusedInstance ?? (MainWindow)Application.Current.MainWindow;
+        }
+
+        // 记录最后获得焦点的实例
+        private static MainWindow? _lastFocusedInstance;
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            _lastFocusedInstance = this;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            if (_lastFocusedInstance == this)
+                _lastFocusedInstance = null;
+        }
+
 
         public MainWindow(string path, bool? fileExists = null)
         {
@@ -1065,7 +1092,7 @@ namespace TabPaint
             {
                 return;
             }
-
+            if(selectTool._selectionRect.Width+ selectTool._selectionRect.Height<150)return; // 小于一定尺寸的选区不显示工具栏，避免遮挡
             // 确保控件已加载 (访问属性会触发加载)
             var toolbar = this.SelectionToolBar;
             var holder = this.SelectionToolHolder; // 引用 XAML 中的 ContentControl

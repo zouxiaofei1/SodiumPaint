@@ -76,7 +76,7 @@ public partial class PenTool : ToolBase
 
     private async void ApplyAiEraser(ToolContext ctx)
     {
-        var mw = (MainWindow)Application.Current.MainWindow;
+        var mw = MainWindow.GetCurrentInstance();
         var aiService = new AiService(mw._cacheDir);
 
         // 1. 初始化取消令牌源

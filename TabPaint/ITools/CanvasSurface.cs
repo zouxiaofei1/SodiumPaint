@@ -55,7 +55,7 @@ namespace TabPaint
 
                 // 更新内部的位图引用
                 this.Bitmap = newBitmap;
-                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                MainWindow mw = MainWindow.GetCurrentInstance();
                 mw.BackgroundImage.Source = newBitmap;
                 mw.BackgroundImage.Width = newBitmap.PixelWidth;
                 mw.BackgroundImage.Height = newBitmap.PixelHeight;

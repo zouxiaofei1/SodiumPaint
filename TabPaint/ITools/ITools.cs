@@ -24,7 +24,6 @@ namespace TabPaint
             var accentBrush = Application.Current.FindResource("ToolAccentBrush") as Brush;
             var accentSubtleBrush = Application.Current.FindResource("ToolAccentSubtleSelectedBrush") as Brush;
 
-            // 1. 获取当前工具类型字符串
             string currentToolTag = _router.CurrentTool switch
             {
                 SelectTool => "SelectTool",
@@ -36,54 +35,65 @@ namespace TabPaint
                 _ => ""
             };
 
-            // 2. 检查是否处于折叠模式
             bool isCollapsedMode = MainToolBar.CollapsedToolsPanel.Visibility == Visibility.Visible;
 
+            // ========== 清除所有状态 ==========
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BorderBrushProperty);
+
+            // 画刷 SplitButton 清除
             MainToolBar.BrushSplitButtonBorder.BorderBrush = Brushes.Transparent;
             MainToolBar.BrushSplitButtonBorder.Background = Brushes.Transparent;
-            MainToolBar.ShapeSplitButtonBorder.BorderBrush = Brushes.Transparent;
-            MainToolBar.ShapeSplitButtonBorder.Background = Brushes.Transparent;
             MainToolBar.BrushMainButton.ClearValue(Control.BackgroundProperty);
             MainToolBar.BrushMainButton.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.BrushMainButton.Tag = null;        // ← 清除 Tag
             MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.BrushToggle.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.BrushToggle.Tag = null;             // ← 清除 Tag
 
+            // 形状 SplitButton 清除
+            MainToolBar.ShapeSplitButtonBorder.BorderBrush = Brushes.Transparent;
+            MainToolBar.ShapeSplitButtonBorder.Background = Brushes.Transparent;
             MainToolBar.ShapeMainButton.ClearValue(Control.BackgroundProperty);
             MainToolBar.ShapeMainButton.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.ShapeMainButton.Tag = null;         // ← 清除 Tag
             MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.ShapeToggle.Tag = null;             // ← 清除 Tag
 
+            // 选区 SplitButton 清除
             MainToolBar.SelectSplitButtonBorder.BorderBrush = Brushes.Transparent;
             MainToolBar.SelectSplitButtonBorder.Background = Brushes.Transparent;
             MainToolBar.SelectMainButton.ClearValue(Control.BackgroundProperty);
             MainToolBar.SelectMainButton.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.SelectMainButton.Tag = null;        // ← 清除 Tag
             MainToolBar.SelectToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.SelectToggle.ClearValue(Control.BorderBrushProperty);
+            MainToolBar.SelectToggle.Tag = null;            // ← 清除 Tag
 
-
-            // 获取所有常规工具按钮
             var toolControls = new Control[] {
         MainToolBar.PickColorButton, MainToolBar.EraserButton,
         MainToolBar.FillButton, MainToolBar.TextButton, MainToolBar.PenButton
     };
 
-            // 清除所有展开按钮及特殊切换按钮的高亮
             foreach (var ctrl in toolControls)
             {
                 ctrl.ClearValue(Control.BorderBrushProperty);
                 ctrl.ClearValue(Control.BackgroundProperty);
             }
+
             bool isBasicTool = !string.IsNullOrEmpty(currentToolTag);
+
             if (!isBasicTool || _router.CurrentTool is SelectTool)
             {
-                // 画刷工具高亮逻辑
+                // 画刷工具高亮
                 if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
-                    // 高亮整个 SplitButton 的边框
                     MainToolBar.BrushSplitButtonBorder.BorderBrush = accentBrush;
                     MainToolBar.BrushSplitButtonBorder.Background = accentSubtleBrush;
+                    // ★ 标记内部按钮为选中状态，抑制悬浮边框
+                    MainToolBar.BrushMainButton.Tag = "Selected";
+                    MainToolBar.BrushToggle.Tag = "Selected";
 
                     string brushTag = _ctx.PenStyle.ToString();
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, brushTag);
@@ -93,11 +103,14 @@ namespace TabPaint
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, null);
                 }
 
-                // 形状工具高亮逻辑
+                // 形状工具高亮
                 if (_router.CurrentTool is ShapeTool shapeTool)
                 {
                     MainToolBar.ShapeSplitButtonBorder.BorderBrush = accentBrush;
                     MainToolBar.ShapeSplitButtonBorder.Background = accentSubtleBrush;
+                    // ★ 标记
+                    MainToolBar.ShapeMainButton.Tag = "Selected";
+                    MainToolBar.ShapeToggle.Tag = "Selected";
 
                     string shapeTag = shapeTool.CurrentShapeType.ToString();
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, shapeTag);
@@ -106,17 +119,16 @@ namespace TabPaint
                 {
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, null);
                 }
+
+                // 选区工具高亮
                 if (_router.CurrentTool is SelectTool selectTool)
                 {
-                    // 高亮整个外框
                     MainToolBar.SelectSplitButtonBorder.BorderBrush = accentBrush;
                     MainToolBar.SelectSplitButtonBorder.Background = accentSubtleBrush;
+                    // ★ 标记
+                    MainToolBar.SelectMainButton.Tag = "Selected";
+                    MainToolBar.SelectToggle.Tag = "Selected";
 
-                    // 高亮下拉箭头（如果需要）
-                    MainToolBar.SelectToggle.BorderBrush = accentBrush;
-                    MainToolBar.SelectToggle.Background = accentSubtleBrush;
-
-                    // 处理子菜单高亮
                     string selectTag = selectTool.SelectionType == SelectionType.Lasso ? "Lasso" : "Rectangle";
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupSelect, selectTag);
                 }
@@ -125,25 +137,22 @@ namespace TabPaint
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupSelect, null);
                 }
             }
+
             if (isBasicTool)
             {
                 if (isCollapsedMode)
                 {
-                    // --- 折叠模式逻辑 ---
                     MainToolBar.ToolsMenuToggle.BorderBrush = accentBrush;
                     MainToolBar.ToolsMenuToggle.Background = accentSubtleBrush;
-
                     UpdateCollapsedButtonIcon(currentToolTag);
                     UpdateCollapsedMenuHighlight(currentToolTag);
                 }
                 else
                 {
-                    // --- 展开模式逻辑 ---
                     Control target = _router.CurrentTool switch
                     {
                         EyedropperTool => MainToolBar.PickColorButton,
                         FillTool => MainToolBar.FillButton,
-                        //SelectTool => MainToolBar.Select,
                         TextTool => MainToolBar.TextButton,
                         PenTool when _ctx.PenStyle == BrushStyle.Eraser => MainToolBar.EraserButton,
                         PenTool when _ctx.PenStyle == BrushStyle.Pencil => MainToolBar.PenButton,
@@ -161,25 +170,29 @@ namespace TabPaint
             {
                 if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
-                    // 1. 高亮主按钮
-                    MainToolBar.BrushToggle.BorderBrush = accentBrush;
-                    MainToolBar.BrushToggle.Background = accentSubtleBrush;
+                    // ★ 只高亮外框，不直接设置内部按钮的 BorderBrush/Background
+                    MainToolBar.BrushSplitButtonBorder.BorderBrush = accentBrush;
+                    MainToolBar.BrushSplitButtonBorder.Background = accentSubtleBrush;
+                    MainToolBar.BrushMainButton.Tag = "Selected";
+                    MainToolBar.BrushToggle.Tag = "Selected";
 
                     string brushTag = _ctx.PenStyle.ToString();
-
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, brushTag);
                 }
                 else
                 {
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupBrush, null);
                 }
+
                 if (_router.CurrentTool is ShapeTool shapeTool)
                 {
-                    MainToolBar.ShapeToggle.BorderBrush = accentBrush;
-                    MainToolBar.ShapeToggle.Background = accentSubtleBrush;
+                    // ★ 只高亮外框，不直接设置内部按钮的 BorderBrush/Background
+                    MainToolBar.ShapeSplitButtonBorder.BorderBrush = accentBrush;
+                    MainToolBar.ShapeSplitButtonBorder.Background = accentSubtleBrush;
+                    MainToolBar.ShapeMainButton.Tag = "Selected";
+                    MainToolBar.ShapeToggle.Tag = "Selected";
 
                     string shapeTag = shapeTool.CurrentShapeType.ToString();
-
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, shapeTag);
                 }
                 else
@@ -187,7 +200,9 @@ namespace TabPaint
                     UpdateSubMenuHighlight(MainToolBar.SubMenuPopupShape, null);
                 }
             }
+
         }
+
         private void UpdateSubMenuHighlight(System.Windows.Controls.Primitives.Popup popup, string targetTag)
         {
             if (popup?.Child is Border border && border.Child is StackPanel panel)
@@ -457,7 +472,7 @@ namespace TabPaint
                 if (_ctx.Surface.Bitmap != null)
                 {
                     Point px = _ctx.ToPixel(position);
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).MousePosition = $"{(int)px.X}, {(int)px.Y}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
+                    (MainWindow.GetCurrentInstance()).MousePosition = $"{(int)px.X}, {(int)px.Y}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 }
                 if (e.StylusDevice != null)
                 {
@@ -493,13 +508,13 @@ namespace TabPaint
 
             public SelectTool GetSelectTool()
             {
-                var mw = (MainWindow)Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 return mw._tools.Select as SelectTool;
             }
 
             public void CleanUpSelectionandShape()
             {
-                var mw = (MainWindow)Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 if (CurrentTool is SelectTool selTool)
                 {
                     if (selTool._selectionData != null)
@@ -527,7 +542,7 @@ namespace TabPaint
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
                 tool.SetCursor(_ctx);
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 mw.AutoSetFloatBarVisibility();
                 mw._router.GetSelectTool().UpdateStatusBarSelectionSize();
                 mw.UpdateToolSelectionHighlight();

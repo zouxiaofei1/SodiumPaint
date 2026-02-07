@@ -41,15 +41,15 @@
                     Click="OnSelectMainButtonClick" 
                     ToolTip="{DynamicResource L_ToolBar_Tool_Select}"
                     Style="{StaticResource TransparentInnerButtonStyleToggle}"
-                    Width="26" Height="36">
+                    Width="26" Height="34">
                                 <ContentControl x:Name="CurrentSelectIconHost" IsHitTestVisible="False" Width="16" Height="16">
                                     <Image Source="{DynamicResource Select_Image}" Width="16" Height="16"/>
                                 </ContentControl>
                             </Button>
-                            <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.4"/>
+                            <Border Width="0.5" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.4"/>
                             <ToggleButton x:Name="SelectToggle" x:FieldModifier="public"
                           Style="{StaticResource TransparentInnerButtonStyleToggle}"
-                          Width="16" Height="36" Checked="OnSelectMenuOpened">
+                          Width="16" Height="34" Checked="OnSelectMenuOpened">
                                 <Path Data="M0,0 L3.5,4 L7,0" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" 
                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </ToggleButton>
@@ -131,7 +131,7 @@
                         <Button x:Name="BrushMainButton" Click="OnBrushMainButtonClick" 
                                 ToolTip="{DynamicResource L_ToolBar_Brush}"
                                 Style="{StaticResource TransparentInnerButtonStyleToggle}"
-                                Width="26" Height="36">
+                                Width="26" Height="34">
                             <ContentControl x:Name="CurrentBrushIconHost" IsHitTestVisible="False" Width="16" Height="16">
                                 <Image Source="{DynamicResource Brush_Image}" Width="16" Height="16"/>
                             </ContentControl>
@@ -139,7 +139,7 @@
                         <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="0,4" Opacity="0.4"/>
                         <ToggleButton x:Name="BrushToggle" 
                                       Style="{StaticResource TransparentInnerButtonStyleToggle}"
-                                      Width="16" Height="36"   Checked="OnBrushMenuOpened">
+                                      Width="16" Height="34"   Checked="OnBrushMenuOpened">
                             <Path Data="M0,0 L3.5,4 L7,0" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" 
                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </ToggleButton>
@@ -193,7 +193,7 @@
 
                         <ToggleButton x:Name="ShapeToggle" 
                                       Style="{StaticResource TransparentInnerButtonStyleToggle}"
-                                      Width="16" Height="36"  Checked="OnShapeMenuOpened">
+                                      Width="16" Height="34"  Checked="OnShapeMenuOpened">
                             <Path Data="M0,0 L3.5,4 L7,0" Stroke="{DynamicResource IconFillBrush}" StrokeThickness="1" 
                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </ToggleButton>

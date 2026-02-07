@@ -353,7 +353,7 @@ namespace TabPaint
   
         private void AutoSetFloatBarVisibility()
         {
-            var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+            var mw = MainWindow.GetCurrentInstance();
             if (mw.ToolPanelGrid == null) return;
 
             // 1. 判断显示逻辑

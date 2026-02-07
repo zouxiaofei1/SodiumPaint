@@ -31,31 +31,62 @@
     <Style x:Key="TransparentInnerButtonStyleToggle" TargetType="{x:Type ButtonBase}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Tag" Value="{x:Null}"/>
+        <!-- 默认无Tag -->
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type ButtonBase}">
-                    <Border x:Name="border" Background="{TemplateBinding Background}" BorderThickness="0" CornerRadius="0">
+                <ControlTemplate TargetType="ButtonBase">
+                    <Border x:Name="border" 
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="3"  
+                    Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
+
                     <ControlTemplate.Triggers>
-                        <!-- 鼠标悬浮在子按钮上时，给一个非常淡的背景，表示子区域活跃 -->
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtleHoverBrush}" />
-                            <!-- 10% 白色，仅微微高亮 -->
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtlePressedBrush}"/>
-                            <!-- 按下加深 -->
-                        </Trigger>
+                        <!-- 悬停：仅当 Tag 不是 "Selected" 时才显示悬浮效果 -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtleHoverBrush}"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ToolAccentHoverBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource ToolAccentHoverBrush}"/>
+                        </MultiTrigger>
+
+                        <!-- 当 Tag="Selected" 且悬浮时，不显示边框（透明覆盖） -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Selected"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <!-- 悬浮时只显示微弱的背景变化，不显示边框 -->
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtleHoverBrush}"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="Transparent"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Selected"/>
+                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <!-- 悬浮时只显示微弱的背景变化，不显示边框 -->
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ToolAccentSubtleHoverBrush}"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="Transparent"/>
+                        </MultiDataTrigger>
+    
                     </ControlTemplate.Triggers>
+
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
     <!-- 圆角菜单/工具 ToggleButton 样式 (紫色系) -->
     <Style x:Key="RoundedMenuToggleButtonStyle" TargetType="ToggleButton">
         <Setter Property="ToolTipService.InitialShowDelay" Value="10" />
@@ -1560,38 +1591,7 @@
         </Setter>
     </Style>
 
-    <Storyboard x:Key="FadeInDragOverlay">
-        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Visibility">
-            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-        </ObjectAnimationUsingKeyFrames>
-        <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Opacity"
-                             From="0" To="1" Duration="0:0:0.05">
-            <DoubleAnimation.EasingFunction>
-                <QuadraticEase EasingMode="EaseOut"/>
-            </DoubleAnimation.EasingFunction>
-        </DoubleAnimation>
-        <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                             From="0.95" To="1" Duration="0:0:0.05">
-            <DoubleAnimation.EasingFunction>
-                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
-            </DoubleAnimation.EasingFunction>
-        </DoubleAnimation>
-        <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                             From="0.95" To="1" Duration="0:0:0.05">
-            <DoubleAnimation.EasingFunction>
-                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
-            </DoubleAnimation.EasingFunction>
-        </DoubleAnimation>
-    </Storyboard>
-
-    <!-- 新增：拖拽遮罩淡出动画 (透明度 1->0) -->
-    <Storyboard x:Key="FadeOutDragOverlay">
-        <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Opacity"
-                             To="0" Duration="0:0:0.15"/>
-        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Visibility">
-            <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
-        </ObjectAnimationUsingKeyFrames>
-    </Storyboard>
+   
 
     <Style x:Key="ColorSwatch" TargetType="Button">
         <Setter Property="Width" Value="21"/>

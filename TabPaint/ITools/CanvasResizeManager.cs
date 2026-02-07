@@ -50,16 +50,16 @@ namespace TabPaint
             {
                 _overlay.Children.Clear();
              
-                if(((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source==null) return;
+                if((MainWindow.GetCurrentInstance()).BackgroundImage.Source==null) return;
                 // 获取当前画布尺寸
-                double w = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source.Width;
-                double h = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source.Height;
+                double w = (MainWindow.GetCurrentInstance()).BackgroundImage.Source.Width;
+                double h = (MainWindow.GetCurrentInstance()).BackgroundImage.Source.Height;
 
                 // 确保 Overlay 大小与图片一致
                 _overlay.Width = w;
                 _overlay.Height = h;
 
-                double scale = ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double scale = (MainWindow.GetCurrentInstance()).zoomscale;
                 double invScale = 1.0 / scale;
                 double size = HandleSize * invScale;
 
@@ -97,10 +97,10 @@ namespace TabPaint
                 var rect = sender as Rectangle;
                 _currentAnchor = (ResizeAnchor)rect.Tag;
                 _isResizing = true;
-                _startDragPoint = e.GetPosition(((MainWindow)System.Windows.Application.Current.MainWindow).CanvasWrapper); // 获取相对于 Grid 的坐标
+                _startDragPoint = e.GetPosition((MainWindow.GetCurrentInstance()).CanvasWrapper); // 获取相对于 Grid 的坐标
 
                 // 记录原始尺寸
-                var bmp = ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source as BitmapSource;
+                var bmp = (MainWindow.GetCurrentInstance()).BackgroundImage.Source as BitmapSource;
                 _startRect = new Int32Rect(0, 0, (int)bmp.PixelWidth, (int)bmp.PixelHeight);
 
                 // 捕获鼠标
@@ -115,7 +115,7 @@ namespace TabPaint
             {
                 if (!_isResizing) return;
 
-                var currentPoint = e.GetPosition(((MainWindow)System.Windows.Application.Current.MainWindow).CanvasWrapper);
+                var currentPoint = e.GetPosition((MainWindow.GetCurrentInstance()).CanvasWrapper);
                 var rect = CalculateNewRect(currentPoint);
 
                 // 更新预览框位置和大小
@@ -134,7 +134,7 @@ namespace TabPaint
                 _isResizing = false;
 
                 // 计算最终矩形
-                var currentPoint = e.GetPosition(((MainWindow)System.Windows.Application.Current.MainWindow).CanvasWrapper);
+                var currentPoint = e.GetPosition((MainWindow.GetCurrentInstance()).CanvasWrapper);
                 var finalRect = CalculateNewRect(currentPoint); // 这里拿到的是相对于原图左上角的 Rect
 
                 // 移除预览框
@@ -221,7 +221,7 @@ namespace TabPaint
 
             private void CreatePreviewBorder()
             {
-                double invScale = 1.0 / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double invScale = 1.0 / (MainWindow.GetCurrentInstance()).zoomscale;
                 _previewBorder = new Rectangle
                 {
                     Stroke = Brushes.Black,
@@ -234,7 +234,7 @@ namespace TabPaint
 
             private void ApplyResize(Rect newBounds)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 int newW = Math.Min((int)AppConsts.MaxCanvasSize, (int)newBounds.Width);
                 int newH = Math.Min((int)AppConsts.MaxCanvasSize, (int)newBounds.Height);
                 int offsetX = -(int)newBounds.X;
@@ -286,11 +286,11 @@ namespace TabPaint
             }
             private void EnsureEdgeVisible(Rect resizeRect)
             {
-                var scrollViewer = ((MainWindow)System.Windows.Application.Current.MainWindow).ScrollContainer;
+                var scrollViewer = (MainWindow.GetCurrentInstance()).ScrollContainer;
 
                 if (scrollViewer == null) return;
                 scrollViewer.UpdateLayout();
-                double scale = ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double scale = (MainWindow.GetCurrentInstance()).zoomscale;
 
                 // 定义留白大小 (比如 50px)
                 double padding = 50;
@@ -343,7 +343,7 @@ namespace TabPaint
             public void SetHandleVisibility(bool visible)
             {
                 _overlay.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-                if (visible && ((MainWindow)System.Windows.Application.Current.MainWindow).BackgroundImage.Source == null)
+                if (visible && (MainWindow.GetCurrentInstance()).BackgroundImage.Source == null)
                 {
                     _overlay.Visibility = Visibility.Collapsed;
                 }

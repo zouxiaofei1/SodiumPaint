@@ -7,43 +7,36 @@
              mc:Ignorable="d" 
              d:DesignHeight="40" d:DesignWidth="150">
     <UserControl.Resources>
-        <Style x:Key="ToolBarButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Width" Value="32"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="6"/>
-            <Setter Property="Margin" Value="2,0"/>
-            <Style.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="4"/>
-                </Style>
-            </Style.Resources>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+          
+        </ResourceDictionary>
     </UserControl.Resources>
     
     <Border Background="{DynamicResource PanelBackgroundBrush}" 
             BorderBrush="{DynamicResource BorderMediumBrush}" 
             BorderThickness="1" 
             CornerRadius="8" 
-            Padding="4"
+            Padding="2"
             SnapsToDevicePixels="True">
         <Border.Effect>
             <DropShadowEffect BlurRadius="10" Opacity="0.15" ShadowDepth="2"/>
         </Border.Effect>
         <StackPanel Orientation="Horizontal">
             <!-- 复制按钮 -->
-            <Button x:Name="CopyBtn" Style="{StaticResource ToolBarButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_Copy}">
-                <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}"/>
+            <Button x:Name="CopyBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_Copy}">
+                <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
             
             <!-- AI抠图按钮 (移除背景) -->
-            <Button x:Name="AiRemoveBgBtn" Style="{StaticResource ToolBarButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_AI_RemoveBg}">
-                <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}"/>
+            <Button x:Name="AiRemoveBgBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_AI_RemoveBg}">
+                <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
             
             <!-- OCR按钮 -->
-            <Button x:Name="OcrBtn" Style="{StaticResource ToolBarButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_OCR}">
+            <Button x:Name="OcrBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_OCR}">
                 <TextBlock Text="🅰️" FontFamily="Segoe UI Emoji" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </Button>
         </StackPanel>

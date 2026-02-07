@@ -229,6 +229,7 @@ namespace TabPaint
             UpdateWindowTitle();
             UpdateImageBarVisibilityState();
             AggressiveMemoryRelease();
+            MainImageBar.ClosePopupAndReset();
         }
 
 

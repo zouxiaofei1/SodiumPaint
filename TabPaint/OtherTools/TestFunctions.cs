@@ -272,6 +272,14 @@ namespace TabPaint
         {
             double scale = 1.0;
             if (value is double d) scale = d;
+            if (parameter != null && parameter.ToString().Contains("_IsLess"))
+            {
+                if (double.TryParse(parameter.ToString().Replace("_IsLess", ""), out double threshold))
+                {
+                    return scale < threshold;
+                }
+            }
+
             if (scale < 0.01) scale = 0.01;
             double baseSize = 20.0;
             if (parameter != null && double.TryParse(parameter.ToString(), out double parsedSize))

@@ -221,8 +221,8 @@ public partial class PenTool : ToolBase
     }
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        if (((MainWindow)System.Windows.Application.Current.MainWindow).IsViewMode) return;
-        if (((MainWindow)System.Windows.Application.Current.MainWindow)._router.CurrentTool != ((MainWindow)System.Windows.Application.Current.MainWindow)._tools.Pen) return;
+        if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
+        if ((MainWindow.GetCurrentInstance())._router.CurrentTool != (MainWindow.GetCurrentInstance())._tools.Pen) return;
 
         UpdateCursorVisual(ctx, viewPos); // 更新光标
         if (ctx.PenStyle == BrushStyle.AiEraser)
@@ -443,7 +443,7 @@ public partial class PenTool : ToolBase
         int w = (int)Math.Abs(p1.X - p2.X) + expand * 2;
         int h = (int)Math.Abs(p1.Y - p2.Y) + expand * 2;
         return ClampRect(new Int32Rect(x, y, w, h),
-            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelWidth,
-            ((MainWindow)System.Windows.Application.Current.MainWindow)._ctx.Bitmap.PixelHeight);
+            (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth,
+            (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight);
     }
 }

@@ -511,8 +511,12 @@
 
                     <StackPanel Orientation="Vertical">
                         <!-- 图片容器，增加最大宽高限制防止过大 -->
+            
                         <Border CornerRadius="4" ClipToBounds="True">
-                            <Image x:Name="PopupPreviewImage" MaxHeight="300" MaxWidth="400" Stretch="Uniform"/>
+                            <!-- 内层 Border 的背景就是棋盘格，尺寸完全由 Image 撑开 -->
+                            <Border x:Name="CheckerboardBorder" Background="Transparent">
+                                <Image x:Name="PopupPreviewImage" MaxHeight="200" MaxWidth="300" Stretch="Uniform"/>
+                            </Border>
                         </Border>
 
                         <!-- 信息区 -->

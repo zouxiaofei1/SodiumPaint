@@ -587,7 +587,7 @@ namespace TabPaint
         [JsonPropertyName("window_state")] // 0: Normal, 1: Minimized, 2: Maximized
         public int WindowState { get; set; } = 0;
 
-        private bool _autoLoadFolderImages = true; // 默认值为 true，保持原有行为
+        private bool _autoLoadFolderImages = false;
 
         [JsonPropertyName("auto_load_folder_images")]
         public bool AutoLoadFolderImages

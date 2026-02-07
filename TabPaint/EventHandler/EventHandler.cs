@@ -289,7 +289,7 @@ namespace TabPaint
                         if (_router.CurrentTool is TextTool tx && tx._richTextBox != null) break;
                         if (_router.CurrentTool != _tools.Select) break;
                         _router.SetTool(_tools.Select);
-                        SelectTool stSelectAll = _router.GetSelectTool();
+                        SelectTool stSelectAll = _router.GetSelectTool(); 
                         if (stSelectAll.HasActiveSelection) stSelectAll.CommitSelection(_ctx);
                         stSelectAll.Cleanup(_ctx);
                         stSelectAll.SelectAll(_ctx, false);
@@ -825,13 +825,11 @@ namespace TabPaint
                 if (Math.Abs(_targetZoomScale - zoomscale) < 0.0001) return;
 
                 _zoomCenter = center;
- a.s("StartSmoothZoom");
                 if (!_isZoomAnimating)
                 {
                     // 动画开始前，先以当前 UI 的真实位置作为起点
                     _virtualScrollH = ScrollContainer.HorizontalOffset;
                     _virtualScrollV = ScrollContainer.VerticalOffset;
-                    a.s("startanimate");
                     _isZoomAnimating = true;
                     CompositionTarget.Rendering += OnZoomRendering;
                 }
@@ -842,9 +840,6 @@ namespace TabPaint
         }
         private void OnZoomRendering(object sender, EventArgs e)
         {
-
-            var t = new TimeRecorder();
-            t.Toggle();
             double delta = _targetZoomScale - zoomscale;
             bool isEnding = false;
             double nextScale;
@@ -877,17 +872,11 @@ namespace TabPaint
             UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
             _canvasResizer.UpdateUI();
-
-
-
             if (IsViewMode) CheckBirdEyeVisibility();
             if (!IsViewMode) UpdateSelectionScalingMode();
             if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
             if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx); UpdateSelectionToolBarPosition();
             if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
-          
-           
-            t.Toggle(true);
 
         }
 
@@ -902,7 +891,6 @@ namespace TabPaint
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
-            a.s("OnMouseWheelZoom");
             // 1. 处理 Shift + 滚轮 (水平滚动) - 优先级最高，保持不变
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {

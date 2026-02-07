@@ -35,6 +35,38 @@
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
+            <Storyboard x:Key="FadeInDragOverlay">
+                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Visibility">
+                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                </ObjectAnimationUsingKeyFrames>
+                <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Opacity"
+                          From="0" To="1" Duration="0:0:0.05">
+                    <DoubleAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                          From="0.95" To="1" Duration="0:0:0.05">
+                    <DoubleAnimation.EasingFunction>
+                        <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                          From="0.95" To="1" Duration="0:0:0.05">
+                    <DoubleAnimation.EasingFunction>
+                        <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+
+            <!-- 新增：拖拽遮罩淡出动画 (透明度 1->0) -->
+            <Storyboard x:Key="FadeOutDragOverlay">
+                <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Opacity"
+                          To="0" Duration="0:0:0.15"/>
+                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Visibility">
+                    <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
+                </ObjectAnimationUsingKeyFrames>
+            </Storyboard>
             <Style x:Key="RulerVisibilityStyle" TargetType="{x:Type local:Ruler}">
                 <Setter Property="Visibility" Value="Collapsed"/>
           
@@ -232,10 +264,7 @@
         BorderThickness="1">
 
                                 <!-- 1. 新增：开启位图缓存 -->
-                                <Border.CacheMode>
-                                    <BitmapCache EnableClearType="False" RenderAtScale="1" SnapsToDevicePixels="False"/>
-                                </Border.CacheMode>
-
+  
                                 <Border.Margin>
                                     <Thickness Left="-1" Top="-1" Right="-1" Bottom="-1"/>
                                 </Border.Margin>
@@ -243,7 +272,12 @@
                                     <Style TargetType="Border">
                                         <Setter Property="Effect" Value="{x:Null}"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False">
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False"/>
+                                                    <!-- 当缩放倍数小于 1.5 (150%) 时才显示阴影 -->
+                                                    <Condition Binding="{Binding ElementName=ZoomTransform, Path=ScaleX, Converter={StaticResource ScaleToTileRectConverter}, ConverterParameter=1.5_IsLess}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
                                                 <Setter Property="Effect">
                                                     <Setter.Value>
                                                         <!-- 你的原有阴影设置 -->
@@ -255,7 +289,7 @@
                                               RenderingBias="Performance"/>
                                                     </Setter.Value>
                                                 </Setter>
-                                            </DataTrigger>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>

@@ -19,6 +19,7 @@ using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
 {
+   
     public class InverseBooleanToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -40,9 +41,33 @@ namespace TabPaint.Controls
         }
     }
     public partial class ImageBarControl : UserControl
-    {
+    { private Brush _checkerboardBrush;
         private DispatcherTimer _closeTimer;
         private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
+        private Brush GetCheckerboardBrush()
+        {
+            if (_checkerboardBrush != null) return _checkerboardBrush;
+
+            var lightBrush = (Brush)FindResource("CheckerboardLightBrush");
+            var darkBrush = (Brush)FindResource("CheckerboardDarkBrush");
+
+            var drawing = new DrawingGroup();
+            drawing.Children.Add(new GeometryDrawing(lightBrush, null, new RectangleGeometry(new Rect(0, 0, 16, 16))));
+            var darkGeometry = new GeometryGroup();
+            darkGeometry.Children.Add(new RectangleGeometry(new Rect(0, 0, 8, 8)));
+            darkGeometry.Children.Add(new RectangleGeometry(new Rect(8, 8, 8, 8)));
+            drawing.Children.Add(new GeometryDrawing(darkBrush, null, darkGeometry));
+
+            _checkerboardBrush = new DrawingBrush(drawing)
+            {
+                TileMode = TileMode.Tile,
+                Viewport = new Rect(0, 0, 16, 16),
+                ViewportUnits = BrushMappingMode.Absolute
+            };
+            _checkerboardBrush.Freeze();
+            return _checkerboardBrush;
+        }
+
         public ImageBarControl()
         {
             InitializeComponent();
@@ -107,8 +132,6 @@ namespace TabPaint.Controls
                 ClosePopupAndReset();
                 return;
             }
-
-            // ... (保留原有的坐标判断逻辑) ...
             Point mousePos = Mouse.GetPosition(_currentHoveredElement);
             bool isStillOver = mousePos.X >= 0 &&
                                mousePos.X <= _currentHoveredElement.ActualWidth &&
@@ -120,18 +143,42 @@ namespace TabPaint.Controls
                 if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;
                 return;
             }
-
-            // --- 修改: 关闭时彻底清理 ---
             ClosePopupAndReset();
         }
-        private void ClosePopupAndReset()
+        private void UpdateCheckerboardVisibility(BitmapSource source)
+        {
+            if (source == null)
+            {
+                CheckerboardBorder.Background = Brushes.Transparent;
+                return;
+            }
+
+            bool hasAlpha = false;
+            try
+            {
+                var format = source.Format;
+                hasAlpha = format == PixelFormats.Bgra32
+                        || format == PixelFormats.Pbgra32
+                        || format == PixelFormats.Rgba64
+                        || format == PixelFormats.Rgba128Float
+                        || format == PixelFormats.Prgba64
+                        || format == PixelFormats.Prgba128Float
+                        || (format.Masks.Count >= 4);
+            }
+            catch { hasAlpha = false;}
+            CheckerboardBorder.Background = hasAlpha ? GetCheckerboardBrush() : Brushes.Transparent;
+        }
+
+        public void ClosePopupAndReset()
         {
             LargePreviewPopup.IsOpen = false;
             _currentHoveredElement = null;
             _highResTimer.Stop();
-            _previewCts?.Cancel(); // 取消正在进行的后台加载
-            PopupPreviewImage.Source = null; // 释放内存引用
+            _previewCts?.Cancel();
+            PopupPreviewImage.Source = null;
+            CheckerboardBorder.Background = Brushes.Transparent; // ★ 清理
         }
+
         // 5. 定时器触发（0.5s 后）
         private void HoverTimer_Tick(object sender, EventArgs e)
         {
@@ -142,7 +189,6 @@ namespace TabPaint.Controls
             _closeTimer.Stop();
             UpdatePreviewPopup();
         }
-
         private void UpdatePreviewPopup()
         {
             if (_currentHoveredElement == null) return;
@@ -150,61 +196,103 @@ namespace TabPaint.Controls
             dynamic tabData = _currentHoveredElement.DataContext;
             if (tabData != null)
             {
-                // 1. 先显示已有的缩略图 (模糊/小图)
+                // 1. 先显示已有的缩略图
                 if (tabData.Thumbnail != null)
                 {
                     PopupPreviewImage.Source = tabData.Thumbnail;
+                    UpdateCheckerboardVisibility(tabData.Thumbnail as BitmapSource);
                 }
                 else
                 {
-                    // 如果连缩略图都没有，可以设置一个占位符或null
                     PopupPreviewImage.Source = null;
+                    CheckerboardBorder.Background = Brushes.Transparent;
                 }
 
-                // 2. 获取文件基本信息 (同步快速操作)
+                // 2. 获取文件信息
                 string filePath = tabData.FilePath;
-                if (File.Exists(filePath))
+                bool isNewFile = string.IsNullOrEmpty(filePath) || !File.Exists(filePath);
+
+                if (isNewFile)
+                {
+                    PopupFileSizeText.Text = "";
+                    // ★ 新图片也尝试从缩略图获取尺寸
+                    BitmapSource thumb = tabData.Thumbnail as BitmapSource;
+                    if (thumb != null && thumb.PixelWidth > 0)
+                    {
+                        PopupDimensionsText.Text = $"{thumb.PixelWidth} × {thumb.PixelHeight} px";
+                    }
+                    else
+                    {
+                        PopupDimensionsText.Text = LocalizationManager.GetString("L_ImgBar_NewImage");
+                    }
+                    _highResTimer.Stop();
+                }
+                else
                 {
                     try
                     {
                         var fi = new FileInfo(filePath);
-                        // 格式化文件大小
                         PopupFileSizeText.Text = FormatFileSize(fi.Length);
-                        PopupDimensionsText.Text = "Loading..."; // 尺寸需要读取头部，稍后异步加载
+
+                        // ★ 同步快速读取图片尺寸（只读文件头，不解码像素）
+                        var dims = GetImageDimensionsFast(filePath);
+                        if (dims.Width > 0 && dims.Height > 0)
+                        {
+                            PopupDimensionsText.Text = $"{dims.Width} × {dims.Height} px";
+                        }
+                        else
+                        {
+                            PopupDimensionsText.Text = "";
+                        }
                     }
                     catch
                     {
-                        PopupFileSizeText.Text = "Unknown";
+                        PopupFileSizeText.Text = ""; PopupDimensionsText.Text = "";
                     }
+
+                    _highResTimer.Stop();
+                    _highResTimer.Start();
                 }
 
                 // 3. 设置位置并打开
                 LargePreviewPopup.PlacementTarget = _currentHoveredElement;
 
-                if (!LargePreviewPopup.IsOpen)
-                {
-                    LargePreviewPopup.IsOpen = true;
-                }
-
-                // 4. 启动高清图加载定时器 (1秒后触发)
-                _highResTimer.Stop();
-                _highResTimer.Start();
-
-                // 5. 修复位置 (原代码逻辑)
+                if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     try
                     {
-                        var method = typeof(Popup).GetMethod("Reposition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        var method = typeof(Popup).GetMethod("Reposition",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                         method?.Invoke(LargePreviewPopup, null);
                     }
                     catch { }
                 }), System.Windows.Threading.DispatcherPriority.Render);
             }
         }
+
+        private (int Width, int Height) GetImageDimensionsFast(string filePath)
+        {
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var decoder = BitmapDecoder.Create(fs,
+                    BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile,
+                    BitmapCacheOption.None);
+
+                if (decoder.Frames.Count > 0)
+                {
+                    var frame = decoder.Frames[0];
+                    return (frame.PixelWidth, frame.PixelHeight);
+                }
+            }
+            catch{}
+            return (0, 0);
+        }
+
         private async void HighResTimer_Tick(object sender, EventArgs e)
         {
-            _highResTimer.Stop(); // 只触发一次
+            _highResTimer.Stop();
 
             if (_currentHoveredElement == null) return;
             dynamic tabData = _currentHoveredElement.DataContext;
@@ -212,43 +300,35 @@ namespace TabPaint.Controls
 
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
 
-            // 取消上一次可能的任务
             _previewCts?.Cancel();
             _previewCts = new CancellationTokenSource();
             var token = _previewCts.Token;
 
             try
             {
-                // 在后台线程加载图片信息和高清预览
                 var result = await Task.Run(() => LoadHighResPreviewInternal(filePath, token), token);
 
                 if (token.IsCancellationRequested) return;
 
-                // 回到UI线程更新界面
                 if (result.Image != null)
                 {
                     PopupPreviewImage.Source = result.Image;
+                    UpdateCheckerboardVisibility(result.Image);
                 }
-                if (result.Width > 0 && result.Height > 0)
+                if (string.IsNullOrEmpty(PopupDimensionsText.Text) || PopupDimensionsText.Text == "")
                 {
-                    PopupDimensionsText.Text = $"{result.Width} × {result.Height} px";
-                }
-                else
-                {
-                    PopupDimensionsText.Text = "Unknown Size";
+                    if (result.Width > 0 && result.Height > 0)
+                    {
+                        PopupDimensionsText.Text = $"{result.Width} × {result.Height} px";
+                    }
                 }
             }
-            catch (OperationCanceledException)
-            {
-                // 忽略取消
-            }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 Debug.WriteLine($"High res preview failed: {ex.Message}");
             }
         }
-
-        // 内部结构，用于传递后台任务结果
         private struct PreviewResult
         {
             public BitmapSource Image;
@@ -272,19 +352,13 @@ namespace TabPaint.Controls
                         res.Width = frame.PixelWidth;
                         res.Height = frame.PixelHeight;
                     }
-
-                    // 2. 生成高清预览 (限制大小以优化性能，比如限制宽400)
                     if (token.IsCancellationRequested) return res;
-
-                    // 重置流位置
                     fs.Position = 0;
 
                     var img = new BitmapImage();
                     img.BeginInit();
                     img.CacheOption = BitmapCacheOption.OnLoad; // 必须OnLoad，因为流会关闭
                     img.StreamSource = fs;
-                    // 重要：设置解码高度/宽度，避免加载4K/8K原图占用巨大内存
-                    // 这里设置DecodePixelWidth=400，足够Popup清晰显示了
                     img.DecodePixelWidth = 400;
                     img.EndInit();
                     img.Freeze(); // 必须冻结以便跨线程传递
@@ -294,7 +368,6 @@ namespace TabPaint.Controls
             }
             catch
             {
-                // 加载失败 (例如格式不支持)
             }
             return res;
         }
@@ -417,8 +490,6 @@ namespace TabPaint.Controls
         public event MouseWheelEventHandler FileTabsWheelScroll;
         public event DragEventHandler FileTabReorderDragOver;
         private void Internal_OnFileTabReorderDragOver(object sender, DragEventArgs e) => FileTabReorderDragOver?.Invoke(sender, e);
-
-        // 滚动条与滑块
         private void Internal_OnFileTabsWheelScroll(object sender, MouseWheelEventArgs e)
         {
             var scroller = sender as ScrollViewer;
@@ -449,7 +520,6 @@ namespace TabPaint.Controls
 
         private void Internal_OnSaveAllDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            // 标记事件已处理，防止其继续冒泡或触发其他的 Click 行为（视具体需求而定）
             e.Handled = true;
             RaiseEvent(new RoutedEventArgs(SaveAllDoubleClickEvent, sender));
         }
@@ -465,11 +535,8 @@ namespace TabPaint.Controls
             // 2. 遍历当前可见的 Tab 容器
             for (int i = 0; i < FileTabList.Items.Count; i++)
             {
-                // 获取 UI 容器 (即 DataTemplate 里的那个 Grid/Button)
                 var container = FileTabList.ItemContainerGenerator.ContainerFromIndex(i) as FrameworkElement;
                 if (container == null) continue;
-
-                // 获取该 Tab 相对于 FileTabList 的位置
                 Point relativePos = container.TranslatePoint(new Point(0, 0), FileTabList);
                 Rect bounds = new Rect(relativePos.X, relativePos.Y+110, container.ActualWidth, container.ActualHeight);
                 if (bounds.Contains(mousePosInList))
@@ -493,7 +560,6 @@ namespace TabPaint.Controls
             set { SetValue(IsSingleTabModeProperty, value); }
         }
         public event DragEventHandler FileTabLeave;
-        // 1. DragOver: 计算位置并显示竖线
            private void Internal_OnFileTabDragLeave(object sender, DragEventArgs e) => FileTabLeave?.Invoke(sender, e);
 
         public static readonly DependencyProperty IsViewModeProperty =
@@ -524,8 +590,6 @@ namespace TabPaint.Controls
             get { return (bool)GetValue(IsCompactModeProperty); }
             set { SetValue(IsCompactModeProperty, value); }
         }
-
-        // --- 新增：动态高度属性，用于动画绑定 ---
         public double DesiredHeight
         {
             get { return (double)GetValue(DesiredHeightProperty); }

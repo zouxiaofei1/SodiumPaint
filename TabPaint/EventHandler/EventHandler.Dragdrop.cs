@@ -36,6 +36,7 @@ namespace TabPaint
         }
         private void OnGlobalDragOver(object sender, DragEventArgs e)
         {
+            
             if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
                 HideDragOverlay();
@@ -43,7 +44,7 @@ namespace TabPaint
                 e.Handled = true;
                 return;
             }
-          //  a.s( GetDynamicImageBarThreshold());
+      
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
@@ -73,7 +74,7 @@ namespace TabPaint
 
                     if (pos.Y <= AppConsts.DragTitleBarThresholdY)
                     {
-                        e.Effects = DragDropEffects.Move;
+                        e.Effects = DragDropEffects.Move;   
                         ShowDragOverlay(
                             LocalizationManager.GetString("L_Drag_SwitchWorkspace_Title"),
                             LocalizationManager.GetString("L_Drag_SwitchWorkspace_Desc")
@@ -345,7 +346,7 @@ namespace TabPaint
             // 更新文字内容
             DragOverlayText.Text = title;
             DragOverlaySubText.Text = subText;
-
+           // s(_isDragOverlayVisible);
             if (_isDragOverlayVisible) return;
 
             _isDragOverlayVisible = true;
@@ -357,6 +358,8 @@ namespace TabPaint
 
         private void HideDragOverlay()
         {
+            try
+            {
             if (!_isDragOverlayVisible) return;
 
             _isDragOverlayVisible = false;
@@ -364,6 +367,8 @@ namespace TabPaint
             // 播放淡出动画
             Storyboard fadeOut = (Storyboard)this.Resources["FadeOutDragOverlay"];
             fadeOut.Begin(); _dragWatchdog.Stop();
+            }
+            catch { }
         }
 
         private void InsertImageToCanvas(string filePath)

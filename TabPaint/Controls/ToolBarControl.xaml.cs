@@ -477,7 +477,7 @@ namespace TabPaint.Controls
         {
             if (sender is System.Windows.Controls.Button btn && btn.Background is SolidColorBrush brush)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 Color selectedColor = brush.Color;
 
                 mw.SelectedBrush = new SolidColorBrush(selectedColor);

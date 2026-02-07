@@ -199,7 +199,7 @@ namespace TabPaint
                                 if (ext == ".svg")
                                 {
                                     byte[] bytes = File.ReadAllBytes(targetPath);
-                                    var mw = System.Windows.Application.Current.Dispatcher.Invoke(() => (MainWindow)System.Windows.Application.Current.MainWindow);
+                                    var mw = System.Windows.Application.Current.Dispatcher.Invoke(() => MainWindow.GetCurrentInstance());
                                     return mw.DecodeSvg(bytes, token);
                                 }
 

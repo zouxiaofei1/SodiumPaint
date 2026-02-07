@@ -76,7 +76,7 @@ namespace TabPaint
             public void ApplySelectionAttributes()
             {
                 if (_richTextBox == null) return;
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 var selection = _richTextBox.Selection;
 
                 // 1. 上下标 (使用 BaselineAlignment)
@@ -109,7 +109,7 @@ namespace TabPaint
 
             public override void Cleanup(ToolContext ctx)
             {
-                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                MainWindow mw = MainWindow.GetCurrentInstance();
 
                 if (_richTextBox != null && ctx.EditorOverlay.Children.Contains(_richTextBox))
                 {
@@ -140,7 +140,7 @@ namespace TabPaint
                 {
                     ctx.Undo.Undo();
                     ctx.Undo._redo.Pop();
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).SetUndoRedoButtonState();
+                    (MainWindow.GetCurrentInstance()).SetUndoRedoButtonState();
                 }
             }
             public override void SetCursor(ToolContext ctx)
@@ -176,7 +176,7 @@ namespace TabPaint
 
             public void DrawTextboxOverlay(ToolContext ctx)
             {
-                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                MainWindow mw = MainWindow.GetCurrentInstance();
                 if (_richTextBox == null) return;
 
                 double invScale = 1 / mw.zoomscale;
@@ -226,7 +226,7 @@ namespace TabPaint
             private ResizeAnchor HitTestTextboxHandle(Point px)
             {
                 if (_richTextBox == null) return ResizeAnchor.None;
-                double size = AppConsts.TextToolHandleHitTestSize / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale;
+                double size = AppConsts.TextToolHandleHitTestSize / (MainWindow.GetCurrentInstance()).zoomscale;
                 double x1 = Canvas.GetLeft(_richTextBox);
                 double y1 = Canvas.GetTop(_richTextBox);
                 double x2 = x1 + _richTextBox.ActualWidth;
@@ -398,13 +398,13 @@ namespace TabPaint
                 rtb.MaxWidth = AppConsts.MaxTextBoxWidth;
 
                 rtb.UpdateLayout();
-                DrawTextboxOverlay(((MainWindow)System.Windows.Application.Current.MainWindow)._ctx);
+                DrawTextboxOverlay((MainWindow.GetCurrentInstance())._ctx);
             }
 
 
             public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
-                MainWindow mw = ((MainWindow)System.Windows.Application.Current.MainWindow);
+                MainWindow mw = (MainWindow.GetCurrentInstance());
                 if (mw.IsViewMode) return;
 
                 // 如果文本框存在，优先检测交互逻辑
@@ -493,7 +493,7 @@ namespace TabPaint
                 double y = Canvas.GetTop(_richTextBox);
                 double w = _richTextBox.ActualWidth;
                 double h = _richTextBox.ActualHeight;
-                double borderThickness = Math.Max(AppConsts.TextToolBorderThicknessMin / ((MainWindow)System.Windows.Application.Current.MainWindow).zoomscale, AppConsts.TextToolBorderThicknessMax);
+                double borderThickness = Math.Max(AppConsts.TextToolBorderThicknessMin / (MainWindow.GetCurrentInstance()).zoomscale, AppConsts.TextToolBorderThicknessMax);
 
                 // 外矩形 (扩大边框宽度)
                 bool inOuter = px.X >= x - borderThickness &&
@@ -512,7 +512,7 @@ namespace TabPaint
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
-                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                MainWindow mw = MainWindow.GetCurrentInstance();
                 if (mw._router.CurrentTool != mw._tools.Text) return;
                 if (_resizing || (_dragging && _richTextBox != null))
                 {
@@ -539,7 +539,7 @@ namespace TabPaint
                     Canvas.SetZIndex(ctx.EditorOverlay, AppConsts.EditorOverlayZIndex);
                     ctx.EditorOverlay.Children.Add(_richTextBox);
 
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);
+                    (MainWindow.GetCurrentInstance()).ShowTextToolbarFor(_richTextBox);
 
                     _richTextBox.Focus();
                 }
@@ -684,7 +684,7 @@ namespace TabPaint
             }
             private System.Windows.Controls.RichTextBox CreateRichTextBox(ToolContext ctx, double x, double y)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
 
                 var rtb = new System.Windows.Controls.RichTextBox
                 {
@@ -715,7 +715,7 @@ namespace TabPaint
             }
             public void ApplyTextSettings(System.Windows.Controls.RichTextBox tb)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 if (tb == null) return;
                 if (mw.TextMenu == null) return;
                
@@ -752,7 +752,7 @@ namespace TabPaint
             {
                 if (_richTextBox == null) return;
 
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 ApplyTextSettings(_richTextBox);
 
                 _richTextBox.UpdateLayout();
@@ -760,7 +760,7 @@ namespace TabPaint
             }
             private void CleanUpUI(ToolContext ctx)
             {
-                MainWindow mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                MainWindow mw = MainWindow.GetCurrentInstance();
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 if (ctx.EditorOverlay.Children.Contains(_richTextBox))
@@ -848,7 +848,7 @@ namespace TabPaint
                 rtb.Loaded += (s, e) => { DrawTextboxOverlay(ctx); };
                 rtb.SelectionChanged += (s, e) =>
                 {
-                    ((MainWindow)System.Windows.Application.Current.MainWindow).SyncTextToolbarState(rtb);
+                    (MainWindow.GetCurrentInstance()).SyncTextToolbarState(rtb);
                 };
                 rtb.PreviewKeyDown += (s, e) =>
                 {
@@ -892,7 +892,7 @@ namespace TabPaint
                 Canvas.SetZIndex(ctx.EditorOverlay, AppConsts.EditorOverlayZIndex);
                 ctx.EditorOverlay.Children.Add(_richTextBox);
 
-                ((MainWindow)System.Windows.Application.Current.MainWindow).ShowTextToolbarFor(_richTextBox);
+                (MainWindow.GetCurrentInstance()).ShowTextToolbarFor(_richTextBox);
                 SetupTextBoxEvents(ctx, _richTextBox);
 
                 ctx.EditorOverlay.PreviewMouseUp -= Overlay_PreviewMouseUp; // 防止重复订阅
@@ -909,21 +909,21 @@ namespace TabPaint
             }
             private void Overlay_PreviewMouseUp(object sender, MouseButtonEventArgs e)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 Point pos = e.GetPosition(mw._ctx.EditorOverlay);
                 OnPointerUp(mw._ctx, pos);
             }
 
             private void Overlay_PreviewMouseMove(object sender, MouseEventArgs e)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 Point pos = e.GetPosition(mw._ctx.EditorOverlay);
                 OnPointerMove(mw._ctx, pos);
             }
 
             private void Overlay_PreviewMouseDown(object sender, MouseButtonEventArgs e)
             {
-                var mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                var mw = MainWindow.GetCurrentInstance();
                 var ctx = mw._ctx;
 
                 Point pos = e.GetPosition(ctx.EditorOverlay);

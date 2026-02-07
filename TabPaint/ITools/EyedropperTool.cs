@@ -42,7 +42,7 @@ namespace TabPaint
             }
             public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
-                MainWindow  mw = (MainWindow)System.Windows.Application.Current.MainWindow;
+                MainWindow  mw = MainWindow.GetCurrentInstance();
                 if (mw.IsViewMode) return;
                 var px = ctx.ToPixel(viewPos);
                 if (px.X >= 0 && px.Y >= 0 && px.X < ctx.Surface.Bitmap.PixelWidth && px.Y < ctx.Surface.Bitmap.PixelHeight)
