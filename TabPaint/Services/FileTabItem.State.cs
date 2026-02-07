@@ -129,6 +129,12 @@ namespace TabPaint
             public string Id { get; set; } = Guid.NewGuid().ToString();
             public string BackupPath { get; set; }
             public DateTime LastBackupTime { get; set; }
+
+            // 撤销栈支持
+            public Stack<UndoAction> UndoStack { get; set; } = new();
+            public Stack<UndoAction> RedoStack { get; set; } = new();
+            public int SavedUndoPoint { get; set; } = 0;
+
             public FileTabItem(string path)
             {
                 FilePath = path;

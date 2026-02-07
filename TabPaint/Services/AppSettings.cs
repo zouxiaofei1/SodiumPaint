@@ -172,11 +172,9 @@ namespace TabPaint
                 if (_ctx != null)  _ctx.PenStyle = targetStyle;
                 if (_router != null)
                 {
-
                     if (settings.LastToolName == "PenTool")
                     {
-                        SetBrushStyle(_ctx.PenStyle); UpdateBrushSplitButtonIcon(_ctx.PenStyle);
-                        UpdateGlobalToolSettingsKey(); 
+                        SetBrushStyle(_ctx.PenStyle);
                     }
                     else _router.SetTool(targetTool);
                 }

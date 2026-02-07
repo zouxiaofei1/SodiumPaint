@@ -180,6 +180,7 @@ namespace TabPaint
                 CanvasWrapper.ForceCursor = false;
             }
             UpdateCanvasVisuals();
+            UpdateDwmBorderColor();
             if (AppTitleBar != null) AppTitleBar.UpdateModeIcon(IsViewMode);
             AutoUpdateMaximizeIcon();
      

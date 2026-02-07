@@ -156,7 +156,7 @@ namespace TabPaint
         {
             try
             {
-                MainWindow newWindow = new MainWindow(string.Empty);
+                MainWindow newWindow = new MainWindow(string.Empty, false);
 
                 newWindow.Left = this.Left + 20;
                 newWindow.Top = this.Top + 20;
@@ -494,7 +494,7 @@ namespace TabPaint
         }
         private void OnExitClick(object sender, RoutedEventArgs e)
         {
-            System.Windows.Application.Current.Shutdown();
+            App.GlobalExit();
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)

@@ -79,61 +79,12 @@ public partial class PenTool : ToolBase
         var mw = MainWindow.GetCurrentInstance();
         var aiService = new AiService(mw._cacheDir);
 
-        // 1. 初始化取消令牌源
-        var cts = new System.Threading.CancellationTokenSource();
-
-        // 定义取消事件的处理逻辑
-        EventHandler cancelHandler = (s, args) =>
-        {
-            if (!cts.IsCancellationRequested)
-            {
-                cts.Cancel();
-                mw.ShowToast("L_Toast_DownloadCancelled"); // 提示已取消
-            }
-        };
-
         try
         {
-            // 2. 检查模型状态
-            if (!aiService.IsModelReady(AiService.AiTaskType.Inpainting))
-            {
-                var result = FluentMessageBox.Show(
-                    LocalizationManager.GetString("L_AI_Download_Inpaint_Content"),
-                    LocalizationManager.GetString("L_AI_Download_Title"),
-                    MessageBoxButton.YesNo);
-
-                if (result != MessageBoxResult.Yes)
-                {
-                    CleanupMask(ctx);
-                    return;
-                }
-            }
-
-            // 3. 准备状态UI并绑定取消事件
+            string modelPath = System.IO.Path.Combine(mw._cacheDir, AppConsts.Inpaint_ModelName);
             string oldStatus = mw.ImageSize;
-            mw.ImageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
 
-            // 绑定悬浮窗的取消事件
-            mw.DownloadProgressPopup.CancelRequested += cancelHandler;
-
-            // 4. 定义进度回调 (加入 CancellationToken 检查)
-            var dlProgress = new Progress<AiDownloadStatus>(status =>
-            {
-                // 如果已经请求取消，不再更新UI，防止窗口再次弹出
-                if (cts.Token.IsCancellationRequested) return;
-
-                mw.ImageSize = LocalizationManager.GetString("L_AI_Downloading") +$"{status.Percentage:F0}% " ;
-                mw.DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
-            });
-
-            // 5. 执行模型准备（传入 Token）
-            // 注意：PrepareModelAsync 必须已按照上一轮建议修改，增加了 CancellationToken 参数
-            string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.Inpainting, dlProgress, cts.Token);
-
-            // 下载完成后隐藏悬浮窗
-            mw.DownloadProgressPopup.Finish();
-
-            // 6. 开始推理阶段
+            // 开始推理阶段
             mw.ImageSize = LocalizationManager.GetString("L_AI_Eraser_Processing");
             mw.ShowToast("L_AI_Eraser_Processing");
             mw.IsEnabled = false; // 锁定 UI
@@ -178,24 +129,13 @@ public partial class PenTool : ToolBase
             mw.ShowToast("L_AI_Eraser_Success");
             mw.ImageSize = oldStatus;
         }
-        catch (OperationCanceledException)
-        {
-            // 处理用户主动取消
-            mw.DownloadProgressPopup.Finish();
-            mw.ImageSize = LocalizationManager.GetString("L_Main_Status_Ready"); // 恢复状态
-        }
         catch (Exception ex)
         {
-            mw.DownloadProgressPopup.Finish();
             string errorFormat = LocalizationManager.GetString("L_AI_Eraser_Error_Prefix");
             mw.ShowToast(string.Format(errorFormat, ex.Message));
         }
         finally
         {
-            // 7. 资源清理
-            mw.DownloadProgressPopup.CancelRequested -= cancelHandler; // 必须解除绑定
-            cts.Dispose(); // 释放令牌
-
             mw.IsEnabled = true;
             CleanupMask(ctx);
             mw.Focus();

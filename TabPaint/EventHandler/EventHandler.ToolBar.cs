@@ -240,14 +240,7 @@ namespace TabPaint
                 && menuItem.Tag is string tagString
                 && Enum.TryParse(tagString, out BrushStyle style))
             {
-               
-                _router.SetTool(_tools.Pen);
-                
-                _ctx.PenStyle = style;
-                UpdateBrushSplitButtonIcon(style);
-                UpdateToolSelectionHighlight();
-                AutoSetFloatBarVisibility();
-                UpdateGlobalToolSettingsKey();
+                SetBrushStyle(style);
                 // 关闭 UserControl 里的 ToggleButton
                 MainToolBar.BrushToggle.IsChecked = false;
             }
@@ -369,6 +362,66 @@ namespace TabPaint
                 TextMenu.TextEditBar.ReleaseMouseCapture(); // 释放鼠标捕获
             }
         }
+        public async Task<bool> EnsureAiModelReadyAsync(AiService.AiTaskType taskType)
+        {
+            var aiService = new AiService(_cacheDir);
+            if (aiService.IsModelReady(taskType)) return true;
+
+            string contentKey = "";
+            switch (taskType)
+            {
+                case AiService.AiTaskType.Inpainting: contentKey = "L_AI_Download_Inpaint_Content"; break;
+                case AiService.AiTaskType.RemoveBackground: contentKey = "L_AI_Download_RMBG_Content"; break;
+                case AiService.AiTaskType.SuperResolution: contentKey = "L_AI_Download_SR_Content"; break;
+            }
+
+            var result = FluentMessageBox.Show(
+                LocalizationManager.GetString(contentKey),
+                LocalizationManager.GetString("L_AI_Download_Title"),
+                MessageBoxButton.YesNo);
+
+            if (result != MessageBoxResult.Yes) return false;
+
+            var cts = new System.Threading.CancellationTokenSource();
+            EventHandler cancelHandler = (s, args) => cts.Cancel();
+            DownloadProgressPopup.CancelRequested += cancelHandler;
+
+            try
+            {
+                string oldStatus = ImageSize;
+                ImageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
+
+                var dlProgress = new Progress<AiDownloadStatus>(status =>
+                {
+                    if (cts.Token.IsCancellationRequested) return;
+                    ImageSize = LocalizationManager.GetString("L_AI_Downloading") + $"{status.Percentage:F0}% ";
+                    DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
+                });
+
+                await aiService.PrepareModelAsync(taskType, dlProgress, cts.Token);
+                DownloadProgressPopup.Finish();
+                ImageSize = oldStatus;
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                DownloadProgressPopup.Finish();
+                ShowToast("L_Toast_DownloadCancelled");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                DownloadProgressPopup.Finish();
+                ShowToast(string.Format(LocalizationManager.GetString("L_AI_Eraser_Error_Prefix"), ex.Message));
+                return false;
+            }
+            finally
+            {
+                DownloadProgressPopup.CancelRequested -= cancelHandler;
+                cts.Dispose();
+            }
+        }
+
         public enum SelectionType { Rectangle, Lasso, MagicWand }
 
         // 2. 处理左侧主按钮点击

@@ -34,29 +34,51 @@
             <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2"/>
         </Border.Effect>
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="32"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- Title Bar -->
-            <Grid Grid.Row="0" Background="{DynamicResource ChromeLowBrush}">
-                <StackPanel Orientation="Horizontal" Margin="12,0" VerticalAlignment="Center">
-                    <Image Source="{StaticResource Favorite_Image}" 
-                                    Width="14" Height="14" Margin="0,0,8,0"/>
-                    <TextBlock Text="{DynamicResource L_StatusBar_Favorite_ToolTip}" 
-                               FontSize="12" FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" 
-                               VerticalAlignment="Center"/>
-                </StackPanel>
+            <!-- Left Navigation Bar -->
+            <Grid Grid.Column="0" Background="{DynamicResource ChromeLowBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="48"/>
+                </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Click="CloseButton_Click" Style="{StaticResource OtherCloseButtonStyle}" Width="46" Height="32"/>
-                </StackPanel>
+                <!-- Page Tabs (From bottom up) -->
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Style="{DynamicResource FluentScrollViewer}">
+                    <StackPanel x:Name="PagesStackPanel" VerticalAlignment="Bottom">
+                        <!-- Pages will be added here -->
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Add Page Button -->
+                <Button Grid.Row="1" Click="AddPage_Click" Style="{StaticResource RoundedMenuButtonStyle}" Width="32" Height="32" Margin="0,4"
+                        ToolTip="{DynamicResource L_Menu_File_Add}">
+                    <Path Data="M11,19V13H5V11H11V5H13V11H19V13H13V19H11Z" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16" Stretch="Uniform"/>
+                </Button>
+
+                <!-- Favorite Star Icon (Bottom) -->
+                <Grid Grid.Row="2" WindowChrome.IsHitTestVisibleInChrome="True" Background="Transparent" MouseLeftButtonDown="StarIcon_MouseLeftButtonDown" Cursor="SizeAll">
+                    <Image Source="{StaticResource Favorite_Image}" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                </Grid>
             </Grid>
 
             <!-- Content -->
-            <controls:FavoriteBarControl x:Name="FavoriteContent" Grid.Row="1"/>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <!-- Invisible handle for dragging in the top area if needed -->
+                <Border Grid.Row="0" Background="Transparent" WindowChrome.IsHitTestVisibleInChrome="False"/>
+                <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Click="CloseButton_Click" Style="{StaticResource OtherCloseButtonStyle}" Width="46" Height="32"/>
+                </StackPanel>
+                <controls:FavoriteBarControl x:Name="FavoriteContent" Grid.Row="1"/>
+            </Grid>
         </Grid>
     </Border>
 </Window>

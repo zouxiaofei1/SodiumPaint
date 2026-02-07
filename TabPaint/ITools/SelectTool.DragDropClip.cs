@@ -211,7 +211,7 @@ namespace TabPaint
 
                 if (sourceBitmap == null) return;
                 IsPasted = true;
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
 
                 if (sourceBitmap.Format != PixelFormats.Bgra32)
                 {

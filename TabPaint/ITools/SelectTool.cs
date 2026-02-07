@@ -89,7 +89,7 @@ namespace TabPaint
                 bool isCleanSelection = ctxForTimer.Undo.UndoCount <= 1 && ctxForTimer.Undo._redo.Count == 0;
                 double targetDelay = isCleanSelection ? AppConsts.QuickDragDelayMs : AppConsts.SlowDragDelayMs;
                 double elapsed = (DateTime.Now - _hoverStartTime).TotalMilliseconds;
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctxForTimer.ParentWindow;
                 if (elapsed > AppConsts.HoverStartTimeThresholdMs)
                 {
                     // 1. 光标反馈
@@ -145,7 +145,7 @@ namespace TabPaint
                 // 恢复预览图状态
                 if (ctxForTimer != null) ctxForTimer.SelectionPreview.Opacity = 1.0;
 
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctxForTimer?.ParentWindow;
                 if (mw != null) mw.UpdateSelectionScalingMode();
             }
             private ToolContext ctxForTimer;

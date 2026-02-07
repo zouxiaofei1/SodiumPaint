@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace TabPaint.Controls
@@ -13,17 +14,26 @@ namespace TabPaint.Controls
     {
         public event EventHandler CloseRequested;
         public event Action<string> ImageSelected;
+        public event EventHandler FavoritesChanged;
+
+        private string _currentPage = "Default";
+
+        private StackPanel GetFavoriteStack()
+        {
+            return this.FindName("FavoriteStackPanel") as StackPanel;
+        }
 
         public FavoriteBarControl()
         {
             InitializeComponent();
-            LoadFavorites();
+            
+            this.Loaded += (s, e) => {
+                if (!string.IsNullOrEmpty(_currentPage))
+                    LoadFavorites(_currentPage);
+            };
 
-            // 允许粘贴
             this.KeyDown += FavoriteBarControl_KeyDown;
             this.Focusable = true;
-
-            // 允许拖放
             this.AllowDrop = true;
         }
 
@@ -47,17 +57,21 @@ namespace TabPaint.Controls
             }
         }
 
-        public void LoadFavorites()
+        public void LoadFavorites(string pageName = "Default")
         {
-            if (FavoriteWrapPanel == null) return;
-            FavoriteWrapPanel.Children.Clear();
-            if (!Directory.Exists(AppConsts.FavoriteDir))
+            _currentPage = pageName;
+            var stack = GetFavoriteStack();
+            if (stack == null) return;
+            
+            stack.Children.Clear();
+
+            string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
+            if (!Directory.Exists(pagePath))
             {
-                Directory.CreateDirectory(AppConsts.FavoriteDir);
-                return;
+                Directory.CreateDirectory(pagePath);
             }
 
-            var files = Directory.GetFiles(AppConsts.FavoriteDir)
+            var files = Directory.GetFiles(pagePath)
                                  .Where(f => AppConsts.IsSupportedImage(f))
                                  .OrderByDescending(f => File.GetCreationTime(f));
 
@@ -65,10 +79,72 @@ namespace TabPaint.Controls
             {
                 AddImageToUI(file);
             }
+
+            AddPlusButton();
+        }
+
+        private void AddPlusButton()
+        {
+            var stack = GetFavoriteStack();
+            if (stack == null) return;
+
+            var grid = new Grid
+            {
+                Width = 120,
+                Height = 120,
+                Margin = new Thickness(6),
+                ToolTip = FindResource("L_Menu_File_Add")
+            };
+
+            var rect = new System.Windows.Shapes.Rectangle
+            {
+                Stroke = (Brush)FindResource("BorderBrush"),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 2 },
+                RadiusX = 6,
+                RadiusY = 6,
+                Fill = (Brush)FindResource("GlassBackgroundLowBrush"),
+                SnapsToDevicePixels = true
+            };
+            grid.Children.Add(rect);
+
+            var iconPath = new System.Windows.Shapes.Path
+            {
+                Data = Geometry.Parse("M11,19V13H5V11H11V5H13V11H19V13H13V19H11Z"),
+                Fill = (Brush)FindResource("IconFillBrush"),
+                Width = 24,
+                Height = 24,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            grid.Children.Add(iconPath);
+
+            grid.Cursor = Cursors.Hand;
+            grid.MouseLeftButtonDown += (s, e) =>
+            {
+                var dialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = string.Format(AppConsts.ImageFilterFormat, "Image Files", "PNG", "JPG", "WEBP", "BMP", "GIF", "TIF", "ICO", "SVG"),
+                    Multiselect = true
+                };
+                if (dialog.ShowDialog() == true)
+                {
+                    foreach (var file in dialog.FileNames)
+                    {
+                        AddFavoriteFile(file);
+                    }
+                }
+            };
+
+            stack.Children.Add(grid);
         }
 
         private void AddImageToUI(string filePath)
         {
+            var stack = GetFavoriteStack();
+            if (stack == null) return;
+
             var grid = new Grid
             {
                 Width = 120,
@@ -78,22 +154,21 @@ namespace TabPaint.Controls
 
             var border = new Border
             {
-                BorderBrush = (System.Windows.Media.Brush)FindResource("BorderBrush"),
+                BorderBrush = (Brush)FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(6),
                 ToolTip = Path.GetFileName(filePath),
-                Background = (System.Windows.Media.Brush)FindResource("GlassBackgroundLowBrush"),
+                Background = (Brush)FindResource("GlassBackgroundLowBrush"),
                 Cursor = Cursors.Hand,
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 10, ShadowDepth = 0, Opacity = 0.1 }
             };
 
             var img = new Image
             {
-                Stretch = System.Windows.Media.Stretch.Uniform,
+                Stretch = Stretch.Uniform,
                 Margin = new Thickness(4)
             };
 
-            // 使用低内存占用的方式加载缩略图
             try
             {
                 var bitmap = new BitmapImage();
@@ -109,7 +184,6 @@ namespace TabPaint.Controls
             border.Child = img;
             grid.Children.Add(border);
 
-            // 右上角删除按钮
             var deleteBtn = new Button
             {
                 Style = (Style)FindResource("OtherCloseButtonStyle"),
@@ -119,7 +193,7 @@ namespace TabPaint.Controls
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 2, 2, 0),
                 Visibility = Visibility.Collapsed,
-                Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(180, 0, 0, 0)),
+                Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
                 Padding = new Thickness(0)
             };
             grid.Children.Add(deleteBtn);
@@ -132,29 +206,25 @@ namespace TabPaint.Controls
                 try
                 {
                     File.Delete(filePath);
-                    FavoriteWrapPanel.Children.Remove(grid);
+                    stack.Children.Remove(grid);
+                    FavoritesChanged?.Invoke(this, EventArgs.Empty);
                 }
                 catch { }
                 e.Handled = true;
             };
 
-            // 拖拽支持 (从 FavoriteBar 拖出)
             border.MouseMove += (s, e) =>
             {
                 if (e.LeftButton == MouseButtonState.Pressed)
                 {
                     DataObject data = new DataObject();
                     data.SetData(DataFormats.FileDrop, new string[] { filePath });
-
-                    // 额外支持直接拖入 Explorer 或其他应用
                     var fileList = new System.Collections.Specialized.StringCollection { filePath };
                     data.SetFileDropList(fileList);
-
                     DragDrop.DoDragDrop(border, data, DragDropEffects.Copy);
                 }
             };
 
-            // 双击插入到画布
             border.MouseLeftButtonDown += (s, e) =>
             {
                 if (e.ClickCount == 2)
@@ -163,15 +233,19 @@ namespace TabPaint.Controls
                 }
             };
 
-            // 右键菜单
             var menu = new ContextMenu { Style = (Style)FindResource("Win11ContextMenuStyle") };
             var openItem = new MenuItem { Header = FindResource("L_Menu_File_Open"), Style = (Style)FindResource("Win11MenuItemStyle") };
             openItem.Click += (s, e) => ImageSelected?.Invoke(filePath);
 
-            var deleteItem = new MenuItem { Header = FindResource("L_Ctx_DeleteFile"), Style = (Style)FindResource("Win11MenuItemStyle"), Foreground = System.Windows.Media.Brushes.Red };
+            var deleteItem = new MenuItem { Header = FindResource("L_Ctx_DeleteFile"), Style = (Style)FindResource("Win11MenuItemStyle"), Foreground = Brushes.Red };
             deleteItem.Click += (s, e) =>
             {
-                try { File.Delete(filePath); FavoriteWrapPanel.Children.Remove(grid); } catch { }
+                try 
+                { 
+                    File.Delete(filePath); 
+                    stack.Children.Remove(grid); 
+                    FavoritesChanged?.Invoke(this, EventArgs.Empty);
+                } catch { }
             };
 
             var explorerItem = new MenuItem { Header = FindResource("L_Menu_File_OpenFolder"), Style = (Style)FindResource("Win11MenuItemStyle") };
@@ -191,7 +265,14 @@ namespace TabPaint.Controls
             menu.Items.Add(deleteItem);
             border.ContextMenu = menu;
 
-            FavoriteWrapPanel.Children.Add(grid);
+            if (stack.Children.Count > 0)
+            {
+                stack.Children.Insert(stack.Children.Count - 1, grid);
+            }
+            else
+            {
+                stack.Children.Add(grid);
+            }
         }
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -226,17 +307,18 @@ namespace TabPaint.Controls
             try
             {
                 string fileName = Path.GetFileName(filePath);
-                string destPath = Path.Combine(AppConsts.FavoriteDir, fileName);
+                string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
+                string destPath = Path.Combine(pagePath, fileName);
 
-                // 处理重名
                 int i = 1;
                 while (File.Exists(destPath))
                 {
-                    destPath = Path.Combine(AppConsts.FavoriteDir, Path.GetFileNameWithoutExtension(fileName) + $"_{i++}" + Path.GetExtension(fileName));
+                    destPath = Path.Combine(pagePath, Path.GetFileNameWithoutExtension(fileName) + $"_{i++}" + Path.GetExtension(fileName));
                 }
 
                 File.Copy(filePath, destPath);
                 AddImageToUI(destPath);
+                FavoritesChanged?.Invoke(this, EventArgs.Empty);
             }
             catch { }
         }
@@ -245,8 +327,9 @@ namespace TabPaint.Controls
         {
             try
             {
-                string fileName = $"Pasted_{DateTime.Now:yyyyMMdd_HHmmss}.png";
-                string destPath = Path.Combine(AppConsts.FavoriteDir, fileName);
+                string fileName = string.Format("Pasted_{0:yyyyMMdd_HHmmss}.png", DateTime.Now);
+                string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
+                string destPath = Path.Combine(pagePath, fileName);
 
                 using (var fileStream = new FileStream(destPath, FileMode.Create))
                 {
@@ -255,6 +338,7 @@ namespace TabPaint.Controls
                     encoder.Save(fileStream);
                 }
                 AddImageToUI(destPath);
+                FavoritesChanged?.Invoke(this, EventArgs.Empty);
             }
             catch { }
         }

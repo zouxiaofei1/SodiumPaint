@@ -17,7 +17,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private void UpdateToolSelectionHighlight()
+        public void UpdateToolSelectionHighlight()
         {
             if (_router == null || MainToolBar == null) return;
 
@@ -351,6 +351,7 @@ namespace TabPaint
 
         public class ToolContext
         {
+            public MainWindow ParentWindow { get; }
             public CanvasSurface Surface { get; }
             public UndoRedoManager Undo { get; }
             public Color PenColor { get; set; } = Colors.Black;
@@ -367,8 +368,9 @@ namespace TabPaint
             // public string CurrentFilePath { get; set; } = string.Empty;
             public bool IsDirty { get; set; } = false;
             private readonly IInputElement _captureElement;
-            public ToolContext(CanvasSurface surface, UndoRedoManager undo, Image viewElement, Image previewElement, Canvas overlayElement, Canvas EditorElement, IInputElement captureElement)
+            public ToolContext(MainWindow parent, CanvasSurface surface, UndoRedoManager undo, Image viewElement, Image previewElement, Canvas overlayElement, Canvas EditorElement, IInputElement captureElement)
             {
+                ParentWindow = parent;
                 Surface = surface;
                 Undo = undo;
                 ViewElement = viewElement;
@@ -430,10 +432,12 @@ namespace TabPaint
         public class InputRouter /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         {
             private readonly ToolContext _ctx;
+            private readonly MainWindow _parentWindow;
             public ITool CurrentTool { get; private set; }
 
-            public InputRouter(ToolContext ctx, ITool defaultTool)
+            public InputRouter(MainWindow parent, ToolContext ctx, ITool defaultTool)
             {
+                _parentWindow = parent;
                 _ctx = ctx;
                 CurrentTool = defaultTool;
                 if (_ctx.ViewElement != null)
@@ -472,7 +476,7 @@ namespace TabPaint
                 if (_ctx.Surface.Bitmap != null)
                 {
                     Point px = _ctx.ToPixel(position);
-                    (MainWindow.GetCurrentInstance()).MousePosition = $"{(int)px.X}, {(int)px.Y}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
+                    _parentWindow.MousePosition = $"{(int)px.X}, {(int)px.Y}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 }
                 if (e.StylusDevice != null)
                 {
@@ -508,13 +512,11 @@ namespace TabPaint
 
             public SelectTool GetSelectTool()
             {
-                var mw = MainWindow.GetCurrentInstance();
-                return mw._tools.Select as SelectTool;
+                return _parentWindow._tools.Select as SelectTool;
             }
 
             public void CleanUpSelectionandShape()
             {
-                var mw = MainWindow.GetCurrentInstance();
                 if (CurrentTool is SelectTool selTool)
                 {
                     if (selTool._selectionData != null)
@@ -522,12 +524,12 @@ namespace TabPaint
                     selTool.Cleanup(_ctx);
 
                 }
-                if (mw._router.CurrentTool is ShapeTool shapetool)
+                if (_parentWindow._router.CurrentTool is ShapeTool shapetool)
                 {
                     shapetool.GiveUpSelection(_ctx);
                     GetSelectTool()?.Cleanup(_ctx);
                 }
-                if (mw._router.CurrentTool is TextTool textTool)
+                if (_parentWindow._router.CurrentTool is TextTool textTool)
                 {
                     textTool.Cleanup(_ctx);
                 }
@@ -542,11 +544,10 @@ namespace TabPaint
                 CurrentTool?.Cleanup(_ctx);
                 CurrentTool = tool;
                 tool.SetCursor(_ctx);
-                var mw = MainWindow.GetCurrentInstance();
-                mw.AutoSetFloatBarVisibility();
-                mw._router.GetSelectTool().UpdateStatusBarSelectionSize();
-                mw.UpdateToolSelectionHighlight();
-                mw.UpdateGlobalToolSettingsKey();
+                _parentWindow.AutoSetFloatBarVisibility();
+                _parentWindow._router.GetSelectTool().UpdateStatusBarSelectionSize(_parentWindow);
+                _parentWindow.UpdateToolSelectionHighlight();
+                _parentWindow.UpdateGlobalToolSettingsKey();
             }
             public void ViewElement_MouseDown(object sender, MouseButtonEventArgs e)
             {

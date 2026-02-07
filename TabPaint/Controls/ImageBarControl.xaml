@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
              x:Name="RootControl"
@@ -515,7 +516,10 @@
                         <Border CornerRadius="4" ClipToBounds="True">
                             <!-- 内层 Border 的背景就是棋盘格，尺寸完全由 Image 撑开 -->
                             <Border x:Name="CheckerboardBorder" Background="Transparent">
-                                <Image x:Name="PopupPreviewImage" MaxHeight="200" MaxWidth="300" Stretch="Uniform"/>
+                                <Image x:Name="PopupPreviewImage" 
+                                       gif:AnimationBehavior.AutoStart="True"
+                                       gif:AnimationBehavior.RepeatBehavior="Forever"
+                                       MaxHeight="200" MaxWidth="300" Stretch="Uniform"/>
                             </Border>
                         </Border>
 

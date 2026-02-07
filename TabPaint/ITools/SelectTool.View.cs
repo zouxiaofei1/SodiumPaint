@@ -22,7 +22,7 @@ namespace TabPaint
                 HidePreview(ctx);
                 ctx.SelectionOverlay.Children.Clear();
                 ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 if (mw._canvasResizer != null)   mw._canvasResizer.SetHandleVisibility(true);
         
                 _originalRect = new Int32Rect();
@@ -36,7 +36,7 @@ namespace TabPaint
                 _selectionAlphaMap = null;  // 添加
                 _selectionGeometry = null;  // 添加
                 _isWandAdjusting = false;   // 添加
-                lag = 0; (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                lag = 0; ctx.ParentWindow.UpdateSelectionToolBarPosition();
             }
 
             public void RefreshOverlay(ToolContext ctx)
@@ -47,15 +47,15 @@ namespace TabPaint
 
             public void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 if (mw._canvasResizer != null)  mw._canvasResizer.SetHandleVisibility(false);
                 double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.ClipToBounds = false;
                 overlay.Children.Clear();
 
-                double diff = (MainWindow.GetCurrentInstance()).CanvasWrapper.RenderSize.Width -
-                              (int)(MainWindow.GetCurrentInstance()).CanvasWrapper.RenderSize.Width;
+                double diff = mw.CanvasWrapper.RenderSize.Width -
+                              (int)mw.CanvasWrapper.RenderSize.Width;
 
                 if (SelectionType == SelectionType.Lasso && _selectionGeometry != null)
                 {
@@ -88,14 +88,14 @@ namespace TabPaint
                     DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
                 }
 
-                (MainWindow.GetCurrentInstance()).UpdateSelectionScalingMode();
+                mw.UpdateSelectionScalingMode();
                 ctx.SelectionOverlay.IsHitTestVisible = false;
                 ctx.SelectionOverlay.Visibility = Visibility.Visible;
             }
             public Int32Rect GetSelectionRect() => _selectionRect;
             public ResizeAnchor HitTestHandle(Point px, Int32Rect rect)
             {
-                double size = AppConsts.SelectToolHandleSize / (MainWindow.GetCurrentInstance()).zoomscale; // 句柄大小
+                double size = AppConsts.SelectToolHandleSize / ctxForTimer.ParentWindow.zoomscale; // 句柄大小
                 double x1 = rect.X;
                 double y1 = rect.Y;
                 double x2 = rect.X + rect.Width;
@@ -160,7 +160,7 @@ namespace TabPaint
                 ctx.SelectionPreview.Height = _selectionRect.Height * scaleY;
 
 
-              double diff = (MainWindow.GetCurrentInstance()).CanvasWrapper.RenderSize.Width - (int)(MainWindow.GetCurrentInstance()).CanvasWrapper.RenderSize.Width;
+              double diff = ctx.ParentWindow.CanvasWrapper.RenderSize.Width - (int)ctx.ParentWindow.CanvasWrapper.RenderSize.Width;
                 // 计算位移
                 double localX = pixelX * scaleX+diff*0.75 ;
                 double localY = pixelY * scaleY;
@@ -253,7 +253,7 @@ namespace TabPaint
                 if (ctx == null) return;
                 CommitSelection(ctx);
                 Cleanup(ctx);
-                ctx.Undo.Undo(); (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                ctx.Undo.Undo(); ctx.ParentWindow.UpdateSelectionToolBarPosition();
             }
             public void CommitSelection(ToolContext ctx, bool shape = false)
             {
@@ -280,7 +280,7 @@ namespace TabPaint
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
                         PixelFormats.Bgra32, null, _selectionData, dataStride);
-                    var resized = (MainWindow.GetCurrentInstance()).ResampleBitmap(src, finalWidth, finalHeight);
+                    var resized = ctx.ParentWindow.ResampleBitmap(src, finalWidth, finalHeight);
 
                     // 提取像素数据
                     finalStride = resized.PixelWidth * 4;
@@ -297,7 +297,7 @@ namespace TabPaint
                 lag = 1;
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 mw.SetUndoRedoButtonState();
                 ResetPreviewState(ctx);
                 mw.NotifyCanvasChanged();
@@ -388,7 +388,7 @@ namespace TabPaint
             }
             private void HidePreview(ToolContext ctx)
             {
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 if (mw._canvasResizer != null)mw._canvasResizer.SetHandleVisibility(true);
                 ctx.SelectionPreview.Visibility = Visibility.Collapsed;
             }
@@ -499,8 +499,8 @@ namespace TabPaint
                     }
                 }
                 // 标记脏区域以更新 UI
-                var pixelWidth = (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth;
-                var pixelHeight = (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight;
+                var pixelWidth = ctx.Surface.Bitmap.PixelWidth;
+                var pixelHeight = ctx.Surface.Bitmap.PixelHeight;
                 ctx.Surface.Bitmap.AddDirtyRect(ClampRect(rect, pixelWidth, pixelHeight));
 
                 ctx.Surface.Bitmap.Unlock();

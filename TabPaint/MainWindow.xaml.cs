@@ -53,6 +53,8 @@ namespace TabPaint
         // 记录最后获得焦点的实例
         private static MainWindow? _lastFocusedInstance;
 
+        private UIHandlers.DropZoneWindow? _dropZone;
+
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
@@ -67,13 +69,24 @@ namespace TabPaint
         }
 
 
-        public MainWindow(string path, bool? fileExists = null)
+        public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null)
         {
             
             _workingPath = path;
             _currentFilePath = path;  
             if (fileExists.HasValue) _currentFileExists = fileExists.Value;//<0.1ms
             else CheckFilePathAvailibility(_currentFilePath);
+
+            if (initialTab != null)
+            {
+                FileTabs.Add(initialTab);
+                _currentTabItem = initialTab;
+                _imageFiles.Add(initialTab.FilePath);
+                _currentFilePath = initialTab.FilePath;
+                _currentFileName = initialTab.FileName;
+                _currentImageIndex = 0;
+            }
+
         InitializeComponent();  //220ms
           
             RestoreWindowBounds();//0.3ms
@@ -136,7 +149,32 @@ namespace TabPaint
             }
 
 
-            if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath))) await OpenImageAndTabs(_currentFilePath, true);
+            if (!string.IsNullOrEmpty(_currentFilePath) && (File.Exists(_currentFilePath) || IsVirtualPath(_currentFilePath)))
+            {
+                if (FileTabs.Contains(_currentTabItem) && _currentTabItem != null)
+                {
+                    // 如果已经有了通过构造函数传入的标签，直接加载它
+                    await OpenImageAndTabs(_currentTabItem.FilePath, true);
+                    
+                    // 还原撤销栈
+                    _undo.ClearUndo();
+                    _undo.ClearRedo();
+                    if (_currentTabItem.UndoStack != null)
+                    {
+                        foreach (var action in _currentTabItem.UndoStack.Reverse()) _undo._undo.Push(action);
+                    }
+                    if (_currentTabItem.RedoStack != null)
+                    {
+                        foreach (var action in _currentTabItem.RedoStack.Reverse()) _undo._redo.Push(action);
+                    }
+                    _savedUndoPoint = _currentTabItem.SavedUndoPoint;
+                    SetUndoRedoButtonState();
+                }
+                else
+                {
+                    await OpenImageAndTabs(_currentFilePath, true);
+                }
+            }
             else
             {
 
@@ -205,13 +243,13 @@ namespace TabPaint
                 var popup = this.FindName("FavoritePopup") as Popup;
                 if (bar != null && popup != null)
                 {
-                    bar.CloseRequested += (s, ev) => popup.IsOpen = false;
+                    bar.CloseRequested += (s, ev) => { if (popup != null) popup.IsOpen = false; };
                     bar.ImageSelected += async (path) =>
                     {
                         if (AppConsts.IsSupportedImage(path))
                         {
                             await OpenFilesAsNewTabs(new string[] { path });
-                            popup.IsOpen = false;
+                            if (popup != null) popup.IsOpen = false;
                         }
                     };
                 }
@@ -244,10 +282,10 @@ namespace TabPaint
                 // 初始化工具
                 _surface = new CanvasSurface(_bitmap);
                 _undo = new UndoRedoManager(_surface);
-                _ctx = new ToolContext(_surface, _undo, BackgroundImage, SelectionPreview, SelectionOverlayCanvas, EditorOverlayCanvas, CanvasWrapper);
+                _ctx = new ToolContext(this, _surface, _undo, BackgroundImage, SelectionPreview, SelectionOverlayCanvas, EditorOverlayCanvas, CanvasWrapper);
                 _tools = new ToolRegistry();
                 _ctx.ViewElement.Cursor = _tools.Pen.Cursor;
-                _router = new InputRouter(_ctx, _tools.Pen);
+                _router = new InputRouter(this, _ctx, _tools.Pen);
                 _originalGridBrush = CanvasWrapper.Background;
                 SettingsManager.Instance.Current.PropertyChanged += OnSettingsPropertyChanged;
                 UpdateCanvasVisuals();
@@ -271,7 +309,7 @@ namespace TabPaint
                
 
                 _isInitialLayoutComplete = true;
-                if (FileTabs.Count > 0)
+                if (FileTabs.Count > 0 && MainImageBar != null && MainImageBar.Scroller != null)
                 { // 模拟触发一次滚动检查
                     OnFileTabsScrollChanged(MainImageBar.Scroller, null);
                 }
@@ -872,7 +910,8 @@ namespace TabPaint
         {
             if (!IsLoaded) return;
 
-            if (this.IsActive)
+            // 看图模式下始终使用默认边框色 (灰色)
+            if (this.IsActive && !IsViewMode)
             {
                 var accentBrush = FindResource("SystemAccentPressedBrush") as SolidColorBrush;
                 if (accentBrush != null)
@@ -1139,7 +1178,7 @@ namespace TabPaint
                 }
                 st.InsertImageAsSelection(_ctx, bmp, expandCanvas: true);
 
-                st.ForceDragState();
+                st.ForceDragState(this);
 
                 NotifyCanvasChanged();
             }

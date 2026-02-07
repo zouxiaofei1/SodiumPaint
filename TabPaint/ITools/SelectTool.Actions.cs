@@ -44,7 +44,7 @@ namespace TabPaint
                 _draggingSelection = false;
                 _resizing = false;
                 Mouse.OverrideCursor = null;
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 mw.SetCropButtonState();
                 mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), 0, 0);
                 mw.SetUndoRedoButtonState(); mw.UpdateSelectionToolBarPosition();
@@ -86,16 +86,16 @@ namespace TabPaint
                 CreatePreviewFromSelectionData(ctx);
 
                 // 7. 更新UI状态
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 mw.SelectionSize = $"{w}×{h}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 mw.UpdateSelectionToolBarPosition();
             }
 
 
             // 确保 GetSelectionCroppedBitmap 返回的是 WriteableBitmap 以便 AI 服务使用
-            public WriteableBitmap GetSelectionWriteableBitmap()
+            public WriteableBitmap GetSelectionWriteableBitmap(MainWindow mw)
             {
-                var source = GetSelectionCroppedBitmap();
+                var source = GetSelectionCroppedBitmap(mw);
                 if (source == null) return null;
 
                 // 1. 统一转换为 BGRA32
@@ -118,7 +118,7 @@ namespace TabPaint
 
             private DateTime _hoverStartTime;
             private bool _isHoveringForSwitch = false;
-            public void ForceDragState()
+            public void ForceDragState(MainWindow mw)
             {
                 if (_selectionData != null)
                 {
@@ -126,7 +126,6 @@ namespace TabPaint
                     _draggingSelection = true;
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        var mw = MainWindow.GetCurrentInstance();
                         _clickOffset = new Point(_selectionRect.Width / 2, _selectionRect.Height / 2);
                         Mouse.Capture(mw.CanvasWrapper);
                     });
@@ -189,7 +188,7 @@ namespace TabPaint
 
                 // 绘制虚线框
                 DrawOverlay(ctx, _selectionRect);
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 mw.UpdateSelectionToolBarPosition();
                 mw.SetCropButtonState();
             }
@@ -219,7 +218,7 @@ namespace TabPaint
                         PixelFormats.Bgra32, null, _selectionData, _originalRect.Width * 4);
 
                     // 【替换旧逻辑】
-                    var resizedBitmap = (MainWindow.GetCurrentInstance()).ResampleBitmap(src, finalWidth, finalHeight);
+                    var resizedBitmap = (ctx.ParentWindow).ResampleBitmap(src, finalWidth, finalHeight);
 
                     finalStride = resizedBitmap.PixelWidth * 4;
                     finalSelectionData = new byte[finalHeight * finalStride];
@@ -258,13 +257,14 @@ namespace TabPaint
                 Cleanup(ctx);
                 ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
                 ctx.IsDirty = true;
-                (MainWindow.GetCurrentInstance()).NotifyCanvasSizeChanged(finalWidth, finalHeight);
+                (ctx.ParentWindow).NotifyCanvasSizeChanged(finalWidth, finalHeight);
                 // 更新UI（例如Undo/Redo按钮的状态）
-                (MainWindow.GetCurrentInstance()).SetUndoRedoButtonState();
+                (ctx.ParentWindow).SetUndoRedoButtonState();
             }
             public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f) ////////////////////////////////////////////////////////////////////////////// 后面是鼠标键盘事件处理
             {
-                if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
+                var mw = ctx.ParentWindow;
+                if (mw.IsViewMode) return;
                 if (lag > 0) { lag--; return; }
                 if (ctx.Surface.Bitmap == null) return;
                 var px = ctx.ToPixel(viewPos);
@@ -278,7 +278,7 @@ namespace TabPaint
                     {
                         if (_transformStep == 0) _originalRect = _selectionRect;
                         _transformStep++;
-                        _resizing = true; (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                        _resizing = true; mw.UpdateSelectionToolBarPosition();
                         _startMouse = px;
                         _startW = _selectionRect.Width;
                         _startH = _selectionRect.Height;
@@ -291,7 +291,7 @@ namespace TabPaint
                     {
                         if (_transformStep == 0)  _originalRect = _selectionRect;
                         _transformStep++;
-                        _draggingSelection = true; (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                        _draggingSelection = true; mw.UpdateSelectionToolBarPosition();
                         _clickOffset = new Point(px.X - _selectionRect.X, px.Y - _selectionRect.Y);
                         ctx.ViewElement.CaptureMouse();
                         return;
@@ -306,7 +306,7 @@ namespace TabPaint
                    // _wandTolerance = 0; // 初始点击容差为 0
 
                     // 记录点击点的颜色
-                    _wandStartColor = (MainWindow.GetCurrentInstance()).GetPixelColor((int)px.X, (int)px.Y);
+                    _wandStartColor = mw.GetPixelColor((int)px.X, (int)px.Y);
 
                     // 如果没有按 Shift，先清除旧选区 (视觉上)
                     if (!isShift)
@@ -318,7 +318,7 @@ namespace TabPaint
                     RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
 
                     ctx.ViewElement.CaptureMouse();
-                    (MainWindow.GetCurrentInstance()).SetCropButtonState();
+                    mw.SetCropButtonState();
                     return;
                 }
 
@@ -329,17 +329,18 @@ namespace TabPaint
                 }
 
                 _selecting = true;
-                _startPixel = px; (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                _startPixel = px; mw.UpdateSelectionToolBarPosition();
                 _selectionRect = new Int32Rect((int)px.X, (int)px.Y, 0, 0);
                 HidePreview(ctx);
                 ctx.ViewElement.CaptureMouse();
-                (MainWindow.GetCurrentInstance()).SetCropButtonState();
+                mw.SetCropButtonState();
             }
 
             public bool _hasLifted = false;
             public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
-            { var mw = MainWindow.GetCurrentInstance();
-         
+            {
+                var mw = ctx.ParentWindow;
+
                 ctxForTimer = ctx; // 缓存 Context 供 Timer 使用
                 EnsureTimer();
                 if ((_selecting || _draggingSelection || _resizing) &&
@@ -350,7 +351,7 @@ namespace TabPaint
                     return;
                 }
                 var px = ctx.ToPixel(viewPos);
-               
+
                 if (_draggingSelection && _selectionData != null)
                 {
                     // 1. 坐标转换
@@ -535,7 +536,7 @@ namespace TabPaint
                         }
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
-                    UpdateStatusBarSelectionSize(); mw.UpdateSelectionToolBarPosition();
+                    UpdateStatusBarSelectionSize(mw); mw.UpdateSelectionToolBarPosition();
                     DrawOverlay(ctx, _selectionRect);
                     return;
                 }
@@ -666,14 +667,14 @@ namespace TabPaint
                    
                 }
 
-                UpdateStatusBarSelectionSize(); 
+                UpdateStatusBarSelectionSize(mw);
             }
 
-            public void UpdateStatusBarSelectionSize()
+            public void UpdateStatusBarSelectionSize(MainWindow mw)
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {// 状态栏更新
-                    (MainWindow.GetCurrentInstance()).SelectionSize =
+                    mw.SelectionSize =
                         $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 });
             }
@@ -698,7 +699,7 @@ namespace TabPaint
 
             public override void OnKeyDown(ToolContext ctx, System.Windows.Input.KeyEventArgs e)
             {
-                if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
+                if (ctx.ParentWindow.IsViewMode) return;
                 if (Keyboard.Modifiers == ModifierKeys.Control)
                 {
                     switch (e.Key)
@@ -802,11 +803,12 @@ namespace TabPaint
 
                 // 刷新虚线框
                 DrawOverlay(ctx, _selectionRect);
-                var mw = MainWindow.GetCurrentInstance(); (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                var mw = ctx.ParentWindow;
+                mw.UpdateSelectionToolBarPosition();
                 mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 mw.SetCropButtonState();
             }
-            public BitmapSource GetSelectionCroppedBitmap()
+            public BitmapSource GetSelectionCroppedBitmap(MainWindow mw)
             {
                 if (_selectionData == null || _originalRect.Width <= 0 || _originalRect.Height <= 0)
                     return null;
@@ -814,7 +816,6 @@ namespace TabPaint
                 try
                 {
                     int stride = _originalRect.Width * 4;
-                    var mw = MainWindow.GetCurrentInstance();
                     double dpiX = mw._surface?.Bitmap.DpiX ?? AppConsts.StandardDpi;
                     double dpiY = mw._surface?.Bitmap.DpiY ?? AppConsts.StandardDpi;
 
@@ -841,6 +842,7 @@ namespace TabPaint
             
             private void CreatePreviewFromSelectionData(ToolContext ctx)
             {
+                var mw = ctx.ParentWindow;
                 var previewBmp = new WriteableBitmap(_selectionRect.Width, _selectionRect.Height,
                     ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
 
@@ -851,16 +853,16 @@ namespace TabPaint
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
 
                 SetPreviewPosition(ctx, _selectionRect.X, _selectionRect.Y);
-                (MainWindow.GetCurrentInstance()).UpdateSelectionScalingMode();
+                mw.UpdateSelectionScalingMode();
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
-                UpdateStatusBarSelectionSize();
+                UpdateStatusBarSelectionSize(mw);
 
                 DrawOverlay(ctx, _selectionRect);
-                (MainWindow.GetCurrentInstance()).SetCropButtonState();
+                mw.SetCropButtonState();
             }
             public Rect GetViewportInPixelCoords(ToolContext ctx)
             {
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 // ScrollViewer 的可见区域（WPF 坐标）
                 var sv = mw.ScrollContainer; // 你的 ScrollViewer 引用
                 if (sv == null) return Rect.Empty;
@@ -883,6 +885,7 @@ namespace TabPaint
                 if (lag > 0) { lag--; return; }
                 ctx.ViewElement.ReleaseMouseCapture();
                 var px = ctx.ToPixel(viewPos);
+                var mw = ctx.ParentWindow;
                 if (_selecting && SelectionType == SelectionType.MagicWand)
                 {
                     _selecting = false;
@@ -892,7 +895,6 @@ namespace TabPaint
                     {
                         _originalRect = _selectionRect;
 
-                        var mw = MainWindow.GetCurrentInstance();
                         double zoom = mw.zoomscale; Rect? viewport = null;
 
                         // 放大时传入视口，缩小时传 null（降采样处理全图）
@@ -910,14 +912,14 @@ namespace TabPaint
                             zoom,
                             viewport);
 
-                        UpdateStatusBarSelectionSize();
+                        UpdateStatusBarSelectionSize(mw);
                         DrawOverlay(ctx, _selectionRect);
                     }
                     else
                     {
                         Cleanup(ctx);
                     }
-                    (MainWindow.GetCurrentInstance()).SetCropButtonState();
+                    mw.SetCropButtonState();
                     return;
                 }
                 if (_selecting)
@@ -962,9 +964,9 @@ namespace TabPaint
                 }
                 if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
                 {
-                    DrawOverlay(ctx, _selectionRect); (MainWindow.GetCurrentInstance()).UpdateSelectionToolBarPosition();
+                    DrawOverlay(ctx, _selectionRect); mw.UpdateSelectionToolBarPosition();
                 }
-                (MainWindow.GetCurrentInstance()).SetCropButtonState();
+                mw.SetCropButtonState();
 
             }
 

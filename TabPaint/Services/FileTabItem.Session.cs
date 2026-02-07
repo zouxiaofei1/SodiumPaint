@@ -366,13 +366,22 @@ namespace TabPaint
         {
             return GetCurrentCanvasSnapshotSafe();
         }
-        protected async void OnClosing()
+        public async void OnClosing()
         {
+            if (_programClosed) return;
+            _programClosed = true;
 
             try
             {
                 this.Hide();
-                SingleInstance.Release();
+
+                if (_hwndSource != null)
+                {
+                    _hwndSource.RemoveHook(WndProc);
+                    _hwndSource.Dispose();
+                    _hwndSource = null;
+                }
+
                 SaveAppState();
                 CommitPendingDeletions();
                 // 立即保存当前的
@@ -416,10 +425,8 @@ namespace TabPaint
             }
             finally
             {
-                // 确保无论如何都会执行关闭逻辑
-                this.Hide();
-                _programClosed = true;
-                Application.Current.Shutdown();
+                // 确保窗口关闭
+                this.Close();
             }
         }
         private int GetNextAvailableUntitledNumber()
@@ -709,7 +716,6 @@ namespace TabPaint
 
         public async void SwitchToTab(FileTabItem tab)
         {
-
             if (_currentTabItem == tab) return;
             if (tab == null) return;
 
@@ -721,11 +727,18 @@ namespace TabPaint
                 {
                     UpdateTabThumbnail(_currentTabItem);
                 }
+
+                // 保存当前 Tab 的撤销栈
+                _currentTabItem.UndoStack = new Stack<UndoAction>(_undo._undo.Reverse());
+                _currentTabItem.RedoStack = new Stack<UndoAction>(_undo._redo.Reverse());
+                _currentTabItem.SavedUndoPoint = _savedUndoPoint;
             }
+
             if (!IsTransferringSelection)
             {
                 _router.CleanUpSelectionandShape();
             }
+
             // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
 
@@ -737,10 +750,25 @@ namespace TabPaint
                 await OpenImageAndTabs(tab.FilePath);
             }
 
-            // 4. 状态重置
-            ResetDirtyTracker();
-            _currentTabItem = tab;//删除会导致创建未命名→不绘画→切回原图失败bug
+            // 还原新 Tab 的撤销栈
+            _undo.ClearUndo();
+            _undo.ClearRedo();
+            if (tab.UndoStack != null)
+            {
+                foreach (var action in tab.UndoStack.Reverse()) _undo._undo.Push(action);
+            }
+            if (tab.RedoStack != null)
+            {
+                foreach (var action in tab.RedoStack.Reverse()) _undo._redo.Push(action);
+            }
+            _savedUndoPoint = tab.SavedUndoPoint;
+
+            // 4. 状态重置 (不再直接调用 ResetDirtyTracker，因为我们要保留撤销栈)
+            // ResetDirtyTracker(); 
+            _currentTabItem = tab;
+            SetUndoRedoButtonState();
             UpdateWindowTitle();
+
             if (IsTransferringSelection)
             {
                 await Task.Delay(50);

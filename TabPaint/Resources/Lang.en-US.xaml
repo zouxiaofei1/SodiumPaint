@@ -227,10 +227,14 @@
     <sys:String x:Key="L_Main_Drag_DropToOpen">Drop to open</sys:String>
     <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">Release to confirm</sys:String>
 
+    <sys:String x:Key="L_Drag_DropZone_Title">Create New Window</sys:String>
+    <sys:String x:Key="L_Drag_DropZone_Desc">Release here to open this tab in a new window</sys:String>
+
     <!-- Top menu bar -->
     <sys:String x:Key="L_Menu_File">File</sys:String>
     <sys:String x:Key="L_Menu_File_New">New</sys:String>
     <sys:String x:Key="L_Menu_File_Open">Open</sys:String>
+    <sys:String x:Key="L_Menu_File_Add">Add</sys:String>
     <sys:String x:Key="L_Menu_File_OpenFolder">Open folder</sys:String>
     <sys:String x:Key="L_Menu_File_NewWindow" xmlns:sys="clr-namespace:System;assembly=mscorlib">New Window</sys:String>
     <sys:String x:Key="L_Menu_File_Recent">Recent</sys:String>
@@ -258,6 +262,7 @@
     <sys:String x:Key="L_Menu_QA_Redo">Redo</sys:String>
     <sys:String x:Key="L_Menu_QA_NewTab">New tab</sys:String>
     <sys:String x:Key="L_Menu_QA_DiscardAll">Discard all changes</sys:String>
+
     <sys:String x:Key="L_Menu_QA_Settings">Settings</sys:String>
 
     <!-- About Section -->

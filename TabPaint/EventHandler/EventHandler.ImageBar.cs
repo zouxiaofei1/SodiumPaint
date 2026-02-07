@@ -469,7 +469,18 @@ namespace TabPaint
                     dataObject.SetFileDropList(fileList);
                 }
 
-                DragDrop.DoDragDrop((DependencyObject)sender, dataObject, DragDropEffects.Copy);
+                // 初始化悬浮窗
+                if (_dropZone == null)
+                {
+                    _dropZone = new UIHandlers.DropZoneWindow();
+                    _dropZone.TabDropped += OnDropZoneTabDropped;
+                }
+                _dropZone.ShowAtBottom();
+
+                DragDrop.DoDragDrop((DependencyObject)sender, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
+
+                // 拖拽结束，隐藏悬浮窗
+                if (_dropZone != null) _dropZone.Hide();
 
                 e.Handled = true;
                 _mouseDownTabItem = null;
@@ -477,6 +488,56 @@ namespace TabPaint
             catch (Exception ex)
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_DragStartFailed_Prefix"), ex.Message));
+                if (_dropZone != null) _dropZone.Hide();
+            }
+        }
+
+        private async void OnDropZoneTabDropped(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent("TabPaintReorderItem"))
+            {
+                var tab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
+                if (tab != null)
+                {
+                    await TransferTabToNewWindow(tab);
+                }
+            }
+        }
+
+        private async Task TransferTabToNewWindow(FileTabItem tab)
+        {
+            // 1. 如果是当前标签，先保存当前画布状态到撤销栈
+            if (tab == _currentTabItem)
+            {
+                tab.UndoStack = new Stack<UndoAction>(_undo.GetUndoStack().Reverse());
+                tab.RedoStack = new Stack<UndoAction>(_undo.GetRedoStack().Reverse());
+                tab.SavedUndoPoint = _savedUndoPoint;
+            }
+
+            // 2. 准备路径和备份
+            if (tab.IsNew && string.IsNullOrEmpty(tab.BackupPath))
+            {
+                PrepareDragFilePath(tab);
+            }
+
+            // 3. 在当前进程内直接创建新 MainWindow 实例
+            try
+            {
+                // 创建新窗口，并将标签传递过去
+                MainWindow newWindow = new MainWindow(tab.FilePath, !IsVirtualPath(tab.FilePath), tab);
+
+                // 设置新窗口位置
+                newWindow.Left = this.Left + 40;
+                newWindow.Top = this.Top + 40;
+
+                newWindow.Show();
+
+                // 4. 从当前窗口移除标签
+                CloseTab(tab, true); // 强制关闭，不提示保存
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Failed to create new window: " + ex.Message);
             }
         }
 

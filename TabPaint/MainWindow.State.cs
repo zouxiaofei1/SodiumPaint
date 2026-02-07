@@ -63,7 +63,7 @@ namespace TabPaint
                 }
             }
         }
-        private CanvasSurface _surface;
+        public CanvasSurface _surface;
         public UndoRedoManager _undo;
         public ToolContext _ctx;
         public InputRouter _router;

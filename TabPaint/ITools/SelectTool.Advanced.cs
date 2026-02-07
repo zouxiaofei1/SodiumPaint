@@ -352,7 +352,7 @@ namespace TabPaint
             private void DrawIrregularContour(ToolContext ctx, Canvas overlay, Geometry geometry,
     Int32Rect rect, double invScale, double diff, bool applyTransform = true)
             {
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
 
                 Geometry drawGeometry = geometry;
                 if (applyTransform)
@@ -406,12 +406,12 @@ namespace TabPaint
                 overlay.Children.Add(blackPath);
 
                 // 绘制 8 个句柄（在包围盒上）
-                DrawHandles(overlay, rect, invScale, diff);
+                DrawHandles(ctx, overlay, rect, invScale, diff);
             }
 
             private void DrawRectangleOverlay(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff)
             {
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 var geometry = new RectangleGeometry(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
 
                 // 白色底线
@@ -446,12 +446,12 @@ namespace TabPaint
                 overlay.Children.Add(outlinePath);
 
                 // 绘制句柄
-                DrawHandles(overlay, rect, invScale, diff);
+                DrawHandles(ctx, overlay, rect, invScale, diff);
             }
-            private void DrawHandles(Canvas overlay, Int32Rect rect, double invScale, double diff)
+            private void DrawHandles(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff)
             {
                 if (SelectionType != SelectionType.Rectangle) return;
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
 
                 foreach (var p in GetHandlePositions(rect))
                 {
@@ -519,7 +519,7 @@ namespace TabPaint
             }
             private void DrawLassoTrace(ToolContext ctx)
             {
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 double invScale = 1 / mw.zoomscale;
                 var overlay = ctx.SelectionOverlay;
                 overlay.Children.Clear();
@@ -978,7 +978,7 @@ namespace TabPaint
 
                 CreatePreviewFromSelectionData(ctx);
 
-                var mw = MainWindow.GetCurrentInstance();
+                var mw = ctx.ParentWindow;
                 mw.SelectionSize = $"{w}×{h}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 mw.UpdateSelectionToolBarPosition();
             }

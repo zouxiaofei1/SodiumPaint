@@ -346,7 +346,7 @@ namespace TabPaint
 
             if (_router.CurrentTool is SelectTool selTool && selTool.HasActiveSelection)
             {
-                sourceToRecognize = selTool.GetSelectionCroppedBitmap();
+                sourceToRecognize = selTool.GetSelectionCroppedBitmap(this);
             }
 
             try
@@ -403,29 +403,18 @@ namespace TabPaint
                 ShowToast("L_Error_MissingVCRedist");
                 return;
             }
-            DownloadProgressPopup.CancelRequested -= OnDownloadCancelRequested;
-            DownloadProgressPopup.CancelRequested += OnDownloadCancelRequested;
 
-            // 初始化 CancellationTokenSource
-            _downloadCts = new System.Threading.CancellationTokenSource();
-            var aiService = new AiService(_cacheDir);
-            if (!aiService.IsModelReady(AiService.AiTaskType.SuperResolution))
-            {
-                var result = FluentMessageBox.Show(
-                    LocalizationManager.GetString("L_AI_Download_SR_Content"),
-                    LocalizationManager.GetString("L_AI_Download_Title"),
-                    MessageBoxButton.YesNo);
-
-                if (result != MessageBoxResult.Yes) return;
-            }
+            bool ready = await EnsureAiModelReadyAsync(AiService.AiTaskType.SuperResolution);
+            if (!ready) return;
 
             // 2. 状态保存与 UI 锁定
             var statusText = _imageSize;
-            _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
-            OnPropertyChanged(nameof(ImageSize));
 
             try
             {
+                var aiService = new AiService(_cacheDir);
+                string modelPath = Path.Combine(_cacheDir, AppConsts.Sr_ModelName);
+
                 WriteableBitmap inputBmp = _surface.Bitmap;
                 const int MaxLongSide = AppConsts.AiUpscaleMaxLongSide; // 限制长边最大 4096
 
@@ -441,17 +430,7 @@ namespace TabPaint
                     var resampledSource = ResampleBitmap(inputBmp, targetW, targetH);
                     inputBmp = new WriteableBitmap(resampledSource);
                 }
-                var dlProgress = new Progress<AiDownloadStatus>(status =>
-                {
-                    if (_downloadCts.IsCancellationRequested) return;
 
-                    ImageSize = LocalizationManager.GetString("L_AI_Downloading") + $"{status.Percentage:F0}% ";
-                    OnPropertyChanged(nameof(ImageSize));
-                    DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
-                });
-
-                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.SuperResolution, dlProgress, _downloadCts.Token);
-                DownloadProgressPopup.Finish();
                 // 4. 执行推理
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
@@ -569,44 +548,16 @@ namespace TabPaint
                 return;
             }
 
-            var aiService = new AiService(_cacheDir);
-            if (!aiService.IsModelReady(AiService.AiTaskType.RemoveBackground))
-            {
-                var result = FluentMessageBox.Show(
-                    LocalizationManager.GetString("L_AI_Download_RMBG_Content"),
-                    LocalizationManager.GetString("L_AI_Download_Title"),
-                    MessageBoxButton.YesNo);
-
-                if (result != MessageBoxResult.Yes) return;
-            }
-
-            // --- 新增：准备取消令牌和绑定事件 ---
-            DownloadProgressPopup.CancelRequested -= OnDownloadCancelRequested; // 先解绑防止重复
-            DownloadProgressPopup.CancelRequested += OnDownloadCancelRequested;
-            _downloadCts = new System.Threading.CancellationTokenSource();
+            bool ready = await EnsureAiModelReadyAsync(AiService.AiTaskType.RemoveBackground);
+            if (!ready) return;
 
             var statusText = _imageSize; // 暂存状态栏文本
-            _imageSize = LocalizationManager.GetString("L_AI_Status_Preparing");
-            OnPropertyChanged(nameof(ImageSize));
 
             try
             {
-                var progress = new Progress<AiDownloadStatus>(status =>
-                {
-                    // 如果已取消，则不再更新 UI，防止窗口再次弹起
-                    if (_downloadCts != null && _downloadCts.IsCancellationRequested) return;
-                    ImageSize = LocalizationManager.GetString("L_AI_Downloading") + $"{status.Percentage:F0}% ";
-                    OnPropertyChanged(nameof(ImageSize));
+                var aiService = new AiService(_cacheDir);
+                string modelPath = Path.Combine(_cacheDir, AppConsts.BgRem_ModelName);
 
-                    // 更新悬浮进度条详细信息
-                    DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
-                });
-
-                // 传入 _downloadCts.Token
-                string modelPath = await aiService.PrepareModelAsync(AiService.AiTaskType.RemoveBackground, progress, _downloadCts.Token);
-
-                // 下载完成
-                DownloadProgressPopup.Finish();
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
 
@@ -621,7 +572,7 @@ namespace TabPaint
                         if (boundingBoxBmp == null)
                         {
                             // 回退：使用裁剪后的位图
-                            boundingBoxBmp = selectTool.GetSelectionWriteableBitmap();
+                            boundingBoxBmp = selectTool.GetSelectionWriteableBitmap(this);
                         }
                         if (boundingBoxBmp == null) return;
 
@@ -637,7 +588,7 @@ namespace TabPaint
                     else
                     {
                         // --- 矩形选区模式：保持原有逻辑 ---
-                        var cropBmp = selectTool.GetSelectionWriteableBitmap();
+                        var cropBmp = selectTool.GetSelectionWriteableBitmap(this);
                         if (cropBmp == null) return;
 
                         int newW = cropBmp.PixelWidth;

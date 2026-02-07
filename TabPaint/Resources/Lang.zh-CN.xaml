@@ -166,10 +166,13 @@
     <sys:String x:Key="L_Main_Drag_DropToOpen">拖放以打开</sys:String>
     <sys:String x:Key="L_Main_Drag_ReleaseToConfirm">释放鼠标以确认</sys:String>
 
+
+
     <!-- Top menu bar -->
     <sys:String x:Key="L_Menu_File">文件</sys:String>
     <sys:String x:Key="L_Menu_File_New">新建</sys:String>
     <sys:String x:Key="L_Menu_File_Open">打开</sys:String>
+    <sys:String x:Key="L_Menu_File_Add">添加</sys:String>
     <sys:String x:Key="L_Menu_File_OpenFolder">打开新文件夹</sys:String>
     <sys:String x:Key="L_Menu_File_NewWindow">打开新窗口</sys:String>
     <sys:String x:Key="L_Menu_File_Recent">最近打开</sys:String>
@@ -198,6 +201,8 @@
     <sys:String x:Key="L_Menu_QA_Redo">重做</sys:String>
     <sys:String x:Key="L_Menu_QA_NewTab">新建标签页</sys:String>
     <sys:String x:Key="L_Menu_QA_DiscardAll">放弃所有更改</sys:String>
+    <sys:String x:Key="L_Drag_DropZone_Title">拖拽到此处创建新窗口</sys:String>
+    <sys:String x:Key="L_Drag_DropZone_Desc">释放鼠标以在独立窗口中打开此标签页</sys:String>
     <sys:String x:Key="L_Menu_QA_Settings">设置</sys:String>
 
     <!-- About -->

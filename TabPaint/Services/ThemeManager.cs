@@ -88,16 +88,6 @@ namespace TabPaint
                 else mergedDicts.Add(newDict);
                 
                 CurrentAppliedTheme = targetTheme;
-
-                // 2. 图标字典处理
-                if(!IsLazyIconsLoaded)
-                {
-                    ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
-                }
-                else
-                {
-                    ReloadIconDictionary("Resources/Icons/Icons.xaml");
-                }
             }
 
             // 更新窗口样式和背景
@@ -164,8 +154,20 @@ namespace TabPaint
             {
                 hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
             }
-            MainWindow mw = (MainWindow.GetCurrentInstance());
             UpdateAccentResources(hexColor);
+
+            // 重新加载图标字典以刷新内部对强调色的引用 (DrawingImage 内部的 DynamicResource)
+            if (!IsLazyIconsLoaded)
+            {
+                ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
+            }
+            else
+            {
+                ReloadIconDictionary("Resources/Icons/Icons.xaml");
+            }
+
+            MainWindow mw = (MainWindow.GetCurrentInstance());
+            mw?.UpdateToolSelectionHighlight();
         }
 
         private static void UpdateAccentResources(string hexColor)

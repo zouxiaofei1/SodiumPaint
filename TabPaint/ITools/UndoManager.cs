@@ -65,8 +65,11 @@ namespace TabPaint
         public class UndoRedoManager
         {
             private readonly CanvasSurface _surface;
-            public readonly Stack<UndoAction> _undo = new();
-            public readonly Stack<UndoAction> _redo = new();
+            public Stack<UndoAction> _undo = new();
+            public Stack<UndoAction> _redo = new();
+
+            public Stack<UndoAction> GetUndoStack() => _undo;
+            public Stack<UndoAction> GetRedoStack() => _redo;
             private byte[]? _preStrokeSnapshot;
             private readonly List<Int32Rect> _strokeRects = new();
             public int UndoCount => _undo.Count;

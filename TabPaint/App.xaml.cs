@@ -19,6 +19,24 @@ namespace TabPaint
 {
     public partial class App : Application
     {
+        public static void GlobalExit()
+        {
+            // 复制一份列表，避免在循环中修改集合导致异常
+            var windows = Application.Current.Windows.Cast<Window>().ToList();
+            foreach (Window window in windows)
+            {
+                if (window is MainWindow mw)
+                {
+                    mw.OnClosing();
+                }
+                else
+                {
+                    window.Close();
+                }
+            }
+            Application.Current.Shutdown();
+        }
+
         // 保存 MainWindow 的静态引用，方便回调使用
         private static MainWindow _mainWindow;
         private static readonly string LogDirectory = System.IO.Path.Combine(
@@ -142,15 +160,16 @@ namespace TabPaint
             {
                 Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    if (_mainWindow != null)
+                    var targetWindow = TabPaint.MainWindow.GetCurrentInstance();
+                    if (targetWindow != null)
                     {
-                        RestoreWindow(_mainWindow);
+                        RestoreWindow(targetWindow);
 
-                        var tab = _mainWindow.FileTabs.FirstOrDefault(t => t.FilePath == filePath);
+                        var tab = targetWindow.FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
                         if (tab == null)
                         {
-                            int indexInList = _mainWindow._imageFiles.IndexOf(filePath);
+                            int indexInList = targetWindow._imageFiles.IndexOf(filePath);
                             if (indexInList >= 0)
                             {
                                 var newTab = new FileTabItem(filePath)
@@ -159,22 +178,22 @@ namespace TabPaint
                                     IsDirty = false
                                 };
 
-                                _mainWindow.FileTabs.Add(newTab);
-                                _mainWindow.SwitchToTab(newTab);
-                                _mainWindow.ScrollToTabCenter(newTab);
+                                targetWindow.FileTabs.Add(newTab);
+                                targetWindow.SwitchToTab(newTab);
+                                targetWindow.ScrollToTabCenter(newTab);
                             }
                             else
                             {
-                                _ = _mainWindow.OpenFilesAsNewTabs(new string[] { filePath });
+                                _ = targetWindow.OpenFilesAsNewTabs(new string[] { filePath });
                             }
 
                         }
                         else
                         {
-                            _mainWindow.SwitchToTab(tab);
-                            _mainWindow.ScrollToTabCenter(tab);
+                            targetWindow.SwitchToTab(tab);
+                            targetWindow.ScrollToTabCenter(tab);
                         }
-                        _mainWindow.UpdateImageBarSliderState();
+                        targetWindow.UpdateImageBarSliderState();
                     }
                 });
             });
@@ -219,6 +238,13 @@ namespace TabPaint
          
 
         }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            SingleInstance.Release();
+            base.OnExit(e);
+        }
+
         private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             var settings = (AppSettings)sender;
@@ -226,8 +252,14 @@ namespace TabPaint
             if (e.PropertyName == nameof(AppSettings.ThemeMode))
             {
                 ThemeManager.ApplyTheme(settings.ThemeMode);
-                _mainWindow.SetUndoRedoButtonState();
-                _mainWindow.AutoUpdateMaximizeIcon();
+                foreach (Window w in Application.Current.Windows)
+                {
+                    if (w is MainWindow mw)
+                    {
+                        mw.SetUndoRedoButtonState();
+                        mw.AutoUpdateMaximizeIcon();
+                    }
+                }
             }
             else if (e.PropertyName == nameof(AppSettings.ThemeAccentColor))
             {
@@ -242,9 +274,12 @@ namespace TabPaint
 
             if (e.PropertyName == nameof(AppSettings.PenThickness))
             {
-                if (_mainWindow._ctx != null)
+                foreach (Window w in Application.Current.Windows)
                 {
-                    _mainWindow._ctx.PenThickness = SettingsManager.Instance.Current.PenThickness;
+                    if (w is MainWindow mw && mw._ctx != null)
+                    {
+                        mw._ctx.PenThickness = settings.PenThickness;
+                    }
                 }
             }
         }

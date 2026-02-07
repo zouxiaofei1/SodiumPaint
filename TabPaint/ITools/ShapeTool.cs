@@ -38,23 +38,24 @@ public class ShapeTool : ToolBase
         _currentShapeType = type;
     }
 
-    private SelectTool GetSelectTool()
+    private SelectTool GetSelectTool(MainWindow mw)
     {
-        var mw = MainWindow.GetCurrentInstance();
         return mw._tools.Select as SelectTool;
     }
 
     public void GiveUpSelection(ToolContext ctx)
     {
         if (ctx == null) return;
-        GetSelectTool()?.CommitSelection(ctx, true);
-        GetSelectTool()?.Cleanup(ctx);
+        var mw = ctx.ParentWindow;
+        GetSelectTool(mw)?.CommitSelection(ctx, true);
+        GetSelectTool(mw)?.Cleanup(ctx);
     }
 
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
-        var selectTool = GetSelectTool();
+        var mw = ctx.ParentWindow;
+        if (mw.IsViewMode) return;
+        var selectTool = GetSelectTool(mw);
         var px = ctx.ToPixel(viewPos);
 
         // ... (保持原有的操控模式判断逻辑) ...
@@ -134,7 +135,8 @@ public class ShapeTool : ToolBase
 
     public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        if (_isManipulating) { GetSelectTool()?.OnPointerMove(ctx, viewPos); return; }
+        var mw = ctx.ParentWindow;
+        if (_isManipulating) { GetSelectTool(mw)?.OnPointerMove(ctx, viewPos); return; }
         if (!_isDrawing || _previewShape == null) return;
 
         var current = ctx.ToPixel(viewPos);
@@ -142,14 +144,14 @@ public class ShapeTool : ToolBase
 
         int w = (int)Math.Abs(current.X - _startPoint.X);
         int h = (int)Math.Abs(current.Y - _startPoint.Y);
-        var mw = MainWindow.GetCurrentInstance();
         mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
     }
     public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
+        var mw = ctx.ParentWindow;
         if (_isManipulating)
         {
-            GetSelectTool()?.OnPointerUp(ctx, viewPos);
+            GetSelectTool(mw)?.OnPointerUp(ctx, viewPos);
             return;
         }
 
@@ -195,7 +197,7 @@ public class ShapeTool : ToolBase
         // 生成位图
         var shapeBitmap = RenderShapeToBitmapClipped(_startPoint, endPoint, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
 
-        var selectTool = GetSelectTool();
+        var selectTool = GetSelectTool(mw);
         if (selectTool != null && shapeBitmap != null)
         {
             bool isCtrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
@@ -220,7 +222,7 @@ public class ShapeTool : ToolBase
                 ctx.SelectionPreview.RenderTransform = tg;
                 ctx.SelectionPreview.Clip = new RectangleGeometry(new Rect(0, 0, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight));
                 selectTool.RefreshOverlay(ctx);
-                selectTool.UpdateStatusBarSelectionSize();
+                selectTool.UpdateStatusBarSelectionSize(mw);
                 _isManipulating = true;
             }
             else
@@ -235,17 +237,18 @@ public class ShapeTool : ToolBase
 
     public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
     {
+        var mw = ctx.ParentWindow;
         if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
             if (_isManipulating)
             {
-                var st = GetSelectTool();
+                var st = GetSelectTool(mw);
                 if (st != null && st.HasActiveSelection)
                 {
                     st.Cleanup(ctx);
                     ctx.Undo.Redo();
                     _isManipulating = false;
-                    (MainWindow.GetCurrentInstance()).SetUndoRedoButtonState();
+                    mw.SetUndoRedoButtonState();
                     e.Handled = true;
                     return;
                 }
@@ -253,7 +256,7 @@ public class ShapeTool : ToolBase
         }
         if (_isManipulating)
         {
-            var st = GetSelectTool();
+            var st = GetSelectTool(mw);
             if (st != null)
             {
                 st.OnKeyDown(ctx, e);

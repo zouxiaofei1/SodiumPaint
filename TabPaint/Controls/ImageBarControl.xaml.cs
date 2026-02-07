@@ -15,6 +15,7 @@ using System.Windows.Interop; // 用于 HwndSource
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using XamlAnimatedGif;
 using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
@@ -75,14 +76,14 @@ namespace TabPaint.Controls
             this.Unloaded += ImageBarControl_Unloaded;
 
             _hoverTimer = new DispatcherTimer();
-            _hoverTimer.Interval = TimeSpan.FromSeconds(0.2); // 设置为 0.5 秒
+            _hoverTimer.Interval = TimeSpan.FromSeconds(0.2); // 0.2s 后显示基础预览
             _hoverTimer.Tick += HoverTimer_Tick;
             _closeTimer = new DispatcherTimer();
             _closeTimer.Interval = TimeSpan.FromMilliseconds(100); // 100ms 缓冲期
             _closeTimer.Tick += CloseTimer_Tick;
 
             _highResTimer = new DispatcherTimer();
-            _highResTimer.Interval = TimeSpan.FromSeconds(0.3); // 悬浮显示后1秒触发
+            _highResTimer.Interval = TimeSpan.FromSeconds(0.3); // 基础预览显示后再过 0.3s 触发高清/GIF (总计 0.5s)
             _highResTimer.Tick += HighResTimer_Tick;
         }
         private void Internal_OnTabMouseEnter(object sender, MouseEventArgs e)
@@ -91,6 +92,14 @@ namespace TabPaint.Controls
 
             var element = sender as FrameworkElement;
             if (element == null) return;
+
+            // 3. 鼠标悬浮到当前tab不弹出LargePreviewPopup
+            var tabData = element.DataContext as FileTabItem;
+            if (tabData != null && tabData.IsSelected)
+            {
+                ClosePopupAndReset();
+                return;
+            }
 
             // 如果切换了Tab，先取消之前的任务和定时器
             if (_currentHoveredElement != element)
@@ -175,6 +184,7 @@ namespace TabPaint.Controls
             _currentHoveredElement = null;
             _highResTimer.Stop();
             _previewCts?.Cancel();
+            AnimationBehavior.SetSourceUri(PopupPreviewImage, null);
             PopupPreviewImage.Source = null;
             CheckerboardBorder.Background = Brushes.Transparent; // ★ 清理
         }
@@ -193,14 +203,14 @@ namespace TabPaint.Controls
         {
             if (_currentHoveredElement == null) return;
 
-            dynamic tabData = _currentHoveredElement.DataContext;
+            var tabData = _currentHoveredElement.DataContext as FileTabItem;
             if (tabData != null)
             {
                 // 1. 先显示已有的缩略图
                 if (tabData.Thumbnail != null)
                 {
                     PopupPreviewImage.Source = tabData.Thumbnail;
-                    UpdateCheckerboardVisibility(tabData.Thumbnail as BitmapSource);
+                    UpdateCheckerboardVisibility(tabData.Thumbnail);
                 }
                 else
                 {
@@ -215,15 +225,40 @@ namespace TabPaint.Controls
                 if (isNewFile)
                 {
                     PopupFileSizeText.Text = "";
-                    // ★ 新图片也尝试从缩略图获取尺寸
-                    BitmapSource thumb = tabData.Thumbnail as BitmapSource;
-                    if (thumb != null && thumb.PixelWidth > 0)
+                    // 2. 对于新图片显示正确的宽高
+                    bool dimsFound = false;
+                    if (tabData.IsSelected)
                     {
-                        PopupDimensionsText.Text = $"{thumb.PixelWidth} × {thumb.PixelHeight} px";
+                        var mw = MainWindow.GetCurrentInstance();
+                        if (mw?._surface?.Bitmap != null)
+                        {
+                            PopupDimensionsText.Text = $"{mw._surface.Bitmap.PixelWidth} × {mw._surface.Bitmap.PixelHeight} px";
+                            dimsFound = true;
+                        }
                     }
-                    else
+
+                    if (!dimsFound && !string.IsNullOrEmpty(tabData.BackupPath) && File.Exists(tabData.BackupPath))
                     {
-                        PopupDimensionsText.Text = LocalizationManager.GetString("L_ImgBar_NewImage");
+                        var dims = GetImageDimensionsFast(tabData.BackupPath);
+                        if (dims.Width > 0)
+                        {
+                            PopupDimensionsText.Text = $"{dims.Width} × {dims.Height} px";
+                            dimsFound = true;
+                        }
+                    }
+
+                    if (!dimsFound)
+                    {
+                        // ★ 兜底尝试从缩略图获取尺寸
+                        var thumb = tabData.Thumbnail;
+                        if (thumb != null && thumb.PixelWidth > 0 && thumb.PixelWidth != 100) // 避免显示缩略图本身的100x60
+                        {
+                            PopupDimensionsText.Text = $"{thumb.PixelWidth} × {thumb.PixelHeight} px";
+                        }
+                        else
+                        {
+                            PopupDimensionsText.Text = LocalizationManager.GetString("L_ImgBar_NewImage");
+                        }
                     }
                     _highResTimer.Stop();
                 }
@@ -295,12 +330,24 @@ namespace TabPaint.Controls
             _highResTimer.Stop();
 
             if (_currentHoveredElement == null) return;
-            dynamic tabData = _currentHoveredElement.DataContext;
+            var tabData = _currentHoveredElement.DataContext as FileTabItem;
             string filePath = tabData?.FilePath;
 
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
 
             _previewCts?.Cancel();
+
+            // GIF 特殊处理：使用 XamlAnimatedGif 播放
+            if (filePath.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
+            {
+                AnimationBehavior.SetSourceUri(PopupPreviewImage, new Uri(filePath));
+                CheckerboardBorder.Background = GetCheckerboardBrush(); // GIF 通常带透明
+                return;
+            }
+
+            // 非 GIF 清除动画源
+            AnimationBehavior.SetSourceUri(PopupPreviewImage, null);
+
             _previewCts = new CancellationTokenSource();
             var token = _previewCts.Token;
 
@@ -348,28 +395,75 @@ namespace TabPaint.Controls
                     var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
                     if (decoder.Frames.Count > 0)
                     {
-                        var frame = decoder.Frames[0];
+                        // 1.ico显示最大一帧（复用逻辑）
+                        int bestIndex = GetLargestFrameIndex(decoder);
+                        var frame = decoder.Frames[bestIndex];
                         res.Width = frame.PixelWidth;
                         res.Height = frame.PixelHeight;
+
+                        if (token.IsCancellationRequested) return res;
+
+                        // 对于多帧图像（如ICO），直接从Frame创建以确保显示的是最大帧
+                        if (decoder.Frames.Count > 1)
+                        {
+                            // 如果是多帧，我们渲染这一帧并缩放到 400 宽
+                            double scale = 400.0 / frame.PixelWidth;
+                            if (scale > 1.0) scale = 1.0;
+
+                            var transformed = new TransformedBitmap(frame, new ScaleTransform(scale, scale));
+                            var resultBmp = new WriteableBitmap(transformed);
+                            resultBmp.Freeze();
+                            res.Image = resultBmp;
+                        }
+                        else
+                        {
+                            // 单帧图像按原有逻辑加载以支持 DecodePixelWidth 节省内存
+                            fs.Position = 0;
+                            var img = new BitmapImage();
+                            img.BeginInit();
+                            img.CacheOption = BitmapCacheOption.OnLoad;
+                            img.StreamSource = fs;
+                            img.DecodePixelWidth = 400;
+                            img.EndInit();
+                            img.Freeze();
+                            res.Image = img;
+                        }
                     }
-                    if (token.IsCancellationRequested) return res;
-                    fs.Position = 0;
-
-                    var img = new BitmapImage();
-                    img.BeginInit();
-                    img.CacheOption = BitmapCacheOption.OnLoad; // 必须OnLoad，因为流会关闭
-                    img.StreamSource = fs;
-                    img.DecodePixelWidth = 400;
-                    img.EndInit();
-                    img.Freeze(); // 必须冻结以便跨线程传递
-
-                    res.Image = img;
                 }
             }
             catch
             {
             }
             return res;
+        }
+
+        private int GetLargestFrameIndex(BitmapDecoder decoder)
+        {
+            if (decoder.Frames == null || decoder.Frames.Count == 0) return 0;
+            if (decoder.Frames.Count == 1) return 0;
+
+            int bestIndex = 0;
+            long maxArea = 0;
+            int maxBpp = 0;
+
+            for (int i = 0; i < decoder.Frames.Count; i++)
+            {
+                try
+                {
+                    var frame = decoder.Frames[i];
+                    long area = (long)frame.PixelWidth * frame.PixelHeight;
+                    int bpp = frame.Format.BitsPerPixel;
+
+                    if (area > maxArea || (area == maxArea && bpp > maxBpp))
+                    {
+                        maxArea = area;
+                        maxBpp = bpp;
+                        bestIndex = i;
+                    }
+                }
+                catch { }
+            }
+            return bestIndex;
         }
 
         private string FormatFileSize(long bytes)
@@ -403,8 +497,12 @@ namespace TabPaint.Controls
             var window = Window.GetWindow(this);
             if (window != null)
             {
-                var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
-                source?.RemoveHook(WndProc);
+                IntPtr handle = new WindowInteropHelper(window).Handle;
+                if (handle != IntPtr.Zero)
+                {
+                    var source = HwndSource.FromHwnd(handle);
+                    source?.RemoveHook(WndProc);
+                }
             }
         }
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

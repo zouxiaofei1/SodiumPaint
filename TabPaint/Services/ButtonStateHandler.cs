@@ -123,13 +123,19 @@ namespace TabPaint
             if(_maximized)SetRestoreIcon(); 
             else SetMaximizeIcon();
         }
-        private void SetBrushStyle(BrushStyle style)
+        private async void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，所有画笔都是pen工具
+            if (style == BrushStyle.AiEraser)
+            {
+                if (!await EnsureAiModelReadyAsync(AiService.AiTaskType.Inpainting)) return;
+            }
             _router.SetTool(_tools.Pen);
             _ctx.PenStyle = style;
+            UpdateBrushSplitButtonIcon(style);
             UpdateToolSelectionHighlight();
             _tools.Pen.SetCursor(_ctx);
             AutoSetFloatBarVisibility();
+            UpdateGlobalToolSettingsKey();
         }
 
         private void SetThicknessSlider_Pos(double sliderProgressValue)
