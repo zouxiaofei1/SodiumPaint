@@ -858,6 +858,25 @@ namespace TabPaint
                 DrawOverlay(ctx, _selectionRect);
                 (MainWindow.GetCurrentInstance()).SetCropButtonState();
             }
+            public Rect GetViewportInPixelCoords(ToolContext ctx)
+            {
+                var mw = MainWindow.GetCurrentInstance();
+                // ScrollViewer 的可见区域（WPF 坐标）
+                var sv = mw.ScrollContainer; // 你的 ScrollViewer 引用
+                if (sv == null) return Rect.Empty;
+
+                // 视口左上角和右下角在 View 坐标系中的位置
+                Point topLeft = new Point(sv.HorizontalOffset, sv.VerticalOffset);
+                Point bottomRight = new Point(
+                    sv.HorizontalOffset + sv.ViewportWidth,
+                    sv.VerticalOffset + sv.ViewportHeight);
+
+                // 转换为像素坐标
+                Point pxTL = ctx.ToPixel(topLeft);
+                Point pxBR = ctx.ToPixel(bottomRight);
+
+                return new Rect(pxTL, pxBR);
+            }
 
             public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
             {
@@ -872,15 +891,24 @@ namespace TabPaint
                     if (_selectionAlphaMap != null && _selectionRect.Width > 0 && _selectionRect.Height > 0)
                     {
                         _originalRect = _selectionRect;
-                        if (_selectionRect.Width * _selectionRect.Height < 500000) // 约 700x700
+
+                        var mw = MainWindow.GetCurrentInstance();
+                        double zoom = mw.zoomscale; Rect? viewport = null;
+
+                        // 放大时传入视口，缩小时传 null（降采样处理全图）
+                        if (zoom >= 1.0)
                         {
-                            _selectionGeometry = GeneratePixelEdgeGeometry(
-                                _selectionAlphaMap,
-                                _selectionRect.Width,
-                                _selectionRect.Height,
-                                _selectionRect.X,
-                                _selectionRect.Y);
+                            viewport = GetViewportInPixelCoords(ctx);
                         }
+
+                        _selectionGeometry = GeneratePixelEdgeGeometry(
+                            _selectionAlphaMap,
+                            _selectionRect.Width,
+                            _selectionRect.Height,
+                            _selectionRect.X,
+                            _selectionRect.Y,
+                            zoom,
+                            viewport);
 
                         UpdateStatusBarSelectionSize();
                         DrawOverlay(ctx, _selectionRect);

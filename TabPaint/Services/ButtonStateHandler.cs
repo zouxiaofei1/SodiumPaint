@@ -488,12 +488,8 @@ namespace TabPaint
         _originalDpiX, _originalDpiY,
         PixelFormats.Bgra32, null, pixels, stride
     );
-
-                // 弹出配置窗口
-                // 注意：因为这是模态窗口，会阻塞这里，直到用户点保存或取消
                 var icoWin = new TabPaint.Windows.IcoExportWindow(baseSource);
-                icoWin.Owner = this; // 设为 Owner 以居中
-                icoWin.ShowDialog();
+                icoWin.ShowOwnerModal(this);
 
                 if (icoWin.IsConfirmed)
                 {
@@ -515,9 +511,6 @@ namespace TabPaint
                 }
                 else
                 {
-                    // 用户取消了 ICO 配置窗口，不算保存成功，也不报错
-                    // 可能需要在这里抛出一个特定异常来中断后续流程，或者简单 return
-                    // 取决于你外层调用逻辑。如果是 "另存为"，这里 return 即可，文件还没生成。
                     return;
                 }
                 return; // ICO 保存完毕，退出方法

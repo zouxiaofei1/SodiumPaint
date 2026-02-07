@@ -211,9 +211,7 @@
 
                         <!-- 调整卡片 -->
                         <Border Grid.Row="0" Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.1" Direction="270"/>
-                            </Border.Effect>
+              
                             <Grid Margin="4,4,4,4">
                                 <TabControl x:Name="AdjustTabControl" Background="Transparent" BorderThickness="0" Margin="0" SelectionChanged="AdjustTabControl_SelectionChanged">
                                     <!-- Tab 1: 光效 (BCE) -->
@@ -279,9 +277,7 @@
 
                         <!-- 直方图卡片 -->
                         <Border Grid.Row="1" Margin="0,12,0,4" Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="12,8">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.1" Direction="270"/>
-                            </Border.Effect>
+                 
                             <Grid>
                                 <Grid x:Name="HistogramGrid" VerticalAlignment="Bottom" Height="60" Margin="0" ClipToBounds="True">
                                     <Grid.OpacityMask>
@@ -336,9 +332,7 @@
                 <Border Grid.Column="1" Background="{DynamicResource GlassBackgroundLowBrush}" ClipToBounds="True">
                     <Grid Margin="8,8,12,12">
                         <Border Background="{DynamicResource GlassBackgroundLowBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.15" Direction="270"/>
-                            </Border.Effect>
+          
                             <Grid Margin="8">
                                 <Border Background="{StaticResource CheckerboardBrush}" CornerRadius="8"/>
                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">

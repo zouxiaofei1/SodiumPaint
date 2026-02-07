@@ -1,10 +1,11 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace TabPaint
 {
@@ -12,11 +13,12 @@ namespace TabPaint
     {
         public MessageBoxResult Result { get; private set; } = MessageBoxResult.None;
 
-        // SVG Path Data
         private const string PathInfo = AppConsts.PathInfo;
         private const string PathQuestion = AppConsts.PathQuestion;
         private const string PathWarning = AppConsts.PathWarning;
         private const string PathError = AppConsts.PathError;
+
+        private string _logFolderPath = null;
 
         private FluentMessageBox()
         {
@@ -26,35 +28,23 @@ namespace TabPaint
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-
-            // 1. 适配深色/浅色主题
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
-
-            // 2. 启用 Mica 特效
             MicaAcrylicManager.ApplyEffect(this);
-
-            // 3. 非 Win11 系统的回退处理
             if (!MicaAcrylicManager.IsWin11())
             {
-                // 如果不支持 Mica，使用实色背景防止完全透明
                 this.Background = FindResource("ControlBackgroundBrush") as Brush;
             }
         }
 
-        /// <summary>
-        /// 全窗口拖动逻辑
-        /// </summary>
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // 确保不是在按钮或其他交互控件上点击
-            if (e.OriginalSource is DependencyObject source && FindAncestor<System.Windows.Controls.Button>(source) == null)
+            if (e.OriginalSource is DependencyObject source && FindAncestor<Button>(source) == null)
             {
                 this.DragMove();
             }
         }
 
-        // 辅助方法：查找父级控件
         private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
         {
             while (current != null)
@@ -65,39 +55,116 @@ namespace TabPaint
             return null;
         }
 
-        private string _logFolderPath = null;
-
-        // 2. 修改 Show 方法签名，增加 logFolderPath 参数
-        public static MessageBoxResult Show(string message, string title = "TabPaint", MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Information, Window owner = null, string logFolderPath = null)
+        // =====================================================
+        // ★ 核心改动：静态 Show 方法使用局部模态
+        // =====================================================
+        public static MessageBoxResult Show(
+            string message,
+            string title = "TabPaint",
+            MessageBoxButton button = MessageBoxButton.OK,
+            MessageBoxImage icon = MessageBoxImage.Information,
+            Window owner = null,
+            string logFolderPath = null)
         {
             var msgBox = new FluentMessageBox();
             msgBox.TxtTitle.Text = title;
             msgBox.TxtMessage.Text = message;
-
-            // 保存日志路径
             msgBox._logFolderPath = logFolderPath;
 
-            // 如果传递了路径，显示按钮
             if (!string.IsNullOrEmpty(logFolderPath))
             {
                 msgBox.BtnOpenLog.Visibility = Visibility.Visible;
             }
 
-            if (owner != null)
-            {
-                msgBox.Owner = owner;
-                msgBox.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            }
-            else
-            {
-                msgBox.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            }
-
             msgBox.SetupButtons(button);
             msgBox.SetupIcon(icon);
 
-            msgBox.ShowDialog();
+            if (owner != null)
+            {
+                msgBox.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+                // ★ 使用局部模态：只阻塞 owner，不影响其他主窗口
+                ShowOwnerModal(msgBox, owner);
+            }
+            else
+            {
+                // 无 owner 时居中屏幕，使用普通 ShowDialog
+                // （此时没有特定窗口需要保护，ShowDialog 是安全的）
+                msgBox.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                msgBox.ShowDialog();
+            }
+
             return msgBox.Result;
+        }
+
+        // =====================================================
+        // ★ 内置的局部模态实现（针对 MessageBox 场景优化）
+        // =====================================================
+        private static void ShowOwnerModal(FluentMessageBox dialog, Window owner)
+        {
+            dialog.Owner = owner;
+            owner.IsEnabled = false;
+
+            var frame = new DispatcherFrame();
+
+            // 防止 Owner 关闭时子窗口悬空
+            CancelEventHandler ownerClosing = null;
+            ownerClosing = (s, e) =>
+            {
+                if (dialog.IsVisible)
+                    dialog.Close();
+            };
+            owner.Closing += ownerClosing;
+
+            dialog.Closed += (s, e) =>
+            {
+                owner.Closing -= ownerClosing;
+                owner.IsEnabled = true;
+                if (owner.IsVisible)
+                    owner.Activate(); frame.Continue = false;
+            };
+
+            // 非模态显示，但通过 DispatcherFrame 同步等待
+            dialog.Show();
+            Dispatcher.PushFrame(frame);
+        }
+
+        // =====================================================
+        // 按钮事件：不再设置 DialogResult，直接 Close()
+        // （Result 属性已经在 Close 之前赋值了）
+        // =====================================================
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        {
+            if (BtnCancel.Visibility == Visibility.Visible) Result = MessageBoxResult.Cancel;
+            else if (BtnNo.Visibility == Visibility.Visible)
+                Result = MessageBoxResult.No;
+            else
+                Result = MessageBoxResult.None;
+            Close();
+        }
+
+        private void BtnOk_Click(object sender, RoutedEventArgs e)
+        {
+            Result = MessageBoxResult.OK;
+            Close();
+        }
+
+        private void BtnYes_Click(object sender, RoutedEventArgs e)
+        {
+            Result = MessageBoxResult.Yes;
+            Close();
+        }
+
+        private void BtnNo_Click(object sender, RoutedEventArgs e)
+        {
+            Result = MessageBoxResult.No;
+            Close();
+        }
+
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            Result = MessageBoxResult.Cancel;
+            Close();
         }
 
         private void BtnOpenLog_Click(object sender, RoutedEventArgs e)
@@ -115,11 +182,11 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    // 如果打开文件夹失败，可以用 Debug 记录一下，但不要在崩溃处理里再弹窗了，容易死循环
                     Debug.WriteLine("Failed to open log directory: " + ex.Message);
                 }
             }
         }
+
         private void SetupIcon(MessageBoxImage icon)
         {
             if (icon == MessageBoxImage.None)
@@ -136,7 +203,7 @@ namespace TabPaint
             {
                 case MessageBoxImage.Error:
                     pathData = PathError;
-                    colorKey = "DangerBrush"; // 确保你在资源里定义了这个 Brush
+                    colorKey = "DangerBrush";
                     break;
                 case MessageBoxImage.Question:
                     pathData = PathQuestion;
@@ -144,7 +211,7 @@ namespace TabPaint
                     break;
                 case MessageBoxImage.Warning:
                     pathData = PathWarning;
-                    colorKey = "WarningBrush"; // 确保定义了
+                    colorKey = "WarningBrush";
                     break;
                 case MessageBoxImage.Information:
                     pathData = PathInfo;
@@ -152,32 +219,17 @@ namespace TabPaint
                     break;
             }
 
-            // --- 修改点开始 ---
             try
             {
-                // 显式解析并赋值
-                var geometry = Geometry.Parse(pathData);
-                IconPath.Data = geometry;
+                IconPath.Data = Geometry.Parse(pathData);
             }
-            catch (Exception)
+            catch
             {
-                // 如果解析失败，至少不让程序崩，或者给一个默认形状
                 IconPath.Data = null;
             }
-            // --- 修改点结束 ---
 
-            if (TryFindResource(colorKey) is Brush brush)
-            {
-                IconPath.Fill = brush;
-            }
-            else
-            {
-                // 如果找不到资源，给一个默认颜色，防止因为透明而"看不见"
-                IconPath.Fill = Brushes.Black;
-            }
+            IconPath.Fill = TryFindResource(colorKey) is Brush brush ? brush : Brushes.Black;
         }
-
-
 
         private void SetupButtons(MessageBoxButton button)
         {
@@ -187,21 +239,18 @@ namespace TabPaint
                     BtnOk.Visibility = Visibility.Visible;
                     BtnOk.IsDefault = true;
                     break;
-
                 case MessageBoxButton.OKCancel:
                     BtnOk.Visibility = Visibility.Visible;
                     BtnOk.IsDefault = true;
                     BtnCancel.Visibility = Visibility.Visible;
                     BtnCancel.IsCancel = true;
                     break;
-
                 case MessageBoxButton.YesNo:
                     BtnYes.Visibility = Visibility.Visible;
                     BtnYes.IsDefault = true;
                     BtnNo.Visibility = Visibility.Visible;
                     BtnNo.IsCancel = true;
                     break;
-
                 case MessageBoxButton.YesNoCancel:
                     BtnYes.Visibility = Visibility.Visible;
                     BtnYes.IsDefault = true;
@@ -211,26 +260,5 @@ namespace TabPaint
                     break;
             }
         }
-        private void BtnClose_Click(object sender, RoutedEventArgs e)
-        {
-            if (BtnCancel.Visibility == Visibility.Visible)
-            {
-                Result = MessageBoxResult.Cancel;
-            }
-            else if (BtnNo.Visibility == Visibility.Visible)
-            {
-                Result = MessageBoxResult.No;
-            }
-            else
-            {
-                Result = MessageBoxResult.None; // 强行关闭视为不做操作
-            }
-            Close();
-        }
-        // 按钮事件处理保持不变
-        private void BtnOk_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.OK; Close(); }
-        private void BtnYes_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.Yes; Close(); }
-        private void BtnNo_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.No; Close(); }
-        private void BtnCancel_Click(object sender, RoutedEventArgs e) { Result = MessageBoxResult.Cancel; Close(); }
     }
 }

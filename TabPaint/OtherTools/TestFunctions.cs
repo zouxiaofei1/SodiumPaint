@@ -19,7 +19,82 @@ using System.Windows.Input;
 
 namespace TabPaint
 {
+    public static class WindowHelper
+    {
+        private static readonly DependencyProperty LocalModalResultProperty =
+        DependencyProperty.RegisterAttached(
+            "LocalModalResult",
+            typeof(bool?),
+            typeof(WindowHelper),
+            new PropertyMetadata(null));
 
+        // 标记窗口是否以局部模态方式打开
+        private static readonly DependencyProperty IsLocalModalProperty =
+            DependencyProperty.RegisterAttached(
+                "IsLocalModal",
+                typeof(bool),
+                typeof(WindowHelper),
+                new PropertyMetadata(false));
+
+        public static bool? ShowOwnerModal(this Window dialog, Window owner)
+        {
+            if (owner != null)
+            {
+                dialog.Owner = owner;
+                owner.IsEnabled = false;
+            }
+
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            dialog.SetValue(IsLocalModalProperty, true);
+
+            bool? result = null;
+            var frame = new System.Windows.Threading.DispatcherFrame();
+
+            CancelEventHandler ownerClosing = null;
+            ownerClosing = (s, e) =>
+            {
+                if (dialog.IsVisible)
+                    dialog.Close();
+            };
+
+            if (owner != null) owner.Closing += ownerClosing;
+
+            dialog.Closed += (s, e) =>
+            {
+                // ★ 从附加属性读取结果
+                result = (bool?)dialog.GetValue(LocalModalResultProperty);
+                if (owner != null)
+                {
+                    owner.Closing -= ownerClosing;
+                    owner.IsEnabled = true;
+                    if (owner.IsVisible)
+                        owner.Activate();
+                }
+                frame.Continue = false;
+            };
+
+            dialog.Show();
+            System.Windows.Threading.Dispatcher.PushFrame(frame);
+
+            return result;
+        }
+
+        public static void SetDialogResultSafe(this Window window, bool? value)
+        {
+            bool isLocalModal = (bool)window.GetValue(IsLocalModalProperty);
+            if (isLocalModal)
+            {
+                // 局部模态模式：存到附加属性，然后关闭
+                window.SetValue(LocalModalResultProperty, value);
+            }
+            else
+            {
+                // 标准 ShowDialog 模式：直接设置
+                window.DialogResult = value;
+            }
+        }
+       
+    }
     public class ColorMatchConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

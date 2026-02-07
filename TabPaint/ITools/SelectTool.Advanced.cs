@@ -17,74 +17,231 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
-            private Geometry GeneratePixelEdgeGeometry(byte[] alphaMap, int width, int height, int offsetX, int offsetY)
+            public Geometry GeneratePixelEdgeGeometry(byte[] alphaMap, int width, int height,
+     int offsetX, int offsetY, double zoomScale = 1.0, Rect? viewportRect = null)
             {
                 if (alphaMap == null || width <= 0 || height <= 0) return null;
+                int downsample = 1;
+                if (zoomScale < 1.0)
+                {
+                    // 保证至少1，最大不超过16（避免极端缩小时全丢了）
+                    downsample = Math.Clamp((int)Math.Ceiling(1.0 / zoomScale), 1, 16);
+                }
+                int clipX0 = 0, clipY0 = 0, clipX1 = width, clipY1 = height;
 
+                if (viewportRect.HasValue && zoomScale >= 1.0)
+                {
+                    // 放大时才做视口裁剪（缩小时降采样已经够快了）
+                    // viewportRect 是像素坐标系，需要转换为相对于选区的局部坐标
+                    var vp = viewportRect.Value;
+                    int margin = 2; // 多留2像素避免边缘闪烁
+                    clipX0 = Math.Max(0, (int)Math.Floor(vp.Left - offsetX) - margin);
+                    clipY0 = Math.Max(0, (int)Math.Floor(vp.Top - offsetY) - margin);
+                    clipX1 = Math.Min(width, (int)Math.Ceiling(vp.Right - offsetX) + margin);
+                    clipY1 = Math.Min(height, (int)Math.Ceiling(vp.Bottom - offsetY) + margin);
+
+                    if (clipX0 >= clipX1 || clipY0 >= clipY1) return Geometry.Empty; // 完全不在视口内
+                }
+                if (downsample > 1)
+                {
+                    return GenerateDownsampledEdge(alphaMap, width, height, offsetX, offsetY, downsample);
+                }
+                else
+                {
+                    return GenerateClippedEdge(alphaMap, width, height, offsetX, offsetY,
+                        clipX0, clipY0, clipX1, clipY1);
+                }
+            }
+            private Geometry GenerateDownsampledEdge(byte[] alphaMap, int width, int height,
+                int offsetX, int offsetY, int factor)
+            {
                 int stride = width * 4;
-                var segments = new List<(Point Start, Point End)>();
+                int dsW = (width + factor - 1) / factor;
+                int dsH = (height + factor - 1) / factor;
+                bool[] dsMask = new bool[dsW * dsH];
 
-                // 扫描所有像素，找出边缘线段
-                for (int y = 0; y < height; y++)
+                Parallel.For(0, dsH, dy =>
                 {
-                    for (int x = 0; x < width; x++)
+                    for (int dx = 0; dx < dsW; dx++)
                     {
-                        int idx = y * stride + x * 4 + 3;
-                        bool current = idx < alphaMap.Length && alphaMap[idx] > 128;
+                        // 对应原图的 block 范围
+                        int srcX0 = dx * factor;
+                        int srcY0 = dy * factor;
+                        int srcX1 = Math.Min(srcX0 + factor, width);
+                        int srcY1 = Math.Min(srcY0 + factor, height);
 
-                        if (!current) continue;
+                        bool found = false;
+                        for (int sy = srcY0; sy < srcY1 && !found; sy++)
+                        {
+                            for (int sx = srcX0; sx < srcX1 && !found; sx++)
+                            {
+                                int idx = sy * stride + sx * 4 + 3;
+                                if (idx < alphaMap.Length && alphaMap[idx] > 128)
+                                    found = true;
+                            }
+                        }
+                        dsMask[dy * dsW + dx] = found;
+                    }
+                });
+                var hSegs = new List<(int y, int x1, int x2)>();
+                for (int y = 0; y <= dsH; y++)
+                {
+                    int runStart = -1;
+                    for (int x = 0; x < dsW; x++)
+                    {
+                        bool above = (y > 0) && dsMask[(y - 1) * dsW + x];
+                        bool below = (y < dsH) && dsMask[y * dsW + x];
+                        bool isEdge = above != below;
 
-                        // 检查四个方向，如果邻居不是选中状态，则添加边缘
-                        // 上边缘
-                        if (y == 0 || alphaMap[(y - 1) * stride + x * 4 + 3] <= 128)
+                        if (isEdge)
                         {
-                            segments.Add((new Point(x, y), new Point(x + 1, y)));
+                            if (runStart < 0) runStart = x;
                         }
-                        // 下边缘
-                        if (y == height - 1 || alphaMap[(y + 1) * stride + x * 4 + 3] <= 128)
+                        else
                         {
-                            segments.Add((new Point(x, y + 1), new Point(x + 1, y + 1)));
-                        }
-                        // 左边缘
-                        if (x == 0 || alphaMap[y * stride + (x - 1) * 4 + 3] <= 128)
-                        {
-                            segments.Add((new Point(x, y), new Point(x, y + 1)));
-                        }
-                        // 右边缘
-                        if (x == width - 1 || alphaMap[y * stride + (x + 1) * 4 + 3] <= 128)
-                        {
-                            segments.Add((new Point(x + 1, y), new Point(x + 1, y + 1)));
+                            if (runStart >= 0)
+                            {
+                                hSegs.Add((y, runStart, x));
+                                runStart = -1;
+                            }
                         }
                     }
+                    if (runStart >= 0) hSegs.Add((y, runStart, dsW));
                 }
 
-                if (segments.Count == 0) return null;
-
-                // 将线段连接成路径
-                var paths = ConnectSegments(segments);
-
-                var geometryGroup = new GeometryGroup();
-
-                foreach (var path in paths)
+                // 垂直边缘
+                var vSegs = new List<(int x, int y1, int y2)>();
+                for (int x = 0; x <= dsW; x++)
                 {
-                    if (path.Count < 2) continue;
-
-                    var streamGeometry = new StreamGeometry();
-                    using (var ctx = streamGeometry.Open())
+                    int runStart = -1;
+                    for (int y = 0; y < dsH; y++)
                     {
-                        ctx.BeginFigure(new Point(path[0].X + offsetX, path[0].Y + offsetY), false, true);
+                        bool left = (x > 0) && dsMask[y * dsW + (x - 1)];
+                        bool right = (x < dsW) && dsMask[y * dsW + x];
+                        bool isEdge = left != right;
 
-                        for (int i = 1; i < path.Count; i++)
+                        if (isEdge)
                         {
-                            ctx.LineTo(new Point(path[i].X + offsetX, path[i].Y + offsetY), true, false);
+                            if (runStart < 0) runStart = y;
+                        }
+                        else
+                        {
+                            if (runStart >= 0)
+                            {
+                                vSegs.Add((x, runStart, y));
+                                runStart = -1;
+                            }
                         }
                     }
-                    streamGeometry.Freeze();
-                    geometryGroup.Children.Add(streamGeometry);
+                    if (runStart >= 0) vSegs.Add((x, runStart, dsH));
                 }
 
-                geometryGroup.Freeze();
-                return geometryGroup;
+                // 构建 Geometry，坐标映射回原图像素坐标
+                var sg = new StreamGeometry();
+                using (var ctx = sg.Open())
+                {
+                    foreach (var seg in hSegs)
+                    {
+                        // 降采样格子边界 → 原图像素坐标
+                        double py = Math.Min(seg.y * factor, height) + offsetY;
+                        double px1 = Math.Min(seg.x1 * factor, width) + offsetX;
+                        double px2 = Math.Min(seg.x2 * factor, width) + offsetX;
+                        ctx.BeginFigure(new Point(px1, py), false, false);
+                        ctx.LineTo(new Point(px2, py), true, false);
+                    }
+                    foreach (var seg in vSegs)
+                    {
+                        double px = Math.Min(seg.x * factor, width) + offsetX;
+                        double py1 = Math.Min(seg.y1 * factor, height) + offsetY;
+                        double py2 = Math.Min(seg.y2 * factor, height) + offsetY;
+                        ctx.BeginFigure(new Point(px, py1), false, false);
+                        ctx.LineTo(new Point(px, py2), true, false);
+                    }
+                }
+                sg.Freeze();
+                return sg;
+            }
+
+            /// <summary>
+            /// 视口裁剪后生成边缘（放大视图时使用）
+            /// </summary>
+            private Geometry GenerateClippedEdge(byte[] alphaMap, int width, int height,
+                int offsetX, int offsetY, int clipX0, int clipY0, int clipX1, int clipY1)
+            {
+                int stride = width * 4;
+
+                // 只扫描裁剪区域内的像素
+                var hSegs = new List<(int y, int x1, int x2)>();
+                var vSegs = new List<(int x, int y1, int y2)>();
+
+                // 水平边缘（扫描 clipY0 到 clipY1+1 的行边界）
+                for (int y = clipY0; y <= clipY1; y++)
+                {
+                    int runStart = -1;
+                    for (int x = clipX0; x < clipX1; x++)
+                    {
+                        bool above = (y > 0 && y - 1 < height) && alphaMap[(y - 1) * stride + x * 4 + 3] > 128;
+                        bool below = (y < height) && alphaMap[y * stride + x * 4 + 3] > 128;
+                        bool isEdge = above != below;
+
+                        if (isEdge)
+                        {
+                            if (runStart < 0) runStart = x;
+                        }
+                        else
+                        {
+                            if (runStart >= 0)
+                            {
+                                hSegs.Add((y, runStart, x));
+                                runStart = -1;
+                            }
+                        }
+                    }
+                    if (runStart >= 0) hSegs.Add((y, runStart, clipX1));
+                }
+
+                // 垂直边缘
+                for (int x = clipX0; x <= clipX1; x++)
+                {
+                    int runStart = -1;
+                    for (int y = clipY0; y < clipY1; y++)
+                    {
+                        bool left = (x > 0 && x - 1 < width) && alphaMap[y * stride + (x - 1) * 4 + 3] > 128;
+                        bool right = (x < width) && alphaMap[y * stride + x * 4 + 3] > 128;
+                        bool isEdge = left != right;
+
+                        if (isEdge)
+                        {
+                            if (runStart < 0) runStart = y;
+                        }
+                        else
+                        {
+                            if (runStart >= 0)
+                            {
+                                vSegs.Add((x, runStart, y));
+                                runStart = -1;
+                            }
+                        }
+                    }
+                    if (runStart >= 0) vSegs.Add((x, runStart, clipY1));
+                }
+
+                var sg = new StreamGeometry();
+                using (var ctx = sg.Open())
+                {
+                    foreach (var seg in hSegs)
+                    {
+                        ctx.BeginFigure(new Point(seg.x1 + offsetX, seg.y + offsetY), false, false);
+                        ctx.LineTo(new Point(seg.x2 + offsetX, seg.y + offsetY), true, false);
+                    }
+                    foreach (var seg in vSegs)
+                    {
+                        ctx.BeginFigure(new Point(seg.x + offsetX, seg.y1 + offsetY), false, false);
+                        ctx.LineTo(new Point(seg.x + offsetX, seg.y2 + offsetY), true, false);
+                    }
+                }
+                sg.Freeze();
+                return sg;
             }
             private List<List<Point>> ConnectSegments(List<(Point Start, Point End)> segments)
             {

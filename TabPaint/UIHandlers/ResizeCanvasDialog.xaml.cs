@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace TabPaint
 {
@@ -36,7 +38,6 @@ namespace TabPaint
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         { // 初始化 UI
-            MicaAcrylicManager.ApplyEffect(this);
             _isUpdating = true;
             WidthTextBox.Text = _originalWidth.ToString();
             HeightTextBox.Text = _originalHeight.ToString();
@@ -48,7 +49,18 @@ namespace TabPaint
             WidthTextBox.Focus();
             WidthTextBox.SelectAll();
         }
-
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            MicaAcrylicManager.ApplyEffect(this);
+            bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+            ThemeManager.SetWindowImmersiveDarkMode(this, isDark);
+            var src = (HwndSource)PresentationSource.FromVisual(this);
+            if (src != null)
+            {
+                src.CompositionTarget.BackgroundColor = Colors.Transparent;
+            }
+        }
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed) this.DragMove();
@@ -243,7 +255,7 @@ namespace TabPaint
 
             if (ImageWidth > 0 && ImageHeight > 0)
             {
-                DialogResult = true;
+                this.SetDialogResultSafe(true);
             }
             else
             {
@@ -255,6 +267,7 @@ namespace TabPaint
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
+            this.SetDialogResultSafe(false);
             this.Close();
         }
     }

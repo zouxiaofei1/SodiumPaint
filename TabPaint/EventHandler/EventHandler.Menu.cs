@@ -67,10 +67,9 @@ namespace TabPaint
         }
         private void OnMosaicClick(object sender, RoutedEventArgs e)
         {
-            // 打开窗口获取强度，范围 2 - 100
             var dialog = new TabPaint.Windows.FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_Mosaic"), 10, 2, 100);
             dialog.Owner = this;
-            dialog.ShowDialog();
+            dialog.ShowOwnerModal(this);
 
             if (dialog.IsConfirmed)
             {
@@ -83,7 +82,7 @@ namespace TabPaint
             // 打开窗口获取强度（半径），范围 1 - 50
             var dialog = new TabPaint.Windows.FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_GaussianBlur"), 5, 1, 50);
             dialog.Owner = this;
-            dialog.ShowDialog();
+            dialog.ShowOwnerModal(this);
 
             if (dialog.IsConfirmed)
             {
@@ -338,6 +337,13 @@ namespace TabPaint
 
         private void OnSettingsClick(object sender, RoutedEventArgs e)// 打开设置窗口
         {
+            var existingSettings = OwnedWindows.OfType<SettingsWindow>().FirstOrDefault();
+            if (existingSettings != null)
+            {
+                existingSettings.Activate();
+                return;
+            }
+
             var settingsWindow = new SettingsWindow();
             TabPaint.SettingsManager.Instance.Current.PropertyChanged += (s, e) =>
             {
@@ -350,7 +356,7 @@ namespace TabPaint
 
             settingsWindow.ProgramVersion = this.ProgramVersion;
             settingsWindow.Owner = this; // 设置主窗口为父窗口，实现模态
-            settingsWindow.ShowDialog();
+            settingsWindow.Show();
         }
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
@@ -453,7 +459,7 @@ namespace TabPaint
                 Owner = this
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowOwnerModal(this) == true)
             {
                 _undo.PushExplicitImageUndo(oldBitmapState);
                 NotifyCanvasChanged();
@@ -594,10 +600,12 @@ namespace TabPaint
             int originalW = _surface.Bitmap.PixelWidth;
             int originalH = _surface.Bitmap.PixelHeight;
 
-            var dialog = new ResizeCanvasDialog(originalW, originalH);
-            dialog.Owner = this;
+          
 
-            if (dialog.ShowDialog() == true)
+            var dialog = new ResizeCanvasDialog(originalW, originalH);
+
+            // ★ 改动点：替换 Owner + ShowDialog
+            if (dialog.ShowOwnerModal(this) == true)
             {
                 int targetWidth = dialog.ImageWidth;
                 int targetHeight = dialog.ImageHeight;
@@ -809,7 +817,9 @@ namespace TabPaint
                 Owner = this
             };
 
-            if (dlg.ShowDialog() == true)
+            bool? dialogResult = WindowHelper.ShowOwnerModal(dlg, this);
+
+            if (dialogResult == true)
             {
                 var newBitmap = _surface.Bitmap;
                 var redoPixels = new byte[undoRect.Height * newBitmap.BackBufferStride];

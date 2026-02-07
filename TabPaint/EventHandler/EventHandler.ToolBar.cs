@@ -213,9 +213,9 @@ namespace TabPaint
             if (initialColor == Colors.Transparent) initialColor = Colors.Black;
 
             var dlg = new ModernColorPickerWindow(initialColor);
-            dlg.Owner = this; // 确保在主窗口之上
+            //dlg.Owner = this; // 确保在主窗口之上
 
-            if (dlg.ShowDialog() == true)
+            if (dlg.ShowOwnerModal(this) == true)
             {
                 var color = dlg.SelectedColor;
                 var brush = new SolidColorBrush(color);

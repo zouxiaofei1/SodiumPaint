@@ -417,7 +417,7 @@ namespace TabPaint
                 _originalFullBitmap.AddDirtyRect(new Int32Rect(0, 0, _originalFullBitmap.PixelWidth, _originalFullBitmap.PixelHeight));
                 _originalFullBitmap.Unlock();
 
-                DialogResult = true;
+                this.SetDialogResultSafe(true);
             }
             finally
             {
@@ -428,7 +428,7 @@ namespace TabPaint
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.SetDialogResultSafe(false);
             Close();
         }
     }

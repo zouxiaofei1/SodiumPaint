@@ -265,7 +265,7 @@ namespace TabPaint
             // 保存设置供批量处理
             CurrentSettings = GetCurrentSettings();
 
-            DialogResult = true;
+            this.SetDialogResultSafe(true);
             Close();
         }
         private WatermarkSettings GetCurrentSettings()
@@ -288,7 +288,7 @@ namespace TabPaint
         }
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.SetDialogResultSafe(false);
             Close();
         }
 

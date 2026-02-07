@@ -819,12 +819,12 @@ namespace TabPaint
         }
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            this.SetDialogResultSafe(true);
             Close();
         }
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.SetDialogResultSafe(false);
             Close();
         }
     }

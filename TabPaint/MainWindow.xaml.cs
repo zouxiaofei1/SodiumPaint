@@ -756,8 +756,31 @@ namespace TabPaint
         {
             CheckBirdEyeVisibility();
             UpdateBirdEyeView();
-            UpdateRulerPositions();
+            UpdateRulerPositions(); ClampScrollBarThumbSize();
         }
+        private void ClampScrollBarThumbSize()
+        {
+            const double minThumbRatio = 0.06;
+
+            // 获取 ScrollViewer 内部的 ScrollBar
+            var vBar = ScrollContainer.Template.FindName("PART_VerticalScrollBar", ScrollContainer) as System.Windows.Controls.Primitives.ScrollBar;
+            var hBar = ScrollContainer.Template.FindName("PART_HorizontalScrollBar", ScrollContainer) as System.Windows.Controls.Primitives.ScrollBar;
+
+            if (vBar != null && vBar.Maximum > 0)
+            {
+                double minViewport = vBar.Maximum * minThumbRatio / (1.0 - minThumbRatio);
+                if (vBar.ViewportSize < minViewport)
+                    vBar.ViewportSize = minViewport;
+            }
+
+            if (hBar != null && hBar.Maximum > 0)
+            {
+                double minViewport = hBar.Maximum * minThumbRatio / (1.0 - minThumbRatio);
+                if (hBar.ViewportSize < minViewport)
+                    hBar.ViewportSize = minViewport;
+            }
+        }
+
         private void UpdateRulerPositions()
         {
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
@@ -987,6 +1010,24 @@ namespace TabPaint
             {
                 RenderOptions.SetBitmapScalingMode(SelectionPreview, mode);
             }
+
+        //    if (Select?.HasActiveSelection == true &&
+        //Select.IsIrregularSelection &&
+        //Select._selectionAlphaMap != null)
+        //    {
+        //        var zoom = zoomscale;
+        //        Rect? viewport = zoom >= 1.0 ? GetViewportInPixelCoords(Select) : null;
+
+        //        Select._selectionGeometry = Select.GeneratePixelEdgeGeometry(
+        //            Select._selectionAlphaMap,
+        //            Select._selectionRect.Width,
+        //            Select._selectionRect.Height,
+        //            Select._selectionRect.X,
+        //            _selecSelecttTool._selectionRect.Y,
+        //            zoom, viewport);
+
+        //        _selectTool.DrawOverlay(_currentCtx, _selectTool._selectionRect);
+            
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -1088,7 +1129,7 @@ namespace TabPaint
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
             var selectTool = _router?.CurrentTool as SelectTool;
-            if (_selectionToolBar == null && (selectTool == null || !selectTool.HasActiveSelection))
+            if (_selectionToolBar == null || (selectTool == null || !selectTool.HasActiveSelection))
             {
                 return;
             }

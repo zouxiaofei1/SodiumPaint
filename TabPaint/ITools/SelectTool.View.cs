@@ -45,7 +45,7 @@ namespace TabPaint
             }
 
 
-            private void DrawOverlay(ToolContext ctx, Int32Rect rect)
+            public void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
                 var mw = MainWindow.GetCurrentInstance();
                 if (mw._canvasResizer != null)  mw._canvasResizer.SetHandleVisibility(false);

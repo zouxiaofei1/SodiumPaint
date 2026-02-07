@@ -31,8 +31,8 @@ namespace TabPaint
             public bool _selecting = false;
             public bool _draggingSelection = false;
             private List<Point> _lassoPoints;
-            private Geometry? _selectionGeometry;
-            private byte[]? _selectionAlphaMap;
+            public Geometry? _selectionGeometry;
+            public byte[]? _selectionAlphaMap;
             private Point _startPixel;
             private Point _clickOffset;
             public Int32Rect _selectionRect;
