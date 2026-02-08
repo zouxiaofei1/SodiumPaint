@@ -14,6 +14,26 @@ namespace TabPaint
         private const double SegmentHeight = AppConsts.RulerSegmentHeight; // 短刻度高度
         private const double SegmentHeightMid = AppConsts.RulerSegmentHeightMid; // 中刻度高度
         private const double SegmentHeightLong = AppConsts.RulerSegmentHeightLong; // 长刻度高度
+        public static readonly DependencyProperty SelectionStartProperty =
+    DependencyProperty.Register("SelectionStart", typeof(double), typeof(Ruler),
+        new FrameworkPropertyMetadata(-1.0, FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public double SelectionStart
+        {
+            get { return (double)GetValue(SelectionStartProperty); }
+            set { SetValue(SelectionStartProperty, value); }
+        }
+
+        // 选区结束位置（像素坐标）
+        public static readonly DependencyProperty SelectionEndProperty =
+            DependencyProperty.Register("SelectionEnd", typeof(double), typeof(Ruler),
+                new FrameworkPropertyMetadata(-1.0, FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public double SelectionEnd
+        {
+            get { return (double)GetValue(SelectionEndProperty); }
+            set { SetValue(SelectionEndProperty, value); }
+        }
 
         // 依赖属性：缩放比例
         public static readonly DependencyProperty ZoomFactorProperty =
@@ -57,6 +77,61 @@ namespace TabPaint
             get { return (double)GetValue(MouseMarkerProperty); }
             set { SetValue(MouseMarkerProperty, value); }
         }
+        private void DrawSelectionHighlight(DrawingContext drawingContext, double zoom)
+        {
+            if (SelectionStart < 0 || SelectionEnd <= SelectionStart) return;
+
+            // 像素坐标 → 屏幕坐标
+            double screenStart = SelectionStart * zoom + OriginOffset;
+            double screenEnd = SelectionEnd * zoom + OriginOffset;
+
+            double maxVal = (Orientation == RulerOrientation.Horizontal) ? ActualWidth : ActualHeight;
+
+            // 裁剪到可见范围
+            screenStart = Math.Max(0, screenStart);
+            screenEnd = Math.Min(maxVal, screenEnd);
+
+            if (screenEnd <= screenStart) return;
+
+            // 使用主题色半透明作为高亮背景
+            Brush accentBrush = (Brush)TryFindResource("SystemAccentBrush") ?? Brushes.DodgerBlue;
+            Color accentColor;
+            if (accentBrush is SolidColorBrush scb)
+                accentColor = scb.Color;
+            else
+                accentColor = Colors.DodgerBlue;
+
+            Brush highlightBrush = new SolidColorBrush(Color.FromArgb(15, accentColor.R, accentColor.G, accentColor.B)); 
+            if (highlightBrush.CanFreeze) highlightBrush.Freeze();
+
+            // 高亮条下方的实色细线（标记边界）
+            Brush edgeBrush = new SolidColorBrush(Color.FromArgb(12, accentColor.R, accentColor.G, accentColor.B));
+            if (edgeBrush.CanFreeze) edgeBrush.Freeze();
+            Pen edgePen = new Pen(edgeBrush, 1);
+            edgePen.Freeze();
+
+            if (Orientation == RulerOrientation.Horizontal)
+            {
+                // 高亮背景条
+                drawingContext.DrawRectangle(highlightBrush, null,
+                    new Rect(screenStart, 0, screenEnd - screenStart, ActualHeight));
+
+                // 左右边界线
+                drawingContext.DrawLine(edgePen, new Point(screenStart, 0), new Point(screenStart, ActualHeight));
+                drawingContext.DrawLine(edgePen, new Point(screenEnd, 0), new Point(screenEnd, ActualHeight));
+            }
+            else
+            {
+                // 高亮背景条
+                drawingContext.DrawRectangle(highlightBrush, null,
+                    new Rect(0, screenStart, ActualWidth, screenEnd - screenStart));
+
+                // 上下边界线
+                drawingContext.DrawLine(edgePen, new Point(0, screenStart), new Point(ActualWidth, screenStart));
+                drawingContext.DrawLine(edgePen, new Point(0, screenEnd), new Point(ActualWidth, screenEnd));
+            }
+        }
+
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
@@ -65,16 +140,13 @@ namespace TabPaint
             Brush borderBrush = (Brush)TryFindResource("BorderMediumBrush") ?? Brushes.Gray;
             Brush bgBrush = (Brush)TryFindResource("GlassBackgroundMediumBrush") ?? Brushes.Transparent;
 
-            // 冻结画刷以提升性能 (OnRender会被频繁调用)
-            if (textBrush.CanFreeze) textBrush = textBrush.Clone(); // 确保是副本以便Freeze? 其实通常资源已经是Freezed的，但在代码中创建Pen最好Freeze Pen
             Pen borderPen = new Pen(borderBrush, 1);
             borderPen.Freeze();
-
             Pen tickPen = new Pen(tickBrush, 1);
             tickPen.Freeze();
-
-            Pen textPen = new Pen(textBrush, 1); // 如果需要文字轮廓才用这个，DrawText不需要Pen
+            Pen textPen = new Pen(textBrush, 1);
             textPen.Freeze();
+
             drawingContext.DrawRectangle(bgBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
 
             if (Orientation == RulerOrientation.Horizontal)
@@ -85,6 +157,10 @@ namespace TabPaint
             double zoom = ZoomFactor;
             if (zoom <= 0.0001) zoom = 0.0001;
 
+            // ========== 绘制选区高亮 ==========
+            DrawSelectionHighlight(drawingContext, zoom);
+
+            // ========== 原有刻度绘制逻辑 ==========
             double desiredPixelSpacing = 80.0;
             double rawStep = desiredPixelSpacing / zoom;
             double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
@@ -107,6 +183,18 @@ namespace TabPaint
             double startStepIndex = Math.Floor(startValue / smallStep);
             double currentVal = startStepIndex * smallStep;
             int safetyCount = 0;
+            double selScreenStart = -1, selScreenEnd = -1;
+            bool hasSelection = SelectionStart >= 0 && SelectionEnd > SelectionStart;
+            if (hasSelection)
+            {
+                selScreenStart = SelectionStart * zoom + OriginOffset;
+                selScreenEnd = SelectionEnd * zoom + OriginOffset;
+            }
+
+            // 选区内的刻度用主题色
+            Brush accentTextBrush = (Brush)TryFindResource("SystemAccentBrush") ?? Brushes.DodgerBlue;
+            Pen accentTickPen = new Pen(accentTextBrush, 1);
+            accentTickPen.Freeze();
 
             while (safetyCount++ < 2000)
             {
@@ -127,9 +215,14 @@ namespace TabPaint
 
                     double tickHeight = isMainTick ? SegmentHeightLong : (isMidTick ? SegmentHeightMid : SegmentHeight);
 
+                    // 判断当前刻度是否在选区范围内
+                    bool inSelection = hasSelection && screenPos >= selScreenStart - 0.5 && screenPos <= selScreenEnd + 0.5;
+                    Pen currentTickPen = inSelection ? accentTickPen : tickPen;
+                    Brush currentTextBrush = inSelection ? accentTextBrush : textBrush;
+
                     if (Orientation == RulerOrientation.Horizontal)
                     {
-                        drawingContext.DrawLine(tickPen, new Point(screenPos, ActualHeight - tickHeight), new Point(screenPos, ActualHeight));
+                        drawingContext.DrawLine(currentTickPen, new Point(screenPos, ActualHeight - tickHeight), new Point(screenPos, ActualHeight));
 
                         if (isMainTick)
                         {
@@ -139,15 +232,15 @@ namespace TabPaint
                                 FlowDirection.LeftToRight,
                                 typeface,
                                 10,
-                                textBrush, 
+                                currentTextBrush,
                                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
                             drawingContext.DrawText(text, new Point(screenPos + 2, 0));
                         }
                     }
                     else // Vertical
-                    { // 画刻度线 (使用 tickPen)
-                        drawingContext.DrawLine(tickPen, new Point(ActualWidth - tickHeight, screenPos), new Point(ActualWidth, screenPos));
+                    {
+                        drawingContext.DrawLine(currentTickPen, new Point(ActualWidth - tickHeight, screenPos), new Point(ActualWidth, screenPos));
 
                         if (isMainTick)
                         {
@@ -157,7 +250,7 @@ namespace TabPaint
                                 FlowDirection.LeftToRight,
                                 typeface,
                                 10,
-                                textBrush, 
+                                currentTextBrush,
                                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
                             double xBase = ActualWidth - text.Height - 2;
@@ -173,7 +266,7 @@ namespace TabPaint
                 currentVal = Math.Round(currentVal / smallStep) * smallStep;
             }
 
-            // 绘制鼠标红线 (保持红色或使用 DangerBrush)
+            // 绘制鼠标红线
             Pen markerPen = new Pen(Brushes.Red, 1);
             markerPen.Freeze();
 

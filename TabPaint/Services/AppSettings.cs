@@ -264,6 +264,22 @@ namespace TabPaint
                 }
             }
         }
+        private bool _alwaysShowTabCloseButton = false;
+
+        [JsonPropertyName("always_show_tab_close_button")]
+        public bool AlwaysShowTabCloseButton
+        {
+            get => _alwaysShowTabCloseButton;
+            set
+            {
+                if (_alwaysShowTabCloseButton != value)
+                {
+                    _alwaysShowTabCloseButton = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private bool _startInViewMode = false; // 默认关闭，即启动为画图模式
 
         [JsonPropertyName("start_in_view_mode")]
@@ -710,7 +726,35 @@ namespace TabPaint
                 }
             }
         }
+        private int _maxUndoSteps = 200;
+        [JsonPropertyName("max_undo_steps")]
+        public int MaxUndoSteps
+        {
+            get => _maxUndoSteps;
+            set
+            {
+                if (_maxUndoSteps != value)
+                {
+                    _maxUndoSteps = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
+        private int _maxUndoMemoryMB = 2048;
+        [JsonPropertyName("max_undo_memory_mb")]
+        public int MaxUndoMemoryMB
+        {
+            get => _maxUndoMemoryMB;
+            set
+            {
+                if (_maxUndoMemoryMB != value)
+                {
+                    _maxUndoMemoryMB = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private int _performanceScore = -1;
         [JsonPropertyName("performance_score")]
         public int PerformanceScore

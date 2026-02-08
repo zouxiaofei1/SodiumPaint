@@ -28,6 +28,11 @@ namespace TabPaint
             {
                 get  { return System.Windows.Input.Cursors.Cross; }
             }
+            public Int32Rect SelectionRect => _selectionRect;
+            public bool IsSelecting => _selecting;  
+            public bool HasRulerHighlight =>
+                (_selectionData != null && _selectionRect.Width > 0 && _selectionRect.Height > 0)
+                || (_selecting && _selectionRect.Width > 0 && _selectionRect.Height > 0);
             public bool _selecting = false;
             public bool _draggingSelection = false;
             private List<Point> _lassoPoints;

@@ -260,9 +260,16 @@ namespace TabPaint
             foreach (Window window in Application.Current.Windows)
             {
                 SetWindowImmersiveDarkMode(window, isDark);
-                
-                // 重新应用背景特效（处理 Win10 噪点背景切换）
-                MicaAcrylicManager.ApplyEffect(window);
+
+                if (MicaAcrylicManager.IsWin11())
+                {
+                    var bgBrush =Brushes.Transparent ;
+                    window.Background = bgBrush;
+                }
+                else
+                {
+                    MicaAcrylicManager.ApplyEffect(window);
+                }
             }
         }
         [DllImport("dwmapi.dll")]

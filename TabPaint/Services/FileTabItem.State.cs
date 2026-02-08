@@ -131,8 +131,9 @@ namespace TabPaint
             public DateTime LastBackupTime { get; set; }
 
             // 撤销栈支持
-            public Stack<UndoAction> UndoStack { get; set; } = new();
-            public Stack<UndoAction> RedoStack { get; set; } = new();
+            public List<UndoAction> UndoStack { get; set; } = new();
+            public List<UndoAction> RedoStack { get; set; } = new();
+            public DateTime LastAccessTime { get; set; } = DateTime.Now;
             public int SavedUndoPoint { get; set; } = 0;
 
             public FileTabItem(string path)

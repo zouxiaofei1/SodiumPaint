@@ -5,11 +5,11 @@
     <sys:String x:Key="L_Settings_Plugins_Title">Plugins / AI Models</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">Manage AI models and optional components. Models will be downloaded to the app cache directory.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Title">Remove Background</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">AI model for high-quality background removal. (170MB)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">AI model for high-quality background removal.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_SR_Title">Real-ESRGAN (Super Resolution)</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">AI model for 4x image upscaling and enhancement. (60MB)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">AI model for 4x image upscaling and enhancement.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">LaMa (AI Eraser)</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">AI model for removal and inpainting. (200MB)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">AI model for removal and inpainting.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">Not Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">Downloading...</sys:String>
@@ -39,7 +39,19 @@
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Auto">Auto</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">Scroll image</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">Switch image</sys:String>
-
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">Always show tab close button</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">Always display the close button on image tabs, not just on hover</sys:String>
+    <sys:String x:Key="L_Menu_File_RecycleBin">File Recycle Bin</sys:String>
+    <sys:String x:Key="L_RecycleBin_Title">File Recycle Bin</sys:String>
+    <sys:String x:Key="L_RecycleBin_Empty">No temporary images</sys:String>
+    <sys:String x:Key="L_RecycleBin_DaysLeft_Format">Expires in {0} days</sys:String>
+    <sys:String x:Key="L_RecycleBin_Restore">Restore</sys:String>
+    <sys:String x:Key="L_RecycleBin_DeleteForever">Delete Forever</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Undo_Header">Undo / Redo</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoSteps">Max Undo Steps</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoSteps_Desc">Limit the number of undo history items kept per tab.</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory">Max Undo Memory</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">Automatically clean oldest undo records when total memory used by all tabs exceeds this value.</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Title">Theme</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Desc">Switch between light and dark modes</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Option_System">System</sys:String>

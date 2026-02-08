@@ -11,6 +11,26 @@ using System.Windows.Media.Imaging;
 
 namespace TabPaint
 {
+    public static class ListStackExtensions
+    {
+        public static void Push<T>(this List<T> list, T item)
+        {
+            list.Add(item);
+        }
+        public static T Pop<T>(this List<T> list)
+        {
+            if (list.Count == 0) throw new InvalidOperationException("Stack is empty");
+            T last = list[list.Count - 1];
+            list.RemoveAt(list.Count - 1);
+            return last;
+        }
+        public static T Peek<T>(this List<T> list)
+        {
+            if (list.Count == 0) throw new InvalidOperationException("Stack is empty");
+            return list[list.Count - 1];
+        }
+    }
+
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
         private void Undo()
@@ -40,18 +60,22 @@ namespace TabPaint
             public string DeletedFilePath { get; }
             public FileTabItem DeletedTab { get; }
             public int DeletedTabIndex { get; }
+            public long MemorySize { get; } // 估算内存占用 (Bytes)
+
             public UndoAction(string filePath, FileTabItem tab, int index)
             {
                 ActionType = UndoActionType.FileDelete;
                 DeletedFilePath = filePath;
                 DeletedTab = tab;
                 DeletedTabIndex = index;
+                MemorySize = 0;
             }
             public UndoAction(Int32Rect rect, byte[] pixels, UndoActionType actionType = UndoActionType.Draw)
             {
                 ActionType = actionType;
                 Rect = rect;
                 Pixels = pixels;
+                MemorySize = (pixels?.Length ?? 0);
             }
             public UndoAction(Int32Rect undoRect, byte[] undoPixels, Int32Rect redoRect, byte[] redoPixels)
             {
@@ -60,16 +84,17 @@ namespace TabPaint
                 UndoPixels = undoPixels;
                 RedoRect = redoRect;
                 RedoPixels = redoPixels;
+                MemorySize = (undoPixels?.Length ?? 0) + (redoPixels?.Length ?? 0);
             }
         }
         public class UndoRedoManager
         {
             private readonly CanvasSurface _surface;
-            public Stack<UndoAction> _undo = new();
-            public Stack<UndoAction> _redo = new();
+            public List<UndoAction> _undo = new();
+            public List<UndoAction> _redo = new();
 
-            public Stack<UndoAction> GetUndoStack() => _undo;
-            public Stack<UndoAction> GetRedoStack() => _redo;
+            public List<UndoAction> GetUndoStack() => _undo;
+            public List<UndoAction> GetRedoStack() => _redo;
             private byte[]? _preStrokeSnapshot;
             private readonly List<Int32Rect> _strokeRects = new();
             public int UndoCount => _undo.Count;
@@ -84,10 +109,102 @@ namespace TabPaint
 
             public bool CanUndo => _undo.Count > 0;
             public bool CanRedo => _redo.Count > 0;
+
+            private void TrimStack()
+            {
+                var settings = SettingsManager.Instance.Current;
+                // 1. 限制步数 (撤销 + 重做总和)
+                while (_undo.Count + _redo.Count > settings.MaxUndoSteps)
+                {
+                    if (_redo.Count > 0)
+                    {
+                        _redo.RemoveAt(0); // 优先清理最旧的重做记录
+                    }
+                    else if (_undo.Count > 0)
+                    {
+                        _undo.RemoveAt(0); // 其次清理最旧的撤销记录
+                    }
+                    else break;
+                }
+
+                // 2. 检查全局内存
+                CheckGlobalUndoMemory();
+            }
+
+            public static void CheckGlobalUndoMemory()
+            {
+                var mw = MainWindow.GetCurrentInstance();
+                if (mw == null) return;
+
+                var settings = SettingsManager.Instance.Current;
+                long maxMemory = (long)settings.MaxUndoMemoryMB * 1024 * 1024;
+
+                // 1. 计算当前总内存
+                long currentTotal = 0;
+                var allTabs = mw.FileTabs.ToList();
+                foreach (var tab in allTabs)
+                {
+                    // 如果是当前标签页，其最新的撤销栈在 mw._undo 中，SwitchToTab 时才会同步回 tab.UndoStack
+                    if (tab == mw._currentTabItem && mw._undo != null)
+                    {
+                        currentTotal += mw._undo._undo.Sum(a => a.MemorySize);
+                        currentTotal += mw._undo._redo.Sum(a => a.MemorySize);
+                    }
+                    else
+                    {
+                        currentTotal += tab.UndoStack.Sum(a => a.MemorySize);
+                        currentTotal += tab.RedoStack.Sum(a => a.MemorySize);
+                    }
+                }
+
+                if (currentTotal <= maxMemory) return;
+
+                // 2. 优先清理非当前标签页的撤销栈
+                foreach (var tab in allTabs)
+                {
+                    if (tab == mw._currentTabItem) continue;
+
+                    while (currentTotal > maxMemory && (tab.UndoStack.Count > 0 || tab.RedoStack.Count > 0))
+                    {
+                        // 优先清理重做栈
+                        if (tab.RedoStack.Count > 0)
+                        {
+                            currentTotal -= tab.RedoStack[0].MemorySize;
+                            tab.RedoStack.RemoveAt(0);
+                        }
+                        else if (tab.UndoStack.Count > 0)
+                        {
+                            currentTotal -= tab.UndoStack[0].MemorySize;
+                            tab.UndoStack.RemoveAt(0);
+                        }
+                    }
+                }
+
+                // 3. 如果内存还是超标，清理当前标签页的最旧记录
+                if (currentTotal > maxMemory && mw._undo != null)
+                {
+                    while (currentTotal > maxMemory && (mw._undo._undo.Count > 1 || mw._undo._redo.Count > 0))
+                    {
+                        if (mw._undo._redo.Count > 0)
+                        {
+                            currentTotal -= mw._undo._redo[0].MemorySize;
+                            mw._undo._redo.RemoveAt(0);
+                        }
+                        else if (mw._undo._undo.Count > 1) // 至少保留一步撤销
+                        {
+                            currentTotal -= mw._undo._undo[0].MemorySize;
+                            mw._undo._undo.RemoveAt(0);
+                        }
+                        else break;
+                    }
+                }
+            }
+
             public void PushTransformAction(Int32Rect undoRect, byte[] undoPixels, Int32Rect redoRect, byte[] redoPixels)
             {//自动SetUndoRedoButtonState和_redo.Clear()
-                _undo.Push(new UndoAction(undoRect, undoPixels, redoRect, redoPixels));
+                _undo.Add(new UndoAction(undoRect, undoPixels, redoRect, redoPixels));
                 _redo.Clear(); // 新操作截断重做链
+                TrimStack();
                 UpdateUI();
             }
             // ---------- 绘制操作 ----------
@@ -108,7 +225,7 @@ namespace TabPaint
 
             public void CommitStroke(UndoActionType undoActionType = UndoActionType.Draw)//一般绘画
             {
-               
+
                 if (_preStrokeSnapshot == null || _strokeRects.Count == 0 || _surface?.Bitmap == null)
                 {
                     _preStrokeSnapshot = null;
@@ -118,6 +235,7 @@ namespace TabPaint
 
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
                 _undo.Push(new UndoAction(combined, region, undoActionType));
+                TrimStack();
                 UpdateUI();
                 _preStrokeSnapshot = null;
 
@@ -149,7 +267,7 @@ namespace TabPaint
             {
                 var mw = MainWindow.GetCurrentInstance();
 
-    
+
 
                 // === 原有逻辑：处理选区清理 ===
                 if (mw._router.CurrentTool is SelectTool sselTool && sselTool.HasActiveSelection)
@@ -251,6 +369,7 @@ namespace TabPaint
                 // 3. 创建撤销动作 (由于滤镜不改变尺寸，使用 Draw 类型即可)
                 _undo.Push(new UndoAction(rect, pixels, UndoActionType.Draw));
                 _redo.Clear();  // 4. 清空重做链并更新 UI
+                TrimStack();
                 UpdateUI();
             }
 
@@ -265,6 +384,7 @@ namespace TabPaint
                 var currentPixels = SafeExtractRegion(rect);
                 _undo.Push(new UndoAction(rect, currentPixels));
                 _redo.Clear();
+                TrimStack();
             }
             private static Int32Rect CombineRects(List<Int32Rect> rects)
             {

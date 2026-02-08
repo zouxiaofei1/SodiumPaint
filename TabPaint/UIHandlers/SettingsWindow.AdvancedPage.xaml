@@ -125,6 +125,44 @@
 
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
+        <!-- 撤销设置 -->
+        <TextBlock Text="{DynamicResource L_Settings_Advanced_Undo_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_MaxUndoSteps}"/>
+                <TextBlock Text="{DynamicResource L_Settings_MaxUndoSteps_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+            <TextBox Grid.Column="1" Width="80" HorizontalAlignment="Left" Height="28" VerticalContentAlignment="Center"
+                     LostFocus="TextBox_LostFocus"
+                     PreviewTextInput="NumberValidationTextBox"
+                     Text="{Binding Path=Current.MaxUndoSteps, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_MaxUndoMemory}"/>
+                <TextBlock Text="{DynamicResource L_Settings_MaxUndoMemory_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBox Width="80" Height="28" VerticalContentAlignment="Center"
+                         LostFocus="TextBox_LostFocus"
+                         PreviewTextInput="NumberValidationTextBox"
+                         Text="{Binding Path=Current.MaxUndoMemoryMB, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
+                <TextBlock Text=" MB" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            </StackPanel>
+        </Grid>
+
+        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+
         <!-- 习惯设置 -->
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Habits_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,15,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
@@ -143,6 +181,24 @@
 
             <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
                       IsChecked="{Binding Path=Current.SkipResetConfirmation, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
+                      VerticalAlignment="Center"/>
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_AlwaysShowTabClose_Title}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Advanced_AlwaysShowTabClose_Desc}" 
+                           Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <CheckBox Grid.Column="2" Style="{StaticResource FluentCheckBoxStyle}" 
+                      IsChecked="{Binding Path=Current.AlwaysShowTabCloseButton, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                       VerticalAlignment="Center"/>
         </Grid>
 

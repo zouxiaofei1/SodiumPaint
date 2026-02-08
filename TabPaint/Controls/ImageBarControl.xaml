@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
              xmlns:local="clr-namespace:TabPaint.Controls"
+                    xmlns:root="clr-namespace:TabPaint"
              mc:Ignorable="d" 
              x:Name="RootControl"
              d:DesignHeight="100" d:DesignWidth="1000">
@@ -352,7 +353,9 @@
                                         <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
                                     </Trigger>
 
-                                    <!-- Compact 模式下的内部元素布局调整 -->
+                                    <DataTrigger Binding="{Binding Path=Current.AlwaysShowTabCloseButton, Source={x:Static root:SettingsManager.Instance}}" Value="True">
+                                        <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
                                         <!-- 隐藏图片 -->
                                         <Setter TargetName="ThumbImage" Property="Visibility" Value="Collapsed"/>

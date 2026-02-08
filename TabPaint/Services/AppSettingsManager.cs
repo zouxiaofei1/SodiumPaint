@@ -61,9 +61,9 @@ namespace TabPaint
         public void Load()
         {
             Directory.CreateDirectory(_folderPath);
-            
+
             bool loaded = false;
-         
+
             // 1. 尝试从二进制文件加载 (性能优化：< 3ms)
             if (File.Exists(_binPath))
             {
@@ -160,19 +160,20 @@ namespace TabPaint
 
         private void SaveBinary()
         {
-        
+
             try
             {
                 using (var stream = File.Create(_binPath))
                 using (var writer = new BinaryWriter(stream))
                 {
                     writer.Write(BinaryVersion);
-                    
+
                     // 基础属性
                     writer.Write((int)Current.Language);
                     writer.Write((int)Current.SelectionClearMode);
                     writer.Write(Current.IsFirstRun);
                     writer.Write(Current.IsImageBarCompact);
+                    writer.Write(Current.AlwaysShowTabCloseButton);
                     writer.Write(Current.StartInViewMode);
                     writer.Write((int)Current.ViewMouseWheelMode);
                     writer.Write(Current.IsTextToolbarExpanded);
@@ -244,17 +245,18 @@ namespace TabPaint
 
             try
             {
-                
+
                 using (var stream = File.OpenRead(_binPath))
                 using (var reader = new BinaryReader(stream))
                 {
                     if (reader.ReadInt32() != BinaryVersion) return false;
 
-                    var settings = new AppSettings(); 
+                    var settings = new AppSettings();
                     settings.Language = (AppLanguage)reader.ReadInt32();
                     settings.SelectionClearMode = (SelectionClearMode)reader.ReadInt32();
                     settings.IsFirstRun = reader.ReadBoolean();
                     settings.IsImageBarCompact = reader.ReadBoolean();
+                    settings.AlwaysShowTabCloseButton = reader.ReadBoolean();
                     settings.StartInViewMode = reader.ReadBoolean();
                     settings.ViewMouseWheelMode = (MouseWheelMode)reader.ReadInt32();
                     settings.IsTextToolbarExpanded = reader.ReadBoolean();
@@ -282,7 +284,7 @@ namespace TabPaint
                     settings.ThemeAccentColor = reader.ReadString();
                     settings.PerformanceScore = reader.ReadInt32();
                     settings.LastBenchmarkDate = new DateTime(reader.ReadInt64());
-                   
+
                     // RecentFiles
                     int recentCount = reader.ReadInt32();
                     var recentFiles = new List<string>(recentCount);

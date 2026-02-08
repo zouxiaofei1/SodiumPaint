@@ -180,10 +180,10 @@ namespace TabPaint
             }
         }
 
-        private async void CloseTab(FileTabItem item,bool slient=false)
+        private async void CloseTab(FileTabItem item, bool slient = false)
         {
             // 1. 脏检查
-            if (item.IsDirty&&!slient&& !SettingsManager.Instance.Current.SkipResetConfirmation)
+            if (item.IsDirty && !slient && !SettingsManager.Instance.Current.SkipResetConfirmation)
             {
                 var result = FluentMessageBox.Show(
                     string.Format(LocalizationManager.GetString("L_Msg_UnsavedClose_Content"), item.DisplayName),
@@ -203,9 +203,14 @@ namespace TabPaint
             {
                 _imageFiles.Remove(pathToRemove);
             }
+            // 如果是已保存的文件或非临时文件，删除其对应的备份文件以节省空间
+            // 如果是“新建”的临时图片，关闭时不删除备份文件，使其进入回收站（缓存扫描机制）
             if (!string.IsNullOrEmpty(item.BackupPath) && File.Exists(item.BackupPath))
             {
-                try { File.Delete(item.BackupPath); } catch { }
+                if (!item.IsNew)
+                {
+                    try { File.Delete(item.BackupPath); } catch { }
+                }
             }
             if (FileTabs.Count == 0)
             {
@@ -214,7 +219,7 @@ namespace TabPaint
                 UpdateImageBarSliderState();
                 return;
             }
-           
+
             if (wasSelected)
             {
                 int newIndex = Math.Max(0, Math.Min(removedUiIndex - 1, FileTabs.Count - 1));
@@ -231,6 +236,7 @@ namespace TabPaint
             AggressiveMemoryRelease();
             MainImageBar.ClosePopupAndReset();
         }
+
 
 
         private void InitializeScrollPosition()

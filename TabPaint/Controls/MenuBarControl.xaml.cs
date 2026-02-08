@@ -23,7 +23,7 @@ namespace TabPaint.Controls
         public static readonly RoutedEvent SaveClickEvent = EventManager.RegisterRoutedEvent("SaveClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent SaveAsClickEvent = EventManager.RegisterRoutedEvent("SaveAsClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent ExitClickEvent = EventManager.RegisterRoutedEvent("ExitClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
+        public static readonly RoutedEvent RecycleBinClickEvent = EventManager.RegisterRoutedEvent("RecycleBinClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         // Edit Menu
         public static readonly RoutedEvent CopyClickEvent = EventManager.RegisterRoutedEvent("CopyClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent CutClickEvent = EventManager.RegisterRoutedEvent("CutClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
@@ -48,6 +48,7 @@ namespace TabPaint.Controls
         public event RoutedEventHandler ExitClick { add { AddHandler(ExitClickEvent, value); } remove { RemoveHandler(ExitClickEvent, value); } }
         public event RoutedEventHandler CopyClick { add { AddHandler(CopyClickEvent, value); } remove { RemoveHandler(CopyClickEvent, value); } }
         public event RoutedEventHandler CutClick { add { AddHandler(CutClickEvent, value); } remove { RemoveHandler(CutClickEvent, value); } }
+        public event RoutedEventHandler RecycleBinClick { add { AddHandler(RecycleBinClickEvent, value); } remove { RemoveHandler(RecycleBinClickEvent, value); } }
         public event RoutedEventHandler PasteClick { add { AddHandler(PasteClickEvent, value); } remove { RemoveHandler(PasteClickEvent, value); } }
         public event RoutedEventHandler ResizeCanvasClick { add { AddHandler(ResizeCanvasClickEvent, value); } remove { RemoveHandler(ResizeCanvasClickEvent, value); } }
         public event RoutedEventHandler BCEClick { add { AddHandler(BCEClickEvent, value); } remove { RemoveHandler(BCEClickEvent, value); } }
@@ -95,6 +96,7 @@ namespace TabPaint.Controls
         private void OnExitClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(ExitClickEvent));
         private void OnCopyClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(CopyClickEvent));
         private void OnCutClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(CutClickEvent));
+        private void OnRecycleBinClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(RecycleBinClickEvent));
         private void OnPasteClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(PasteClickEvent));
         private void OnResizeCanvasClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(ResizeCanvasClickEvent));
         private void OnBCEClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(BCEClickEvent));
@@ -154,12 +156,7 @@ namespace TabPaint.Controls
                         Width = 16,
                         Height = 16
                     };
-
-                    // 特殊处理：如果是 Exit 图标，有些样式是 Stroke，有些是 Fill
-                    // 这里统一使用 IconFillBrush 填充，如果你的图标是线条型的，需要根据具体情况调整
                     path.SetResourceReference(Shape.FillProperty, "IconFillBrush");
-
-                    // 如果某些图标(如Exit/Resize)在XAML里是Stroke模式，可以在这里单独判断
                     if (iconResKey == "Exit_Image" || iconResKey == "Resize_Image")
                     {
                         path.Fill = Brushes.Transparent;
@@ -212,7 +209,7 @@ namespace TabPaint.Controls
                 RecentFilesMenuItem.Icon = resetPath;
 
                 menuItem.Items.Add(RecentFilesMenuItem);
-
+                menuItem.Items.Add(CreateMenuItem("L_RecycleBin_Title", "Delete_Image", OnRecycleBinClick));
                 menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "Ctrl+S"));

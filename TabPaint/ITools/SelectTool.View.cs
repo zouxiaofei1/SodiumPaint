@@ -36,7 +36,7 @@ namespace TabPaint
                 _selectionAlphaMap = null;  // 添加
                 _selectionGeometry = null;  // 添加
                 _isWandAdjusting = false;   // 添加
-                lag = 0; ctx.ParentWindow.UpdateSelectionToolBarPosition();
+                lag = 0; ctx.ParentWindow.UpdateSelectionToolBarPosition(); ctx.ParentWindow.ClearRulerSelection();
             }
 
             public void RefreshOverlay(ToolContext ctx)

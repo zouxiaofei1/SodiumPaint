@@ -29,23 +29,13 @@ namespace TabPaint
 
         private void InitializeLazyControls()
         {
-            // 采用扁平化的分帧加载，避免深度嵌套导致的时间累积
-            // 优先级从高到低排列，确保关键组件优先显示
-
-            // 1. 最优先加载 ImageBar (通常包含 Tab 标签)
             Dispatcher.BeginInvoke(new Action(InitializeImageBar), DispatcherPriority.Render);
-
-            // 2. 其次是工具栏 (常用操作)
             Dispatcher.BeginInvoke(new Action(InitializeToolBar), DispatcherPriority.Loaded);
-
-            // 3. 菜单栏和状态栏
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 InitializeMenuBar();
                 InitializeStatusBar();
             }), DispatcherPriority.Background);
-
-            // 4. 完全不紧急的逻辑推迟到最后
             Dispatcher.BeginInvoke(new Action(InitializeDragWatchdog), DispatcherPriority.ApplicationIdle);
         }
 
@@ -94,6 +84,7 @@ namespace TabPaint
             MainMenu.NewWindowClick += OnNewWindowClick;
             MainMenu.ExitClick += OnExitClick;
             MainMenu.RecentFileClick += OnRecentFileClick;
+            MainMenu.RecycleBinClick += OnRecycleBinClick;
             MainMenu.ClearRecentFilesClick += OnClearRecentFilesClick;
             MainMenu.WatermarkClick += OnWatermarkClick;
             MainMenu.CopyClick += OnCopyClick;

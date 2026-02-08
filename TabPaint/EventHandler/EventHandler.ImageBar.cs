@@ -509,8 +509,8 @@ namespace TabPaint
             // 1. 如果是当前标签，先保存当前画布状态到撤销栈
             if (tab == _currentTabItem)
             {
-                tab.UndoStack = new Stack<UndoAction>(_undo.GetUndoStack().Reverse());
-                tab.RedoStack = new Stack<UndoAction>(_undo.GetRedoStack().Reverse());
+                tab.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
+                tab.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
                 tab.SavedUndoPoint = _savedUndoPoint;
             }
 

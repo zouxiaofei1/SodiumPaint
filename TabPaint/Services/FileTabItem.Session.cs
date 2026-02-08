@@ -729,10 +729,12 @@ namespace TabPaint
                 }
 
                 // 保存当前 Tab 的撤销栈
-                _currentTabItem.UndoStack = new Stack<UndoAction>(_undo._undo.Reverse());
-                _currentTabItem.RedoStack = new Stack<UndoAction>(_undo._redo.Reverse());
+                _currentTabItem.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
+                _currentTabItem.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
                 _currentTabItem.SavedUndoPoint = _savedUndoPoint;
             }
+
+            tab.LastAccessTime = DateTime.Now;
 
             if (!IsTransferringSelection)
             {
@@ -755,11 +757,11 @@ namespace TabPaint
             _undo.ClearRedo();
             if (tab.UndoStack != null)
             {
-                foreach (var action in tab.UndoStack.Reverse()) _undo._undo.Push(action);
+                foreach (var action in tab.UndoStack) _undo.GetUndoStack().Add(action);
             }
             if (tab.RedoStack != null)
             {
-                foreach (var action in tab.RedoStack.Reverse()) _undo._redo.Push(action);
+                foreach (var action in tab.RedoStack) _undo.GetRedoStack().Add(action);
             }
             _savedUndoPoint = tab.SavedUndoPoint;
 

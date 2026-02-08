@@ -981,5 +981,27 @@ namespace TabPaint
         {
             CreateNewTab(TabInsertPosition.AfterCurrent,true);
         }
+        private UIHandlers.RecycleBinWindow _recycleBinWindow;
+        private void OnRecycleBinClick(object sender, RoutedEventArgs e)
+        {
+            if (_recycleBinWindow == null || !Application.Current.Windows.OfType<UIHandlers.RecycleBinWindow>().Any())
+            {
+                _recycleBinWindow = new UIHandlers.RecycleBinWindow();
+                _recycleBinWindow.Owner = this;
+                _recycleBinWindow.OnRestoreRequested += async (path) =>
+                {
+                    if (File.Exists(path))
+                    {
+                        await OpenFilesAsNewTabs(new string[] { path });
+                        try { File.Delete(path); } catch { }
+                    }
+                };
+                _recycleBinWindow.Show();
+            }
+            else
+            {
+                _recycleBinWindow.Activate();
+            }
+        }
     }
 }

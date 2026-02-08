@@ -162,11 +162,11 @@ namespace TabPaint
                     _undo.ClearRedo();
                     if (_currentTabItem.UndoStack != null)
                     {
-                        foreach (var action in _currentTabItem.UndoStack.Reverse()) _undo._undo.Push(action);
+                        foreach (var action in _currentTabItem.UndoStack) _undo._undo.Push(action);
                     }
                     if (_currentTabItem.RedoStack != null)
                     {
-                        foreach (var action in _currentTabItem.RedoStack.Reverse()) _undo._redo.Push(action);
+                        foreach (var action in _currentTabItem.RedoStack) _undo._redo.Push(action);
                     }
                     _savedUndoPoint = _currentTabItem.SavedUndoPoint;
                     SetUndoRedoButtonState();
@@ -998,45 +998,70 @@ namespace TabPaint
         {
             try
             {
-                // 1. 动态读取独立的资源字典文件
-                // 【注意】请确保 CanvasMenu.xaml 的“生成操作”是 "Page" 或 "Resource"
-                // 路径格式：/程序集名称;component/文件夹/文件名.xaml
-                // 假设你的文件在根目录或 Resources 目录下，请根据实际情况修改字符串
                 var resourceUri = new Uri("pack://application:,,,/Controls/ContextMenus/CanvasMenu.xaml");
                 var dictionary = new ResourceDictionary { Source = resourceUri };
-
-                // 2. 从字典中提取 ContextMenu (Key 必须与 XAML 中的 x:Key 一致)
                 var menu = dictionary["MainImageCtxMenu"] as ContextMenu;
 
                 if (menu != null)
                 {
-                    // 3. 递归遍历所有项进行事件绑定
                     foreach (var item in menu.Items)
                     {
                         BindCanvasMenuEvents(item);
                     }
-
-                    // 4. 赋值给控件
                     ScrollContainer.ContextMenu = menu;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"主菜单加载失败: {ex.Message}");
-                // 可以在这里加一个 MessageBox 提示调试
             }
         }
-        // 辅助方法：递归绑定事件
+        public void UpdateRulerSelection()
+        {
+            if (RulerTop == null || RulerLeft == null) return;
+
+            var selectTool = _router?.CurrentTool as SelectTool;
+            // 也检查 _tools 中注册的 SelectTool（工具可能不是当前工具但仍有选区）
+            if (selectTool == null)
+                selectTool = _tools?.Select as SelectTool;
+
+            if (selectTool != null && selectTool.HasRulerHighlight)
+            {
+                var rect = selectTool.SelectionRect;
+
+                if (rect.Width > 0 && rect.Height > 0)
+                {
+                    RulerTop.SelectionStart = rect.X;
+                    RulerTop.SelectionEnd = rect.X + rect.Width;
+
+                    RulerLeft.SelectionStart = rect.Y;
+                    RulerLeft.SelectionEnd = rect.Y + rect.Height;
+                    return;
+                }
+            }
+
+            ClearRulerSelection();
+        }
+
+        public void ClearRulerSelection()
+        {
+            if (RulerTop != null)
+            {
+                RulerTop.SelectionStart = -1;
+                RulerTop.SelectionEnd = -1;
+            }
+            if (RulerLeft != null)
+            {
+                RulerLeft.SelectionStart = -1;
+                RulerLeft.SelectionEnd = -1;
+            }
+        }
         private void BindCanvasMenuEvents(object item)
         {
             // 情况 A: 标准 MenuItem
             if (item is MenuItem menuItem)
             {
-                // 先解绑防止重复（虽然懒加载只执行一次，但为了安全）
                 menuItem.Click -= OnCanvasMenuClickDispatcher;
-
-                // 根据 Tag 绑定通用处理函数，或者直接绑定具体函数
-                // 这里为了代码整洁，我们使用 Switch 匹配 Tag
                 if (menuItem.Tag != null)
                 {
                     switch (menuItem.Tag.ToString())
@@ -1106,23 +1131,6 @@ namespace TabPaint
             {
                 RenderOptions.SetBitmapScalingMode(SelectionPreview, mode);
             }
-
-        //    if (Select?.HasActiveSelection == true &&
-        //Select.IsIrregularSelection &&
-        //Select._selectionAlphaMap != null)
-        //    {
-        //        var zoom = zoomscale;
-        //        Rect? viewport = zoom >= 1.0 ? GetViewportInPixelCoords(Select) : null;
-
-        //        Select._selectionGeometry = Select.GeneratePixelEdgeGeometry(
-        //            Select._selectionAlphaMap,
-        //            Select._selectionRect.Width,
-        //            Select._selectionRect.Height,
-        //            Select._selectionRect.X,
-        //            _selecSelecttTool._selectionRect.Y,
-        //            zoom, viewport);
-
-        //        _selectTool.DrawOverlay(_currentCtx, _selectTool._selectionRect);
             
         }
 
@@ -1174,8 +1182,6 @@ namespace TabPaint
                 }
                 st._selectionData = null;
                 st._selectionRect = new Int32Rect(0, 0, 0, 0);
-
-                // 同时也隐藏旧的预览框，防止闪烁
                 if (_ctx.SelectionPreview != null)
                 {
                     _ctx.SelectionPreview.Visibility = Visibility.Collapsed;

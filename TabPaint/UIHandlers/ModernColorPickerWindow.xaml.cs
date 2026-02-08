@@ -212,7 +212,7 @@ namespace TabPaint
                 finalEn = engName;
             }
 
-            return $"{finalZh} / {finalEn}";
+            return $"{finalZh}";
         }
 
         private static ResourceDictionary _enDict;
@@ -754,8 +754,8 @@ namespace TabPaint
             if (_customColors.Contains(newColor)) return;
             _customColors.Insert(0, newColor); // 插入到最前面
 
-            if (_customColors.Count > 18)
-                _customColors.RemoveAt(18);
+            if (_customColors.Count > 24)
+                _customColors.RemoveAt(24);
 
             // 刷新 UI
             RenderCustomColors();

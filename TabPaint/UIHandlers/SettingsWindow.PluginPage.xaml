@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint"
+             xmlns:controls="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="500"
              Background="Transparent">
@@ -13,7 +14,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            
+
             <Style x:Key="PluginCardStyle" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource GlassBackgroundLowBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -25,77 +26,86 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <ScrollViewer Style="{StaticResource FluentScrollViewer}">
-        <StackPanel Margin="24,24,44,24">
-            <TextBlock Text="{DynamicResource L_Settings_Plugins_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
-            <TextBlock Text="{DynamicResource L_Settings_Plugins_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,24"/>
+    <Grid>
+        <ScrollViewer Style="{StaticResource FluentScrollViewer}">
+            <StackPanel Margin="24,24,44,24">
+                <TextBlock Text="{DynamicResource L_Settings_Plugins_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="{DynamicResource L_Settings_Plugins_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,24"/>
 
-            <!-- RMBG 1.4 -->
-            <Border Style="{StaticResource PluginCardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_RMBG_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_RMBG_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
-                        <StackPanel Orientation="Horizontal">
+                <!-- RMBG 1.4 -->
+                <Border Style="{StaticResource PluginCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_RMBG_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_RMBG_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
                             <TextBlock x:Name="TxtStatusRMBG" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
-                            <ProgressBar x:Name="ProgressRMBG" Width="100" Height="4" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
                         </StackPanel>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <Button x:Name="BtnInstallRMBG" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallRMBG_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
-                        <Button x:Name="BtnUninstallRMBG" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallRMBG_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <Button x:Name="BtnInstallRMBG" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallRMBG_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnUninstallRMBG" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallRMBG_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <!-- 内嵌进度条 -->
+                        <controls:DownloadProgressFloat x:Name="FloatRMBG" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
+                    </Grid>
+                </Border>
 
-            <!-- Real-ESRGAN -->
-            <Border Style="{StaticResource PluginCardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_SR_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_SR_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
-                        <StackPanel Orientation="Horizontal">
+                <!-- Real-ESRGAN -->
+                <Border Style="{StaticResource PluginCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_SR_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_SR_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
                             <TextBlock x:Name="TxtStatusSR" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
-                            <ProgressBar x:Name="ProgressSR" Width="100" Height="4" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
                         </StackPanel>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <Button x:Name="BtnInstallSR" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallSR_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
-                        <Button x:Name="BtnUninstallSR" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallSR_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <Button x:Name="BtnInstallSR" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallSR_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnUninstallSR" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallSR_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <controls:DownloadProgressFloat x:Name="FloatSR" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
+                    </Grid>
+                </Border>
 
-            <!-- LaMa -->
-            <Border Style="{StaticResource PluginCardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_Inpaint_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_Inpaint_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
-                        <StackPanel Orientation="Horizontal">
+                <!-- LaMa -->
+                <Border Style="{StaticResource PluginCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_Inpaint_Title}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource L_Settings_Plugins_Model_Inpaint_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap"/>
                             <TextBlock x:Name="TxtStatusInpaint" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
-                            <ProgressBar x:Name="ProgressInpaint" Width="100" Height="4" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
                         </StackPanel>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <Button x:Name="BtnInstallInpaint" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallInpaint_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
-                        <Button x:Name="BtnUninstallInpaint" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallInpaint_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                        <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+                            <Button x:Name="BtnInstallInpaint" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallInpaint_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnUninstallInpaint" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallInpaint_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <controls:DownloadProgressFloat x:Name="FloatInpaint" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
+                    </Grid>
+                </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

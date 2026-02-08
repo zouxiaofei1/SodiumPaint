@@ -12,6 +12,7 @@ namespace TabPaint.Controls
         private bool _isDragging = false;
         private Point _startPoint;
         public event EventHandler CancelRequested;
+        public bool IsDraggable { get; set; } = true;
         public DownloadProgressFloat()
         {
             InitializeComponent();
@@ -77,7 +78,7 @@ namespace TabPaint.Controls
         // 简单的拖动逻辑 (通过 RenderTransform)
         private void UserControl_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            // 防止点击关闭按钮时触发拖动
+            if (!IsDraggable) return;
             if (e.OriginalSource is DependencyObject obj && IsDescendantOf(obj, typeof(Button)))
                 return;
 
@@ -88,6 +89,7 @@ namespace TabPaint.Controls
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
+            if (!IsDraggable) { base.OnMouseMove(e); return; }
             if (_isDragging)
             {
                 var currentPoint = e.GetPosition(this.Parent as UIElement);

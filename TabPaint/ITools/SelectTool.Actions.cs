@@ -48,7 +48,7 @@ namespace TabPaint
                 mw.SetCropButtonState();
                 mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), 0, 0);
                 mw.SetUndoRedoButtonState(); mw.UpdateSelectionToolBarPosition();
-                LastSelectionDeleteTime = DateTime.Now;
+                LastSelectionDeleteTime = DateTime.Now; mw.ClearRulerSelection();
             }
             public void ResetLastDeleteTime()
             {
@@ -190,7 +190,7 @@ namespace TabPaint
                 DrawOverlay(ctx, _selectionRect);
                 var mw = ctx.ParentWindow;
                 mw.UpdateSelectionToolBarPosition();
-                mw.SetCropButtonState();
+                mw.SetCropButtonState(); mw.UpdateRulerSelection();
             }
             public void CropToSelection(ToolContext ctx)
             {
@@ -259,7 +259,7 @@ namespace TabPaint
                 ctx.IsDirty = true;
                 (ctx.ParentWindow).NotifyCanvasSizeChanged(finalWidth, finalHeight);
                 // 更新UI（例如Undo/Redo按钮的状态）
-                (ctx.ParentWindow).SetUndoRedoButtonState();
+                (ctx.ParentWindow).SetUndoRedoButtonState(); (ctx.ParentWindow).ClearRulerSelection();
             }
             public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f) ////////////////////////////////////////////////////////////////////////////// 后面是鼠标键盘事件处理
             {
@@ -537,7 +537,7 @@ namespace TabPaint
                         ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
                     UpdateStatusBarSelectionSize(mw); mw.UpdateSelectionToolBarPosition();
-                    DrawOverlay(ctx, _selectionRect);
+                    DrawOverlay(ctx, _selectionRect); mw.UpdateRulerSelection();
                     return;
                 }
 
@@ -582,6 +582,7 @@ namespace TabPaint
                         if (_selectionRect.Width != 0 && _selectionRect.Height != 0)
                             DrawOverlay(ctx, _selectionRect);
                     }
+                    mw.UpdateRulerSelection();
                 }
                 else if (_draggingSelection) // 拖动逻辑
                 {
@@ -664,8 +665,8 @@ namespace TabPaint
                             ctx.SelectionPreview.Visibility = Visibility.Visible;
                     }
                     else ctx.SelectionPreview.Clip = Geometry.Empty;
-                    DrawOverlay(ctx, tmprc);// 画布的尺寸
-                   
+                    DrawOverlay(ctx, tmprc); mw.UpdateRulerSelection();
+
                 }
 
                 UpdateStatusBarSelectionSize(mw);
@@ -807,7 +808,7 @@ namespace TabPaint
                 var mw = ctx.ParentWindow;
                 mw.UpdateSelectionToolBarPosition();
                 mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
-                mw.SetCropButtonState();
+                mw.SetCropButtonState(); mw.UpdateRulerSelection();
             }
             public BitmapSource GetSelectionCroppedBitmap(MainWindow mw)
             {
@@ -967,7 +968,7 @@ namespace TabPaint
                 {
                     DrawOverlay(ctx, _selectionRect); mw.UpdateSelectionToolBarPosition();
                 }
-                mw.SetCropButtonState();
+                mw.SetCropButtonState(); mw.UpdateRulerSelection();
 
             }
 

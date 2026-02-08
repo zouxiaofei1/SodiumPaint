@@ -113,7 +113,7 @@ namespace TabPaint.Pages
 
                     // 显式更新绑定源
                     var binding = textBox.GetBindingExpression(TextBox.TextProperty);
-                    binding?.UpdateSource();
+                    binding?.UpdateSource(); MainWindow.UndoRedoManager.CheckGlobalUndoMemory();
                 }
                 else
                 {
