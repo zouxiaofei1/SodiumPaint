@@ -4,6 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
+             xmlns:root="clr-namespace:TabPaint"
+             xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
              d:DesignHeight="40" d:DesignWidth="150">
     <UserControl.Resources>
@@ -26,17 +28,23 @@
         </Border.Effect>
         <StackPanel Orientation="Horizontal">
             <!-- 复制按钮 -->
-            <Button x:Name="CopyBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_Copy}">
+            <Button x:Name="CopyBtn" Style="{StaticResource RoundedMenuButtonStyle}" 
+                    services:ShortcutService.BaseToolTip="L_Main_Ctx_Copy"
+                    services:ShortcutService.ShortcutKey="Edit.Copy">
                 <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
             
             <!-- AI抠图按钮 (移除背景) -->
-            <Button x:Name="AiRemoveBgBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_AI_RemoveBg}">
+            <Button x:Name="AiRemoveBgBtn" Style="{StaticResource RoundedMenuButtonStyle}" 
+                    services:ShortcutService.BaseToolTip="L_Main_Ctx_AI_RemoveBg"
+                    services:ShortcutService.ShortcutKey="Tool.RemoveBg">
                 <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
             
             <!-- OCR按钮 -->
-            <Button x:Name="OcrBtn" Style="{StaticResource RoundedMenuButtonStyle}" ToolTip="{DynamicResource L_Main_Ctx_OCR}">
+            <Button x:Name="OcrBtn" Style="{StaticResource RoundedMenuButtonStyle}" 
+                    services:ShortcutService.BaseToolTip="L_Main_Ctx_OCR"
+                    services:ShortcutService.ShortcutKey="Tool.OCR">
                 <TextBlock Text="🅰️" FontFamily="Segoe UI Emoji" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </Button>
         </StackPanel>

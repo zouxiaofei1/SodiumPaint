@@ -37,20 +37,27 @@ namespace TabPaint.UIHandlers
 
             this.SourceInitialized += FavoriteWindow_SourceInitialized;
             _owner.LocationChanged += UpdatePosition;
-            _owner.SizeChanged += UpdatePosition;
-            _owner.StateChanged += (s, e) => {
+            _owner.SizeChanged += (s, e) =>
+            {
+                UpdateSizeForSnapMode();
+                UpdatePosition(s, e);
+            };
+            _owner.StateChanged += (s, e) =>
+            {
                 if (_owner.WindowState == WindowState.Minimized) this.Hide();
                 else if (this.IsVisible) this.Show();
+                UpdateSizeForSnapMode();
                 UpdatePosition(s, e);
             };
         }
 
-        private int _snapMode = 0; // 0: BR, 1: BL, 2: TR, 3: TL, 4: RC, 5: LC, 6: BC, 7: TC
+        private int _snapMode = 0;
 
         private void FavoriteWindow_SourceInitialized(object sender, EventArgs e)
         {
             ThemeManager.SetWindowImmersiveDarkMode(this, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
             MicaAcrylicManager.ApplyEffect(this);
+            UpdateSizeForSnapMode();
             UpdatePosition(null, null);
         }
 
@@ -60,118 +67,186 @@ namespace TabPaint.UIHandlers
             {
                 this.DragMove();
                 UpdateSnapMode();
+                UpdateSizeForSnapMode();
                 UpdatePosition(null, null);
             }
         }
-
         private void UpdateSnapMode()
         {
             if (_owner == null) return;
 
-            double ownerLeft = _owner.Left;
-            double ownerTop = _owner.Top;
-            double ownerWidth = _owner.ActualWidth;
-            double ownerHeight = _owner.ActualHeight;
+            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
+            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
 
+            // 计算 FavoriteWindow 中心点
+            double cx = this.Left + this.ActualWidth / 2;
+            double cy = this.Top + this.ActualHeight / 2;
+
+            // 计算主窗口中心
+            double ownerCx = ownerLeft + ownerWidth / 2;
+            double ownerCy = ownerTop + ownerHeight / 2;
+
+            // 相对主窗口中心的偏移
+            double dx = cx - ownerCx;
+            double dy = cy - ownerCy;
+
+            // 归一化到主窗口宽高比例，判断在哪个象限/方向
+            double nx = dx / (ownerWidth / 2);
+            double ny = dy / (ownerHeight / 2);
+
+            if (Math.Abs(nx) > Math.Abs(ny))
+            {
+                // 水平方向更远 → 左或右
+                _snapMode = nx > 0 ? 2 : 3; // 2=右, 3=左
+            }
+            else
+            {
+                // 垂直方向更远 → 上或下
+                _snapMode = ny > 0 ? 0 : 1; // 0=底, 1=顶
+            }
+        }
+        private void GetOwnerRect(out double left, out double top, out double width, out double height)
+        {
             if (_owner.WindowState == WindowState.Maximized)
             {
-                ownerLeft = SystemParameters.WorkArea.Left;
-                ownerTop = SystemParameters.WorkArea.Top;
-                ownerWidth = SystemParameters.WorkArea.Width;
-                ownerHeight = SystemParameters.WorkArea.Height;
+                left = SystemParameters.WorkArea.Left;
+                top = SystemParameters.WorkArea.Top;
+                width = SystemParameters.WorkArea.Width;
+                height = SystemParameters.WorkArea.Height;
+            }
+            else
+            {
+                left = _owner.Left;
+                top = _owner.Top;
+                width = _owner.ActualWidth;
+                height = _owner.ActualHeight;
+            }
+        }
+        private void UpdateSizeForSnapMode()
+        {
+            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
+            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
+
+            switch (_snapMode)
+            {
+                case 0:
+                case 1: // 底部case 1: // 顶部
+                    this.Width = ownerWidth;
+                    this.Height = 140;
+                    SetHorizontalLayout();
+                    break;
+                case 2: // 右侧
+                case 3: // 左侧
+                    this.Width = 140;
+                    this.Height = ownerHeight;
+                    SetVerticalLayout();
+                    break;
+            }
+        }
+        private void SetHorizontalLayout()
+        {
+            var stack = GetFavoriteContent()?.FindName("FavoriteStackPanel") as StackPanel;
+            if (stack != null)
+            {
+                stack.Orientation = Orientation.Horizontal;
             }
 
-            double relX = this.Left - ownerLeft;
-            double relY = this.Top - ownerTop;
-
-            // 磁吸锚点坐标（相对于 owner）
-            var targets = new (double x, double y)[]
+            // 找到 FavoriteBarControl 内的 ScrollViewer 并调整
+            var favoriteControl = GetFavoriteContent();
+            if (favoriteControl != null)
             {
-                (ownerWidth - this.ActualWidth - 20, ownerHeight - this.ActualHeight - 40), // 0: BR
-                (20, ownerHeight - this.ActualHeight - 40),                                // 1: BL
-                (ownerWidth - this.ActualWidth - 20, 40),                                   // 2: TR
-                (20, 40),                                                                  // 3: TL
-                (ownerWidth - this.ActualWidth - 10, (ownerHeight - this.ActualHeight) / 2),// 4: RC
-                (10, (ownerHeight - this.ActualHeight) / 2),                               // 5: LC
-                ((ownerWidth - this.ActualWidth) / 2, ownerHeight - this.ActualHeight - 40),// 6: BC
-                ((ownerWidth - this.ActualWidth) / 2, 40)                                   // 7: TC
-            };
-
-            double minSqDist = double.MaxValue;
-            int bestMode = 0;
-
-            for (int i = 0; i < targets.Length; i++)
-            {
-                double dist = Math.Pow(relX - targets[i].x, 2) + Math.Pow(relY - targets[i].y, 2);
-                if (dist < minSqDist)
+                var sv = FindChild<ScrollViewer>(favoriteControl);
+                if (sv != null)
                 {
-                    minSqDist = dist;
-                    bestMode = i;
+                    sv.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
+                    sv.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
                 }
             }
+        }
 
-            _snapMode = bestMode;
+        /// <summary>
+        /// 设置内部布局为纵向（左侧/右侧吸附时）
+        /// </summary>
+        private void SetVerticalLayout()
+        {
+            var stack = GetFavoriteContent()?.FindName("FavoriteStackPanel") as StackPanel;
+            if (stack != null)
+            {
+                stack.Orientation = Orientation.Vertical;
+            }
+
+            var favoriteControl = GetFavoriteContent();
+            if (favoriteControl != null)
+            {
+                var sv = FindChild<ScrollViewer>(favoriteControl);
+                if (sv != null)
+                {
+                    sv.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                    sv.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 辅助：在可视树中查找指定类型的子元素
+        /// </summary>
+        private static T FindChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T t) return t;
+                var result = FindChild<T>(child);
+                if (result != null) return result;
+            }
+            return null;
         }
 
         private void UpdatePosition(object sender, EventArgs e)
         {
             if (_owner == null || _owner.WindowState == WindowState.Minimized || !this.IsVisible) return;
 
-            double ownerLeft = _owner.Left;
-            double ownerTop = _owner.Top;
-            double ownerWidth = _owner.ActualWidth;
-            double ownerHeight = _owner.ActualHeight;
+            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
+            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
 
-            if (_owner.WindowState == WindowState.Maximized)
-            {
-                ownerLeft = SystemParameters.WorkArea.Left;
-                ownerTop = SystemParameters.WorkArea.Top;
-                ownerWidth = SystemParameters.WorkArea.Width;
-                ownerHeight = SystemParameters.WorkArea.Height;
-            }
+            // 先同步尺寸
+            UpdateSizeForSnapMode();
 
-            double left = this.Left;
-            double top = this.Top;
+            double gap = 4; // 窗口间距
 
             switch (_snapMode)
             {
-                case 0: // BR
-                    left = ownerLeft + ownerWidth - this.ActualWidth - 20;
-                    top = ownerTop + ownerHeight - this.ActualHeight - 40;
+                case 0: // 底部外侧
+                    MessageBox.Show("SnapMode: Bottom");
+                    this.Left = ownerLeft;
+                    this.Top = ownerTop + ownerHeight + gap;
                     break;
-                case 1: // BL
-                    left = ownerLeft + 20;
-                    top = ownerTop + ownerHeight - this.ActualHeight - 40;
+                case 1: // 顶部外侧
+                        MessageBox.Show("SnapMode: Top");
+                    this.Left = ownerLeft;
+                    this.Top = ownerTop - this.Height - gap;
                     break;
-                case 2: // TR
-                    left = ownerLeft + ownerWidth - this.ActualWidth - 20;
-                    top = ownerTop + 40;
+                case 2: // 右侧外侧
+                    MessageBox.Show("SnapMode: Right");
+                    this.Left = ownerLeft + ownerWidth + gap;
+                    this.Top = ownerTop;
                     break;
-                case 3: // TL
-                    left = ownerLeft + 20;
-                    top = ownerTop + 40;
-                    break;
-                case 4: // RC
-                    left = ownerLeft + ownerWidth - this.ActualWidth - 10;
-                    top = ownerTop + (ownerHeight - this.ActualHeight) / 2;
-                    break;
-                case 5: // LC
-                    left = ownerLeft + 10;
-                    top = ownerTop + (ownerHeight - this.ActualHeight) / 2;
-                    break;
-                case 6: // BC
-                    left = ownerLeft + (ownerWidth - this.ActualWidth) / 2;
-                    top = ownerTop + ownerHeight - this.ActualHeight - 40;
-                    break;
-                case 7: // TC
-                    left = ownerLeft + (ownerWidth - this.ActualWidth) / 2;
-                    top = ownerTop + 40;
+                case 3: // 左侧外侧
+                    MessageBox.Show("SnapMode: Left");
+                    this.Left = ownerLeft - this.Width - gap;
+                    this.Top = ownerTop;
                     break;
             }
 
-            this.Left = left;
-            this.Top = top;
+            // ★ 边界保护：确保不超出屏幕工作区
+            var workArea = SystemParameters.WorkArea;
+            if (this.Left < workArea.Left) this.Left = workArea.Left;
+            if (this.Top < workArea.Top) this.Top = workArea.Top;
+            if (this.Left + this.Width > workArea.Right) this.Left = workArea.Right - this.Width;
+            if (this.Top + this.Height > workArea.Bottom) this.Top = workArea.Bottom - this.Height;
         }
+      
 
         private void LoadPages()
         {

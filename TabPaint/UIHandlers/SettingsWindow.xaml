@@ -352,6 +352,23 @@
                                 <TextBlock Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
+                        <!-- 3. 冲突通知 -->
+                        <Border x:Name="ConflictToast" 
+                                Background="{DynamicResource DangerBrush}" 
+                                Padding="16,10" CornerRadius="4"
+                                Visibility="Collapsed" Opacity="0" 
+                                IsHitTestVisible="False">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                            </Border.Effect>
+                            <Border.RenderTransform>
+                                <TranslateTransform X="50"/>
+                            </Border.RenderTransform>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtConflict" Text="Conflict" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
 
                     </StackPanel>
                 </Grid>

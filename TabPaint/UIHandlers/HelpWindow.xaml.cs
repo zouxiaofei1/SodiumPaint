@@ -92,7 +92,6 @@ namespace TabPaint
             if (!MicaAcrylicManager.IsWin11())
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
-                //this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
         }
         private async Task LoadCurrentPageAsync()
@@ -136,11 +135,7 @@ namespace TabPaint
                 HasError = false;
                 DisplayUri = rawUri;
             }
-
-            if (!IsBusy && !HasError)
-            {
-                ResetGifAnimation();
-            }
+            if (!IsBusy && !HasError) ResetGifAnimation();
         }
 
         private async Task<string> DownloadImageAsync(string url)

@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
              d:DesignHeight="100" d:DesignWidth="600">
 
@@ -60,16 +61,20 @@
             <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="4,0,8,0"/>
 
             <!-- 基础样式 -->
-            <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Bold}">
+            <ToggleButton x:Name="BoldBtn" Style="{StaticResource FluentToggleButtonStyle}" 
+                          services:ShortcutService.BaseToolTip="L_Text_Bold" services:ShortcutService.ShortcutKey="Edit.Bold">
                 <TextBlock Text="B" FontWeight="Bold" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </ToggleButton>
-            <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Italic}">
+            <ToggleButton x:Name="ItalicBtn" Style="{StaticResource FluentToggleButtonStyle}" 
+                          services:ShortcutService.BaseToolTip="L_Text_Italic" services:ShortcutService.ShortcutKey="Edit.Italic">
                 <TextBlock Text="I" FontStyle="Italic" FontFamily="Times New Roman" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </ToggleButton>
-            <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Underline}">
+            <ToggleButton x:Name="UnderlineBtn" Style="{StaticResource FluentToggleButtonStyle}" 
+                          services:ShortcutService.BaseToolTip="L_Text_Underline" services:ShortcutService.ShortcutKey="Edit.Underline">
                 <TextBlock Text="U" TextDecorations="Underline" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </ToggleButton>
-            <ToggleButton x:Name="StrikeBtn" Style="{StaticResource FluentToggleButtonStyle}" ToolTip="{DynamicResource L_Text_Strike}">
+            <ToggleButton x:Name="StrikeBtn" Style="{StaticResource FluentToggleButtonStyle}" 
+                          services:ShortcutService.BaseToolTip="L_Text_Strike" services:ShortcutService.ShortcutKey="Edit.Strikethrough">
                 <TextBlock Text="S" TextDecorations="Strikethrough" FontFamily="Segoe UI" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
             </ToggleButton>
 

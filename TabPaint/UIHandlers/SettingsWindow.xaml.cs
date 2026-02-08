@@ -31,7 +31,7 @@ namespace TabPaint
         private DispatcherTimer _toastTimer;
         private bool _isToastVisible = false;
         private bool MicaEnabled = false;
-        private DispatcherTimer _updateToastTimer;
+        private DispatcherTimer _updateToastTimer; private DispatcherTimer _conflictToastTimer;
         private string _latestVersionUrl = ""; // 用于存储点击跳转的地址
         public SettingsWindow()
         {
@@ -75,6 +75,36 @@ namespace TabPaint
             _updateToastTimer = new DispatcherTimer();
             _updateToastTimer.Interval = TimeSpan.FromSeconds(5);
             _updateToastTimer.Tick += (s, args) => HideUpdateToast();
+
+            _conflictToastTimer = new DispatcherTimer();
+            _conflictToastTimer.Interval = TimeSpan.FromSeconds(2.5);
+            _conflictToastTimer.Tick += (s, args) => HideConflictToast();
+        }
+
+        public void ShowConflictToast(string featureName)
+        {
+            var conflictToast = this.FindName("ConflictToast") as Border;
+            var txtConflict = this.FindName("TxtConflict") as TextBlock;
+            if (conflictToast == null || txtConflict == null) return;
+
+            _conflictToastTimer.Stop();
+            string msg = LocalizationManager.GetString("L_Settings_Toast_Conflict");
+            txtConflict.Text = string.Format(msg, featureName);
+            if (conflictToast.Visibility != Visibility.Visible)
+            {
+                AnimateShow(conflictToast);
+            }
+            _conflictToastTimer.Start();
+        }
+
+        private void HideConflictToast()
+        {
+            _conflictToastTimer.Stop();
+            var conflictToast = this.FindName("ConflictToast") as Border;
+            if (conflictToast != null)
+            {
+                AnimateHide(conflictToast);
+            }
         }
 
         private void ShowToast()

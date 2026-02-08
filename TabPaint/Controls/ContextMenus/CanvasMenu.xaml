@@ -4,18 +4,19 @@
                     xmlns:controls="clr-namespace:TabPaint.Controls"
                     x:Class="TabPaint.CanvasMenuResources">
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    <ContextMenu  x:Key="MainImageCtxMenu"  Style="{StaticResource Win11ContextMenuStyle}">
-        <MenuItem Header="{DynamicResource L_Main_Ctx_Copy}" InputGestureText="Ctrl+C" Style="{StaticResource Win11MenuItemStyle}" Tag ="Copy">
+    <ContextMenu  x:Key="MainImageCtxMenu"  Style="{StaticResource Win11ContextMenuStyle}"
+                  xmlns:services="clr-namespace:TabPaint.Services">
+        <MenuItem Header="{DynamicResource L_Main_Ctx_Copy}" services:ShortcutService.ShortcutKey="Edit.Copy" Style="{StaticResource Win11MenuItemStyle}" Tag ="Copy">
                 <MenuItem.Icon>
                     <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </MenuItem.Icon>
             </MenuItem>
-        <MenuItem Header="{DynamicResource L_Main_Ctx_Cut}" InputGestureText="Ctrl+X" Style="{StaticResource Win11MenuItemStyle}" Tag ="Cut">
+        <MenuItem Header="{DynamicResource L_Main_Ctx_Cut}" services:ShortcutService.ShortcutKey="Edit.Cut" Style="{StaticResource Win11MenuItemStyle}" Tag ="Cut">
                 <MenuItem.Icon>
                     <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </MenuItem.Icon>
             </MenuItem>
-        <MenuItem Header="{DynamicResource L_Main_Ctx_Paste}" InputGestureText="Ctrl+V" Style="{StaticResource Win11MenuItemStyle}" Tag ="Paste">
+        <MenuItem Header="{DynamicResource L_Main_Ctx_Paste}" services:ShortcutService.ShortcutKey="Edit.Paste" Style="{StaticResource Win11MenuItemStyle}" Tag ="Paste">
                 <MenuItem.Icon>
                     <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </MenuItem.Icon>
@@ -50,54 +51,54 @@ IsChecked="{Binding ShowRulers, Mode=TwoWay}">
                     <Path Data="{DynamicResource Wrench_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </MenuItem.Icon>
 
-            <MenuItem Header="{DynamicResource L_Main_Ctx_AI_RemoveBg}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+1"  Tag ="RemoveBackground">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_AI_RemoveBg}" Style="{StaticResource Win11MenuItemStyle}" services:ShortcutService.ShortcutKey="Tool.RemoveBg"  Tag ="RemoveBackground">
                     <MenuItem.Icon>
                         <Path Data="{DynamicResource RemoveBackground_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
 
                     </MenuItem.Icon>
                 </MenuItem>
 
-            <MenuItem Header="{DynamicResource L_Main_Ctx_AI_ChromaKey}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+2" Tag ="ChromaKey" >
+            <MenuItem Header="{DynamicResource L_Main_Ctx_AI_ChromaKey}" Style="{StaticResource Win11MenuItemStyle}" services:ShortcutService.ShortcutKey="Tool.ChromaKey" Tag ="ChromaKey" >
                     <MenuItem.Icon>
                         <Path Data="{DynamicResource ChromaKey_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                     </MenuItem.Icon>
                 </MenuItem>
 
-            <MenuItem Header="{DynamicResource L_Main_Ctx_OCR}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+3"  Tag ="Ocr">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_OCR}" Style="{StaticResource Win11MenuItemStyle}" services:ShortcutService.ShortcutKey="Tool.OCR"  Tag ="Ocr">
                     <MenuItem.Icon>
                         <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </MenuItem.Icon>
                 </MenuItem>
 
-            <MenuItem Header="{DynamicResource L_Main_Ctx_ScreenPicker}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+4"  Tag ="ScreenColorPicker">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_ScreenPicker}" Style="{StaticResource Win11MenuItemStyle}"  services:ShortcutService.ShortcutKey="Tool.ScreenPicker"  Tag ="ScreenColorPicker">
                     <MenuItem.Icon>
                         <TextBlock Text="🖌️" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </MenuItem.Icon>
                 </MenuItem>
 
-            <MenuItem Header="{DynamicResource L_Main_Ctx_CopyHex}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+5"   Tag ="CopyColorCode">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_CopyHex}" Style="{StaticResource Win11MenuItemStyle}"  services:ShortcutService.ShortcutKey="Tool.CopyColorCode"   Tag ="CopyColorCode">
                     <MenuItem.Icon>
                         <TextBlock Text="🎨" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </MenuItem.Icon>
                 </MenuItem>
-            <MenuItem Header="{DynamicResource L_Main_Ctx_AutoCrop}" Style="{StaticResource Win11MenuItemStyle}"  InputGestureText="Ctrl+Alt+6"   Tag ="AutoCrop">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_AutoCrop}" Style="{StaticResource Win11MenuItemStyle}"  services:ShortcutService.ShortcutKey="Tool.AutoCrop"   Tag ="AutoCrop">
                     <MenuItem.Icon>
                         <TextBlock Text="✂" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </MenuItem.Icon>
                 </MenuItem>
-            <MenuItem Header="{DynamicResource L_Main_Ctx_AddBorder}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+7"  Tag ="AddBorder">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_AddBorder}" Style="{StaticResource Win11MenuItemStyle}" services:ShortcutService.ShortcutKey="Tool.AddBorder"  Tag ="AddBorder">
                     <MenuItem.Icon>
                         <Border BorderBrush="{DynamicResource IconFillBrush}" BorderThickness="1.5" Width="14" Height="14" CornerRadius="1"/>
                     </MenuItem.Icon>
                 </MenuItem>
-            <MenuItem Header="{DynamicResource L_Main_Ctx_AI_SuperRes}" Style="{StaticResource Win11MenuItemStyle}" InputGestureText="Ctrl+Alt+8"  Tag ="AiUpscale">
+            <MenuItem Header="{DynamicResource L_Main_Ctx_AI_SuperRes}" Style="{StaticResource Win11MenuItemStyle}" services:ShortcutService.ShortcutKey="Tool.AiUpscale"  Tag ="AiUpscale">
                     <MenuItem.Icon>
                         <TextBlock Text="🔍" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="{DynamicResource L_Main_Ctx_OCR}" 
 Style="{StaticResource Win11MenuItemStyle}" 
-InputGestureText="Ctrl+Alt+9"  Tag ="AiOcr">
+services:ShortcutService.ShortcutKey="Tool.AiOcr"  Tag ="AiOcr">
                     <MenuItem.Icon>
                         <!-- 可以换一个图标 -->
                         <TextBlock Text="🅰️" FontFamily="Segoe UI Emoji" Foreground="{DynamicResource TextPrimaryBrush}"/>

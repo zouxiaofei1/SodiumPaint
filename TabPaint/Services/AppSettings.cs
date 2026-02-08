@@ -48,10 +48,50 @@ namespace TabPaint
         public double Opacity { get; set; } = AppConsts.DefaultPenOpacity;
     }
 
-    public class ShortcutItem
+    public class ShortcutItem : INotifyPropertyChanged
     {
-        public Key Key { get; set; }
-        public ModifierKeys Modifiers { get; set; }
+        private Key _key;
+        private ModifierKeys _modifiers;
+
+        public Key Key
+        {
+            get => _key;
+            set
+            {
+                if (_key != value)
+                {
+                    _key = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(DisplayText));
+                }
+            }
+        }
+
+        public ModifierKeys Modifiers
+        {
+            get => _modifiers;
+            set
+            {
+                if (_modifiers != value)
+                {
+                    _modifiers = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(DisplayText));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            // 当快捷键的 Key 或 Modifiers 改变时，通知全局 Provider
+            if (propertyName == nameof(Key) || propertyName == nameof(Modifiers))
+            {
+                TabPaint.Services.ShortcutProvider.Instance.NotifyChanged();
+            }
+        }
+
         public string DisplayText
         {
             get
@@ -95,7 +135,7 @@ namespace TabPaint
             }
         }
     }
-        public partial class MainWindow
+    public partial class MainWindow
     {
         private void SaveAppState()
         {
@@ -118,8 +158,8 @@ namespace TabPaint
                 settings.WindowWidth = this.Width;
                 settings.WindowState = (int)System.Windows.WindowState.Normal;
             }
-            if (_router?.CurrentTool != null)    settings.LastToolName = _router.CurrentTool.GetType().Name;
-            if (_ctx != null)  settings.LastBrushStyle = _ctx.PenStyle;
+            if (_router?.CurrentTool != null) settings.LastToolName = _router.CurrentTool.GetType().Name;
+            if (_ctx != null) settings.LastBrushStyle = _ctx.PenStyle;
             if (MainImageBar != null)
             {
                 settings.IsImageBarCompact = MainImageBar.IsCompactMode;
@@ -128,16 +168,16 @@ namespace TabPaint
         }
 
         private void RestoreWindowBounds()
-        { 
+        {
             var settings = TabPaint.SettingsManager.Instance.Current;
-                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;//功能砍了，不再支持记忆上次的窗口位置，统一从屏幕中心启动
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;//功能砍了，不再支持记忆上次的窗口位置，统一从屏幕中心启动
             this.Width = Math.Max(settings.WindowWidth, AppConsts.WindowMinSize);
             this.Height = Math.Max(settings.WindowHeight, AppConsts.WindowMinSize);
             if (settings.WindowState == (int)WindowState.Maximized)
             {
                 this.WindowState = WindowState.Maximized;
             }
-          
+
         }
 
         private void RestoreAppState()
@@ -147,7 +187,7 @@ namespace TabPaint
                 var settings = TabPaint.SettingsManager.Instance.Current;
 
                 // 1. 恢复笔刷大小
-                if (_ctx != null)_ctx.PenThickness = settings.PenThickness;
+                if (_ctx != null) _ctx.PenThickness = settings.PenThickness;
                 // 2. 准备目标工具
                 ITool targetTool = null;
                 BrushStyle targetStyle = settings.LastBrushStyle;
@@ -170,7 +210,7 @@ namespace TabPaint
                     MainImageBar.IsCompactMode = settings.IsImageBarCompact;
                 }
                 // 3. 设置上下文样式
-                if (_ctx != null)  _ctx.PenStyle = targetStyle;
+                if (_ctx != null) _ctx.PenStyle = targetStyle;
                 if (_router != null)
                 {
                     if (settings.LastToolName == "PenTool")
@@ -179,7 +219,7 @@ namespace TabPaint
                     }
                     else _router.SetTool(targetTool);
                 }
-             
+
             }
             catch (Exception ex)
             {
@@ -326,7 +366,7 @@ namespace TabPaint
                 OnPropertyChanged();
             }
         }
-        private bool _isTextToolbarExpanded = false; 
+        private bool _isTextToolbarExpanded = false;
 
         [JsonPropertyName("is_text_toolbar_expanded")]
         public bool IsTextToolbarExpanded
@@ -495,7 +535,7 @@ namespace TabPaint
         public string LastToolName { get; set; } = "PenTool"; // 默认为笔
 
         [JsonPropertyName("last_brush_style")]
-        public BrushStyle LastBrushStyle { get; set; } = BrushStyle.Round; 
+        public BrushStyle LastBrushStyle { get; set; } = BrushStyle.Round;
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -531,9 +571,10 @@ namespace TabPaint
             {
                 _shortcuts = value;
                 OnPropertyChanged();
+                TabPaint.Services.ShortcutProvider.Instance.NotifyChanged();
             }
         }
-        private bool _showRulers = false; // 默认不显示
+        private bool _showRulers = true; // 默认不显示
 
         [JsonPropertyName("show_rulers")]
         public bool ShowRulers
@@ -786,9 +827,15 @@ namespace TabPaint
         }
         private Dictionary<string, ShortcutItem> GetDefaultShortcuts()
         {
-          
+
             var defaults = new Dictionary<string, ShortcutItem>
     {
+        // 0. 基础文件
+        { "File.New",            new ShortcutItem { Key = Key.N, Modifiers = ModifierKeys.Control } },
+        { "File.Open",           new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control } },
+        { "File.Save",           new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control } },
+        { "File.SaveAs",         new ShortcutItem { Key = Key.S, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } },
+
         // 1. 全局/视图功能
         { "View.PrevImage",      new ShortcutItem { Key = Key.Left, Modifiers = ModifierKeys.None } },
         { "View.NextImage",      new ShortcutItem { Key = Key.Right, Modifiers = ModifierKeys.None } },
@@ -798,7 +845,10 @@ namespace TabPaint
         { "View.FullScreen",     new ShortcutItem { Key = Key.F11, Modifiers = ModifierKeys.None } },
         { "View.VerticalFlip",   new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 自动色阶
         { "View.HorizontalFlip",       new ShortcutItem { Key = Key.H, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 调整大小
-        { "View.ToggleMinimize", new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } }, 
+        { "View.ToggleMinimize", new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } },
+        { "View.FitToWindow",    new ShortcutItem { Key = Key.D0, Modifiers = ModifierKeys.Control } },
+        { "View.ZoomIn",         new ShortcutItem { Key = Key.OemPlus, Modifiers = ModifierKeys.Control } },
+        { "View.ZoomOut",        new ShortcutItem { Key = Key.OemMinus, Modifiers = ModifierKeys.Control } },
 
         // 2. 高级工具 (Ctrl + Alt 系列)
         { "Tool.ClipMonitor",    new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 剪贴板监听开关
@@ -809,10 +859,27 @@ namespace TabPaint
         { "Tool.CopyColorCode",  new ShortcutItem { Key = Key.D5, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
         { "Tool.AutoCrop",       new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
         { "Tool.AddBorder",      new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.AiUpscale",      new ShortcutItem { Key = Key.D8, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.AiOcr",          new ShortcutItem { Key = Key.D9, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+        { "Tool.Favorite",       new ShortcutItem { Key = Key.F, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+
         // 3. 特殊操作 (Ctrl + Shift 系列)
         { "File.OpenWorkspace",  new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 打开工作区
         { "File.PasteNewTab",    new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 粘贴为新标签
-          // === 3. 基础绘图工具  ===
+        { "File.NewTab",         new ShortcutItem { Key = Key.T, Modifiers = ModifierKeys.Control } }, // 新建标签页
+        
+        // 4. 编辑
+        { "Edit.Undo",           new ShortcutItem { Key = Key.Z, Modifiers = ModifierKeys.Control } },
+        { "Edit.Redo",           new ShortcutItem { Key = Key.Y, Modifiers = ModifierKeys.Control } },
+        { "Edit.Copy",           new ShortcutItem { Key = Key.C, Modifiers = ModifierKeys.Control } },
+        { "Edit.Cut",            new ShortcutItem { Key = Key.X, Modifiers = ModifierKeys.Control } },
+        { "Edit.Paste",          new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control } },
+        { "Edit.Bold",           new ShortcutItem { Key = Key.B, Modifiers = ModifierKeys.Control } },
+        { "Edit.Italic",         new ShortcutItem { Key = Key.I, Modifiers = ModifierKeys.Control } },
+        { "Edit.Underline",      new ShortcutItem { Key = Key.U, Modifiers = ModifierKeys.Control } },
+        { "Edit.Strikethrough",  new ShortcutItem { Key = Key.T, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } },
+
+          // === 5. 基础绘图工具  ===
         { "Tool.SwitchToSelect", new ShortcutItem { Key = Key.D1, Modifiers = ModifierKeys.Control } }, // 选择
         { "Tool.SwitchToPen",    new ShortcutItem { Key = Key.D2, Modifiers = ModifierKeys.Control } }, // 铅笔/画笔
         { "Tool.SwitchToPick",   new ShortcutItem { Key = Key.D3, Modifiers = ModifierKeys.Control } }, // 取色
@@ -821,7 +888,7 @@ namespace TabPaint
         { "Tool.SwitchToText",   new ShortcutItem { Key = Key.D6, Modifiers = ModifierKeys.Control } }, // 文字
         { "Tool.SwitchToBrush",  new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control } }, // 画刷菜单(通常只切到默认画刷)
         { "Tool.SwitchToShape",  new ShortcutItem { Key = Key.D8, Modifiers = ModifierKeys.Control } }, // 形状菜单(通常切到默认形状)
-          // === 4. 效果菜单 (Effect) ===
+          // === 6. 效果菜单 (Effect) ===
         { "Effect.Brightness",   new ShortcutItem { Key = Key.R, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 亮度/对比度
         { "Effect.Temperature",  new ShortcutItem { Key = Key.T, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 色温/色调
         { "Effect.Grayscale",    new ShortcutItem { Key = Key.Y, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 黑白
@@ -835,6 +902,7 @@ namespace TabPaint
         {
             var defaults = GetDefaultShortcuts();
             Shortcuts = defaults;
+            OnPropertyChanged(nameof(Shortcuts));
         }
     }
 }

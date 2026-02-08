@@ -89,8 +89,6 @@ namespace TabPaint
             }
             else
             {
-                // ★ 改动：不用 ShowDialog()，改用同样的非模态+DispatcherFrame 方式
-                // 找到当前活动窗口作为逻辑 owner
                 Window activeOwner = GetActiveWindow();
                 if (activeOwner != null)
                 {
@@ -125,11 +123,8 @@ namespace TabPaint
             }
             catch
             {
-                // Owner 设置失败时（如 owner 未显示），退回无 owner 模式
                 dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
-
-            // ★ 只禁用这一个 owner 窗口
             owner.IsEnabled = false;
 
             var frame = new DispatcherFrame();
@@ -137,8 +132,7 @@ namespace TabPaint
             CancelEventHandler ownerClosing = null;
             ownerClosing = (s, e) =>
             {
-                if (dialog.IsVisible)
-                    dialog.Close();
+                if (dialog.IsVisible) dialog.Close();
             };
             owner.Closing += ownerClosing;
 
@@ -179,11 +173,7 @@ namespace TabPaint
             Close();
         }
 
-        private void BtnOk_Click(object sender, RoutedEventArgs e)
-        {
-            Result = MessageBoxResult.OK;
-            Close();
-        }
+        private void BtnOk_Click(object sender, RoutedEventArgs e)  { Result = MessageBoxResult.OK; Close();}
 
         private void BtnYes_Click(object sender, RoutedEventArgs e)
         {
@@ -255,10 +245,7 @@ namespace TabPaint
                     break;
             }
 
-            try
-            {
-                IconPath.Data = Geometry.Parse(pathData);
-            }
+            try{ IconPath.Data = Geometry.Parse(pathData);  }
             catch
             {
                 IconPath.Data = null;

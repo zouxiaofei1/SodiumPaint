@@ -47,7 +47,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock x:Name="KeyDisplay" 
-                       Text="None" 
+                       Text="{Binding CurrentItem.DisplayText, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue=1}" 
                        VerticalAlignment="Center" 
                        Margin="10,0" 
                        Foreground="{DynamicResource TextControlBrush}"

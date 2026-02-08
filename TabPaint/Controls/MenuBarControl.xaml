@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
+             xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
              d:DesignHeight="40" d:DesignWidth="800">
 
@@ -44,29 +45,33 @@
             <!-- 快捷操作按钮 -->
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Margin="6,0" ToolTip="{DynamicResource L_Menu_QA_Save}" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="6,0" services:ShortcutService.BaseToolTip="L_Menu_QA_Save" services:ShortcutService.ShortcutKey="File.Save" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Save_Normal_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
 
                 <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
-                <Button Margin="6,0" ToolTip="{DynamicResource L_Menu_QA_Undo}" x:Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="6,0" services:ShortcutService.BaseToolTip="L_Menu_QA_Undo" services:ShortcutService.ShortcutKey="Edit.Undo" x:Name="UndoButton" Click="OnUndoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path x:Name="UndoIcon" Data="{DynamicResource Undo_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
-                <Button ToolTip="{DynamicResource L_Menu_QA_Redo}" x:Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button services:ShortcutService.BaseToolTip="L_Menu_QA_Redo" services:ShortcutService.ShortcutKey="Edit.Redo" x:Name="RedoButton" Click="OnRedoClick" IsEnabled="False" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path x:Name="RedoIcon" Data="{DynamicResource Redo_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
 
                 <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="6,4"/>
 
-                <Button Margin="0,0,6,0" Width="32" ToolTip="{DynamicResource L_Menu_QA_NewTab}" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="0,0,6,0" Width="32" services:ShortcutService.BaseToolTip="L_Menu_QA_NewTab" services:ShortcutService.ShortcutKey="File.NewTab" x:Name="NewTabButton" Click="OnNewTabClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="12" Height="12"/>
                 </Button>
-                <Button Margin="0,0,6,0" ToolTip="{DynamicResource L_Menu_QA_DiscardAll}" Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="0,0,6,0" 
+                        services:ShortcutService.BaseToolTip="L_Menu_QA_DiscardAll" 
+                        Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
             </StackPanel>
 
-            <Button DockPanel.Dock="Right" Margin="0,5,10,5" Padding="2" ToolTip="{DynamicResource L_Menu_QA_Settings}" Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button DockPanel.Dock="Right" Margin="0,5,10,5" Padding="2" 
+                    services:ShortcutService.BaseToolTip="L_Menu_QA_Settings" 
+                    Click="OnSettingsClick" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path Data="{DynamicResource Settings_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="18" Height="18"/>
             </Button>
         </DockPanel>

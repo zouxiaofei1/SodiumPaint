@@ -68,9 +68,6 @@ namespace TabPaint.Pages
                 btnUninstall.Visibility = Visibility.Collapsed;
             }
         }
-
-        // ─── Install Click Handlers ───
-
         private async void InstallRMBG_Click(object sender, RoutedEventArgs e)
         {
             _ctsRMBG?.Cancel();
@@ -120,8 +117,6 @@ namespace TabPaint.Pages
 
                 var progressReporter = new Progress<AiDownloadStatus>(status =>
                 {
-                    // 直接调用已有控件的 UpdateProgress，
-                    // 它会自动处理显示/隐藏、百分比、速度、大小
                     Dispatcher.Invoke(() =>
                     {
                         floatProgress.UpdateProgress(status, taskName);
@@ -147,8 +142,6 @@ namespace TabPaint.Pages
                 btnInstall.IsEnabled = true;
             }
         }
-
-        // ─── Uninstall Click Handlers ───
 
         private void UninstallRMBG_Click(object sender, RoutedEventArgs e)
         {

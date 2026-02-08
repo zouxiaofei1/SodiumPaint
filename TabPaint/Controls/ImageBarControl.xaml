@@ -5,7 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
              xmlns:local="clr-namespace:TabPaint.Controls"
-                    xmlns:root="clr-namespace:TabPaint"
+             xmlns:root="clr-namespace:TabPaint"
+             xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
              x:Name="RootControl"
              d:DesignHeight="100" d:DesignWidth="1000">
@@ -27,6 +28,7 @@
              DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                 <MenuItem Style="{StaticResource Win11MenuItemStyle}"
                   Header="{DynamicResource L_ImgBar_ToggleView}"
+                  services:ShortcutService.ShortcutKey="View.ToggleMode"
                   Click="Internal_OnToggleViewModeClick">
                     <MenuItem.Icon>
                         <Path Data="M4,7 L10,1 L16,7 M4,11 L10,17 L16,11" 
@@ -146,17 +148,21 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <Button ToolTip="{DynamicResource L_Menu_QA_Save}" Click="Internal_OnSaveAllClick" PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
+                        <Button services:ShortcutService.BaseToolTip="L_Menu_QA_Save" 
+                                services:ShortcutService.ShortcutKey="File.Save"
+                                Click="Internal_OnSaveAllClick" PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
                             <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                         </Button>
-                        <Button ToolTip="{DynamicResource L_ImgBar_ClearUnedited}" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22"  >
+                        <Button services:ShortcutService.BaseToolTip="L_ImgBar_ClearUnedited" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22"  >
                             <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                         </Button>
-                        <Button ToolTip="{DynamicResource L_Menu_QA_DiscardAll}" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
+                        <Button services:ShortcutService.BaseToolTip="L_Menu_QA_DiscardAll" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
                             <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="14" Height="14"/>
                         </Button>
                     </StackPanel>
-                    <Button ToolTip="{DynamicResource L_ImgBar_ToggleView}" Click="Internal_OnToggleViewModeClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22">
+                    <Button services:ShortcutService.BaseToolTip="L_ImgBar_ToggleView" 
+                            services:ShortcutService.ShortcutKey="View.ToggleMode"
+                            Click="Internal_OnToggleViewModeClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22">
                         <Path Data="M4,10 L10,4 L16,10 M4,14 L10,20 L16,14" 
           Stroke="{DynamicResource IconFillBrush}" 
           StrokeThickness="1.2"
@@ -176,7 +182,7 @@
                     <!-- 左侧添加按钮 -->
                     <Button Name="LeftAddBtn"
         Click="Internal_OnPrependTabClick"
-        ToolTip="{DynamicResource L_ImgBar_NewTabLeft}">
+        services:ShortcutService.BaseToolTip="L_ImgBar_NewTabLeft">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource Win11AddButtonStyle}">
                                 <Setter Property="Visibility" Value="Visible"/>
@@ -214,23 +220,31 @@
 
                                         <Button.ContextMenu>
                                             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}" >
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Copy}" Click="Internal_OnTabCopyClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Copy}" 
+                                                          services:ShortcutService.ShortcutKey="Edit.Copy"
+                                                          Click="Internal_OnTabCopyClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Copy_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Cut}" Click="Internal_OnTabCutClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Cut}" 
+                                                          services:ShortcutService.ShortcutKey="Edit.Cut"
+                                                          Click="Internal_OnTabCutClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                         
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Paste}" Click="Internal_OnTabPasteClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Paste}" 
+                                                          services:ShortcutService.ShortcutKey="Edit.Paste"
+                                                          Click="Internal_OnTabPasteClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Paste_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenFolder}" Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenFolder}" 
+                                                          services:ShortcutService.ShortcutKey="File.OpenWorkspace"
+                                                          Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
@@ -386,7 +400,8 @@
                     <!-- 新建按钮 -->
                     <Button x:Name="NewTabBtn"
         Click="Internal_OnNewTabClick"
-        ToolTip="{DynamicResource L_Menu_QA_NewTab}">
+        services:ShortcutService.BaseToolTip="L_Menu_QA_NewTab"
+        services:ShortcutService.ShortcutKey="File.NewTab">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource Win11AddButtonStyle}">
                                 <Setter Property="Height" Value="80"/>

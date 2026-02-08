@@ -15,8 +15,6 @@ namespace TabPaint
 {
     public class WatermarkSettings
     {
-
-
         public bool IsText { get; set; }
         public string Text { get; set; }
         public BitmapImage ImageSource { get; set; }
@@ -130,10 +128,7 @@ namespace TabPaint
                 name.Contains("marlett") ||
                 name.Contains("holomdl2") || // Win10/11 系统图标
                 name.Contains("segway") || // 某些特殊的 UI 字体
-                name.Contains("emoji"))       // 有时候 emoji 字体也不太适合做文字水印
-            {
-                return true;
-            }
+                name.Contains("emoji")) return true;       // 有时候 emoji 字体也不太适合做文字水印
             return false;
         }
 
@@ -168,28 +163,12 @@ namespace TabPaint
         }
         private string GetLocalizedFontName(FontFamily fontFamily)
         {
-            // 1. 尝试获取当前 UI 语言对应的名称 (比如中文系统下的中文名)
             var currentLang = System.Windows.Markup.XmlLanguage.GetLanguage(CultureInfo.CurrentUICulture.IetfLanguageTag);
-            if (fontFamily.FamilyNames.TryGetValue(currentLang, out string name))
-            {
-                return name;
-            }
-
-            // 2. 尝试获取中文 (简体) - 强制匹配 zh-cn
+            if (fontFamily.FamilyNames.TryGetValue(currentLang, out string name)) return name;
             var zhCn = System.Windows.Markup.XmlLanguage.GetLanguage("zh-cn");
-            if (fontFamily.FamilyNames.TryGetValue(zhCn, out name))
-            {
-                return name;
-            }
-
-            // 3. 如果都没有，获取英文名称 (en-us)
+            if (fontFamily.FamilyNames.TryGetValue(zhCn, out name)) return name;
             var enUs = System.Windows.Markup.XmlLanguage.GetLanguage("en-us");
-            if (fontFamily.FamilyNames.TryGetValue(enUs, out name))
-            {
-                return name;
-            }
-
-            // 4. 最后回退到 Source 属性 (即字体的内部名称)
+            if (fontFamily.FamilyNames.TryGetValue(enUs, out name)) return name;
             return fontFamily.Source;
         }
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -200,19 +179,13 @@ namespace TabPaint
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
             _isInitialized = false;
-
-            // 1. 重置滑块
             SliderOpacity.Value = 0.5;
             SliderAngle.Value = -45;
             SliderRows.Value = 3;
             SliderCols.Value = 3;
             SliderImgScale.Value = 0.8;
-
-            // 2. 重置文字内容和大小
             TxtContent.Text = "TabPaint";
             TxtFontSize.Text = "40";
-
-            // 3. 重置随机偏移
             ChkRandom.IsChecked = false;
             InitializeFonts();
             ComboCommonColors.SelectedIndex = 0;
@@ -228,7 +201,6 @@ namespace TabPaint
             {
                 Color c = dlg.SelectedColor;
                 c.A = 255;
-
                 UpdateColorInternal(c, true); // true 表示这是自定义颜色，可能不在下拉列表中
                 UpdatePreview();
             }
@@ -239,10 +211,7 @@ namespace TabPaint
 
             if (ComboCommonColors.SelectedItem is ColorItem item)
             {
-                if (item.IsCustom)
-                {
-                    return;
-                }
+                if (item.IsCustom)return;
                 UpdateColorInternal(item.Color, false);
                 UpdatePreview();
             }
@@ -290,19 +259,6 @@ namespace TabPaint
         {
             this.SetDialogResultSafe(false);
             Close();
-        }
-
-        private void RestoreOriginal()
-        {
-            if (_originalBitmap != null && _targetBitmap != null)
-            {
-                int stride = _originalBitmap.BackBufferStride;
-                int h = _originalBitmap.PixelHeight;
-                int w = _originalBitmap.PixelWidth;
-                byte[] data = new byte[h * stride];
-                _originalBitmap.CopyPixels(data, stride, 0);
-                _targetBitmap.WritePixels(new Int32Rect(0, 0, w, h), data, stride, 0);
-            }
         }
         private void Param_Changed_Combo(object sender, SelectionChangedEventArgs e) { if (_isInitialized) UpdatePreview(); }
         // --- 控件事件 ---
@@ -381,9 +337,7 @@ namespace TabPaint
             try
             {
                 Color? c = null;
-                // 确保以 # 开头
                 if (!hex.StartsWith("#")) hex = "#" + hex;
-
                 try
                 {
                     Color temp = (Color)ColorConverter.ConvertFromString(hex);
@@ -395,23 +349,17 @@ namespace TabPaint
                 {
                     _selectedColor = c.Value;
                     RectColorPreview.Fill = new SolidColorBrush(_selectedColor);
-
-                    // 如果这个颜色不在常用列表中，将下拉框设为 -1 (或者你可以显示"自定义")
-                    _isUpdatingColor = true;
+                    _isUpdatingColor = true;    // 如果这个颜色不在常用列表中，将下拉框设为 -1 (或者你可以显示"自定义")
                     ComboCommonColors.SelectedIndex = -1; // 取消选中常用颜色
                     _isUpdatingColor = false;
-
                     UpdatePreview();
                 }
             }
             catch { }
         }
-
-        // 内部更新颜色方法 (同时更新Hex文本和预览)
-        private void UpdateColorInternal(Color color, bool isCustom)
+        private void UpdateColorInternal(Color color, bool isCustom)   // 内部更新颜色方法 (同时更新Hex文本和预览)
         {
             _isUpdatingColor = true;
-
             _selectedColor = color;
             // 格式化为 #RRGGBB (不带Alpha)
             TxtHexColor.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
@@ -420,15 +368,8 @@ namespace TabPaint
             if (isCustom) ComboCommonColors.SelectedIndex = -1;
             _isUpdatingColor = false;
         }
-
-        // 新增这个，给 CheckBox 用 (因为 CheckBox 的事件签名是 RoutedEventArgs)
-        private void Generic_Changed(object sender, RoutedEventArgs e)
-        {
-            if (_isInitialized) UpdatePreview();
-        }
-
-        // --- 核心渲染 ---
-        private void UpdatePreview()
+        private void Generic_Changed(object sender, RoutedEventArgs e){ if (_isInitialized) UpdatePreview(); }
+        private void UpdatePreview()  // --- 核心渲染 ---
         {
             if (!_isInitialized || _originalBitmap == null) return;
 
@@ -440,12 +381,7 @@ namespace TabPaint
                 double origH = _originalBitmap.PixelHeight;
 
                 double overlayScale = 1.0;
-                if (origW > maxOverlayDim || origH > maxOverlayDim)
-                {
-                    overlayScale = Math.Min(maxOverlayDim / origW, maxOverlayDim / origH);
-                }
-
-                // onlyWatermark = true (只画水印，不画底图)
+                if (origW > maxOverlayDim || origH > maxOverlayDim)  overlayScale = Math.Min(maxOverlayDim / origW, maxOverlayDim / origH);
                 var visualOverlay = CreateWatermarkVisual(_originalBitmap, settings, true, overlayScale);
 
                 int overlayW = (int)(origW * overlayScale);
@@ -458,8 +394,6 @@ namespace TabPaint
                 rtbOverlay.Freeze();
                 _previewLayer.Source = rtbOverlay;
             }
-
-            // === 2. 更新窗口内的实时预览 (Internal Preview) ===
             if (_isWindowLoaded)
             {
                 double maxPreviewDim = 1200;
@@ -481,13 +415,9 @@ namespace TabPaint
                 var rtbInternal = new RenderTargetBitmap(scaledW, scaledH, 96, 96, PixelFormats.Pbgra32);
                 rtbInternal.Render(visualInternal);
                 rtbInternal.Freeze();
-
                 ImgWindowPreview.Source = rtbInternal;
             }
         }
-
-
-
         private static DrawingVisual CreateWatermarkVisual(BitmapSource source, WatermarkSettings settings, bool onlyWatermark, double renderScale = 1.0)
         {
             int w = source.PixelWidth;
@@ -530,7 +460,6 @@ namespace TabPaint
                                 cx += offsetX;
                                 cy += offsetY;
                             }
-
                             dc.PushTransform(new RotateTransform(settings.Angle, cx, cy));
 
                             if (settings.IsText && !string.IsNullOrEmpty(settings.Text))
@@ -571,15 +500,10 @@ namespace TabPaint
             }
             return visual;
         }
-
-
-
         public static BitmapSource ApplyWatermarkToBitmap(BitmapSource original, WatermarkSettings settings)
         {
             if (!original.IsFrozen && original.CheckAccess() == false)
                 throw new InvalidOperationException("Source bitmap must be frozen.");
-
-            // 最终输出时，scale 必须是 1.0，onlyWatermark 必须是 false (包含底图)
             var visual = CreateWatermarkVisual(original, settings, onlyWatermark: false, renderScale: 1.0);
 
             var rtb = new RenderTargetBitmap(original.PixelWidth, original.PixelHeight, 96, 96, PixelFormats.Pbgra32);
@@ -587,7 +511,6 @@ namespace TabPaint
             rtb.Freeze();
             return rtb;
         }
-
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
             this.SetDialogResultSafe(false);

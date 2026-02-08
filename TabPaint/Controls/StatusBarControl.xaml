@@ -6,6 +6,7 @@
              xmlns:app="clr-namespace:TabPaint"
              xmlns:local="clr-namespace:TabPaint.Controls"
              xmlns:behaviors="clr-namespace:TabPaint.Behaviors"
+                       xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
              MaxHeight="36"
              Height="36"
@@ -98,10 +99,24 @@
         <!-- 右侧控制区 -->
         <StatusBarItem HorizontalAlignment="Right">
             <StackPanel Orientation="Horizontal" Cursor="">
+
+                <ToggleButton x:Name="FavoriteToggle"
+                             Width="24" Height="24"
+                             Margin="4,0,0,0" Padding="0"
+                               services:ShortcutService.BaseToolTip="L_StatusBar_Favorite_ToolTip"
+             services:ShortcutService.ShortcutKey="Tool.Favorite"
+                             Style="{StaticResource RoundedMenuToggleButtonStyle}"
+                             Click="OnFavoriteToggleClick">
+                    <Path Data="{DynamicResource Favorite_Image}" Stretch="Uniform" 
+                         Fill="{DynamicResource IconFillBrush}" 
+                         Width="16" Height="16"/>
+                </ToggleButton>
+                
                 <ToggleButton x:Name="ClipboardMonitorToggle"
                       Width="24" Height="24"
                       Margin="4,0,0,0" Padding="0"
-                      ToolTip="{DynamicResource L_StatusBar_ClipboardMonitor_ToolTip}"
+                                    services:ShortcutService.BaseToolTip="L_StatusBar_ClipboardMonitor_ToolTip"
+                 services:ShortcutService.ShortcutKey="Tool.ClipMonitor"
                       behaviors:AdvancedToolTipBehavior.EnableAdvancedToolTip="True"
        behaviors:AdvancedToolTipBehavior.DetailedToolTip="{DynamicResource L_ClipboardMonitorToggle_Detail}"
                       Style="{StaticResource RoundedMenuToggleButtonStyle}"
@@ -115,18 +130,9 @@
                     </Grid>
                 </ToggleButton>
 
-                <ToggleButton x:Name="FavoriteToggle"
-                             Width="24" Height="24"
-                             Margin="4,0,0,0" Padding="0"
-                             ToolTip="{DynamicResource L_StatusBar_Favorite_ToolTip}"
-                             Style="{StaticResource RoundedMenuToggleButtonStyle}"
-                             Click="OnFavoriteToggleClick">
-                    <Path Data="{DynamicResource Icon_Shape_Star}" Stretch="Uniform" 
-                         Fill="{DynamicResource IconFillBrush}" 
-                         Width="16" Height="16"/>
-                </ToggleButton>
                 <!-- 适应窗口按钮 -->
-                <Button Width="24" Height="24" ToolTip="{DynamicResource L_StatusBar_FitToWindow}" Margin="4,0,6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
+                <Button Width="24" Height="24"               services:ShortcutService.BaseToolTip="L_StatusBar_FitToWindow"
+               services:ShortcutService.ShortcutKey="View.FitToWindow" Margin="4,0,6,0" Padding="2,0" Style="{StaticResource RoundedMenuButtonStyle}" Click="OnFitToWindowClick">
                     <Path Data="{DynamicResource FitToWindow_Image}" Stretch="Uniform" 
                           Fill="{DynamicResource IconFillBrush}" 
                           Width="14" Height="14"/>

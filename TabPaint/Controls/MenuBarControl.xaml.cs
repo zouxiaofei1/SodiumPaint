@@ -5,9 +5,11 @@
 //
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using TabPaint.Services;
 
 namespace TabPaint.Controls
 {
@@ -124,7 +126,7 @@ namespace TabPaint.Controls
         public event RoutedEventHandler NewTabClick;
 
 
-        private MenuItem CreateMenuItem(string headerResKey, string iconResKey, RoutedEventHandler clickHandler, string inputGesture = null)
+        private MenuItem CreateMenuItem(string headerResKey, string iconResKey, RoutedEventHandler clickHandler, string shortcutKey = null)
         {
             var item = new MenuItem
             {
@@ -133,9 +135,10 @@ namespace TabPaint.Controls
                 Style = (Style)FindResource("Win11MenuItemStyle")
             };
 
-            if (!string.IsNullOrEmpty(inputGesture))
+            if (!string.IsNullOrEmpty(shortcutKey))
             {
-                item.InputGestureText = inputGesture;
+                // 使用 ShortcutService 应用动态绑定，确保实时响应快捷键更改
+                ShortcutService.SetShortcutKey(item, shortcutKey);
             }
 
             if (clickHandler != null)
@@ -190,9 +193,9 @@ namespace TabPaint.Controls
             {
                 menuItem.Items.Clear(); // 清除占位符
 
-                menuItem.Items.Add(CreateMenuItem("L_Menu_File_New", "NewFile_Image", OnNewClick, "Ctrl+N"));
-                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Open", "Open_Folder_Image", OnOpenClick, "Ctrl+O"));
-                menuItem.Items.Add(CreateMenuItem("L_Menu_File_OpenFolder", "Open_Folder_Image", OnOpenWorkspaceClick, "Ctrl+Shift+O"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_New", "NewFile_Image", OnNewClick, "File.New"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Open", "Open_Folder_Image", OnOpenClick, "File.Open"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_OpenFolder", "Open_Folder_Image", OnOpenWorkspaceClick, "File.OpenWorkspace"));
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_NewWindow", "New_Window_Image", OnNewWindowClick));
 
                 // 重新创建 RecentFilesMenuItem (因为我们在XAML里删除了它)
@@ -212,9 +215,10 @@ namespace TabPaint.Controls
                 menuItem.Items.Add(CreateMenuItem("L_RecycleBin_Title", "Delete_Image", OnRecycleBinClick));
                 menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
-                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "Ctrl+S"));
-                menuItem.Items.Add(CreateMenuItem("L_Menu_File_SaveAs", "Save_Button_Image", OnSaveAsClick));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "File.Save"));
+                menuItem.Items.Add(CreateMenuItem("L_Menu_File_SaveAs", "Save_Button_Image", OnSaveAsClick, "File.SaveAs"));
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Exit", "Exit_Image", OnExitClick));
+
 
                 _isFileMenuLoaded = true;
             }
@@ -232,9 +236,9 @@ namespace TabPaint.Controls
 
             menuItem.Items.Clear();
 
-            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Copy", "Copy_Image", OnCopyClick, "Ctrl+C"));
-            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Cut", "Cut_Image", OnCutClick, "Ctrl+X"));
-            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Paste", "Paste_Image", OnPasteClick, "Ctrl+V"));
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Copy", "Copy_Image", OnCopyClick, "Edit.Copy"));
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Cut", "Cut_Image", OnCutClick, "Edit.Cut"));
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Edit_Paste", "Paste_Image", OnPasteClick, "Edit.Paste"));
 
             _isEditMenuLoaded = true;
         }
@@ -249,7 +253,7 @@ namespace TabPaint.Controls
             menuItem.Items.Clear();
 
             // 基础调整
-            var bceItem = CreateMenuItem("L_Menu_Effect_BCE", "Brightness_Image", OnBCEClick);
+            var bceItem = CreateMenuItem("L_Menu_Effect_BCE", "Brightness_Image", OnBCEClick, "Effect.Brightness");
             // 修正BCE图标样式 (原XAML是Stroke)
             if (bceItem.Icon is Path p)
             {
@@ -259,8 +263,8 @@ namespace TabPaint.Controls
             }
             menuItem.Items.Add(bceItem);
 
-            menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_TTS", "Color_Temperature_Image", OnTTSClick));
-            var autoLevelsItem = CreateMenuItem("L_Menu_Effect_AutoLevels", null, OnAutoLevelsClick);
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_TTS", "Color_Temperature_Image", OnTTSClick, "Effect.Temperature"));
+            var autoLevelsItem = CreateMenuItem("L_Menu_Effect_AutoLevels", null, OnAutoLevelsClick, "Effect.AutoLevels");
             var alPath = new Path
             {
                 Data = Geometry.Parse("M5,5H19V19H5V5M7,17V13H9V17H7M11,17V10H13V17H11M15,17V7H17V17H15Z"),
@@ -293,8 +297,8 @@ namespace TabPaint.Controls
 
             filterItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_BW", "Black_And_White_Image", OnBlackWhiteClick));
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Invert", "Invert_Color_Image", OnInvertClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_BW", "Black_And_White_Image", OnBlackWhiteClick, "Effect.Grayscale"));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Invert", "Invert_Color_Image", OnInvertClick, "Effect.Invert"));
 
             // 锐化 (PathData 也是硬编码的)
             var sharpenItem = CreateMenuItem("L_Menu_Effect_Sharpen", null, OnSharpenClick);
@@ -328,7 +332,7 @@ namespace TabPaint.Controls
             menuItem.Items.Add(filterItem);
 
             // 画布调整
-            menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick));
+            menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick, "Effect.Resize"));
             // 水印 (Stroke样式)
             var wmItem = CreateMenuItem("L_Menu_Effect_Watermark", "Watermark_Image", OnWatermarkClick);
             if (wmItem.Icon is Path wp)

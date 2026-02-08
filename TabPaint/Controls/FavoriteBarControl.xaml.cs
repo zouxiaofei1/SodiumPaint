@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
+using System.Security.Cryptography;
 namespace TabPaint.Controls
 {
     public partial class FavoriteBarControl : UserControl
@@ -35,6 +35,72 @@ namespace TabPaint.Controls
             this.KeyDown += FavoriteBarControl_KeyDown;
             this.Focusable = true;
             this.AllowDrop = true;
+        }
+        private string ComputeFileHash(string filePath)
+        {
+            using (var md5 = MD5.Create())
+            using (var stream = File.OpenRead(filePath))
+            {
+                var hash = md5.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+        }
+
+        private string ComputeBitmapHash(BitmapSource bitmap)
+        {
+            using (var md5 = MD5.Create())
+            using (var ms = new MemoryStream())
+            {
+                BitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                encoder.Save(ms);
+                ms.Position = 0;
+                var hash = md5.ComputeHash(ms);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+        }
+        private bool IsDuplicateInPage(string sourceFilePath)
+        {
+            string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
+            if (!Directory.Exists(pagePath)) return false;
+
+            string sourceHash = ComputeFileHash(sourceFilePath);
+
+            var existingFiles = Directory.GetFiles(pagePath)
+                                        .Where(f => AppConsts.IsSupportedImage(f));
+
+            foreach (var existing in existingFiles)
+            {
+                try
+                {
+                    if (ComputeFileHash(existing) == sourceHash)
+                        return true;
+                }
+                catch { }
+            }
+            return false;
+        }
+
+        private bool IsDuplicateBitmapInPage(BitmapSource bitmap)
+        {
+            string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
+            if (!Directory.Exists(pagePath)) return false;
+
+            string sourceHash = ComputeBitmapHash(bitmap);
+
+            var existingFiles = Directory.GetFiles(pagePath)
+                                        .Where(f => AppConsts.IsSupportedImage(f));
+
+            foreach (var existing in existingFiles)
+            {
+                try
+                {
+                    if (ComputeFileHash(existing) == sourceHash)
+                        return true;
+                }
+                catch { }
+            }
+            return false;
         }
 
         private void FavoriteBarControl_KeyDown(object sender, KeyEventArgs e)
@@ -90,8 +156,8 @@ namespace TabPaint.Controls
 
             var grid = new Grid
             {
-                Width = 120,
-                Height = 120,
+                Width = 100,
+                Height = 100,
                 Margin = new Thickness(6),
                 ToolTip = FindResource("L_Menu_File_Add")
             };
@@ -147,8 +213,8 @@ namespace TabPaint.Controls
 
             var grid = new Grid
             {
-                Width = 120,
-                Height = 120,
+                Width = 100,
+                Height = 100,
                 Margin = new Thickness(6),
             };
 
@@ -180,6 +246,23 @@ namespace TabPaint.Controls
                 img.Source = bitmap;
             }
             catch { }
+            Action doDelete = () =>
+            {
+                try
+                {
+                    File.Delete(filePath);
+                    stack.Children.Remove(grid);
+                    FavoritesChanged?.Invoke(this, EventArgs.Empty);
+                }
+                catch { }
+            }; grid.MouseDown += (s, e) =>
+            {
+                if (e.ChangedButton == MouseButton.Middle)
+                {
+                    doDelete();
+                    e.Handled = true;
+                }
+            };
 
             border.Child = img;
             grid.Children.Add(border);
@@ -192,6 +275,7 @@ namespace TabPaint.Controls
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 2, 2, 0),
+                Foreground = Brushes.White,
                 Visibility = Visibility.Collapsed,
                 Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
                 Padding = new Thickness(0)
@@ -200,19 +284,11 @@ namespace TabPaint.Controls
 
             grid.MouseEnter += (s, e) => deleteBtn.Visibility = Visibility.Visible;
             grid.MouseLeave += (s, e) => deleteBtn.Visibility = Visibility.Collapsed;
-
             deleteBtn.Click += (s, e) =>
             {
-                try
-                {
-                    File.Delete(filePath);
-                    stack.Children.Remove(grid);
-                    FavoritesChanged?.Invoke(this, EventArgs.Empty);
-                }
-                catch { }
+                doDelete();
                 e.Handled = true;
             };
-
             border.MouseMove += (s, e) =>
             {
                 if (e.LeftButton == MouseButtonState.Pressed)
@@ -306,6 +382,9 @@ namespace TabPaint.Controls
             if (!AppConsts.IsSupportedImage(filePath)) return;
             try
             {
+                // ★ 去重检查
+                if (IsDuplicateInPage(filePath)) return;
+
                 string fileName = Path.GetFileName(filePath);
                 string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
                 string destPath = Path.Combine(pagePath, fileName);
@@ -322,11 +401,24 @@ namespace TabPaint.Controls
             }
             catch { }
         }
+        private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var scrollViewer = sender as ScrollViewer;
+            if (scrollViewer == null) return;
+
+            // 将垂直滚轮转换为水平滚动
+            scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset - e.Delta);
+            e.Handled = true;
+        }
+
 
         private void SaveAndAddImage(BitmapSource bitmap)
         {
             try
             {
+                // ★ 去重检查
+                if (IsDuplicateBitmapInPage(bitmap)) return;
+
                 string fileName = string.Format("Pasted_{0:yyyyMMdd_HHmmss}.png", DateTime.Now);
                 string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
                 string destPath = Path.Combine(pagePath, fileName);

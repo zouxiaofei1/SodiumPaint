@@ -10,6 +10,7 @@
     <sys:String x:Key="L_Settings_Nav_Advanced">高级</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">关于</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
+    <sys:String x:Key="L_Settings_Toast_Conflict">快捷键与“{0}”冲突，已自动重置旧项</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
@@ -123,6 +124,20 @@
     <sys:String x:Key="L_Settings_Shortcuts_Effect_Invert">反色</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Effect_AutoLevels">自动色阶</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Effect_Resize">调整大小</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_New">新建文件</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_Open">打开文件</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_Save">保存文件</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_SaveAs">另存为</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_File_NewTab">新建标签页</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Undo">撤销</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Redo">重做</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Copy">复制</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Cut">剪切</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Paste">粘贴</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Bold">加粗</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Italic">斜体</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Underline">下划线</sys:String>
+    <sys:String x:Key="L_Settings_Shortcuts_Edit_Strikethrough">删除线</sys:String>
 
     <!-- Advanced panel -->
     <sys:String x:Key="L_Settings_Advanced_Title">高级</sys:String>
@@ -179,8 +194,8 @@
     <sys:String x:Key="L_Main_Ctx_AutoCrop">智能裁切空白</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框 (2px)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x超分辨率</sys:String>
-    
-    <sys:String x:Key="L_Main_Unit_Pixel"> 像素</sys:String>
+
+    <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>
     <sys:String x:Key="L_Main_Filter_AllImages">所有图像文件</sys:String>
     <sys:String x:Key="L_Main_Filter_PNG">PNG 图片</sys:String>
     <sys:String x:Key="L_Main_Filter_JPEG">JPEG 图片</sys:String>
@@ -236,8 +251,8 @@
     <!-- About -->
     <sys:String x:Key="L_Settings_About_Title">关于 TabPaint</sys:String>
     <sys:String x:Key="L_Settings_About_Subtitle">轻量级绘画与看图工具🖌️</sys:String>
-    <sys:String x:Key="L_Settings_About_Developer">开发者: </sys:String>
-    <sys:String x:Key="L_Settings_About_Stack">技术栈: </sys:String>
+    <sys:String x:Key="L_Settings_About_Developer">开发者:</sys:String>
+    <sys:String x:Key="L_Settings_About_Stack">技术栈:</sys:String>
     <sys:String x:Key="L_Settings_About_Github">GitHub 主页</sys:String>
     <sys:String x:Key="L_Settings_About_CheckUpdate">检查更新</sys:String>
     <sys:String x:Key="L_Settings_About_Help">帮助文档</sys:String>
@@ -279,8 +294,8 @@
 
     <sys:String x:Key="L_ToolBar_Crop">裁剪选区</sys:String>
     <sys:String x:Key="L_ToolBar_RotateFlip">旋转/翻转</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_Left">向左旋转90°(Ctrl + L)</sys:String>
-    <sys:String x:Key="L_ToolBar_Rotate_Right">向右旋转90°(Ctrl + R)</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Left">向左旋转90°</sys:String>
+    <sys:String x:Key="L_ToolBar_Rotate_Right">向右旋转90°</sys:String>
     <sys:String x:Key="L_ToolBar_Rotate_180">旋转180°</sys:String>
     <sys:String x:Key="L_ToolBar_Flip_Vertical">垂直翻转</sys:String>
     <sys:String x:Key="L_ToolBar_Flip_Horizontal">水平翻转</sys:String>
@@ -545,22 +560,22 @@
     <sys:String x:Key="L_Toast_MinSize">已是最小尺寸</sys:String>
     <sys:String x:Key="L_Toast_Copied">已复制</sys:String>
     <sys:String x:Key="L_Toast_PressDeleteAgain">再次按下 Delete 删除文件</sys:String>
-    <sys:String x:Key="L_Toast_DragFailed">拖拽失败: </sys:String>
+    <sys:String x:Key="L_Toast_DragFailed">拖拽失败:</sys:String>
     <sys:String x:Key="L_Toast_Effect_Inverted">已应用反色</sys:String>
     <sys:String x:Key="L_Toast_Effect_AutoLevels">已自动调整色阶</sys:String>
     <sys:String x:Key="L_Toast_Effect_BW">已应用黑白</sys:String>
     <sys:String x:Key="L_Toast_FileNotFound">文件已不存在，无法定位文件夹。</sys:String>
-    <sys:String x:Key="L_Toast_PasteFailed">粘贴图片失败: </sys:String>
-    <sys:String x:Key="L_Toast_DeleteFailed">删除失败: </sys:String>
+    <sys:String x:Key="L_Toast_PasteFailed">粘贴图片失败:</sys:String>
+    <sys:String x:Key="L_Toast_DeleteFailed">删除失败:</sys:String>
     <sys:String x:Key="L_Toast_CopyFailed">复制失败</sys:String>
     <sys:String x:Key="L_Toast_NoImageData">无法获取该标签页的图像数据</sys:String>
-    <sys:String x:Key="L_Toast_InsertFailed">插入失败: </sys:String>
-    <sys:String x:Key="L_Toast_CannotInsertImage">无法插入图片: </sys:String>
+    <sys:String x:Key="L_Toast_InsertFailed">插入失败:</sys:String>
+    <sys:String x:Key="L_Toast_CannotInsertImage">无法插入图片:</sys:String>
     <sys:String x:Key="L_Toast_SizeTooSmallForBorder">图片尺寸过小，无法添加边框</sys:String>
     <sys:String x:Key="L_Toast_NoSelection">未选中图片区域</sys:String>
     <sys:String x:Key="L_Toast_OCR_NoText">未识别到文字</sys:String>
     <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 图片过大，已自动压缩显示</sys:String>
-    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">读取文件夹失败: </sys:String>
+    <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">读取文件夹失败:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">启动加载失败:</sys:String>
 
     <sys:String x:Key="L_Toast_BorderAdded">已添加 2px 边框</sys:String>
@@ -690,8 +705,8 @@
     <sys:String x:Key="L_Drag_InsertText_Title">插入文字</sys:String>
     <sys:String x:Key="L_Drag_InsertText_Desc">松开鼠标创建文本框</sys:String>
 
-    <sys:String x:Key="L_Mode_Switch_ToPaint">切换到画图模式 (Tab)</sys:String>
-    <sys:String x:Key="L_Mode_Switch_ToView">切换到看图模式 (Tab)</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToPaint">切换到画图模式</sys:String>
+    <sys:String x:Key="L_Mode_Switch_ToView">切换到看图模式</sys:String>
 
     <sys:String x:Key="L_Menu_Recent_None">(无最近文件)</sys:String>
     <sys:String x:Key="L_Menu_Recent_Clear">清除最近文件列表</sys:String>
@@ -700,7 +715,7 @@
     <sys:String x:Key="L_Stick_Opacity">透明度</sys:String>
     <sys:String x:Key="L_Stick_ResetScale">重置缩放</sys:String>
 
-    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve">创建矩形选区以进行移动、裁剪或复制。 快捷键: Ctrl + 1&#x0a;支持拖拽至Word，浏览器，桌面等外部程序&#x0a;拖拽图片到画布可创建矩形选区</sys:String>
+    <sys:String x:Key="L_ToolBar_Tool_Select_Detail" xml:space="preserve">创建矩形选区以进行移动、裁剪或复制。&#x0a;支持拖拽至Word，浏览器，桌面等外部程序&#x0a;拖拽图片到画布可创建矩形选区</sys:String>
     <sys:String x:Key="L_ClipboardMonitorToggle_Detail" xml:space="preserve">截图后自动创建包含这张图片的新标签页</sys:String>
 
     <sys:String x:Key="L_ImgBar_ClearUnedited">关闭所有未编辑的图片</sys:String>
@@ -734,7 +749,7 @@
     <sys:String x:Key="L_Progress_Loading_Format">正在加载 {0}%</sys:String>
 
     <!-- StatusBar Tooltips -->
-    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">监听剪切板 (Ctrl + Alt + P)</sys:String>
+    <sys:String x:Key="L_StatusBar_ClipboardMonitor_ToolTip">监听剪切板</sys:String>
     <sys:String x:Key="L_StatusBar_FitToWindow">适应窗口大小</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomOut">缩小</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomIn">放大</sys:String>
@@ -793,7 +808,7 @@
     <sys:String x:Key="L_Menu_Effect_Mosaic">马赛克</sys:String>
     <sys:String x:Key="L_Menu_Effect_GaussianBlur">高斯模糊</sys:String>
     <sys:String x:Key="L_Dialog_Strength">强度</sys:String>
-    
+
     <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>
 
     <!-- 统一 AI 状态描述 (如果之前没有) -->

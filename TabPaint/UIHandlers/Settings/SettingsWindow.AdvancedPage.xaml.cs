@@ -27,17 +27,9 @@ namespace TabPaint.Pages
         {
             try
             {
-                // 定位到 %LOCALAPPDATA%\TabPaint
                 string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 string cachePath = Path.Combine(localAppData, "TabPaint");
-
-                // 如果目录不存在，先创建它（防止打开报错）
-                if (!Directory.Exists(cachePath))
-                {
-                    Directory.CreateDirectory(cachePath);
-                }
-
-                // 使用资源管理器打开
+                if (!Directory.Exists(cachePath)) Directory.CreateDirectory(cachePath);
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = cachePath,
@@ -45,10 +37,7 @@ namespace TabPaint.Pages
                     Verb = "open"
                 });
             }
-            catch (Exception)
-            {
-                // 忽略错误，或添加简单的日志
-            }
+            catch (Exception) {}
         }
 
         // 恢复出厂设置
@@ -66,8 +55,6 @@ namespace TabPaint.Pages
                 string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint");
                 string currentExe = Process.GetCurrentProcess().MainModule.FileName;
                 string tempBatPath = Path.Combine(Path.GetTempPath(), "tabpaint_reset.bat");
-
-                // 创建一个批处理文件来删除数据并重启应用
                 string batContent = $@"
                         @echo off
                         timeout /t 1 /nobreak > NUL
@@ -97,9 +84,7 @@ namespace TabPaint.Pages
                    MessageBoxButton.OK);
             }
         }
-
-        // 输入框失去焦点时进行数值校验
-        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)// 输入框失去焦点时进行数值校验
         {
             if (sender is TextBox textBox)
             {

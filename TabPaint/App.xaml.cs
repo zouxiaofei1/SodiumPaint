@@ -2,10 +2,6 @@
 //App.xaml.cs
 //应用程序入口点，负责初始化设置、异常处理、单实例检测以及主窗口的启动。
 //
-//
-//App.xaml.cs
-//应用程序入口点，负责初始化设置、异常处理、单实例检测以及主窗口的启动。
-//
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
@@ -144,9 +140,7 @@ namespace TabPaint
             }//4ms
             catch { }
  
-            SetupExceptionHandling();//0.9ms
-            //检查单实例
-         
+            SetupExceptionHandling();//检查单实例0.9ms
             if (!SingleInstance.IsFirstInstance())//0.3ms
             {
                 SingleInstance.SendArgsToFirstInstance(e.Args);
@@ -226,9 +220,6 @@ namespace TabPaint
             {
                 targetTheme = AppTheme.Dark;
             }
-
-
-            // 在创建 MainWindow 之前应用主题，避免 InitializeComponent 时的资源浪费
             ThemeManager.ApplyTheme(targetTheme);  //2ms
 
             // 3. 创建并启动主窗口
@@ -238,7 +229,6 @@ namespace TabPaint
          
 
         }
-
         protected override void OnExit(ExitEventArgs e)
         {
             SingleInstance.Release();

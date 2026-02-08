@@ -30,13 +30,7 @@ namespace TabPaint.Windows
             InitializeComponent();
             _sourceImage = source;
             SizeListBox.ItemsSource = SizeItems;
-
-            // 默认尺寸
-            AddSize(256);
-            AddSize(64);
-            AddSize(48);
-            AddSize(32);
-            AddSize(16);
+            AddSize(256);  AddSize(64);AddSize(48);AddSize(32); AddSize(16);// 默认尺寸
 
             // 默认选中第一个
             if (SizeItems.Count > 0) SizeListBox.SelectedIndex = 0;
@@ -60,9 +54,6 @@ namespace TabPaint.Windows
             // 获取图片源的原始尺寸
             var bmp = LargePreviewImage.Source as BitmapSource;
             if (bmp == null) return;
-
-            // 计算图片在 Uniform 模式下的实际渲染尺寸
-            // 这一步是因为 Image 控件的 ActualWidth 可能包含留白，我们需要算出“去留白”后的尺寸
             double containerWidth = LargePreviewImage.ActualWidth;
             double containerHeight = LargePreviewImage.ActualHeight;
 
@@ -75,13 +66,11 @@ namespace TabPaint.Windows
 
             if (imageRatio >= containerRatio)
             {
-                // 图片较宽，宽度占满，高度缩放
                 renderWidth = containerWidth;
                 renderHeight = containerWidth / imageRatio;
             }
             else
             {
-                // 图片较高，高度占满，宽度缩放
                 renderWidth = containerHeight * imageRatio;
                 renderHeight = containerHeight;
             }
@@ -95,15 +84,9 @@ namespace TabPaint.Windows
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-
-            // 应用 Mica 特效
             MicaAcrylicManager.ApplyEffect(this);
-
-            // 如果不是 Win11，或者 Mica 启用失败，手动设置一个不透明背景
-            // 否则窗口会变成全透明/黑色
             if (!MicaAcrylicManager.IsWin11())
             {
-                // 获取应用资源中的背景色 (SubWindowStyles.xaml 里应该有 WindowBackgroundBrush)
                 var bgBrush = Application.Current.TryFindResource("WindowBackgroundBrush") as Brush
                               ?? Application.Current.TryFindResource("ControlBackgroundBrush") as Brush;
                 RootBorder.Background = bgBrush ?? Brushes.White;
@@ -149,9 +132,6 @@ namespace TabPaint.Windows
             if (renderBitmap.CanFreeze) renderBitmap.Freeze();
             return renderBitmap;
         }
-
-
-
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
@@ -193,25 +173,16 @@ namespace TabPaint.Windows
         {
             if (SizeItems.Count == 0)
             {
-                MessageBox.Show(LocalizationManager.GetString("L_Ico_Error_NoSize"), "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                FluentMessageBox.Show(LocalizationManager.GetString("L_Ico_Error_NoSize"), "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
             ResultSizes = SizeItems.Select(x => x.Size).ToList();
             IsConfirmed = true;
             Close();
         }
 
-        private void OnCancelClick(object sender, RoutedEventArgs e)
-        {
-            IsConfirmed = false;
-            Close();
-        }
+        private void OnCancelClick(object sender, RoutedEventArgs e) {  IsConfirmed = false; Close();  }
 
-        private void OnCloseClick(object sender, RoutedEventArgs e)
-        {
-            IsConfirmed = false;
-            Close();
-        }
+        private void OnCloseClick(object sender, RoutedEventArgs e) { IsConfirmed = false; Close();  }
     }
 }

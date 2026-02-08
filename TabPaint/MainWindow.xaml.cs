@@ -124,8 +124,6 @@ namespace TabPaint
                 ThemeManager.LoadLazyIcons();
             }), DispatcherPriority.Background);
             if (IsViewMode) OnModeChanged(true, isSilent: true);
-
-            // 由于 MyStatusBar 和 MainToolBar 现在是分帧加载的，这里需要延迟初始化依赖它们的逻辑
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (MyStatusBar != null)
@@ -229,7 +227,6 @@ namespace TabPaint
             {
                 src.CompositionTarget.BackgroundColor = Colors.Transparent;
             }
-            //}), DispatcherPriority.Loaded);
         }
         private void MainWindow_Activated(object sender, EventArgs e)
         {
@@ -335,22 +332,10 @@ namespace TabPaint
 
             if (IsViewMode)
             {
-                if (settings.ViewUseDarkCanvasBackground)
-                {
-                    ScrollContainer.Background = _darkBackgroundBrush;
-                }
-                else
-                {
-                    ScrollContainer.Background = Brushes.Transparent;
-                }
-                if (settings.ViewShowTransparentGrid)
-                {
-                    CanvasWrapper.Background = _originalGridBrush;
-                }
-                else
-                {
-                    CanvasWrapper.Background = Brushes.White;
-                }
+                if (settings.ViewUseDarkCanvasBackground)ScrollContainer.Background = _darkBackgroundBrush;
+                else ScrollContainer.Background = Brushes.Transparent;
+                if (settings.ViewShowTransparentGrid)CanvasWrapper.Background = _originalGridBrush;
+                else CanvasWrapper.Background = Brushes.White;
             }
             else
             {
@@ -376,7 +361,6 @@ namespace TabPaint
             catch (Exception ex)
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ReadFolderFailed_Prefix"), ex.Message));
-
                 return null;
             }
         }
@@ -522,7 +506,6 @@ namespace TabPaint
             catch (Exception ex)
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_ClipboardReadFailed_Prefix"), ex.Message));
-
                 return;
             }
 
@@ -551,12 +534,8 @@ namespace TabPaint
 
                 if (uiInsertIndex + addedCount <= FileTabs.Count)FileTabs.Insert(uiInsertIndex + addedCount, newTab);
                 else FileTabs.Add(newTab);
-
-                // 异步加载缩略图
-                _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
-
-                // 记录第一张新图，用于稍后跳转
-                if (firstNewTab == null) firstNewTab = newTab;
+                _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight); // 异步加载缩略图
+                if (firstNewTab == null) firstNewTab = newTab; // 记录第一张新图，用于稍后跳转
 
                 addedCount++;
             }
@@ -570,14 +549,11 @@ namespace TabPaint
                 if (firstNewTab != null)
                 {
                     if (_currentTabItem != null) _currentTabItem.IsSelected = false;
-
-                    // 选中新图
-                    firstNewTab.IsSelected = true;
+                    firstNewTab.IsSelected = true; // 选中新图
                     _currentTabItem = firstNewTab;
-
                     await OpenImageAndTabs(firstNewTab.FilePath);
-                    // 确保新加的图片在视野内
-                    MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1);
+                   
+                    MainImageBar.Scroller.ScrollToHorizontalOffset(MainImageBar.Scroller.HorizontalOffset + 1); // 确保新加的图片在视野内
                 }
             }
         }
@@ -703,14 +679,8 @@ namespace TabPaint
                 return string.Format(LocalizationManager.GetString("L_Format_Size_KB"), bytes / 1024.0);
             return string.Format(LocalizationManager.GetString("L_Format_Size_MB"), bytes / 1024.0 / 1024.0);
         }
-        private void ShowNextImage()
-        {
-            MoveImageIndex(1);
-        }
-        private void ShowPrevImage()
-        {
-            MoveImageIndex(-1);
-        }
+        private void ShowNextImage() { MoveImageIndex(1); }
+        private void ShowPrevImage() { MoveImageIndex(-1);  }
         private void MoveImageIndex(int direction) // direction: 1 or -1
         {
             if (_imageFiles.Count == 0 || _currentImageIndex < 0 || FileTabs == null) return;
@@ -763,10 +733,7 @@ namespace TabPaint
                 }
                 return filePath;
             }
-            catch
-            {
-                return null;
-            }
+            catch   { return null;   }
         }
 
         private async Task InsertImagesToTabs(string[] files)
@@ -800,10 +767,7 @@ namespace TabPaint
                     FileTabs.Insert(uiInsertIndex + addedCount, newTab);
                 else
                     FileTabs.Add(newTab);
-
-                // 异步加载缩略图
-                _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
-
+                _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight); // 异步加载缩略图
                 if (firstNewTab == null) firstNewTab = newTab;
                 addedCount++;
             }
@@ -861,7 +825,6 @@ namespace TabPaint
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
 
             Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
-
             // 获取 ZoomTransform 的当前缩放
             double currentZoom = ZoomTransform.ScaleX;
 
@@ -881,10 +844,7 @@ namespace TabPaint
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                if (child != null && child is T)
-                {
-                    return (T)child;
-                }
+                if (child != null && child is T) return (T)child;
                 else
                 {
                     T childOfChild = FindVisualChild<T>(child);
@@ -919,10 +879,7 @@ namespace TabPaint
             if (this.IsActive && !IsViewMode)
             {
                 var accentBrush = FindResource("SystemAccentPressedBrush") as SolidColorBrush;
-                if (accentBrush != null)
-                {
-                    DwmBorderHelper.SetBorderColor(this, accentBrush.Color);
-                }
+                if (accentBrush != null) DwmBorderHelper.SetBorderColor(this, accentBrush.Color);
             }
             else
             {
@@ -938,9 +895,7 @@ namespace TabPaint
             if (_isPanning)
             {
                 Point currentPos = e.GetPosition(ScrollContainer);
-
-                // 计算偏移量：鼠标向左移，视口应该向右移，所以是 上次位置 - 当前位置
-                double deltaX = _lastMousePosition.X - currentPos.X;
+                double deltaX = _lastMousePosition.X - currentPos.X;   // 计算偏移量
                 double deltaY = _lastMousePosition.Y - currentPos.Y;
 
                 ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + deltaX);
@@ -965,20 +920,13 @@ namespace TabPaint
             if (e.ChangedButton == MouseButton.Right)
             {
                 // 如果菜单还没加载过，进行加载
-                if (ScrollContainer.ContextMenu == null)
-                {
-                    LoadCanvasContextMenu();
-                }
-
-                // 再次检查（因为加载可能失败），如果成功则打开
+                if (ScrollContainer.ContextMenu == null) LoadCanvasContextMenu();// 再次检查（因为加载可能失败），如果成功则打开
                 if (ScrollContainer.ContextMenu != null)
                 {
                     ScrollContainer.ContextMenu.PlacementTarget = ScrollContainer; // 确保定位准确
                     ScrollContainer.ContextMenu.IsOpen = true;
                 }
             }
-
-            // ... 下面保留你原有的平移、画图结束逻辑 ...
             if (_isPanning)
             {
                 _isPanning = false;
@@ -1039,7 +987,6 @@ namespace TabPaint
                     return;
                 }
             }
-
             ClearRulerSelection();
         }
 
@@ -1101,16 +1048,7 @@ namespace TabPaint
                 }
             }
         }
-
-        // 可选：如果你不想上面写那么多 +=，可以用这个通用分发器，
-        // 但上面的 switch += 方式性能更好且更直观。
-        private void OnCanvasMenuClickDispatcher(object sender, RoutedEventArgs e)
-        {
-            // 这里的代码已经在上面的 BindCanvasMenuEvents 里用 += 具体方法 替代了，
-            // 所以这个方法其实可以不需要，除非你希望所有菜单走同一个入口打印日志。
-        }
-
-
+        private void OnCanvasMenuClickDispatcher(object sender, RoutedEventArgs e){ }
         private bool _isDragOverlayVisible = false;
 
         public void UpdateSelectionScalingMode()
@@ -1127,11 +1065,7 @@ namespace TabPaint
                 ? BitmapScalingMode.NearestNeighbor
                 : BitmapScalingMode.Linear;
 
-            if (RenderOptions.GetBitmapScalingMode(SelectionPreview) != mode)
-            {
-                RenderOptions.SetBitmapScalingMode(SelectionPreview, mode);
-            }
-            
+            if (RenderOptions.GetBitmapScalingMode(SelectionPreview) != mode)    RenderOptions.SetBitmapScalingMode(SelectionPreview, mode);
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -1153,7 +1087,6 @@ namespace TabPaint
             _transferSelectionData = selectionData;
             _transferWidth = width;
             _transferHeight = height;
-
             try
             {
                 SwitchToTab(targetTab);
@@ -1174,12 +1107,7 @@ namespace TabPaint
                     PixelFormats.Bgra32, null, _transferSelectionData, _transferWidth * 4);
 
                 SelectTool st = _router.GetSelectTool();
-
-                // 确保切换到 Select 工具
-                if (_router.CurrentTool != st)
-                {
-                    _router.SetTool(st);
-                }
+                if (_router.CurrentTool != st)  _router.SetTool(st);// 确保切换到 Select 工具
                 st._selectionData = null;
                 st._selectionRect = new Int32Rect(0, 0, 0, 0);
                 if (_ctx.SelectionPreview != null)
@@ -1196,7 +1124,6 @@ namespace TabPaint
             catch (Exception ex)
             {
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_RestoreSelectionFailed_Prefix"), ex.Message));
-
             }
             finally
             {
@@ -1215,15 +1142,13 @@ namespace TabPaint
 
         private void SelectionToolBar_AiRemoveBgClick(object sender, RoutedEventArgs e)
         {
-            OnRemoveBackgroundClick(sender, e);
-            // 修改为控制 Holder 的可见性
+            OnRemoveBackgroundClick(sender, e); 
             if (SelectionToolHolder != null) SelectionToolHolder.Visibility = Visibility.Collapsed;
         }
 
         private void SelectionToolBar_OcrClick(object sender, RoutedEventArgs e)
         {
             OnOcrClick(sender, e);
-            // 修改为控制 Holder 的可见性
             if (SelectionToolHolder != null) SelectionToolHolder.Visibility = Visibility.Collapsed;
         }
 
@@ -1231,12 +1156,8 @@ namespace TabPaint
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
             var selectTool = _router?.CurrentTool as SelectTool;
-            if (_selectionToolBar == null || (selectTool == null || !selectTool.HasActiveSelection))
-            {
-                return;
-            }
-            if(selectTool._selectionRect.Width+ selectTool._selectionRect.Height<150)return; // 小于一定尺寸的选区不显示工具栏，避免遮挡
-            // 确保控件已加载 (访问属性会触发加载)
+            if (_selectionToolBar == null && (selectTool == null || !selectTool.HasActiveSelection)) return;
+            if(selectTool._selectionRect.Width+ selectTool._selectionRect.Height<150)return;
             var toolbar = this.SelectionToolBar;
             var holder = this.SelectionToolHolder; // 引用 XAML 中的 ContentControl
 
@@ -1248,7 +1169,6 @@ namespace TabPaint
                     holder.Visibility = Visibility.Collapsed;
                     return;
                 }
-
                 Point p1 = _ctx.FromPixel(new Point(rect.X, rect.Y));
                 Point p2 = _ctx.FromPixel(new Point(rect.X + rect.Width, rect.Y + rect.Height));
 
@@ -1258,8 +1178,6 @@ namespace TabPaint
                 double selTop = rootPos.Y;
                 double selLeft = rootPos.X;
                 double selWidth = rootPosEnd.X - rootPos.X;
-
-                // 注意：这里可能需要硬编码或测量实际宽度，因为第一次显示时 ActualWidth 可能为 0
                 double toolbarHeight = 45;
                 double toolbarWidth = 140;
 
@@ -1271,8 +1189,6 @@ namespace TabPaint
 
                 if (left < 10) left = 10;
                 if (left + toolbarWidth > this.ActualWidth - 10) left = this.ActualWidth - toolbarWidth - 10;
-
-                // 关键修改：设置 Holder 的 Margin
                 holder.Margin = new Thickness(left, top, 0, 0);
                 holder.Visibility = Visibility.Visible;
             }
@@ -1285,13 +1201,9 @@ namespace TabPaint
         public void SyncTextToolbarState(RichTextBox rtb)
         {
             var selection = rtb.Selection;
-
-            // 字体粗细
-            var weight = selection.GetPropertyValue(TextElement.FontWeightProperty);
+            var weight = selection.GetPropertyValue(TextElement.FontWeightProperty);// 字体粗细
             TextMenu.BoldBtn.IsChecked = (weight != DependencyProperty.UnsetValue) && ((FontWeight)weight == FontWeights.Bold);
-
-            // 斜体
-            var style = selection.GetPropertyValue(TextElement.FontStyleProperty);
+            var style = selection.GetPropertyValue(TextElement.FontStyleProperty);// 斜体
             TextMenu.ItalicBtn.IsChecked = (style != DependencyProperty.UnsetValue) && ((FontStyle)style == FontStyles.Italic);
 
             // 下划线/删除线
@@ -1307,9 +1219,7 @@ namespace TabPaint
                     if (d.Location == TextDecorationLocation.Strikethrough) TextMenu.StrikeBtn.IsChecked = true;
                 }
             }
-
-            // 上下标
-            var baseline = selection.GetPropertyValue(Inline.BaselineAlignmentProperty);
+            var baseline = selection.GetPropertyValue(Inline.BaselineAlignmentProperty);// 上下标
             TextMenu.SubscriptBtn.IsChecked = false;
             TextMenu.SuperscriptBtn.IsChecked = false;
             if (baseline != DependencyProperty.UnsetValue)
@@ -1318,13 +1228,9 @@ namespace TabPaint
                 if (bl == BaselineAlignment.Subscript) TextMenu.SubscriptBtn.IsChecked = true;
                 if (bl == BaselineAlignment.Superscript) TextMenu.SuperscriptBtn.IsChecked = true;
             }
-
-            // 高亮
-            var bg = selection.GetPropertyValue(TextElement.BackgroundProperty);
+            var bg = selection.GetPropertyValue(TextElement.BackgroundProperty);// 高亮
             TextMenu.HighlightBtn.IsChecked = (bg != null && bg != DependencyProperty.UnsetValue && bg != Brushes.Transparent);
-
-            // 阴影 (阴影是整个框的属性，不是 Selection 的，所以不用在这里读 Selection，直接读 Effect)
-            TextMenu.ShadowBtn.IsChecked = (rtb.Effect is System.Windows.Media.Effects.DropShadowEffect);
+            TextMenu.ShadowBtn.IsChecked = (rtb.Effect is System.Windows.Media.Effects.DropShadowEffect);// 阴影
         }
 
         private void UpdateImageBarVisibilityState()

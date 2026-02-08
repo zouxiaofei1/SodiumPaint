@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
              xmlns:behaviors="clr-namespace:TabPaint.Behaviors"
+             xmlns:services="clr-namespace:TabPaint.Services"
              mc:Ignorable="d" 
              d:DesignHeight="36" d:DesignWidth="1200">
 
@@ -39,7 +40,8 @@
                             <!-- 左半部分：点击直接触发当前选区模式 -->
                             <Button x:Name="SelectMainButton" x:FieldModifier="public"
                     Click="OnSelectMainButtonClick" 
-                    ToolTip="{DynamicResource L_ToolBar_Tool_Select}"
+                    services:ShortcutService.BaseToolTip="L_ToolBar_Tool_Select"
+                    services:ShortcutService.ShortcutKey="Tool.SwitchToSelect"
                     Style="{StaticResource TransparentInnerButtonStyleToggle}"
                     Width="26" Height="34">
                                 <ContentControl x:Name="CurrentSelectIconHost" IsHitTestVisible="False" Width="16" Height="16">
@@ -70,20 +72,20 @@
                         </Border>
                     </Popup>
                 </Grid>
-                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Pen}"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="PenButton" x:FieldModifier="public" services:ShortcutService.BaseToolTip="L_ToolBar_Tool_Pen" services:ShortcutService.ShortcutKey="Tool.SwitchToPen"  Click="OnPenClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
 
                     <Image Source="{DynamicResource Pencil_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_PickColor}"  Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="PickColorButton" x:FieldModifier="public" services:ShortcutService.BaseToolTip="L_ToolBar_Tool_PickColor" services:ShortcutService.ShortcutKey="Tool.SwitchToPick"  Click="OnPickColorClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Pick_Colour_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Eraser}" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="EraserButton" x:FieldModifier="public" services:ShortcutService.BaseToolTip="L_ToolBar_Tool_Eraser" services:ShortcutService.ShortcutKey="Tool.SwitchToEraser" Click="OnEraserClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Eraser_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Fill}" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0" Name="FillButton" x:FieldModifier="public" services:ShortcutService.BaseToolTip="L_ToolBar_Tool_Fill" services:ShortcutService.ShortcutKey="Tool.SwitchToFill" Click="OnFillClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Fill_Bucket_Image}" Width="16" Height="16" />
                 </Button>
-                <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Tool_Text}" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+                <Button Margin="4,0,6,0" Name="TextButton" x:FieldModifier="public" services:ShortcutService.BaseToolTip="L_ToolBar_Tool_Text" services:ShortcutService.ShortcutKey="Tool.SwitchToText" Click="OnTextClick_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Image Source="{DynamicResource Text_Image}" Width="16" Height="16" />
                 </Button>
             </StackPanel>
@@ -129,7 +131,8 @@
                     <StackPanel Orientation="Horizontal">
                         <!-- 左半部分：应用透明样式 -->
                         <Button x:Name="BrushMainButton" Click="OnBrushMainButtonClick" 
-                                ToolTip="{DynamicResource L_ToolBar_Brush}"
+                                services:ShortcutService.BaseToolTip="L_ToolBar_Brush"
+                                services:ShortcutService.ShortcutKey="Tool.SwitchToBrush"
                                 Style="{StaticResource TransparentInnerButtonStyleToggle}"
                                 Width="26" Height="34">
                             <ContentControl x:Name="CurrentBrushIconHost" IsHitTestVisible="False" Width="16" Height="16">
@@ -178,7 +181,8 @@
 
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="ShapeMainButton" Click="OnShapeMainButtonClick" 
-                                ToolTip="{DynamicResource L_ToolBar_Shape}"
+                                services:ShortcutService.BaseToolTip="L_ToolBar_Shape"
+                                services:ShortcutService.ShortcutKey="Tool.SwitchToShape"
                                 Style="{StaticResource TransparentInnerButtonStyleToggle}"
                                 Width="26" Height="30">
                             <ContentControl x:Name="CurrentShapeIconHost" IsHitTestVisible="False" Width="16" Height="16">
@@ -214,13 +218,13 @@
             </Grid>
 
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
-            <Button Margin="2,0,0,7" Name="CutImage" x:FieldModifier="public" ToolTip="{DynamicResource L_ToolBar_Crop}" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
+            <Button Margin="2,0,0,7" Name="CutImage" x:FieldModifier="public" services:ShortcutService.BaseToolTip="L_ToolBar_Crop" services:ShortcutService.ShortcutKey="Effect.Resize" Click="CropMenuItem_Click_Forward" Style="{StaticResource RoundedMenuButtonStyle}">
                 <Path x:Name="CutImageIcon" x:FieldModifier="public" Data="{DynamicResource Cut_Selection_Image}"  Stretch="Uniform"  Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
 
             <!-- 旋转/翻转菜单 -->
             <Grid Margin="0,0,0,7">
-                <ToggleButton x:Name="RotateFlipMenuToggle" x:FieldModifier="public"  Checked="OnRotateMenuOpened" ToolTip="{DynamicResource L_ToolBar_RotateFlip}" Style="{StaticResource DropDownButtonStyle}">
+                <ToggleButton x:Name="RotateFlipMenuToggle" x:FieldModifier="public"  Checked="OnRotateMenuOpened" services:ShortcutService.BaseToolTip="L_ToolBar_RotateFlip" Style="{StaticResource DropDownButtonStyle}">
                     <Image Source="{DynamicResource Spin180_Image}" Width="16" Height="16"/>
                 </ToggleButton>
 
@@ -236,7 +240,7 @@
             </Grid>
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4,2,11"/>
 
-            <Button ToolTip="{DynamicResource L_ToolBar_CustomColor}" 
+            <Button services:ShortcutService.BaseToolTip="L_ToolBar_CustomColor" 
         Click="OnCustomColorClick_Forward" 
         Margin="5,0,2,7" 
         Padding="0" 
@@ -318,9 +322,9 @@
                 </Viewbox>
             </Button>
 
-            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2,2,2,9" ToolTip="{DynamicResource L_ToolBar_Color1}" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
+            <Button x:Name="ColorBtn1" x:FieldModifier="public" Width="30" Height="30" Margin="2,2,2,9" services:ShortcutService.BaseToolTip="L_ToolBar_Color1" Click="OnColorOneClick_Forward" Tag="True" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding ForegroundBrush, Mode=TwoWay}">
             </Button>
-            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,7" ToolTip="{DynamicResource L_ToolBar_Color2}" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
+            <Button x:Name="ColorBtn2" x:FieldModifier="public" Width="30" Height="30" Margin="2,0,10,7" services:ShortcutService.BaseToolTip="L_ToolBar_Color2" Click="OnColorTwoClick_Forward" Style="{StaticResource ColorCircleButtonStyle}" Background="{Binding BackgroundBrush, Mode=TwoWay}">
             </Button>
 
             <StackPanel>

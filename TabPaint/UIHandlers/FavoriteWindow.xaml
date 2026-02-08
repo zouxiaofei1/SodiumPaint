@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TabPaint.UIHandlers"
         xmlns:controls="clr-namespace:TabPaint.Controls"
         mc:Ignorable="d"
-        Title="Favorite" Height="300" Width="450"
+        Title="Favorite" Height="150" Width="450"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" Topmost="True">
     <Window.Resources>
@@ -44,7 +44,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="48"/>
+                 
                 </Grid.RowDefinitions>
 
                 <!-- Page Tabs (From bottom up) -->
@@ -57,26 +57,19 @@
                 <!-- Add Page Button -->
                 <Button Grid.Row="1" Click="AddPage_Click" Style="{StaticResource RoundedMenuButtonStyle}" Width="32" Height="32" Margin="0,4"
                         ToolTip="{DynamicResource L_Menu_File_Add}">
-                    <Path Data="M11,19V13H5V11H11V5H13V11H19V13H13V19H11Z" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16" Stretch="Uniform"/>
+                    <Path Data="{DynamicResource Favorite_Image}" Stretch="Uniform" 
+Fill="{DynamicResource IconFillBrush}" 
+Width="16" Height="16"/>
                 </Button>
 
-                <!-- Favorite Star Icon (Bottom) -->
-                <Grid Grid.Row="2" WindowChrome.IsHitTestVisibleInChrome="True" Background="Transparent" MouseLeftButtonDown="StarIcon_MouseLeftButtonDown" Cursor="SizeAll">
-                    <Image Source="{StaticResource Favorite_Image}" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                </Grid>
+       
             </Grid>
 
             <!-- Content -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="32"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <!-- Invisible handle for dragging in the top area if needed -->
-                <Border Grid.Row="0" Background="Transparent" WindowChrome.IsHitTestVisibleInChrome="False"/>
-                <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Click="CloseButton_Click" Style="{StaticResource OtherCloseButtonStyle}" Width="46" Height="32"/>
-                </StackPanel>
                 <controls:FavoriteBarControl x:Name="FavoriteContent" Grid.Row="1"/>
             </Grid>
         </Grid>

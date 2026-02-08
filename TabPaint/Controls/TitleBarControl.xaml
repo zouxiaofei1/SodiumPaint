@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
+             xmlns:services="clr-namespace:TabPaint.Services"
                  PreviewMouseDoubleClick   ="Window_DoubleClick"
              mc:Ignorable="d" 
              d:DesignHeight="30" d:DesignWidth="800">
@@ -33,7 +34,7 @@
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <Button Width="40" Height="30" x:Name="HelpButton"
-            ToolTip="{DynamicResource L_TitleBar_Help}"
+            services:ShortcutService.BaseToolTip="L_TitleBar_Help"
             Click="OnHelpClick"
             Style="{StaticResource TitleBarButtonStyle}"
             Margin="0,0,4,0">
@@ -41,7 +42,8 @@
                 </Button>
                 
                 <Button Width="40" Height="30" x:Name="ModeSwitchButton" 
-                        ToolTip="{DynamicResource L_TitleBar_ToggleMode}" 
+                        services:ShortcutService.BaseToolTip="L_TitleBar_ToggleMode" 
+                        services:ShortcutService.ShortcutKey="View.ToggleMode" 
                         Click="OnModeSwitchClick" 
                         Style="{StaticResource TitleBarButtonStyle}"
                         Margin="0,0,8,0" >

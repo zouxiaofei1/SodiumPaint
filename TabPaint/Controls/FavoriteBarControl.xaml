@@ -25,10 +25,14 @@
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto" Padding="6" Style="{DynamicResource FluentScrollViewer}">
-            <StackPanel x:Name="FavoriteStackPanel" Orientation="Horizontal" Margin="4" AllowDrop="True" 
-                       Drop="OnWrapPanelDrop" DragOver="OnWrapPanelDragOver"
-                       Background="Transparent">
+        <ScrollViewer Grid.Row="1" 
+              VerticalScrollBarVisibility="Disabled" 
+              HorizontalScrollBarVisibility="Auto" 
+              Padding="6" 
+              Style="{DynamicResource FluentScrollViewer}"
+              PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
+            <StackPanel x:Name="FavoriteStackPanel" Orientation="Horizontal" Margin="4" AllowDrop="True" Drop="OnWrapPanelDrop" DragOver="OnWrapPanelDragOver"
+               Background="Transparent">
                 <!-- Favorite items will be added here -->
             </StackPanel>
         </ScrollViewer>

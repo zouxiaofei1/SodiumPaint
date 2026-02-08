@@ -14,153 +14,43 @@ namespace TabPaint
     {
         private static readonly Dictionary<Color, string> StandardColorNames = new Dictionary<Color, string>
         {
-            { Colors.White, "L_Color_White" },
-            { Colors.Snow, "L_Color_Snow" },
-            { Colors.Honeydew, "L_Color_Honeydew" },
-            { Colors.MintCream, "L_Color_MintCream" },
-            { Colors.Azure, "L_Color_Azure" },
-            { Colors.AliceBlue, "L_Color_AliceBlue" },
-            { Colors.GhostWhite, "L_Color_GhostWhite" },
-            { Colors.WhiteSmoke, "L_Color_WhiteSmoke" },
-            { Colors.Beige, "L_Color_Beige" },
-            { Colors.OldLace, "L_Color_OldLace" },
-            { Colors.FloralWhite, "L_Color_FloralWhite" },
-            { Colors.Ivory, "L_Color_Ivory" },
-            { Colors.AntiqueWhite, "L_Color_AntiqueWhite" },
-            { Colors.Linen, "L_Color_Linen" },
-            { Colors.LavenderBlush, "L_Color_LavenderBlush" },
-            { Colors.MistyRose, "L_Color_MistyRose" },
-            { Colors.Gainsboro, "L_Color_Gainsboro" },
-            { Colors.LightGray, "L_Color_LightGray" },
-            { Colors.Silver, "L_Color_Silver" },
-            { Colors.DarkGray, "L_Color_DarkGray" },
-            { Colors.Gray, "L_Color_Gray" },
-            { Colors.DimGray, "L_Color_DimGray" },
-            { Colors.LightSlateGray, "L_Color_LightSlateGray" },
-            { Colors.SlateGray, "L_Color_SlateGray" },
-            { Colors.DarkSlateGray, "L_Color_DarkSlateGray" },
-            { Colors.Black, "L_Color_Black" },
-            { Colors.IndianRed, "L_Color_IndianRed" },
-            { Colors.LightCoral, "L_Color_LightCoral" },
-            { Colors.Salmon, "L_Color_Salmon" },
-            { Colors.DarkSalmon, "L_Color_DarkSalmon" },
-            { Colors.LightSalmon, "L_Color_LightSalmon" },
-            { Colors.Crimson, "L_Color_Crimson" },
-            { Colors.Red, "L_Color_Red" },
-            { Colors.Firebrick, "L_Color_FireBrick" },
-            { Colors.DarkRed, "L_Color_DarkRed" },
-            { Colors.Pink, "L_Color_Pink" },
-            { Colors.LightPink, "L_Color_LightPink" },
-            { Colors.HotPink, "L_Color_HotPink" },
-            { Colors.DeepPink, "L_Color_DeepPink" },
-            { Colors.MediumVioletRed, "L_Color_MediumVioletRed" },
-            { Colors.PaleVioletRed, "L_Color_PaleVioletRed" },
-            { Colors.Coral, "L_Color_Coral" },
-            { Colors.Tomato, "L_Color_Tomato" },
-            { Colors.OrangeRed, "L_Color_OrangeRed" },
-            { Colors.DarkOrange, "L_Color_DarkOrange" },
-            { Colors.Orange, "L_Color_Orange" },
-            { Colors.Gold, "L_Color_Gold" },
-            { Colors.Yellow, "L_Color_Yellow" },
-            { Colors.LightYellow, "L_Color_LightYellow" },
-            { Colors.LemonChiffon, "L_Color_LemonChiffon" },
-            { Colors.PapayaWhip, "L_Color_PapayaWhip" },
-            { Colors.Moccasin, "L_Color_Moccasin" },
-            { Colors.PeachPuff, "L_Color_PeachPuff" },
-            { Colors.PaleGoldenrod, "L_Color_PaleGoldenrod" },
-            { Colors.Khaki, "L_Color_Khaki" },
-            { Colors.DarkKhaki, "L_Color_DarkKhaki" },
-            { Colors.Lavender, "L_Color_Lavender" },
-            { Colors.Thistle, "L_Color_Thistle" },
-            { Colors.Plum, "L_Color_Plum" },
-            { Colors.Violet, "L_Color_Violet" },
-            { Colors.Orchid, "L_Color_Orchid" },
-            { Colors.Magenta, "L_Color_Magenta" },
-            { Colors.MediumOrchid, "L_Color_MediumOrchid" },
-            { Colors.MediumPurple, "L_Color_MediumPurple" },
-            { Colors.BlueViolet, "L_Color_BlueViolet" },
-            { Colors.DarkViolet, "L_Color_DarkViolet" },
-            { Colors.DarkOrchid, "L_Color_DarkOrchid" },
-            { Colors.DarkMagenta, "L_Color_DarkMagenta" },
-            { Colors.Purple, "L_Color_Purple" },
-            { Colors.Indigo, "L_Color_Indigo" },
-            { Colors.SlateBlue, "L_Color_SlateBlue" },
-            { Colors.DarkSlateBlue, "L_Color_DarkSlateBlue" },
-            { Colors.GreenYellow, "L_Color_GreenYellow" },
-            { Colors.Chartreuse, "L_Color_Chartreuse" },
-            { Colors.LawnGreen, "L_Color_LawnGreen" },
-            { Colors.Lime, "L_Color_Lime" },
-            { Colors.LimeGreen, "L_Color_LimeGreen" },
-            { Colors.PaleGreen, "L_Color_PaleGreen" },
-            { Colors.LightGreen, "L_Color_LightGreen" },
-            { Colors.MediumSpringGreen, "L_Color_MediumSpringGreen" },
-            { Colors.SpringGreen, "L_Color_SpringGreen" },
-            { Colors.MediumSeaGreen, "L_Color_MediumSeaGreen" },
-            { Colors.SeaGreen, "L_Color_SeaGreen" },
-            { Colors.ForestGreen, "L_Color_ForestGreen" },
-            { Colors.Green, "L_Color_Green" },
-            { Colors.DarkGreen, "L_Color_DarkGreen" },
-            { Colors.YellowGreen, "L_Color_YellowGreen" },
-            { Colors.OliveDrab, "L_Color_OliveDrab" },
-            { Colors.Olive, "L_Color_Olive" },
-            { Colors.DarkOliveGreen, "L_Color_DarkOliveGreen" },
-            { Colors.MediumAquamarine, "L_Color_MediumAquamarine" },
-            { Colors.DarkSeaGreen, "L_Color_DarkSeaGreen" },
-            { Colors.LightSeaGreen, "L_Color_LightSeaGreen" },
-            { Colors.DarkCyan, "L_Color_DarkCyan" },
-            { Colors.Teal, "L_Color_Teal" },
-            { Colors.Cyan, "L_Color_Cyan" },
-            { Colors.LightCyan, "L_Color_LightCyan" },
-            { Colors.PaleTurquoise, "L_Color_PaleTurquoise" },
-            { Colors.Aquamarine, "L_Color_Aquamarine" },
-            { Colors.Turquoise, "L_Color_Turquoise" },
-            { Colors.MediumTurquoise, "L_Color_MediumTurquoise" },
-            { Colors.DarkTurquoise, "L_Color_DarkTurquoise" },
-            { Colors.CadetBlue, "L_Color_CadetBlue" },
-            { Colors.SteelBlue, "L_Color_SteelBlue" },
-            { Colors.LightSteelBlue, "L_Color_LightSteelBlue" },
-            { Colors.PowderBlue, "L_Color_PowderBlue" },
-            { Colors.LightBlue, "L_Color_LightBlue" },
-            { Colors.SkyBlue, "L_Color_SkyBlue" },
-            { Colors.LightSkyBlue, "L_Color_LightSkyBlue" },
-            { Colors.DeepSkyBlue, "L_Color_DeepSkyBlue" },
-            { Colors.DodgerBlue, "L_Color_DodgerBlue" },
-            { Colors.CornflowerBlue, "L_Color_CornflowerBlue" },
-            { Colors.MediumSlateBlue, "L_Color_MediumSlateBlue" },
-            { Colors.RoyalBlue, "L_Color_RoyalBlue" },
-            { Colors.Blue, "L_Color_Blue" },
-            { Colors.MediumBlue, "L_Color_MediumBlue" },
-            { Colors.DarkBlue, "L_Color_DarkBlue" },
-            { Colors.Navy, "L_Color_Navy" },
-            { Colors.MidnightBlue, "L_Color_MidnightBlue" },
-            { Colors.Cornsilk, "L_Color_Cornsilk" },
-            { Colors.BlanchedAlmond, "L_Color_BlanchedAlmond" },
-            { Colors.Bisque, "L_Color_Bisque" },
-            { Colors.NavajoWhite, "L_Color_NavajoWhite" },
-            { Colors.Wheat, "L_Color_Wheat" },
-            { Colors.BurlyWood, "L_Color_BurlyWood" },
-            { Colors.Tan, "L_Color_Tan" },
-            { Colors.RosyBrown, "L_Color_RosyBrown" },
-            { Colors.SandyBrown, "L_Color_SandyBrown" },
-            { Colors.Goldenrod, "L_Color_Goldenrod" },
-            { Colors.DarkGoldenrod, "L_Color_DarkGoldenrod" },
-            { Colors.Peru, "L_Color_Peru" },
-            { Colors.Chocolate, "L_Color_Chocolate" },
-            { Colors.SaddleBrown, "L_Color_SaddleBrown" },
-            { Colors.Sienna, "L_Color_Sienna" },
-            { Colors.Brown, "L_Color_Brown" },
-            { Colors.Maroon, "L_Color_Maroon" },
-            { Color.FromRgb(102, 51, 0), "L_Color_DeepBrown" },
-            { Color.FromRgb(0, 102, 102), "L_Color_RockCyan" },
-            { Color.FromRgb(62, 39, 35), "L_Color_Coffee" },
-            { Color.FromRgb(204, 255, 204), "L_Color_MintGreen" },
-            { Color.FromRgb(255, 204, 255), "L_Color_LightPink" },
-            { Color.FromRgb(255, 204, 204), "L_Color_LightRed" },
-            { Color.FromRgb(255, 229, 204), "L_Color_LightOrange" },
-            { Color.FromRgb(204, 0, 0), "L_Color_DeepRed" },
-            { Color.FromRgb(204, 102, 0), "L_Color_DeepOrange" },
-            { Color.FromRgb(153, 76, 0), "L_Color_Ochre" },
-            { Color.FromRgb(51, 0, 102), "L_Color_DeepViolet" }
+            { Colors.White, "L_Color_White" }, { Colors.Snow, "L_Color_Snow" },  { Colors.Honeydew, "L_Color_Honeydew" }, { Colors.MintCream, "L_Color_MintCream" },
+            { Colors.Azure, "L_Color_Azure" }, { Colors.AliceBlue, "L_Color_AliceBlue" },     { Colors.GhostWhite, "L_Color_GhostWhite" },{ Colors.WhiteSmoke, "L_Color_WhiteSmoke" },
+            { Colors.Beige, "L_Color_Beige" },{ Colors.OldLace, "L_Color_OldLace" },  { Colors.FloralWhite, "L_Color_FloralWhite" }, { Colors.Ivory, "L_Color_Ivory" },
+            { Colors.AntiqueWhite, "L_Color_AntiqueWhite" }, { Colors.Linen, "L_Color_Linen" },   { Colors.LavenderBlush, "L_Color_LavenderBlush" },{ Colors.MistyRose, "L_Color_MistyRose" },
+            { Colors.Gainsboro, "L_Color_Gainsboro" }, { Colors.LightGray, "L_Color_LightGray" },   { Colors.Silver, "L_Color_Silver" }, { Colors.DarkGray, "L_Color_DarkGray" },
+            { Colors.Gray, "L_Color_Gray" }, { Colors.DimGray, "L_Color_DimGray" },   { Colors.LightSlateGray, "L_Color_LightSlateGray" },{ Colors.SlateGray, "L_Color_SlateGray" },
+            { Colors.DarkSlateGray, "L_Color_DarkSlateGray" }, { Colors.Black, "L_Color_Black" },   { Colors.IndianRed, "L_Color_IndianRed" },  { Colors.LightCoral, "L_Color_LightCoral" },
+            { Colors.Salmon, "L_Color_Salmon" }, { Colors.DarkSalmon, "L_Color_DarkSalmon" }, { Colors.LightSalmon, "L_Color_LightSalmon" },{ Colors.Crimson, "L_Color_Crimson" },
+            { Colors.Red, "L_Color_Red" },{ Colors.Firebrick, "L_Color_FireBrick" },  { Colors.DarkRed, "L_Color_DarkRed" },{ Colors.Pink, "L_Color_Pink" },
+            { Colors.LightPink, "L_Color_LightPink" }, { Colors.HotPink, "L_Color_HotPink" },    { Colors.DeepPink, "L_Color_DeepPink" },{ Colors.MediumVioletRed, "L_Color_MediumVioletRed" },
+            { Colors.PaleVioletRed, "L_Color_PaleVioletRed" }, { Colors.Coral, "L_Color_Coral" },  { Colors.Tomato, "L_Color_Tomato" },{ Colors.OrangeRed, "L_Color_OrangeRed" },
+            { Colors.DarkOrange, "L_Color_DarkOrange" }, { Colors.Orange, "L_Color_Orange" }, { Colors.Gold, "L_Color_Gold" },{ Colors.Yellow, "L_Color_Yellow" },
+            { Colors.LightYellow, "L_Color_LightYellow" }, { Colors.LemonChiffon, "L_Color_LemonChiffon" }, { Colors.PapayaWhip, "L_Color_PapayaWhip" }, { Colors.Moccasin, "L_Color_Moccasin" },
+            { Colors.PeachPuff, "L_Color_PeachPuff" }, { Colors.PaleGoldenrod, "L_Color_PaleGoldenrod" },   { Colors.Khaki, "L_Color_Khaki" },{ Colors.DarkKhaki, "L_Color_DarkKhaki" },
+            { Colors.Lavender, "L_Color_Lavender" }, { Colors.Thistle, "L_Color_Thistle" }, { Colors.Plum, "L_Color_Plum" },{ Colors.Violet, "L_Color_Violet" },
+            { Colors.Orchid, "L_Color_Orchid" }, { Colors.Magenta, "L_Color_Magenta" },    { Colors.MediumOrchid, "L_Color_MediumOrchid" },{ Colors.MediumPurple, "L_Color_MediumPurple" },
+            { Colors.BlueViolet, "L_Color_BlueViolet" },{ Colors.DarkViolet, "L_Color_DarkViolet" }, { Colors.DarkOrchid, "L_Color_DarkOrchid" }, { Colors.DarkMagenta, "L_Color_DarkMagenta" },
+            { Colors.Purple, "L_Color_Purple" }, { Colors.Indigo, "L_Color_Indigo" },  { Colors.SlateBlue, "L_Color_SlateBlue" },  { Colors.DarkSlateBlue, "L_Color_DarkSlateBlue" },
+            { Colors.GreenYellow, "L_Color_GreenYellow" }, { Colors.Chartreuse, "L_Color_Chartreuse" },   { Colors.LawnGreen, "L_Color_LawnGreen" }, { Colors.Lime, "L_Color_Lime" },
+            { Colors.LimeGreen, "L_Color_LimeGreen" }, { Colors.PaleGreen, "L_Color_PaleGreen" },  { Colors.LightGreen, "L_Color_LightGreen" }, { Colors.MediumSpringGreen, "L_Color_MediumSpringGreen" },
+            { Colors.SpringGreen, "L_Color_SpringGreen" },  { Colors.MediumSeaGreen, "L_Color_MediumSeaGreen" },  { Colors.SeaGreen, "L_Color_SeaGreen" },{ Colors.ForestGreen, "L_Color_ForestGreen" },
+            { Colors.Green, "L_Color_Green" }, { Colors.DarkGreen, "L_Color_DarkGreen" },  { Colors.YellowGreen, "L_Color_YellowGreen" }, { Colors.OliveDrab, "L_Color_OliveDrab" },
+            { Colors.Olive, "L_Color_Olive" },{ Colors.DarkOliveGreen, "L_Color_DarkOliveGreen" },  { Colors.MediumAquamarine, "L_Color_MediumAquamarine" },  { Colors.DarkSeaGreen, "L_Color_DarkSeaGreen" },
+            { Colors.LightSeaGreen, "L_Color_LightSeaGreen" },{ Colors.DarkCyan, "L_Color_DarkCyan" },   { Colors.Teal, "L_Color_Teal" },{ Colors.Cyan, "L_Color_Cyan" },
+            { Colors.LightCyan, "L_Color_LightCyan" },{ Colors.PaleTurquoise, "L_Color_PaleTurquoise" }, { Colors.Aquamarine, "L_Color_Aquamarine" },  { Colors.Turquoise, "L_Color_Turquoise" },
+            { Colors.MediumTurquoise, "L_Color_MediumTurquoise" }, { Colors.DarkTurquoise, "L_Color_DarkTurquoise" },   { Colors.CadetBlue, "L_Color_CadetBlue" },   { Colors.SteelBlue, "L_Color_SteelBlue" },
+            { Colors.LightSteelBlue, "L_Color_LightSteelBlue" }, { Colors.PowderBlue, "L_Color_PowderBlue" },    { Colors.LightBlue, "L_Color_LightBlue" },  { Colors.SkyBlue, "L_Color_SkyBlue" },
+            { Colors.LightSkyBlue, "L_Color_LightSkyBlue" }, { Colors.DeepSkyBlue, "L_Color_DeepSkyBlue" },    { Colors.DodgerBlue, "L_Color_DodgerBlue" }, { Colors.CornflowerBlue, "L_Color_CornflowerBlue" },
+            { Colors.MediumSlateBlue, "L_Color_MediumSlateBlue" }, { Colors.RoyalBlue, "L_Color_RoyalBlue" },  { Colors.Blue, "L_Color_Blue" }, { Colors.MediumBlue, "L_Color_MediumBlue" },
+            { Colors.DarkBlue, "L_Color_DarkBlue" }, { Colors.Navy, "L_Color_Navy" }, { Colors.MidnightBlue, "L_Color_MidnightBlue" }, { Colors.Cornsilk, "L_Color_Cornsilk" },
+            { Colors.BlanchedAlmond, "L_Color_BlanchedAlmond" },{ Colors.Bisque, "L_Color_Bisque" },  { Colors.NavajoWhite, "L_Color_NavajoWhite" },   { Colors.Wheat, "L_Color_Wheat" },
+            { Colors.BurlyWood, "L_Color_BurlyWood" }, { Colors.Tan, "L_Color_Tan" },  { Colors.RosyBrown, "L_Color_RosyBrown" },{ Colors.SandyBrown, "L_Color_SandyBrown" },
+            { Colors.Goldenrod, "L_Color_Goldenrod" },  { Colors.DarkGoldenrod, "L_Color_DarkGoldenrod" },  { Colors.Peru, "L_Color_Peru" },  { Colors.Chocolate, "L_Color_Chocolate" },
+            { Colors.SaddleBrown, "L_Color_SaddleBrown" },  { Colors.Sienna, "L_Color_Sienna" }, { Colors.Brown, "L_Color_Brown" },   { Colors.Maroon, "L_Color_Maroon" },
+            { Color.FromRgb(102, 51, 0), "L_Color_DeepBrown" }, { Color.FromRgb(0, 102, 102), "L_Color_RockCyan" },  { Color.FromRgb(62, 39, 35), "L_Color_Coffee" },  { Color.FromRgb(204, 255, 204), "L_Color_MintGreen" },
+            { Color.FromRgb(255, 204, 255), "L_Color_LightPink" },   { Color.FromRgb(255, 204, 204), "L_Color_LightRed" },   { Color.FromRgb(255, 229, 204), "L_Color_LightOrange" },   { Color.FromRgb(204, 0, 0), "L_Color_DeepRed" },
+            { Color.FromRgb(204, 102, 0), "L_Color_DeepOrange" },   { Color.FromRgb(153, 76, 0), "L_Color_Ochre" },  { Color.FromRgb(51, 0, 102), "L_Color_DeepViolet" }
         };
 
         private string GetFriendlyColorName(Color target)
@@ -338,8 +228,6 @@ namespace TabPaint
             if (AlphaGradientStop != null)
                 AlphaGradientStop.Color = pureColor;
         }
-
-
         private void SetColorFromRgb(byte r, byte g, byte b)
         {
             var c = System.Drawing.Color.FromArgb(r, g, b);
@@ -348,7 +236,6 @@ namespace TabPaint
             double max = Math.Max(r, Math.Max(g, b));
             double min = Math.Min(r, Math.Min(g, b));
             _currentVal = max / 255.0;
-
             if (max == 0) _currentSat = 0;
             else _currentSat = (max - min) / max;
 
@@ -416,10 +303,7 @@ namespace TabPaint
                     UpdateHueColorVisual(); // 动态更新滑块渐变色
                 }
             }
-            finally
-            {
-                _isUpdatingInputs = false;
-            }
+            finally { _isUpdatingInputs = false; }
         }
         #endregion
 
@@ -430,17 +314,13 @@ namespace TabPaint
             int h = 360;
             var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
             int[] pixels = new int[w * h];
-
             for (int y = 0; y < h; y++)
             {
                 double hue = 360 - (y * 360.0 / h);
                 var color = ColorFromHsv(hue, 1, 1);
                 int colorData = (255 << 24) | (color.R << 16) | (color.G << 8) | color.B;
 
-                for (int x = 0; x < w; x++)
-                {
-                    pixels[y * w + x] = colorData;
-                }
+                for (int x = 0; x < w; x++) pixels[y * w + x] = colorData;
             }
             bitmap.WritePixels(new Int32Rect(0, 0, w, h), pixels, w * 4, 0);
             HueSliderImage.Source = bitmap;
@@ -472,7 +352,6 @@ namespace TabPaint
             Keyboard.ClearFocus();
             e.Handled = true;
             _isDraggingSpectrum = true;
-
             var grid = sender as Grid;
             if (grid != null)
             {
@@ -486,10 +365,7 @@ namespace TabPaint
             var grid = sender as Grid;
             if (grid == null) return;
 
-            if (_isDraggingSpectrum)
-            {
-                UpdateSpectrumFromMouse(e.GetPosition(grid), grid.ActualWidth, grid.ActualHeight);
-            }
+            if (_isDraggingSpectrum) UpdateSpectrumFromMouse(e.GetPosition(grid), grid.ActualWidth, grid.ActualHeight);
         }
 
         private void Spectrum_MouseUp(object sender, MouseButtonEventArgs e)
@@ -497,10 +373,7 @@ namespace TabPaint
             _isDraggingSpectrum = false;
             if (sender is IInputElement el) el.ReleaseMouseCapture();
 
-            if (ColorToolTipBorder != null)
-            {
-                ColorToolTipBorder.Visibility = Visibility.Collapsed;
-            }
+            if (ColorToolTipBorder != null) ColorToolTipBorder.Visibility = Visibility.Collapsed;
         }
 
         private void UpdateSpectrumFromMouse(Point p, double w, double h)
@@ -600,8 +473,7 @@ namespace TabPaint
             if (_isDraggingAlpha)
             {
                 var grid = sender as Grid;
-                if (grid != null)
-                    UpdateAlphaFromMouse(e.GetPosition(grid), grid.ActualHeight);
+                if (grid != null) UpdateAlphaFromMouse(e.GetPosition(grid), grid.ActualHeight);
             }
         }
 
@@ -641,8 +513,7 @@ namespace TabPaint
                     var c = GetRgbFromHsv(true);
                     NewColorRect.Fill = new SolidColorBrush(c);
                     SelectedColor = c;
-                    // 更新 Alpha 输入框
-                    if (InputAlpha != null) InputAlpha.Text = "255";
+                    if (InputAlpha != null) InputAlpha.Text = "255";// 更新 Alpha 输入框
                 }
                 catch { }
             }
@@ -701,8 +572,6 @@ namespace TabPaint
 
                 _isUpdatingInputs = true;
                 HexInput.Text = $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
-
-
                 if (AlphaSliderGrid.ActualHeight > 0)
                     Canvas.SetTop(AlphaCursor, (1 - (_currentAlpha / 255.0)) * AlphaSliderGrid.ActualHeight);
 
@@ -796,7 +665,8 @@ namespace TabPaint
                             Background = new SolidColorBrush(c),
                             ToolTip = GetFriendlyColorName(c)
                         };
-                        btn.Click += (s, e2) => {
+                        btn.Click += (s, e2) =>
+                        {
                             _currentAlpha = c.A;
                             SetColorFromRgb(c.R, c.G, c.B);
                             UpdateUI();
@@ -817,15 +687,7 @@ namespace TabPaint
                 }
             }
         }
-        private void OkButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.SetDialogResultSafe(true);
-            Close();
-        }
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.SetDialogResultSafe(false);
-            Close();
-        }
+        private void OkButton_Click(object sender, RoutedEventArgs e) { this.SetDialogResultSafe(true); Close(); }
+        private void CancelButton_Click(object sender, RoutedEventArgs e) { this.SetDialogResultSafe(false); Close(); }
     }
 }

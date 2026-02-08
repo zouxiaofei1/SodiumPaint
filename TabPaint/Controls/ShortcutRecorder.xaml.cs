@@ -2,10 +2,12 @@
 //ShortcutRecorder.xaml.cs
 //快捷键录制控件，用于在设置界面中捕获用户按下的键盘组合键并实时显示。
 //
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using TabPaint.Services;
 
 namespace TabPaint.Controls
 {
@@ -29,16 +31,7 @@ namespace TabPaint.Controls
 
         private static void OnCurrentItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as ShortcutRecorder;
-            control?.UpdateDisplay();
-        }
-
-        private void UpdateDisplay()
-        {
-            if (CurrentItem != null)
-                KeyDisplay.Text = CurrentItem.DisplayText;
-            else
-                KeyDisplay.Text = "无";
+            // Binding is used in XAML now
         }
         private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -61,13 +54,40 @@ namespace TabPaint.Controls
             // 获取修饰键
             ModifierKeys modifiers = Keyboard.Modifiers;
 
+            // 冲突检查逻辑
+            var settings = SettingsManager.Instance.Current;
+            if (settings != null && settings.Shortcuts != null)
+            {
+                // 查找除了当前项以外，是否已经有功能占用了这个组合键
+                var conflict = settings.Shortcuts.FirstOrDefault(kvp => 
+                    kvp.Value != CurrentItem && // 排除自己
+                    key != Key.None && // 忽略 None 键的冲突
+                    kvp.Value.Key == key && 
+                    kvp.Value.Modifiers == modifiers);
+
+                if (conflict.Value != null)
+                {
+                    // 发现冲突：清除旧的
+                    conflict.Value.Key = Key.None;
+                    conflict.Value.Modifiers = ModifierKeys.None;
+                    
+                    // 尝试通知 SettingsWindow 显示 Toast
+                    var window = Window.GetWindow(this) as SettingsWindow;
+                    if (window != null)
+                    {
+                        // 尝试获取冲突功能的名称
+                        string featureName = GetFriendlyName(conflict.Key);
+                        window.ShowConflictToast(featureName);
+                    }
+                }
+            }
+
             // 更新数据对象
             if (CurrentItem == null) CurrentItem = new ShortcutItem();
 
             CurrentItem.Key = key;
             CurrentItem.Modifiers = modifiers;
 
-            UpdateDisplay();
             Keyboard.ClearFocus();
         }
         private void UserControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -93,8 +113,32 @@ namespace TabPaint.Controls
             {
                 CurrentItem.Key = Key.None;
                 CurrentItem.Modifiers = ModifierKeys.None;
-                UpdateDisplay();
             }
+        }
+
+        private string GetFriendlyName(string shortcutId)
+        {
+            // 1. 尝试直接拼接 L_Settings_Shortcuts_ 为前缀的资源 Key (例如 L_Settings_Shortcuts_File_Open)
+            string resourceKey = "L_Settings_Shortcuts_" + shortcutId.Replace(".", "_");
+            string name = LocalizationManager.GetString(resourceKey);
+            if (name != resourceKey) return name;
+
+            // 2. 尝试去掉前缀后的名称 (例如 L_Settings_Shortcuts_ToggleMode)
+            resourceKey = "L_Settings_Shortcuts_" + (shortcutId.Contains(".") ? shortcutId.Split('.')[1] : shortcutId);
+            name = LocalizationManager.GetString(resourceKey);
+            if (name != resourceKey) return name;
+
+            // 3. 尝试通用工具前缀 (L_ToolBar_...)
+            resourceKey = "L_ToolBar_" + shortcutId.Replace("Tool.SwitchTo", "");
+            name = LocalizationManager.GetString(resourceKey);
+            if (name != resourceKey) return name;
+
+            // 4. 尝试菜单前缀 (L_Menu_...)
+            resourceKey = "L_Menu_" + shortcutId.Replace(".", "_");
+            name = LocalizationManager.GetString(resourceKey);
+            if (name != resourceKey) return name;
+
+            return shortcutId;
         }
     }
 }
