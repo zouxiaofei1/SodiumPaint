@@ -174,7 +174,7 @@ namespace TabPaint
         public class PaintSession
         {
             public string LastViewedFile { get; set; } // 上次正在看的文件
-            public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>();
+            public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>(); public int ActiveTabIndex { get; set; }
         }
         public bool _startupFinished = false;
 
@@ -186,6 +186,7 @@ namespace TabPaint
             public bool IsDirty { get; set; }
             public bool IsNew { get; set; }
             public int UntitledNumber { get; set; }
+            public bool IsCleanDiskFile { get; set; }
             // [新增] 记录该标签页所属的工作目录
             public string WorkDirectory { get; set; }
         }

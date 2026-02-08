@@ -132,7 +132,6 @@ namespace TabPaint
                     {
                         if (_isInternalZoomUpdate) return;
                         double targetScale = SliderToZoom(MyStatusBar.ZoomSliderControl.Value);
-                        //SetZoom(targetScale, slient: true);
                     };
                 }
                 SetCropButtonState();
@@ -175,8 +174,7 @@ namespace TabPaint
                 }
             }
             else
-            {
-
+            {//无路径启动
                 {
                     if (FileTabs.Count == 0)
                     {

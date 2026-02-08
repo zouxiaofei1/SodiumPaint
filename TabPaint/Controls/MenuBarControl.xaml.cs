@@ -212,7 +212,7 @@ namespace TabPaint.Controls
                 RecentFilesMenuItem.Icon = resetPath;
 
                 menuItem.Items.Add(RecentFilesMenuItem);
-                menuItem.Items.Add(CreateMenuItem("L_RecycleBin_Title", "Delete_Image", OnRecycleBinClick));
+             //   menuItem.Items.Add(CreateMenuItem("L_RecycleBin_Title", "Delete_Image", OnRecycleBinClick));
                 menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "File.Save"));
