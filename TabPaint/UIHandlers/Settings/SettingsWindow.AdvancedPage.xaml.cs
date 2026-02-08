@@ -5,15 +5,109 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using TabPaint;
 
 namespace TabPaint.Pages
 {
     public partial class AdvancedPage : UserControl
     {
+        private enum MemoryUnit { KB, MB, GB }
+        private MemoryUnit _currentUnit = MemoryUnit.MB;
+
         public AdvancedPage()
         {
             InitializeComponent();
+            this.Loaded += AdvancedPage_Loaded;
         }
+
+        private void AdvancedPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateMemoryTextBox();
+        }
+
+        private void UpdateMemoryTextBox()
+        {
+            var settings = SettingsManager.Instance.Current;
+            double mbValue = settings.MaxUndoMemoryMB;
+            double displayValue = mbValue;
+
+            switch (_currentUnit)
+            {
+                case MemoryUnit.KB: displayValue = mbValue * 1024; break;
+                case MemoryUnit.GB: displayValue = mbValue / 1024.0; break;
+            }
+
+            if (UndoMemoryTextBox != null)
+                UndoMemoryTextBox.Text = displayValue % 1 == 0 ? displayValue.ToString("0") : displayValue.ToString("0.##");
+            if (UnitToggleButton != null)
+                UnitToggleButton.Content = _currentUnit.ToString();
+        }
+
+        private void UnitToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (UndoMemoryTextBox == null) return;
+
+            // 获取当前显示的数值
+            if (double.TryParse(UndoMemoryTextBox.Text, out double currentValue))
+            {
+                // 先转换回 MB
+                double mbValue = currentValue;
+                switch (_currentUnit)
+                {
+                    case MemoryUnit.KB: mbValue = currentValue / 1024.0; break;
+                    case MemoryUnit.GB: mbValue = currentValue * 1024.0; break;
+                }
+
+                // 切换单位
+                _currentUnit = (MemoryUnit)(((int)_currentUnit + 1) % 3);
+
+                // 更新显示
+                double nextDisplayValue = mbValue;
+                switch (_currentUnit)
+                {
+                    case MemoryUnit.KB: nextDisplayValue = mbValue * 1024; break;
+                    case MemoryUnit.GB: nextDisplayValue = mbValue / 1024.0; break;
+                }
+                UndoMemoryTextBox.Text = nextDisplayValue % 1 == 0 ? nextDisplayValue.ToString("0") : nextDisplayValue.ToString("0.##");
+                UnitToggleButton.Content = _currentUnit.ToString();
+            }
+            else
+            {
+                _currentUnit = (MemoryUnit)(((int)_currentUnit + 1) % 3);
+                UpdateMemoryTextBox();
+            }
+        }
+
+        private void UndoMemoryTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (UndoMemoryTextBox == null) return;
+
+            if (double.TryParse(UndoMemoryTextBox.Text, out double value))
+            {
+                double mbValue = value;
+                switch (_currentUnit)
+                {
+                    case MemoryUnit.KB: mbValue = value / 1024.0; break;
+                    case MemoryUnit.GB: mbValue = value * 1024.0; break;
+                }
+
+                // 限制 MB 范围 (0 - 10GB)
+                if (mbValue < 0) mbValue = 0;
+                if (mbValue > 10240) mbValue = 10240;
+
+                SettingsManager.Instance.Current.MaxUndoMemoryMB = (int)mbValue;
+                // 使用完整路径调用静态方法
+                global::TabPaint.MainWindow.UndoRedoManager.CheckGlobalUndoLimits();
+                
+                // 刷新显示（处理四舍五入或范围限制后的值）
+                UpdateMemoryTextBox();
+            }
+            else
+            {
+                UpdateMemoryTextBox();
+            }
+        }
+
         private void OpenPlugins_Click(object sender, RoutedEventArgs e)
         {
             var win = Window.GetWindow(this) as SettingsWindow;
@@ -46,7 +140,9 @@ namespace TabPaint.Pages
             var result = FluentMessageBox.Show(
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset_Confirm"),
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset"),
-              MessageBoxButton.YesNo);
+              MessageBoxButton.YesNo,
+              MessageBoxImage.Information,
+              Window.GetWindow(this));
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -81,7 +177,9 @@ namespace TabPaint.Pages
                 FluentMessageBox.Show(
                    string.Format(LocalizationManager.GetString("L_Msg_ResetFailed"), ex.Message),
                    LocalizationManager.GetString("L_Common_Error"),
-                   MessageBoxButton.OK);
+                   MessageBoxButton.OK,
+                   MessageBoxImage.Error,
+                   Window.GetWindow(this));
             }
         }
         private void TextBox_LostFocus(object sender, RoutedEventArgs e)// 输入框失去焦点时进行数值校验
@@ -98,7 +196,7 @@ namespace TabPaint.Pages
 
                     // 显式更新绑定源
                     var binding = textBox.GetBindingExpression(TextBox.TextProperty);
-                    binding?.UpdateSource(); MainWindow.UndoRedoManager.CheckGlobalUndoMemory();
+                    binding?.UpdateSource(); global::TabPaint.MainWindow.UndoRedoManager.CheckGlobalUndoLimits();
                 }
                 else
                 {

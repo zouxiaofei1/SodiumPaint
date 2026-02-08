@@ -3,6 +3,7 @@
 //应用程序设置模型，包含语言、主题、快捷键、画笔参数及各种UI配置项的持久化结构。
 //
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Globalization;
@@ -170,14 +171,76 @@ namespace TabPaint
         private void RestoreWindowBounds()
         {
             var settings = TabPaint.SettingsManager.Instance.Current;
-            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;//功能砍了，不再支持记忆上次的窗口位置，统一从屏幕中心启动
-            this.Width = Math.Max(settings.WindowWidth, AppConsts.WindowMinSize);
-            this.Height = Math.Max(settings.WindowHeight, AppConsts.WindowMinSize);
-            if (settings.WindowState == (int)WindowState.Maximized)
-            {
-                this.WindowState = WindowState.Maximized;
-            }
+            var workArea = SystemParameters.WorkArea;
 
+            // 1. 确定初始尺寸
+            double winWidth = Math.Max(settings.WindowWidth, AppConsts.WindowMinSize);
+            double winHeight = Math.Max(settings.WindowHeight, AppConsts.WindowMinSize);
+            if (winWidth > workArea.Width) winWidth = workArea.Width;
+            if (winHeight > workArea.Height) winHeight = workArea.Height;
+
+            this.Width = winWidth;
+            this.Height = winHeight;
+
+            // 2. 查找参照窗口
+            var existingWindows = Application.Current.Windows.OfType<MainWindow>()
+                .Where(w => w != this && w.IsVisible).ToList();
+
+            if (existingWindows.Count > 0)
+            {
+                // 层叠创建逻辑
+                var refWindow = existingWindows.Last();
+                double offset = 30;
+                double newLeft, newTop;
+
+                if (refWindow.WindowState == WindowState.Maximized)
+                {
+                    newLeft = refWindow.RestoreBounds.Left + offset;
+                    newTop = refWindow.RestoreBounds.Top + offset;
+                }
+                else
+                {
+                    newLeft = refWindow.Left + offset;
+                    newTop = refWindow.Top + offset;
+                }
+
+                // 回绕处理：超出屏幕边界则返回左上角区域
+                if (newLeft + winWidth > workArea.Right || newTop + winHeight > workArea.Bottom) { newLeft = workArea.Left + offset; newTop = workArea.Top + offset; }
+                if (newLeft < workArea.Left) newLeft = workArea.Left;
+                if (newTop < workArea.Top) newTop = workArea.Top;
+
+                this.WindowStartupLocation = WindowStartupLocation.Manual;
+                this.Left = newLeft;
+                this.Top = newTop;
+                this.WindowState = WindowState.Normal;
+            }
+            else
+            {
+                // 首个窗口逻辑：恢复上次位置或居中
+                if (settings.WindowLeft != AppConsts.UninitializedWindowPosition &&
+                    settings.WindowTop != AppConsts.UninitializedWindowPosition)
+                {
+                    this.WindowStartupLocation = WindowStartupLocation.Manual;
+                    this.Left = settings.WindowLeft;
+                    this.Top = settings.WindowTop;
+                    
+                    // 额外检查：确保恢复的位置在当前可见区域内（防止多显示器断开后的问题）
+                    if (this.Left + 100 > workArea.Right || this.Top + 100 > workArea.Bottom ||
+                        this.Left + this.Width < workArea.Left || this.Top < workArea.Top)
+                    {
+                        this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    }
+                }
+                else
+                {
+                    this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                }
+
+                if (settings.WindowState == (int)WindowState.Maximized)
+                {
+                    this.WindowState = WindowState.Maximized;
+                }
+            }
         }
 
         private void RestoreAppState()
@@ -767,16 +830,16 @@ namespace TabPaint
                 }
             }
         }
-        private int _maxUndoSteps = 200;
-        [JsonPropertyName("max_undo_steps")]
-        public int MaxUndoSteps
+        private int _maxGlobalUndoSteps = 1000;
+        [JsonPropertyName("max_global_undo_steps")]
+        public int MaxGlobalUndoSteps
         {
-            get => _maxUndoSteps;
+            get => _maxGlobalUndoSteps;
             set
             {
-                if (_maxUndoSteps != value)
+                if (_maxGlobalUndoSteps != value)
                 {
-                    _maxUndoSteps = value;
+                    _maxGlobalUndoSteps = value;
                     OnPropertyChanged();
                 }
             }

@@ -227,72 +227,63 @@ namespace TabPaint.Controls
                 }
                 // 2. 获取文件信息
                 string filePath = tabData.FilePath;
-                bool isNewFile = string.IsNullOrEmpty(filePath) || !File.Exists(filePath);
+                string backupPath = tabData.BackupPath;
+                bool hasBackup = !string.IsNullOrEmpty(backupPath) && File.Exists(backupPath);
+                string effectivePath = hasBackup ? backupPath : filePath;
+                bool isNewFile = string.IsNullOrEmpty(filePath) || filePath.StartsWith("::TABPAINT_NEW::");
 
-                if (isNewFile)
+                // 2.1 优先确定显示尺寸
+                bool dimsFound = false;
+                if (tabData.IsSelected)
                 {
-                    PopupFileSizeText.Text = "";
-                    // 2. 对于新图片显示正确的宽高
-                    bool dimsFound = false;
-                    if (tabData.IsSelected)
+                    var mw = MainWindow.GetCurrentInstance();
+                    if (mw?._surface?.Bitmap != null)
                     {
-                        var mw = MainWindow.GetCurrentInstance();
-                        if (mw?._surface?.Bitmap != null)
-                        {
-                            PopupDimensionsText.Text = $"{mw._surface.Bitmap.PixelWidth} × {mw._surface.Bitmap.PixelHeight} px";
-                            dimsFound = true;
-                        }
+                        PopupDimensionsText.Text = $"{mw._surface.Bitmap.PixelWidth} × {mw._surface.Bitmap.PixelHeight} px";
+                        dimsFound = true;
                     }
-
-                    if (!dimsFound && !string.IsNullOrEmpty(tabData.BackupPath) && File.Exists(tabData.BackupPath))
-                    {
-                        var dims = GetImageDimensionsFast(tabData.BackupPath);
-                        if (dims.Width > 0)
-                        {
-                            PopupDimensionsText.Text = $"{dims.Width} × {dims.Height} px";
-                            dimsFound = true;
-                        }
-                    }
-
-                    if (!dimsFound)
-                    {
-                        // ★ 兜底尝试从缩略图获取尺寸
-                        var thumb = tabData.Thumbnail;
-                        if (thumb != null && thumb.PixelWidth > 0 && thumb.PixelWidth != 100) // 避免显示缩略图本身的100x60
-                        {
-                            PopupDimensionsText.Text = $"{thumb.PixelWidth} × {thumb.PixelHeight} px";
-                        }
-                        else
-                        {
-                            PopupDimensionsText.Text = LocalizationManager.GetString("L_ImgBar_NewImage");
-                        }
-                    }
-                    _highResTimer.Stop();
                 }
-                else
+
+                if (!dimsFound && !string.IsNullOrEmpty(effectivePath) && File.Exists(effectivePath))
+                {
+                    var dims = GetImageDimensionsFast(effectivePath);
+                    if (dims.Width > 0)
+                    {
+                        PopupDimensionsText.Text = $"{dims.Width} × {dims.Height} px";
+                        dimsFound = true;
+                    }
+                }
+
+                if (!dimsFound)
+                {
+                    var thumb = tabData.Thumbnail;
+                    if (thumb != null && thumb.PixelWidth > 0 && thumb.PixelWidth != 100)
+                    {
+                        PopupDimensionsText.Text = $"{thumb.PixelWidth} × {thumb.PixelHeight} px";
+                        dimsFound = true;
+                    }
+                }
+
+                // 2.2 确定显示文件大小
+                if (hasBackup || (!isNewFile && File.Exists(filePath)))
                 {
                     try
                     {
-                        var fi = new FileInfo(filePath);
+                        var fi = new FileInfo(effectivePath);
                         PopupFileSizeText.Text = FormatFileSize(fi.Length);
-
-                        // ★ 同步快速读取图片尺寸（只读文件头，不解码像素）
-                        var dims = GetImageDimensionsFast(filePath);
-                        if (dims.Width > 0 && dims.Height > 0)
-                        {
-                            PopupDimensionsText.Text = $"{dims.Width} × {dims.Height} px";
-                        }
-                        else
-                        {
-                            PopupDimensionsText.Text = "";
-                        }
                     }
-                    catch
-                    {
-                        PopupFileSizeText.Text = ""; PopupDimensionsText.Text = "";
-                    }
+                    catch { PopupFileSizeText.Text = ""; }
+                }
+                else
+                {
+                    PopupFileSizeText.Text = "";
+                    if (!dimsFound) PopupDimensionsText.Text = LocalizationManager.GetString("L_ImgBar_NewImage");
+                }
 
-                    _highResTimer.Stop();
+                // 2.3 决定是否启动高清预览加载
+                _highResTimer.Stop();
+                if (!string.IsNullOrEmpty(effectivePath) && File.Exists(effectivePath))
+                {
                     _highResTimer.Start();
                 }
 
@@ -341,17 +332,22 @@ namespace TabPaint.Controls
 
             if (_currentHoveredElement == null) return;
             var tabData = _currentHoveredElement.DataContext as FileTabItem;
-            string filePath = tabData?.FilePath;
+            if (tabData == null) return;
 
-            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
+            string filePath = tabData.FilePath;
+            string backupPath = tabData.BackupPath;
+            bool hasBackup = !string.IsNullOrEmpty(backupPath) && File.Exists(backupPath);
+            string effectivePath = hasBackup ? backupPath : filePath;
+
+            if (string.IsNullOrEmpty(effectivePath) || !File.Exists(effectivePath)) return;
 
             _previewCts?.Cancel();
 
             // GIF 特殊处理
-            if (filePath.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
+            if (effectivePath.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
             {
                 AnimationBehavior.AddLoadedHandler(PopupPreviewImage, OnGifLoaded);
-                AnimationBehavior.SetSourceUri(PopupPreviewImage, new Uri(filePath));
+                AnimationBehavior.SetSourceUri(PopupPreviewImage, new Uri(effectivePath));
                 CheckerboardBorder.Background = GetCheckerboardBrush();
                 return;
             }
@@ -364,7 +360,7 @@ namespace TabPaint.Controls
 
             try
             {
-                var result = await Task.Run(() => LoadHighResPreviewInternal(filePath, token), token);
+                var result = await Task.Run(() => LoadHighResPreviewInternal(effectivePath, token), token);
 
                 if (token.IsCancellationRequested) return;
 

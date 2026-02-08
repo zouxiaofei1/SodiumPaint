@@ -156,11 +156,7 @@ namespace TabPaint
         {
             try
             {
-                MainWindow newWindow = new MainWindow(string.Empty, false);
-
-                newWindow.Left = this.Left + 20;
-                newWindow.Top = this.Top + 20;
-
+                MainWindow newWindow = new MainWindow(string.Empty, false, loadSession: false);
                 newWindow.Show();
             }
             catch (Exception ex)
@@ -322,6 +318,14 @@ namespace TabPaint
         {
             if (File.Exists(filePath))
             {
+                // 1. 跨窗口互斥检查
+                var (existingWindow, existingTab) = FindWindowHostingFile(filePath);
+                if (existingWindow != null && existingTab != null)
+                {
+                    existingWindow.FocusAndSelectTab(existingTab);
+                    return;
+                }
+
                 string[] files = [filePath];
                 await OpenFilesAsNewTabs(files);
 

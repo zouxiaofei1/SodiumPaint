@@ -808,7 +808,7 @@ namespace TabPaint
                 var mw = ctx.ParentWindow;
                 mw.UpdateSelectionToolBarPosition();
                 mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
-                mw.SetCropButtonState(); mw.UpdateRulerSelection();
+                mw.SetCropButtonState(); mw.UpdateRulerSelection();mw._canvasResizer.UpdateUI();
             }
             public BitmapSource GetSelectionCroppedBitmap(MainWindow mw)
             {

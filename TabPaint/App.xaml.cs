@@ -154,11 +154,18 @@ namespace TabPaint
             {
                 Application.Current.Dispatcher.InvokeAsync(() =>
                 {
+                    // 1. 首先尝试在所有窗口中查找是否已经打开
+                    var (existingWindow, existingTab) = TabPaint.MainWindow.FindWindowHostingFile(filePath);
+                    if (existingWindow != null && existingTab != null)
+                    {
+                        existingWindow.FocusAndSelectTab(existingTab);
+                        return;
+                    }
+
+                    // 2. 如果没找到，则在当前活动窗口打开
                     var targetWindow = TabPaint.MainWindow.GetCurrentInstance();
                     if (targetWindow != null)
                     {
-                        RestoreWindow(targetWindow);
-
                         var tab = targetWindow.FileTabs.FirstOrDefault(t => t.FilePath == filePath);
 
                         if (tab == null)
@@ -173,21 +180,17 @@ namespace TabPaint
                                 };
 
                                 targetWindow.FileTabs.Add(newTab);
-                                targetWindow.SwitchToTab(newTab);
-                                targetWindow.ScrollToTabCenter(newTab);
+                                targetWindow.FocusAndSelectTab(newTab);
                             }
                             else
                             {
                                 _ = targetWindow.OpenFilesAsNewTabs(new string[] { filePath });
                             }
-
                         }
                         else
                         {
-                            targetWindow.SwitchToTab(tab);
-                            targetWindow.ScrollToTabCenter(tab);
+                            targetWindow.FocusAndSelectTab(tab);
                         }
-                        targetWindow.UpdateImageBarSliderState();
                     }
                 });
             });
@@ -248,6 +251,8 @@ namespace TabPaint
                     {
                         mw.SetUndoRedoButtonState();
                         mw.AutoUpdateMaximizeIcon();
+                        mw.UpdateDwmBorderColor();
+                        mw.UpdateRulerPositions();
                     }
                 }
             }

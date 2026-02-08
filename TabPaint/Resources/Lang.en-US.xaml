@@ -48,8 +48,8 @@
     <sys:String x:Key="L_RecycleBin_Restore">Restore</sys:String>
     <sys:String x:Key="L_RecycleBin_DeleteForever">Delete Forever</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">Undo / Redo</sys:String>
-    <sys:String x:Key="L_Settings_MaxUndoSteps">Max Undo Steps</sys:String>
-    <sys:String x:Key="L_Settings_MaxUndoSteps_Desc">Limit the number of undo history items kept per tab.</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">Global Undo Limit</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">Total undo steps across all tabs. Oldest records are cleared when limit is reached.</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory">Max Undo Memory</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">Automatically clean oldest undo records when total memory used by all tabs exceeds this value.</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Title">Theme</sys:String>

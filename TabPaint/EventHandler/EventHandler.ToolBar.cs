@@ -22,6 +22,16 @@ namespace TabPaint
     {
         private async Task SwitchWorkspaceToNewFile(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            // 1. 跨窗口互斥检查
+            var (existingWindow, existingTab) = FindWindowHostingFile(filePath);
+            if (existingWindow != null && existingTab != null)
+            {
+                existingWindow.FocusAndSelectTab(existingTab);
+                return;
+            }
+
             try
             {
                 if (_currentTabItem != null)

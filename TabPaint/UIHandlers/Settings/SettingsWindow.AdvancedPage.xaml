@@ -14,6 +14,65 @@
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <local:NonLinearConverter x:Key="NonLinearConverter"/>
+
+            <!-- 组合输入框样式：左侧文本框 -->
+            <Style x:Key="LeftPartTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TextBox}">
+                            <Border x:Name="border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1,1,0,1"
+                                    CornerRadius="4,0,0,4" 
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- 组合输入框样式：右侧按钮 -->
+            <Style x:Key="RightPartButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="1" 
+                                    CornerRadius="0,4,4,0">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -130,35 +189,45 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220"/>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="100"/>
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="{DynamicResource L_Settings_MaxUndoSteps}"/>
-                <TextBlock Text="{DynamicResource L_Settings_MaxUndoSteps_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                <TextBlock Text="{DynamicResource L_Settings_MaxGlobalUndoSteps}"/>
+                <TextBlock Text="{DynamicResource L_Settings_MaxGlobalUndoSteps_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
             </StackPanel>
-            <TextBox Grid.Column="1" Width="80" HorizontalAlignment="Left" Height="28" VerticalContentAlignment="Center"
+            <TextBox Grid.Column="1" Margin="0,0,20,0" Width="80" HorizontalAlignment="Right" Height="28" VerticalContentAlignment="Center"
                      LostFocus="TextBox_LostFocus"
                      PreviewTextInput="NumberValidationTextBox"
-                     Text="{Binding Path=Current.MaxUndoSteps, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
+                     Text="{Binding Path=Current.MaxGlobalUndoSteps, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
         </Grid>
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220"/>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="100"/>
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="{DynamicResource L_Settings_MaxUndoMemory}"/>
                 <TextBlock Text="{DynamicResource L_Settings_MaxUndoMemory_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <TextBox Width="80" Height="28" VerticalContentAlignment="Center"
-                         LostFocus="TextBox_LostFocus"
-                         PreviewTextInput="NumberValidationTextBox"
-                         Text="{Binding Path=Current.MaxUndoMemoryMB, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"/>
-                <TextBlock Text=" MB" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-            </StackPanel>
+            <Grid Grid.Column="1" Width="80" HorizontalAlignment="Right" Margin="0,0,20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="32"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="UndoMemoryTextBox" 
+                         Style="{StaticResource LeftPartTextBoxStyle}"
+                         Padding="4,0"
+                         VerticalContentAlignment="Center"
+                         LostFocus="UndoMemoryTextBox_LostFocus"
+                         PreviewTextInput="NumberValidationTextBox"/>
+                <Button x:Name="UnitToggleButton" 
+                        Grid.Column="1" 
+                        Content="MB"
+                        Style="{StaticResource RightPartButtonStyle}"
+                        Click="UnitToggleButton_Click"/>
+            </Grid>
         </Grid>
 
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>

@@ -455,10 +455,19 @@ namespace TabPaint
             if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold) return;
             try
             {
+                // 如果拖拽的是当前活跃标签，同步最新的撤销栈到对象中
+                if (_mouseDownTabItem == _currentTabItem && _undo != null)
+                {
+                    _mouseDownTabItem.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
+                    _mouseDownTabItem.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
+                    _mouseDownTabItem.SavedUndoPoint = _savedUndoPoint;
+                }
+
                 var dataObject = new System.Windows.DataObject();
 
                 dataObject.SetData("TabPaintReorderItem", _mouseDownTabItem);
                 dataObject.SetData("TabPaintInternalDrag", true);
+                dataObject.SetData("TabPaintSourceWindow", this);
 
                 string externalDragPath = PrepareDragFilePath(_mouseDownTabItem);
 
@@ -524,12 +533,9 @@ namespace TabPaint
             try
             {
                 // 创建新窗口，并将标签传递过去
-                MainWindow newWindow = new MainWindow(tab.FilePath, !IsVirtualPath(tab.FilePath), tab);
+                MainWindow newWindow = new MainWindow(tab.FilePath, !IsVirtualPath(tab.FilePath), tab, loadSession: false);
 
                 // 设置新窗口位置
-                newWindow.Left = this.Left + 40;
-                newWindow.Top = this.Top + 40;
-
                 newWindow.Show();
 
                 // 4. 从当前窗口移除标签
@@ -550,7 +556,7 @@ namespace TabPaint
         {
             if (e.Data.GetDataPresent("TabPaintReorderItem"))
             {
-                e.Effects = DragDropEffects.Copy;
+                e.Effects = DragDropEffects.Move;
                 e.Handled = true;
 
                 if (sender is Grid grid)
@@ -604,60 +610,101 @@ namespace TabPaint
             if (e.Data.GetDataPresent("TabPaintReorderItem"))
             {
                 var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
+                var sourceWindow = e.Data.GetData("TabPaintSourceWindow") as MainWindow;
 
                 var targetGrid = sender as Grid;
                 var targetTab = targetGrid?.DataContext as FileTabItem;
 
-                if (sourceTab != null && targetTab != null && sourceTab != targetTab)
+                if (sourceTab != null)
                 {
                     int oldUIIndex = FileTabs.IndexOf(sourceTab);
-                    int targetUIIndex = FileTabs.IndexOf(targetTab);
+                    int targetUIIndex = targetTab != null ? FileTabs.IndexOf(targetTab) : FileTabs.Count;
 
-                    // 判断是插入到前面(Left)还是后面(Right)
-                    Point p = e.GetPosition(targetGrid);
-                    bool insertAfter = p.X >= targetGrid.ActualWidth / 2;
-
-                    int newUIIndex = targetUIIndex;
-
-                    if (insertAfter)newUIIndex++;
-                    if (oldUIIndex < newUIIndex) newUIIndex--;
- 
-                    // 简单校验
-                    if (newUIIndex < 0) newUIIndex = 0;
-                    if (newUIIndex >= FileTabs.Count) newUIIndex = FileTabs.Count - 1;
-                    if (oldUIIndex != newUIIndex)
+                    // 跨窗口处理
+                    if (oldUIIndex == -1 && sourceWindow != null)
                     {
-                        FileTabs.Move(oldUIIndex, newUIIndex);
+                        // 1. 从原窗口移除
+                        sourceWindow.CloseTab(sourceTab, true);
 
-                        // 同步更新 _imageFiles 列表
-                        string sourcePath = sourceTab.FilePath;
-                        if (!string.IsNullOrEmpty(sourcePath) && _imageFiles.Contains(sourcePath))
+                        // 2. 插入到本窗口
+                        int newUIIndex = targetUIIndex;
+                        if (targetGrid != null)
                         {
-                            _imageFiles.Remove(sourcePath);
-                            int newTgtIdx = -1;
+                            Point p = e.GetPosition(targetGrid);
+                            if (p.X >= targetGrid.ActualWidth / 2) newUIIndex++;
+                        }
+
+                        if (newUIIndex < 0) newUIIndex = 0;
+                        if (newUIIndex > FileTabs.Count) newUIIndex = FileTabs.Count;
+
+                        FileTabs.Insert(newUIIndex, sourceTab);
+
+                        // 3. 更新 _imageFiles
+                        if (!string.IsNullOrEmpty(sourceTab.FilePath))
+                        {
+                            int fileInsertIdx = 0;
                             if (newUIIndex > 0)
                             {
                                 var prevTab = FileTabs[newUIIndex - 1];
-                                newTgtIdx = _imageFiles.IndexOf(prevTab.FilePath);
-                                // 插在它后面
-                                if (newTgtIdx >= 0) _imageFiles.Insert(newTgtIdx + 1, sourcePath);
-                                else _imageFiles.Add(sourcePath); // Fallback
+                                fileInsertIdx = _imageFiles.IndexOf(prevTab.FilePath) + 1;
                             }
-                            else
-                            {
-                                // 插在最前面
-                                _imageFiles.Insert(0, sourcePath);
-                            }
+                            if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
+                            _imageFiles.Insert(fileInsertIdx, sourceTab.FilePath);
                         }
 
-                        if (_currentTabItem != null)
+                        // 4. 切换并激活
+                        SwitchToTab(sourceTab);
+                        UpdateImageBarSliderState();
+                    }
+                    else if (targetTab != null && sourceTab != targetTab)
+                    {
+                        // 同窗口重排序
+                        // 判断是插入到前面(Left)还是后面(Right)
+                        Point p = e.GetPosition(targetGrid);
+                        bool insertAfter = p.X >= targetGrid.ActualWidth / 2;
+
+                        int newUIIndex = targetUIIndex;
+
+                        if (insertAfter) newUIIndex++;
+                        if (oldUIIndex < newUIIndex) newUIIndex--;
+
+                        // 简单校验
+                        if (newUIIndex < 0) newUIIndex = 0;
+                        if (newUIIndex >= FileTabs.Count) newUIIndex = FileTabs.Count - 1;
+                        if (oldUIIndex != newUIIndex)
                         {
-                            _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                            FileTabs.Move(oldUIIndex, newUIIndex);
+
+                            // 同步更新 _imageFiles 列表
+                            string sourcePath = sourceTab.FilePath;
+                            if (!string.IsNullOrEmpty(sourcePath) && _imageFiles.Contains(sourcePath))
+                            {
+                                _imageFiles.Remove(sourcePath);
+                                int newTgtIdx = -1;
+                                if (newUIIndex > 0)
+                                {
+                                    var prevTab = FileTabs[newUIIndex - 1];
+                                    newTgtIdx = _imageFiles.IndexOf(prevTab.FilePath);
+                                    // 插在它后面
+                                    if (newTgtIdx >= 0) _imageFiles.Insert(newTgtIdx + 1, sourcePath);
+                                    else _imageFiles.Add(sourcePath); // Fallback
+                                }
+                                else
+                                {
+                                    // 插在最前面
+                                    _imageFiles.Insert(0, sourcePath);
+                                }
+                            }
+
+                            if (_currentTabItem != null)
+                            {
+                                _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
+                            }
+                            UpdateWindowTitle();
                         }
-                        UpdateWindowTitle(); // 如果需要
                     }
                 }
-                e.Effects = DragDropEffects.Copy;
+                e.Effects = DragDropEffects.Move;
                 e.Handled = true;
             }
         }
@@ -715,7 +762,15 @@ namespace TabPaint
                     {
                         if (!IsImageFile(file)) continue;
 
-                        // 检查是否已存在
+                        // 1. 跨窗口互斥检查
+                        var (foundWindow, foundTab) = FindWindowHostingFile(file);
+                        if (foundWindow != null && foundTab != null)
+                        {
+                            foundWindow.FocusAndSelectTab(foundTab);
+                            continue;
+                        }
+
+                        // 2. 检查是否已存在
                         if (!_imageFiles.Contains(file))
                         {
                             // 1. 不存在：插入新 Tab

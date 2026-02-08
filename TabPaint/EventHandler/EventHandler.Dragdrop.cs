@@ -60,9 +60,32 @@ namespace TabPaint
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
+                var sourceWindow = e.Data.GetData("TabPaintSourceWindow") as MainWindow;
+                bool isCrossWindow = sourceWindow != null && sourceWindow != this;
                 Point pos = e.GetPosition(this);
-            
-                if (pos.Y < GetDynamicImageBarThreshold() && pos.Y > AppConsts.DragTitleBarThresholdY)
+                double threshold = GetDynamicImageBarThreshold();
+
+                if (isCrossWindow)
+                {
+                    // 如果是在 ImageBar 区域，交给 ImageBar 处理（不要 Handled）
+                    if (pos.Y >= threshold)
+                    {
+                        HideDragOverlay();
+                        return;
+                    }
+
+                    // 否则（在画布、工具栏等），允许添加并显示 Overlay
+                    e.Effects = DragDropEffects.Move;
+                    ShowDragOverlay(
+                        LocalizationManager.GetString("L_Drag_AddToList_Title"),
+                        LocalizationManager.GetString("L_Drag_AddToList_Desc")
+                    );
+                    e.Handled = true;
+                    return;
+                }
+
+                // 同窗口内部拖拽
+                if (pos.Y < threshold && pos.Y > AppConsts.DragTitleBarThresholdY)
                 {
                     HideDragOverlay();
                     e.Effects = DragDropEffects.None;
@@ -203,21 +226,30 @@ namespace TabPaint
             }
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
-                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                var sourceWindow = e.Data.GetData("TabPaintSourceWindow") as MainWindow;
+                var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
+                Point pos = e.GetPosition(this);
+
+                // 如果是在 ImageBar 区域落下，让 ImageBar 自己的逻辑处理
+                if (pos.Y >= GetDynamicImageBarThreshold()) return;
+
+                if (sourceWindow != null && sourceWindow != this && sourceTab != null)
                 {
-                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                    var imageFiles = files?.Where(f => IsImageFile(f)).ToArray();
-                    if (imageFiles[0].IndexOf(_currentTabItem.DisplayName, StringComparison.OrdinalIgnoreCase) >= 0)
+                    // 跨窗口拖拽标签：将标签从原窗口移动到本窗口末尾
+                    sourceWindow.CloseTab(sourceTab, true);
+                    FileTabs.Add(sourceTab);
+
+                    if (!string.IsNullOrEmpty(sourceTab.FilePath))
                     {
-                        e.Handled = true;
-                        return;
+                        _imageFiles.Add(sourceTab.FilePath);
                     }
+
+                    SwitchToTab(sourceTab);
+                    UpdateImageBarSliderState();
                 }
-                else
-                {
-                    e.Handled = true; return; 
-                }
-            
+
+                e.Handled = true;
+                return;
             }
             // 2. 处理文件
             if (e.Data.GetDataPresent(DataFormats.FileDrop))

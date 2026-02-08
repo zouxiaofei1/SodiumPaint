@@ -180,7 +180,7 @@ namespace TabPaint
             }
         }
 
-        private async void CloseTab(FileTabItem item, bool slient = false)
+        public async void CloseTab(FileTabItem item, bool slient = false)
         {
             // 1. 脏检查
             if (item.IsDirty && !slient && !SettingsManager.Instance.Current.SkipResetConfirmation)

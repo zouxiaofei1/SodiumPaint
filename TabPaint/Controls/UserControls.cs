@@ -35,6 +35,17 @@ namespace TabPaint
             {
                 InitializeMenuBar();
                 InitializeStatusBar();
+                if (MyStatusBar != null)
+                {
+                    MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
+                    {
+                        if (_isInternalZoomUpdate|| !_startupFinished) return;
+                        double sliderVal = MyStatusBar.ZoomSliderControl.Value;
+                        double targetScale = SliderToZoom(sliderVal);
+SetZoom(targetScale, slient: true);
+                    };
+                }
+                SetCropButtonState();
             }), DispatcherPriority.Background);
             Dispatcher.BeginInvoke(new Action(InitializeDragWatchdog), DispatcherPriority.ApplicationIdle);
         }

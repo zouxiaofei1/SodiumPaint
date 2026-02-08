@@ -51,7 +51,9 @@ namespace TabPaint.Pages
                 {
                     FluentMessageBox.Show($"{LocalizationManager.GetString("L_Toast_OpenUrlFailed")}: {ex.Message}",
                                 LocalizationManager.GetString("L_Common_Error"),
-                                MessageBoxButton.OK);
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error,
+                                Window.GetWindow(this));
                 }
             }
         }

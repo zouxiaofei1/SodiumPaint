@@ -173,8 +173,38 @@ namespace TabPaint
         private bool _draggingFromMaximized = false;
         public class PaintSession
         {
+            private const int CurrentVersion = 1;
             public string LastViewedFile { get; set; } // 上次正在看的文件
-            public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>(); public int ActiveTabIndex { get; set; }
+            public List<SessionTabInfo> Tabs { get; set; } = new List<SessionTabInfo>();
+            public int ActiveTabIndex { get; set; }
+
+            public void Write(BinaryWriter writer)
+            {
+                writer.Write(CurrentVersion);
+                writer.Write(LastViewedFile ?? "");
+                writer.Write(ActiveTabIndex);
+                writer.Write(Tabs.Count);
+                foreach (var tab in Tabs)
+                {
+                    tab.Write(writer);
+                }
+            }
+
+            public static PaintSession Read(BinaryReader reader)
+            {
+                int version = reader.ReadInt32();
+                if (version != 1) throw new InvalidDataException("Unsupported session version");
+
+                var session = new PaintSession();
+                session.LastViewedFile = reader.ReadString();
+                session.ActiveTabIndex = reader.ReadInt32();
+                int count = reader.ReadInt32();
+                for (int i = 0; i < count; i++)
+                {
+                    session.Tabs.Add(SessionTabInfo.Read(reader, version));
+                }
+                return session;
+            }
         }
         public bool _startupFinished = false;
 
@@ -189,6 +219,33 @@ namespace TabPaint
             public bool IsCleanDiskFile { get; set; }
             // [新增] 记录该标签页所属的工作目录
             public string WorkDirectory { get; set; }
+
+            public void Write(BinaryWriter writer)
+            {
+                writer.Write(Id ?? "");
+                writer.Write(OriginalPath ?? "");
+                writer.Write(BackupPath ?? "");
+                writer.Write(IsDirty);
+                writer.Write(IsNew);
+                writer.Write(UntitledNumber);
+                writer.Write(IsCleanDiskFile);
+                writer.Write(WorkDirectory ?? "");
+            }
+
+            public static SessionTabInfo Read(BinaryReader reader, int version)
+            {
+                return new SessionTabInfo
+                {
+                    Id = reader.ReadString(),
+                    OriginalPath = reader.ReadString(),
+                    BackupPath = reader.ReadString(),
+                    IsDirty = reader.ReadBoolean(),
+                    IsNew = reader.ReadBoolean(),
+                    UntitledNumber = reader.ReadInt32(),
+                    IsCleanDiskFile = reader.ReadBoolean(),
+                    WorkDirectory = reader.ReadString()
+                };
+            }
         }
         public string _dragTempDir = AppConsts.DragTempDir;
 

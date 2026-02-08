@@ -158,8 +158,8 @@
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">始终显示标签关闭按钮</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">在图片标签上始终显示关闭按钮，而不只是在鼠标悬停时显示</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">撤销重做</sys:String>
-    <sys:String x:Key="L_Settings_MaxUndoSteps">最大撤销项数</sys:String>
-    <sys:String x:Key="L_Settings_MaxUndoSteps_Desc">限制每个标签页保存的撤销记录数量。</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">全局撤销总量</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">所有标签页合共保留的最大撤销次数，超限将按时间顺序清理</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory">最大撤销内存</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">当所有标签页撤销记录占用的总内存超过此值时，将自动清理最旧的记录。</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">文件回收站</sys:String>

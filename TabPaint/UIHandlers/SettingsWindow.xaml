@@ -179,8 +179,19 @@
             </Grid.ColumnDefinitions>
 
             <!-- 左侧导航栏 -->
-            <Border Grid.Column="0" x:Name="SidebarBorder" Width="220"  Background="{DynamicResource GlassBackgroundLowBrush}" 
+            <Border Grid.Column="0" x:Name="SidebarBorder" Width="220"
                     BorderBrush="{DynamicResource BorderBrush}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource GlassBackgroundLowBrush}"/>
+                        <Style.Triggers>
+                            <!-- 确保在窗口禁用（如弹出模态对话框）时，背景依然可见 -->
+                            <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                <Setter Property="Background" Value="{DynamicResource GlassBackgroundLowBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>

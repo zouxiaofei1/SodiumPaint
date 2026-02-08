@@ -1,6 +1,8 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -61,6 +63,7 @@ namespace TabPaint
             public FileTabItem DeletedTab { get; }
             public int DeletedTabIndex { get; }
             public long MemorySize { get; } // 估算内存占用 (Bytes)
+            public DateTime Timestamp { get; } = DateTime.Now;
 
             public UndoAction(string filePath, FileTabItem tab, int index)
             {
@@ -112,91 +115,69 @@ namespace TabPaint
 
             private void TrimStack()
             {
-                var settings = SettingsManager.Instance.Current;
-                // 1. 限制步数 (撤销 + 重做总和)
-                while (_undo.Count + _redo.Count > settings.MaxUndoSteps)
-                {
-                    if (_redo.Count > 0)
-                    {
-                        _redo.RemoveAt(0); // 优先清理最旧的重做记录
-                    }
-                    else if (_undo.Count > 0)
-                    {
-                        _undo.RemoveAt(0); // 其次清理最旧的撤销记录
-                    }
-                    else break;
-                }
-
-                // 2. 检查全局内存
-                CheckGlobalUndoMemory();
+                // 检查全局限制 (步数与内存)
+                CheckGlobalUndoLimits();
             }
 
-            public static void CheckGlobalUndoMemory()
+            public static void CheckGlobalUndoLimits()
             {
                 var mw = MainWindow.GetCurrentInstance();
                 if (mw == null) return;
 
                 var settings = SettingsManager.Instance.Current;
                 long maxMemory = (long)settings.MaxUndoMemoryMB * 1024 * 1024;
+                int maxGlobalSteps = settings.MaxGlobalUndoSteps;
 
-                // 1. 计算当前总内存
-                long currentTotal = 0;
-                var allTabs = mw.FileTabs.ToList();
-                foreach (var tab in allTabs)
+                while (true)
                 {
-                    // 如果是当前标签页，其最新的撤销栈在 mw._undo 中，SwitchToTab 时才会同步回 tab.UndoStack
-                    if (tab == mw._currentTabItem && mw._undo != null)
-                    {
-                        currentTotal += mw._undo._undo.Sum(a => a.MemorySize);
-                        currentTotal += mw._undo._redo.Sum(a => a.MemorySize);
-                    }
-                    else
-                    {
-                        currentTotal += tab.UndoStack.Sum(a => a.MemorySize);
-                        currentTotal += tab.RedoStack.Sum(a => a.MemorySize);
-                    }
-                }
+                    long currentTotalMemory = 0;
+                    int currentTotalSteps = 0;
+                    var allStacks = new List<List<UndoAction>>();
 
-                if (currentTotal <= maxMemory) return;
-
-                // 2. 优先清理非当前标签页的撤销栈
-                foreach (var tab in allTabs)
-                {
-                    if (tab == mw._currentTabItem) continue;
-
-                    while (currentTotal > maxMemory && (tab.UndoStack.Count > 0 || tab.RedoStack.Count > 0))
+                    foreach (var tab in mw.FileTabs)
                     {
-                        // 优先清理重做栈
-                        if (tab.RedoStack.Count > 0)
+                        List<UndoAction> u, r;
+                        if (tab == mw._currentTabItem && mw._undo != null)
                         {
-                            currentTotal -= tab.RedoStack[0].MemorySize;
-                            tab.RedoStack.RemoveAt(0);
+                            u = mw._undo._undo;
+                            r = mw._undo._redo;
                         }
-                        else if (tab.UndoStack.Count > 0)
+                        else
                         {
-                            currentTotal -= tab.UndoStack[0].MemorySize;
-                            tab.UndoStack.RemoveAt(0);
+                            u = tab.UndoStack;
+                            r = tab.RedoStack;
+                        }
+
+                        foreach (var action in u) currentTotalMemory += action.MemorySize;
+                        foreach (var action in r) currentTotalMemory += action.MemorySize;
+                        currentTotalSteps += (u.Count + r.Count);
+
+                        if (u.Count > 0) allStacks.Add(u);
+                        if (r.Count > 0) allStacks.Add(r);
+                    }
+
+                    // 检查是否在限制内
+                    if (currentTotalMemory <= maxMemory && currentTotalSteps <= maxGlobalSteps)
+                        break;
+
+                    // 寻找全局最旧的操作 (Timestamp 最小的)
+                    List<UndoAction> oldestStack = null;
+                    DateTime oldestTime = DateTime.MaxValue;
+
+                    foreach (var stack in allStacks)
+                    {
+                        if (stack.Count > 0 && stack[0].Timestamp < oldestTime)
+                        {
+                            oldestTime = stack[0].Timestamp;
+                            oldestStack = stack;
                         }
                     }
-                }
 
-                // 3. 如果内存还是超标，清理当前标签页的最旧记录
-                if (currentTotal > maxMemory && mw._undo != null)
-                {
-                    while (currentTotal > maxMemory && (mw._undo._undo.Count > 1 || mw._undo._redo.Count > 0))
+                    if (oldestStack != null)
                     {
-                        if (mw._undo._redo.Count > 0)
-                        {
-                            currentTotal -= mw._undo._redo[0].MemorySize;
-                            mw._undo._redo.RemoveAt(0);
-                        }
-                        else if (mw._undo._undo.Count > 1) // 至少保留一步撤销
-                        {
-                            currentTotal -= mw._undo._undo[0].MemorySize;
-                            mw._undo._undo.RemoveAt(0);
-                        }
-                        else break;
+                        oldestStack.RemoveAt(0);
                     }
+                    else break; // 无可清理
                 }
             }
 

@@ -163,7 +163,9 @@ namespace TabPaint.Pages
             var result = FluentMessageBox.Show(
                 LocalizationManager.GetString("L_Settings_Plugins_Uninstall_Confirm"),
                 LocalizationManager.GetString("L_Settings_Plugins_Uninstall"),
-                MessageBoxButton.YesNo);
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question,
+                Window.GetWindow(this));
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -185,7 +187,7 @@ namespace TabPaint.Pages
             }
             catch (Exception ex)
             {
-                FluentMessageBox.Show("Uninstall failed: " + ex.Message, "Error", MessageBoxButton.OK);
+                FluentMessageBox.Show("Uninstall failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error, Window.GetWindow(this));
             }
         }
     }

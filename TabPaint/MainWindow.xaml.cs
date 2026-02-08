@@ -51,10 +51,41 @@ namespace TabPaint
             return Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
         }
 
+        /// <summary>
+        /// 在所有打开的窗口中查找是否已经加载了指定文件
+        /// </summary>
+        public static (MainWindow? Window, FileTabItem? Tab) FindWindowHostingFile(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || filePath.StartsWith(AppConsts.VirtualFilePrefix)) return (null, null);
+
+            foreach (Window w in Application.Current.Windows)
+            {
+                if (w is MainWindow mw)
+                {
+                    var tab = mw.FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+                    if (tab != null) return (mw, tab);
+                }
+            }
+            return (null, null);
+        }
+
+        /// <summary>
+        /// 激活窗口并选中指定标签页
+        /// </summary>
+        public void FocusAndSelectTab(FileTabItem tab)
+        {
+            RestoreWindow(this);
+            SwitchToTab(tab);
+            ScrollToTabCenter(tab);
+            UpdateImageBarSliderState();
+        }
+
         // 记录最后获得焦点的实例
         private static MainWindow? _lastFocusedInstance;
 
         private UIHandlers.DropZoneWindow? _dropZone;
+
+        private bool _shouldLoadSession = true;
 
         protected override void OnActivated(EventArgs e)
         {
@@ -70,9 +101,9 @@ namespace TabPaint
         }
 
 
-        public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null)
+        public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null, bool loadSession = true)
         {
-            
+            _shouldLoadSession = loadSession;
             _workingPath = path;
             _currentFilePath = path;  
             if (fileExists.HasValue) _currentFileExists = fileExists.Value;//<0.1ms
@@ -124,23 +155,16 @@ namespace TabPaint
                 ThemeManager.LoadLazyIcons();
             }), DispatcherPriority.Background);
             if (IsViewMode) OnModeChanged(true, isSilent: true);
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (MyStatusBar != null)
-                {
-                    MyStatusBar.ZoomSliderControl.ValueChanged += (s, e) =>
-                    {
-                        if (_isInternalZoomUpdate) return;
-                        double targetScale = SliderToZoom(MyStatusBar.ZoomSliderControl.Value);
-                    };
-                }
-                SetCropButtonState();
-            }), DispatcherPriority.Loaded);
+            //Dispatcher.BeginInvoke(new Action(() =>
+            //{
+
+            //}), DispatcherPriority.Loaded);
             
             _canvasResizer = new CanvasResizeManager(this);//0.2ms
 
 
-            LoadSession(); //8ms
+            if (_shouldLoadSession) LoadSession(); //8ms
+
            if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))//0.2ms
             {
                 _currentFilePath = FindFirstImageInDirectory(_currentFilePath);
@@ -397,14 +421,28 @@ namespace TabPaint
                 if (currentIndexInTabs >= 0) uiInsertIndex = currentIndexInTabs + 1;
             }
 
-            FileTabItem firstNewTab = null;
+            FileTabItem? firstNewTab = null;
             int addedCount = 0;
 
             foreach (string file in files)
             {
                 if (IsImageFile(file))
                 {
-                    if (_imageFiles.Contains(file)) continue; // 去重
+                    // 1. 跨窗口互斥：检查文件是否在其他窗口打开
+                    var (existingWindow, existingTab) = FindWindowHostingFile(file);
+                    if (existingWindow != null && existingTab != null)
+                    {
+                        existingWindow.FocusAndSelectTab(existingTab);
+                        continue;
+                    }
+
+                    // 2. 当前窗口去重
+                    if (_imageFiles.Contains(file))
+                    {
+                        var tab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, file, StringComparison.OrdinalIgnoreCase));
+                        if (tab != null) firstNewTab = tab;
+                        continue;
+                    }
 
                     _imageFiles.Insert(insertIndex + addedCount, file);
                     var newTab = new FileTabItem(file) { IsLoading = true };
@@ -420,7 +458,7 @@ namespace TabPaint
                 }
             }
 
-            if (addedCount > 0)
+            if (firstNewTab != null)
             {
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
@@ -524,6 +562,14 @@ namespace TabPaint
 
             foreach (string file in filesToProcess)
             {
+                // 1. 跨窗口互斥检查
+                var (existingWindow, existingTab) = FindWindowHostingFile(file);
+                if (existingWindow != null && existingTab != null)
+                {
+                    existingWindow.FocusAndSelectTab(existingTab);
+                    continue;
+                }
+
                 if (_imageFiles.Contains(file)) continue;
                 _imageFiles.Insert(insertIndex + addedCount, file);
 
@@ -754,7 +800,15 @@ namespace TabPaint
 
             foreach (string file in files)
             {
-                // 去重检查
+                // 1. 跨窗口互斥检查
+                var (existingWindow, existingTab) = FindWindowHostingFile(file);
+                if (existingWindow != null && existingTab != null)
+                {
+                    existingWindow.FocusAndSelectTab(existingTab);
+                    continue;
+                }
+
+                // 2. 去重检查
                 if (_imageFiles.Contains(file)) continue;
                 _imageFiles.Insert(insertIndex + addedCount, file);
 
@@ -818,7 +872,7 @@ namespace TabPaint
             }
         }
 
-        private void UpdateRulerPositions()
+        public void UpdateRulerPositions()
         {
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
 
@@ -1153,8 +1207,9 @@ namespace TabPaint
         public void UpdateSelectionToolBarPosition()
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
-            var selectTool = _router?.CurrentTool as SelectTool;
+            var selectTool = _router?.CurrentTool as SelectTool;if (selectTool == null) return;
             if (_selectionToolBar == null && (selectTool == null || !selectTool.HasActiveSelection)) return;
+
             if(selectTool._selectionRect.Width+ selectTool._selectionRect.Height<150)return;
             var toolbar = this.SelectionToolBar;
             var holder = this.SelectionToolHolder; // 引用 XAML 中的 ContentControl

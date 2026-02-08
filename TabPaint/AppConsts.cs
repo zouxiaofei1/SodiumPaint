@@ -67,7 +67,8 @@ namespace TabPaint
         public static readonly string CacheDir = Path.Combine(AppDataFolder, "Cache");
         public static readonly string FavoriteDir = Path.Combine(CacheDir, "Favorite");
         public static readonly string DragTempDir = Path.Combine(CacheDir, "DragTemp");
-        public static readonly string SessionPath = Path.Combine(AppDataFolder, "session.json");
+        public static readonly string SessionPath = Path.Combine(AppDataFolder, "session.bin");
+        public static readonly string LegacySessionPath = Path.Combine(AppDataFolder, "session.json");
         public static readonly string ClipboardCacheDir = Path.Combine(CacheDir, "Clipboard");
 
         // --- AI 模型配置 (RMBG - 背景移除) ---

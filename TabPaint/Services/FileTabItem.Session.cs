@@ -517,12 +517,24 @@ namespace TabPaint
             var finalTabsToSave = new List<SessionTabInfo>();
             finalTabsToSave.AddRange(currentSessionTabs);
 
-            if (File.Exists(_sessionPath))
+            if (File.Exists(_sessionPath) || File.Exists(AppConsts.LegacySessionPath))
             {
                 try
                 {
-                    var oldJson = File.ReadAllText(_sessionPath);
-                    var oldSession = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(oldJson);
+                    PaintSession oldSession = null;
+                    if (File.Exists(_sessionPath))
+                    {
+                        using (var fs = new FileStream(_sessionPath, FileMode.Open, FileAccess.Read))
+                        using (var reader = new BinaryReader(fs))
+                        {
+                            oldSession = PaintSession.Read(reader);
+                        }
+                    }
+                    else if (File.Exists(AppConsts.LegacySessionPath))
+                    {
+                        var oldJson = File.ReadAllText(AppConsts.LegacySessionPath);
+                        oldSession = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(oldJson);
+                    }
 
                     if (oldSession != null && oldSession.Tabs != null)
                     {
@@ -567,8 +579,16 @@ namespace TabPaint
                 string? dir = System.IO.Path.GetDirectoryName(_sessionPath);
                 if (dir != null) Directory.CreateDirectory(dir);
 
-                string json = System.Text.Json.JsonSerializer.Serialize(session);
-                File.WriteAllText(_sessionPath, json);
+                using (var fs = new FileStream(_sessionPath, FileMode.Create, FileAccess.Write))
+                using (var writer = new BinaryWriter(fs))
+                {
+                    session.Write(writer);
+                }
+                // 如果保存成功且存在旧文件，则可以尝试删除旧文件
+                if (File.Exists(AppConsts.LegacySessionPath))
+                {
+                    try { File.Delete(AppConsts.LegacySessionPath); } catch { }
+                }
             }
             catch (Exception ex)
             {
@@ -580,14 +600,26 @@ namespace TabPaint
 
         private void LoadSession()
         {
-            if (!File.Exists(_sessionPath)) return;
+            if (!File.Exists(_sessionPath) && !File.Exists(AppConsts.LegacySessionPath)) return;
 
             try
             {
-                var json = File.ReadAllText(_sessionPath);
-                var session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+                PaintSession session = null;
+                if (File.Exists(_sessionPath))
+                {
+                    using (var fs = new FileStream(_sessionPath, FileMode.Open, FileAccess.Read))
+                    using (var reader = new BinaryReader(fs))
+                    {
+                        session = PaintSession.Read(reader);
+                    }
+                }
+                else
+                {
+                    var json = File.ReadAllText(AppConsts.LegacySessionPath);
+                    session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+                }
 
-                if (session.Tabs != null)
+                if (session != null && session.Tabs != null)
                 {
                     foreach (var info in session.Tabs)
                     {
@@ -954,17 +986,29 @@ namespace TabPaint
         }// 修改原 LoadSession 方法，或者新建一个专门用于工作区切换加载的方法
         private void LoadSessionForCurrentWorkspace(string workspaceFilePath)
         {
-            if (!File.Exists(_sessionPath)) return;
+            if (!File.Exists(_sessionPath) && !File.Exists(AppConsts.LegacySessionPath)) return;
 
             try
             {
                 string workspaceDir = System.IO.Path.GetDirectoryName(workspaceFilePath);
                 if (workspaceDir != null) workspaceDir = System.IO.Path.GetFullPath(workspaceDir);
 
-                var json = File.ReadAllText(_sessionPath);
-                var session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+                PaintSession session = null;
+                if (File.Exists(_sessionPath))
+                {
+                    using (var fs = new FileStream(_sessionPath, FileMode.Open, FileAccess.Read))
+                    using (var reader = new BinaryReader(fs))
+                    {
+                        session = PaintSession.Read(reader);
+                    }
+                }
+                else
+                {
+                    var json = File.ReadAllText(AppConsts.LegacySessionPath);
+                    session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+                }
 
-                if (session.Tabs != null)
+                if (session != null && session.Tabs != null)
                 {
                     foreach (var info in session.Tabs)
                     {

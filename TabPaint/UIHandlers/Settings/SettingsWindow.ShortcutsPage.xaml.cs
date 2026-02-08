@@ -15,7 +15,9 @@ namespace TabPaint.Pages
             var result = FluentMessageBox.Show(
               LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Confirm"),
               LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Title"),
-              MessageBoxButton.YesNo
+              MessageBoxButton.YesNo,
+              MessageBoxImage.Question,
+              Window.GetWindow(this)
             );
 
             if (result == MessageBoxResult.Yes)

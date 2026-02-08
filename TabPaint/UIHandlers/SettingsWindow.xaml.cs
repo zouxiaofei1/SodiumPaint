@@ -486,31 +486,19 @@ namespace TabPaint
 
         private async void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            // 忽略一些不需要提示的变更，或者可以全提示
-            if (e.PropertyName == "Shortcuts") return; // 快捷键可能是对象引用变化，不提示
-
-            // 防抖，避免连续触发
-            if ((DateTime.Now - _lastToastTime).TotalMilliseconds < 500 && _isToasting) return;
-
+            TabPaint.SettingsManager.Instance.Save();
+            if (_isToasting) return;
             _lastToastTime = DateTime.Now;
             _isToasting = true;
 
             ShowToast();
-
-            // 等待1秒
             await Task.Delay(1000);
-
-            // 如果距离上次触发超过1秒（说明没有新的触发），则隐藏
             if ((DateTime.Now - _lastToastTime).TotalMilliseconds >= 1000)
             {
                 HideToast();
                 _isToasting = false;
             }
         }
-
-      
-
-
         #endregion
 
       
