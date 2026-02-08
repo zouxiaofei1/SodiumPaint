@@ -312,7 +312,7 @@ namespace TabPaint
         public TabPaint.Controls.StatusBarControl MyStatusBar;
 
         private DispatcherTimer _toastTimer;
-        private const int ToastDuration = AppConsts.ToastDuration;
+
         public bool BlanketMode = false;
         private bool _isCurrentFileGif = false; // 标记当前文件是否为GIF
         private System.Windows.Threading.DispatcherTimer _deleteCommitTimer;

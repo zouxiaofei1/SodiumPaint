@@ -278,24 +278,20 @@ namespace TabPaint
         [DllImport("user32.dll")]
         private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
-        private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
-        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE;
-        private const int WM_NCACTIVATE = 0x0086;
-
         public static bool SetWindowImmersiveDarkMode(Window window, bool enabled)
         {
             if (window == null) return false;
             var handle = new WindowInteropHelper(window).Handle;
             if (handle == IntPtr.Zero) return false;
 
-            int attribute = DWMWA_USE_IMMERSIVE_DARK_MODE;
+            int attribute = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE;
             int useImmersiveDarkMode = enabled ? 1 : 0;
 
             bool success = true;
             if (DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(int)) != 0)
             {
                 // 尝试旧版本的 Attribute
-                attribute = DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
+                attribute = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
                 if (DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(int)) != 0)
                 {
                     success = false;
@@ -305,8 +301,8 @@ namespace TabPaint
             if (success)
             {
                 // 强制刷新非客户区以应用主题（特别是 Win10）
-                SendMessage(handle, WM_NCACTIVATE, (IntPtr)0, (IntPtr)0);
-                SendMessage(handle, WM_NCACTIVATE, (IntPtr)1, (IntPtr)0);
+                SendMessage(handle, AppConsts.WM_NCACTIVATE, (IntPtr)0, (IntPtr)0);
+                SendMessage(handle, AppConsts.WM_NCACTIVATE, (IntPtr)1, (IntPtr)0);
             }
 
             return success;

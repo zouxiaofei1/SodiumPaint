@@ -82,8 +82,6 @@ namespace TabPaint
             ref uint pvAttribute,
             int cbAttribute);
 
-        // DWMWA_BORDER_COLOR = 34 (Win11 22H2+)
-        private const int DWMWA_BORDER_COLOR = 34;
         public static void SetBorderColor(Window window, Color color)
         {
             try
@@ -93,7 +91,7 @@ namespace TabPaint
 
                 // DWM 使用 COLORREF 格式: 0x00BBGGRR
                 uint colorRef = (uint)(color.R | (color.G << 8) | (color.B << 16));
-                DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorRef, sizeof(uint));
+                DwmSetWindowAttribute(hwnd, AppConsts.DWMWA_BORDER_COLOR, ref colorRef, sizeof(uint));
             }
             catch
             {
@@ -108,7 +106,7 @@ namespace TabPaint
                 if (hwnd == IntPtr.Zero) return;
 
                 uint colorDefault = 0xFFFFFFFF;
-                DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorDefault, sizeof(uint));
+                DwmSetWindowAttribute(hwnd, AppConsts.DWMWA_BORDER_COLOR, ref colorDefault, sizeof(uint));
             }
             catch { }
         }
@@ -120,7 +118,7 @@ namespace TabPaint
                 if (hwnd == IntPtr.Zero) return;
 
                 uint colorNone = 0xFFFFFFFE;
-                DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorNone, sizeof(uint));
+                DwmSetWindowAttribute(hwnd, AppConsts.DWMWA_BORDER_COLOR, ref colorNone, sizeof(uint));
             }
             catch { }
         }

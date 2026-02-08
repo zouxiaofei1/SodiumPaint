@@ -26,8 +26,6 @@ namespace TabPaint
     {
         public string ProgramVersion { get; set; } = "";
         private bool _isNavExpanded = true;
-        private const double NAV_EXPANDED_WIDTH = AppConsts.NavExpandedWidth;
-        private const double NAV_COLLAPSED_WIDTH = AppConsts.NavCollapsedWidth;
         private DispatcherTimer _toastTimer;
         private bool _isToastVisible = false;
         private bool MicaEnabled = false;
@@ -319,7 +317,7 @@ namespace TabPaint
             if (_isNavExpanded == expand) return;
             _isNavExpanded = expand;
 
-            double targetWidth = expand ? NAV_EXPANDED_WIDTH : NAV_COLLAPSED_WIDTH;
+            double targetWidth = expand ? AppConsts.NavExpandedWidth : AppConsts.NavCollapsedWidth;
 
             // 使用原生的 DoubleAnimation，非常稳定
             DoubleAnimation anim = new DoubleAnimation();

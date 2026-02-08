@@ -678,7 +678,7 @@ namespace TabPaint
                             {
                                 try
                                 {
-                                    // A. 加载图片
+
                                     var bmp = new BitmapImage();
                                     bmp.BeginInit();
                                     bmp.UriSource = new Uri(info.SourcePath);
@@ -890,7 +890,8 @@ namespace TabPaint
                             {
                                 try
                                 {
-                                    // A. 加载图片 (需要在新线程重新加载，不能复用 UI 线程的 Bitmap)
+
+
                                     var bmp = new BitmapImage();
                                     bmp.BeginInit();
                                     bmp.UriSource = new Uri(info.SourcePath);

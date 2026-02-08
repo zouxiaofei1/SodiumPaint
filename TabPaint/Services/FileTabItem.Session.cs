@@ -180,10 +180,33 @@ namespace TabPaint
                     return DecodeSvg(bytes, CancellationToken.None);
                 }
 
+                // 获取原始尺寸
+                int originalWidth = 0;
+                int originalHeight = 0;
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    originalWidth = decoder.Frames[0].PixelWidth;
+                    originalHeight = decoder.Frames[0].PixelHeight;
+                }
+
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.UriSource = new Uri(path);
+
+                // 检查尺寸限制
+                const int maxSize = (int)AppConsts.MaxCanvasSize;
+                if (originalWidth > maxSize || originalHeight > maxSize)
+                {
+                    if (originalWidth >= originalHeight)
+                        bitmap.DecodePixelWidth = maxSize;
+                    else
+                        bitmap.DecodePixelHeight = maxSize;
+
+                    ShowToast("L_Toast_ImageTooLarge");
+                }
+
                 bitmap.EndInit();
                 bitmap.Freeze();
                 return bitmap;

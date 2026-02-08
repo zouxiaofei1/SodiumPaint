@@ -17,6 +17,7 @@ namespace TabPaint
         public const int WM_NCHITTEST = 0x0084;
         public const int WM_CLIPBOARDUPDATE = 0x031D;
         public const int WM_MOUSEHWHEEL = 0x020E;
+        public const int WM_NCACTIVATE = 0x0086;
 
         // --- HitTest 区域常量 ---
         public const int HTCLIENT = 1;
@@ -174,6 +175,7 @@ namespace TabPaint
 
         // --- 布局参数 ---
         public const double FitToWindowMarginFactor = 0.9;
+        public const double CanvasMargin = 200.0;
 
         // --- 加载与性能参数 ---
         public const int PreviewDecodeWidth = 480;
@@ -239,6 +241,7 @@ namespace TabPaint
         public const string RegistryValueNameLightTheme = "AppsUseLightTheme";
         public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
         public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+        public const int DWMWA_BORDER_COLOR = 34;
 
         // --- 应用逻辑与限制 ---
         public const int MaxRecentFiles = 10;

@@ -17,6 +17,8 @@ namespace TabPaint.Controls
         public event EventHandler FavoritesChanged;
 
         private string _currentPage = "Default";
+        private const string ThumbnailDirName = ".thumbnails";
+        private const int FavoriteThumbnailSize = 150;
 
         private StackPanel GetFavoriteStack()
         {
@@ -206,6 +208,60 @@ namespace TabPaint.Controls
             stack.Children.Add(grid);
         }
 
+        private string GetThumbnailPath(string originalPath)
+        {
+            string dir = Path.GetDirectoryName(originalPath);
+            string fileName = Path.GetFileName(originalPath);
+            string thumbDir = Path.Combine(dir, ThumbnailDirName);
+            return Path.Combine(thumbDir, fileName);
+        }
+
+        private string EnsureThumbnail(string originalPath)
+        {
+            try
+            {
+                string thumbPath = GetThumbnailPath(originalPath);
+                if (File.Exists(thumbPath)) return thumbPath;
+
+                string thumbDir = Path.GetDirectoryName(thumbPath);
+                if (!Directory.Exists(thumbDir))
+                {
+                    var di = Directory.CreateDirectory(thumbDir);
+                    di.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
+                }
+
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(originalPath);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+
+                double scale = Math.Min((double)FavoriteThumbnailSize / bitmap.PixelWidth, (double)FavoriteThumbnailSize / bitmap.PixelHeight);
+                if (scale >= 1)
+                {
+                    File.Copy(originalPath, thumbPath, true);
+                    return thumbPath;
+                }
+
+                var resized = new TransformedBitmap(bitmap, new ScaleTransform(scale, scale));
+                using (var fs = new FileStream(thumbPath, FileMode.Create))
+                {
+                    BitmapEncoder encoder;
+                    string ext = Path.GetExtension(originalPath).ToLower();
+                    if (ext == ".png" || ext == ".ico" || ext == ".svg") encoder = new PngBitmapEncoder();
+                    else encoder = new JpegBitmapEncoder { QualityLevel = 80 };
+
+                    encoder.Frames.Add(BitmapFrame.Create(resized));
+                    encoder.Save(fs);
+                }
+                return thumbPath;
+            }
+            catch
+            {
+                return originalPath;
+            }
+        }
+
         private void AddImageToUI(string filePath)
         {
             var stack = GetFavoriteStack();
@@ -237,10 +293,11 @@ namespace TabPaint.Controls
 
             try
             {
+                string displayPath = EnsureThumbnail(filePath);
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
-                bitmap.UriSource = new Uri(filePath);
-                bitmap.DecodePixelWidth = 200;
+                bitmap.UriSource = new Uri(displayPath);
+                bitmap.DecodePixelWidth = FavoriteThumbnailSize;
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.EndInit();
                 img.Source = bitmap;
@@ -251,6 +308,8 @@ namespace TabPaint.Controls
                 try
                 {
                     File.Delete(filePath);
+                    string thumbPath = GetThumbnailPath(filePath);
+                    if (File.Exists(thumbPath)) File.Delete(thumbPath);
                     stack.Children.Remove(grid);
                     FavoritesChanged?.Invoke(this, EventArgs.Empty);
                 }
@@ -396,6 +455,7 @@ namespace TabPaint.Controls
                 }
 
                 File.Copy(filePath, destPath);
+                EnsureThumbnail(destPath);
                 AddImageToUI(destPath);
                 FavoritesChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -429,6 +489,7 @@ namespace TabPaint.Controls
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
                     encoder.Save(fileStream);
                 }
+                EnsureThumbnail(destPath);
                 AddImageToUI(destPath);
                 FavoritesChanged?.Invoke(this, EventArgs.Empty);
             }

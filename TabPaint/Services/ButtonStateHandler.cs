@@ -14,6 +14,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using TabPaint.Services;
 using static TabPaint.MainWindow;
 
 //
@@ -231,14 +232,6 @@ namespace TabPaint
         }
 
         private bool _fontsLoaded = false;
-        public class FontDisplayItem
-        {
-            public string DisplayName { get; set; }
-            public FontFamily FontFamily { get; set; }
-
-            // 重写 ToString 让 ComboBox 默认显示 DisplayName
-            public override string ToString() => DisplayName;
-        }
 
         private void EnsureFontsLoaded()
         {
@@ -247,46 +240,16 @@ namespace TabPaint
 
             System.Threading.Tasks.Task.Run(() =>
             {
-                // 获取当前系统语言
-                var currentLang = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentUICulture.IetfLanguageTag);
-
-                var fontItems = new List<FontDisplayItem>();
-
-                foreach (var fontFamily in Fonts.SystemFontFamilies)
-                {
-                    string name;
-
-                    // 1. 尝试获取当前语言对应的名称 (中文系统下即获取中文名)
-                    if (fontFamily.FamilyNames.ContainsKey(currentLang))
-                        name = fontFamily.FamilyNames[currentLang];
-                    // 2. 如果没有当前语言，尝试获取英文名称
-                    else if (fontFamily.FamilyNames.ContainsKey(System.Windows.Markup.XmlLanguage.GetLanguage("en-us")))
-                        name = fontFamily.FamilyNames[System.Windows.Markup.XmlLanguage.GetLanguage("en-us")];
-                    // 3. 实在不行，就用 Source
-                    else
-                        name = fontFamily.Source;
-
-                    fontItems.Add(new FontDisplayItem { DisplayName = name, FontFamily = fontFamily });
-                }
-
-                // 排序：通常希望中文名在一起，英文名在一起，这里简单按名称排序
-                var sortedFonts = fontItems.OrderBy(f => f.DisplayName).ToList();
+                var sortedFonts = FontService.GetSystemFonts();
 
                 // 切回 UI 线程更新
                 Dispatcher.Invoke(() =>
                 {
                     TextMenu.FontFamilyBox.ItemsSource = sortedFonts;
-
-                    // 设置显示路径（如果不用辅助类，直接绑定 List<FontFamily> 的话需要设置这个，用了辅助类则不需要或设为 DisplayName）
                     TextMenu.FontFamilyBox.DisplayMemberPath = "DisplayName";
-                    TextMenu.FontFamilyBox.SelectedValuePath = "FontFamily"; // 选中后获取真正的 FontFamily 对象
-
-                    // 设置默认字体 (匹配中文名)
-                    var defaultFont = sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("微软雅黑"))
-                                   ?? sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("Microsoft YaHei"))
-                                   ?? sortedFonts.FirstOrDefault(f => f.DisplayName.Contains("宋体"))
-                                   ?? sortedFonts.FirstOrDefault();
-
+                    TextMenu.FontFamilyBox.SelectedValuePath = "FontFamily";
+                    
+                    var defaultFont = FontService.GetDefaultFont(sortedFonts);
                     TextMenu.FontFamilyBox.SelectedItem = defaultFont;
 
                     _fontsLoaded = true;

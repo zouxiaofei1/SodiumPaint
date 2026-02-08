@@ -36,7 +36,7 @@ namespace TabPaint
         }
         private void OnGlobalDragOver(object sender, DragEventArgs e)
         {
-            
+
             if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
                 var sourceWindowData = e.Data.GetData("TabPaintSourceWindow");
@@ -56,7 +56,7 @@ namespace TabPaint
                 e.Handled = true;
                 return;
             }
-      
+
             // 1. 屏蔽程序内部拖拽 (如标签页排序)
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
@@ -109,7 +109,7 @@ namespace TabPaint
 
                     if (pos.Y <= AppConsts.DragTitleBarThresholdY)
                     {
-                        e.Effects = DragDropEffects.Move;   
+                        e.Effects = DragDropEffects.Move;
                         ShowDragOverlay(
                             LocalizationManager.GetString("L_Drag_SwitchWorkspace_Title"),
                             LocalizationManager.GetString("L_Drag_SwitchWorkspace_Desc")
@@ -152,7 +152,7 @@ namespace TabPaint
                     HideDragOverlay();
                 }
             }
-            else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText)|| e.Data.GetDataPresent(DataFormats.Rtf))
+            else if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.UnicodeText) || e.Data.GetDataPresent(DataFormats.Rtf))
             {
                 if ((e.AllowedEffects & DragDropEffects.Copy) == DragDropEffects.Copy)
                 {
@@ -269,14 +269,14 @@ namespace TabPaint
                     }
                     else
                     {
-                    // B-1. 多文件 -> 全部新建标签页
-                    if (imageFiles.Length > 1) await OpenFilesAsNewTabs(imageFiles);
+                        // B-1. 多文件 -> 全部新建标签页
+                        if (imageFiles.Length > 1) await OpenFilesAsNewTabs(imageFiles);
 
-                    else
-                    {
-                        string filePath = imageFiles[0];
+                        else
+                        {
+                            string filePath = imageFiles[0];
 
-                        if (pos.Y < AppConsts.DragImageBarThresholdY) await OpenFilesAsNewTabs(new string[] { filePath });
+                            if (pos.Y < AppConsts.DragImageBarThresholdY) await OpenFilesAsNewTabs(new string[] { filePath });
                             else
                             {
                                 Point canvasPos = e.GetPosition(BackgroundImage);
@@ -410,7 +410,7 @@ namespace TabPaint
             // 更新文字内容
             DragOverlayText.Text = title;
             DragOverlaySubText.Text = subText;
-           // s(_isDragOverlayVisible);
+            // s(_isDragOverlayVisible);
             if (_isDragOverlayVisible) return;
 
             _isDragOverlayVisible = true;
@@ -424,13 +424,10 @@ namespace TabPaint
         {
             try
             {
-            if (!_isDragOverlayVisible) return;
-
-            _isDragOverlayVisible = false;
-
-            // 播放淡出动画
-            Storyboard fadeOut = (Storyboard)this.Resources["FadeOutDragOverlay"];
-            fadeOut.Begin(); _dragWatchdog.Stop();
+                if (!_isDragOverlayVisible) return;
+                _isDragOverlayVisible = false;
+                Storyboard fadeOut = (Storyboard)this.Resources["FadeOutDragOverlay"];
+                fadeOut.Begin(); _dragWatchdog.Stop();
             }
             catch { }
         }
@@ -448,10 +445,33 @@ namespace TabPaint
                 }
                 else
                 {
+                    // 获取原始尺寸
+                    int originalWidth = 0;
+                    int originalHeight = 0;
+                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                        originalWidth = decoder.Frames[0].PixelWidth;
+                        originalHeight = decoder.Frames[0].PixelHeight;
+                    }
+
                     BitmapImage bmi = new BitmapImage();
                     bmi.BeginInit();
                     bmi.UriSource = new Uri(filePath);
                     bmi.CacheOption = BitmapCacheOption.OnLoad; // 必须 OnLoad 才能解除文件占用
+
+                    // 检查尺寸限制
+                    const int maxSize = (int)AppConsts.MaxCanvasSize;
+                    if (originalWidth > maxSize || originalHeight > maxSize)
+                    {
+                        if (originalWidth >= originalHeight)
+                            bmi.DecodePixelWidth = maxSize;
+                        else
+                            bmi.DecodePixelHeight = maxSize;
+
+                        ShowToast("L_Toast_ImageTooLarge");
+                    }
+
                     bmi.EndInit();
                     bmi.Freeze(); // 性能优化
                     bitmap = bmi;

@@ -177,7 +177,21 @@
                                   AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
                       
 
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5" ClipToBounds="False">
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="False">
+                            <Grid.Resources>
+                                <Thickness x:Key="BigMargin">200,200,200,200</Thickness>
+                                <Thickness x:Key="SmallMargin">5,5,5,5</Thickness>
+                            </Grid.Resources>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Margin" Value="{StaticResource BigMargin}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
+                                            <Setter Property="Margin" Value="{StaticResource SmallMargin}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
                             <Grid Name="CanvasWrapper" ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
                                 <Grid.Background>
                                     <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">

@@ -40,7 +40,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Left Navigation Bar -->
-            <Grid Grid.Column="0" Background="{DynamicResource ChromeLowBrush}">
+            <Grid Grid.Column="0" Background="{DynamicResource ChromeLowBrush}" MouseLeftButtonDown="StarIcon_MouseLeftButtonDown">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>

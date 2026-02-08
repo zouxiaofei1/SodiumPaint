@@ -781,8 +781,9 @@ namespace TabPaint
             double offsetX = ScrollContainer.HorizontalOffset;
             double offsetY = ScrollContainer.VerticalOffset;
 
-            double newOffsetX = (offsetX + anchorPoint.X) * (newScale / oldScale) - anchorPoint.X;
-            double newOffsetY = (offsetY + anchorPoint.Y) * (newScale / oldScale) - anchorPoint.Y;
+            double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
+            double newOffsetX = (offsetX + anchorPoint.X - margin) * (newScale / oldScale) + margin - anchorPoint.X;
+            double newOffsetY = (offsetY + anchorPoint.Y - margin) * (newScale / oldScale) + margin - anchorPoint.Y;
 
             ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
             ScrollContainer.ScrollToVerticalOffset(newOffsetY);
@@ -862,9 +863,10 @@ namespace TabPaint
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = nextScale;
            
             double scaleRatio = nextScale / oldScale;
+            double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
 
-            _virtualScrollH = (_virtualScrollH + _zoomCenter.X) * scaleRatio - _zoomCenter.X;
-            _virtualScrollV = (_virtualScrollV + _zoomCenter.Y) * scaleRatio - _zoomCenter.Y;
+            _virtualScrollH = (_virtualScrollH + _zoomCenter.X - margin) * scaleRatio + margin - _zoomCenter.X;
+            _virtualScrollV = (_virtualScrollV + _zoomCenter.Y - margin) * scaleRatio + margin - _zoomCenter.Y;
           
             ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
             ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);

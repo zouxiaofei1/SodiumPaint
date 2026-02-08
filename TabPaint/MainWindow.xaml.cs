@@ -487,6 +487,8 @@ namespace TabPaint
                 double viewWidth = ScrollContainer.ViewportWidth+ viewWidthoffset;
                 double viewHeight = ScrollContainer.ViewportHeight+ viewHeightoffset;
 
+                // 减去我们强制添加的边距，以获取真正可用的图片展示空间
+                // 只有看图模式下我们才希望“铺满”，绘图模式下其实也可以按此比例缩放
                 double scaleX = viewWidth / imgWidth;
                 double scaleY = viewHeight / imgHeight;
 
@@ -498,6 +500,11 @@ namespace TabPaint
 
                 if(needcanvasUpdateUI)_canvasResizer.UpdateUI();//关掉可以节省2-5ms
                 _firstFittoWindowdone = true;
+
+                // 强制更新布局并居中
+                Dispatcher.InvokeAsync(() => {
+                    CenterImage();
+                }, DispatcherPriority.Render);
             }
         }
         private async void PasteClipboardAsNewTab()
@@ -648,19 +655,23 @@ namespace TabPaint
         }
         private void CenterImage()
         {
-            if (_bitmap == null || BackgroundImage == null)
+            if (_bitmap == null || BackgroundImage == null || ScrollContainer == null)
                 return;
 
+            // 确保同步更新 Image 属性
             BackgroundImage.Width = BackgroundImage.Source.Width;
             BackgroundImage.Height = BackgroundImage.Source.Height;
 
-            if (ScrollContainer != null)
-            {
-                ScrollContainer.ScrollToHorizontalOffset(
-                    (BackgroundImage.Width - ScrollContainer.ViewportWidth) / 2);
-                ScrollContainer.ScrollToVerticalOffset(
-                    (BackgroundImage.Height - ScrollContainer.ViewportHeight) / 2);
-            }
+            // 强制布局更新以获得准确的 ExtentWidth/Height (包含 Margin 和 Scale)
+            ScrollContainer.UpdateLayout();
+
+            // 计算居中偏移：(总内容长度 - 视口长度) / 2
+            // 这种方法配合 XAML 中 Grid 的 HorizontalAlignment="Center" 可以完美处理所有情况
+            double targetOffsetH = (ScrollContainer.ExtentWidth - ScrollContainer.ViewportWidth) / 2;
+            double targetOffsetV = (ScrollContainer.ExtentHeight - ScrollContainer.ViewportHeight) / 2;
+
+            ScrollContainer.ScrollToHorizontalOffset(targetOffsetH);
+            ScrollContainer.ScrollToVerticalOffset(targetOffsetV);
 
             BackgroundImage.VerticalAlignment = VerticalAlignment.Center;
         }
@@ -668,7 +679,7 @@ namespace TabPaint
         private void InitializeToastTimer()
         {
             _toastTimer = new DispatcherTimer();
-            _toastTimer.Interval = TimeSpan.FromMilliseconds(ToastDuration);
+            _toastTimer.Interval = TimeSpan.FromMilliseconds(AppConsts.ToastDuration);
             _toastTimer.Tick += (s, e) => HideToast(); // 计时结束触发淡出
         }
 

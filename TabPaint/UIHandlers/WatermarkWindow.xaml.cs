@@ -9,6 +9,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading; // 需要引用
+using TabPaint.Services;
 
 
 namespace TabPaint
@@ -118,58 +119,19 @@ namespace TabPaint
             ComboCommonColors.SelectedIndex = 0;
             UpdateColorInternal(Colors.Black, false);
         }
-        private bool IsSymbolFont(FontFamily font)
-        {
-            string name = font.Source.ToLower();
-            // 过滤常见的符号字体关键词
-            if (name.Contains("webdings") ||
-                name.Contains("wingdings") ||
-                name.Contains("symbol") ||
-                name.Contains("marlett") ||
-                name.Contains("holomdl2") || // Win10/11 系统图标
-                name.Contains("segway") || // 某些特殊的 UI 字体
-                name.Contains("emoji")) return true;       // 有时候 emoji 字体也不太适合做文字水印
-            return false;
-        }
-
         private void InitializeFonts()
         {
-            // 获取当前线程的语言环境（用于匹配字体名称）
-            var targetLanguage = System.Windows.Markup.XmlLanguage.GetLanguage(CultureInfo.CurrentUICulture.IetfLanguageTag);
-
-            var fonts = Fonts.SystemFontFamilies
-                // 1. 过滤掉通常也是乱码或者系统专用的符号字体
-                .Where(font => !IsSymbolFont(font))
-                .Select(font => new
-                {
-                    FontFamily = font,
-                    DisplayName = GetLocalizedFontName(font)
-                })
-                .OrderBy(x => x.DisplayName)
-                .ToList();
+            var fonts = FontService.GetSystemFonts();
 
             ComboFontFamily.ItemsSource = fonts;
             ComboFontFamily.SelectedValuePath = "FontFamily";  // 选中后获取哪个属性
 
-            // 尝试默认选中 微软雅黑 或 Arial
-            var defaultFontItem = fonts.FirstOrDefault(f => f.FontFamily.Source.Contains("Microsoft YaHei"))
-                               ?? fonts.FirstOrDefault(f => f.FontFamily.Source.Contains("Arial"))
-                               ?? fonts.FirstOrDefault();
+            var defaultFontItem = FontService.GetDefaultFont(fonts);
 
             if (defaultFontItem != null)
             {
                 ComboFontFamily.SelectedItem = defaultFontItem;
             }
-        }
-        private string GetLocalizedFontName(FontFamily fontFamily)
-        {
-            var currentLang = System.Windows.Markup.XmlLanguage.GetLanguage(CultureInfo.CurrentUICulture.IetfLanguageTag);
-            if (fontFamily.FamilyNames.TryGetValue(currentLang, out string name)) return name;
-            var zhCn = System.Windows.Markup.XmlLanguage.GetLanguage("zh-cn");
-            if (fontFamily.FamilyNames.TryGetValue(zhCn, out name)) return name;
-            var enUs = System.Windows.Markup.XmlLanguage.GetLanguage("en-us");
-            if (fontFamily.FamilyNames.TryGetValue(enUs, out name)) return name;
-            return fontFamily.Source;
         }
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {

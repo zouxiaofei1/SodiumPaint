@@ -584,7 +584,8 @@ namespace TabPaint
 
                 // 5. 适配窗口
                 FitToWindow(needcanvasUpdateUI: false);
-                CenterImage();
+                // CenterImage() 已经由 FitToWindow 内部通过 Dispatcher 调用，此处不再重复同步调用
+                // 以免出现布局未完成导致计算偏差。
               //  _canvasResizer.UpdateUI();
 
                 // 6. GIF 特殊处理

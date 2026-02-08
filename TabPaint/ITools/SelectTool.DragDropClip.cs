@@ -1,4 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -175,10 +178,33 @@ namespace TabPaint
                     string[] allowed = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
                     if (!allowed.Contains(ext)) return null;
 
+                    // 获取原始尺寸
+                    int originalWidth = 0;
+                    int originalHeight = 0;
+                    using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                        originalWidth = decoder.Frames[0].PixelWidth;
+                        originalHeight = decoder.Frames[0].PixelHeight;
+                    }
+
                     BitmapImage bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.UriSource = new Uri(path);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
+
+                    // 检查尺寸限制
+                    const int maxSize = (int)AppConsts.MaxCanvasSize;
+                    if (originalWidth > maxSize || originalHeight > maxSize)
+                    {
+                        if (originalWidth >= originalHeight)
+                            bitmap.DecodePixelWidth = maxSize;
+                        else
+                            bitmap.DecodePixelHeight = maxSize;
+
+                        ctxForTimer?.ParentWindow?.ShowToast("L_Toast_ImageTooLarge");
+                    }
+
                     bitmap.EndInit();
                     bitmap.Freeze(); // 跨线程安全
                     return bitmap;
@@ -210,6 +236,16 @@ namespace TabPaint
                 if (_selectionData != null) CommitSelection(ctx);
 
                 if (sourceBitmap == null) return;
+
+                // 尺寸限制检查
+                const int maxSize = (int)AppConsts.MaxCanvasSize;
+                if (sourceBitmap.PixelWidth > maxSize || sourceBitmap.PixelHeight > maxSize)
+                {
+                    double scale = Math.Min((double)maxSize / sourceBitmap.PixelWidth, (double)maxSize / sourceBitmap.PixelHeight);
+                    sourceBitmap = new TransformedBitmap(sourceBitmap, new ScaleTransform(scale, scale));
+                    ctx.ParentWindow?.ShowToast("L_Toast_ImageTooLarge");
+                }
+
                 IsPasted = true;
                 var mw = ctx.ParentWindow;
 

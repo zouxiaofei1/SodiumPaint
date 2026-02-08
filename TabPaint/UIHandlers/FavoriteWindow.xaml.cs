@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,6 +14,26 @@ namespace TabPaint.UIHandlers
 {
     public partial class FavoriteWindow : Window
     {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
         private Window _owner;
         private List<string> _pages = new List<string>();
         private string _activePage = "Default";
@@ -52,20 +73,105 @@ namespace TabPaint.UIHandlers
         }
 
         private int _snapMode = 0;
+        private bool _isDragging = false;
 
         private void FavoriteWindow_SourceInitialized(object sender, EventArgs e)
         {
             ThemeManager.SetWindowImmersiveDarkMode(this, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
             MicaAcrylicManager.ApplyEffect(this);
+
+            var helper = new WindowInteropHelper(this);
+            HwndSource source = HwndSource.FromHwnd(helper.Handle);
+            source.AddHook(WndProc);
+
             UpdateSizeForSnapMode();
             UpdatePosition(null, null);
+        }
+
+        private const int WM_MOVING = 0x0216;
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == WM_MOVING && _isDragging)
+            {
+                UpdateSnapMode();
+                UpdateSizeForSnapMode();
+
+                // 获取建议的矩形 (Win32 RECT 是物理像素)
+                RECT rect = (RECT)Marshal.PtrToStructure(lParam, typeof(RECT));
+
+                double ownerLeft, ownerTop, ownerWidth, ownerHeight;
+                GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
+
+                DpiScale dpi = VisualTreeHelper.GetDpi(this);
+                double factorX = dpi.DpiScaleX;
+                double factorY = dpi.DpiScaleY;
+                double gap = 2;
+
+                // 预计算目标尺寸（DIU），避免使用尚未更新完成的 this.Width/Height
+                double targetWidthDIU = (_snapMode < 2) ? ownerWidth : 150;
+                double targetHeightDIU = (_snapMode < 2) ? 150 : ownerHeight;
+
+                // 计算目标位置（物理像素）
+                int targetLeft;
+                int targetTop;
+
+                switch (_snapMode)
+                {
+                    case 0: // 底部
+                        targetLeft = (int)(ownerLeft * factorX);
+                        targetTop = (int)((ownerTop + ownerHeight + gap) * factorY);
+                        break;
+                    case 1: // 顶部
+                        targetLeft = (int)(ownerLeft * factorX);
+                        targetTop = (int)((ownerTop - targetHeightDIU - gap) * factorY);
+                        break;
+                    case 2: // 右侧
+                        targetLeft = (int)((ownerLeft + ownerWidth + gap) * factorX);
+                        targetTop = (int)(ownerTop * factorY);
+                        break;
+                    case 3: // 左侧
+                        targetLeft = (int)((ownerLeft - targetWidthDIU - gap) * factorX);
+                        targetTop = (int)(ownerTop * factorY);
+                        break;
+                    default:
+                        targetLeft = rect.Left;
+                        targetTop = rect.Top;
+                        break;
+                }
+
+                int pWidth = (int)(targetWidthDIU * factorX);
+                int pHeight = (int)(targetHeightDIU * factorY);
+
+                // 边界保护（物理像素）
+                var workArea = SystemParameters.WorkArea;
+                int pWorkLeft = (int)(workArea.Left * factorX);
+                int pWorkTop = (int)(workArea.Top * factorY);
+                int pWorkRight = (int)(workArea.Right * factorX);
+                int pWorkBottom = (int)(workArea.Bottom * factorY);
+
+                if (targetLeft < pWorkLeft) targetLeft = pWorkLeft;
+                if (targetTop < pWorkTop) targetTop = pWorkTop;
+                if (targetLeft + pWidth > pWorkRight) targetLeft = pWorkRight - pWidth;
+                if (targetTop + pHeight > pWorkBottom) targetTop = pWorkBottom - pHeight;
+
+                rect.Left = targetLeft;
+                rect.Top = targetTop;
+                rect.Right = targetLeft + pWidth;
+                rect.Bottom = targetTop + pHeight;
+
+                Marshal.StructureToPtr(rect, lParam, false);
+                handled = true;
+            }
+            return IntPtr.Zero;
         }
 
         private void StarIcon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
+                _isDragging = true;
                 this.DragMove();
+                _isDragging = false;
                 UpdateSnapMode();
                 UpdateSizeForSnapMode();
                 UpdatePosition(null, null);
@@ -78,32 +184,40 @@ namespace TabPaint.UIHandlers
             double ownerLeft, ownerTop, ownerWidth, ownerHeight;
             GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
 
-            // 计算 FavoriteWindow 中心点
-            double cx = this.Left + this.ActualWidth / 2;
-            double cy = this.Top + this.ActualHeight / 2;
-
-            // 计算主窗口中心
-            double ownerCx = ownerLeft + ownerWidth / 2;
-            double ownerCy = ownerTop + ownerHeight / 2;
-
-            // 相对主窗口中心的偏移
-            double dx = cx - ownerCx;
-            double dy = cy - ownerCy;
-
-            // 归一化到主窗口宽高比例，判断在哪个象限/方向
-            double nx = dx / (ownerWidth / 2);
-            double ny = dy / (ownerHeight / 2);
-
-            if (Math.Abs(nx) > Math.Abs(ny))
+            double cx, cy;
+            if (_isDragging)
             {
-                // 水平方向更远 → 左或右
-                _snapMode = nx > 0 ? 2 : 3; // 2=右, 3=左
+                POINT p;
+                if (GetCursorPos(out p))
+                {
+                    DpiScale dpi = VisualTreeHelper.GetDpi(this);
+                    cx = p.X / dpi.DpiScaleX;
+                    cy = p.Y / dpi.DpiScaleY;
+                }
+                else
+                {
+                    cx = this.Left + this.ActualWidth / 2;
+                    cy = this.Top + this.ActualHeight / 2;
+                }
             }
             else
             {
-                // 垂直方向更远 → 上或下
-                _snapMode = ny > 0 ? 0 : 1; // 0=底, 1=顶
+                cx = this.Left + this.ActualWidth / 2;
+                cy = this.Top + this.ActualHeight / 2;
             }
+
+            // 计算到主窗口四条边的距离
+            double distToTop = Math.Abs(cy - ownerTop);
+            double distToBottom = Math.Abs(cy - (ownerTop + ownerHeight));
+            double distToLeft = Math.Abs(cx - ownerLeft);
+            double distToRight = Math.Abs(cx - (ownerLeft + ownerWidth));
+
+            double minDist = Math.Min(Math.Min(distToTop, distToBottom), Math.Min(distToLeft, distToRight));
+
+            if (minDist == distToBottom) _snapMode = 0;
+            else if (minDist == distToTop) _snapMode = 1;
+            else if (minDist == distToRight) _snapMode = 2;
+            else if (minDist == distToLeft) _snapMode = 3;
         }
         private void GetOwnerRect(out double left, out double top, out double width, out double height)
         {
@@ -129,15 +243,15 @@ namespace TabPaint.UIHandlers
 
             switch (_snapMode)
             {
-                case 0:
-                case 1: // 底部case 1: // 顶部
+                case 0: // 底部
+                case 1: // 顶部
                     this.Width = ownerWidth;
-                    this.Height = 140;
+                    this.Height = 150;
                     SetHorizontalLayout();
                     break;
                 case 2: // 右侧
                 case 3: // 左侧
-                    this.Width = 140;
+                    this.Width = 150;
                     this.Height = ownerHeight;
                     SetVerticalLayout();
                     break;
@@ -205,7 +319,7 @@ namespace TabPaint.UIHandlers
 
         private void UpdatePosition(object sender, EventArgs e)
         {
-            if (_owner == null || _owner.WindowState == WindowState.Minimized || !this.IsVisible) return;
+            if (_owner == null || _owner.WindowState == WindowState.Minimized || !this.IsVisible || _isDragging) return;
 
             double ownerLeft, ownerTop, ownerWidth, ownerHeight;
             GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
@@ -213,28 +327,26 @@ namespace TabPaint.UIHandlers
             // 先同步尺寸
             UpdateSizeForSnapMode();
 
-            double gap = 4; // 窗口间距
+            double gap = 2; // 窗口间距
+            double targetWidth = (_snapMode < 2) ? ownerWidth : 150;
+            double targetHeight = (_snapMode < 2) ? 150 : ownerHeight;
 
             switch (_snapMode)
             {
                 case 0: // 底部外侧
-                    MessageBox.Show("SnapMode: Bottom");
                     this.Left = ownerLeft;
                     this.Top = ownerTop + ownerHeight + gap;
                     break;
                 case 1: // 顶部外侧
-                        MessageBox.Show("SnapMode: Top");
                     this.Left = ownerLeft;
-                    this.Top = ownerTop - this.Height - gap;
+                    this.Top = ownerTop - targetHeight - gap;
                     break;
                 case 2: // 右侧外侧
-                    MessageBox.Show("SnapMode: Right");
                     this.Left = ownerLeft + ownerWidth + gap;
                     this.Top = ownerTop;
                     break;
                 case 3: // 左侧外侧
-                    MessageBox.Show("SnapMode: Left");
-                    this.Left = ownerLeft - this.Width - gap;
+                    this.Left = ownerLeft - targetWidth - gap;
                     this.Top = ownerTop;
                     break;
             }
