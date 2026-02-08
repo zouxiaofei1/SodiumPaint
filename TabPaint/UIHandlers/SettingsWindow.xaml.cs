@@ -311,7 +311,7 @@ namespace TabPaint
             if (TxtView != null) TxtView.Visibility = textVis;
             if (TxtShortcuts != null) TxtShortcuts.Visibility = textVis;
             if (TxtAdvanced != null) TxtAdvanced.Visibility = textVis;
-            if (TxtAbout != null) TxtAbout.Visibility = textVis;
+            if (TxtAbout != null) TxtAbout.Visibility = textVis; if (TxtPlugins != null) TxtPlugins.Visibility = textVis;
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -416,6 +416,9 @@ namespace TabPaint
 
                     case "Advanced":
                         page = new Pages.AdvancedPage();
+                        break;
+                    case "Plugins":
+                        page = new Pages.PluginPage();
                         break;
                     case "About":
                         page = new Pages.AboutPage();

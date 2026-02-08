@@ -266,7 +266,16 @@
                                 <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_Advanced}" VerticalAlignment="Center" x:Name="TxtAdvanced"/>
                             </Grid>
                         </ListBoxItem>
-
+                        <ListBoxItem Tag="Plugins" Visibility="Collapsed">
+                            <Grid Width="212" Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Path Data="{DynamicResource View_Mode_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+                                <TextBlock Grid.Column="1" Margin="8,0,0,0" Foreground="{DynamicResource TextPrimaryBrush}" Text="{DynamicResource L_Settings_Nav_Plugins}" VerticalAlignment="Center" x:Name="TxtPlugins"/>
+                            </Grid>
+                        </ListBoxItem>
                     </ListBox>
 
                     <ListBox x:Name="BottomListBox" Grid.Row="2"

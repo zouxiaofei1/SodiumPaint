@@ -114,7 +114,7 @@ namespace TabPaint
                 if (w.IsActive && w is not FluentMessageBox)
                     return w;
             }
-            return Application.Current.MainWindow;
+            return MainWindow.GetCurrentInstance();
         }
 
         private static void ShowOwnerModal(FluentMessageBox dialog, Window owner)

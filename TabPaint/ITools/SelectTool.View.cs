@@ -202,7 +202,8 @@ namespace TabPaint
                     var dataObject = new System.Windows.DataObject();
 
                     dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
-                    dataObject.SetData("TabPaintSelectionDrag", true);
+                    dataObject.SetData("TabPaintSelectionDrag", true); dataObject.SetData("TabPaintSourceWindow", ctx.ParentWindow.GetHashCode());
+
                     if (_hasLifted)
                     {
                         ctx.Undo.Undo();

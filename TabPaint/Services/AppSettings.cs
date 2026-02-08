@@ -5,6 +5,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Input;
@@ -189,7 +190,24 @@ namespace TabPaint
     }
     public class AppSettings : INotifyPropertyChanged
     {
-        private AppLanguage _language = AppLanguage.ChineseSimplified;
+        private AppLanguage _language = GetDefaultLanguage();
+
+        private static AppLanguage GetDefaultLanguage()
+        {
+            try
+            {
+                string cultureName = CultureInfo.CurrentUICulture.Name;
+                if (cultureName.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
+                {
+                    return AppLanguage.ChineseSimplified;
+                }
+            }
+            catch
+            {
+                // 忽略异常，默认返回英文或中文
+            }
+            return AppLanguage.English;
+        }
 
         [JsonPropertyName("language")]
         public AppLanguage Language

@@ -42,6 +42,7 @@ namespace TabPaint
 
         public void UpdateImageBarSliderState()
         {
+            a.s("UpdateImageBarSliderState");
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (MainImageBar == null || MainImageBar.Slider == null || MainImageBar.Scroller == null) return;

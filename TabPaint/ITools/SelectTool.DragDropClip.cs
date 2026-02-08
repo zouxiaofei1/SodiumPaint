@@ -203,7 +203,7 @@ namespace TabPaint
                 }
             }
 
-            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true)
+            public void InsertImageAsSelection(ToolContext ctx, BitmapSource sourceBitmap, bool expandCanvas = true, Point? dropPos = null)
             {
 
                 // 1. 提交当前的选区（如果有）
@@ -285,12 +285,22 @@ namespace TabPaint
                 sourceBitmap.CopyPixels(newData, strideFinal, 0);
 
                 _selectionData = newData;
-                _selectionRect = new Int32Rect(0, 0, imgW, imgH);
+                int startX = 0;
+                int startY = 0;
+
+                if (dropPos.HasValue)
+                {
+                    Point px = ctx.ToPixel(dropPos.Value);
+                    startX = (int)(px.X - imgW / 2.0);
+                    startY = (int)(px.Y - imgH / 2.0);
+                }
+
+                _selectionRect = new Int32Rect(startX, startY, imgW, imgH);
                 _originalRect = _selectionRect;
                 ctx.SelectionPreview.Source = new WriteableBitmap(sourceBitmap);
-                Canvas.SetLeft(ctx.SelectionPreview, 0);  // 默认放在左上角 (0,0)
+                Canvas.SetLeft(ctx.SelectionPreview, 0);
                 Canvas.SetTop(ctx.SelectionPreview, 0);
-                ctx.SelectionPreview.RenderTransform = new TranslateTransform(0, 0);
+                ctx.SelectionPreview.RenderTransform = new TranslateTransform(startX, startY);
                 ctx.SelectionPreview.Visibility = Visibility.Visible;
                 ctx.SelectionPreview.Width = imgW;
                 ctx.SelectionPreview.Height = imgH;
@@ -302,7 +312,7 @@ namespace TabPaint
 
                 mw.UpdateSelectionToolBarPosition();
                 mw.SetCropButtonState();
-                mw._canvasResizer.UpdateUI();
+                mw._canvasResizer.UpdateUI(); lag = 0;
             }
 
 

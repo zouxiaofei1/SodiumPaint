@@ -174,8 +174,8 @@ namespace TabPaint
                         VerticalAlignment = VerticalAlignment.Stretch,
                     };
                     // 插入到最底层
-                    Grid.SetRowSpan(noiseRect, Math.Max(1, rootGrid.RowDefinitions.Count));
-                    Grid.SetColumnSpan(noiseRect, Math.Max(1, rootGrid.ColumnDefinitions.Count));
+                    if (rootGrid.RowDefinitions.Count > 0) Grid.SetRowSpan(noiseRect, rootGrid.RowDefinitions.Count);
+                    if (rootGrid.ColumnDefinitions.Count > 0) Grid.SetColumnSpan(noiseRect, rootGrid.ColumnDefinitions.Count);
                     Panel.SetZIndex(noiseRect, -1);
                     rootGrid.Children.Insert(0, noiseRect);
                 }

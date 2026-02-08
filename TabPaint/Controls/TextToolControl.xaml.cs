@@ -31,14 +31,20 @@ namespace TabPaint.Controls
         {
             if (_isDragging)
             {
-                // 3. 获取当前鼠标相对于【主窗口】的坐标
-                var currentPoint = e.GetPosition(Application.Current.MainWindow);
+                var parentWindow = Window.GetWindow(this);
+                if (parentWindow == null) return;
 
-                // 4. 计算位移差量 (Delta)
-                double deltaX = currentPoint.X - _lastDragPoint.X;
-                double deltaY = currentPoint.Y - _lastDragPoint.Y;
-             //   DragTransform.X += deltaX/2;
-              //  DragTransform.Y += deltaY/2;
+                // 获取当前鼠标相对于当前窗口的坐标
+                var currentPoint = e.GetPosition(parentWindow);
+
+                if (_lastDragPoint != default)
+                {
+                    double deltaX = currentPoint.X - _lastDragPoint.X;
+                    double deltaY = currentPoint.Y - _lastDragPoint.Y;
+
+                   // DragTransform.X += deltaX;
+                  //  DragTransform.Y += deltaY;
+                }
 
                 _lastDragPoint = currentPoint;
             }

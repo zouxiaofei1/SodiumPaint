@@ -147,6 +147,24 @@
         </Grid>
 
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+        <!-- 插件跳转入口 -->
+        <TextBlock Text="{DynamicResource L_Settings_Nav_Plugins}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Content="{DynamicResource L_Settings_Plugins_Install}" Width="120" Height="32" 
+                    HorizontalAlignment="Left" Click="OpenPlugins_Click"
+                    Style="{StaticResource Win11SecondaryButtonStyle}"
+                    BorderThickness="1"/>
+
+            <TextBlock Grid.Column="1" Text="{DynamicResource L_Settings_Plugins_Desc}" 
+                       VerticalAlignment="Center" Margin="15,0,0,0" 
+                       Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" TextWrapping="Wrap"/>
+        </Grid>
+
+        <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
 
         <!-- 维护设置 -->
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Maintenance_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>

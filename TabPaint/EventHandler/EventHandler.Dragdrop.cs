@@ -39,6 +39,18 @@ namespace TabPaint
             
             if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
+                var sourceWindowData = e.Data.GetData("TabPaintSourceWindow");
+                if (sourceWindowData is int sourceWindowHash && sourceWindowHash != this.GetHashCode())
+                {
+                    // 跨窗口拖拽选区，允许
+                    e.Effects = DragDropEffects.Copy;
+                    ShowDragOverlay(
+                        LocalizationManager.GetString("L_Drag_Insert_Title"),
+                        LocalizationManager.GetString("L_Drag_Insert_Desc")
+                    );
+                    e.Handled = true;
+                    return;
+                }
                 HideDragOverlay();
                 e.Effects = DragDropEffects.None; // 此时在窗口内显示禁止符号，或者改为 Move/Copy 也可以，只要不弹窗
                 e.Handled = true;
@@ -170,9 +182,25 @@ namespace TabPaint
 
         private async void OnGlobalDrop(object sender, DragEventArgs e)
         {
-            HideDragOverlay(); 
-
-            // 1. 屏蔽内部拖拽
+            HideDragOverlay();
+            if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
+            {
+                var sourceWindowData = e.Data.GetData("TabPaintSourceWindow");
+                if (sourceWindowData is int sourceWindowHash && sourceWindowHash != this.GetHashCode())
+                {
+                    if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                    {
+                        string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                        if (files != null && files.Length > 0)
+                        {
+                            Point pos = e.GetPosition(BackgroundImage);
+                            InsertImageToCanvas(files[0], pos);
+                        }
+                    }
+                }
+                e.Handled = true;
+                return;
+            }
             if (e.Data.GetDataPresent("TabPaintInternalDrag"))
             {
                 if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -217,8 +245,12 @@ namespace TabPaint
                         string filePath = imageFiles[0];
 
                         if (pos.Y < AppConsts.DragImageBarThresholdY) await OpenFilesAsNewTabs(new string[] { filePath });
-                        else InsertImageToCanvas(filePath);
-                    }
+                            else
+                            {
+                                Point canvasPos = e.GetPosition(BackgroundImage);
+                                InsertImageToCanvas(filePath, canvasPos);
+                            }
+                        }
                     }
                 }
                 e.Handled = true;
@@ -371,7 +403,7 @@ namespace TabPaint
             catch { }
         }
 
-        private void InsertImageToCanvas(string filePath)
+        private void InsertImageToCanvas(string filePath, Point? dropPos = null)
         {
             try
             {
@@ -400,7 +432,7 @@ namespace TabPaint
 
                 if (_tools.Select is SelectTool st)
                 {
-                    st.InsertImageAsSelection(_ctx, bitmap);
+                    st.InsertImageAsSelection(_ctx, bitmap, true, dropPos);
                 }
             }
             catch (Exception ex)

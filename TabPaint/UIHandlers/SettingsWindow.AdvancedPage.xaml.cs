@@ -14,7 +14,14 @@ namespace TabPaint.Pages
         {
             InitializeComponent();
         }
-
+        private void OpenPlugins_Click(object sender, RoutedEventArgs e)
+        {
+            var win = Window.GetWindow(this) as SettingsWindow;
+            if (win != null)
+            {
+                win.NavListBox.SelectedIndex = 5; // Plugins item index
+            }
+        }
         // 打开缓存文件夹
         private void OpenCacheFolder_Click(object sender, RoutedEventArgs e)
         {

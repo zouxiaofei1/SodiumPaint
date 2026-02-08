@@ -685,6 +685,7 @@ namespace TabPaint
         }
         private async Task LoadBlankCanvasAsync(string filePath, string reason = null)
         {
+            a.s("LoadBlankCanvasAsync");
             await Dispatcher.InvokeAsync(() =>
             {
                 int width = AppConsts.DefaultBlankCanvasWidth;
@@ -708,9 +709,6 @@ namespace TabPaint
 
                 RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
                 BackgroundImage.Source = _bitmap;
-
-                // 3. 确定显示名称
-                // 如果是虚拟路径，尝试从 Tab 获取名字；如果是真实文件，获取文件名
                 if (IsVirtualPath(filePath))
                 {
                     var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
@@ -744,9 +742,13 @@ namespace TabPaint
                 GifPlayerImage.Visibility = Visibility.Collapsed;
                 BackgroundImage.Visibility = Visibility.Visible;
                 if (!string.IsNullOrEmpty(reason)) ShowToast(reason);
-                FitToWindow(needcanvasUpdateUI:false);
-                CenterImage();
-          
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    FitToWindow(viewHeightoffset: _startupFinished ?0:- 72,needcanvasUpdateUI: false);
+                    CenterImage();
+
+                }), DispatcherPriority.Loaded);
+             
             });
         }
 

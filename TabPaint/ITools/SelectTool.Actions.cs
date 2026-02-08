@@ -587,7 +587,8 @@ namespace TabPaint
                 {
                     
                     if (!_hasLifted)LiftSelectionFromCanvas(ctx);
-                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                   
+                    var mainWindow = mw;
                     if (mainWindow != null)
                     {
                         Point posInWindow = ctx.ViewElement.TranslatePoint(viewPos, mainWindow);

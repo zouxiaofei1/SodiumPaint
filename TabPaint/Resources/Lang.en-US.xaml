@@ -1,7 +1,22 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
-
+    <!-- Plugins panel -->
+    <sys:String x:Key="L_Settings_Plugins_Title">Plugins / AI Models</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Desc">Manage AI models and optional components. Models will be downloaded to the app cache directory.</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Title">Remove Background</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">AI model for high-quality background removal. (170MB)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Title">Real-ESRGAN (Super Resolution)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">AI model for 4x image upscaling and enhancement. (60MB)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">LaMa (AI Eraser)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">AI model for removal and inpainting. (200MB)</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">Not Installed</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Installed">Installed</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Downloading">Downloading...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Install">Install</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? You will need to redownload it to use the corresponding features.</sys:String>
+    <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
     <!-- SettingsWindow Navigation -->
     <sys:String x:Key="L_Settings_Title">Settings</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
@@ -392,6 +407,9 @@
     <sys:String x:Key="L_ColorPicker_Transparent">Fully Transparent</sys:String>
     <sys:String x:Key="L_ColorPicker_TransparentPrefix">Transparent </sys:String>
 
+    <sys:String x:Key="L_Toast_Apply_Success">Apply Success</sys:String>
+    <sys:String x:Key="L_AI_Downloading">Downloading...</sys:String>
+    <sys:String x:Key="L_Toast_DownloadCancelled">Download Cancelled</sys:String>
     <!-- 100+ Color Names -->
     <sys:String x:Key="L_Color_Snow">Snow</sys:String>
     <sys:String x:Key="L_Color_Honeydew">Honeydew</sys:String>

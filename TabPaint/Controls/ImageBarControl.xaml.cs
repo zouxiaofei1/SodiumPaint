@@ -184,9 +184,11 @@ namespace TabPaint.Controls
             _currentHoveredElement = null;
             _highResTimer.Stop();
             _previewCts?.Cancel();
+            AnimationBehavior.RemoveLoadedHandler(PopupPreviewImage, OnGifLoaded); // ★ 防止残留回调
             AnimationBehavior.SetSourceUri(PopupPreviewImage, null);
             PopupPreviewImage.Source = null;
-            CheckerboardBorder.Background = Brushes.Transparent; // ★ 清理
+            PopupPreviewImageBase.Source = null;  // ★ 清理底层
+            CheckerboardBorder.Background = Brushes.Transparent;
         }
 
         // 5. 定时器触发（0.5s 后）
@@ -206,18 +208,23 @@ namespace TabPaint.Controls
             var tabData = _currentHoveredElement.DataContext as FileTabItem;
             if (tabData != null)
             {
-                // 1. 先显示已有的缩略图
+                // ★ 切换Tab时，先清理顶层的GIF/高清图，避免残留上一张
+                AnimationBehavior.SetSourceUri(PopupPreviewImage, null);
+                PopupPreviewImage.Source = null;
+
+                // 1. 缩略图同时设置到底层和顶层
                 if (tabData.Thumbnail != null)
                 {
-                    PopupPreviewImage.Source = tabData.Thumbnail;
+                    PopupPreviewImageBase.Source = tabData.Thumbnail;  // ★ 底层保底
+                    PopupPreviewImage.Source = tabData.Thumbnail;       // 顶层也显示
                     UpdateCheckerboardVisibility(tabData.Thumbnail);
                 }
                 else
                 {
+                    PopupPreviewImageBase.Source = null;
                     PopupPreviewImage.Source = null;
                     CheckerboardBorder.Background = Brushes.Transparent;
                 }
-
                 // 2. 获取文件信息
                 string filePath = tabData.FilePath;
                 bool isNewFile = string.IsNullOrEmpty(filePath) || !File.Exists(filePath);
@@ -317,13 +324,16 @@ namespace TabPaint.Controls
 
                 if (decoder.Frames.Count > 0)
                 {
-                    var frame = decoder.Frames[0];
+                    // ★ 对多帧图像（ICO等）选择最大帧，与预览渲染逻辑一致
+                    int bestIndex = GetLargestFrameIndex(decoder);
+                    var frame = decoder.Frames[bestIndex];
                     return (frame.PixelWidth, frame.PixelHeight);
                 }
             }
-            catch{}
+            catch { }
             return (0, 0);
         }
+
 
         private async void HighResTimer_Tick(object sender, EventArgs e)
         {
@@ -337,11 +347,12 @@ namespace TabPaint.Controls
 
             _previewCts?.Cancel();
 
-            // GIF 特殊处理：使用 XamlAnimatedGif 播放
+            // GIF 特殊处理
             if (filePath.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
             {
+                AnimationBehavior.AddLoadedHandler(PopupPreviewImage, OnGifLoaded);
                 AnimationBehavior.SetSourceUri(PopupPreviewImage, new Uri(filePath));
-                CheckerboardBorder.Background = GetCheckerboardBrush(); // GIF 通常带透明
+                CheckerboardBorder.Background = GetCheckerboardBrush();
                 return;
             }
 
@@ -360,6 +371,7 @@ namespace TabPaint.Controls
                 if (result.Image != null)
                 {
                     PopupPreviewImage.Source = result.Image;
+                    PopupPreviewImageBase.Source = null;  // ★ 高清图加载完成，清理底层
                     UpdateCheckerboardVisibility(result.Image);
                 }
                 if (string.IsNullOrEmpty(PopupDimensionsText.Text) || PopupDimensionsText.Text == "")
@@ -375,6 +387,11 @@ namespace TabPaint.Controls
             {
                 Debug.WriteLine($"High res preview failed: {ex.Message}");
             }
+        }
+        private void OnGifLoaded(object sender, RoutedEventArgs e)
+        {
+            PopupPreviewImageBase.Source = null;
+            AnimationBehavior.RemoveLoadedHandler(PopupPreviewImage, OnGifLoaded);
         }
         private struct PreviewResult
         {

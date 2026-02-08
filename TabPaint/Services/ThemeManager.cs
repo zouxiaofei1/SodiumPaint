@@ -260,15 +260,20 @@ namespace TabPaint
             foreach (Window window in Application.Current.Windows)
             {
                 SetWindowImmersiveDarkMode(window, isDark);
-                var bgBrush = MicaAcrylicManager.IsWin11()? Brushes.Transparent: Application.Current.FindResource("WindowBackgroundBrush") as Brush;
-                window.Background = bgBrush;
+                
+                // 重新应用背景特效（处理 Win10 噪点背景切换）
+                MicaAcrylicManager.ApplyEffect(window);
             }
         }
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
         private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
         private const int DWMWA_USE_IMMERSIVE_DARK_MODE = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE;
+        private const int WM_NCACTIVATE = 0x0086;
 
         public static bool SetWindowImmersiveDarkMode(Window window, bool enabled)
         {
@@ -279,16 +284,25 @@ namespace TabPaint
             int attribute = DWMWA_USE_IMMERSIVE_DARK_MODE;
             int useImmersiveDarkMode = enabled ? 1 : 0;
 
+            bool success = true;
             if (DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(int)) != 0)
             {
                 // 尝试旧版本的 Attribute
                 attribute = DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
                 if (DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(int)) != 0)
                 {
-                    return false;
+                    success = false;
                 }
             }
-            return true;
+
+            if (success)
+            {
+                // 强制刷新非客户区以应用主题（特别是 Win10）
+                SendMessage(handle, WM_NCACTIVATE, (IntPtr)0, (IntPtr)0);
+                SendMessage(handle, WM_NCACTIVATE, (IntPtr)1, (IntPtr)0);
+            }
+
+            return success;
         }
     }
 }

@@ -41,13 +41,14 @@ namespace TabPaint
 
         public static MainWindow GetCurrentInstance()
         {
-            // 优先返回当前激活的 MainWindow
             foreach (Window w in Application.Current.Windows)
             {
                 if (w is MainWindow mw && mw.IsActive) return mw;
             }
-            // 如果没有激活的（比如在后台线程调用），返回最后获得焦点的
-            return _lastFocusedInstance ?? (MainWindow)Application.Current.MainWindow;
+            if (_lastFocusedInstance != null) return _lastFocusedInstance;
+
+            // 兜底：返回第一个找到的 MainWindow
+            return Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
         }
 
         // 记录最后获得焦点的实例
@@ -114,7 +115,7 @@ namespace TabPaint
             InitializeAutoSave();
             InitializeLazyControls();
            UpdateDwmBorderColor();
-
+            UpdateImageBarSliderState();
             // 窗口激活/失活时切换颜色
             this.Activated += (s, e) => UpdateDwmBorderColor(); 
             this.Deactivated += (s, e) => UpdateDwmBorderColor();
@@ -197,11 +198,15 @@ namespace TabPaint
             this.Dispatcher.InvokeAsync(() =>
             {
                 ThemeManager.StartSystemThemeMonitoring();
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _startupFinished = true;
+                }), DispatcherPriority.ApplicationIdle);
             }, DispatcherPriority.ApplicationIdle);
 
             InitializeScrollPosition();
             //if (BlanketMode) FitToWindow();
-            _startupFinished = true;
+
 
         }
         protected override void OnSourceInitialized(EventArgs e)
@@ -451,23 +456,23 @@ namespace TabPaint
         }
 
 
-        private void FitToWindow(double addscale = 1,bool needcanvasUpdateUI=true)
+        private void FitToWindow(double addscale = 1,bool needcanvasUpdateUI=true,double viewWidthoffset=0,double viewHeightoffset = 0)
         {
             if (SettingsManager.Instance.Current.IsFixedZoom && _firstFittoWindowdone) return;
             if (BackgroundImage.Source != null)
             {
-                a.s("fit to window start");
+             
                 double imgWidth = BackgroundImage.Source.Width;
                 double imgHeight = BackgroundImage.Source.Height;
-                double viewWidth = ScrollContainer.ViewportWidth;
-                double viewHeight = ScrollContainer.ViewportHeight;
+                double viewWidth = ScrollContainer.ViewportWidth+ viewWidthoffset;
+                double viewHeight = ScrollContainer.ViewportHeight+ viewHeightoffset;
 
                 double scaleX = viewWidth / imgWidth;
                 double scaleY = viewHeight / imgHeight;
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale * AppConsts.FitToWindowMarginFactor;
-
+              //  a.s(addscale * AppConsts.FitToWindowMarginFactor,fitScale, viewWidth,imgWidth, viewHeight, imgHeight);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
 

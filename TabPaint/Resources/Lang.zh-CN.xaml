@@ -10,7 +10,22 @@
     <sys:String x:Key="L_Settings_Nav_Advanced">高级</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">关于</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
-    
+    <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
+    <!-- 插件面板 -->
+    <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和可选组件。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Title">背景移除</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">用于背景移除的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Title">超分辨率</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_SR_Desc">用于图片放大的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Title">AI 橡皮擦</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Model_Inpaint_Desc">用于物体移除和图片修复的 AI 模型。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Status_Downloading">正在下载...</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Install">安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？卸载后需重新下载才能使用相应功能。</sys:String>
     <sys:String x:Key="L_Settings_General_Title">通用</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">启动</sys:String>
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">自动加载同文件夹图片</sys:String>
