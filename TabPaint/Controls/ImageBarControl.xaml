@@ -216,7 +216,7 @@
                                             PreviewMouseMove="Internal_OnFileTabPreviewMouseMove" 
                                                  MouseEnter="Internal_OnTabMouseEnter"
                                          MouseLeave="Internal_OnTabMouseLeave"
-                                            ToolTip="{Binding FileName}" Tag="{Binding}">
+                                          Tag="{Binding}">
 
                                         <Button.ContextMenu>
                                             <ContextMenu Style="{StaticResource Win11ContextMenuStyle}" >
@@ -333,7 +333,7 @@
                                                 <!-- 默认(Expand)模式尺寸 -->
                                                 <Setter Property="Width" Value="120"/>
                                                 <Setter Property="Height" Value="80"/>
-
+                                                <Setter Property="ToolTip" Value="{Binding FileName}"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
@@ -346,7 +346,7 @@
                                                     <!-- Compact 模式触发器 -->
                                                     <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
                                                         <Setter Property="Width" Value="150"/>
-                                                        <!-- 稍微宽一点以容纳长文件名 -->
+                                                        <Setter Property="ToolTip" Value="{x:Null}"/>
                                                         <Setter Property="Height" Value="32"/>
                                                         <Setter Property="Padding" Value="8,0,8,0"/>
                                                     </DataTrigger>
@@ -506,12 +506,12 @@
                             <Border x:Name="CheckerboardBorder" Background="Transparent">
                                 <Grid>
                                     <Image x:Name="PopupPreviewImageBase" 
-                   MaxHeight="200" MaxWidth="300" Stretch="Uniform"
+                   MaxHeight="120" MaxWidth="200" Stretch="Uniform"
                    IsHitTestVisible="False"/>
                                 <Image x:Name="PopupPreviewImage" 
                                        gif:AnimationBehavior.AutoStart="True"
                                        gif:AnimationBehavior.RepeatBehavior="Forever"
-                                       MaxHeight="200" MaxWidth="300" Stretch="Uniform"/>
+                                       MaxHeight="120" MaxWidth="200" Stretch="Uniform"/>
                                 </Grid>
                             </Border>
                         </Border>
@@ -525,8 +525,8 @@
 
                             <!-- 尺寸信息 (例如: 1920x1080) -->
                             <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
-                                <Path Data="M3,3 L3,13 L13,13 L13,3 Z M1,1 L15,1 L15,15 L1,15 Z" 
-                                      Fill="{DynamicResource TextSecondaryBrush}" 
+                                <Path Data="{DynamicResource Picture_Image}"
+           Fill="{DynamicResource TextSecondaryBrush}" 
                                       Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" Opacity="0.7"/>
                                 <TextBlock x:Name="PopupDimensionsText" 
                                            Text="Loading..." 
@@ -543,6 +543,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        HorizontalAlignment="Right"
                                        Margin="8,0,0,0"/>
+                            
                         </Grid>
                     </StackPanel>
                 </Border>

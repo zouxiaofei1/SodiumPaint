@@ -24,7 +24,7 @@ public partial class PenTool : ToolBase
     private bool _drawing = false;
     private Point _lastPixel;
     private float _lastPressure = 1.0f;
-    private bool[] _currentStrokeMask;
+    private byte[] _currentStrokeMask;
     private int _maskWidth;
     private int _maskHeight;
     private WriteableBitmap _maskBitmap; // 专门用于存储 mask 数据的位图
@@ -261,11 +261,15 @@ public partial class PenTool : ToolBase
         int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
         if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
         {
-            _currentStrokeMask = new bool[totalPixels];
+            _currentStrokeMask = new byte[totalPixels];
             _maskWidth = ctx.Surface.Width;
             _maskHeight = ctx.Surface.Height;
         }
-        else  Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
+        else
+        {
+            Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
+        }
+
         ctx.CapturePointer();
         var px = ctx.ToPixel(viewPos);
         ctx.Undo.BeginStroke();
@@ -329,41 +333,45 @@ public partial class PenTool : ToolBase
             pressure = speedPressure;
         }
        ctx.Surface.Bitmap.Lock();
-
-        int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-        bool hasUpdate = false;
-
-        unsafe
+        try
         {
-            byte* backBuffer = (byte*)ctx.Surface.Bitmap.BackBuffer;
-            int stride = ctx.Surface.Bitmap.BackBufferStride;
-            int width = ctx.Surface.Bitmap.PixelWidth;
-            int height = ctx.Surface.Bitmap.PixelHeight;
+            int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+            bool hasUpdate = false;
 
-            var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, _lastPressure, px, pressure, backBuffer, stride, width, height);
-
-            if (dirty.HasValue)
+            unsafe
             {
-                hasUpdate = true;
-                minX = dirty.Value.X;
-                minY = dirty.Value.Y;
-                maxX = dirty.Value.X + dirty.Value.Width;
-                maxY = dirty.Value.Y + dirty.Value.Height;
+                byte* backBuffer = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                int stride = ctx.Surface.Bitmap.BackBufferStride;
+                int width = ctx.Surface.Bitmap.PixelWidth;
+                int height = ctx.Surface.Bitmap.PixelHeight;
+
+                var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, _lastPressure, px, pressure, backBuffer, stride, width, height);
+
+                if (dirty.HasValue)
+                {
+                    hasUpdate = true;
+                    minX = dirty.Value.X;
+                    minY = dirty.Value.Y;
+                    maxX = dirty.Value.X + dirty.Value.Width;
+                    maxY = dirty.Value.Y + dirty.Value.Height;
+                }
+            }
+
+            if (hasUpdate && maxX >= minX && maxY >= minY)
+            {
+                var finalRect = ClampRect(new Int32Rect(minX, minY, maxX - minX, maxY - minY), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+                if (finalRect.Width > 0 && finalRect.Height > 0)
+                {
+                    ctx.Surface.Bitmap.AddDirtyRect(finalRect);
+                    ctx.Undo.AddDirtyRect(finalRect);
+                }
             }
         }
-      
-        if (hasUpdate && maxX >= minX && maxY >= minY)
+        finally
         {
-            var finalRect = ClampRect(new Int32Rect(minX, minY, maxX - minX, maxY - minY), ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
-            if (finalRect.Width > 0 && finalRect.Height > 0)
-            {
-                ctx.Surface.Bitmap.AddDirtyRect(finalRect);
-                ctx.Undo.AddDirtyRect(finalRect);
-            }
+            ctx.Surface.Bitmap.Unlock();
         }
 
-        ctx.Surface.Bitmap.Unlock();
-       
         _lastPixel = px;
         _lastPressure = pressure; 
     }
@@ -375,7 +383,8 @@ public partial class PenTool : ToolBase
                style == BrushStyle.Highlighter ||
                style == BrushStyle.Watercolor ||
                style == BrushStyle.Crayon ||
-               style == BrushStyle.Calligraphy;
+               style == BrushStyle.Calligraphy  ||style == BrushStyle.Brush ||
+           style == BrushStyle.Mosaic;  
     }
 
     public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)

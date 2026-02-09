@@ -45,7 +45,10 @@ namespace TabPaint
                     await Task.Delay(100);
                     waitCount++;
                 }
-                SaveSession();
+                System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    SaveSession();
+                }, System.Windows.Threading.DispatcherPriority.Background);
                 _loadImageCts?.Cancel();
                 lock (_queueLock) { _pendingFilePath = null; }
                 FileTabs.Clear();

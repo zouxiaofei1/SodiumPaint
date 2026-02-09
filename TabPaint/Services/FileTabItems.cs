@@ -235,7 +235,11 @@ namespace TabPaint
             UpdateWindowTitle();
             UpdateImageBarVisibilityState();
             AggressiveMemoryRelease();
-            MainImageBar.ClosePopupAndReset(); SaveSession();
+            MainImageBar.ClosePopupAndReset();
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SaveSession();
+            }, System.Windows.Threading.DispatcherPriority.Background);
         }
 
 

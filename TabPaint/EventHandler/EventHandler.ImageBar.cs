@@ -118,7 +118,7 @@ namespace TabPaint
                 if (IsVirtualPath(tab.FilePath) && (!isDoubleClick)) continue;
                 if (SaveSingleTab(tab)) successCount++;
             }
-            SaveSession();
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() => { SaveSession(); }, System.Windows.Threading.DispatcherPriority.Background);
             // 简单提示 (实际项目中建议用 Statusbar)
             if (successCount > 0)
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SavedCount_Format"), successCount));

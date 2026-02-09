@@ -30,7 +30,7 @@ namespace TabPaint
 
         private void TriggerBackgroundBackup()
         {
-
+        
             if (_currentTabItem == null) return;
             if (_surface?.Bitmap == null) return;
 
@@ -97,7 +97,7 @@ namespace TabPaint
 
                     // 原子操作替换文件
                     System.IO.File.Move(tempPath, fullPath, true);
-
+                    //SaveSession();
                     // 更新 UI 模型
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
@@ -124,13 +124,13 @@ namespace TabPaint
                         }
                         _isSavingFile = false; // 只有当这是最后一个任务时才设为 false (简单处理)
                     });
-                    myCts.Dispose();
+                    myCts.Dispose(); 
                 }
             }, token);
             if (_activeSaveTasks.ContainsKey(fileId)) _activeSaveTasks[fileId] = saveTask;
             else _activeSaveTasks.Add(fileId, saveTask);
+       
 
-            SaveSession();
         }
 
         private BitmapSource RenderCurrentCanvasToBitmap()
@@ -294,6 +294,11 @@ namespace TabPaint
 
             try
             {
+           
+                  Dispatcher.InvokeAsync(() =>
+                {
+               
+               
                 RenderTargetBitmap rtb = new RenderTargetBitmap(
                     (int)BackgroundImage.ActualWidth,
                     (int)BackgroundImage.ActualHeight,
@@ -311,6 +316,8 @@ namespace TabPaint
 
                 // 3. 立即更新 UI (ViewModel)
                 tabItem.Thumbnail = transformedBitmap;
+                }, DispatcherPriority.Normal);
+             
             }
             catch (Exception ex)
             {
@@ -397,12 +404,12 @@ namespace TabPaint
 
             try
             {
-                    var favWin = FavoriteWindowManager.GetInstance();
-                    if (favWin != null && favWin.IsLoaded)
-                    {
-                        favWin.Close();
-                    }
-            
+                var favWin = FavoriteWindowManager.GetInstance();
+                if (favWin != null && favWin.IsLoaded)
+                {
+                    favWin.Close();
+                }
+
                 this.Hide();
 
                 if (_hwndSource != null)
@@ -500,6 +507,7 @@ namespace TabPaint
         public HashSet<string> _closedTabIds = new HashSet<string>();
         private void SaveSession()
         {
+          
             var currentSessionTabs = new List<SessionTabInfo>();
             string currentContextDir = null;
 
@@ -514,13 +522,9 @@ namespace TabPaint
                 }
                 catch { currentContextDir = null; }
             }
-        
+
             foreach (var tab in FileTabs)
             {
-                //if (_closedTabIds.Contains(tab.Id))
-                //{
-                //    continue;
-                //}
                 string? tabDir = null;
                 if (!string.IsNullOrEmpty(tab.FilePath) && !IsVirtualPath(tab.FilePath))
                 {
@@ -549,11 +553,12 @@ namespace TabPaint
 
             var finalTabsToSave = new List<SessionTabInfo>();
             finalTabsToSave.AddRange(currentSessionTabs);
-
+          
             if (File.Exists(_sessionPath) || File.Exists(AppConsts.LegacySessionPath))
             {
                 try
                 {
+                  
                     PaintSession oldSession = null;
                     if (File.Exists(_sessionPath))
                     {
@@ -562,7 +567,7 @@ namespace TabPaint
                         {
                             oldSession = PaintSession.Read(reader);
                         }
-                    }
+                    }  
                     else if (File.Exists(AppConsts.LegacySessionPath))
                     {
                         var oldJson = File.ReadAllText(AppConsts.LegacySessionPath);
@@ -594,6 +599,7 @@ namespace TabPaint
                             }
                         }
                     }
+                  
                 }
                 catch (Exception ex)
                 {
@@ -605,7 +611,7 @@ namespace TabPaint
             {
                 LastViewedFile = _currentTabItem?.FilePath ?? (_imageFiles.Count > _currentImageIndex ? _imageFiles[_currentImageIndex] : null),
                 Tabs = finalTabsToSave,
-                ActiveTabIndex = activeTabIndex  // ★★★ 新增 ★★★
+                ActiveTabIndex = activeTabIndex 
             };
 
             try
@@ -632,118 +638,166 @@ namespace TabPaint
 
 
 
-        private void LoadSession()
+        private async Task LoadSessionAsync()
         {
             if (!File.Exists(_sessionPath) && !File.Exists(AppConsts.LegacySessionPath)) return;
 
             try
             {
-                PaintSession session = null;
-                if (File.Exists(_sessionPath))
+                // ① 后台线程：读取并反序列化 session 文件
+                PaintSession session = await Task.Run(() =>
                 {
-                    using (var fs = new FileStream(_sessionPath, FileMode.Open, FileAccess.Read))
-                    using (var reader = new BinaryReader(fs))
+                    try
                     {
-                        session = PaintSession.Read(reader);
+                        if (File.Exists(_sessionPath))
+                        {
+                            using (var fs = new FileStream(_sessionPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            using (var reader = new BinaryReader(fs))
+                            {
+                                return PaintSession.Read(reader);
+                            }
+                        }
+                        else if (File.Exists(AppConsts.LegacySessionPath))
+                        {
+                            var json = File.ReadAllText(AppConsts.LegacySessionPath);
+                            return System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
+                        }
+                        return null;
                     }
-                }
-                else
-                {
-                    var json = File.ReadAllText(AppConsts.LegacySessionPath);
-                    session = System.Text.Json.JsonSerializer.Deserialize<PaintSession>(json);
-                }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Session file read error: {ex.Message}");
+                        return null;
+                    }
+                });
 
-                if (session != null && session.Tabs != null)
+                if (session?.Tabs == null || session.Tabs.Count == 0) return;
+
+                // ② 后台线程：预筛选有效 Tab，避免在 UI 线程做文件存在性检查
+                var validEntries = await Task.Run(() =>
                 {
+                    var results = new List<(SessionTabInfo info, bool isCleanDisk, bool hasBackup, bool fileExists)>();
+
                     foreach (var info in session.Tabs)
                     {
                         if (_closedTabIds.Contains(info.Id)) continue;
-                        // 原有的目录过滤逻辑保持不变...
-                        {
-                            string tabDir = info.WorkDirectory;
-                            if (string.IsNullOrEmpty(tabDir) && !string.IsNullOrEmpty(info.OriginalPath))
-                            {
-                                tabDir = System.IO.Path.GetDirectoryName(info.OriginalPath);
-                            }
-                            if (tabDir != null)
-                            {
-                                try { tabDir = System.IO.Path.GetFullPath(tabDir); }
-                                catch { }
-                            }
 
-                            if (info.IsNew && !info.IsDirty) continue;
+                        // 跳过空白未修改的新建页
+                        if (info.IsNew && !info.IsDirty) continue;
+
+                        bool isCleanDisk = info.IsCleanDiskFile;
+                        bool fileExists = !string.IsNullOrEmpty(info.OriginalPath) && File.Exists(info.OriginalPath);
+                        bool hasBackup = !string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath);
+
+                        // 干净磁盘文件必须原文件还在
+                        if (isCleanDisk && !fileExists) continue;
+
+                        // 脏文件/新文件必须有备份
+                        if (!isCleanDisk && !hasBackup) continue;
+
+                        results.Add((info, isCleanDisk, hasBackup, fileExists));
+                    }
+
+                    return results;
+                });
+
+                if (validEntries.Count == 0) return;
+
+                // ③ UI 线程：批量创建 Tab 对象并加入集合（尽量减少 UI 交互次数）
+                var tabsToLoadThumbnails = new List<FileTabItem>();
+
+                foreach (var (info, isCleanDisk, hasBackup, fileExists) in validEntries)
+                {
+                    // 去重
+                    if (FileTabs.Any(t => t.Id == info.Id)) continue;
+
+                    FileTabItem tab;
+
+                    if (isCleanDisk)
+                    {
+                        tab = new FileTabItem(info.OriginalPath)
+                        {
+                            Id = info.Id,
+                            IsNew = false,
+                            IsDirty = false,
+                            BackupPath = null,
+                            IsLoading = true,
+                        };
+                    }
+                    else
+                    {
+                        tab = new FileTabItem(info.OriginalPath)
+                        {
+                            Id = info.Id,
+                            IsNew = info.IsNew,
+                            IsDirty = info.IsDirty,
+                            BackupPath = info.BackupPath,
+                            UntitledNumber = info.UntitledNumber,
+                            IsLoading = true,
+                        };
+                    }
+
+                    FileTabs.Add(tab);
+
+                    if (!_imageFiles.Contains(info.OriginalPath))
+                    {
+                        _imageFiles.Add(info.OriginalPath);
+                    }
+
+                    tabsToLoadThumbnails.Add(tab);
+                }
+
+                // ④ 让 UI 先渲染一帧，显示 Loading 占位状态
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+
+                // ⑤ 并行加载所有缩略图（I/O + 解码 + 缩放全在后台）
+                const int maxConcurrency = 4; // 限制并发数，避免磁盘争抢
+                using (var semaphore = new SemaphoreSlim(maxConcurrency))
+                {
+                    var thumbnailTasks = tabsToLoadThumbnails.Select(async tab =>
+                    {
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            await tab.LoadThumbnailAsync(100, 60);
                         }
-
-                        // ★★★ 新增：处理未编辑的磁盘文件 ★★★
-                        if (info.IsCleanDiskFile)
+                        catch (Exception ex)
                         {
-                            // 磁盘文件必须仍然存在才恢复
-                            if (!string.IsNullOrEmpty(info.OriginalPath) && File.Exists(info.OriginalPath))
-                            {
-                                if (FileTabs.Any(t => t.Id == info.Id)) continue;
-
-                                var tab = new FileTabItem(info.OriginalPath)
-                                {
-                                    Id = info.Id,
-                                    IsNew = false,
-                                    IsDirty = false,
-                                    BackupPath = null,  // 无需备份
-                                    IsLoading = true,
-                                };
-
-                                FileTabs.Add(tab);
-
-                                // 确保 _imageFiles 也包含此路径
-                                if (!_imageFiles.Contains(info.OriginalPath))
-                                {
-                                    _imageFiles.Add(info.OriginalPath);
-                                }
-
-                                // 异步加载缩略图
-                                _ = tab.LoadThumbnailAsync(100, 60).ContinueWith(t =>
-                                {
-                                    tab.IsLoading = false;
-                                }, TaskScheduler.FromCurrentSynchronizationContext());
-                            }
-                            continue;  // 处理完毕，跳到下一个
+                            Debug.WriteLine($"Thumbnail load failed for {tab.Id}: {ex.Message}");
                         }
-
-                        // ★★★ 原有逻辑：处理有备份的脏文件/新文件 ★★★
-                        if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
+                        finally
                         {
-                            var tab = new FileTabItem(info.OriginalPath)
-                            {
-                                Id = info.Id,
-                                IsNew = info.IsNew,
-                                IsDirty = info.IsDirty,
-                                BackupPath = info.BackupPath,
-                                UntitledNumber = info.UntitledNumber,
-                                IsLoading = true,
-                            };
+                            semaphore.Release();
 
-                            FileTabs.Add(tab);
-
-                            // 确保 _imageFiles 包含此路径
-                            if (!_imageFiles.Contains(info.OriginalPath))
-                            {
-                                _imageFiles.Add(info.OriginalPath);
-                            }
-
-                            _ = tab.LoadThumbnailAsync(100, 60).ContinueWith(t =>
+                            // 回到 UI 线程更新加载状态
+                            await Dispatcher.InvokeAsync(() =>
                             {
                                 tab.IsLoading = false;
-                            }, TaskScheduler.FromCurrentSynchronizationContext());
+                            }, DispatcherPriority.Background);
                         }
+                    });
+
+                    await Task.WhenAll(thumbnailTasks);
+                }
+
+                // ⑥ 恢复选中的 Tab
+                if (session.ActiveTabIndex >= 0 && session.ActiveTabIndex < FileTabs.Count)
+                {
+                    var targetTab = FileTabs[session.ActiveTabIndex];
+                    if (targetTab != _currentTabItem)
+                    {
+                        SwitchToTab(targetTab, needsave: false);
                     }
                 }
 
-                UpdateImageBarVisibilityState();
+                UpdateImageBarVisibilityState(); UpdateImageBarSliderState();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Session Load Error: {ex.Message}");
+                Debug.WriteLine($"LoadSessionAsync Error: {ex.Message}");
             }
         }
+
 
         private void ResetDirtyTracker()
         {
@@ -804,14 +858,16 @@ namespace TabPaint
             }
             if (tabposition == TabInsertPosition.AtStart)
                 FileTabs.Insert(0, newTab);
+
             if (switchto) SwitchToTab(newTab);
 
             UpdateImageBarVisibilityState();
-            UpdateImageBarSliderState();
+            UpdateImageBarSliderState(); 
         }
 
-        public async void SwitchToTab(FileTabItem tab,bool needsave = true)
+        public async void SwitchToTab(FileTabItem tab,bool needsave= true)
         {
+        
             if (_currentTabItem == tab) return;
             if (tab == null) return;
 
@@ -819,50 +875,54 @@ namespace TabPaint
             {
                 _autoSaveTimer.Stop();
 
+                // ★ 判断：当前画布版本 vs 上次备份版本
+                bool hasNewEdits = _currentCanvasVersion != _lastBackedUpVersion;
+
                 if (_currentTabItem.IsDirty || _currentTabItem.IsNew)
                 {
                     UpdateTabThumbnail(_currentTabItem);
                 }
 
-                // 保存当前 Tab 的撤销栈
+                // 保存当前 Tab 的所有状态
                 _currentTabItem.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
                 _currentTabItem.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
                 _currentTabItem.SavedUndoPoint = _savedUndoPoint;
+                _currentTabItem.CanvasVersion = _currentCanvasVersion;       // ★ 保存版本号
+                _currentTabItem.LastBackedUpVersion = _lastBackedUpVersion;  // ★ 保存备份版本号
+
+                // ★ 只在有未备份的编辑时才触发备份
+                if (hasNewEdits&&needsave)
+                {
+                    TriggerBackgroundBackup();
+                }
             }
 
             tab.LastAccessTime = DateTime.Now;
 
-            if (!IsTransferringSelection)
-            {
-                _router.CleanUpSelectionandShape();
-            }
+            if (!IsTransferringSelection) _router.CleanUpSelectionandShape();
 
-            // 1. UI 选中状态同步
             foreach (var t in FileTabs) t.IsSelected = (t == tab);
 
             _currentFilePath = tab.FilePath;
             _currentFileName = tab.FileName;
             _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
 
-            {
-                await OpenImageAndTabs(tab.FilePath,nobackup:!needsave);
-            }
+    
+            await OpenImageAndTabs(tab.FilePath, nobackup: true);  // 备份已在上面按需处理
+  
 
-            // 还原新 Tab 的撤销栈
             _undo.ClearUndo();
             _undo.ClearRedo();
-            if (tab.UndoStack != null)
-            {
-                foreach (var action in tab.UndoStack) _undo.GetUndoStack().Add(action);
-            }
-            if (tab.RedoStack != null)
-            {
-                foreach (var action in tab.RedoStack) _undo.GetRedoStack().Add(action);
-            }
+
+            if (tab.UndoStack != null) foreach (var action in tab.UndoStack) _undo.GetUndoStack().Add(action);
+            if (tab.RedoStack != null) foreach (var action in tab.RedoStack) _undo.GetRedoStack().Add(action);
+
             _savedUndoPoint = tab.SavedUndoPoint;
 
-            // 4. 状态重置 (不再直接调用 ResetDirtyTracker，因为我们要保留撤销栈)
-            // ResetDirtyTracker(); 
+            // ★ 恢复目标 tab 的版本追踪
+            _currentCanvasVersion = tab.CanvasVersion;
+            _lastBackedUpVersion = tab.LastBackedUpVersion;
+
             _currentTabItem = tab;
             SetUndoRedoButtonState();
             UpdateWindowTitle();
@@ -871,8 +931,9 @@ namespace TabPaint
             {
                 await Task.Delay(50);
                 RestoreTransferredSelection();
-            }
+            } 
         }
+
         private void ResetCanvasView()
         {
             // 使用 Loaded 优先级，确保 ScrollViewer 已经感知到了新的图片尺寸

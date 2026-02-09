@@ -144,7 +144,8 @@ namespace TabPaint
             public List<UndoAction> RedoStack { get; set; } = new();
             public DateTime LastAccessTime { get; set; } = DateTime.Now;
             public int SavedUndoPoint { get; set; } = 0;
-       
+            public long CanvasVersion { get; set; } = 0;
+            public long LastBackedUpVersion { get; set; } = 0;
             public FileTabItem(string path)
             {
                 FilePath = path;

@@ -26,7 +26,7 @@ namespace TabPaint
         private bool _isUpdatingUiFromScroll = false;
         private bool _isWheelScrollingSlider = false;
         private System.Windows.Threading.DispatcherTimer _wheelLockTimer;
-
+ 
         // 在构造函数或 Window_Loaded 中初始化这个 Timer
         private void InitWheelLockTimer()
         {

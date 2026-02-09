@@ -111,8 +111,8 @@ namespace TabPaint
                 _currentFileName = initialTab.FileName;
                 _currentImageIndex = 0;
             }
-
-        InitializeComponent();  //220ms
+            InitializeLazyControls();
+            InitializeComponent();  //220ms
           
             RestoreWindowBounds();//0.3ms
 
@@ -137,7 +137,7 @@ namespace TabPaint
         private async void MainWindow_ContentRendered(object sender, EventArgs e)
         {
             InitializeAutoSave();
-            InitializeLazyControls();
+        
            UpdateDwmBorderColor();
             UpdateImageBarSliderState();
             // 窗口激活/失活时切换颜色
@@ -151,7 +151,7 @@ namespace TabPaint
             _canvasResizer = new CanvasResizeManager(this);//0.2ms
 
 
-            if (_shouldLoadSession) LoadSession(); //8ms
+            if (_shouldLoadSession) LoadSessionAsync(); //8ms
 
            if (!string.IsNullOrEmpty(_currentFilePath) && Directory.Exists(_currentFilePath))//0.2ms
             {
@@ -164,7 +164,7 @@ namespace TabPaint
                 if (FileTabs.Contains(_currentTabItem) && _currentTabItem != null)
                 {
                     // 如果已经有了通过构造函数传入的标签，直接加载它
-                    await OpenImageAndTabs(_currentTabItem.FilePath, true);
+                  OpenImageAndTabs(_currentTabItem.FilePath, true);
                     
                     // 还原撤销栈
                     _undo.ClearUndo();
@@ -182,7 +182,7 @@ namespace TabPaint
                 }
                 else
                 {
-                    await OpenImageAndTabs(_currentFilePath, true);
+                    OpenImageAndTabs(_currentFilePath, true);
                 }
             }
             else
@@ -485,11 +485,7 @@ namespace TabPaint
 
                 if(needcanvasUpdateUI)_canvasResizer.UpdateUI();//关掉可以节省2-5ms
                 _firstFittoWindowdone = true;
-
-                // 强制更新布局并居中
-                Dispatcher.InvokeAsync(() => {
                     CenterImage();
-                }, DispatcherPriority.Render);
             }
         }
         private async void PasteClipboardAsNewTab()
@@ -1144,12 +1140,6 @@ namespace TabPaint
         {
             MaximizeWindowHandler();
         }
-        //private void OnCloseClick(object sender, RoutedEventArgs e)
-        //{
-        //    s(1);
-        //    if (!_programClosed)
-        //        App.GlobalExit();
-        //}
         public bool IsTransferringSelection { get; private set; } = false;
 
         // 暂存传输的选区数据

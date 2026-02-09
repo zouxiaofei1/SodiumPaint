@@ -83,7 +83,7 @@ namespace TabPaint.Controls
             _closeTimer.Tick += CloseTimer_Tick;
 
             _highResTimer = new DispatcherTimer();
-            _highResTimer.Interval = TimeSpan.FromSeconds(0.3); // 基础预览显示后再过 0.3s 触发高清/GIF (总计 0.5s)
+            _highResTimer.Interval = TimeSpan.FromSeconds(0.05); 
             _highResTimer.Tick += HighResTimer_Tick;
         }
         private void Internal_OnTabMouseEnter(object sender, MouseEventArgs e)
@@ -92,16 +92,12 @@ namespace TabPaint.Controls
 
             var element = sender as FrameworkElement;
             if (element == null) return;
-
-            // 3. 鼠标悬浮到当前tab不弹出LargePreviewPopup
             var tabData = element.DataContext as FileTabItem;
             if (tabData != null && tabData.IsSelected)
             {
                 ClosePopupAndReset();
                 return;
             }
-
-            // 如果切换了Tab，先取消之前的任务和定时器
             if (_currentHoveredElement != element)
             {
                 _highResTimer.Stop();

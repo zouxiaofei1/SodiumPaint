@@ -60,13 +60,12 @@ namespace TabPaint
             {
                 var exception = e.ExceptionObject as Exception;
                 LogException(exception, "AppDomain");
-                // 这种异常通常无法恢复，记录后程序即将终止
             };
 
             TaskScheduler.UnobservedTaskException += (s, e) =>
             {
                 LogException(e.Exception, "TaskScheduler");
-                e.SetObserved(); // 标记为已观察，防止程序崩溃
+                e.SetObserved(); 
             };
         }
         private static void LogException(Exception ex, string source)
@@ -74,8 +73,6 @@ namespace TabPaint
             try
             {
                 if (ex == null) return;
-
-                // 确保目录存在
                 if (!Directory.Exists(LogDirectory))
                 {
                     Directory.CreateDirectory(LogDirectory);
@@ -95,7 +92,6 @@ namespace TabPaint
                 sb.AppendLine(new string('-', 50));
                 sb.AppendLine("Stack Trace:");
                 sb.AppendLine(ex.StackTrace);
-
                 if (ex.InnerException != null)
                 {
                     sb.AppendLine(new string('=', 50));
@@ -122,7 +118,7 @@ namespace TabPaint
             }
             catch { }
 
-            Environment.Exit(1);
+          //  Environment.Exit(1);
         }
         protected override void OnStartup(StartupEventArgs e)
         {//680ms

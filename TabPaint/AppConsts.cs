@@ -271,7 +271,7 @@ namespace TabPaint
         public const double DynamicRangeMinSize = 1.0;
         public const double DynamicRangeShapeMaxSize = 24.0;
         public const double DynamicRangePenPencilMaxSize = 10.0;
-        public const double DynamicRangeDefaultMaxSize = 400.0;
+        public const double DynamicRangeDefaultMaxSize = 1200.0;
         public const double ZoomSliderMinReal = 0.1;
         public const double ZoomSliderMaxReal = 16.0;
 

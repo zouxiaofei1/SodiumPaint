@@ -548,7 +548,7 @@ namespace TabPaint
                 if (_stopwatch == null)
                 {
                     _stopwatch = Stopwatch.StartNew();
-                    a.s("计时开始...");
+                //    a.s("计时开始...");
                 }
                 else if (_stopwatch.IsRunning)
                 {

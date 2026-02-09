@@ -785,7 +785,10 @@ namespace TabPaint
                 await Task.WhenAll(tasks);
             }
 
-            SaveSession();
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SaveSession();
+            }, System.Windows.Threading.DispatcherPriority.Background);
             ShowToast(LocalizationManager.GetString("L_Toast_BatchResizeComplete") ?? "Batch resize complete.");
         }
 
@@ -979,7 +982,10 @@ namespace TabPaint
                 await Task.WhenAll(tasks);
             }
 
-            SaveSession(); // 保存会话状态
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SaveSession();
+            }, System.Windows.Threading.DispatcherPriority.Background);
             ShowToast(LocalizationManager.GetString("L_Toast_BatchComplete") ?? "Batch watermark applied.");
         }
 
