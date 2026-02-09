@@ -26,6 +26,7 @@
     <sys:String x:Key="L_Settings_Nav_Advanced">Advanced</sys:String>
     <sys:String x:Key="L_Settings_Nav_About">About</sys:String>
     <sys:String x:Key="L_Settings_Toast_Saved">Settings Saved</sys:String>
+    <sys:String x:Key="L_Untitled">Untitled</sys:String>
     <!-- General Settings -->
     <sys:String x:Key="L_Settings_General_Title">General</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">Startup</sys:String>

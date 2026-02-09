@@ -395,10 +395,6 @@ namespace TabPaint
                 // 缓存结果
                 settings.PerformanceScore = (int)Math.Round(score);
                 settings.LastBenchmarkDate = now;
-                // 注意：这里不立即调用 SettingsManager.Instance.Save()，
-                // 因为 MainWindow 后面通常会有其他设置变动一并保存，
-                // 或者在程序退出时统一保存。如果需要确保立即写入，可以取消下面注释：
-                // SettingsManager.Instance.Save();
             }
             catch
             {

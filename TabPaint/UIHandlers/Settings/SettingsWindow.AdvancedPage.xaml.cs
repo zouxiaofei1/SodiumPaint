@@ -6,7 +6,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using TabPaint;
-
+using System.Windows.Input;
+using System.Windows.Media;
 namespace TabPaint.Pages
 {
     public partial class AdvancedPage : UserControl
@@ -142,7 +143,7 @@ namespace TabPaint.Pages
               LocalizationManager.GetString("L_Settings_Advanced_FactoryReset"),
               MessageBoxButton.YesNo,
               MessageBoxImage.Information,
-              Window.GetWindow(this));
+             MainWindow.GetCurrentInstance());//设置窗口用这个，否则左边栏会显示白色背景
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -211,5 +212,16 @@ namespace TabPaint.Pages
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
+
+        private void UndoMemoryTextBox_GotFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            UndoMemoryBorder.BorderBrush = (Brush)FindResource("SystemAccentBrush");
+        }
+
+        private void UndoMemoryTextBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            UndoMemoryBorder.BorderBrush = (Brush)FindResource("BorderBrush");
+        }
+
     }
 }

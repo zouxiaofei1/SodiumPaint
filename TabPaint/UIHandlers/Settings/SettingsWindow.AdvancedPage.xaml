@@ -15,7 +15,53 @@
             </ResourceDictionary.MergedDictionaries>
             <local:NonLinearConverter x:Key="NonLinearConverter"/>
 
-            <!-- 组合输入框样式：左侧文本框 -->
+            <Style x:Key="LeftPartTextBoxStyle_NoBorder" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TextBox}">
+                            <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        BorderThickness="0"
+                        CornerRadius="4,0,0,4" 
+                        SnapsToDevicePixels="True">
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" 
+                                  HorizontalScrollBarVisibility="Hidden" 
+                                  VerticalScrollBarVisibility="Hidden"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- 无边框版本的右侧Button -->
+            <Style x:Key="RightPartButtonStyle_NoBorder" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" 
+                        Background="{TemplateBinding Background}" 
+                        BorderThickness="0" 
+                        CornerRadius="0,4,4,0">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <Style x:Key="LeftPartTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                 <Setter Property="Height" Value="30"/>
                 <Setter Property="Template">
@@ -216,17 +262,27 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="32"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="UndoMemoryTextBox" 
-                         Style="{StaticResource LeftPartTextBoxStyle}"
-                         Padding="4,0"
-                         VerticalContentAlignment="Center"
-                         LostFocus="UndoMemoryTextBox_LostFocus"
-                         PreviewTextInput="NumberValidationTextBox"/>
+
+                <!-- 外层统一边框 -->
+                <Border x:Name="UndoMemoryBorder" 
+            Grid.ColumnSpan="2" CornerRadius="4" 
+            BorderThickness="1"
+            BorderBrush="{DynamicResource BorderBrush}"
+            Background="Transparent"
+            IsHitTestVisible="False"
+            Panel.ZIndex="1"/>
+                <TextBox x:Name="UndoMemoryTextBox" Padding="4,0"
+             VerticalContentAlignment="Center"
+             LostFocus="UndoMemoryTextBox_LostFocus"
+             PreviewTextInput="NumberValidationTextBox"
+             GotKeyboardFocus="UndoMemoryTextBox_GotFocus"
+             LostKeyboardFocus="UndoMemoryTextBox_LostKeyboardFocus"
+             Style="{StaticResource LeftPartTextBoxStyle_NoBorder}"/>
                 <Button x:Name="UnitToggleButton" 
-                        Grid.Column="1" 
-                        Content="MB"
-                        Style="{StaticResource RightPartButtonStyle}"
-                        Click="UnitToggleButton_Click"/>
+            Grid.Column="1" 
+            Content="MB"
+            Style="{StaticResource RightPartButtonStyle_NoBorder}"
+            Click="UnitToggleButton_Click"/>
             </Grid>
         </Grid>
 

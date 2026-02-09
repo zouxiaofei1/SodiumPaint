@@ -1,3 +1,5 @@
+//这个窗口已经停止使用，相关代码仅供参考，未来可能会被删除
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

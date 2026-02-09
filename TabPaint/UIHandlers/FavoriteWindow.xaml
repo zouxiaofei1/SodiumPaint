@@ -7,8 +7,9 @@
         xmlns:controls="clr-namespace:TabPaint.Controls"
         mc:Ignorable="d"
         Title="Favorite" Height="150" Width="450"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        ShowInTaskbar="False" Topmost="True">
+        WindowStyle="None" AllowsTransparency="False" Background="Transparent"
+        PreviewMouseLeftButtonDown="StarIcon_MouseLeftButtonDown"
+        ShowInTaskbar="False">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -19,59 +20,59 @@
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32" 
+        <WindowChrome CaptionHeight="0" 
                       ResizeBorderThickness="5" 
                       CornerRadius="10" 
                       GlassFrameThickness="-1"/>
     </WindowChrome.WindowChrome>
 
     <Border Background="{DynamicResource GlassBackgroundHighBrush}" 
-            BorderBrush="{DynamicResource BorderBrush}" 
-            BorderThickness="1" 
-            CornerRadius="8"
-            ClipToBounds="True">
+        BorderBrush="{DynamicResource BorderBrush}" 
+        BorderThickness="1" 
+        CornerRadius="8"
+        ClipToBounds="True">
         <Border.Effect>
             <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2"/>
         </Border.Effect>
-        <Grid>
+        <Grid x:Name="RootGrid">
+            <!-- 默认水平布局：左栏 + 右内容 -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="48"/>
+                <ColumnDefinition x:Name="NavColumn" Width="48"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition x:Name="NavRow" Height="0"/>
+            </Grid.RowDefinitions>
 
-            <!-- Left Navigation Bar -->
-            <Grid Grid.Column="0" Background="{DynamicResource ChromeLowBrush}" MouseLeftButtonDown="StarIcon_MouseLeftButtonDown">
+            <!-- Navigation Bar -->
+            <Grid x:Name="NavPanel" Grid.Column="0" Grid.Row="0" 
+              Background="{DynamicResource ChromeLowBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                 
                 </Grid.RowDefinitions>
-
-                <!-- Page Tabs (From bottom up) -->
-                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Style="{DynamicResource FluentScrollViewer}">
-                    <StackPanel x:Name="PagesStackPanel" VerticalAlignment="Bottom">
-                        <!-- Pages will be added here -->
-                    </StackPanel>
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" 
+                          HorizontalScrollBarVisibility="Disabled" 
+                          Style="{DynamicResource FluentScrollViewer}">
+                    <StackPanel x:Name="PagesStackPanel" VerticalAlignment="Bottom"/>
                 </ScrollViewer>
 
-                <!-- Add Page Button -->
-                <Button Grid.Row="1" Click="AddPage_Click" Style="{StaticResource RoundedMenuButtonStyle}" Width="32" Height="32" Margin="0,4"
-                        ToolTip="{DynamicResource L_Menu_File_Add}">
+                <Button Grid.Row="1" Click="AddPage_Click" 
+                    Style="{StaticResource RoundedMenuButtonStyle}" 
+                    Width="32" Height="32" Margin="0,4"
+                    ToolTip="{DynamicResource L_Menu_File_Add}">
                     <Path Data="{DynamicResource Favorite_Image}" Stretch="Uniform" 
-Fill="{DynamicResource IconFillBrush}" 
-Width="16" Height="16"/>
+                      Fill="{DynamicResource IconFillBrush}" 
+                      Width="16" Height="16"/>
                 </Button>
-
-       
             </Grid>
 
             <!-- Content -->
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <controls:FavoriteBarControl x:Name="FavoriteContent" Grid.Row="1"/>
+            <Grid x:Name="ContentPanel" Grid.Column="1" Grid.Row="0">
+                <controls:FavoriteBarControl x:Name="FavoriteContent"/>
             </Grid>
         </Grid>
     </Border>
+
 </Window>

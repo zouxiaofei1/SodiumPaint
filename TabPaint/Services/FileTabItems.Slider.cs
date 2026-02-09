@@ -427,12 +427,13 @@ namespace TabPaint
 
                 // 1. 恢复正确的 ID 和编号
                 string numPart = path.Replace(VirtualFilePrefix, "");
+
                 if (int.TryParse(numPart, out int num))
                 {
                     newTab.UntitledNumber = num;
                     newTab.Id = $"Virtual_{num}"; 
                 }
-
+                newTab.Id = $"Virtual_{Guid.NewGuid():N}";
                 // 2. 检查是否有缓存文件（恢复内容）
                 string potentialBackup = System.IO.Path.Combine(_cacheDir, $"{newTab.Id}.png");
                 if (System.IO.File.Exists(potentialBackup))

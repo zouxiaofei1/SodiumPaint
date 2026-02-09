@@ -17,7 +17,7 @@ namespace TabPaint.Pages
               LocalizationManager.GetString("L_Settings_Shortcuts_Reset_Title"),
               MessageBoxButton.YesNo,
               MessageBoxImage.Question,
-              Window.GetWindow(this)
+               MainWindow.GetCurrentInstance()
             );
 
             if (result == MessageBoxResult.Yes)

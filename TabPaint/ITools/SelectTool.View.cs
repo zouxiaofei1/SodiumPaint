@@ -47,6 +47,7 @@ namespace TabPaint
 
             public void DrawOverlay(ToolContext ctx, Int32Rect rect)
             {
+             
                 var mw = ctx.ParentWindow;
                 if (mw._canvasResizer != null)  mw._canvasResizer.SetHandleVisibility(false);
                 double invScale = 1 / mw.zoomscale;

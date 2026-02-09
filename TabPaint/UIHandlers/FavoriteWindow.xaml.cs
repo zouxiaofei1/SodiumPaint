@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -14,6 +15,8 @@ namespace TabPaint.UIHandlers
 {
     public partial class FavoriteWindow : Window
     {
+        #region Win32 Interop
+
         [StructLayout(LayoutKind.Sequential)]
         public struct RECT
         {
@@ -34,9 +37,33 @@ namespace TabPaint.UIHandlers
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
+            int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ReleaseCapture();
+
+        private const uint SWP_NOZORDER = 0x0004;
+        private const uint SWP_NOACTIVATE = 0x0010;
+
+        #endregion
+
         private Window _owner;
         private List<string> _pages = new List<string>();
         private string _activePage = "Default";
+        private int _snapMode = 0;
+        private bool _isSnapped = true;
+
+        // ===== 拖动相关字段 =====
+        private bool _isDragging = false;
+        private Point _dragStartCursorScreen;
+        private Point _dragStartWindowPos;
+        private IntPtr _hwnd;
+        private const double SnapThreshold = 20.0;
+        private const double SnapGap = 2.0;
 
         private StackPanel GetPagesStack()
         {
@@ -57,23 +84,22 @@ namespace TabPaint.UIHandlers
             this.Loaded += (s, e) => LoadPages();
 
             this.SourceInitialized += FavoriteWindow_SourceInitialized;
-            _owner.LocationChanged += UpdatePosition;
-            _owner.SizeChanged += (s, e) =>
-            {
-                UpdateSizeForSnapMode();
-                UpdatePosition(s, e);
-            };
+
+            // 主窗口移动时：如果吸附状态则跟随
+            _owner.LocationChanged += Owner_LocationOrSizeChanged;
+            _owner.SizeChanged += Owner_LocationOrSizeChanged;
             _owner.StateChanged += (s, e) =>
             {
                 if (_owner.WindowState == WindowState.Minimized) this.Hide();
                 else if (this.IsVisible) this.Show();
-                UpdateSizeForSnapMode();
-                UpdatePosition(s, e);
+
+                if (_isSnapped)
+                {
+                    UpdateSizeForSnapMode();
+                    MoveToSnappedPosition();
+                }
             };
         }
-
-        private int _snapMode = 0;
-        private bool _isDragging = false;
 
         private void FavoriteWindow_SourceInitialized(object sender, EventArgs e)
         {
@@ -81,144 +107,207 @@ namespace TabPaint.UIHandlers
             MicaAcrylicManager.ApplyEffect(this);
 
             var helper = new WindowInteropHelper(this);
-            HwndSource source = HwndSource.FromHwnd(helper.Handle);
-            source.AddHook(WndProc);
+            _hwnd = helper.Handle;
 
+            _isSnapped = true;
             UpdateSizeForSnapMode();
-            UpdatePosition(null, null);
+            MoveToSnappedPosition();
+        }
+        private void Owner_LocationOrSizeChanged(object sender, EventArgs e)
+        {
+            if (!this.IsVisible || _isDragging) return;
+            if (_isSnapped)
+            {
+                UpdateSizeForSnapMode();
+                MoveToSnappedPosition();
+            }
         }
 
-        private const int WM_MOVING = 0x0216;
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        #region 手动拖动逻辑
+
+        private Point GetCursorPosDIU()
         {
-            if (msg == WM_MOVING && _isDragging)
-            {
-                UpdateSnapMode();
-                UpdateSizeForSnapMode();
-
-                // 获取建议的矩形 (Win32 RECT 是物理像素)
-                RECT rect = (RECT)Marshal.PtrToStructure(lParam, typeof(RECT));
-
-                double ownerLeft, ownerTop, ownerWidth, ownerHeight;
-                GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
-
-                DpiScale dpi = VisualTreeHelper.GetDpi(this);
-                double factorX = dpi.DpiScaleX;
-                double factorY = dpi.DpiScaleY;
-                double gap = 2;
-
-                // 预计算目标尺寸（DIU），避免使用尚未更新完成的 this.Width/Height
-                double targetWidthDIU = (_snapMode < 2) ? ownerWidth : 150;
-                double targetHeightDIU = (_snapMode < 2) ? 150 : ownerHeight;
-
-                // 计算目标位置（物理像素）
-                int targetLeft;
-                int targetTop;
-
-                switch (_snapMode)
-                {
-                    case 0: // 底部
-                        targetLeft = (int)(ownerLeft * factorX);
-                        targetTop = (int)((ownerTop + ownerHeight + gap) * factorY);
-                        break;
-                    case 1: // 顶部
-                        targetLeft = (int)(ownerLeft * factorX);
-                        targetTop = (int)((ownerTop - targetHeightDIU - gap) * factorY);
-                        break;
-                    case 2: // 右侧
-                        targetLeft = (int)((ownerLeft + ownerWidth + gap) * factorX);
-                        targetTop = (int)(ownerTop * factorY);
-                        break;
-                    case 3: // 左侧
-                        targetLeft = (int)((ownerLeft - targetWidthDIU - gap) * factorX);
-                        targetTop = (int)(ownerTop * factorY);
-                        break;
-                    default:
-                        targetLeft = rect.Left;
-                        targetTop = rect.Top;
-                        break;
-                }
-
-                int pWidth = (int)(targetWidthDIU * factorX);
-                int pHeight = (int)(targetHeightDIU * factorY);
-
-                // 边界保护（物理像素）
-                var workArea = SystemParameters.WorkArea;
-                int pWorkLeft = (int)(workArea.Left * factorX);
-                int pWorkTop = (int)(workArea.Top * factorY);
-                int pWorkRight = (int)(workArea.Right * factorX);
-                int pWorkBottom = (int)(workArea.Bottom * factorY);
-
-                if (targetLeft < pWorkLeft) targetLeft = pWorkLeft;
-                if (targetTop < pWorkTop) targetTop = pWorkTop;
-                if (targetLeft + pWidth > pWorkRight) targetLeft = pWorkRight - pWidth;
-                if (targetTop + pHeight > pWorkBottom) targetTop = pWorkBottom - pHeight;
-
-                rect.Left = targetLeft;
-                rect.Top = targetTop;
-                rect.Right = targetLeft + pWidth;
-                rect.Bottom = targetTop + pHeight;
-
-                Marshal.StructureToPtr(rect, lParam, false);
-                handled = true;
-            }
-            return IntPtr.Zero;
+            GetCursorPos(out POINT p);
+            DpiScale dpi = VisualTreeHelper.GetDpi(this);
+            return new Point(p.X / dpi.DpiScaleX, p.Y / dpi.DpiScaleY);
         }
 
         private void StarIcon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton != MouseButton.Left) return;
+
+            // ★ 关键修改：检查点击源是否是交互控件，如果是则不启动拖动
+            DependencyObject originalSource = e.OriginalSource as DependencyObject;
+            if (IsInteractiveElement(originalSource)) return; // 让事件继续冒泡，交给按钮等控件自己处理
+
+            _isDragging = true;
+            _dragStartCursorScreen = GetCursorPosDIU();
+            _dragStartWindowPos = new Point(this.Left, this.Top);
+
+            var element = sender as UIElement;
+            if (element != null)
             {
-                _isDragging = true;
-                this.DragMove();
-                _isDragging = false;
-                UpdateSnapMode();
-                UpdateSizeForSnapMode();
-                UpdatePosition(null, null);
+                element.CaptureMouse(); element.MouseMove += StarIcon_MouseMove;
+                element.MouseLeftButtonUp += StarIcon_MouseLeftButtonUp;
             }
+
+            e.Handled = true;
         }
-        private void UpdateSnapMode()
+
+        private bool IsInteractiveElement(DependencyObject source)
         {
-            if (_owner == null) return;
-
-            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
-            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
-
-            double cx, cy;
-            if (_isDragging)
+            DependencyObject current = source;
+            while (current != null && current != this)
             {
-                POINT p;
-                if (GetCursorPos(out p))
+                if (current is System.Windows.Controls.Primitives.ButtonBase  // Button, RepeatButton, ToggleButton...
+                    || current is System.Windows.Controls.TextBox
+                    || current is System.Windows.Controls.Primitives.TextBoxBase
+                    || current is System.Windows.Controls.ComboBox
+                    || current is System.Windows.Controls.Primitives.ScrollBar
+                    || current is System.Windows.Controls.Primitives.Thumb
+                    || current is System.Windows.Controls.MenuItem
+                    || current is System.Windows.Controls.ListBoxItem
+                    || current is System.Windows.Controls.Primitives.Selector)
                 {
-                    DpiScale dpi = VisualTreeHelper.GetDpi(this);
-                    cx = p.X / dpi.DpiScaleX;
-                    cy = p.Y / dpi.DpiScaleY;
+                    return true;
                 }
-                else
+
+                if (current is FrameworkElement fe && fe.Cursor == Cursors.Hand)
                 {
-                    cx = this.Left + this.ActualWidth / 2;
-                    cy = this.Top + this.ActualHeight / 2;
+                    return true;
                 }
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return false;
+        }
+
+
+        private void StarIcon_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isDragging) return;
+            Point currentCursor = GetCursorPosDIU();
+            double freeLeft = _dragStartWindowPos.X + (currentCursor.X - _dragStartCursorScreen.X);
+            double freeTop = _dragStartWindowPos.Y + (currentCursor.Y - _dragStartCursorScreen.Y);
+            int candidateSnap;
+            double candidateDist;
+            CalcSnapCandidate(freeLeft, freeTop, this.Width, this.Height, out candidateSnap, out candidateDist);
+
+            if (candidateDist <= SnapThreshold)
+            {
+                // 进入吸附：snap到对应边
+                _isSnapped = true;
+                _snapMode = candidateSnap;
+                UpdateSizeForSnapMode();
+                MoveToSnappedPosition();
             }
             else
             {
-                cx = this.Left + this.ActualWidth / 2;
-                cy = this.Top + this.ActualHeight / 2;
+                _isSnapped = false;
+                var workArea = SystemParameters.WorkArea;
+                if (freeLeft < workArea.Left) freeLeft = workArea.Left;
+                if (freeTop < workArea.Top) freeTop = workArea.Top;
+                if (freeLeft + this.Width > workArea.Right) freeLeft = workArea.Right - this.Width;
+                if (freeTop + this.Height > workArea.Bottom) freeTop = workArea.Bottom - this.Height;
+
+                this.Left = freeLeft;
+                this.Top = freeTop;
+            }
+        }
+
+        private void StarIcon_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isDragging) return;
+
+            _isDragging = false;
+
+            var element = sender as UIElement;
+            if (element != null)
+            {
+                element.ReleaseMouseCapture();
+                element.MouseMove -= StarIcon_MouseMove;
+                element.MouseLeftButtonUp -= StarIcon_MouseLeftButtonUp;
             }
 
-            // 计算到主窗口四条边的距离
-            double distToTop = Math.Abs(cy - ownerTop);
-            double distToBottom = Math.Abs(cy - (ownerTop + ownerHeight));
-            double distToLeft = Math.Abs(cx - ownerLeft);
-            double distToRight = Math.Abs(cx - (ownerLeft + ownerWidth));
+            // 松手时再做一次磁吸检测
+            if (!_isSnapped)
+            {
+                int candidateSnap;
+                double candidateDist;
+                CalcSnapCandidate(this.Left, this.Top, this.Width, this.Height, out candidateSnap, out candidateDist);
 
-            double minDist = Math.Min(Math.Min(distToTop, distToBottom), Math.Min(distToLeft, distToRight));
+                if (candidateDist <= SnapThreshold)
+                {
+                    _isSnapped = true;
+                    _snapMode = candidateSnap;
+                    UpdateSizeForSnapMode();
+                    MoveToSnappedPosition();
+                }
+            }
 
-            if (minDist == distToBottom) _snapMode = 0;
-            else if (minDist == distToTop) _snapMode = 1;
-            else if (minDist == distToRight) _snapMode = 2;
-            else if (minDist == distToLeft) _snapMode = 3;
+            e.Handled = true;
         }
+        private void CalcSnapCandidate(double favLeft, double favTop, double favWidth, double favHeight, out int candidateSnap, out double candidateDist)
+        {
+            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
+            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
+
+            double ownerRight = ownerLeft + ownerWidth;
+            double ownerBottom = ownerTop + ownerHeight;
+
+            double favRight = favLeft + favWidth;
+            double favBottom = favTop + favHeight;
+            double[] dists = new double[4];
+            dists[0] = HorizontalOverlap(favLeft, favRight, ownerLeft, ownerRight) > 0
+                       ? Math.Abs(favTop - ownerBottom)
+                       : double.MaxValue;
+
+            // 顶部吸附：FavoriteWindow 在主窗口上方
+            dists[1] = HorizontalOverlap(favLeft, favRight, ownerLeft, ownerRight) > 0
+                       ? Math.Abs(ownerTop - favBottom)
+                       : double.MaxValue;
+
+            // 右侧吸附：FavoriteWindow 在主窗口右边
+            dists[2] = VerticalOverlap(favTop, favBottom, ownerTop, ownerBottom) > 0
+                       ? Math.Abs(favLeft - ownerRight)
+                       : double.MaxValue;
+
+            // 左侧吸附：FavoriteWindow 在主窗口左边
+            dists[3] = VerticalOverlap(favTop, favBottom, ownerTop, ownerBottom) > 0
+                       ? Math.Abs(ownerLeft - favRight)
+                       : double.MaxValue;
+
+            // 找最小距离
+            candidateSnap = 0;
+            candidateDist = dists[0];
+            for (int i = 1; i < 4; i++)
+            {
+                if (dists[i] < candidateDist)
+                {
+                    candidateDist = dists[i];
+                    candidateSnap = i;
+                }
+            }
+        }
+
+        private double HorizontalOverlap(double aLeft, double aRight, double bLeft, double bRight)
+        {
+            double overlapLeft = Math.Max(aLeft, bLeft);
+            double overlapRight = Math.Min(aRight, bRight);
+            return Math.Max(0, overlapRight - overlapLeft);
+        }
+
+        private double VerticalOverlap(double aTop, double aBottom, double bTop, double bBottom)
+        {
+            double overlapTop = Math.Max(aTop, bTop);
+            double overlapBottom = Math.Min(aBottom, bBottom);
+            return Math.Max(0, overlapBottom - overlapTop);
+        }
+
+        #endregion
+
+        #region 吸附位置/尺寸计算
+
         private void GetOwnerRect(out double left, out double top, out double width, out double height)
         {
             if (_owner.WindowState == WindowState.Maximized)
@@ -236,6 +325,7 @@ namespace TabPaint.UIHandlers
                 height = _owner.ActualHeight;
             }
         }
+
         private void UpdateSizeForSnapMode()
         {
             double ownerLeft, ownerTop, ownerWidth, ownerHeight;
@@ -243,29 +333,94 @@ namespace TabPaint.UIHandlers
 
             switch (_snapMode)
             {
-                case 0: // 底部
-                case 1: // 顶部
+                case 0:
+                case 1:
                     this.Width = ownerWidth;
                     this.Height = 150;
                     SetHorizontalLayout();
                     break;
-                case 2: // 右侧
-                case 3: // 左侧
+                case 2:
+                case 3:
                     this.Width = 150;
                     this.Height = ownerHeight;
                     SetVerticalLayout();
                     break;
             }
         }
-        private void SetHorizontalLayout()
+        private void MoveToSnappedPosition()
         {
-            var stack = GetFavoriteContent()?.FindName("FavoriteStackPanel") as StackPanel;
-            if (stack != null)
+            if (_owner == null || _owner.WindowState == WindowState.Minimized || !this.IsVisible) return;
+
+            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
+            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
+
+            double targetWidth = this.Width;
+            double targetHeight = this.Height;
+
+            switch (_snapMode)
             {
-                stack.Orientation = Orientation.Horizontal;
+                case 0: // 底部
+                    this.Left = ownerLeft;
+                    this.Top = ownerTop + ownerHeight + SnapGap;
+                    break;
+                case 1: // 顶部
+                    this.Left = ownerLeft;
+                    this.Top = ownerTop - targetHeight - SnapGap;
+                    break;
+                case 2: // 右侧
+                    this.Left = ownerLeft + ownerWidth + SnapGap;
+                    this.Top = ownerTop;
+                    break;
+                case 3: // 左侧
+                    this.Left = ownerLeft - targetWidth - SnapGap;
+                    this.Top = ownerTop;
+                    break;
             }
 
-            // 找到 FavoriteBarControl 内的 ScrollViewer 并调整
+            // 边界保护
+            var workArea = SystemParameters.WorkArea;
+            if (this.Left < workArea.Left) this.Left = workArea.Left;
+            if (this.Top < workArea.Top) this.Top = workArea.Top;
+            if (this.Left + this.Width > workArea.Right) this.Left = workArea.Right - this.Width;
+            if (this.Top + this.Height > workArea.Bottom) this.Top = workArea.Bottom - this.Height;
+        }
+
+        private void SetHorizontalLayout()
+        {
+            var rootGrid = this.FindName("RootGrid") as Grid;
+            var navPanel = this.FindName("NavPanel") as Grid;
+            var contentPanel = this.FindName("ContentPanel") as Grid;
+            var navColumn = this.FindName("NavColumn") as ColumnDefinition;
+            var navRow = this.FindName("NavRow") as RowDefinition;
+
+            if (rootGrid == null || navPanel == null || contentPanel == null) return;
+
+            // 列布局：48 | *
+            navColumn.Width = new GridLength(48);
+            navRow.Height = new GridLength(0);
+
+            // 导航栏：左侧
+            Grid.SetColumn(navPanel, 0);
+            Grid.SetRow(navPanel, 0);
+            Grid.SetRowSpan(navPanel, 2);
+            Grid.SetColumnSpan(navPanel, 1);
+
+            // 内容：右侧
+            Grid.SetColumn(contentPanel, 1);
+            Grid.SetRow(contentPanel, 0);
+            Grid.SetRowSpan(contentPanel, 2);
+            Grid.SetColumnSpan(contentPanel, 1);
+
+            // 导航栏内部：纵向排列页签
+            var pagesStack = GetPagesStack();
+            if (pagesStack != null)
+                pagesStack.Orientation = Orientation.Vertical;
+
+            // 内容区：横向排列收藏项
+            var stack = GetFavoriteContent()?.FindName("FavoriteStackPanel") as StackPanel;
+            if (stack != null)
+                stack.Orientation = Orientation.Horizontal;
+
             var favoriteControl = GetFavoriteContent();
             if (favoriteControl != null)
             {
@@ -278,16 +433,39 @@ namespace TabPaint.UIHandlers
             }
         }
 
-        /// <summary>
-        /// 设置内部布局为纵向（左侧/右侧吸附时）
-        /// </summary>
         private void SetVerticalLayout()
         {
+            var rootGrid = this.FindName("RootGrid") as Grid;
+            var navPanel = this.FindName("NavPanel") as Grid;
+            var contentPanel = this.FindName("ContentPanel") as Grid;
+            var navColumn = this.FindName("NavColumn") as ColumnDefinition;
+            var navRow = this.FindName("NavRow") as RowDefinition;
+
+            if (rootGrid == null || navPanel == null || contentPanel == null) return;
+            navColumn.Width = new GridLength(0);
+            navRow.Height = new GridLength(48);
+
+            // 内容：上方，占满宽度
+            Grid.SetColumn(contentPanel, 0);
+            Grid.SetRow(contentPanel, 0);
+            Grid.SetColumnSpan(contentPanel, 2);
+            Grid.SetRowSpan(contentPanel, 1);
+
+            // 导航栏：下方，占满宽度
+            Grid.SetColumn(navPanel, 0);
+            Grid.SetRow(navPanel, 1);
+            Grid.SetColumnSpan(navPanel, 2);
+            Grid.SetRowSpan(navPanel, 1);
+
+            // 导航栏内部：横向排列页签
+            var pagesStack = GetPagesStack();
+            if (pagesStack != null)
+                pagesStack.Orientation = Orientation.Horizontal;
+
+            // 内容区：纵向排列收藏项
             var stack = GetFavoriteContent()?.FindName("FavoriteStackPanel") as StackPanel;
             if (stack != null)
-            {
                 stack.Orientation = Orientation.Vertical;
-            }
 
             var favoriteControl = GetFavoriteContent();
             if (favoriteControl != null)
@@ -301,9 +479,6 @@ namespace TabPaint.UIHandlers
             }
         }
 
-        /// <summary>
-        /// 辅助：在可视树中查找指定类型的子元素
-        /// </summary>
         private static T FindChild<T>(DependencyObject parent) where T : DependencyObject
         {
             if (parent == null) return null;
@@ -317,55 +492,14 @@ namespace TabPaint.UIHandlers
             return null;
         }
 
-        private void UpdatePosition(object sender, EventArgs e)
-        {
-            if (_owner == null || _owner.WindowState == WindowState.Minimized || !this.IsVisible || _isDragging) return;
+        #endregion
 
-            double ownerLeft, ownerTop, ownerWidth, ownerHeight;
-            GetOwnerRect(out ownerLeft, out ownerTop, out ownerWidth, out ownerHeight);
-
-            // 先同步尺寸
-            UpdateSizeForSnapMode();
-
-            double gap = 2; // 窗口间距
-            double targetWidth = (_snapMode < 2) ? ownerWidth : 150;
-            double targetHeight = (_snapMode < 2) ? 150 : ownerHeight;
-
-            switch (_snapMode)
-            {
-                case 0: // 底部外侧
-                    this.Left = ownerLeft;
-                    this.Top = ownerTop + ownerHeight + gap;
-                    break;
-                case 1: // 顶部外侧
-                    this.Left = ownerLeft;
-                    this.Top = ownerTop - targetHeight - gap;
-                    break;
-                case 2: // 右侧外侧
-                    this.Left = ownerLeft + ownerWidth + gap;
-                    this.Top = ownerTop;
-                    break;
-                case 3: // 左侧外侧
-                    this.Left = ownerLeft - targetWidth - gap;
-                    this.Top = ownerTop;
-                    break;
-            }
-
-            // ★ 边界保护：确保不超出屏幕工作区
-            var workArea = SystemParameters.WorkArea;
-            if (this.Left < workArea.Left) this.Left = workArea.Left;
-            if (this.Top < workArea.Top) this.Top = workArea.Top;
-            if (this.Left + this.Width > workArea.Right) this.Left = workArea.Right - this.Width;
-            if (this.Top + this.Height > workArea.Bottom) this.Top = workArea.Bottom - this.Height;
-        }
-      
+        #region 页面管理（不变）
 
         private void LoadPages()
         {
             if (!Directory.Exists(AppConsts.FavoriteDir))
-            {
                 Directory.CreateDirectory(AppConsts.FavoriteDir);
-            }
 
             _pages = Directory.GetDirectories(AppConsts.FavoriteDir)
                               .Select(Path.GetFileName)
@@ -376,9 +510,7 @@ namespace TabPaint.UIHandlers
                 _pages.Insert(0, "Default");
                 string defaultPath = Path.Combine(AppConsts.FavoriteDir, "Default");
                 if (!Directory.Exists(defaultPath))
-                {
                     Directory.CreateDirectory(defaultPath);
-                }
             }
 
             RefreshPageTabs();
@@ -389,15 +521,14 @@ namespace TabPaint.UIHandlers
             var stack = GetPagesStack();
             if (stack == null) return;
             stack.Children.Clear();
-            
-            // 页面从下往上排：反转列表顺序，使最新的（或后添加的）在最上方生长，Default 在最下方
+
             var reversedPages = new List<string>(_pages);
             reversedPages.Reverse();
 
             foreach (var page in reversedPages)
             {
                 var grid = new Grid { Margin = new Thickness(0, 4, 0, 4) };
-                
+
                 var btn = new Button
                 {
                     Content = page.Length > 2 ? page.Substring(0, 2) : page,
@@ -423,7 +554,6 @@ namespace TabPaint.UIHandlers
 
                 grid.Children.Add(btn);
 
-                // 如果是空页面且不是 Default，显示右上角删除按钮
                 if (page != "Default")
                 {
                     string pagePath = Path.Combine(AppConsts.FavoriteDir, page);
@@ -488,10 +618,7 @@ namespace TabPaint.UIHandlers
         {
             string newPageName = "Page " + (_pages.Count);
             int i = _pages.Count;
-            while (_pages.Contains(newPageName))
-            {
-                newPageName = "Page " + (++i);
-            }
+            while (_pages.Contains(newPageName)) newPageName = "Page " + (++i);
 
             try
             {
@@ -514,13 +641,15 @@ namespace TabPaint.UIHandlers
             if (this.IsVisible) this.Hide();
             else
             {
+                _isSnapped = true; // 重新打开时默认吸附
                 this.Show();
-                UpdatePosition(null, null);
-                this.Activate();
+                UpdateSizeForSnapMode(); MoveToSnappedPosition(); this.Activate();
                 GetFavoriteContent()?.Focus();
                 GetFavoriteContent()?.LoadFavorites(_activePage);
                 RefreshPageTabs();
             }
         }
+
+        #endregion
     }
 }

@@ -44,23 +44,28 @@ namespace TabPaint
                     OnPropertyChanged(nameof(DisplayName));
                 }
             }
+            
             public string FileName
             {
                 get
                 {
                     // 1. 优先检查是否是虚拟路径
-                    if (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith("::TABPAINT_NEW::"))
-                        return $"未命名 {UntitledNumber}";
+                    if (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith(MainWindow.VirtualFilePrefix))
+                    {
+                        string untitledLabel = LocalizationManager.GetString("L_Untitled") ?? "未命名";
+                        return $"{untitledLabel} {UntitledNumber}";
+                    }
 
                     // 2. 如果是真实存在的物理路径
                     if (!string.IsNullOrEmpty(FilePath))
                     {
                         try { return System.IO.Path.GetFileName(FilePath); }
-                        catch { return FilePath; } // 防止非法路径字符崩溃
+                        catch { return FilePath; }
                     }
 
                     // 3. 兜底逻辑
-                    return IsNew ? $"未命名 {UntitledNumber}" : "未命名";
+                    string fallbackLabel = LocalizationManager.GetString("L_Untitled") ?? "未命名";
+                    return IsNew ? $"{fallbackLabel} {UntitledNumber}" : fallbackLabel;
                 }
             }
 
@@ -69,8 +74,12 @@ namespace TabPaint
                 get
                 {
                     // 1. 优先检查是否是虚拟路径
-                    if (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith("::TABPAINT_NEW::"))
-                        return $"未命名 {UntitledNumber}";
+                    if (IsNew || (!string.IsNullOrEmpty(FilePath) && FilePath.StartsWith(MainWindow.VirtualFilePrefix)))
+                    {
+                        // ★★★ 使用 UntitledNumber 而非从路径解析 ★★★
+                        string untitledLabel = LocalizationManager.GetString("L_Untitled") ?? "未命名";
+                        return $"{untitledLabel} {UntitledNumber}";
+                    }
 
                     // 2. 如果是真实路径，去掉扩展名显示
                     if (!string.IsNullOrEmpty(FilePath))
@@ -135,7 +144,7 @@ namespace TabPaint
             public List<UndoAction> RedoStack { get; set; } = new();
             public DateTime LastAccessTime { get; set; } = DateTime.Now;
             public int SavedUndoPoint { get; set; } = 0;
-
+       
             public FileTabItem(string path)
             {
                 FilePath = path;

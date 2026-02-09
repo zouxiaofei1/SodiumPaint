@@ -196,21 +196,21 @@ namespace TabPaint
             string pathToRemove = item.FilePath;
             int removedUiIndex = FileTabs.IndexOf(item);
             bool wasSelected = item.IsSelected;
-
+            if (!string.IsNullOrEmpty(item.Id))
+            {
+                _closedTabIds.Add(item.Id);
+            }
             // 2. 从集合中移除
             FileTabs.Remove(item);
             if (!string.IsNullOrEmpty(pathToRemove) && _imageFiles.Contains(pathToRemove))
             {
                 _imageFiles.Remove(pathToRemove);
             }
-            // 如果是已保存的文件或非临时文件，删除其对应的备份文件以节省空间
-            // 如果是“新建”的临时图片，关闭时不删除备份文件，使其进入回收站（缓存扫描机制）
-            if (!string.IsNullOrEmpty(item.BackupPath) && File.Exists(item.BackupPath))
+            if (!string.IsNullOrEmpty(item.BackupPath))
             {
-                if (!item.IsNew)
-                {
-                    try { File.Delete(item.BackupPath); } catch { }
-                }
+            //    s(item.BackupPath);
+                try { File.Delete(item.BackupPath); }
+                catch { }
             }
             if (FileTabs.Count == 0)
             {
@@ -219,22 +219,23 @@ namespace TabPaint
                 UpdateImageBarSliderState();
                 return;
             }
-
+        
             if (wasSelected)
             {
                 int newIndex = Math.Max(0, Math.Min(removedUiIndex - 1, FileTabs.Count - 1));
                 var nextTab = FileTabs[newIndex];
-                SwitchToTab(nextTab);
+              SwitchToTab(nextTab,needsave:false);
             }
             else
             {
                 if (_currentTabItem != null) _currentImageIndex = _imageFiles.IndexOf(_currentTabItem.FilePath);
             }
+            
             UpdateImageBarSliderState();
             UpdateWindowTitle();
             UpdateImageBarVisibilityState();
             AggressiveMemoryRelease();
-            MainImageBar.ClosePopupAndReset();
+            MainImageBar.ClosePopupAndReset(); SaveSession();
         }
 
 

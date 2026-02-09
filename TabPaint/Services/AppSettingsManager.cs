@@ -201,6 +201,8 @@ namespace TabPaint
                     writer.Write(Current.ThemeAccentColor ?? "");
                     writer.Write(Current.PerformanceScore);
                     writer.Write(Current.LastBenchmarkDate.Ticks);
+                    writer.Write(Current.MaxUndoMemoryMB);
+                    writer.Write(Current.MaxGlobalUndoSteps);
 
                     // RecentFiles
                     var recentFiles = Current.RecentFiles ?? new List<string>();
@@ -284,7 +286,8 @@ namespace TabPaint
                     settings.ThemeAccentColor = reader.ReadString();
                     settings.PerformanceScore = reader.ReadInt32();
                     settings.LastBenchmarkDate = new DateTime(reader.ReadInt64());
-
+                    settings.MaxUndoMemoryMB = reader.ReadInt32();
+                    settings.MaxGlobalUndoSteps = reader.ReadInt32();
                     // RecentFiles
                     int recentCount = reader.ReadInt32();
                     var recentFiles = new List<string>(recentCount);

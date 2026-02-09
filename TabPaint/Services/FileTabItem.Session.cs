@@ -461,8 +461,10 @@ namespace TabPaint
             {
                 if (IsVirtualPath(path))
                 {
-                    // 提取 ::TABPAINT_NEW:: 之后的数字
-                    string numPart = path.Replace(VirtualFilePrefix, "");
+                    string afterPrefix = path.Substring(VirtualFilePrefix.Length);
+                    // 取 "::" 之前的部分作为编号（如果有的话）
+                    int separatorIndex = afterPrefix.IndexOf("::");
+                    string numPart = separatorIndex >= 0 ? afterPrefix.Substring(0, separatorIndex) : afterPrefix;
                     if (int.TryParse(numPart, out int num))
                     {
                         usedNumbers.Add(num);
@@ -488,6 +490,7 @@ namespace TabPaint
             }
             return candidate;
         }
+        public HashSet<string> _closedTabIds = new HashSet<string>();
         private void SaveSession()
         {
             var currentSessionTabs = new List<SessionTabInfo>();
@@ -504,10 +507,13 @@ namespace TabPaint
                 }
                 catch { currentContextDir = null; }
             }
-
+        
             foreach (var tab in FileTabs)
             {
-                // ★★★ 改动核心：不再过滤，所有 Tab 都记录 ★★★
+                //if (_closedTabIds.Contains(tab.Id))
+                //{
+                //    continue;
+                //}
                 string? tabDir = null;
                 if (!string.IsNullOrEmpty(tab.FilePath) && !IsVirtualPath(tab.FilePath))
                 {
@@ -529,12 +535,9 @@ namespace TabPaint
                     IsNew = tab.IsNew,
                     WorkDirectory = tabDir,
                     UntitledNumber = tab.UntitledNumber,
-                    // ★★★ 新增字段：标记是否为纯磁盘文件（未修改的已有文件）★★★
                     IsCleanDiskFile = (!tab.IsDirty && !tab.IsNew && !IsVirtualPath(tab.FilePath))
                 });
             }
-
-            // ★★★ 同时记录当前选中的 Tab 索引，方便恢复焦点 ★★★
             int activeTabIndex = _currentTabItem != null ? FileTabs.IndexOf(_currentTabItem) : 0;
 
             var finalTabsToSave = new List<SessionTabInfo>();
@@ -563,6 +566,7 @@ namespace TabPaint
                     {
                         foreach (var oldTab in oldSession.Tabs)
                         {
+                            if (_closedTabIds.Contains(oldTab.Id)) continue;
                             string? oldTabDir = oldTab.WorkDirectory;
                             if (string.IsNullOrEmpty(oldTabDir) && !string.IsNullOrEmpty(oldTab.OriginalPath) && !IsVirtualPath(oldTab.OriginalPath))
                             {
@@ -598,7 +602,7 @@ namespace TabPaint
             };
 
             try
-            {
+            {//session.bin
                 string? dir = System.IO.Path.GetDirectoryName(_sessionPath);
                 if (dir != null) Directory.CreateDirectory(dir);
 
@@ -646,6 +650,7 @@ namespace TabPaint
                 {
                     foreach (var info in session.Tabs)
                     {
+                        if (_closedTabIds.Contains(info.Id)) continue;
                         // 原有的目录过滤逻辑保持不变...
                         {
                             string tabDir = info.WorkDirectory;
@@ -668,8 +673,7 @@ namespace TabPaint
                             // 磁盘文件必须仍然存在才恢复
                             if (!string.IsNullOrEmpty(info.OriginalPath) && File.Exists(info.OriginalPath))
                             {
-                                // 检查是否已经在列表中（避免重复）
-                                if (FileTabs.Any(t => t.FilePath == info.OriginalPath)) continue;
+                                if (FileTabs.Any(t => t.Id == info.Id)) continue;
 
                                 var tab = new FileTabItem(info.OriginalPath)
                                 {
@@ -755,15 +759,15 @@ namespace TabPaint
         private void CreateNewTab(TabInsertPosition tabposition = TabInsertPosition.AfterCurrent, bool switchto = false)
         {
             int availableNumber = GetNextAvailableUntitledNumber();
-            string virtualPath = $"{VirtualFilePrefix}{availableNumber}";
-
+            string uniqueId = $"Virtual_{Guid.NewGuid():N}";
+            string virtualPath = $"{VirtualFilePrefix}{availableNumber}::{uniqueId}";
             // 2. 创建 Tab 对象
             var newTab = new FileTabItem(virtualPath)
             {
                 IsNew = true,
                 UntitledNumber = availableNumber,
                 IsDirty = false,
-                Id = $"Virtual_{availableNumber}",
+                Id = uniqueId,
                 BackupPath = null
             };
 
@@ -799,7 +803,7 @@ namespace TabPaint
             UpdateImageBarSliderState();
         }
 
-        public async void SwitchToTab(FileTabItem tab)
+        public async void SwitchToTab(FileTabItem tab,bool needsave = true)
         {
             if (_currentTabItem == tab) return;
             if (tab == null) return;
@@ -834,7 +838,7 @@ namespace TabPaint
             _currentImageIndex = _imageFiles.IndexOf(tab.FilePath);
 
             {
-                await OpenImageAndTabs(tab.FilePath);
+                await OpenImageAndTabs(tab.FilePath,nobackup:!needsave);
             }
 
             // 还原新 Tab 的撤销栈
@@ -1051,12 +1055,9 @@ namespace TabPaint
 
                         if (shouldLoad)
                         {
-                            // 检查是否已经在 FileTabs 里
-                            if (FileTabs.Any(t => t.Id == info.Id || t.FilePath == info.OriginalPath))
+                            if (FileTabs.Any(t => t.Id == info.Id))
                             {
-                                var existingTab = FileTabs.First(t => t.Id == info.Id || t.FilePath == info.OriginalPath);
-
-                                // ★★★ 对于 CleanDiskFile，只需确认存在即可 ★★★
+                                var existingTab = FileTabs.First(t => t.Id == info.Id);
                                 if (info.IsCleanDiskFile)
                                 {
                                     // 无需额外操作，文件已在列表中
@@ -1124,7 +1125,9 @@ namespace TabPaint
         }
         private string GenerateVirtualPath()   // 格式： ::TABPAINT_NEW::{ID}
         {
-            return $"{VirtualFilePrefix}{GetNextAvailableUntitledNumber()}";
+            int num = GetNextAvailableUntitledNumber();
+            string uniqueId = $"Virtual_{Guid.NewGuid():N}";
+            return $"{VirtualFilePrefix}{num}::{uniqueId}";
         }
     }
 }

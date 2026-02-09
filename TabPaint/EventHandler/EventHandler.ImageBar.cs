@@ -522,23 +522,43 @@ namespace TabPaint
                 tab.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
                 tab.SavedUndoPoint = _savedUndoPoint;
             }
-
-            // 2. 准备路径和备份
-            if (tab.IsNew && string.IsNullOrEmpty(tab.BackupPath))
+            if (tab.IsDirty || tab.IsNew)
             {
-                PrepareDragFilePath(tab);
+                try
+                {
+                    BitmapSource bitmapToSave = null;
+
+                    if (tab == _currentTabItem)
+                    {
+                        // 当前活跃标签：从画布获取最新像素
+                        bitmapToSave = GetCurrentCanvasSnapshotSafe();
+                    }
+                    if (bitmapToSave != null)
+                    {
+                        if (string.IsNullOrEmpty(tab.BackupPath))
+                        {
+                            string cacheFileName = $"{tab.Id}.png";
+                            tab.BackupPath = System.IO.Path.Combine(_cacheDir, cacheFileName);
+                        }
+                        using (var fs = new FileStream(tab.BackupPath, FileMode.Create))
+                        {
+                            var encoder = new PngBitmapEncoder();
+                            encoder.Frames.Add(BitmapFrame.Create(bitmapToSave));
+                            encoder.Save(fs);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowToast($"Failed to save tab state: {ex.Message}"); return; // 备份失败就不要转移了，避免数据丢失
+                }
             }
 
             // 3. 在当前进程内直接创建新 MainWindow 实例
             try
             {
-                // 创建新窗口，并将标签传递过去
                 MainWindow newWindow = new MainWindow(tab.FilePath, !IsVirtualPath(tab.FilePath), tab, loadSession: false);
-
-                // 设置新窗口位置
                 newWindow.Show();
-
-                // 4. 从当前窗口移除标签
                 CloseTab(tab, true); // 强制关闭，不提示保存
             }
             catch (Exception ex)
@@ -625,7 +645,9 @@ namespace TabPaint
                     {
                         // 1. 从原窗口移除
                         sourceWindow.CloseTab(sourceTab, true);
-
+                        bool alreadyExists = FileTabs.Any(t => t.Id == sourceTab.Id) ||
+                  (!IsVirtualPath(sourceTab.FilePath) &&
+                   FileTabs.Any(t => string.Equals(t.FilePath, sourceTab.FilePath, StringComparison.OrdinalIgnoreCase)));
                         // 2. 插入到本窗口
                         int newUIIndex = targetUIIndex;
                         if (targetGrid != null)

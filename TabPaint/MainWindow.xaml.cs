@@ -68,10 +68,6 @@ namespace TabPaint
             }
             return (null, null);
         }
-
-        /// <summary>
-        /// 激活窗口并选中指定标签页
-        /// </summary>
         public void FocusAndSelectTab(FileTabItem tab)
         {
             RestoreWindow(this);
@@ -222,6 +218,9 @@ namespace TabPaint
                 {
                     _startupFinished = true;
                 }), DispatcherPriority.ApplicationIdle);
+                Dispatcher.InvokeAsync(() => {
+                    CenterImage();
+                }, DispatcherPriority.Render);
             }, DispatcherPriority.ApplicationIdle);
 
             InitializeScrollPosition();
@@ -486,9 +485,6 @@ namespace TabPaint
                 double imgHeight = BackgroundImage.Source.Height;
                 double viewWidth = ScrollContainer.ViewportWidth+ viewWidthoffset;
                 double viewHeight = ScrollContainer.ViewportHeight+ viewHeightoffset;
-
-                // 减去我们强制添加的边距，以获取真正可用的图片展示空间
-                // 只有看图模式下我们才希望“铺满”，绘图模式下其实也可以按此比例缩放
                 double scaleX = viewWidth / imgWidth;
                 double scaleY = viewHeight / imgHeight;
 
