@@ -2,17 +2,76 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
 //
 //TabPaint主程序
 //
 
 namespace TabPaint
 {
+    public class CompressedBuffer
+    {
+        private byte[] _raw;           // 未压缩（热数据）
+        private byte[] _compressed;    // 压缩后（冷数据）
+        private bool _isCompressed;
+        public int OriginalLength { get; }
+
+        public CompressedBuffer(byte[] data)
+        {
+            _raw = data;
+            _isCompressed = false;
+            OriginalLength = data.Length;
+        }
+        public void Compress()
+        {
+            if (_isCompressed || _raw == null) return;
+
+            // 方案A: 使用内置 BrotliEncoder (无需NuGet)
+            using var ms = new MemoryStream();
+            using (var brotli = new BrotliStream(ms, CompressionLevel.Fastest))
+            {
+                brotli.Write(_raw, 0, _raw.Length);
+            }
+            _compressed = ms.ToArray();
+            _raw = null;  // 释放原始数据
+            _isCompressed = true;
+        }
+        public byte[] GetData()
+        {
+            if (!_isCompressed) return _raw;
+
+            byte[] result = new byte[OriginalLength];
+            using var ms = new MemoryStream(_compressed);
+            using var brotli = new BrotliStream(ms, CompressionMode.Decompress);
+            int totalRead = 0;
+            while (totalRead < OriginalLength)
+            {
+                int read = brotli.Read(result, totalRead, OriginalLength - totalRead);
+                if (read == 0) break;
+                totalRead += read;
+            }
+            return result;
+        }
+        public void Decompress()
+        {
+            if (!_isCompressed) return;
+            _raw = GetData();
+            _compressed = null;
+            _isCompressed = false;
+        }
+        public long ActualMemorySize => _isCompressed
+            ? (_compressed?.Length ?? 0)
+            : (_raw?.Length ?? 0);
+
+        public double CompressionRatio => _isCompressed && _compressed != null
+            ? (double)OriginalLength / _compressed.Length
+            : 1.0;
+    }
     public static class ListStackExtensions
     {
         public static void Push<T>(this List<T> list, T item)
@@ -52,17 +111,23 @@ namespace TabPaint
 
         public class UndoAction
         {
+            private CompressedBuffer _pixelsBuf;
+            private CompressedBuffer _undoPixelsBuf;
+            private CompressedBuffer _redoPixelsBuf;
             public Int32Rect Rect { get; }
-            public byte[] Pixels { get; }
+            public byte[] Pixels => _pixelsBuf?.GetData();
             public Int32Rect UndoRect { get; }      // 撤销时恢复的尺寸
-            public byte[] UndoPixels { get; }       // 撤销时恢复的像素
+            public byte[] UndoPixels => _undoPixelsBuf?.GetData();
             public Int32Rect RedoRect { get; }      // 重做时恢复的尺寸
-            public byte[] RedoPixels { get; }       // 重做时恢复的像素
+            public byte[] RedoPixels => _redoPixelsBuf?.GetData();
             public UndoActionType ActionType { get; }
             public string DeletedFilePath { get; }
             public FileTabItem DeletedTab { get; }
             public int DeletedTabIndex { get; }
-            public long MemorySize { get; } // 估算内存占用 (Bytes)
+            public long MemorySize =>
+             (_pixelsBuf?.ActualMemorySize ?? 0) +
+             (_undoPixelsBuf?.ActualMemorySize ?? 0) +
+             (_redoPixelsBuf?.ActualMemorySize ?? 0);
             public DateTime Timestamp { get; } = DateTime.Now;
 
             public UndoAction(string filePath, FileTabItem tab, int index)
@@ -71,23 +136,35 @@ namespace TabPaint
                 DeletedFilePath = filePath;
                 DeletedTab = tab;
                 DeletedTabIndex = index;
-                MemorySize = 0;
             }
+
             public UndoAction(Int32Rect rect, byte[] pixels, UndoActionType actionType = UndoActionType.Draw)
             {
                 ActionType = actionType;
                 Rect = rect;
-                Pixels = pixels;
-                MemorySize = (pixels?.Length ?? 0);
+                _pixelsBuf = pixels != null ? new CompressedBuffer(pixels) : null;
             }
+
             public UndoAction(Int32Rect undoRect, byte[] undoPixels, Int32Rect redoRect, byte[] redoPixels)
             {
                 ActionType = UndoActionType.Transform;
                 UndoRect = undoRect;
-                UndoPixels = undoPixels;
                 RedoRect = redoRect;
-                RedoPixels = redoPixels;
-                MemorySize = (undoPixels?.Length ?? 0) + (redoPixels?.Length ?? 0);
+                _undoPixelsBuf = undoPixels != null ? new CompressedBuffer(undoPixels) : null;
+                _redoPixelsBuf = redoPixels != null ? new CompressedBuffer(redoPixels) : null;
+            }
+            public void CompressAll()
+            {
+                _pixelsBuf?.Compress();
+                _undoPixelsBuf?.Compress();
+                _redoPixelsBuf?.Compress();
+            }
+
+            public void DecompressAll()
+            {
+                _pixelsBuf?.Decompress();
+                _undoPixelsBuf?.Decompress();
+                _redoPixelsBuf?.Decompress();
             }
         }
         public class UndoRedoManager
@@ -112,13 +189,30 @@ namespace TabPaint
 
             public bool CanUndo => _undo.Count > 0;
             public bool CanRedo => _redo.Count > 0;
-
+            private const int HotZoneSize = 3;              // 最近3步不压缩
+            private const int CompressThreshold = 64 * 1024; // 64KB以下不压缩
             private void TrimStack()
             {
-                // 检查全局限制 (步数与内存)
+                CompressColdActions(_undo);
+                CompressColdActions(_redo);
                 CheckGlobalUndoLimits();
             }
+            private static void CompressColdActions(List<UndoAction> stack)
+            {
+                if (stack.Count <= HotZoneSize) return;
 
+                // 栈顶是最新的（热区），从底部开始压缩
+                int coldEnd = stack.Count - HotZoneSize;
+                for (int i = 0; i < coldEnd; i++)
+                {
+                    var action = stack[i];
+                    // 仅压缩大块数据
+                    if (action.MemorySize > CompressThreshold)
+                    {
+                        action.CompressAll();
+                    }
+                }
+            }
             public static void CheckGlobalUndoLimits()
             {
                 var mw = MainWindow.GetCurrentInstance();
@@ -247,10 +341,6 @@ namespace TabPaint
             public void ImageUndo()
             {
                 var mw = MainWindow.GetCurrentInstance();
-
-
-
-                // === 原有逻辑：处理选区清理 ===
                 if (mw._router.CurrentTool is SelectTool sselTool && sselTool.HasActiveSelection)
                 {
                     if (sselTool.IsPasted)
@@ -270,7 +360,7 @@ namespace TabPaint
                 if (!CanUndo || _surface?.Bitmap == null) return;
 
                 var action = _undo.Pop();
-
+                action.DecompressAll();
                 if (mw._router.CurrentTool is SelectTool selTool) selTool.Cleanup(mw._ctx);
 
                 if (action.ActionType == UndoActionType.Transform)
@@ -291,7 +381,7 @@ namespace TabPaint
                     internalUndoAction(action);
                     if (action.ActionType == UndoActionType.Selection && _undo.Count > 0)
                     {
-                        var pairedAction = _undo.Pop();
+                        var pairedAction = _undo.Pop(); pairedAction.DecompressAll();
                         internalUndoAction(pairedAction);
                     }
                 }
@@ -306,7 +396,7 @@ namespace TabPaint
                 if (!CanRedo || _surface?.Bitmap == null) return;
 
                 var action = _redo.Pop();
-
+                action.DecompressAll();
                 if (action.ActionType == UndoActionType.Transform)
                 {
                     // 1. 准备对应的 Undo Action
@@ -407,14 +497,8 @@ namespace TabPaint
             }
 
             // 清空重做链
-            public void ClearRedo()
-            {
-                _redo.Clear();
-            }
-            public void ClearUndo()
-            {
-                _undo.Clear();
-            }
+            public void ClearRedo(){_redo.Clear();}
+            public void ClearUndo() {  _undo.Clear();  }
         }
     }
 }

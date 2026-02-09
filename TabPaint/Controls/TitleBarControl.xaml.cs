@@ -173,15 +173,8 @@ namespace TabPaint.Controls
                 System.Diagnostics.Debug.WriteLine($"加载菜单失败: {ex.Message}");
             }
         }
-
-        // 辅助方法：重新连接事件（因为分离的 XAML 找不到 CodeBehind 的事件处理方法）
         private void BindMenuEvents(MenuItem item)
         {
-            // 如果你在 XAML 里写了 Click="OnNewClick"，动态加载时会报错或无效，
-            // 因为分离的 ResourceDictionary 没有 CodeBehind 类。
-            // 建议：去 TitleBarMenu.xaml 把 Click="..." 删掉，改用 Tag 标识，在这里统一绑定。
-
-            // 示例：假设你在 XAML 里给新建菜单项加了 Tag="New"
             if (item.Tag?.ToString() == "New") item.Click += OnNewClick;
             else if (item.Tag?.ToString() == "Open") item.Click += OnOpenClick;
             else if (item.Tag?.ToString() == "Save") item.Click += OnSaveClick;

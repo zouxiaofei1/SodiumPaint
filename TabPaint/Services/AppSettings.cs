@@ -904,12 +904,10 @@ namespace TabPaint
         { "View.NextImage",      new ShortcutItem { Key = Key.Right, Modifiers = ModifierKeys.None } },
         { "View.RotateLeft",     new ShortcutItem { Key = Key.L, Modifiers = ModifierKeys.Control } },
         { "View.RotateRight",    new ShortcutItem { Key = Key.R, Modifiers = ModifierKeys.Control } },
-        { "View.ToggleMode",     new ShortcutItem { Key = Key.Tab, Modifiers = ModifierKeys.None } }, // 切换模式
         { "View.FullScreen",     new ShortcutItem { Key = Key.F11, Modifiers = ModifierKeys.None } },
         { "View.VerticalFlip",   new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 自动色阶
         { "View.HorizontalFlip",       new ShortcutItem { Key = Key.H, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } }, // 调整大小
         { "View.ToggleMinimize", new ShortcutItem { Key = Key.P, Modifiers = ModifierKeys.Control } },
-        { "View.FitToWindow",    new ShortcutItem { Key = Key.D0, Modifiers = ModifierKeys.Control } },
         { "View.ZoomIn",         new ShortcutItem { Key = Key.OemPlus, Modifiers = ModifierKeys.Control } },
         { "View.ZoomOut",        new ShortcutItem { Key = Key.OemMinus, Modifiers = ModifierKeys.Control } },
 
@@ -924,12 +922,11 @@ namespace TabPaint
         { "Tool.AddBorder",      new ShortcutItem { Key = Key.D7, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
         { "Tool.AiUpscale",      new ShortcutItem { Key = Key.D8, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
         { "Tool.AiOcr",          new ShortcutItem { Key = Key.D9, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
-        { "Tool.Favorite",       new ShortcutItem { Key = Key.F, Modifiers = ModifierKeys.Control | ModifierKeys.Alt } },
+    
 
         // 3. 特殊操作 (Ctrl + Shift 系列)
         { "File.OpenWorkspace",  new ShortcutItem { Key = Key.O, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 打开工作区
         { "File.PasteNewTab",    new ShortcutItem { Key = Key.V, Modifiers = ModifierKeys.Control | ModifierKeys.Shift } }, // 粘贴为新标签
-        { "File.NewTab",         new ShortcutItem { Key = Key.T, Modifiers = ModifierKeys.Control } }, // 新建标签页
         
         // 4. 编辑
         { "Edit.Undo",           new ShortcutItem { Key = Key.Z, Modifiers = ModifierKeys.Control } },

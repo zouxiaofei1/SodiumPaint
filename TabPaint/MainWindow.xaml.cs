@@ -24,6 +24,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using TabPaint.Controls;
+using TabPaint.UIHandlers;
 using static TabPaint.MainWindow;
 
 namespace TabPaint
@@ -50,10 +51,6 @@ namespace TabPaint
             // 兜底：返回第一个找到的 MainWindow
             return Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
         }
-
-        /// <summary>
-        /// 在所有打开的窗口中查找是否已经加载了指定文件
-        /// </summary>
         public static (MainWindow? Window, FileTabItem? Tab) FindWindowHostingFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath) || filePath.StartsWith(AppConsts.VirtualFilePrefix)) return (null, null);
@@ -151,11 +148,6 @@ namespace TabPaint
                 ThemeManager.LoadLazyIcons();
             }), DispatcherPriority.Background);
             if (IsViewMode) OnModeChanged(true, isSilent: true);
-            //Dispatcher.BeginInvoke(new Action(() =>
-            //{
-
-            //}), DispatcherPriority.Loaded);
-            
             _canvasResizer = new CanvasResizeManager(this);//0.2ms
 
 
@@ -224,9 +216,6 @@ namespace TabPaint
             }, DispatcherPriority.ApplicationIdle);
 
             InitializeScrollPosition();
-            //if (BlanketMode) FitToWindow();
-
-
         }
         protected override void OnSourceInitialized(EventArgs e)
         {
@@ -1129,8 +1118,38 @@ namespace TabPaint
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (!_programClosed) OnClosing();
+            if (!_programClosed)
+                App.GlobalExit();
         }
+        private void OnTitleBarCloseClick(object sender, RoutedEventArgs e)
+        {
+            int mainWindowCount = Application.Current.Windows
+        .OfType<MainWindow>()
+        .Count(w => w != this); // 排除自己
+
+            if (mainWindowCount == 0)
+            {
+                App.GlobalExit();
+            }
+            else
+                this.Close();
+        }
+
+        private void OnTitleBarMinimizeClick(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void OnTitleBarMaximizeRestoreClick(object sender, RoutedEventArgs e)
+        {
+            MaximizeWindowHandler();
+        }
+        //private void OnCloseClick(object sender, RoutedEventArgs e)
+        //{
+        //    s(1);
+        //    if (!_programClosed)
+        //        App.GlobalExit();
+        //}
         public bool IsTransferringSelection { get; private set; } = false;
 
         // 暂存传输的选区数据
@@ -1310,7 +1329,7 @@ namespace TabPaint
         {
             if (_favoriteWindow == null)
             {
-                _favoriteWindow = new UIHandlers.FavoriteWindow(this);
+                _favoriteWindow = new UIHandlers.FavoriteWindow();
                 _favoriteWindow.FavoriteContent.ImageSelected += async (path) =>
                 {
                     if (AppConsts.IsSupportedImage(path))
@@ -1326,7 +1345,7 @@ namespace TabPaint
                     }
                 };
             }
-            _favoriteWindow.ToggleVisibility();
+            FavoriteWindowManager.Toggle(this);
         }
     }
 }

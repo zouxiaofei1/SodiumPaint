@@ -498,6 +498,7 @@ namespace TabPaint
         }
         private void OnExitClick(object sender, RoutedEventArgs e)
         {
+
             App.GlobalExit();
         }
 

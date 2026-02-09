@@ -13,7 +13,7 @@
         SizeToContent="Manual"
         AllowsTransparency="False" 
         Background="{DynamicResource WindowBackgroundBrush}"
-        Closing="Window_Closing"
+      
         WindowStyle="None"
         SizeChanged="Window_SizeChanged" 
         PreviewKeyUp="Window_KeyUp"

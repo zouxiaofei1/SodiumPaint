@@ -129,7 +129,6 @@ namespace TabPaint.Services
             }
             else
             {
-                // 创建多值绑定用于 ToolTip
                 var multiBinding = new MultiBinding
                 {
                     Converter = new ShortcutToolTipConverter()
@@ -145,11 +144,7 @@ namespace TabPaint.Services
                     Path = new PropertyPath("Shortcuts"),
                     Mode = BindingMode.OneWay
                 });
-
-                // 3. 传递快捷键 Key 作为参数
                 multiBinding.ConverterParameter = key;
-
-                // 应用绑定到 ToolTip
                 element.SetBinding(FrameworkElement.ToolTipProperty, multiBinding);
             }
         }
@@ -185,10 +180,6 @@ namespace TabPaint.Services
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values == null || values.Length < 2) return null;
-
-            // 调试日志 (可选，开发时使用)
-            // System.Diagnostics.Debug.WriteLine($"Converting ToolTip for {parameter}, Shortcuts count: {(values[1] as Dictionary<string, ShortcutItem>)?.Count}");
-
             object baseContent = values[0];
             var shortcuts = values[1] as Dictionary<string, ShortcutItem>;
             string shortcutKey = parameter as string;

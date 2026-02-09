@@ -176,6 +176,10 @@ SetZoom(targetScale, slient: true);
             AppTitleBar.IconDragRequest += OnAppTitleBarIconDragRequest;
             AppTitleBar.LogoMiddleClick += OnAppTitleBarLogoMiddleClick;
             AppTitleBar.HelpClick += OnHelpClick;
+            AppTitleBar.CloseClick += OnTitleBarCloseClick;
+            AppTitleBar.MinimizeClick += OnTitleBarMinimizeClick;
+            AppTitleBar.MaximizeRestoreClick += OnTitleBarMaximizeRestoreClick;
+
             StatusBarHolder.Content = MyStatusBar;
 
             UpdateUIStatus(zoomscale);

@@ -161,7 +161,8 @@ namespace TabPaint.Controls
                 Width = 100,
                 Height = 100,
                 Margin = new Thickness(6),
-                ToolTip = FindResource("L_Menu_File_Add")
+                ToolTip = FindResource("L_Menu_File_Add"),
+                Style = (Style)FindResource("PlusButtonStyle")  // ★ 应用 + 按钮动画样式
             };
 
             var rect = new System.Windows.Shapes.Rectangle
@@ -207,6 +208,7 @@ namespace TabPaint.Controls
 
             stack.Children.Add(grid);
         }
+
 
         private string GetThumbnailPath(string originalPath)
         {
@@ -272,6 +274,7 @@ namespace TabPaint.Controls
                 Width = 100,
                 Height = 100,
                 Margin = new Thickness(6),
+                Style = (Style)FindResource("FavoriteItemStyle")  // ★ 应用动画样式
             };
 
             var border = new Border
@@ -303,18 +306,62 @@ namespace TabPaint.Controls
                 img.Source = bitmap;
             }
             catch { }
+
             Action doDelete = () =>
             {
-                try
+                // ★ 删除时播放缩小淡出动画
+                var removeStoryboard = new System.Windows.Media.Animation.Storyboard();
+
+                var scaleXAnim = new System.Windows.Media.Animation.DoubleAnimation
                 {
-                    File.Delete(filePath);
-                    string thumbPath = GetThumbnailPath(filePath);
-                    if (File.Exists(thumbPath)) File.Delete(thumbPath);
-                    stack.Children.Remove(grid);
-                    FavoritesChanged?.Invoke(this, EventArgs.Empty);
-                }
-                catch { }
-            }; grid.MouseDown += (s, e) =>
+                    To = 0,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
+                };
+                System.Windows.Media.Animation.Storyboard.SetTarget(scaleXAnim, grid);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleXAnim,
+                    new PropertyPath("(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"));
+
+                var scaleYAnim = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    To = 0,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
+                };
+                System.Windows.Media.Animation.Storyboard.SetTarget(scaleYAnim, grid);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleYAnim,
+                    new PropertyPath("(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)"));
+
+                var opacityAnim = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    To = 0,
+                    Duration = TimeSpan.FromMilliseconds(200)
+                };
+                System.Windows.Media.Animation.Storyboard.SetTarget(opacityAnim, grid);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(opacityAnim,
+                    new PropertyPath("Opacity"));
+
+                removeStoryboard.Children.Add(scaleXAnim);
+                removeStoryboard.Children.Add(scaleYAnim);
+                removeStoryboard.Children.Add(opacityAnim);
+
+                removeStoryboard.Completed += (s2, e2) =>
+                {
+                    try
+                    {
+                        File.Delete(filePath);
+                        string thumbPath = GetThumbnailPath(filePath);
+                        if (File.Exists(thumbPath)) File.Delete(thumbPath);
+                        stack.Children.Remove(grid);
+                        FavoritesChanged?.Invoke(this, EventArgs.Empty);
+                    }
+                    catch { }
+                };
+
+                removeStoryboard.Begin();
+            };
+
+            grid.MouseDown += (s, e) =>
             {
                 if (e.ChangedButton == MouseButton.Middle)
                 {
@@ -326,28 +373,85 @@ namespace TabPaint.Controls
             border.Child = img;
             grid.Children.Add(border);
 
+            // ★ 删除按钮：使用动画样式，并通过 Grid 的 MouseEnter/Leave 控制
             var deleteBtn = new Button
             {
-                Style = (Style)FindResource("OtherCloseButtonStyle"),
                 Width = 20,
                 Height = 20,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 2, 2, 0),
                 Foreground = Brushes.White,
-                Visibility = Visibility.Collapsed,
                 Background = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0)),
-                Padding = new Thickness(0)
+                Padding = new Thickness(0),
+                Opacity = 0,
+                RenderTransformOrigin = new Point(0.5, 0.5),
+                RenderTransform = new ScaleTransform(0.7, 0.7)
             };
+            // 尝试应用基础样式
+            try { deleteBtn.Style = (Style)FindResource("OtherCloseButtonStyle"); } catch { }
+
             grid.Children.Add(deleteBtn);
 
-            grid.MouseEnter += (s, e) => deleteBtn.Visibility = Visibility.Visible;
-            grid.MouseLeave += (s, e) => deleteBtn.Visibility = Visibility.Collapsed;
+            // ★ 删除按钮的淡入/淡出动画
+            grid.MouseEnter += (s, e) =>
+            {
+                var sb = new System.Windows.Media.Animation.Storyboard();
+                var fadeIn = new System.Windows.Media.Animation.DoubleAnimation { To = 1, Duration = TimeSpan.FromMilliseconds(150) };
+                System.Windows.Media.Animation.Storyboard.SetTarget(fadeIn, deleteBtn);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+
+                var scaleX = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    To = 1,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new System.Windows.Media.Animation.BackEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut, Amplitude = 0.3 }
+                };
+                System.Windows.Media.Animation.Storyboard.SetTarget(scaleX, deleteBtn);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleX, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
+
+                var scaleY = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    To = 1,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new System.Windows.Media.Animation.BackEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut, Amplitude = 0.3 }
+                };
+                System.Windows.Media.Animation.Storyboard.SetTarget(scaleY, deleteBtn);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleY, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
+
+                sb.Children.Add(fadeIn);
+                sb.Children.Add(scaleX);
+                sb.Children.Add(scaleY);
+                sb.Begin();
+            };
+
+            grid.MouseLeave += (s, e) =>
+            {
+                var sb = new System.Windows.Media.Animation.Storyboard();
+                var fadeOut = new System.Windows.Media.Animation.DoubleAnimation { To = 0, Duration = TimeSpan.FromMilliseconds(100) };
+                System.Windows.Media.Animation.Storyboard.SetTarget(fadeOut, deleteBtn);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+
+                var scaleX = new System.Windows.Media.Animation.DoubleAnimation { To = 0.7, Duration = TimeSpan.FromMilliseconds(100) };
+                System.Windows.Media.Animation.Storyboard.SetTarget(scaleX, deleteBtn);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleX, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
+
+                var scaleY = new System.Windows.Media.Animation.DoubleAnimation { To = 0.7, Duration = TimeSpan.FromMilliseconds(100) };
+                System.Windows.Media.Animation.Storyboard.SetTarget(scaleY, deleteBtn);
+                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleY, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
+
+                sb.Children.Add(fadeOut);
+                sb.Children.Add(scaleX);
+                sb.Children.Add(scaleY);
+                sb.Begin();
+            };
+
             deleteBtn.Click += (s, e) =>
             {
                 doDelete();
                 e.Handled = true;
             };
+
             border.MouseMove += (s, e) =>
             {
                 if (e.LeftButton == MouseButtonState.Pressed)
@@ -375,12 +479,7 @@ namespace TabPaint.Controls
             var deleteItem = new MenuItem { Header = FindResource("L_Ctx_DeleteFile"), Style = (Style)FindResource("Win11MenuItemStyle"), Foreground = Brushes.Red };
             deleteItem.Click += (s, e) =>
             {
-                try 
-                { 
-                    File.Delete(filePath); 
-                    stack.Children.Remove(grid); 
-                    FavoritesChanged?.Invoke(this, EventArgs.Empty);
-                } catch { }
+                doDelete();
             };
 
             var explorerItem = new MenuItem { Header = FindResource("L_Menu_File_OpenFolder"), Style = (Style)FindResource("Win11MenuItemStyle") };

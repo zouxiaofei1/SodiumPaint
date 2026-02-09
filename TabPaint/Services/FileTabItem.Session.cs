@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using TabPaint.UIHandlers;
 using static TabPaint.MainWindow;
 
 //
@@ -396,6 +397,12 @@ namespace TabPaint
 
             try
             {
+                    var favWin = FavoriteWindowManager.GetInstance();
+                    if (favWin != null && favWin.IsLoaded)
+                    {
+                        favWin.Close();
+                    }
+            
                 this.Hide();
 
                 if (_hwndSource != null)
