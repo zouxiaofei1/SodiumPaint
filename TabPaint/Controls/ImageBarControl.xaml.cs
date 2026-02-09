@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using XamlAnimatedGif;
+using TabPaint;
 using static TabPaint.MainWindow;
 
 namespace TabPaint.Controls
@@ -42,7 +43,9 @@ namespace TabPaint.Controls
         }
     }
     public partial class ImageBarControl : UserControl
-    { private Brush _checkerboardBrush;
+    {
+        private static readonly ThumbnailCache _highResPreviewCache = new ThumbnailCache(5);
+        private Brush _checkerboardBrush;
         private DispatcherTimer _closeTimer;
         private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
         private Brush GetCheckerboardBrush()
@@ -280,7 +283,17 @@ namespace TabPaint.Controls
                 _highResTimer.Stop();
                 if (!string.IsNullOrEmpty(effectivePath) && File.Exists(effectivePath))
                 {
-                    _highResTimer.Start();
+                    var cached = _highResPreviewCache.Get(effectivePath);
+                    if (cached != null)
+                    {
+                        PopupPreviewImage.Source = cached;
+                        PopupPreviewImageBase.Source = null;
+                        UpdateCheckerboardVisibility(cached);
+                    }
+                    else
+                    {
+                        _highResTimer.Start();
+                    }
                 }
 
                 // 3. 设置位置并打开
@@ -365,6 +378,7 @@ namespace TabPaint.Controls
                     PopupPreviewImage.Source = result.Image;
                     PopupPreviewImageBase.Source = null;  // ★ 高清图加载完成，清理底层
                     UpdateCheckerboardVisibility(result.Image);
+                    _highResPreviewCache.Add(effectivePath, result.Image);
                 }
                 if (string.IsNullOrEmpty(PopupDimensionsText.Text) || PopupDimensionsText.Text == "")
                 {
@@ -415,8 +429,8 @@ namespace TabPaint.Controls
                         // 对于多帧图像（如ICO），直接从Frame创建以确保显示的是最大帧
                         if (decoder.Frames.Count > 1)
                         {
-                            // 如果是多帧，我们渲染这一帧并缩放到 400 宽
-                            double scale = 400.0 / frame.PixelWidth;
+                            // 如果是多帧，我们渲染这一帧并缩放到 300 宽
+                            double scale = 300.0 / frame.PixelWidth;
                             if (scale > 1.0) scale = 1.0;
 
                             var transformed = new TransformedBitmap(frame, new ScaleTransform(scale, scale));
@@ -432,7 +446,7 @@ namespace TabPaint.Controls
                             img.BeginInit();
                             img.CacheOption = BitmapCacheOption.OnLoad;
                             img.StreamSource = fs;
-                            img.DecodePixelWidth = 400;
+                            img.DecodePixelWidth = 300;
                             img.EndInit();
                             img.Freeze();
                             res.Image = img;

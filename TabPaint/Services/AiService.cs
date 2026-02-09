@@ -29,6 +29,26 @@ namespace TabPaint
     }
     public class AiService
     {
+        private static AiService _instance;
+        private static readonly object _instanceLock = new object();
+        public static AiService Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    lock (_instanceLock)
+                    {
+                        _instance ??= new AiService(AppConsts.CacheDir);
+                    }
+                }
+                return _instance;
+            }
+        }
+
+        private readonly Dictionary<AiTaskType, InferenceSession> _sessions = new();
+        private readonly System.Threading.SemaphoreSlim _sessionLock = new(1, 1);
+
         private const string BgRem_ModelUrl_HF = AppConsts.BgRem_ModelUrl_HF;
         private const string BgRem_ModelUrl_MS = AppConsts.BgRem_ModelUrl_MS;
         private const string BgRem_ModelName = AppConsts.BgRem_ModelName;
@@ -54,18 +74,75 @@ namespace TabPaint
         }
 
 
+        private async Task<InferenceSession> GetSessionAsync(AiTaskType taskType, string modelPath)
+        {
+            await _sessionLock.WaitAsync();
+            try
+            {
+                if (_sessions.TryGetValue(taskType, out var session))
+                {
+                    return session;
+                }
+
+                var options = taskType == AiTaskType.Inpainting ? new SessionOptions() : GetSessionOptions();
+                if (taskType == AiTaskType.Inpainting)
+                {
+                    options.AppendExecutionProvider_CPU();
+                }
+
+                var newSession = await Task.Run(() => new InferenceSession(modelPath, options));
+                _sessions[taskType] = newSession;
+                return newSession;
+            }
+            finally
+            {
+                _sessionLock.Release();
+            }
+        }
+
+        public void ReleaseModel(AiTaskType taskType)
+        {
+            _sessionLock.Wait();
+            try
+            {
+                if (_sessions.TryGetValue(taskType, out var session))
+                {
+                    session.Dispose();
+                    _sessions.Remove(taskType);
+                }
+            }
+            finally
+            {
+                _sessionLock.Release();
+            }
+        }
+
+        public void ReleaseAllModels()
+        {
+            _sessionLock.Wait();
+            try
+            {
+                foreach (var session in _sessions.Values)
+                {
+                    session.Dispose();
+                }
+                _sessions.Clear();
+            }
+            finally
+            {
+                _sessionLock.Release();
+            }
+        }
+
         public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
         {
             int targetW = AppConsts.AiInpaintSize;
             int targetH = AppConsts.AiInpaintSize;
 
+            var session = await GetSessionAsync(AiTaskType.Inpainting, modelPath);
+
             return await Task.Run(() =>
             {
-                var options = new SessionOptions();
-                options.AppendExecutionProvider_CPU();
-
-                using var session = new InferenceSession(modelPath, options);
-
                 var imgTensor = PreprocessImageBytesToTensor(imagePixels, targetW, targetH);
                 var maskTensor = PreprocessMaskBytesToTensor(maskPixels, targetW, targetH);
 
@@ -75,9 +152,12 @@ namespace TabPaint
             NamedOnnxValue.CreateFromTensor("mask", maskTensor)
         };
 
-                using var results = session.Run(inputs);
-                var outputTensor = results.First().AsTensor<float>();
-                return PostProcessInpaintToBytes(outputTensor, targetW, targetH);
+                lock (session)
+                {
+                    using var results = session.Run(inputs);
+                    var outputTensor = results.First().AsTensor<float>();
+                    return PostProcessInpaintToBytes(outputTensor, targetW, targetH);
+                }
             });
         }
 
@@ -471,23 +551,26 @@ namespace TabPaint
             byte[] originalPixels = new byte[origH * origStride];
             originalBmp.CopyPixels(originalPixels, origStride, 0); // 必须在主线程读原图
 
+            var session = await GetSessionAsync(AiTaskType.RemoveBackground, modelPath);
+
             // C. 后台线程
             return await Task.Run(() =>
             {
-                using var sessionOptions = GetSessionOptions();
-                using var session = new InferenceSession(modelPath, sessionOptions);
-
                 // 转换 Tensor
                 var tensor = PreprocessPixelsToTensor(inputPixels, targetW, targetH, inputStride);
 
                 // 推理
                 string inputName = session.InputMetadata.Keys.First();
                 var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor(inputName, tensor) };
-                using var results = session.Run(inputs);
+                
+                lock (session)
+                {
+                    using var results = session.Run(inputs);
 
-                // 后处理 (传入原图的 byte[] 数据，而不是 Bitmap 对象)
-                var outputTensor = results.First().AsTensor<float>();
-                return PostProcess(outputTensor, originalPixels, origW, origH, origStride);
+                    // 后处理 (传入原图的 byte[] 数据，而不是 Bitmap 对象)
+                    var outputTensor = results.First().AsTensor<float>();
+                    return PostProcess(outputTensor, originalPixels, origW, origH, origStride);
+                }
             });
         }
         public async Task<WriteableBitmap> RunSuperResolutionAsync(string modelPath, WriteableBitmap inputBitmap, IProgress<double> progress)
@@ -506,12 +589,11 @@ namespace TabPaint
             int outStride = outputBitmap.BackBufferStride;
             byte[] outputPixels = new byte[outH * outStride];
 
+            var session = await GetSessionAsync(AiTaskType.SuperResolution, modelPath);
+
             // 3. 运行推理 (后台线程)
             await Task.Run(() =>
             {
-                using var sessionOptions = GetSessionOptions();
-                using var session = new InferenceSession(modelPath, sessionOptions);
-
                 // 计算分块
                 int tilesX = (int)Math.Ceiling((double)w / TileSize);
                 int tilesY = (int)Math.Ceiling((double)h / TileSize);
@@ -528,9 +610,13 @@ namespace TabPaint
 
                         // 3. 推理 (此时输入的 tensor 永远是 [1, 3, TileSize, TileSize])
                         var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor(session.InputMetadata.Keys.First(), tileTensor) };
-                        using var results = session.Run(inputs);
-                        var outputTensor = results.First().AsTensor<float>();
-                        WriteTensorToPixels(outputTensor, outputPixels, x * ScaleFactor, y * ScaleFactor, validW, validH, outW, outH, outStride);
+                        
+                        lock (session)
+                        {
+                            using var results = session.Run(inputs);
+                            var outputTensor = results.First().AsTensor<float>();
+                            WriteTensorToPixels(outputTensor, outputPixels, x * ScaleFactor, y * ScaleFactor, validW, validH, outW, outH, outStride);
+                        }
 
                         processedTiles++;
                         progress?.Report((double)processedTiles / totalTiles * 100);

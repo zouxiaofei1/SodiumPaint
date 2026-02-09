@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -24,14 +27,32 @@ public partial class PenTool : ToolBase
     private bool _drawing = false;
     private Point _lastPixel;
     private float _lastPressure = 1.0f;
+
+    // ===== 书写笔平滑状态 =====
+    private float _smoothedPressure = 1.0f;       // 平滑后的压力值
+    private float _smoothedVelocity = 0f;          // 平滑后的速度
+    private long _lastTimestamp = 0;                // 上次事件时间戳
+
+    // 输入点缓冲（用于曲线拟合）
+    private readonly List<CalligraphyPoint> _calliPoints = new();
+
+    private struct CalligraphyPoint
+    {
+        public float X, Y;
+        public float Pressure;    // 平滑后的压力
+        public float Velocity;    // 平滑后的速度
+        public long Timestamp;
+    }
+
     private byte[] _currentStrokeMask;
     private int _maskWidth;
     private int _maskHeight;
+    private Int32Rect _lastStrokeDirtyRect; // 记录上一笔的脏矩形，用于局部清理 Mask
     private WriteableBitmap _maskBitmap; // 专门用于存储 mask 数据的位图
     private Image _maskImageOverlay;     // 用于显示红色遮罩的控件
     private static List<Point[]> _sprayPatterns;
     private static int _patternIndex = 0;
-    private static Random _rnd = new Random();
+    private static readonly ThreadLocal<Random> _rnd = new ThreadLocal<Random>(() => new Random());
 
     public override void Cleanup(ToolContext ctx)
     {
@@ -102,9 +123,8 @@ public partial class PenTool : ToolBase
         if (_brushCursor == null || _cursorTransform == null) return;
 
         double size = ctx.PenThickness;
-        const double MinCustomCursorSize = 4.0;
 
-        if (ctx.PenStyle == BrushStyle.Pencil || size < MinCustomCursorSize)
+        if (ctx.PenStyle == BrushStyle.Pencil || size < AppConsts.MinCustomCursorSize)
         {
             _brushCursor.Visibility = Visibility.Collapsed;
             if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.Cross)
@@ -257,18 +277,60 @@ public partial class PenTool : ToolBase
         }
 
 
-        if (ctx.PenStyle == BrushStyle.Calligraphy) pressure = 1.0f;
+        if (ctx.PenStyle == BrushStyle.Calligraphy)
+        {
+            pressure = 1.0f;
+            // ★ 重置平滑状态
+            _smoothedPressure = 1.0f;  // 起笔时压力满
+            _smoothedVelocity = 0f;
+            _lastTimestamp = 0;
+            _calliPoints.Clear();
+        }
         int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
         if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
         {
             _currentStrokeMask = new byte[totalPixels];
             _maskWidth = ctx.Surface.Width;
             _maskHeight = ctx.Surface.Height;
+            _lastStrokeDirtyRect = new Int32Rect(0, 0, _maskWidth, _maskHeight);
         }
         else
         {
-            Array.Clear(_currentStrokeMask, 0, _currentStrokeMask.Length);
+            // 优化：仅清理上次笔划触及的区域，避免全屏 Array.Clear
+            if (_lastStrokeDirtyRect.Width > 0 && _lastStrokeDirtyRect.Height > 0)
+            {
+                int xStart = _lastStrokeDirtyRect.X;
+                int yStart = _lastStrokeDirtyRect.Y;
+                int xEnd = xStart + _lastStrokeDirtyRect.Width;
+                int yEnd = yStart + _lastStrokeDirtyRect.Height;
+
+                for (int y = yStart; y < yEnd; y++)
+                {
+                    int rowOffset = y * _maskWidth;
+                    Array.Clear(_currentStrokeMask, rowOffset + xStart, _lastStrokeDirtyRect.Width);
+                }
+            }
+            _lastStrokeDirtyRect = new Int32Rect(0, 0, 0, 0); // 重置
         }
+        if (ctx.PenStyle == BrushStyle.GaussianBlur)
+        {
+            int snapshotBytes = ctx.Surface.Bitmap.PixelHeight * ctx.Surface.Bitmap.BackBufferStride;
+            if (_blurSourceSnapshot == null || _blurSourceSnapshot.Length != snapshotBytes)
+                _blurSourceSnapshot = new byte[snapshotBytes];
+            _blurSnapshotStride = ctx.Surface.Bitmap.BackBufferStride;
+
+            ctx.Surface.Bitmap.Lock();
+            unsafe
+            {
+                byte* src = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                fixed (byte* dst = _blurSourceSnapshot)
+                {
+                    Buffer.MemoryCopy(src, dst, snapshotBytes, snapshotBytes);
+                }
+            }
+            ctx.Surface.Bitmap.Unlock();
+        }
+
 
         ctx.CapturePointer();
         var px = ctx.ToPixel(viewPos);
@@ -312,7 +374,7 @@ public partial class PenTool : ToolBase
         }
 
         UpdateCursorVisual(ctx, viewPos);
-        
+
         if (!_drawing) return;
         var px = ctx.ToPixel(viewPos);
 
@@ -324,15 +386,67 @@ public partial class PenTool : ToolBase
             return;
         }
 
-
         if (ctx.PenStyle == BrushStyle.Calligraphy)
         {
-            double distance = Math.Sqrt(Math.Pow(px.X - _lastPixel.X, 2) + Math.Pow(px.Y - _lastPixel.Y, 2));
-            double maxSpeed = AppConsts.CalligraphyMaxSpeed;
-            float speedPressure = (float)Math.Clamp(1.0 - (distance / maxSpeed), AppConsts.CalligraphyMinPressure, 1.0);
-            pressure = speedPressure;
+            // ★ 使用新的平滑算法
+            pressure = ComputeSmoothedCalligraphyPressure(px, _lastPixel);
+
+            _calliPoints.Add(new CalligraphyPoint
+            {
+                X = (float)px.X,
+                Y = (float)px.Y,
+                Pressure = pressure
+            });
+
+            // 至少需要 4 个点才能做 Catmull-Rom
+            if (_calliPoints.Count >= 4)
+            {
+                int n = _calliPoints.Count;
+                var p0 = _calliPoints[n - 4];
+                var p1 = _calliPoints[n - 3];
+                var p2 = _calliPoints[n - 2];
+                var p3 = _calliPoints[n - 1];
+
+                ctx.Surface.Bitmap.Lock();
+
+                try
+                {
+                    unsafe
+                    {
+                        byte* buf = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                        int s = ctx.Surface.Bitmap.BackBufferStride;
+                        int bw = ctx.Surface.Bitmap.PixelWidth;
+                        int bh = ctx.Surface.Bitmap.PixelHeight;
+
+                        var dirty = DrawCatmullRomSegment(
+                            ctx, p0, p1, p2, p3, buf, s, bw, bh);
+
+                        if (dirty.HasValue)
+                        {
+                            var fr = ClampRect(dirty.Value, bw, bh);
+                            if (fr.Width > 0 && fr.Height > 0)
+                            {
+                                ctx.Surface.Bitmap.AddDirtyRect(fr);
+                                ctx.Undo.AddDirtyRect(fr);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    ctx.Surface.Bitmap.Unlock();
+                }
+
+                if (_calliPoints.Count > 100)
+                    _calliPoints.RemoveRange(0, 50);
+
+                _lastPixel = px;
+                _lastPressure = pressure;
+                return;
+            }
         }
-       ctx.Surface.Bitmap.Lock();
+
+        ctx.Surface.Bitmap.Lock();
         try
         {
             int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
@@ -345,7 +459,20 @@ public partial class PenTool : ToolBase
                 int width = ctx.Surface.Bitmap.PixelWidth;
                 int height = ctx.Surface.Bitmap.PixelHeight;
 
-                var dirty = DrawContinuousStrokeUnsafe(ctx, _lastPixel, _lastPressure, px, pressure, backBuffer, stride, width, height);
+                // ★ 对书写笔使用细分插值绘制
+                Int32Rect? dirty;
+                if (ctx.PenStyle == BrushStyle.Calligraphy)
+                {
+                    dirty = DrawCalligraphySegmentSubdivided(
+                        ctx, _lastPixel, _lastPressure, px, pressure,
+                        backBuffer, stride, width, height);
+                }
+                else
+                {
+                    dirty = DrawContinuousStrokeUnsafe(
+                        ctx, _lastPixel, _lastPressure, px, pressure,
+                        backBuffer, stride, width, height);
+                }
 
                 if (dirty.HasValue)
                 {
@@ -401,6 +528,22 @@ public partial class PenTool : ToolBase
     {
         if (!_drawing) return;
         _drawing = false;
+
+        // 在提交前获取最终的脏矩形联合体
+        var dirtyRects = ctx.Undo.GetCurrentStrokeRects();
+        if (dirtyRects != null && dirtyRects.Count > 0)
+        {
+            int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+            foreach (var r in dirtyRects)
+            {
+                if (r.X < minX) minX = r.X;
+                if (r.Y < minY) minY = r.Y;
+                if (r.X + r.Width > maxX) maxX = r.X + r.Width;
+                if (r.Y + r.Height > maxY) maxY = r.Y + r.Height;
+            }
+            _lastStrokeDirtyRect = ClampRect(new Int32Rect(minX, minY, maxX - minX, maxY - minY), _maskWidth, _maskHeight);
+        }
+
         ctx.Undo.CommitStroke();
         ctx.IsDirty = true;
         ctx.ReleasePointerCapture();
@@ -411,6 +554,7 @@ public partial class PenTool : ToolBase
             return;
         }
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static byte ClampColor(int value)
     {
         if (value < 0) return 0;
@@ -439,6 +583,7 @@ public partial class PenTool : ToolBase
         return pts;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
     {
         int left = Math.Max(0, rect.X);
@@ -459,5 +604,70 @@ public partial class PenTool : ToolBase
         return ClampRect(new Int32Rect(x, y, w, h),
             (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth,
             (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight);
+    }
+
+    /// <summary>
+    /// 基于时间的速度计算 + 指数移动平均平滑
+    /// </summary>
+    private float ComputeSmoothedCalligraphyPressure(Point currentPixel, Point lastPixel)
+    {
+        long now = System.Diagnostics.Stopwatch.GetTimestamp();
+        long freq = System.Diagnostics.Stopwatch.Frequency;
+
+        // 计算真实时间间隔（秒）
+        float dt;
+        if (_lastTimestamp == 0)
+        {
+            dt = 0.016f; // 假设 ~60fps
+        }
+        else
+        {
+            dt = (float)(now - _lastTimestamp) / freq;
+            dt = Math.Clamp(dt, 0.001f, 0.1f); // 防止极端值
+        }
+        _lastTimestamp = now;
+
+        // 计算像素距离
+        float dx = (float)(currentPixel.X - lastPixel.X);
+        float dy = (float)(currentPixel.Y - lastPixel.Y);
+        float distance = MathF.Sqrt(dx * dx + dy * dy);
+
+        // 基于时间的速度（像素/秒），而非每帧距离
+        float velocity = distance / dt;
+
+        // 速度平滑（指数移动平均）
+        // smoothFactor 越小越平滑，0.15~0.3 适合书写笔
+        _smoothedVelocity = _smoothedVelocity + (_smoothedVelocity == 0 ? 1.0f : AppConsts.PenVelocitySmoothFactor) * (velocity - _smoothedVelocity);
+
+        // 速度 → 压力映射（使用 sigmoid 曲线，比线性更自然）
+        // minSpeed: 低于此速度视为"停顿"，压力=1
+        // maxSpeed: 高于此速度视为"快速"，压力=minPressure
+
+        // 归一化速度 [0, 1]
+        float normalizedSpeed = Math.Clamp(
+            (_smoothedVelocity - AppConsts.CalligraphyMinSpeed) / (AppConsts.CalligraphyMaxSpeedPx - AppConsts.CalligraphyMinSpeed), 0f, 1f);
+
+        // Sigmoid 映射：中间速度变化更敏感，两端趋于平缓
+        // f(x) = 1 - x^power  (power < 1 使中间更敏感)
+        float targetPressure = 1.0f - (1.0f - AppConsts.CalligraphyMinPressureVal) * MathF.Pow(normalizedSpeed, 0.6f);
+
+        // 压力平滑（关键！防止粗细跳变）
+        // 变细可以快一些（笔提起），变粗要慢一些（墨水扩散需要时间）
+        float pressureSmoothFactor;
+        if (targetPressure < _smoothedPressure)
+        {
+            // 变细（加速）— 响应快一些
+            pressureSmoothFactor = Math.Clamp(dt * 8f, 0.05f, 0.5f);
+        }
+        else
+        {
+            // 变粗（减速）— 响应慢一些，更自然
+            pressureSmoothFactor = Math.Clamp(dt * 4f, 0.03f, 0.3f);
+        }
+
+        _smoothedPressure += pressureSmoothFactor * (targetPressure - _smoothedPressure);
+        _smoothedPressure = Math.Clamp(_smoothedPressure, (float)AppConsts.CalligraphyMinPressureVal, 1.0f);
+
+        return _smoothedPressure;
     }
 }

@@ -377,7 +377,7 @@ namespace TabPaint
         }
         public async Task<bool> EnsureAiModelReadyAsync(AiService.AiTaskType taskType)
         {
-            var aiService = new AiService(_cacheDir);
+            var aiService = AiService.Instance;
             if (aiService.IsModelReady(taskType)) return true;
 
             string contentKey = "";

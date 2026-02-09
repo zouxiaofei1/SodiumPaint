@@ -147,8 +147,9 @@ namespace TabPaint
             {
                 ThemeManager.LoadLazyIcons();
             }), DispatcherPriority.Background);
-            if (IsViewMode) OnModeChanged(true, isSilent: true);
+            
             _canvasResizer = new CanvasResizeManager(this);//0.2ms
+            OnModeChanged(IsViewMode, isSilent: true);
 
 
             if (_shouldLoadSession) LoadSessionAsync(); //8ms

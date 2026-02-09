@@ -206,14 +206,14 @@ namespace TabPaint
                 {
                     var handle = new System.Windows.Shapes.Rectangle
                     {
-                        Width = HandleSize * invScale,
-                        Height = HandleSize * invScale,
+                        Width = AppConsts.SelectToolHandleSize * invScale,
+                        Height = AppConsts.SelectToolHandleSize * invScale,
                         Fill = Brushes.White,
                         Stroke = mw._darkBackgroundBrush,
                         StrokeThickness = invScale
                     };
-                    Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2);
-                    Canvas.SetTop(handle, p.Y - HandleSize * invScale / 2);
+                    Canvas.SetLeft(handle, p.X - AppConsts.SelectToolHandleSize * invScale / 2);
+                    Canvas.SetTop(handle, p.Y - AppConsts.SelectToolHandleSize * invScale / 2);
                     overlay.Children.Add(handle);
                 }
 

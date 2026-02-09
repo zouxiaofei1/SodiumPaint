@@ -52,12 +52,12 @@ namespace TabPaint
             return bestIndex;
         }
 
-        private BitmapSource DecodeWithSkiaAndIcc(byte[] imageBytes)
+        private BitmapSource DecodeWithSkiaAndIcc(Stream stream)
         {
             try
             {
-                using var ms = new MemoryStream(imageBytes);
-                using var codec = SKCodec.Create(ms);
+                stream.Position = 0;
+                using var codec = SKCodec.Create(stream);
                 if (codec == null) return null;
 
                 // --- 1. 准备色彩空间和参数 ---
@@ -160,14 +160,14 @@ namespace TabPaint
         }
 
 
-        internal BitmapSource DecodeSvg(byte[] imageBytes, CancellationToken token)
+        internal BitmapSource DecodeSvg(Stream stream, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
             try
             {
-                using var ms = new System.IO.MemoryStream(imageBytes);
+                stream.Position = 0;
                 using var svg = new SKSvg();
-                svg.Load(ms);
+                svg.Load(stream);
 
                 if (svg.Picture == null) return null;
 
@@ -200,8 +200,9 @@ namespace TabPaint
                 }
 
                 // 4. 开始绘图
-                using var surface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));
-                var canvas = surface.Canvas;
+                var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+                using var skiaBitmap = new SKBitmap(info);
+                using var canvas = new SKCanvas(skiaBitmap);
                 canvas.Clear(SKColors.Transparent);
 
                 // 计算最终渲染时的缩放矩阵
@@ -212,18 +213,8 @@ namespace TabPaint
                 canvas.DrawPicture(svg.Picture, ref matrix);
                 canvas.Flush();
 
-                using var image = surface.Snapshot();
-                using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-                using var outMs = new System.IO.MemoryStream(data.ToArray());
-
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.StreamSource = outMs;
-                bitmap.EndInit();
-                bitmap.Freeze();
-
-                return bitmap;
+                // 5. 直接转换为 WPF 对象，移除 PNG 中转
+                return SkiaBitmapToWpfSource(skiaBitmap);
             }
             catch (Exception ex)
             {
@@ -252,7 +243,7 @@ namespace TabPaint
             {
                 while (!token.IsCancellationRequested && currentProgress < AppConsts.ProgressMaxPercent)
                 {
-                    await Task.Delay(interval, token);
+                    await Task.Delay(interval, token).ConfigureAwait(false);
                     currentProgress += incrementPerStep;
                     if (currentProgress > AppConsts.ProgressLimitPercent) currentProgress = AppConsts.ProgressLimitPercent;
 

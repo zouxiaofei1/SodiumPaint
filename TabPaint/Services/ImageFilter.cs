@@ -177,10 +177,10 @@ namespace TabPaint
                             byte b = row[x * 4];
                             byte g = row[x * 4 + 1];
                             byte r = row[x * 4 + 2];
-                            double gray = r * 0.299 + g * 0.587 + b * 0.114;
-                            double newR = gray + 35;
-                            double newG = gray + 8;
-                            double newB = gray - 20;
+                            double gray = r * AppConsts.GrayWeightR + g * AppConsts.GrayWeightG + b * AppConsts.GrayWeightB;
+                            double newR = gray + AppConsts.FilterBrownRAddition;
+                            double newG = gray + AppConsts.FilterBrownGAddition;
+                            double newB = gray + AppConsts.FilterBrownBAddition;
 
                             row[x * 4 + 2] = (byte)Math.Clamp(newR, 0, 255); // R
                             row[x * 4 + 1] = (byte)Math.Clamp(newG, 0, 255); // G

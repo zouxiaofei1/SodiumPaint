@@ -230,6 +230,7 @@ namespace TabPaint
         }
         protected override void OnExit(ExitEventArgs e)
         {
+            AiService.Instance.ReleaseAllModels();
             SingleInstance.Release();
             base.OnExit(e);
         }

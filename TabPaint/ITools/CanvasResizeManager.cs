@@ -293,7 +293,7 @@ namespace TabPaint
                 double scale = (MainWindow.GetCurrentInstance()).zoomscale;
 
                 // 定义留白大小 (比如 50px)
-                double padding = 50;
+                double padding = AppConsts.CanvasResizeEdgePadding;
                 if (resizeRect.X < 0)
                 {
                     scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + (resizeRect.X * scale) - padding);

@@ -17,7 +17,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private Task<string> GetImageMetadataInfoAsync(byte[] imageBytes, string filePath, BitmapSource bitmap)
+        private Task<string> GetImageMetadataInfoAsync(string filePath, long byteLength, BitmapSource bitmap)
         {
             return Task.Run(() =>
             {
@@ -27,9 +27,9 @@ namespace TabPaint
 
                     // --- 1. 文件与画布信息 ---
                     sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_File"));
-                    if (IsVirtualPath(filePath))  sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
-                    else  sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
-                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Size_MB_Format"), imageBytes.Length / 1024.0 / 1024.0));
+                    if (IsVirtualPath(filePath)) sb.AppendLine(LocalizationManager.GetString("L_Exif_Path_Memory"));
+                    else sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Path_Format"), filePath));
+                    sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_Size_MB_Format"), byteLength / 1024.0 / 1024.0));
                     sb.AppendLine();
 
                     sb.AppendLine(LocalizationManager.GetString("L_Exif_Section_Canvas"));
@@ -39,10 +39,12 @@ namespace TabPaint
                     sb.AppendLine(string.Format(LocalizationManager.GetString("L_Exif_PixelFormat_Format"), bitmap.Format));
 
                     // --- 2. 尝试读取 EXIF 元数据 ---
-                    using var ms = new MemoryStream(imageBytes);
-                    var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    if (IsVirtualPath(filePath) || !File.Exists(filePath)) return sb.ToString().TrimEnd();
 
-                    if (decoder.Frames[0].Metadata is BitmapMetadata metadata)
+                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+
+                    if (decoder.Frames.Count > 0 && decoder.Frames[0].Metadata is BitmapMetadata metadata)
                     {
                         StringBuilder exifSb = new StringBuilder();
 

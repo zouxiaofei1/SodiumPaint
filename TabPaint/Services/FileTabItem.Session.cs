@@ -177,24 +177,23 @@ namespace TabPaint
                 string ext = System.IO.Path.GetExtension(path)?.ToLower();
                 if (ext == ".svg")
                 {
-                    byte[] bytes = File.ReadAllBytes(path);
-                    return DecodeSvg(bytes, CancellationToken.None);
+                    using var svgFs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    return DecodeSvg(svgFs, CancellationToken.None);
                 }
 
-                // 获取原始尺寸
-                int originalWidth = 0;
-                int originalHeight = 0;
-                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                    originalWidth = decoder.Frames[0].PixelWidth;
-                    originalHeight = decoder.Frames[0].PixelHeight;
-                }
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                int frameIndex = GetLargestFrameIndex(decoder);
+                var frame = decoder.Frames[frameIndex];
+
+                int originalWidth = frame.PixelWidth;
+                int originalHeight = frame.PixelHeight;
 
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.UriSource = new Uri(path);
+                fs.Position = 0;
+                bitmap.StreamSource = fs;
 
                 // 检查尺寸限制
                 const int maxSize = (int)AppConsts.MaxCanvasSize;
@@ -221,7 +220,7 @@ namespace TabPaint
             if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
 
             _autoSaveTimer = new System.Windows.Threading.DispatcherTimer();
-            _autoSaveTimer.Interval = TimeSpan.FromSeconds(3); // 3秒停笔后触发
+            _autoSaveTimer.Interval = TimeSpan.FromSeconds(AppConsts.AutoSaveDefaultDelaySeconds); // 3秒停笔后触发
             _autoSaveTimer.Tick += AutoSaveTimer_Tick;
         }
         public void NotifyCanvasChanged()
@@ -232,11 +231,11 @@ namespace TabPaint
             if (Mouse.LeftButton == MouseButtonState.Pressed) return;
 
             _autoSaveTimer.Stop();
-            double delayMs = 2000; // 基础延迟 2秒
+            double delayMs = AppConsts.AutoSaveBaseDelayMs; // 基础延迟 2秒
             if (BackgroundImage.Source is BitmapSource source)
             {
                 double pixels = source.PixelWidth * source.PixelHeight;
-                delayMs = pixels / 200 / PerformanceScore;
+                delayMs = pixels / AppConsts.AutoSavePerformanceFactor / PerformanceScore;
             }
             _autoSaveTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
             _autoSaveTimer.Start();
@@ -245,9 +244,9 @@ namespace TabPaint
 
         private BitmapSource GenerateBlankThumbnail()
         {
-            int width = 100;
-            int height = 60;
-            var bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            int width = AppConsts.DefaultThumbnailWidth;
+            int height = AppConsts.DefaultThumbnailHeight;
+            var bmp = new RenderTargetBitmap(width, height, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Pbgra32);
             var drawingVisual = new DrawingVisual();
             using (var context = drawingVisual.RenderOpen())
             {
@@ -270,7 +269,7 @@ namespace TabPaint
             var tab = FileTabs.FirstOrDefault(t => t.FilePath == path);
             if (tab == null) return;
 
-            double targetWidth = 100;
+            double targetWidth = AppConsts.DefaultThumbnailWidth;
             double scale = targetWidth / _bitmap.PixelWidth;
 
             var transformedBitmap = new TransformedBitmap(_bitmap, new ScaleTransform(scale, scale));
@@ -307,7 +306,7 @@ namespace TabPaint
                 rtb.Render(BackgroundImage);
                 rtb.Freeze(); // 冻结以便跨线程使用（如果需要）
 
-                double scale = 60.0 / rtb.PixelHeight;
+                double scale = (double)AppConsts.DefaultThumbnailHeight / rtb.PixelHeight;
                 if (scale > 1) scale = 1; // 不放大
 
                 var scaleTransform = new ScaleTransform(scale, scale);
@@ -336,7 +335,7 @@ namespace TabPaint
                     96d, 96d, PixelFormats.Pbgra32);
 
 
-                double scale = 60.0 / rtb.PixelHeight;
+                double scale = (double)AppConsts.DefaultThumbnailHeight / rtb.PixelHeight;
                 if (scale > 1) scale = 1; // 不放大
 
                 var scaleTransform = new ScaleTransform(scale, scale);
@@ -751,15 +750,14 @@ namespace TabPaint
                 await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
 
                 // ⑤ 并行加载所有缩略图（I/O + 解码 + 缩放全在后台）
-                const int maxConcurrency = 4; // 限制并发数，避免磁盘争抢
-                using (var semaphore = new SemaphoreSlim(maxConcurrency))
+                using (var semaphore = new SemaphoreSlim(AppConsts.MaxDiskConcurrency))
                 {
                     var thumbnailTasks = tabsToLoadThumbnails.Select(async tab =>
                     {
                         await semaphore.WaitAsync();
                         try
                         {
-                            await tab.LoadThumbnailAsync(100, 60);
+                            await tab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                         }
                         catch (Exception ex)
                         {
@@ -1156,7 +1154,7 @@ namespace TabPaint
                                         FileTabs.Add(tab);
                                         if (!_imageFiles.Contains(info.OriginalPath))
                                             _imageFiles.Add(info.OriginalPath);
-                                        _ = tab.LoadThumbnailAsync(100, 60);
+                                        _ = tab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                                     }
                                 }
                                 else if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
@@ -1172,7 +1170,7 @@ namespace TabPaint
                                     FileTabs.Add(tab);
                                     if (!_imageFiles.Contains(info.OriginalPath))
                                         _imageFiles.Add(info.OriginalPath);
-                                    _ = tab.LoadThumbnailAsync(100, 60);
+                                    _ = tab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                                 }
                             }
                         }

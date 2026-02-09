@@ -22,8 +22,6 @@ namespace TabPaint
         private readonly string _folderPath;        // 设定存储路径: AppData/Local/TabPaint/settings.json
         private readonly string _filePath;
         private readonly string _binPath;
-        private const int BinaryVersion = 1; // 二进制版本号，如果结构发生重大变化需递增
-        private const int MaxRecentFiles = AppConsts.MaxRecentFiles;
         // 当前的设置实例
         public AppSettings Current { get; private set; }
         private SettingsManager()
@@ -148,7 +146,7 @@ namespace TabPaint
             list.Insert(0, filePath);
 
             // 限制数量
-            if (list.Count > MaxRecentFiles) list = list.Take(MaxRecentFiles).ToList();
+            if (list.Count > AppConsts.MaxRecentFiles) list = list.Take(AppConsts.MaxRecentFiles).ToList();
 
             Current.RecentFiles = list;
         }
@@ -166,7 +164,7 @@ namespace TabPaint
                 using (var stream = File.Create(_binPath))
                 using (var writer = new BinaryWriter(stream))
                 {
-                    writer.Write(BinaryVersion);
+                    writer.Write(AppConsts.AppSettingsBinaryVersion);
 
                     // 基础属性
                     writer.Write((int)Current.Language);
@@ -251,7 +249,7 @@ namespace TabPaint
                 using (var stream = File.OpenRead(_binPath))
                 using (var reader = new BinaryReader(stream))
                 {
-                    if (reader.ReadInt32() != BinaryVersion) return false;
+                    if (reader.ReadInt32() != AppConsts.AppSettingsBinaryVersion) return false;
 
                     var settings = new AppSettings();
                     settings.Language = (AppLanguage)reader.ReadInt32();

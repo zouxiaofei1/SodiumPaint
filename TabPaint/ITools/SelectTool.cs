@@ -53,10 +53,9 @@ namespace TabPaint
             private double _startW, _startH, _startX, _startY;
             public int lag = 0;
             // 句柄尺寸
-            private const double HandleSize = AppConsts.SelectToolHandleSize;
             private DispatcherTimer _tabSwitchTimer;
             private FileTabItem _pendingTab;
-            private int _wandTolerance = 50; // 当前容差
+            private int _wandTolerance = AppConsts.DefaultWandTolerance; // 当前容差
             private Point _wandStartPoint; // 点击的起始点
             private Color _wandStartColor; // 起始点的颜色
             private bool _isWandAdjusting = false; // 是否正在拖拽调整容差

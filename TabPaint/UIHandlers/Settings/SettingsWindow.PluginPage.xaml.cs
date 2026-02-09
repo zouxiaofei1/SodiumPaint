@@ -41,7 +41,7 @@ namespace TabPaint.Pages
 
         private void UpdateAllStatuses()
         {
-            var aiService = new AiService(AppConsts.CacheDir);
+            var aiService = AiService.Instance;
 
             UpdateStatus(aiService.IsModelReady(AiService.AiTaskType.RemoveBackground),
                          TxtStatusRMBG, BtnInstallRMBG, BtnUninstallRMBG);
@@ -113,7 +113,7 @@ namespace TabPaint.Pages
 
             try
             {
-                var aiService = new AiService(AppConsts.CacheDir);
+                var aiService = AiService.Instance;
 
                 var progressReporter = new Progress<AiDownloadStatus>(status =>
                 {
@@ -171,6 +171,9 @@ namespace TabPaint.Pages
 
             try
             {
+                // 卸载前必须释放驻留的模型文件，否则删除会失败
+                AiService.Instance.ReleaseModel(type);
+
                 string modelName = type switch
                 {
                     AiService.AiTaskType.RemoveBackground => AppConsts.BgRem_ModelName,

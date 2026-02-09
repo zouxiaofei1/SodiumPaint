@@ -14,35 +14,35 @@ public partial class PenTool : ToolBase
 {
     private unsafe Int32Rect? DrawContinuousStrokeUnsafe(ToolContext ctx, Point from, float fromP, Point to, float toP, byte* buffer, int stride, int w, int h)
     {
-        if (IsLineBasedBrush(ctx.PenStyle))  return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
-        double dx = to.X - from.X;
-        double dy = to.Y - from.Y;
-        double length = Math.Sqrt(dx * dx + dy * dy);
+        if (IsLineBasedBrush(ctx.PenStyle)) return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
+        float dx = (float)(to.X - from.X);
+        float dy = (float)(to.Y - from.Y);
+        float length = MathF.Sqrt(dx * dx + dy * dy);
 
-        if (length < 0.5) return DrawBrushAtUnsafe(ctx, to, buffer, stride, w, h);
+        if (length < 0.5f) return DrawBrushAtUnsafe(ctx, to, buffer, stride, w, h);
 
         int steps = 1;
+        float thickness = (float)ctx.PenThickness;
         switch (ctx.PenStyle)
         {
             case BrushStyle.Square:
             case BrushStyle.Eraser:
-                steps = (int)(length / (Math.Max(1, ctx.PenThickness / 2.0)));
+                steps = (int)(length / MathF.Max(1f, thickness * 0.5f));
                 break;
             case BrushStyle.Brush:
-                steps = (int)(length / 2.0);
+                steps = (int)(length * 0.5f);
                 break;
             case BrushStyle.Spray:
-                steps = (int)(length / (Math.Max(1, ctx.PenThickness)));
+                steps = (int)(length / MathF.Max(1f, thickness));
                 break;
-
         }
 
         if (steps < 1) steps = 1;
 
-        double xStep = dx / steps;
-        double yStep = dy / steps;
-        double x = from.X;
-        double y = from.Y;
+        float xStep = dx / steps;
+        float yStep = dy / steps;
+        float x = (float)from.X;
+        float y = (float)from.Y;
 
         int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
         bool hit = false;
@@ -84,12 +84,14 @@ public partial class PenTool : ToolBase
                 DrawHighlighterLineUnsafe(ctx, p1, p2, buffer, stride, w, h);
                 return LineBounds(p1, p2, (int)ctx.PenThickness);
             case BrushStyle.Watercolor:
-                double dist = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
-                int steps = (int)(dist / (ctx.PenThickness / 4));
+                float wdx = (float)(p2.X - p1.X);
+                float wdy = (float)(p2.Y - p1.Y);
+                float dist = MathF.Sqrt(wdx * wdx + wdy * wdy);
+                int steps = (int)(dist / MathF.Max(1f, (float)ctx.PenThickness * 0.25f));
                 if (steps == 0) steps = 1;
-                double sx = (p2.X - p1.X) / steps;
-                double sy = (p2.Y - p1.Y) / steps;
-                double cx = p1.X, cy = p1.Y;
+                float sx = wdx / steps;
+                float sy = wdy / steps;
+                float cx = (float)p1.X, cy = (float)p1.Y;
                 for (int i = 0; i <= steps; i++)
                 {
                     DrawWatercolorStrokeUnsafe(ctx, new Point(cx, cy), buffer, stride, w, h);
@@ -97,18 +99,20 @@ public partial class PenTool : ToolBase
                 }
                 return LineBounds(p1, p2, (int)ctx.PenThickness + 5);
             case BrushStyle.Crayon:
-                double dist2 = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
-                int steps2 = (int)(dist2 / (ctx.PenThickness / 2));
+                float cdx = (float)(p2.X - p1.X);
+                float cdy = (float)(p2.Y - p1.Y);
+                float dist2 = MathF.Sqrt(cdx * cdx + cdy * cdy);
+                int steps2 = (int)(dist2 / MathF.Max(1f, (float)ctx.PenThickness * 0.5f));
                 if (steps2 == 0) steps2 = 1;
-                double sx2 = (p2.X - p1.X) / steps2;
-                double sy2 = (p2.Y - p1.Y) / steps2;
-                double cx2 = p1.X, cy2 = p1.Y;
+                float sx2 = cdx / steps2;
+                float sy2 = cdy / steps2;
+                float cx2 = (float)p1.X, cy2 = (float)p1.Y;
                 for (int i = 0; i <= steps2; i++)
                 {
                     DrawOilPaintStrokeUnsafe(ctx, new Point(cx2, cy2), buffer, stride, w, h);
                     cx2 += sx2; cy2 += sy2;
                 }
-                break;
+                return LineBounds(p1, p2, (int)ctx.PenThickness + 5);
             case BrushStyle.Brush:
                 DrawBrushStrokeLineUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
                 return LineBounds(p1, p2, (int)ctx.PenThickness + 5);
@@ -138,6 +142,9 @@ public partial class PenTool : ToolBase
     }
     private int[] _satBufferInt;      // 积分图改用 int（ROI 尺寸有限，不会溢出）
     private int _satIntCapacity;
+    private byte[] _blurSourceSnapshot;// 模糊画笔专用：原始图像快照
+    private int _blurSnapshotStride;
+
     private unsafe void DrawBlurStrokeUnsafeParallel(
         ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
     {
@@ -146,7 +153,7 @@ public partial class PenTool : ToolBase
         if (r < 1) r = 1;
 
         float opacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
-        int kernelRadius = 1 + (int)(opacity * 49);
+        int kernelRadius = 1 + (int)(opacity * r*0.2);
 
         int cx = (int)p.X;
         int cy = (int)p.Y;
@@ -157,9 +164,10 @@ public partial class PenTool : ToolBase
         int roiW = roiR - roiX;
         int roiH = roiB - roiY;
         if (roiW <= 0 || roiH <= 0) return;
+
         int satW = roiW + 1;
         int satH = roiH + 1;
-        int satStride4 = satW * 4;// 每行元素数（含4通道）
+        int satStride4 = satW * 4;
         int totalNeeded = satH * satStride4;
 
         if (_satBufferInt == null || _satIntCapacity < totalNeeded)
@@ -169,39 +177,70 @@ public partial class PenTool : ToolBase
         }
         else Array.Clear(_satBufferInt, 0, totalNeeded);
 
-        fixed (int* sat = _satBufferInt)
+        int[] localSatBuffer = _satBufferInt;
+
+        // ★ 关键：用 GCHandle 固定快照数组，获取裸指针，避免 fixed + lambda 冲突
+        var snapHandle = System.Runtime.InteropServices.GCHandle.Alloc(
+            _blurSourceSnapshot, System.Runtime.InteropServices.GCHandleType.Pinned);
+        try
         {
-            for (int iy = 0; iy < roiH; iy++)
+            byte* snapBase = (byte*)snapHandle.AddrOfPinnedObject();
+            int snapStride = _blurSnapshotStride;
+
+            // 第一步：并行计算行前缀和（从快照读取）
+            Parallel.For(0, roiH, (iy) =>
             {
-                byte* srcRow = basePtr + (long)(roiY + iy) * stride + roiX * 4;
-                int* curRow = sat + (iy + 1) * satStride4;
-                int* prevRow = sat + iy * satStride4;
-
-                // 行内展开：利用局部变量做行前缀和，减少随机内存访问
-                int prefB = 0, prefG = 0, prefR = 0, prefA = 0;
-
-                for (int ix = 0; ix < roiW; ix++)
+                byte* srcRow = snapBase + (long)(roiY + iy) * snapStride + roiX * 4;
+                fixed (int* sat = localSatBuffer)
                 {
-                    byte* px = srcRow + ix * 4;
-                    prefB += px[0];
-                    prefG += px[1];
-                    prefR += px[2];
-                    prefA += px[3];
+                    int* curRow = sat + (iy + 1) * satStride4;
+                    int prefB = 0, prefG = 0, prefR = 0, prefA = 0;
 
-                    int idx = (ix + 1) * 4;
-                    curRow[idx + 0] = prefB + prevRow[idx + 0];
-                    curRow[idx + 1] = prefG + prevRow[idx + 1];
-                    curRow[idx + 2] = prefR + prevRow[idx + 2];
-                    curRow[idx + 3] = prefA + prevRow[idx + 3];
+                    for (int ix = 0; ix < roiW; ix++)
+                    {
+                        byte* px = srcRow + ix * 4;
+                        prefB += px[0]; prefG += px[1]; prefR += px[2]; prefA += px[3];
+                        int idx = (ix + 1) * 4;
+                        curRow[idx + 0] = prefB;
+                        curRow[idx + 1] = prefG;
+                        curRow[idx + 2] = prefR;
+                        curRow[idx + 3] = prefA;
+                    }
                 }
-            }
+            });
+
+            // 第二步：并行计算列前缀和
+            Parallel.For(1, roiW + 1, (ix) =>
+            {
+                int idx4 = ix * 4;
+                fixed (int* sat = localSatBuffer)
+                {
+                    for (int iy = 1; iy < roiH; iy++)
+                    {
+                        int* curRow = sat + (iy + 1) * satStride4 + idx4;
+                        int* prevRow = sat + iy * satStride4 + idx4;
+                        curRow[0] += prevRow[0];
+                        curRow[1] += prevRow[1];
+                        curRow[2] += prevRow[2];
+                        curRow[3] += prevRow[3];
+                    }
+                }
+            });
+        }
+        finally
+        {
+            snapHandle.Free();
+        }
+
+        // 第三步：应用模糊（写入 basePtr，与之前相同）
+        fixed (int* sat = localSatBuffer)
+        {
             int paintXMin = Math.Max(0, cx - r);
             int paintYMin = Math.Max(0, cy - r);
             int paintXMax = Math.Min(w, cx + r);
             int paintYMax = Math.Min(h, cy + r);
             int rSq = r * r;
 
-            // 捕获到局部变量，供 lambda 使用
             int localRoiX = roiX;
             int localRoiY = roiY;
             int localRoiW = roiW;
@@ -220,11 +259,8 @@ public partial class PenTool : ToolBase
             int rowCount = paintYMax - paintYMin;
             if (rowCount <= 0) return;
 
-            const int ParallelThreshold = 16; // 少于16行不值得并行
-
-            if (rowCount >= ParallelThreshold)
+        if (rowCount >= AppConsts.BlurParallelThreshold)
             {
-                // ── 并行版本 ──
                 Parallel.For(paintYMin, paintYMax, new ParallelOptions
                 {
                     MaxDegreeOfParallelism = Environment.ProcessorCount
@@ -243,7 +279,6 @@ public partial class PenTool : ToolBase
             }
             else
             {
-                // ── 串行版本（小区域） ──
                 for (int py = paintYMin; py < paintYMax; py++)
                 {
                     BlurApplyRow(
@@ -256,8 +291,10 @@ public partial class PenTool : ToolBase
                         localKernelRadius);
                 }
             }
-        } // fixed
+        }
     }
+
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void BlurApplyRow(
         int* sat, int satStride4,
@@ -270,7 +307,6 @@ public partial class PenTool : ToolBase
     {
         int dy = py - cy;
         int dySq = dy * dy;
-        if (dySq > rSq) return; // 整行在圆外
 
         int maxDx = (int)Math.Sqrt(rSq - dySq);
         int rowXMin = Math.Max(paintXMin, cx - maxDx);
@@ -278,36 +314,25 @@ public partial class PenTool : ToolBase
 
         byte* dstRow = basePtr + (long)py * stride;
         int rowIdx = py * imgW;
-
         int localY = py - roiY;
 
         for (int px = rowXMin; px < rowXMax; px++)
         {
-            int dx = px - cx;
-            // 精确圆形检测（上面已粗筛，这里做精确判断）
-            if (dx * dx + dySq > rSq) continue;
-
             int pixelIndex = rowIdx + px;
             if (strokeMask[pixelIndex] >= 255) continue;
+
+            int dx = px - cx;
+            if (dx * dx + dySq > rSq) continue;
+
             strokeMask[pixelIndex] = 255;
 
-            // 积分图查询：box [boxY1..boxY2) × [boxX1..boxX2)
             int localX = px - roiX;
-            int boxX1 = localX - kernelRadius;
-            int boxY1 = localY - kernelRadius;
-            int boxX2 = localX + kernelRadius + 1;
-            int boxY2 = localY + kernelRadius + 1;
-
-            // Clamp to ROI bounds
-            if (boxX1 < 0) boxX1 = 0;
-            if (boxY1 < 0) boxY1 = 0;
-            if (boxX2 > roiW) boxX2 = roiW;
-            if (boxY2 > roiH) boxY2 = roiH;
+            int boxX1 = Math.Max(0, localX - kernelRadius);
+            int boxY1 = Math.Max(0, localY - kernelRadius);
+            int boxX2 = Math.Min(roiW, localX + kernelRadius + 1);
+            int boxY2 = Math.Min(roiH, localY + kernelRadius + 1);
 
             int area = (boxX2 - boxX1) * (boxY2 - boxY1);
-            if (area <= 0) continue;
-
-            // 积分图四角索引
             int i22 = boxY2 * satStride4 + boxX2 * 4;
             int i12 = boxY1 * satStride4 + boxX2 * 4;
             int i21 = boxY2 * satStride4 + boxX1 * 4;
@@ -323,121 +348,91 @@ public partial class PenTool : ToolBase
     private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P,
      Point p2, float p2P, byte* basePtr, int stride, int w, int h)
     {
-      
-        double baseThickness = ctx.PenThickness;
-        double minScale = 0.2;
-        double r1 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p1P)) / 2.0);
-        double r2 = Math.Max(0.5, (baseThickness * (minScale + (1.0 - minScale) * p2P)) / 2.0);
+        float baseThickness = (float)ctx.PenThickness;
+        float minScale = 0.2f;
+        float r1 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * p1P)) * 0.5f);
+        float r2 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * p2P)) * 0.5f);
 
         float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
         if (globalOpacity <= 0.005f) return;
 
         Color targetColor = ctx.PenColor;
-        float targetB = targetColor.B, targetG = targetColor.G;
-        float targetR = targetColor.R, targetA = targetColor.A;
+        float targetB = targetColor.B, targetG = targetColor.G, targetR = targetColor.R, targetA = targetColor.A;
         float alpha1 = globalOpacity * (0.2f + 0.8f * MathF.Sqrt(p1P));
         float alpha2 = globalOpacity * (0.2f + 0.8f * MathF.Sqrt(p2P));
 
-        double maxR = Math.Max(r1, r2);
-        double feather = Math.Max(1.0, maxR * 0.08);
+        float maxR = MathF.Max(r1, r2);
+        float feather = MathF.Max(1.0f, maxR * 0.08f);
 
-        int xmin = Math.Max(0, (int)(Math.Min(p1.X, p2.X) - maxR - feather - 1));
-        int ymin = Math.Max(0, (int)(Math.Min(p1.Y, p2.Y) - maxR - feather - 1));
-        int xmax = Math.Min(w - 1, (int)(Math.Max(p1.X, p2.X) + maxR + feather + 1));
-        int ymax = Math.Min(h - 1, (int)(Math.Max(p1.Y, p2.Y) + maxR + feather + 1));
+        int xmin = Math.Max(0, (int)(MathF.Min((float)p1.X, (float)p2.X) - maxR - feather - 1));
+        int ymin = Math.Max(0, (int)(MathF.Min((float)p1.Y, (float)p2.Y) - maxR - feather - 1));
+        int xmax = Math.Min(w - 1, (int)(MathF.Max((float)p1.X, (float)p2.X) + maxR + feather + 1));
+        int ymax = Math.Min(h - 1, (int)(MathF.Max((float)p1.Y, (float)p2.Y) + maxR + feather + 1));
 
-        double dx = p2.X - p1.X;
-        double dy = p2.Y - p1.Y;
-        double lenSq = dx * dx + dy * dy;
-        double invLenSq = lenSq > 0 ? 1.0 / lenSq : 0;
+        float dx = (float)(p2.X - p1.X), dy = (float)(p2.Y - p1.Y);
+        float lenSq = dx * dx + dy * dy;
+        float invLenSq = lenSq > 1e-6f ? 1.0f / lenSq : 0;
 
-        int totalRows = ymax - ymin + 1;
-
-        Parallel.For(ymin, ymax + 1, new ParallelOptions
+        Parallel.For(ymin, ymax + 1, (y) =>
         {
-            MaxDegreeOfParallelism = Environment.ProcessorCount
-        },
-        (y) =>
-        {
-            DrawRoundSingleRow(y, xmin, xmax,
-                basePtr, stride, w, h,
-                p1, p2, r1, r2, dx, dy, lenSq, invLenSq,
-                feather, alpha1, alpha2,
-                targetB, targetG, targetR, targetA);
+            byte* rowPtr = basePtr + (long)y * stride;
+            int rowIdx = y * w;
+            float pyDy = (float)(y - p1.Y);
+
+            for (int x = xmin; x <= xmax; x++)
+            {
+                float pxDx = (float)(x - p1.X);
+                float t = lenSq > 1e-6f ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
+
+                float currentR = r1 + (r2 - r1) * t;
+                float projx = (float)p1.X + t * dx, projy = (float)p1.Y + t * dy;
+                float dX = x - projx, dY = y - projy;
+                float distSq = dX * dX + dY * dY;
+
+                float outerR = currentR + feather;
+                float outerRSq = outerR * outerR;
+                if (distSq > outerRSq) continue;
+
+                float innerR = MathF.Max(0, currentR - feather);
+                float innerRSq = innerR * innerR;
+                float edgeFactor;
+                if (distSq <= innerRSq)
+                {
+                    edgeFactor = 1.0f;
+                }
+                else
+                {
+                    float dist = MathF.Sqrt(distSq);
+                    edgeFactor = (outerR - dist) / (outerR - innerR);
+                    edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
+                }
+
+                if (edgeFactor <= 0.002f) continue;
+
+                float dynamicOpacity = alpha1 + (alpha2 - alpha1) * t;
+                float desiredOpacity = dynamicOpacity * edgeFactor;
+                byte desiredLevel = (byte)(desiredOpacity * 255.0f);
+                if (desiredLevel == 0) continue;
+
+                int pixelIndex = rowIdx + x;
+                byte currentLevel = _currentStrokeMask[pixelIndex];
+                if (currentLevel >= desiredLevel) continue;
+
+                float currentOpacity = currentLevel * 0.00392157f; // 1/255
+                float delta = desiredOpacity - currentOpacity;
+                _currentStrokeMask[pixelIndex] = desiredLevel;
+
+                if (delta <= 0.001f) continue;
+                float invOneMinusCurrent = 1.0f / (MathF.Max(0.001f, 1.0f - currentOpacity));
+                float blend = MathF.Min(delta * invOneMinusCurrent, 1.0f);
+
+                byte* bp = rowPtr + (long)x * 4;
+                bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
+                bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
+                bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
+                bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
+            }
         });
-     
-    }
-
-    private unsafe void DrawRoundSingleRow(
-      int y, int xmin, int xmax,
-      byte* basePtr, int stride, int w, int h,
-      Point p1, Point p2, double r1, double r2,
-      double dx, double dy, double lenSq, double invLenSq,
-      double feather, float alpha1, float alpha2,
-      float targetB, float targetG, float targetR, float targetA)
-    {
-      
-        byte* rowPtr = basePtr + y * stride;
-        int rowIdx = y * w;
-        double pyDy = y - p1.Y;
-
-        for (int x = xmin; x <= xmax; x++)
-        {
-            double pxDx = x - p1.X;
-            double t = lenSq > 0
-                ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1)
-                : 0;
-
-            double currentR = r1 + (r2 - r1) * t;
-            double projx = p1.X + t * dx;
-            double projy = p1.Y + t * dy;
-            double distSq = (x - projx) * (x - projx) + (y - projy) * (y - projy);
-
-            double outerR = currentR + feather;
-            if (distSq > outerR * outerR) continue;
-
-            double innerR = currentR - feather;
-            if (innerR < 0) innerR = 0;
-
-            float edgeFactor;
-            if (distSq <= innerR * innerR)
-            {
-                edgeFactor = 1.0f;
-            }
-            else
-            {
-                double dist = Math.Sqrt(distSq);
-                edgeFactor = (float)((outerR - dist) / (outerR - innerR));
-                edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
-            }
-
-            if (edgeFactor <= 0.002f) continue;
-
-            float dynamicOpacity = alpha1 + (alpha2 - alpha1) * (float)t;
-            float desiredOpacity = dynamicOpacity * edgeFactor;
-            byte desiredLevel = (byte)(desiredOpacity * 255.0f);
-            if (desiredLevel == 0) continue;
-
-            int pixelIndex = rowIdx + x;
-            byte currentLevel = _currentStrokeMask[pixelIndex];
-            if (currentLevel >= desiredLevel) continue;
-
-            float currentOpacity = currentLevel / 255.0f;
-            float delta = desiredOpacity - currentOpacity;
-            _currentStrokeMask[pixelIndex] = desiredLevel;
-
-            if (delta <= 0.001f) continue;
-            float remaining = 1.0f - currentOpacity;
-            float blend = remaining <= 0.001f ? 1.0f
-                : Math.Min(delta / remaining, 1.0f);
-
-            byte* bp = rowPtr + x * 4;
-            bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
-            bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
-            bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
-            bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
-        }
-       
     }
 
     private unsafe void DrawPencilLineUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
@@ -449,30 +444,30 @@ public partial class PenTool : ToolBase
         float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
         if (globalOpacity <= 0.005f) return;
 
-        float tB = targetColor.B; float tG = targetColor.G;
-        float tR = targetColor.R; float tA = targetColor.A;
+        float tB = targetColor.B, tG = targetColor.G, tR = targetColor.R, tA = targetColor.A;
 
         int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
         int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
         int err = dx + dy, e2;
-        float totalDist = (float)Math.Sqrt(dx * dx + dy * dy);
+        float totalDist = MathF.Sqrt((float)dx * dx + (float)dy * dy);
         if (totalDist == 0) totalDist = 1;
-        int startX = x0; int startY = y0;
+        int startX = x0, startY = y0;
 
         while (true)
         {
             if (x0 >= 0 && x0 < w && y0 >= 0 && y0 < h)
             {
                 int pixelIndex = y0 * w + x0;
-                if (!(_currentStrokeMask[pixelIndex] >= 255))
+                if (_currentStrokeMask[pixelIndex] < 255)
                 {
                     _currentStrokeMask[pixelIndex] = 255;
-                    float currentDist = (float)Math.Sqrt(Math.Pow(x0 - startX, 2) + Math.Pow(y0 - startY, 2));
+                    float dX = x0 - startX, dY = y0 - startY;
+                    float currentDist = MathF.Sqrt(dX * dX + dY * dY);
                     float t = currentDist / totalDist;
                     float currentPressure = p1P + (p2P - p1P) * t;
                     float localOpacity = globalOpacity * Math.Clamp(currentPressure, 0.1f, 1.0f);
 
-                    byte* p = basePtr + y0 * stride + x0 * 4;
+                    byte* p = basePtr + (long)y0 * stride + (long)x0 * 4;
                     p[0] = (byte)(p[0] + (tB - p[0]) * localOpacity);
                     p[1] = (byte)(p[1] + (tG - p[1]) * localOpacity);
                     p[2] = (byte)(p[2] + (tR - p[2]) * localOpacity);
@@ -535,62 +530,57 @@ public partial class PenTool : ToolBase
         if (globalOpacity <= 0.005f) return;
 
         float tB = c.B, tG = c.G, tR = c.R, tA = c.A;
+        float dx = (float)(p2.X - p1.X);
+        float dy = (float)(p2.Y - p1.Y);
+        float lenSq = dx * dx + dy * dy;
+        float invLenSq = lenSq > 0 ? 1.0f / lenSq : 0;
 
-        double maxR = r;
-        double dx = p2.X - p1.X;
-        double dy = p2.Y - p1.Y;
-        double lenSq = dx * dx + dy * dy;
-        double invLenSq = lenSq > 0 ? 1.0 / lenSq : 0;
+        int xmin = Math.Max(0, (int)(Math.Min(p1.X, p2.X) - r - 1));
+        int ymin = Math.Max(0, (int)(Math.Min(p1.Y, p2.Y) - r - 1));
+        int xmax = Math.Min(w - 1, (int)(Math.Max(p1.X, p2.X) + r + 1));
+        int ymax = Math.Min(h - 1, (int)(Math.Max(p1.Y, p2.Y) + r + 1));
 
-        int xmin = Math.Max(0, (int)(Math.Min(p1.X, p2.X) - maxR - 1));
-        int ymin = Math.Max(0, (int)(Math.Min(p1.Y, p2.Y) - maxR - 1));
-        int xmax = Math.Min(w - 1, (int)(Math.Max(p1.X, p2.X) + maxR + 1));
-        int ymax = Math.Min(h - 1, (int)(Math.Max(p1.Y, p2.Y) + maxR + 1));
-
-        int rSq = r * r;
-        for (int y = ymin; y <= ymax; y++)
+        float rSq = r * r;
+        Parallel.For(ymin, ymax + 1, (y) =>
         {
-            byte* rowPtr = basePtr + y * stride;
+            byte* rowPtr = basePtr + (long)y * stride;
             int rowIdx = y * w;
+            float dyVal = (float)(y - p1.Y);
 
             for (int x = xmin; x <= xmax; x++)
             {
-                // 计算到线段的最近距离
-                double t = 0;
+                float t = 0;
                 if (lenSq > 0)
                 {
-                    t = ((x - p1.X) * dx + (y - p1.Y) * dy) * invLenSq;
-                    if (t < 0) t = 0;
-                    else if (t > 1) t = 1;
+                    t = Math.Clamp(((float)(x - p1.X) * dx + dyVal * dy) * invLenSq, 0, 1);
                 }
 
-                double projX = p1.X + t * dx;
-                double projY = p1.Y + t * dy;
-                double distX = x - projX;
-                double distY = y - projY;
-                double distSq = distX * distX + distY * distY;
+                float projX = (float)p1.X + t * dx;
+                float projY = (float)p1.Y + t * dy;
+                float distX = x - projX;
+                float distY = y - projY;
+                float distSq = distX * distX + distY * distY;
 
                 if (distSq > rSq) continue;
 
                 int pixelIndex = rowIdx + x;
                 if (_currentStrokeMask[pixelIndex] >= 255) continue;
+                
                 uint hash = (uint)(x * 73856093 ^ y * 19349663);
                 hash = (hash ^ (hash >> 16)) * 0x45d9f3b;
                 hash = hash ^ (hash >> 16);
                 float noise = (hash & 0xFF) / 255.0f;
-                double normalizedDist = distSq / (double)rSq; // 0(中心)~1(边缘)
-                float density = (float)(1.0 - normalizedDist * 0.7); // 中心密，边缘疏
+                float density = 1.0f - (distSq / rSq) * 0.7f; 
                 if (noise > density) continue;
 
                 _currentStrokeMask[pixelIndex] = 255;
-
                 byte* bp = rowPtr + x * 4;
                 bp[0] = (byte)(bp[0] + (tB - bp[0]) * globalOpacity);
                 bp[1] = (byte)(bp[1] + (tG - bp[1]) * globalOpacity);
                 bp[2] = (byte)(bp[2] + (tR - bp[2]) * globalOpacity);
                 bp[3] = (byte)(bp[3] + (tA - bp[3]) * globalOpacity);
             }
-        }
+        });
     }
 
     private unsafe void DrawSprayStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
@@ -626,58 +616,56 @@ public partial class PenTool : ToolBase
     private unsafe void DrawMosaicLineUnsafe(ToolContext ctx, Point p1, Point p2,
      byte* basePtr, int stride, int w, int h)
     {
-        var xyy = new TimeRecorder(); xyy.Toggle();
         int radius = (int)(ctx.PenThickness / 2.0);
         if (radius < 1) radius = 1;
-        long radiusSq = (long)radius * radius;
+        float radiusSq = radius * radius;
         int blockSize = Math.Max(4, (int)(ctx.PenThickness / 4.0));
 
-        // 1) 计算线段扫过区域的总包围盒（胶囊体的AABB）
-        int aabbLeft = (int)(Math.Min(p1.X, p2.X) - radius);
-        int aabbTop = (int)(Math.Min(p1.Y, p2.Y) - radius);
-        int aabbRight = (int)(Math.Max(p1.X, p2.X) + radius);
-        int aabbBottom = (int)(Math.Max(p1.Y, p2.Y) + radius);
-
-        aabbLeft = Math.Max(0, aabbLeft);
-        aabbTop = Math.Max(0, aabbTop);
-        aabbRight = Math.Min(w, aabbRight);
-        aabbBottom = Math.Min(h, aabbBottom);
+        int aabbLeft = Math.Max(0, (int)(Math.Min(p1.X, p2.X) - radius));
+        int aabbTop = Math.Max(0, (int)(Math.Min(p1.Y, p2.Y) - radius));
+        int aabbRight = Math.Min(w, (int)(Math.Max(p1.X, p2.X) + radius));
+        int aabbBottom = Math.Min(h, (int)(Math.Max(p1.Y, p2.Y) + radius));
 
         if (aabbLeft >= aabbRight || aabbTop >= aabbBottom) return;
 
-        // 2) 线段参数（用于点到线段距离计算）
-        double segDx = p2.X - p1.X;
-        double segDy = p2.Y - p1.Y;
-        double segLenSq = segDx * segDx + segDy * segDy;
-        double invSegLenSq = segLenSq > 0 ? 1.0 / segLenSq : 0;
+        float segDx = (float)(p2.X - p1.X);
+        float segDy = (float)(p2.Y - p1.Y);
+        float segLenSq = segDx * segDx + segDy * segDy;
+        float invSegLenSq = segLenSq > 0 ? 1.0f / segLenSq : 0;
         int gridXStart = (aabbLeft / blockSize) * blockSize;
         int gridYStart = (aabbTop / blockSize) * blockSize;
 
-        for (int by = gridYStart; by < aabbBottom; by += blockSize)
+        // 使用 Parallel 优化块循环
+        Parallel.For(0, (aabbBottom - gridYStart + blockSize - 1) / blockSize, (i) =>
         {
+            int by = gridYStart + i * blockSize;
             for (int bx = gridXStart; bx < aabbRight; bx += blockSize)
             {
-                double blockCenterX = bx + blockSize * 0.5;
-                double blockCenterY = by + blockSize * 0.5;
-                double t = 0;
+                float blockCenterX = bx + blockSize * 0.5f;
+                float blockCenterY = by + blockSize * 0.5f;
+                float t = 0;
                 if (segLenSq > 0)
                 {
-                    t = ((blockCenterX - p1.X) * segDx + (blockCenterY - p1.Y) * segDy) * invSegLenSq; t = Math.Clamp(t, 0, 1);
+                    t = Math.Clamp(((blockCenterX - (float)p1.X) * segDx + (blockCenterY - (float)p1.Y) * segDy) * invSegLenSq, 0, 1);
                 }
-                double closestX = p1.X + t * segDx;
-                double closestY = p1.Y + t * segDy;
-                double dcx = blockCenterX - closestX;
-                double dcy = blockCenterY - closestY;
-                double centerDistSq = dcx * dcx + dcy * dcy;
-                double blockHalfDiag = blockSize * 0.7071; // sqrt(2)/2
-                double threshold = radius + blockHalfDiag;
-                if (centerDistSq > threshold * threshold) continue;
+                float closestX = (float)p1.X + t * segDx;
+                float closestY = (float)p1.Y + t * segDy;
+                float dcx = blockCenterX - closestX;
+                float dcy = blockCenterY - closestY;
+                float centerDistSq = dcx * dcx + dcy * dcy;
+
+                float blockHalfDiag = blockSize * 0.7071f;
+                float thresholdOuter = radius + blockHalfDiag;
+                if (centerDistSq > thresholdOuter * thresholdOuter) continue;
+
+                float thresholdInner = Math.Max(0, radius - blockHalfDiag);
+                bool isFullyInside = centerDistSq <= thresholdInner * thresholdInner;
+
                 int sampleX = Math.Clamp(bx, 0, w - 1);
                 int sampleY = Math.Clamp(by, 0, h - 1);
-                byte* srcPixel = basePtr + sampleY * stride + sampleX * 4;
-                byte mB = srcPixel[0];
-                byte mG = srcPixel[1];
-                byte mR = srcPixel[2];
+                byte* srcPixel = basePtr + (long)sampleY * stride + sampleX * 4;
+                byte mB = srcPixel[0], mG = srcPixel[1], mR = srcPixel[2];
+
                 int fillStartX = Math.Max(bx, aabbLeft);
                 int fillEndX = Math.Min(bx + blockSize, aabbRight);
                 int fillStartY = Math.Max(by, aabbTop);
@@ -685,136 +673,147 @@ public partial class PenTool : ToolBase
 
                 for (int y = fillStartY; y < fillEndY; y++)
                 {
-                    byte* rowPtr = basePtr + y * stride;
+                    byte* rowPtr = basePtr + (long)y * stride;
                     int rowIdx = y * w;
+                    float dyVal = (float)(y - p1.Y);
 
                     for (int x = fillStartX; x < fillEndX; x++)
                     {
                         int pixelIndex = rowIdx + x;
                         if (_currentStrokeMask[pixelIndex] >= 255) continue;
-                        double pt = 0;
+
+                        if (isFullyInside)
+                        {
+                            _currentStrokeMask[pixelIndex] = 255;
+                            byte* destPixel = rowPtr + x * 4;
+                            destPixel[0] = mB; destPixel[1] = mG; destPixel[2] = mR;
+                            continue;
+                        }
+
+                        float pt = 0;
                         if (segLenSq > 0)
                         {
-                            pt = ((x - p1.X) * segDx + (y - p1.Y) * segDy) * invSegLenSq;
-                            pt = Math.Clamp(pt, 0, 1);
+                            pt = Math.Clamp(((x - (float)p1.X) * segDx + dyVal * segDy) * invSegLenSq, 0, 1);
                         }
-                        double projX = p1.X + pt * segDx;
-                        double projY = p1.Y + pt * segDy;
-                        double pdx = x - projX;
-                        double pdy = y - projY;
+                        float pdx = x - ((float)p1.X + pt * segDx);
+                        float pdy = y - ((float)p1.Y + pt * segDy);
 
                         if (pdx * pdx + pdy * pdy <= radiusSq)
                         {
                             _currentStrokeMask[pixelIndex] = 255;
                             byte* destPixel = rowPtr + x * 4;
-                            destPixel[0] = mB;
-                            destPixel[1] = mG;
-                            destPixel[2] = mR;
+                            destPixel[0] = mB; destPixel[1] = mG; destPixel[2] = mR;
                         }
                     }
                 }
             }
-        }
-        xyy.Toggle(slient: true);
+        });
     }
 
 
     private unsafe void DrawWatercolorStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
     {
-   
-        int radius = (int)(ctx.PenThickness / 2.0);
-        if (radius < 1) radius = 1;
+        float radius = (float)ctx.PenThickness * 0.5f;
+        if (radius < 0.5f) radius = 0.5f;
         Color targetColor = ctx.PenColor;
         float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
         if (globalOpacity <= 0.005f) return;
         float baseOpacity = globalOpacity * 0.5f;
-        float tB = targetColor.B; float tG = targetColor.G;
-        float tR = targetColor.R; float tA = targetColor.A;
+        float tB = targetColor.B, tG = targetColor.G, tR = targetColor.R, tA = targetColor.A;
 
-        double irregularRadius = radius * (0.9 + _rnd.NextDouble() * 0.2);
-        double irregularRadiusSq = irregularRadius * irregularRadius;
-        double invIrregularRadius = 1.0 / irregularRadius;
+        float irregularRadius = radius * (0.9f + (float)_rnd.Value.NextDouble() * 0.2f);
+        float irregularRadiusSq = irregularRadius * irregularRadius;
 
-        int x_start = (int)Math.Max(0, p.X - radius);
-        int x_end = (int)Math.Min(w, p.X + radius);
-        int y_start = (int)Math.Max(0, p.Y - radius);
-        int y_end = (int)Math.Min(h, p.Y + radius);
+        int x_start = Math.Max(0, (int)(p.X - irregularRadius - 1));
+        int x_end = Math.Min(w, (int)(p.X + irregularRadius + 1));
+        int y_start = Math.Max(0, (int)(p.Y - irregularRadius - 1));
+        int y_end = Math.Min(h, (int)(p.Y + irregularRadius + 1));
 
-        double pX = p.X, pY = p.Y;
+        float pX = (float)p.X, pY = (float)p.Y;
+        float invIrregularRadiusSq = 1.0f / irregularRadiusSq;
 
-        for (int y = y_start; y < y_end; y++)
+        // 对水彩画笔应用并行化
+        Parallel.For(y_start, y_end, (y) =>
         {
-            byte* rowPtr = basePtr + y * stride;
-            double dyVal = y - pY;
-            double dySq = dyVal * dyVal;
+            byte* rowPtr = basePtr + (long)y * stride;
+            float dyVal = y - pY;
+            float dySq = dyVal * dyVal;
 
             for (int x = x_start; x < x_end; x++)
             {
-                double dxVal = x - pX;
-                double distSq = dxVal * dxVal + dySq;
+                float dxVal = x - pX;
+                float distSq = dxVal * dxVal + dySq;
                 if (distSq >= irregularRadiusSq) continue;
-                double normalizedDistSq = distSq / irregularRadiusSq; // 0~1
-                double falloffSq = (1.0 - normalizedDistSq); // 近似 (1-d/R)²当d/R较小时
-                float localOpacity = baseOpacity * (float)(falloffSq * falloffSq);
+
+                float normalizedDistSq = distSq * invIrregularRadiusSq;
+                float falloff = 1.0f - normalizedDistSq;
+                float localOpacity = baseOpacity * falloff * falloff;
 
                 if (localOpacity > 0.001f)
                 {
-                    byte* pPx = rowPtr + x * 4;
+                    byte* pPx = rowPtr + (long)x * 4;
                     pPx[0] = (byte)(pPx[0] + (tB - pPx[0]) * localOpacity);
                     pPx[1] = (byte)(pPx[1] + (tG - pPx[1]) * localOpacity);
                     pPx[2] = (byte)(pPx[2] + (tR - pPx[2]) * localOpacity);
                     pPx[3] = (byte)(pPx[3] + (tA - pPx[3]) * localOpacity);
                 }
             }
-        }
- 
+        });
     }
     private unsafe void DrawOilPaintStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
     {
-       
         double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
-        byte alpha = (byte)((0.2 * 255 / Math.Max(1, Math.Pow(ctx.PenThickness, 0.5))) * globalOpacity);
+        float baseAlpha = (float)(0.2f * 255.0f / MathF.Max(1.0f, MathF.Sqrt((float)ctx.PenThickness))) * (float)globalOpacity;
+        int alpha = (int)baseAlpha;
         if (alpha == 0) return;
-        int radius = (int)(ctx.PenThickness / 2.0);
+
+        int radius = (int)(ctx.PenThickness * 0.5);
         if (radius < 1) radius = 1;
         Color baseColor = ctx.PenColor;
         int x_center = (int)p.X; int y_center = (int)p.Y;
         int numClumps = radius / 2 + 5;
-        int brightnessVariation = 40;
 
-        for (int i = 0; i < numClumps; i++)
+        // 对油画笔应用并行化处理每一个 Clump (团块)
+        Parallel.For(0, numClumps, (i) =>
         {
-            int brightnessOffset = _rnd.Next(-brightnessVariation, brightnessVariation + 1);
+            var r = _rnd.Value;
+            int brightnessOffset = r.Next(-AppConsts.OilPaintBrightnessVariation, AppConsts.OilPaintBrightnessVariation + 1);
             byte clumpR = ClampColor(baseColor.R + brightnessOffset);
             byte clumpG = ClampColor(baseColor.G + brightnessOffset);
             byte clumpB = ClampColor(baseColor.B + brightnessOffset);
-            double angle = _rnd.NextDouble() * 2 * Math.PI;
-            double distFromCenter = Math.Sqrt(_rnd.NextDouble()) * radius;
+
+            double angle = r.NextDouble() * 2 * Math.PI;
+            double distFromCenter = MathF.Sqrt((float)r.NextDouble()) * radius;
             int clumpCenterX = x_center + (int)(distFromCenter * Math.Cos(angle));
             int clumpCenterY = y_center + (int)(distFromCenter * Math.Sin(angle));
-            int clumpRadius = _rnd.Next(1, radius / 4 + 3);
+            int clumpRadius = r.Next(1, radius / 4 + 3);
             int clumpRadiusSq = clumpRadius * clumpRadius;
+
             int startX = Math.Max(0, clumpCenterX - clumpRadius);
             int endX = Math.Min(w, clumpCenterX + clumpRadius);
             int startY = Math.Max(0, clumpCenterY - clumpRadius);
             int endY = Math.Min(h, clumpCenterY + clumpRadius);
+
+            int invAlpha = 255 - alpha;
+
             for (int y = startY; y < endY; y++)
             {
+                byte* rowPtr = basePtr + (long)y * stride;
+                int dySq = (y - clumpCenterY) * (y - clumpCenterY);
                 for (int x = startX; x < endX; x++)
                 {
                     int dx = x - clumpCenterX;
-                    int dy = y - clumpCenterY;
-                    if (dx * dx + dy * dy < clumpRadiusSq)
+                    if (dx * dx + dySq < clumpRadiusSq)
                     {
-                        byte* pixelPtr = basePtr + y * stride + x * 4;
-                        byte oldB = pixelPtr[0]; byte oldG = pixelPtr[1]; byte oldR = pixelPtr[2];
-                        pixelPtr[0] = (byte)((clumpB * alpha + oldB * (255 - alpha)) / 255);
-                        pixelPtr[1] = (byte)((clumpG * alpha + oldG * (255 - alpha)) / 255);
-                        pixelPtr[2] = (byte)((clumpR * alpha + oldR * (255 - alpha)) / 255);
+                        byte* pixelPtr = rowPtr + (long)x * 4;
+                        // 快速混合 (Div255 优化)
+                        pixelPtr[0] = Div255(clumpB * alpha + pixelPtr[0] * invAlpha);
+                        pixelPtr[1] = Div255(clumpG * alpha + pixelPtr[1] * invAlpha);
+                        pixelPtr[2] = Div255(clumpR * alpha + pixelPtr[2] * invAlpha);
                     }
                 }
             }
-        }
+        });
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static byte Div255(int v) { return (byte)((v * 257 + 257) >> 16); }
@@ -822,46 +821,299 @@ public partial class PenTool : ToolBase
     {
         int r = (int)(ctx.PenThickness / 2.0);
         if (r < 1) r = 1;
-        double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
         byte baseAlpha = 30;
         Color c = Color.FromArgb((byte)(baseAlpha * globalOpacity), 255, 255, 0);
-        int xmin = (int)Math.Min(p1.X, p2.X) - r;
-        int ymin = (int)Math.Min(p1.Y, p2.Y) - r;
-        int xmax = (int)Math.Max(p1.X, p2.X) + r;
-        int ymax = (int)Math.Max(p1.Y, p2.Y) + r;
-        xmin = Math.Max(0, xmin); ymin = Math.Max(0, ymin);
-        xmax = Math.Min(w - 1, xmax); ymax = Math.Min(h - 1, ymax);
-        double dx = p2.X - p1.X;
-        double dy = p2.Y - p1.Y;
-        double lenSq = dx * dx + dy * dy;
-        int invSA = 255 - c.A;
-        for (int y = ymin; y <= ymax; y++)
+        int xmin = Math.Max(0, (int)Math.Min(p1.X, p2.X) - r);
+        int ymin = Math.Max(0, (int)Math.Min(p1.Y, p2.Y) - r);
+        int xmax = Math.Min(w - 1, (int)Math.Max(p1.X, p2.X) + r);
+        int ymax = Math.Min(h - 1, (int)Math.Max(p1.Y, p2.Y) + r);
+        
+        float dx = (float)(p2.X - p1.X), dy = (float)(p2.Y - p1.Y);
+        float lenSq = dx * dx + dy * dy;
+        float invLenSq = lenSq > 0 ? 1.0f / lenSq : 0;
+        int invSA = 255 - c.A, cA = c.A, cB = c.B, cG = c.G, cR = c.R;
+        float rSq = r * r;
+
+        Parallel.For(ymin, ymax + 1, (y) =>
         {
             int rowStartIndex = y * w;
-            byte* rowPtr = basePtr + y * stride;
+            byte* rowPtr = basePtr + (long)y * stride;
+            float dyVal = (float)(y - p1.Y);
+
             for (int x = xmin; x <= xmax; x++)
             {
                 int pixelIndex = rowStartIndex + x;
                 if (_currentStrokeMask[pixelIndex] >= 255) continue;
-                double t = 0;
+
+                float t = 0;
                 if (lenSq > 0)
                 {
-                    t = ((x - p1.X) * dx + (y - p1.Y) * dy) / lenSq;
-                    t = Math.Max(0, Math.Min(1, t));
+                    t = Math.Clamp(((float)(x - p1.X) * dx + dyVal * dy) * invLenSq, 0, 1);
                 }
-                double closeX = p1.X + t * dx;
-                double closeY = p1.Y + t * dy;
-                double distSq = (x - closeX) * (x - closeX) + (y - closeY) * (y - closeY);
-                if (distSq <= r * r)
+                float closeX = (float)p1.X + t * dx, closeY = (float)p1.Y + t * dy;
+                float dX = x - closeX, dY = y - closeY;
+                if (dX * dX + dY * dY <= rSq)
                 {
                     _currentStrokeMask[pixelIndex] = 255;
-                    byte* p = rowPtr + x * 4;
-                    byte oldB = p[0]; byte oldG = p[1]; byte oldR = p[2]; byte oldA = p[3];
-                    p[0] = Div255((c.B * c.A + oldB * invSA));
-                    p[1] = Div255((c.G * c.A + oldG * invSA));
-                    p[2] = Div255((c.R * c.A + oldR * invSA));
+                    byte* p = rowPtr + (long)x * 4;
+                    p[0] = Div255(cB * cA + p[0] * invSA);
+                    p[1] = Div255(cG * cA + p[1] * invSA);
+                    p[2] = Div255(cR * cA + p[2] * invSA);
                 }
             }
+        });
+    }
+
+    /// <summary>
+    /// 将一段线段细分为多个子段，每段的压力线性插值，
+    /// 确保粗细过渡平滑，不会出现突变。
+    /// </summary>
+    private unsafe Int32Rect? DrawCalligraphySegmentSubdivided(
+        ToolContext ctx, Point from, float fromP, Point to, float toP,
+        byte* buffer, int stride, int w, int h)
+    {
+        float dx = (float)(to.X - from.X);
+        float dy = (float)(to.Y - from.Y);
+        float length = MathF.Sqrt(dx * dx + dy * dy);
+
+        if (length < 0.5f)
+        {
+            return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
         }
+
+        // 细分步长：每 2~3 像素一个子段，确保粗细变化平滑
+        float baseThickness = (float)ctx.PenThickness;
+        float maxRadiusChange = baseThickness * 0.15f; // 每子段最大半径变化
+
+        // 根据压力差计算需要的最小细分数
+        float radiusDiff = MathF.Abs(toP - fromP) * baseThickness * 0.5f;
+        int pressureSteps = radiusDiff > 0.1f ? (int)MathF.Ceiling(radiusDiff / maxRadiusChange) : 1;
+
+        // 根据距离计算细分数（每 2 像素一段）
+        int distanceSteps = (int)MathF.Ceiling(length / 2.0f);
+
+        int steps = Math.Max(1, Math.Max(pressureSteps, distanceSteps));
+        // 上限防止极端情况
+        steps = Math.Min(steps, 500);
+
+        float stepX = dx / steps;
+        float stepY = dy / steps;
+        float stepP = (toP - fromP) / steps;
+
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+        bool hit = false;
+
+        float curX = (float)from.X;
+        float curY = (float)from.Y;
+        float curP = fromP;
+
+        for (int i = 0; i < steps; i++)
+        {
+            float nextX = curX + stepX;
+            float nextY = curY + stepY;
+            float nextP = curP + stepP;
+
+            var rect = DrawRoundStrokeUnsafe_Internal(
+                ctx,
+                new Point(curX, curY), curP,
+                new Point(nextX, nextY), nextP,
+                buffer, stride, w, h);
+
+            if (rect.HasValue)
+            {
+                hit = true;
+                if (rect.Value.X < minX) minX = rect.Value.X;
+                if (rect.Value.Y < minY) minY = rect.Value.Y;
+                int rx = rect.Value.X + rect.Value.Width;
+                int ry = rect.Value.Y + rect.Value.Height;
+                if (rx > maxX) maxX = rx;
+                if (ry > maxY) maxY = ry;
+            }
+
+            curX = nextX;
+            curY = nextY;
+            curP = nextP;
+        }
+
+        if (!hit) return null;
+        return new Int32Rect(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    /// <summary>
+    /// 内部版本，返回 Int32Rect 用于脏矩形合并。
+    /// 针对书写笔优化了边缘抗锯齿和压力响应曲线。
+    /// </summary>
+    private unsafe Int32Rect? DrawRoundStrokeUnsafe_Internal(
+        ToolContext ctx, Point p1, float p1P,
+        Point p2, float p2P, byte* basePtr, int stride, int w, int h)
+    {
+        float baseThickness = (float)ctx.PenThickness;
+
+        // ★ 书写笔的压力→半径映射：使用更好的曲线
+        // 让细笔画不会太细（保持可读性），粗笔画有明显对比
+        float minScale = 0.12f;  // 最细时为最粗的 12%
+        float r1 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * EaseInOutPressure(p1P))) * 0.5f);
+        float r2 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * EaseInOutPressure(p2P))) * 0.5f);
+
+        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        if (globalOpacity <= 0.005f) return null;
+
+        Color targetColor = ctx.PenColor;
+        float targetB = targetColor.B, targetG = targetColor.G;
+        float targetR = targetColor.R, targetA = targetColor.A;
+
+        // 书写笔不需要压力影响透明度，保持墨色浓郁
+        float alpha1 = globalOpacity;
+        float alpha2 = globalOpacity;
+
+        float maxR = MathF.Max(r1, r2);
+        // ★ 更好的抗锯齿羽化：至少 1px，但不超过半径的 15%
+        float feather = MathF.Max(1.0f, MathF.Min(maxR * 0.15f, 2.0f));
+
+        int xmin = Math.Max(0, (int)(MathF.Min((float)p1.X, (float)p2.X) - maxR - feather - 1));
+        int ymin = Math.Max(0, (int)(MathF.Min((float)p1.Y, (float)p2.Y) - maxR - feather - 1));
+        int xmax = Math.Min(w - 1, (int)(MathF.Max((float)p1.X, (float)p2.X) + maxR + feather + 1));
+        int ymax = Math.Min(h - 1, (int)(MathF.Max((float)p1.Y, (float)p2.Y) + maxR + feather + 1));
+
+        float dx = (float)(p2.X - p1.X), dy = (float)(p2.Y - p1.Y);
+        float lenSq = dx * dx + dy * dy;
+        float invLenSq = lenSq > 1e-6f ? 1.0f / lenSq : 0;
+
+        Parallel.For(ymin, ymax + 1, (y) =>
+        {
+            byte* rowPtr = basePtr + (long)y * stride;
+            int rowIdx = y * w;
+            float pyDy = (float)(y - p1.Y);
+
+            for (int x = xmin; x <= xmax; x++)
+            {
+                float pxDx = (float)(x - p1.X);
+                float t = lenSq > 1e-6f
+                    ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
+
+                // ★ 半径沿线段平滑插值
+                float currentR = r1 + (r2 - r1) * t;
+                float projx = (float)p1.X + t * dx;
+                float projy = (float)p1.Y + t * dy;
+                float dX = x - projx, dY = y - projy;
+                float distSq = dX * dX + dY * dY;
+
+                float outerR = currentR + feather;
+                if (distSq > outerR * outerR) continue;
+
+                float innerR = MathF.Max(0, currentR - feather);
+                float edgeFactor;
+                if (distSq <= innerR * innerR)
+                {
+                    edgeFactor = 1.0f;
+                }
+                else
+                {
+                    float dist = MathF.Sqrt(distSq);
+                    edgeFactor = (outerR - dist) / (outerR - innerR);
+                    // Smoothstep 抗锯齿
+                    edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
+                }
+
+                if (edgeFactor <= 0.002f) continue;
+
+                float desiredOpacity = globalOpacity * edgeFactor;
+                byte desiredLevel = (byte)(desiredOpacity * 255.0f);
+                if (desiredLevel == 0) continue;
+
+                int pixelIndex = rowIdx + x;
+                byte currentLevel = _currentStrokeMask[pixelIndex];
+                if (currentLevel >= desiredLevel) continue;
+
+                float currentOpacity = currentLevel * (1f / 255f);
+                float delta = desiredOpacity - currentOpacity;
+                _currentStrokeMask[pixelIndex] = desiredLevel;
+
+                if (delta <= 0.001f) continue;
+                float blend = MathF.Min(delta / MathF.Max(0.001f, 1.0f - currentOpacity), 1.0f);
+
+                byte* bp = rowPtr + (long)x * 4;
+                bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
+                bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
+                bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
+                bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
+            }
+        });
+
+        return new Int32Rect(xmin, ymin, xmax - xmin + 1, ymax - ymin + 1);
+    }
+
+    /// <summary>
+    /// 压力的 ease-in-out 曲线，让粗细变化更有"弹性"
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float EaseInOutPressure(float p)
+    {
+        // Hermite 插值：在 0 和 1 附近变化缓慢，中间变化快
+        // 这让细笔画和粗笔画都更稳定，中间过渡更明显
+        p = Math.Clamp(p, 0f, 1f);
+        return p * p * (3f - 2f * p);
+    }
+
+    private unsafe Int32Rect? DrawCatmullRomSegment(
+        ToolContext ctx,
+        CalligraphyPoint p0, CalligraphyPoint p1,
+        CalligraphyPoint p2, CalligraphyPoint p3,
+        byte* buffer, int stride, int w, int h)
+    {
+        // p1→p2 之间的距离决定细分数
+        float segDx = p2.X - p1.X;
+        float segDy = p2.Y - p1.Y;
+        float segLen = MathF.Sqrt(segDx * segDx + segDy * segDy);
+        int steps = Math.Max(1, (int)MathF.Ceiling(segLen / 1.5f));
+        steps = Math.Min(steps, 300);
+
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+        bool hit = false;
+
+        float prevX = p1.X, prevY = p1.Y, prevP = p1.Pressure;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            float t = (float)i / steps;
+            float t2 = t * t;
+            float t3 = t2 * t;
+
+            // Catmull-Rom 系数
+            float c0 = -0.5f * t3 + t2 - 0.5f * t;
+            float c1 = 1.5f * t3 - 2.5f * t2 + 1.0f;
+            float c2 = -1.5f * t3 + 2.0f * t2 + 0.5f * t;
+            float c3 = 0.5f * t3 - 0.5f * t2;
+
+            float curX = c0 * p0.X + c1 * p1.X + c2 * p2.X + c3 * p3.X;
+            float curY = c0 * p0.Y + c1 * p1.Y + c2 * p2.Y + c3 * p3.Y;
+            float curP = c0 * p0.Pressure + c1 * p1.Pressure + c2 * p2.Pressure + c3 * p3.Pressure;
+            curP = Math.Clamp(curP, 0.1f, 1.0f);
+
+            var rect = DrawRoundStrokeUnsafe_Internal(
+                ctx,
+                new Point(prevX, prevY), prevP,
+                new Point(curX, curY), curP,
+                buffer, stride, w, h);
+
+            if (rect.HasValue)
+            {
+                hit = true;
+                if (rect.Value.X < minX) minX = rect.Value.X;
+                if (rect.Value.Y < minY) minY = rect.Value.Y;
+                int rx = rect.Value.X + rect.Value.Width;
+                int ry = rect.Value.Y + rect.Value.Height;
+                if (rx > maxX) maxX = rx;
+                if (ry > maxY) maxY = ry;
+            }
+
+            prevX = curX; prevY = curY; prevP = curP;
+        }
+
+        if (!hit) return null;
+        return new Int32Rect(minX, minY, maxX - minX, maxY - minY);
     }
 }

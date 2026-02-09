@@ -189,8 +189,6 @@ namespace TabPaint
 
             public bool CanUndo => _undo.Count > 0;
             public bool CanRedo => _redo.Count > 0;
-            private const int HotZoneSize = 3;              // 最近3步不压缩
-            private const int CompressThreshold = 64 * 1024; // 64KB以下不压缩
             private void TrimStack()
             {
                 CompressColdActions(_undo);
@@ -199,15 +197,15 @@ namespace TabPaint
             }
             private static void CompressColdActions(List<UndoAction> stack)
             {
-                if (stack.Count <= HotZoneSize) return;
+                if (stack.Count <= AppConsts.UndoHotZoneSize) return;
 
                 // 栈顶是最新的（热区），从底部开始压缩
-                int coldEnd = stack.Count - HotZoneSize;
+                int coldEnd = stack.Count - AppConsts.UndoHotZoneSize;
                 for (int i = 0; i < coldEnd; i++)
                 {
                     var action = stack[i];
                     // 仅压缩大块数据
-                    if (action.MemorySize > CompressThreshold)
+                    if (action.MemorySize > AppConsts.UndoCompressThreshold)
                     {
                         action.CompressAll();
                     }
@@ -295,6 +293,8 @@ namespace TabPaint
                 _strokeRects.Clear();
                 _redo.Clear(); // 新操作截断重做链
             }
+
+            public List<Int32Rect> GetCurrentStrokeRects() => _strokeRects;
 
             public void AddDirtyRect(Int32Rect rect) => _strokeRects.Add(rect);
 

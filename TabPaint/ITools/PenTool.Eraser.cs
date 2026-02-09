@@ -13,13 +13,13 @@ public partial class PenTool : ToolBase
     {
         if (_maskBitmap == null) return;
 
-        // 1. 准备参数
-        double r = ctx.PenThickness / 2.0;
-        double rSq = r * r;
-        int xmin = (int)(Math.Min(p1.X, p2.X) - r - 1);
-        int ymin = (int)(Math.Min(p1.Y, p2.Y) - r - 1);
-        int xmax = (int)(Math.Max(p1.X, p2.X) + r + 1);
-        int ymax = (int)(Math.Max(p1.Y, p2.Y) + r + 1);
+        // 1. 准备参数 (使用 float 加速计算)
+        float r = (float)ctx.PenThickness * 0.5f;
+        float rSq = r * r;
+        int xmin = (int)(MathF.Min((float)p1.X, (float)p2.X) - r - 1);
+        int ymin = (int)(MathF.Min((float)p1.Y, (float)p2.Y) - r - 1);
+        int xmax = (int)(MathF.Max((float)p1.X, (float)p2.X) + r + 1);
+        int ymax = (int)(MathF.Max((float)p1.Y, (float)p2.Y) + r + 1);
 
         _maskBitmap.Lock();
         unsafe
@@ -29,43 +29,43 @@ public partial class PenTool : ToolBase
             int stride = _maskBitmap.BackBufferStride;
             byte* basePtr = (byte*)_maskBitmap.BackBuffer;
 
-            // 3. 边界安全裁剪，防止越界
+            // 3. 边界安全裁剪
             xmin = Math.Max(0, xmin);
             ymin = Math.Max(0, ymin);
             xmax = Math.Min(w - 1, xmax);
             ymax = Math.Min(h - 1, ymax);
 
-            double dx = p2.X - p1.X;
-            double dy = p2.Y - p1.Y;
-            double lenSq = dx * dx + dy * dy;
-            for (int y = ymin; y <= ymax; y++)
+            float dx = (float)(p2.X - p1.X);
+            float dy = (float)(p2.Y - p1.Y);
+            float lenSq = dx * dx + dy * dy;
+            float invLenSq = lenSq > 1e-6f ? 1.0f / lenSq : 0;
+
+            // 使用 Parallel.For 并行化
+            Parallel.For(ymin, ymax + 1, (y) =>
             {
-                byte* rowPtr = basePtr + y * stride;
+                byte* rowPtr = basePtr + (long)y * stride;
+                float pyDy = (float)(y - p1.Y);
+                
                 for (int x = xmin; x <= xmax; x++)
                 {
-                    double t = 0;
-                    if (lenSq > 0.001) // 避免除以0
-                    {
-                        t = ((x - p1.X) * dx + (y - p1.Y) * dy) / lenSq;
-                        t = t < 0 ? 0 : (t > 1 ? 1 : t);
-                    }
-                    double closestX = p1.X + t * dx;
-                    double closestY = p1.Y + t * dy;
+                    float pxDx = (float)(x - p1.X);
+                    float t = lenSq > 1e-6f ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
 
-                    double distSq = (x - closestX) * (x - closestX) + (y - closestY) * (y - closestY);
+                    float closestX = (float)p1.X + t * dx;
+                    float closestY = (float)p1.Y + t * dy;
+
+                    float dX = x - closestX;
+                    float dY = y - closestY;
+                    float distSq = dX * dX + dY * dY;
+
                     if (distSq <= rSq)
                     {
-                        byte* p = rowPtr + x * 4;
-                        if (p[2] != 255)
-                        {
-                            p[0] = 0;   // B
-                            p[1] = 0;   // G
-                            p[2] = 255; // R
-                            p[3] = 255; // A
-                        }
+                        byte* p = rowPtr + (long)x * 4;
+                        // 直接写入 BGRA (0, 0, 255, 255)
+                        *((uint*)p) = 0xFFFF0000; 
                     }
                 }
-            }
+            });
         }
         if (xmax >= xmin && ymax >= ymin)
         {
@@ -77,7 +77,7 @@ public partial class PenTool : ToolBase
     private async void ApplyAiEraser(ToolContext ctx)
     {
         var mw = MainWindow.GetCurrentInstance();
-        var aiService = new AiService(mw._cacheDir);
+        var aiService = AiService.Instance;
 
         try
         {

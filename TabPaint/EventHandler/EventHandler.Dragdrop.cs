@@ -440,27 +440,25 @@ namespace TabPaint
                 string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
                 if (ext == ".svg")
                 {
-                    byte[] bytes = File.ReadAllBytes(filePath);
-                    bitmap = DecodeSvg(bytes, CancellationToken.None);
+                    using var svgFs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    bitmap = DecodeSvg(svgFs, CancellationToken.None);
                 }
                 else
                 {
-                    // 获取原始尺寸
-                    int originalWidth = 0;
-                    int originalHeight = 0;
-                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
-                        originalWidth = decoder.Frames[0].PixelWidth;
-                        originalHeight = decoder.Frames[0].PixelHeight;
-                    }
+                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    int frameIndex = GetLargestFrameIndex(decoder);
+                    var frame = decoder.Frames[frameIndex];
+
+                    int originalWidth = frame.PixelWidth;
+                    int originalHeight = frame.PixelHeight;
 
                     BitmapImage bmi = new BitmapImage();
                     bmi.BeginInit();
-                    bmi.UriSource = new Uri(filePath);
-                    bmi.CacheOption = BitmapCacheOption.OnLoad; // 必须 OnLoad 才能解除文件占用
+                    fs.Position = 0;
+                    bmi.StreamSource = fs;
+                    bmi.CacheOption = BitmapCacheOption.OnLoad;
 
-                    // 检查尺寸限制
                     const int maxSize = (int)AppConsts.MaxCanvasSize;
                     if (originalWidth > maxSize || originalHeight > maxSize)
                     {
@@ -473,7 +471,7 @@ namespace TabPaint
                     }
 
                     bmi.EndInit();
-                    bmi.Freeze(); // 性能优化
+                    bmi.Freeze();
                     bitmap = bmi;
                 }
 

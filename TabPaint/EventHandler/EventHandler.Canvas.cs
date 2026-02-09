@@ -412,7 +412,7 @@ namespace TabPaint
 
             try
             {
-                var aiService = new AiService(_cacheDir);
+                var aiService = AiService.Instance;
                 string modelPath = Path.Combine(_cacheDir, AppConsts.Sr_ModelName);
 
                 WriteableBitmap inputBmp = _surface.Bitmap;
@@ -555,7 +555,7 @@ namespace TabPaint
 
             try
             {
-                var aiService = new AiService(_cacheDir);
+                var aiService = AiService.Instance;
                 string modelPath = Path.Combine(_cacheDir, AppConsts.BgRem_ModelName);
 
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");

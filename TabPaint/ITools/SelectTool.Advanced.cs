@@ -457,15 +457,15 @@ namespace TabPaint
                 {
                     var handle = new System.Windows.Shapes.Rectangle
                     {
-                        Width = HandleSize * invScale,
-                        Height = HandleSize * invScale,
+                        Width = AppConsts.SelectToolHandleSize * invScale,
+                        Height = AppConsts.SelectToolHandleSize * invScale,
                         Fill = Brushes.White,
                         Stroke = mw._darkBackgroundBrush,
                         StrokeThickness = invScale
                     };
                     RenderOptions.SetEdgeMode(handle, EdgeMode.Unspecified);
-                    Canvas.SetLeft(handle, p.X - HandleSize * invScale / 2 + diff * 0.75);
-                    Canvas.SetTop(handle, p.Y - HandleSize * invScale / 2);
+                    Canvas.SetLeft(handle, p.X - AppConsts.SelectToolHandleSize * invScale / 2 + diff * 0.75);
+                    Canvas.SetTop(handle, p.Y - AppConsts.SelectToolHandleSize * invScale / 2);
                     overlay.Children.Add(handle);
                 }
             }

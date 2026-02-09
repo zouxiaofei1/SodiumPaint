@@ -205,15 +205,13 @@ namespace TabPaint
         }
    
 
-        private BitmapSource DecodePreviewBitmap(byte[] imageBytes, CancellationToken token)
+        private BitmapSource DecodePreviewBitmap(Stream stream, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
             try
             {
-                using var ms = new System.IO.MemoryStream(imageBytes);
-
                 // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
-                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+                var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
                 int frameIndex = GetLargestFrameIndex(decoder);
                 var frame = decoder.Frames[frameIndex];
 
@@ -236,14 +234,14 @@ namespace TabPaint
                 int originalWidth = frame.PixelWidth;
 
                 // 重置流位置以供 BitmapImage 读取
-                ms.Position = 0;
+                stream.Position = 0;
 
                 var img = new BitmapImage();
                 img.BeginInit();
                 img.CacheOption = BitmapCacheOption.OnLoad;
 
                 if (originalWidth > AppConsts.PreviewDecodeWidth) img.DecodePixelWidth = AppConsts.PreviewDecodeWidth;
-                img.StreamSource = ms;
+                img.StreamSource = stream;
                 img.EndInit();
                 img.Freeze();
                 return img;
@@ -254,14 +252,16 @@ namespace TabPaint
                 return null;
             }
         }
-        private BitmapSource DecodeFullResBitmap(byte[] imageBytes, CancellationToken token)
+        private BitmapSource DecodeFullResBitmap(Stream stream, CancellationToken token)
         {
             if (token.IsCancellationRequested) return null;
             if (SettingsManager.Instance.Current.EnableIccColorCorrection)
             {
                 try
                 {
-                    var skiaBitmap = DecodeWithSkiaAndIcc(imageBytes);
+                    // Skia 仍然需要能够从流中读取。
+                    // 注意：DecodeWithSkiaAndIcc 内部会处理流的位置。
+                    var skiaBitmap = DecodeWithSkiaAndIcc(stream);
                     if (skiaBitmap != null) return skiaBitmap;
                 }
                 catch (Exception ex)
@@ -272,9 +272,9 @@ namespace TabPaint
             }
             try
             {
-                using var ms = new System.IO.MemoryStream(imageBytes);
+                stream.Position = 0;
                 // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
-                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+                var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
                 int frameIndex = GetLargestFrameIndex(decoder);
                 var frame = decoder.Frames[frameIndex];
 
@@ -297,13 +297,13 @@ namespace TabPaint
                 int originalWidth = frame.PixelWidth;
                 int originalHeight = frame.PixelHeight;
 
-                ms.Position = 0; // 重置流位置以重新读取
+                stream.Position = 0; // 重置流位置以重新读取
 
                 var img = new BitmapImage();
                 img.BeginInit();
                 img.CacheOption = BitmapCacheOption.OnLoad;
                 img.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                img.StreamSource = ms;
+                img.StreamSource = stream;
 
                 const int maxSize = (int)AppConsts.MaxCanvasSize;
                 if (originalWidth > maxSize || originalHeight > maxSize)
@@ -323,18 +323,18 @@ namespace TabPaint
             }
         }
 
-        private Task<(int Width, int Height)?> GetImageDimensionsAsync(byte[] imageBytes, string filePath)
+        private Task<(int Width, int Height)?> GetImageDimensionsAsync(Stream stream, string filePath)
         {
             return Task.Run(() =>
             {
                 try
                 {
+                    stream.Position = 0;
                     string ext = System.IO.Path.GetExtension(filePath)?.ToLower();
                     if (ext == ".svg")
                     {
-                        using var ms = new System.IO.MemoryStream(imageBytes);
                         using var svg = new SKSvg();
-                        svg.Load(ms);
+                        svg.Load(stream);
                         if (svg.Picture != null)  // 检查是否加载成功
                         {
                             int w = (int)svg.Picture.CullRect.Width;  // 获取画布尺寸
@@ -346,8 +346,7 @@ namespace TabPaint
                         }
                         return null;
                     }
-                    using var msNormal = new System.IO.MemoryStream(imageBytes);
-                    var decoder = BitmapDecoder.Create(msNormal, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                    var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
 
                     if (decoder.Frames != null && decoder.Frames.Count > 0)
                     {
@@ -385,14 +384,14 @@ namespace TabPaint
 
             try
             {
-                // 3. 读取文件流与基础信息
-                var imageBytes = await File.ReadAllBytesAsync(fileToRead, token);
-                if (token.IsCancellationRequested) return;
+                // 3. 使用 FileStream 替代 ReadAllBytesAsync
+                using var fs = new FileStream(fileToRead, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                long byteLength = fs.Length;
 
-                await UpdateFileSizeInfo(imageBytes.Length); // 更新底部文件大小显示
+                await UpdateFileSizeInfo(byteLength); // 更新底部文件大小显示
 
                 // 4. 获取尺寸并处理进度条逻辑
-                var dimensions = await GetImageDimensionsAsync(imageBytes, filePath);
+                var dimensions = await GetImageDimensionsAsync(fs, filePath);
                 if (token.IsCancellationRequested) return;
 
                 if (dimensions == null)
@@ -402,13 +401,13 @@ namespace TabPaint
                 }
 
                 var (originalWidth, originalHeight) = dimensions.Value;
-                HandleProgressDisplay(originalWidth, originalHeight, token); // 启动进度条逻辑
+                await HandleProgressDisplay(originalWidth, originalHeight, token); // 启动进度条逻辑
 
                 // 5. [UI阶段 0] 立即显示缓存的缩略图 (极大提升响应感)
                 bool hasThumbnail = await TryShowCachedThumbnail(filePath, token);
 
-                // 6. 启动并行解码任务
-                var decodingTasks = StartDecodingTasks(imageBytes, filePath, token);
+                // 6. 启动并行解码任务 (SVG 特殊处理已在 StartDecodingTasks 内部处理)
+                var decodingTasks = StartDecodingTasks(fs, filePath, token);
 
                 // 7. [UI阶段 1] 显示预览图 (如果是 SVG 或已有缩略图则可能跳过)
                 var previewBitmap = await decodingTasks.PreviewTask;
@@ -426,7 +425,7 @@ namespace TabPaint
                 if (!token.IsCancellationRequested && fullResBitmap != null)
                 {
                     // 获取元数据
-                    string metadata = await GetImageMetadataInfoAsync(imageBytes, filePath, fullResBitmap);
+                    string metadata = await GetImageMetadataInfoAsync(filePath, byteLength, fullResBitmap);
 
                     // 应用最终图像 (这是最重的 UI 操作)
                     await ApplyFullImageToUI(fullResBitmap, filePath, fileToRead, metadata, token);
@@ -474,7 +473,7 @@ namespace TabPaint
 
             return (true, fileToRead);
         }
-        private void HandleProgressDisplay(int width, int height, CancellationToken token)
+        private async Task HandleProgressDisplay(int width, int height, CancellationToken token)
         {
             long totalPixels = (long)width * height;
             bool showProgress = totalPixels > AppConsts.PerformanceScorePixelThreshold * PerformanceScore;
@@ -498,7 +497,7 @@ namespace TabPaint
             }
             if (totalPixels > AppConsts.HugeImagePixelThreshold * PerformanceScore)
             {
-                Thread.Sleep(AppConsts.ImageLoadDelayHugeMs); // 注意：这里最好用 Task.Delay，但在同步块里需谨慎
+                await Task.Delay(AppConsts.ImageLoadDelayHugeMs, token);
             }
         }
         private void StopProgressSimulation()
@@ -510,19 +509,40 @@ namespace TabPaint
                 _progressCts = null;
             }
         }
-        private (Task<BitmapSource> PreviewTask, Task<BitmapSource> FullResTask) StartDecodingTasks(byte[] imageBytes, string filePath, CancellationToken token)
+        private (Task<BitmapSource> PreviewTask, Task<BitmapSource> FullResTask) StartDecodingTasks(FileStream fs, string filePath, CancellationToken token)
         {
             string extension = System.IO.Path.GetExtension(filePath)?.ToLower();
 
             if (extension == ".svg")
             {
-                var task = Task.Run<BitmapSource>(() => DecodeSvg(imageBytes, token), token);
+                string fileName = fs.Name;
+                var task = Task.Run<BitmapSource>(() =>
+                {
+                    using var svgFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                    return DecodeSvg(svgFs, token);
+                }, token);
                 return (task, task); // SVG 预览图即原图
             }
             else
             {
-                var preview = Task.Run<BitmapSource>(() => DecodePreviewBitmap(imageBytes, token), token);
-                var full = Task.Run<BitmapSource>(() => DecodeFullResBitmap(imageBytes, token), token);
+                // 注意：由于是并行解码，不能直接共享同一个 FileStream 的 Position。
+                // 解决方案：为每个任务打开独立的流。
+                // 鉴于目标是减少大图内存占用，我们为预览图和全量解码都重新打开文件流。
+
+                string fileName = fs.Name;
+
+                var preview = Task.Run<BitmapSource>(() =>
+                {
+                    using var previewFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                    return DecodePreviewBitmap(previewFs, token);
+                }, token);
+
+                var full = Task.Run<BitmapSource>(() =>
+                {
+                    using var fullFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                    return DecodeFullResBitmap(fullFs, token);
+                }, token);
+
                 return (preview, full);
             }
         }
@@ -693,16 +713,25 @@ namespace TabPaint
                 int height = AppConsts.DefaultBlankCanvasHeight;
                 _bitmap = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Bgra32, null);
 
-                // 填充白色
-                byte[] pixels = new byte[width * height * 4];
-                for (int i = 0; i < pixels.Length; i += 4)
+                // 优化填充白色：直接在内存中操作，不分配 byte[]
+                _bitmap.Lock();
+                try
                 {
-                    pixels[i] = 255;     // B
-                    pixels[i + 1] = 255; // G
-                    pixels[i + 2] = 255; // R
-                    pixels[i + 3] = 255; // A
+                    unsafe
+                    {
+                        byte* ptr = (byte*)_bitmap.BackBuffer;
+                        long totalSize = (long)width * height * 4;
+                        for (long i = 0; i < totalSize; i++)
+                        {
+                            ptr[i] = 255;
+                        }
+                    }
+                    _bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
                 }
-                _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
+                finally
+                {
+                    _bitmap.Unlock();
+                }
 
                 // 2. 设置状态
                 _originalDpiX = 96.0;

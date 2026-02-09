@@ -182,6 +182,15 @@ namespace TabPaint
         public const long HugeImagePixelThreshold = 10_000_000;
         public const long PerformanceScorePixelThreshold = 2_000_000;
         public const long MemoryLimitForAggressiveRelease = 1024L * 1024 * 1024;
+        public const int FilterBrownRAddition = 35;
+        public const int FilterBrownGAddition = 8;
+        public const int FilterBrownBAddition = -20;
+        public const int AutoSaveDefaultDelaySeconds = 3;
+        public const int AutoSaveBaseDelayMs = 2000;
+        public const int AutoSavePerformanceFactor = 200;
+        public const double CanvasResizeEdgePadding = 50.0;
+        public const int DefaultWandTolerance = 50;
+
         public const int ImageLoadDelayHugeMs = 100;
         public const int ImageLoadDelayLazyMs = 50;
 
@@ -280,10 +289,26 @@ namespace TabPaint
         public const double ArrowHeadRatio = 0.2;
         public const double ArrowAngleDegrees = 35.0;
 
+        // --- 撤销管理参数 ---
+        public const int UndoHotZoneSize = 3;
+        public const int UndoCompressThreshold = 64 * 1024;
+
         // --- 笔刷特定逻辑参数 ---
         public const double CalligraphyMaxSpeed = 60.0;
         public const double CalligraphyMinPressure = 0.1;
         public const byte ColorComponentMax = 255;
+        public const double MinCustomCursorSize = 4.0;
+        public const float PenVelocitySmoothFactor = 0.2f;
+        public const float CalligraphyMinSpeed = 50f;
+        public const float CalligraphyMaxSpeedPx = 2000f;
+        public const float CalligraphyMinPressureVal = 0.15f;
+        public const int BlurParallelThreshold = 16;
+        public const int OilPaintBrightnessVariation = 40;
+
+        // --- 服务与性能配置 ---
+        public const int MaxDiskConcurrency = 4;
+        public const int AppSettingsBinaryVersion = 1;
+
         public static bool IsSupportedImage(string path)
         {
             if (string.IsNullOrEmpty(path)) return false;

@@ -310,7 +310,7 @@
                             </Border>
 
                             <Canvas Name="CanvasResizeOverlay" 
-                                    Visibility="Collapsed" 
+                                    Visibility="Visible" 
                                     IsHitTestVisible="True" 
                                     Background="{x:Null}"  
                                     UseLayoutRounding="False"
