@@ -155,6 +155,7 @@ namespace TabPaint
         public ModernColorPickerWindow(Color initialColor)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             SelectedColor = initialColor;
 
             OriginalColorRect.Fill = new SolidColorBrush(initialColor);

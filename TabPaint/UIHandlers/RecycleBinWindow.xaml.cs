@@ -18,6 +18,7 @@ namespace TabPaint.UIHandlers
         public RecycleBinWindow()
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             RecycleItemsControl.ItemsSource = Items;
             LoadItems();
         }

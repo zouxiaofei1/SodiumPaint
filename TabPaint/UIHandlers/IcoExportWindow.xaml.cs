@@ -28,6 +28,7 @@ namespace TabPaint.Windows
         public IcoExportWindow(BitmapSource source)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             _sourceImage = source;
             SizeListBox.ItemsSource = SizeItems;
             AddSize(256);  AddSize(64);AddSize(48);AddSize(32); AddSize(16);// 默认尺寸

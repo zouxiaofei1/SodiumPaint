@@ -9,6 +9,7 @@ namespace TabPaint.UIHandlers
         public DropZoneWindow()
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             this.AllowDrop = true;
             this.DragOver += DropZoneWindow_DragOver;
             this.Drop += DropZoneWindow_Drop;

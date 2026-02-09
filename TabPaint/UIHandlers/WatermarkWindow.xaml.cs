@@ -55,6 +55,7 @@ namespace TabPaint
         public WatermarkWindow(WriteableBitmap bitmapForPreview, Image previewLayer)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             _targetBitmap = bitmapForPreview;
             _originalBitmap = bitmapForPreview.Clone();
             _previewLayer = previewLayer;

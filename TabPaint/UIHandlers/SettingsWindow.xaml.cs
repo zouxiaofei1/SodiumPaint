@@ -36,6 +36,7 @@ namespace TabPaint
             InitializeComponent();
             this.DataContext = this;
 
+            this.SupportFocusHighlight();
             this.Activated += SettingsWindow_Activated;
             // 订阅设置变更事件以触发 Toast
             if (SettingsManager.Instance.Current != null)

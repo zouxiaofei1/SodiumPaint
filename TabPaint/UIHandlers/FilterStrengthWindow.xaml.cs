@@ -17,6 +17,7 @@ namespace TabPaint.Windows
         public FilterStrengthWindow(string title, int initialValue, int min, int max)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             //MicaAcrylicManager.ApplyEffect(this);
 
             // 如果传入了特定标题，覆盖默认标题

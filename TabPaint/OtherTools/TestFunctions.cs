@@ -98,6 +98,41 @@ namespace TabPaint
                 // Win10 或旧版 Win11 不支持，静默忽略
             }
         }
+
+        public static void UpdateWindowBorder(Window window)
+        {
+            if (!window.IsLoaded) return;
+
+            bool shouldHighlight = window.IsActive;
+
+            // MainWindow 特殊处理：看图模式下即使激活也不高亮
+            if (window is MainWindow mw && mw.IsViewMode)
+            {
+                shouldHighlight = false;
+            }
+
+            if (shouldHighlight)
+            {
+                var accentBrush = window.FindResource("SystemAccentPressedBrush") as SolidColorBrush;
+                if (accentBrush != null) SetBorderColor(window, accentBrush.Color);
+            }
+            else
+            {
+                var borderBrush = window.FindResource("BorderMediumBrush") as SolidColorBrush;
+                if (borderBrush != null) SetBorderColor(window, borderBrush.Color);
+            }
+        }
+
+        public static void SupportFocusHighlight(this Window window)
+        {
+            window.Activated += (s, e) => UpdateWindowBorder(window);
+            window.Deactivated += (s, e) => UpdateWindowBorder(window);
+            
+            // 确保首次加载时应用
+            if (window.IsLoaded) UpdateWindowBorder(window);
+            else window.Loaded += (s, e) => UpdateWindowBorder(window);
+        }
+
         public static void SetDefaultBorderColor(Window window)
         {
             try

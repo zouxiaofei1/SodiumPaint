@@ -22,9 +22,8 @@ namespace TabPaint
 
         private FluentMessageBox()
         {
-        
-
-            InitializeComponent();  
+            InitializeComponent();
+            this.SupportFocusHighlight();
             if (!_isWin11)
             {
                 FluentMsgboxRootBorder.CornerRadius =new CornerRadius(0);

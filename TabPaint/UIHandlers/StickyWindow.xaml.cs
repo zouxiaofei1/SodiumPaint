@@ -12,6 +12,7 @@ namespace TabPaint.Windows
         public StickyWindow(ImageSource image)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             DisplayImage.Source = image;
 
             if (image != null)

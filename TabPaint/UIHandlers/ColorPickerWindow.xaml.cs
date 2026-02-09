@@ -30,6 +30,7 @@ namespace TabPaint
         public ColorPickerWindow()
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
         }
 
         private void ColorPickerWindow_Loaded(object sender, RoutedEventArgs e)

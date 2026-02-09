@@ -28,6 +28,7 @@ namespace TabPaint
         public ResizeCanvasDialog(int currentWidth, int currentHeight)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             _originalWidth = currentWidth;
             _originalHeight = currentHeight;
             _originalRatio = (double)currentWidth / currentHeight;

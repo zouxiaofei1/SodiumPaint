@@ -248,9 +248,9 @@ namespace TabPaint
                     {
                         mw.SetUndoRedoButtonState();
                         mw.AutoUpdateMaximizeIcon();
-                        mw.UpdateDwmBorderColor();
                         mw.UpdateRulerPositions();
                     }
+                    DwmBorderHelper.UpdateWindowBorder(w);
                 }
             }
             else if (e.PropertyName == nameof(AppSettings.ThemeAccentColor))

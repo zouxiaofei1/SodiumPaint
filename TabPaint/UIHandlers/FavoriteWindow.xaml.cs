@@ -24,6 +24,7 @@ namespace TabPaint.UIHandlers
         public FavoriteWindow()
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             this.Loaded += (s, e) => LoadPages();
             this.SourceInitialized += OnSourceInitialized;
         }

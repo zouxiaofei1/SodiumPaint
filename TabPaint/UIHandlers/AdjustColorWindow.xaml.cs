@@ -34,6 +34,7 @@ namespace TabPaint
         public AdjustColorWindow(WriteableBitmap fullBitmap, int initialTabIndex = 0)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             _originalFullBitmap = fullBitmap;
             CreatePreviewBitmaps(fullBitmap);
             PreviewImage.Source = _previewTarget;

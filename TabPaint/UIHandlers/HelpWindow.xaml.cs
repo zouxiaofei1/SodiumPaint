@@ -68,6 +68,7 @@ namespace TabPaint
         public HelpWindow(List<HelpPage> pages)
         {
             InitializeComponent();
+            this.SupportFocusHighlight();
             _pages = pages;
             this.DataContext = this;
 
