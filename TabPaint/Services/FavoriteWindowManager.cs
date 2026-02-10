@@ -36,13 +36,11 @@ namespace TabPaint.UIHandlers
 
             if (win.IsVisible)
             {
-                // 如果是同一个窗口再次点击，隐藏
                 if (CurrentAnchor == caller)
                 {
                     win.Hide();
                     return;
                 }
-                // 不同窗口点击：切换吸附目标
                 SwitchAnchor(caller);
                 win.Activate();
             }
@@ -69,24 +67,15 @@ namespace TabPaint.UIHandlers
 
             if (other != null)
             {
-                if (CurrentAnchor == closingWindow)
-                {
-                    SwitchAnchor(other);
-                }
+                if (CurrentAnchor == closingWindow)  SwitchAnchor(other);
             }
-            else
-            {
-                // 没有其他 MainWindow 了，关闭 FavoriteWindow
-                _instance?.Close();
-            }
+            else _instance?.Close();
+
         }
         public static void SwitchAnchorDuringDrag(MainWindow newAnchor)
         {
             if (newAnchor == null || CurrentAnchor == newAnchor) return;
-
             CurrentAnchor = newAnchor;
-
-            // 拖拽中只更新锚点的事件订阅，不强制移动位置
             _instance?.SwitchAnchorKeepPosition(newAnchor);
         }
         public static void OnMainWindowActivated(MainWindow activatedWindow)

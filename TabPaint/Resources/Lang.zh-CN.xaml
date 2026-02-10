@@ -24,15 +24,15 @@
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">未安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">正在下载...</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Install">安装</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Install">管理</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？卸载后需重新下载才能使用相应功能。</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
     <sys:String x:Key="L_Settings_General_Title">通用</sys:String>
     <sys:String x:Key="L_Settings_General_Startup_Header">启动</sys:String>
     <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Title">自动加载同文件夹图片</sys:String>
-    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">打开图片时，自动扫描并加载同级目录下的其他图片</sys:String>
+    <sys:String x:Key="L_Settings_General_AutoLoadFolderImages_Desc">打开图片时，扫描并加载同级目录下的其他图片</sys:String>
     <sys:String x:Key="L_Settings_General_StartInViewMode_Title">默认进入看图模式</sys:String>
-    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">程序启动时自动隐藏工具栏，作为看图软件使用</sys:String>
+    <sys:String x:Key="L_Settings_General_StartInViewMode_Desc">隐藏工具栏，作为看图软件使用</sys:String>
 
     <sys:String x:Key="L_Settings_General_MouseWheel_Title">鼠标滚轮操作</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Desc">滑动鼠标滚轮时程序的响应</sys:String>
@@ -43,8 +43,8 @@
     <sys:String x:Key="L_Settings_General_Theme_Title">外观主题</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Desc">切换明亮或黑暗模式</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Option_System">跟随系统</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_Light">浅色 (Light)</sys:String>
-    <sys:String x:Key="L_Settings_General_Theme_Option_Dark">深色 (Dark)</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Light">浅色</sys:String>
+    <sys:String x:Key="L_Settings_General_Theme_Option_Dark">深色</sys:String>
 
     <sys:String x:Key="L_Settings_General_Accent_Title">主题色</sys:String>
     <sys:String x:Key="L_Settings_General_Accent_Desc">界面强调颜色与工具图标颜色</sys:String>
@@ -62,11 +62,11 @@
     <sys:String x:Key="L_Settings_Paint_Title">画图设置</sys:String>
     <sys:String x:Key="L_Settings_Paint_Habits_Header">编辑习惯</sys:String>
     <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Title">剪贴板图片自动弹出</sys:String>
-    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">当后台监听检测到剪贴板有新图片时，自动激活并置顶窗口</sys:String>
+    <sys:String x:Key="L_Settings_Paint_AutoPopupClipboard_Desc">剪贴板有新图片时，激活并置顶窗口</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_Title">选区删除背景</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">使用 Delete 键删除选区时的填充方式</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明 (Transparent)</sys:String>
-    <sys:String x:Key="L_Settings_Paint_SelectionClear_White">白色 (White)</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Desc">删除选区时的填充颜色</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_Transparent">透明</sys:String>
+    <sys:String x:Key="L_Settings_Paint_SelectionClear_White">白色</sys:String>
     <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">仅填充颜色 (保留 Alpha)</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 键删除当前图片</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
@@ -76,13 +76,13 @@
     <sys:String x:Key="L_Settings_View_Habits_Header">交互习惯</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Title">鼠标滚轮功能</sys:String>
     <sys:String x:Key="L_Settings_View_MouseWheel_Desc">看图模式下，直接滚动滚轮时的操作</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">缩放图片 (Zoom)</sys:String>
-    <sys:String x:Key="L_Settings_View_MouseWheel_Switch">切换图片 (Prev/Next)</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Zoom">缩放图片</sys:String>
+    <sys:String x:Key="L_Settings_View_MouseWheel_Switch">切换图片</sys:String>
     <sys:String x:Key="L_Settings_View_Display_Header">显示</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Title">使用深色背景</sys:String>
     <sys:String x:Key="L_Settings_View_DarkBg_Desc">在图片周围显示深灰色背景</sys:String>
     <sys:String x:Key="L_Settings_View_TransparentGrid_Title">显示透明度网格</sys:String>
-    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">开启后透明区域显示灰白格子，关闭则显示纯白背景</sys:String>
+    <sys:String x:Key="L_Settings_View_TransparentGrid_Desc">在图片透明区域显示灰白网格</sys:String>
 
     <!-- Shortcuts -->
     <sys:String x:Key="L_Settings_Shortcuts_Title">快捷键设置</sys:String>
@@ -145,7 +145,7 @@
     <sys:String x:Key="L_Settings_Advanced_Resampling_Title">重采样算法</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Desc">用于图片保存或调整大小时</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Title">像素化阈值设置</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">当缩放倍率超过此值时，画面将从模糊(线性插值)切换为清晰像素(邻近插值)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_PixelThreshold_Desc">当缩放倍率超过此值时，画面从线性插值切换为邻近插值</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_ViewMode">看图模式</sys:String>
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">画图模式</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Habits_Header">交互习惯</sys:String>
@@ -156,22 +156,18 @@
     <sys:String x:Key="L_Settings_Advanced_FactoryReset">恢复出厂设置</sys:String>
     <sys:String x:Key="L_Settings_ResetShortcuts">恢复默认快捷键</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">始终显示标签关闭按钮</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">在图片标签上始终显示关闭按钮，而不只是在鼠标悬停时显示</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">在图片标签上始终显示关闭按钮</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">撤销重做</sys:String>
     <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">全局撤销总量</sys:String>
-    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">所有标签页合共保留的最大撤销次数</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">所有标签页共保留的最大撤销次数</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory">最大撤销内存</sys:String>
-    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">所有标签页撤销记录占用的总内存超过此值时，将自动清理</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">所有标签页共允许的撤销栈最大内存占用</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">文件回收站</sys:String>
-    <sys:String x:Key="L_RecycleBin_Title">文件回收站</sys:String>
-    <sys:String x:Key="L_RecycleBin_Empty">暂无临时图片</sys:String>
-    <sys:String x:Key="L_RecycleBin_DaysLeft_Format">{0}天后过期</sys:String>
-    <sys:String x:Key="L_RecycleBin_Restore">恢复</sys:String>
-    <sys:String x:Key="L_RecycleBin_DeleteForever">永久删除</sys:String>
+ 
 
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自动 (Auto)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">双线性 (Bilinear)</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant (高质量)</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Auto">自动</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Bilinear">双线性</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_Resampling_Option_Fant">Fant</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Resampling_Option_HighQuality">HighQuality</sys:String>
 
     <!-- Common -->
@@ -188,11 +184,11 @@
     <sys:String x:Key="L_Main_Ctx_MiniTools">小工具</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_RemoveBg">AI 一键抠图 (RMBG)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_ChromaKey">色差抠图 (去除背景)</sys:String>
-    <sys:String x:Key="L_Main_Ctx_OCR">提取图中文字 (OCR)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_OCR">提取图中文字</sys:String>
     <sys:String x:Key="L_Main_Ctx_ScreenPicker">屏幕取色器</sys:String>
     <sys:String x:Key="L_Main_Ctx_CopyHex">复制颜色代码 (#HEX)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AutoCrop">智能裁切空白</sys:String>
-    <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框 (2px)</sys:String>
+    <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x超分辨率</sys:String>
 
     <sys:String x:Key="L_Main_Unit_Pixel">像素</sys:String>
@@ -346,17 +342,17 @@
     <sys:String x:Key="L_AdjustTTS_Saturation">饱和度</sys:String>
 
     <!-- ResizeCanvasDialog -->
-    <sys:String x:Key="L_ResizeCanvas_Title">调整画布大小</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Title">图像尺寸</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Mode">模式：</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode_Resample">缩放图片 (Resample)</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas">调整画布 (Canvas)</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Resample">缩放图片</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Mode_Canvas">调整画布大小</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Width">宽度</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Height">高度</sys:String>
     <sys:String x:Key="L_ResizeCanvas_KeepAspectRatio">保持长宽比</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Info_Format">缩放: {0}%  |  原始: {1} x {2}</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Info_CanvasMode">画布模式：{0} x {1}</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas">画布模式：仅改变画布大小，不拉伸图像</sys:String>
-    <sys:String x:Key="L_ResizeCanvas_Desc_Resample">缩放模式：拉伸/压缩图像内容</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Canvas">改变画布大小，不拉伸图像</sys:String>
+    <sys:String x:Key="L_ResizeCanvas_Desc_Resample">拉伸/压缩图像内容</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_TooLarge">图片尺寸不能超过 {0}像素。</sys:String>
     <sys:String x:Key="L_ResizeCanvas_Error_InvalidSize">尺寸必须大于 0</sys:String>
     <sys:String x:Key="L_ResizeCanvas_OriginSize">缩放：100% (原始大小)</sys:String>
@@ -533,11 +529,11 @@
     <sys:String x:Key="L_LoadFailed">加载失败，请检查网络</sys:String>
     <!-- Common Buttons -->
     <sys:String x:Key="L_Common_Reset">重置</sys:String>
-    <sys:String x:Key="L_Common_Cancel">取消</sys:String>
+    <sys:String x:Key="L_Common_Cancel">返回</sys:String>
+    <sys:String x:Key="L_Common_No">取消</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Confirm">此操作将删除所有缓存、临时文件和用户配置，并将软件恢复到初始状态。确定要继续吗？</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Confirm">确定要将所有快捷键恢复为默认设置吗？此操作无法撤销。</sys:String>
     <sys:String x:Key="L_Settings_Shortcuts_Reset_Title">确认重置</sys:String>
-    <sys:String x:Key="L_Settings_About_Help_ComingSoon">帮助文档正在编写中，敬请期待！</sys:String>
     <sys:String x:Key="L_Common_Error">错误</sys:String>
     <sys:String x:Key="L_Common_Tip">提示</sys:String>
 
@@ -549,7 +545,7 @@
     <sys:String x:Key="L_Help_Desc_2">按 Tab 键可快速在“专注看图”和“自由绘图”模式间切换</sys:String>
     <sys:String x:Key="L_Help_Desc_3">支持将图片直接拖拽至 Word、桌面或任何支持的地方</sys:String>
     <sys:String x:Key="L_Help_Desc_1">极简的绘制功能，现在就试试看</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_ICC_Title">启用 ICC 配置文件校色</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_ICC_Title">颜色校准</sys:String>
     <sys:String x:Key="L_Settings_Advanced_ICC_Desc">使用显示器的 ICC 配置文件进行色彩校正</sys:String>
     <!-- Toasts -->
     <sys:String x:Key="L_Toast_Deleted">已删除 (Ctrl+Z 撤销)</sys:String>
@@ -618,9 +614,9 @@
     <sys:String x:Key="L_Load_Info_Memory">[新建图像] 内存文件</sys:String>
     <sys:String x:Key="L_Status_Unsaved">未保存</sys:String>
     <sys:String x:Key="L_Msg_ResetWorkspace_Title">放弃更改</sys:String>
-    <sys:String x:Key="L_Msg_ResetWorkspace_Content">确定要重置当前工作区吗？&#x0a;· 所有“未命名”的新建画布将被删除&#x0a;· 所有打开的图片将还原至磁盘文件状态&#x0a;· 撤销记录、所有临时缓存文件及会话记录将被清空</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content">确定要重置当前工作区吗？所有新建画布将被删除，所有打开的图片将还原至磁盘文件状态。</sys:String>
     <sys:String x:Key="L_Msg_DeleteFile_Title">删除文件</sys:String>
-    <sys:String x:Key="L_Msg_DeleteFile_Content">确定要将文件 '{0}' 放入回收站吗？&#x0a;此操作不可撤销（取决于系统设置）。</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content">确定要将文件 '{0}' 放入回收站吗？&#x0a;此操作不可撤销。</sys:String>
     <sys:String x:Key="L_Msg_SaveError_Title">保存失败</sys:String>
     <sys:String x:Key="L_Msg_SaveError_Content">{0}&#x0a;&#x0a;是否尝试【另存为】到其他位置？</sys:String>
     <sys:String x:Key="L_Msg_UnsavedClose_Title">保存提示</sys:String>
@@ -683,7 +679,6 @@
     <sys:String x:Key="L_Exif_Meter_Pattern">模式测光</sys:String>
     <sys:String x:Key="L_Exif_Meter_Partial">部分测光</sys:String>
     <sys:String x:Key="L_Exif_Meter_Other">其他</sys:String>
-    <!-- New Additions for C# Logic -->
     <sys:String x:Key="L_Save_Error_ReadOnly">保存失败：文件是只读的，或者您没有权限写入此位置。</sys:String>
     <sys:String x:Key="L_Save_Error_InUse">保存失败：文件可能正在被占用。&#x0a;{0}</sys:String>
     <sys:String x:Key="L_Save_Error_General">保存时发生错误：{0}</sys:String>
@@ -720,8 +715,8 @@
 
     <sys:String x:Key="L_ImgBar_ClearUnedited">关闭所有未编辑的图片</sys:String>
     <sys:String x:Key="L_ImgBar_NewTabLeft">在左侧新建</sys:String>
-    <sys:String x:Key="L_Ctx_StickImage">贴图 (StickImage)</sys:String>
-    <sys:String x:Key="L_Ctx_DeleteFile">删除文件 (Delete)</sys:String>
+    <sys:String x:Key="L_Ctx_StickImage">贴图</sys:String>
+    <sys:String x:Key="L_Ctx_DeleteFile">删除文件</sys:String>
 
     <sys:String x:Key="L_Text_Bold">加粗</sys:String>
     <sys:String x:Key="L_Text_Italic">斜体</sys:String>
@@ -738,10 +733,8 @@
     <sys:String x:Key="L_Text_InsertTable">插入表格</sys:String>
     <sys:String x:Key="L_Text_ExpandCollapse">展开/收起工具栏</sys:String>
     <sys:String x:Key="L_Common_Preview">预览</sys:String>
-    <!-- 补充到 Code Code Code Code Code Code Code Behind 错误提示 -->
     <sys:String x:Key="L_Toast_OpenUrlFailed">无法打开链接</sys:String>
     <sys:String x:Key="L_Key_None">无</sys:String>
-    <!-- InfoTextBlock & Progress -->
     <sys:String x:Key="L_ResizeCanvas_LimitReached">⚠️ 已达到最大尺寸限制 ({0}px)</sys:String>
     <sys:String x:Key="L_Info_CanvasMode_Format">画布模式：{0} x {1}</sys:String>
     <sys:String x:Key="L_Info_ResampleMode_Format">缩放: {0:P0}  |  原始: {1} x {2}</sys:String>
@@ -758,8 +751,8 @@
     <sys:String x:Key="L_StatusBar_Favorite_ToolTip">收藏</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Error_Prefix">超分失败: {0}</sys:String>
     <sys:String x:Key="L_AI_Download_Title">下载模型</sys:String>
-    <sys:String x:Key="L_AI_Download_RMBG_Content">首次使用需要下载背景移除模型 (约 170MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
-    <sys:String x:Key="L_AI_Download_SR_Content">首次使用需要下载超分辨率模型 (约 60MB)。&#x0a;下载速度取决于网络环境，是否继续？</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content">首次使用需要下载背景移除模型。是否继续？</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content">首次使用需要下载超分辨率模型 。是否继续？</sys:String>
     <sys:String x:Key="L_Menu_Effect_Watermark">水印</sys:String>
     <sys:String x:Key="L_Watermark_Title">添加水印</sys:String>
     <sys:String x:Key="L_Watermark_Type">水印类型</sys:String>
@@ -809,9 +802,7 @@
     <sys:String x:Key="L_Menu_Effect_GaussianBlur">高斯模糊</sys:String>
     <sys:String x:Key="L_Dialog_Strength">强度</sys:String>
 
-    <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下载修复模型 (LaMa)，文件大小约 200MB。&#x0a;下载完成后将自动进行 MD5 校验。是否继续？</sys:String>
-
-    <!-- 统一 AI 状态描述 (如果之前没有) -->
+    <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下载修复模型。是否继续？</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下载修复模型: {0:F1}%</sys:String>
 
 </ResourceDictionary>

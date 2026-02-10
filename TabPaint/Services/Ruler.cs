@@ -17,14 +17,20 @@ namespace TabPaint
         public static readonly DependencyProperty SelectionStartProperty =
     DependencyProperty.Register("SelectionStart", typeof(double), typeof(Ruler),
         new FrameworkPropertyMetadata(-1.0, FrameworkPropertyMetadataOptions.AffectsRender));
+        public static readonly DependencyProperty DrawOffsetProperty =
+    DependencyProperty.Register("DrawOffset", typeof(double), typeof(Ruler),
+        new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
+        public double DrawOffset
+        {
+            get { return (double)GetValue(DrawOffsetProperty); }
+            set { SetValue(DrawOffsetProperty, value); }
+        }
         public double SelectionStart
         {
             get { return (double)GetValue(SelectionStartProperty); }
             set { SetValue(SelectionStartProperty, value); }
         }
-
-        // 选区结束位置（像素坐标）
         public static readonly DependencyProperty SelectionEndProperty =
             DependencyProperty.Register("SelectionEnd", typeof(double), typeof(Ruler),
                 new FrameworkPropertyMetadata(-1.0, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -34,8 +40,6 @@ namespace TabPaint
             get { return (double)GetValue(SelectionEndProperty); }
             set { SetValue(SelectionEndProperty, value); }
         }
-
-        // 依赖属性：缩放比例
         public static readonly DependencyProperty ZoomFactorProperty =
             DependencyProperty.Register("ZoomFactor", typeof(double), typeof(Ruler),
                 new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -44,8 +48,6 @@ namespace TabPaint
             get { return (double)GetValue(ZoomFactorProperty); }
             set { SetValue(ZoomFactorProperty, value); }
         }
-
-        // 依赖属性：原点偏移量 (画布左上角相对于ScrollViewer的位置)
         public static readonly DependencyProperty OriginOffsetProperty =
             DependencyProperty.Register("OriginOffset", typeof(double), typeof(Ruler),
                 new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -55,8 +57,6 @@ namespace TabPaint
             get { return (double)GetValue(OriginOffsetProperty); }
             set { SetValue(OriginOffsetProperty, value); }
         }
-
-        // 依赖属性：方向
         public static readonly DependencyProperty OrientationProperty =
             DependencyProperty.Register("Orientation", typeof(RulerOrientation), typeof(Ruler),
                 new FrameworkPropertyMetadata(RulerOrientation.Horizontal, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -66,8 +66,6 @@ namespace TabPaint
             get { return (RulerOrientation)GetValue(OrientationProperty); }
             set { SetValue(OrientationProperty, value); }
         }
-
-        // 依赖属性：鼠标位置标记
         public static readonly DependencyProperty MouseMarkerProperty =
             DependencyProperty.Register("MouseMarker", typeof(double), typeof(Ruler),
                  new FrameworkPropertyMetadata(-100.0, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -80,20 +78,16 @@ namespace TabPaint
         private void DrawSelectionHighlight(DrawingContext drawingContext, double zoom)
         {
             if (SelectionStart < 0 || SelectionEnd <= SelectionStart) return;
-
-            // 像素坐标 → 屏幕坐标
             double screenStart = SelectionStart * zoom + OriginOffset;
             double screenEnd = SelectionEnd * zoom + OriginOffset;
 
+            double offset = DrawOffset; // ★
             double maxVal = (Orientation == RulerOrientation.Horizontal) ? ActualWidth : ActualHeight;
-
-            // 裁剪到可见范围
-            screenStart = Math.Max(0, screenStart);
+            screenStart = Math.Max(offset, screenStart); // ★ 从偏移处开始
             screenEnd = Math.Min(maxVal, screenEnd);
 
             if (screenEnd <= screenStart) return;
 
-            // 使用主题色半透明作为高亮背景
             Brush accentBrush = (Brush)TryFindResource("SystemAccentBrush") ?? Brushes.DodgerBlue;
             Color accentColor;
             if (accentBrush is SolidColorBrush scb)
@@ -101,10 +95,8 @@ namespace TabPaint
             else
                 accentColor = Colors.DodgerBlue;
 
-            Brush highlightBrush = new SolidColorBrush(Color.FromArgb(15, accentColor.R, accentColor.G, accentColor.B)); 
+            Brush highlightBrush = new SolidColorBrush(Color.FromArgb(15, accentColor.R, accentColor.G, accentColor.B));
             if (highlightBrush.CanFreeze) highlightBrush.Freeze();
-
-            // 高亮条下方的实色细线（标记边界）
             Brush edgeBrush = new SolidColorBrush(Color.FromArgb(12, accentColor.R, accentColor.G, accentColor.B));
             if (edgeBrush.CanFreeze) edgeBrush.Freeze();
             Pen edgePen = new Pen(edgeBrush, 1);
@@ -112,25 +104,20 @@ namespace TabPaint
 
             if (Orientation == RulerOrientation.Horizontal)
             {
-                // 高亮背景条
                 drawingContext.DrawRectangle(highlightBrush, null,
                     new Rect(screenStart, 0, screenEnd - screenStart, ActualHeight));
-
-                // 左右边界线
                 drawingContext.DrawLine(edgePen, new Point(screenStart, 0), new Point(screenStart, ActualHeight));
                 drawingContext.DrawLine(edgePen, new Point(screenEnd, 0), new Point(screenEnd, ActualHeight));
             }
             else
             {
-                // 高亮背景条
                 drawingContext.DrawRectangle(highlightBrush, null,
                     new Rect(0, screenStart, ActualWidth, screenEnd - screenStart));
-
-                // 上下边界线
                 drawingContext.DrawLine(edgePen, new Point(0, screenStart), new Point(ActualWidth, screenStart));
                 drawingContext.DrawLine(edgePen, new Point(0, screenEnd), new Point(ActualWidth, screenEnd));
             }
         }
+
 
         protected override void OnRender(DrawingContext drawingContext)
         {
@@ -138,29 +125,39 @@ namespace TabPaint
             Brush textBrush = (Brush)TryFindResource("TextPrimaryBrush") ?? Brushes.Black;
             Brush tickBrush = (Brush)TryFindResource("TextTertiaryBrush") ?? Brushes.Gray;
             Brush borderBrush = (Brush)TryFindResource("BorderMediumBrush") ?? Brushes.Gray;
-            Brush bgBrush = (Brush)TryFindResource("GlassBackgroundMediumBrush") ?? Brushes.Transparent;
-
-            Pen borderPen = new Pen(borderBrush, 1);
+            Brush bgBrush = (Brush)TryFindResource("GlassBackgroundMediumBrush") ?? Brushes.Transparent; Pen borderPen = new Pen(borderBrush, 1);
             borderPen.Freeze();
             Pen tickPen = new Pen(tickBrush, 1);
             tickPen.Freeze();
             Pen textPen = new Pen(textBrush, 1);
             textPen.Freeze();
 
-            drawingContext.DrawRectangle(bgBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
+            double offset = DrawOffset; // ★ 获取偏移量
 
+            // ★ 背景只画偏移之后的区域
             if (Orientation == RulerOrientation.Horizontal)
-                drawingContext.DrawLine(borderPen, new Point(0, ActualHeight), new Point(ActualWidth, ActualHeight));
+            {
+                drawingContext.DrawRectangle(bgBrush, null,
+                    new Rect(offset, 0, ActualWidth - offset, ActualHeight));
+            }
             else
-                drawingContext.DrawLine(borderPen, new Point(ActualWidth, 0), new Point(ActualWidth, ActualHeight));
+            {
+                drawingContext.DrawRectangle(bgBrush, null,
+                    new Rect(0, offset, ActualWidth, ActualHeight - offset));
+            }
+
+            // ★ 边框线从偏移处开始画
+            if (Orientation == RulerOrientation.Horizontal)
+                drawingContext.DrawLine(borderPen,
+                    new Point(offset, ActualHeight), new Point(ActualWidth, ActualHeight));
+            else
+                drawingContext.DrawLine(borderPen,
+                    new Point(ActualWidth, offset), new Point(ActualWidth, ActualHeight));
 
             double zoom = ZoomFactor;
             if (zoom <= 0.0001) zoom = 0.0001;
-
-            // ========== 绘制选区高亮 ==========
             DrawSelectionHighlight(drawingContext, zoom);
 
-            // ========== 原有刻度绘制逻辑 ==========
             double desiredPixelSpacing = 80.0;
             double rawStep = desiredPixelSpacing / zoom;
             double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
@@ -175,14 +172,13 @@ namespace TabPaint
             double midStep = logicalStep / 2.0;
             double smallStep = logicalStep / 10.0;
             bool drawSmallTicks = (smallStep * zoom) > 4.0;
-            double maxVal = (Orientation == RulerOrientation.Horizontal ? ActualWidth : ActualHeight);
-
-            Typeface typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+            double maxVal = (Orientation == RulerOrientation.Horizontal ? ActualWidth : ActualHeight); Typeface typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
             double startValue = -OriginOffset / zoom;
             double startStepIndex = Math.Floor(startValue / smallStep);
             double currentVal = startStepIndex * smallStep;
             int safetyCount = 0;
+
             double selScreenStart = -1, selScreenEnd = -1;
             bool hasSelection = SelectionStart >= 0 && SelectionEnd > SelectionStart;
             if (hasSelection)
@@ -190,8 +186,6 @@ namespace TabPaint
                 selScreenStart = SelectionStart * zoom + OriginOffset;
                 selScreenEnd = SelectionEnd * zoom + OriginOffset;
             }
-
-            // 选区内的刻度用主题色
             Brush accentTextBrush = (Brush)TryFindResource("SystemAccentBrush") ?? Brushes.DodgerBlue;
             Pen accentTickPen = new Pen(accentTextBrush, 1);
             accentTickPen.Freeze();
@@ -202,7 +196,8 @@ namespace TabPaint
 
                 if (screenPos > maxVal) break;
 
-                if (screenPos >= -20)
+                // ★ 关键改动：跳过偏移区域内的刻度
+                if (screenPos >= offset - 20) // -20 给文字留一点余量
                 {
                     bool isMainTick = IsCloseToMultiple(currentVal, logicalStep);
                     bool isMidTick = !isMainTick && IsCloseToMultiple(currentVal, midStep);
@@ -213,52 +208,62 @@ namespace TabPaint
                         continue;
                     }
 
-                    double tickHeight = isMainTick ? SegmentHeightLong : (isMidTick ? SegmentHeightMid : SegmentHeight);
-
-                    // 判断当前刻度是否在选区范围内
-                    bool inSelection = hasSelection && screenPos >= selScreenStart - 0.5 && screenPos <= selScreenEnd + 0.5;
-                    Pen currentTickPen = inSelection ? accentTickPen : tickPen;
-                    Brush currentTextBrush = inSelection ? accentTextBrush : textBrush;
-
-                    if (Orientation == RulerOrientation.Horizontal)
+                    // ★ 刻度线只在偏移之后才画
+                    if (screenPos >= offset)
                     {
-                        drawingContext.DrawLine(currentTickPen, new Point(screenPos, ActualHeight - tickHeight), new Point(screenPos, ActualHeight));
+                        double tickHeight = isMainTick ? SegmentHeightLong : (isMidTick ? SegmentHeightMid : SegmentHeight);
+                        bool inSelection = hasSelection && screenPos >= selScreenStart - 0.5 && screenPos <= selScreenEnd + 0.5; Pen currentTickPen = inSelection ? accentTickPen : tickPen;
+                        Brush currentTextBrush = inSelection ? accentTextBrush : textBrush;
 
-                        if (isMainTick)
+                        if (Orientation == RulerOrientation.Horizontal)
                         {
-                            FormattedText text = new FormattedText(
-                                currentVal.ToString("F0"),
-                                CultureInfo.InvariantCulture,
-                                FlowDirection.LeftToRight,
-                                typeface,
-                                10,
-                                currentTextBrush,
-                                VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                            drawingContext.DrawLine(currentTickPen,
+                                new Point(screenPos, ActualHeight - tickHeight),
+                                new Point(screenPos, ActualHeight));
 
-                            drawingContext.DrawText(text, new Point(screenPos + 2, 0));
+                            if (isMainTick)
+                            {
+                                FormattedText text = new FormattedText(
+                                    currentVal.ToString("F0"),
+                                    CultureInfo.InvariantCulture,
+                                    FlowDirection.LeftToRight,
+                                    typeface, 10, currentTextBrush,
+                                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                                // ★ 文字不超出偏移区域
+                                double textX = screenPos + 2;
+                                if (textX + text.Width > offset || textX >= offset)
+                                {
+                                    drawingContext.DrawText(text, new Point(textX, 0));
+                                }
+                            }
                         }
-                    }
-                    else // Vertical
-                    {
-                        drawingContext.DrawLine(currentTickPen, new Point(ActualWidth - tickHeight, screenPos), new Point(ActualWidth, screenPos));
-
-                        if (isMainTick)
+                        else // Vertical
                         {
-                            FormattedText text = new FormattedText(
-                                currentVal.ToString("F0"),
-                                CultureInfo.InvariantCulture,
-                                FlowDirection.LeftToRight,
-                                typeface,
-                                10,
-                                currentTextBrush,
-                                VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                            drawingContext.DrawLine(currentTickPen,
+                                new Point(ActualWidth - tickHeight, screenPos),
+                                new Point(ActualWidth, screenPos));
 
-                            double xBase = ActualWidth - text.Height - 2;
-                            double yBase = screenPos + (text.Width / 2) + 10;
+                            if (isMainTick)
+                            {
+                                FormattedText text = new FormattedText(
+                                    currentVal.ToString("F0"),
+                                    CultureInfo.InvariantCulture,
+                                    FlowDirection.LeftToRight,
+                                    typeface, 10, currentTextBrush,
+                                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-                            drawingContext.PushTransform(new RotateTransform(-90, xBase, yBase));
-                            drawingContext.DrawText(text, new Point(xBase, yBase));
-                            drawingContext.Pop();
+                                double xBase = ActualWidth - text.Height - 2;
+                                double yBase = screenPos + (text.Width / 2) + 10;
+
+                                // ★ 文字不超出偏移区域
+                                if (yBase - text.Width >= offset)
+                                {
+                                    drawingContext.PushTransform(new RotateTransform(-90, xBase, yBase));
+                                    drawingContext.DrawText(text, new Point(xBase, yBase));
+                                    drawingContext.Pop();
+                                }
+                            }
                         }
                     }
                 }
@@ -266,11 +271,11 @@ namespace TabPaint
                 currentVal = Math.Round(currentVal / smallStep) * smallStep;
             }
 
-            // 绘制鼠标红线
+            // ★ 鼠标标记也要在偏移之后才画
             Pen markerPen = new Pen(Brushes.Red, 1);
             markerPen.Freeze();
 
-            if (MouseMarker >= 0 && MouseMarker <= maxVal)
+            if (MouseMarker >= offset && MouseMarker <= maxVal)
             {
                 if (Orientation == RulerOrientation.Horizontal)
                     drawingContext.DrawLine(markerPen, new Point(MouseMarker, 0), new Point(MouseMarker, ActualHeight));

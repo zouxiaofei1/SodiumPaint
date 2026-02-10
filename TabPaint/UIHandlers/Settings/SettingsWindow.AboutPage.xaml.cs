@@ -10,7 +10,6 @@ namespace TabPaint.Pages
 {
     public partial class AboutPage : UserControl
     {
-        // 这里的 ProgramVersion 用于绑定到 XAML 显示
         public string ProgramVersion => AppConsts.ProgramVersion;
 
         public AboutPage()

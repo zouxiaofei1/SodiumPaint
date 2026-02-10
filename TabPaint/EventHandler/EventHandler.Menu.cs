@@ -227,8 +227,6 @@ namespace TabPaint
                     int[] histR = new int[256];
                     int[] histG = new int[256];
                     int[] histB = new int[256];
-
-                    // 采样统计 (为了性能，如果是超大图可以考虑跳跃采样，这里做全采样)
                     for (int y = 0; y < height; y++)
                     {
                         byte* row = basePtr + y * stride;
@@ -379,8 +377,6 @@ namespace TabPaint
                 Filter = PicFilterString,
                 FileName = defaultName
             };
-
-            // 2. 需求2：默认位置为打开的文件夹 (即 _currentFilePath 所在目录)
             string initialDir = "";
             if (!string.IsNullOrEmpty(_currentFilePath))
                 initialDir = System.IO.Path.GetDirectoryName(_currentFilePath);
@@ -418,7 +414,6 @@ namespace TabPaint
                 UpdateWindowTitle();
             }
         }
-
         private void OnCopyClick(object sender, RoutedEventArgs e)
         {
             // 确保 SelectTool 是当前工具
@@ -561,8 +556,6 @@ namespace TabPaint
                 UpdateImageBarSliderState();
             }
         }
-
-
         private async void OnOpenClick(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
@@ -600,38 +593,24 @@ namespace TabPaint
         {
             if (_surface?.Bitmap == null) return;
             _router.CleanUpSelectionandShape(); // 清理选区
-
-            // 获取当前原始尺寸
             int originalW = _surface.Bitmap.PixelWidth;
             int originalH = _surface.Bitmap.PixelHeight;
-
-          
-
             var dialog = new ResizeCanvasDialog(originalW, originalH);
-
-            // ★ 改动点：替换 Owner + ShowDialog
             if (dialog.ShowOwnerModal(this) == true)
             {
                 int targetWidth = dialog.ImageWidth;
                 int targetHeight = dialog.ImageHeight;
                 bool isCanvasMode = dialog.IsCanvasResizeMode;
                 bool keepRatio = dialog.IsAspectRatioLocked;
-
-                // 计算缩放比例 (仅用于 Resample 模式)
                 double scaleX = (double)targetWidth / originalW;
                 double scaleY = (double)targetHeight / originalH;
-
-                // 1. 处理当前图片 (保持原有逻辑，立即响应)
                 if (isCanvasMode) ResizeCanvasDimensions(targetWidth, targetHeight);
                 else ResizeCanvas(targetWidth, targetHeight);
 
                 CheckDirtyState();
                 if (_canvasResizer != null) _canvasResizer.UpdateUI();
-
-                // 2. 如果勾选了"应用到所有"，则启动后台批量任务
                 if (dialog.ApplyToAll)
                 {
-                    // 传递必要的参数：目标尺寸、缩放比例、模式、是否保持比例
                     await BatchResizeImages(targetWidth, targetHeight, scaleX, scaleY, isCanvasMode, keepRatio);
                 }
             }
@@ -728,10 +707,7 @@ namespace TabPaint
                                         encoder.Frames.Add(BitmapFrame.Create(resultBmp));
                                         encoder.Save(fs);
                                     }
-
                                     newCachePath = fullPath;
-
-                                    // D. 生成缩略图
                                     if (resultBmp.PixelWidth > 200)
                                     {
                                         var scale = 200.0 / resultBmp.PixelWidth;
@@ -749,7 +725,6 @@ namespace TabPaint
                                     System.Diagnostics.Debug.WriteLine($"Batch Resize Error: {ex.Message}");
                                 }
                             });
-
                             renderThread.SetApartmentState(ApartmentState.STA); // WPF 图形处理必须 STA
                             renderThread.IsBackground = true;
                             renderThread.Start();
@@ -768,15 +743,12 @@ namespace TabPaint
                                     tab.IsLoading = false;
                                 });
                             }
-                            else
-                            {
-                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => info.Tab.IsLoading = false);
-                            }
+                            else  await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => info.Tab.IsLoading = false);
                         }
-                        finally
-                        {
-                            semaphore.Release();
-                        }
+                        finally  { semaphore.Release();  }
+                      
+                           
+                      
                     });
 
                     tasks.Add(task);
@@ -798,19 +770,13 @@ namespace TabPaint
             var dv = new DrawingVisual();
             using (var ctx = dv.RenderOpen())
             {
-                // 绘制背景 (透明或白色，取决于需求，这里留空即透明)
-
-                // 计算居中位置
                 double x = (targetW - source.PixelWidth) / 2.0;
                 double y = (targetH - source.PixelHeight) / 2.0;
-
-                // 绘制原图
                 ctx.DrawImage(source, new Rect(x, y, source.PixelWidth, source.PixelHeight));
             }
             rtb.Render(dv);
             return rtb;
         }
-
         private async void OnWatermarkClick(object sender, RoutedEventArgs e)
         {
             var oldBitmap = _surface.Bitmap;
@@ -818,13 +784,7 @@ namespace TabPaint
 
             byte[] undoPixels = new byte[undoRect.Height * oldBitmap.BackBufferStride];
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
-
-            // 2. 打开窗口
-            var dlg = new WatermarkWindow(_surface.Bitmap, WatermarkPreviewLayer)
-            {
-                Owner = this
-            };
-
+            var dlg = new WatermarkWindow(_surface.Bitmap, WatermarkPreviewLayer) {  Owner = this};
             bool? dialogResult = WindowHelper.ShowOwnerModal(dlg, this);
 
             if (dialogResult == true)
@@ -839,18 +799,14 @@ namespace TabPaint
                 NotifyCanvasChanged();
                 SetUndoRedoButtonState();
 
-                if (dlg.ApplyToAll)
-                {
-                    await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
-                }
+                if (dlg.ApplyToAll)  await ApplyWatermarkToAllTabs(dlg.CurrentSettings);
             }
-            else
-            {
-                NotifyCanvasChanged();
-            }
+            else {  NotifyCanvasChanged();  }
+           
+              
+          
         }
-        // 批量应用水印逻辑
-        private async Task ApplyWatermarkToAllTabs(WatermarkSettings settings)
+        private async Task ApplyWatermarkToAllTabs(WatermarkSettings settings) // 批量应用水印逻辑
         {
             if (settings == null) return;
             string currentTabId = _currentTabItem?.Id;
@@ -877,10 +833,7 @@ namespace TabPaint
 
                 foreach (var info in tasksInfo)
                 {
-                    // 更新 Tab 状态为加载中
                     info.Tab.IsLoading = true;
-
-                    // 创建异步任务
                     var task = Task.Run(async () =>
                     {
                         await semaphore.WaitAsync(); // 等待信号量
@@ -888,25 +841,17 @@ namespace TabPaint
                         {
                             string newCachePath = null;
                             BitmapSource thumbnailResult = null;
-
-                            // 定义一个线程任务来执行渲染
                             Thread renderThread = new Thread(() =>
                             {
                                 try
                                 {
-
-
                                     var bmp = new BitmapImage();
                                     bmp.BeginInit();
                                     bmp.UriSource = new Uri(info.SourcePath);
                                     bmp.CacheOption = BitmapCacheOption.OnLoad;
                                     bmp.EndInit();
                                     bmp.Freeze(); // 冻结以便处理
-
-                                    // B. 应用水印 (这是静态纯计算方法)
                                     var renderedBmp = WatermarkWindow.ApplyWatermarkToBitmap(bmp, settings);
-
-                                    // C. 保存到缓存
                                     if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
                                     string fileName = $"{info.Tab.Id}_{DateTime.Now.Ticks}.png"; // 加时间戳防止重名冲突
                                     string fullPath = Path.Combine(_cacheDir, fileName);
@@ -917,7 +862,6 @@ namespace TabPaint
                                         encoder.Frames.Add(BitmapFrame.Create(renderedBmp));
                                         encoder.Save(fileStream);
                                     }
-
                                     newCachePath = fullPath;
 
                                     if (renderedBmp.PixelWidth > 200)
@@ -937,14 +881,10 @@ namespace TabPaint
                                     System.Diagnostics.Debug.WriteLine($"Thread Render Error: {ex.Message}");
                                 }
                             });
-
-                            // 设置为 STA 模式，这是 WPF 渲染必须的
                             renderThread.SetApartmentState(ApartmentState.STA);
                             renderThread.IsBackground = true;
                             renderThread.Start();
                             renderThread.Join(); // 等待线程结束
-
-                            // === 回到 UI 线程更新 ===
                             if (!string.IsNullOrEmpty(newCachePath))
                             {
                                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -953,32 +893,17 @@ namespace TabPaint
                                     tab.BackupPath = newCachePath;
                                     tab.IsDirty = true;
                                     tab.LastBackupTime = DateTime.Now;
-
-                                    // 更新缩略图
-                                    if (thumbnailResult != null)
-                                    {
-                                        tab.Thumbnail = thumbnailResult; // 需要你的 ViewModel 支持
-                                    }
-
+                                    if (thumbnailResult != null)  tab.Thumbnail = thumbnailResult; 
                                     tab.IsLoading = false;
                                 });
                             }
-                            else
-                            {
-                                // 失败处理
-                                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => info.Tab.IsLoading = false);
-                            }
+                            else await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => info.Tab.IsLoading = false);
                         }
-                        finally
-                        {
-                            semaphore.Release(); // 释放信号量
-                        }
+                        finally  { semaphore.Release();  }
                     });
 
                     tasks.Add(task);
                 }
-
-                // 等待所有任务完成
                 await Task.WhenAll(tasks);
             }
 
@@ -993,27 +918,9 @@ namespace TabPaint
         {
             CreateNewTab(TabInsertPosition.AfterCurrent,true);
         }
-        private UIHandlers.RecycleBinWindow _recycleBinWindow;
         private void OnRecycleBinClick(object sender, RoutedEventArgs e)
         {
-            if (_recycleBinWindow == null || !Application.Current.Windows.OfType<UIHandlers.RecycleBinWindow>().Any())
-            {
-                _recycleBinWindow = new UIHandlers.RecycleBinWindow();
-                _recycleBinWindow.Owner = this;
-                _recycleBinWindow.OnRestoreRequested += async (path) =>
-                {
-                    if (File.Exists(path))
-                    {
-                        await OpenFilesAsNewTabs(new string[] { path });
-                        try { File.Delete(path); } catch { }
-                    }
-                };
-                _recycleBinWindow.Show();
-            }
-            else
-            {
-                _recycleBinWindow.Activate();
-            }
+          
         }
     }
 }

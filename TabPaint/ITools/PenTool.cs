@@ -8,18 +8,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using TabPaint;
+using Windows.ApplicationModel.Background;
 using static TabPaint.MainWindow;
 
 public partial class PenTool : ToolBase
 {
     public override string Name => "Pen";
 
-    // --- 修改 1：优化光标对象定义 ---
     private System.Windows.Shapes.Path _brushCursor;
     private TranslateTransform _cursorTransform; // 用于高性能移动
     private EllipseGeometry _circleGeometry;     // 缓存圆形
     private RectangleGeometry _squareGeometry;   // 缓存方形
-    // 缓存的画刷，减少GC压力
     private SolidColorBrush _cachedFillBrush;
     private Color _lastColor;
     private double _lastOpacity = -1;
@@ -27,15 +26,10 @@ public partial class PenTool : ToolBase
     private bool _drawing = false;
     private Point _lastPixel;
     private float _lastPressure = 1.0f;
-
-    // ===== 书写笔平滑状态 =====
     private float _smoothedPressure = 1.0f;       // 平滑后的压力值
     private float _smoothedVelocity = 0f;          // 平滑后的速度
     private long _lastTimestamp = 0;                // 上次事件时间戳
-
-    // 输入点缓冲（用于曲线拟合）
     private readonly List<CalligraphyPoint> _calliPoints = new();
-
     private struct CalligraphyPoint
     {
         public float X, Y;
@@ -43,7 +37,6 @@ public partial class PenTool : ToolBase
         public float Velocity;    // 平滑后的速度
         public long Timestamp;
     }
-
     private byte[] _currentStrokeMask;
     private int _maskWidth;
     private int _maskHeight;
@@ -79,13 +72,11 @@ public partial class PenTool : ToolBase
     }
     public override void OnMouseLeave(ToolContext ctx)
     {
-        if (_brushCursor != null)
-        {
-            _brushCursor.Visibility = Visibility.Collapsed;
-        }
+        if (_brushCursor != null)  _brushCursor.Visibility = Visibility.Collapsed;
     }
     public override void SetCursor(ToolContext ctx)
     {
+   
         if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
         if (ctx.EditorOverlay != null)
         {
@@ -98,7 +89,11 @@ public partial class PenTool : ToolBase
             {
                 IsHitTestVisible = false,
                 SnapsToDevicePixels = false,
-                UseLayoutRounding = false
+                UseLayoutRounding = false,    CacheMode = new BitmapCache
+                {
+                    SnapsToDevicePixels = false,
+                    RenderAtScale = 1.0  // 如果光标不大，1.0 就够了
+                }
             };
             _cursorTransform = new TranslateTransform();
             _brushCursor.RenderTransform = _cursorTransform;
@@ -108,43 +103,35 @@ public partial class PenTool : ToolBase
         }
 
         // 2. 将光标添加到图层（如果尚未添加）
-        if (!ctx.EditorOverlay.Children.Contains(_brushCursor))
-        {
-            ctx.EditorOverlay.Children.Add(_brushCursor);
-        }
-
+        if (!ctx.EditorOverlay.Children.Contains(_brushCursor))  ctx.EditorOverlay.Children.Add(_brushCursor);
         Point currentPos = System.Windows.Input.Mouse.GetPosition(ctx.ViewElement);
-        UpdateCursorVisual(ctx, currentPos);
+        UpdateCursorVisual(ctx, currentPos); 
     }
-
-
     private void UpdateCursorVisual(ToolContext ctx, Point viewPos)
     {
-        if (_brushCursor == null || _cursorTransform == null) return;
-
+    if (_brushCursor == null || _cursorTransform == null) return;
+        var t = new TimeRecorder(); t.Toggle();
         double size = ctx.PenThickness;
 
-        if (ctx.PenStyle == BrushStyle.Pencil || size < AppConsts.MinCustomCursorSize)
-        {
-            _brushCursor.Visibility = Visibility.Collapsed;
-            if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.Cross)
-            {
-                ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Cross;
-            }
-            return; 
-        }
-        else
-        {
-            if (_brushCursor.Visibility != Visibility.Visible)
-            {
-                _brushCursor.Visibility = Visibility.Visible;
-            }
+    // ★ 修改：始终显示十字光标，不再因为有自定义光标就隐藏
+    if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.Cross)
+    {
+        ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Cross;
+    }
 
-            if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.None)
-            {
-                ctx.ViewElement.Cursor = System.Windows.Input.Cursors.None;
-            }
-        }
+    if (ctx.PenStyle == BrushStyle.Pencil || size < AppConsts.MinCustomCursorSize)
+    {
+        // 画笔太小时只显示十字光标，不显示自定义光标
+        _brushCursor.Visibility = Visibility.Collapsed;
+        return; 
+    }
+    else
+    {
+        // ★ 修改：只控制自定义光标的可见性，不再隐藏系统光标
+        if (_brushCursor.Visibility != Visibility.Visible)
+            _brushCursor.Visibility = Visibility.Visible;
+        // ★ 删除了原来的: ctx.ViewElement.Cursor = Cursors.None;
+    }
 
         double halfSize = size / 2.0;
 
@@ -157,20 +144,13 @@ public partial class PenTool : ToolBase
 
         if (isSquare)
         {
-            // 更新方形尺寸
             if (_brushCursor.Data != _squareGeometry) _brushCursor.Data = _squareGeometry;
 
-            if (_squareGeometry.Rect.Width != size)
-            {
-                _squareGeometry.Rect = new Rect(0, 0, size, size);
-            }
+            if (_squareGeometry.Rect.Width != size)   _squareGeometry.Rect = new Rect(0, 0, size, size);
         }
         else
         {
-            // 更新圆形尺寸
             if (_brushCursor.Data != _circleGeometry) _brushCursor.Data = _circleGeometry;
-
-            // EllipseGeometry 的 Center 设置为半径位置，Radius 设置为半径
             if (_circleGeometry.RadiusX != halfSize)
             {
                 _circleGeometry.Center = new Point(halfSize, halfSize);
@@ -190,7 +170,6 @@ public partial class PenTool : ToolBase
             _brushCursor.Stroke = Brushes.Red;
             _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
         }
-        // 3. 颜色更新 (保持原有的缓存逻辑)
         else if(ctx.PenStyle == BrushStyle.Eraser)
         {
             _brushCursor.Fill = Brushes.Transparent;
@@ -199,7 +178,6 @@ public partial class PenTool : ToolBase
         }
             else if (ctx.PenStyle == BrushStyle.GaussianBlur)
             {
-                // 青色半透明，代表水滴/模糊
                 _brushCursor.Fill = new SolidColorBrush(Color.FromArgb(AppConsts.GaussianBlurCursorAlpha, 0, 255, 255));
                 _brushCursor.Stroke = Brushes.Cyan;
                 _brushCursor.StrokeThickness = AppConsts.PenDefaultStrokeThickness;
@@ -230,11 +208,8 @@ public partial class PenTool : ToolBase
                 _brushCursor.Stroke = new SolidColorBrush(Color.FromArgb(AppConsts.PenLowOpacityStrokeAlpha, 128, 128, 128));
                 _brushCursor.StrokeThickness = AppConsts.PenLowOpacityStrokeThickness;
             }
-            else
-            {
-                _brushCursor.Stroke = null;
-            }
-        }
+            else  _brushCursor.Stroke = null;
+        } t.Toggle(slient: true);
     }
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
@@ -244,7 +219,6 @@ public partial class PenTool : ToolBase
         UpdateCursorVisual(ctx, viewPos); // 更新光标
         if (ctx.PenStyle == BrushStyle.AiEraser)
         {
-            // 确保遮罩层存在
             if (_maskImageOverlay == null)
             {
                 _maskImageOverlay = new Image
@@ -252,11 +226,8 @@ public partial class PenTool : ToolBase
                     IsHitTestVisible = false,
                     Opacity = AppConsts.AiEraserMaskOpacity // 半透明显示
                 };
-                // 插入到 EditorOverlay 中，但在 Cursor 之下
                 ctx.EditorOverlay.Children.Insert(0, _maskImageOverlay);
             }
-
-            // 如果 Bitmap 大小变了或为空，重新创建
             int w = ctx.Surface.Bitmap.PixelWidth;
             int h = ctx.Surface.Bitmap.PixelHeight;
             if (_maskBitmap == null || _maskBitmap.PixelWidth != w || _maskBitmap.PixelHeight != h)
@@ -280,7 +251,6 @@ public partial class PenTool : ToolBase
         if (ctx.PenStyle == BrushStyle.Calligraphy)
         {
             pressure = 1.0f;
-            // ★ 重置平滑状态
             _smoothedPressure = 1.0f;  // 起笔时压力满
             _smoothedVelocity = 0f;
             _lastTimestamp = 0;
@@ -296,7 +266,6 @@ public partial class PenTool : ToolBase
         }
         else
         {
-            // 优化：仅清理上次笔划触及的区域，避免全屏 Array.Clear
             if (_lastStrokeDirtyRect.Width > 0 && _lastStrokeDirtyRect.Height > 0)
             {
                 int xStart = _lastStrokeDirtyRect.X;
@@ -361,7 +330,6 @@ public partial class PenTool : ToolBase
         }
         ctx.Surface.Bitmap.Unlock();
     }
-
     public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         if ((MainWindow.GetCurrentInstance()).IsViewMode)
@@ -388,7 +356,6 @@ public partial class PenTool : ToolBase
 
         if (ctx.PenStyle == BrushStyle.Calligraphy)
         {
-            // ★ 使用新的平滑算法
             pressure = ComputeSmoothedCalligraphyPressure(px, _lastPixel);
 
             _calliPoints.Add(new CalligraphyPoint
@@ -397,8 +364,6 @@ public partial class PenTool : ToolBase
                 Y = (float)px.Y,
                 Pressure = pressure
             });
-
-            // 至少需要 4 个点才能做 Catmull-Rom
             if (_calliPoints.Count >= 4)
             {
                 int n = _calliPoints.Count;
@@ -458,8 +423,6 @@ public partial class PenTool : ToolBase
                 int stride = ctx.Surface.Bitmap.BackBufferStride;
                 int width = ctx.Surface.Bitmap.PixelWidth;
                 int height = ctx.Surface.Bitmap.PixelHeight;
-
-                // ★ 对书写笔使用细分插值绘制
                 Int32Rect? dirty;
                 if (ctx.PenStyle == BrushStyle.Calligraphy)
                 {
@@ -494,11 +457,7 @@ public partial class PenTool : ToolBase
                 }
             }
         }
-        finally
-        {
-            ctx.Surface.Bitmap.Unlock();
-        }
-
+        finally { ctx.Surface.Bitmap.Unlock();  }
         _lastPixel = px;
         _lastPressure = pressure; 
     }
@@ -514,22 +473,13 @@ public partial class PenTool : ToolBase
            style == BrushStyle.Mosaic;  
     }
 
-    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
-    {
-        StopDrawing(ctx);
-    }
-
-    public override void StopAction(ToolContext ctx)
-    {
-        StopDrawing(ctx);
-    }
+    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f) {StopDrawing(ctx); }
+    public override void StopAction(ToolContext ctx) { StopDrawing(ctx);  }
 
     public void StopDrawing(ToolContext ctx)
     {
         if (!_drawing) return;
         _drawing = false;
-
-        // 在提交前获取最终的脏矩形联合体
         var dirtyRects = ctx.Undo.GetCurrentStrokeRects();
         if (dirtyRects != null && dirtyRects.Count > 0)
         {
@@ -543,16 +493,11 @@ public partial class PenTool : ToolBase
             }
             _lastStrokeDirtyRect = ClampRect(new Int32Rect(minX, minY, maxX - minX, maxY - minY), _maskWidth, _maskHeight);
         }
-
         ctx.Undo.CommitStroke();
         ctx.IsDirty = true;
         ctx.ReleasePointerCapture();
 
-        if (ctx.PenStyle == BrushStyle.AiEraser)
-        {
-            ApplyAiEraser(ctx);
-            return;
-        }
+        if (ctx.PenStyle == BrushStyle.AiEraser) {  ApplyAiEraser(ctx);  return;   }
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static byte ClampColor(int value)
@@ -605,10 +550,6 @@ public partial class PenTool : ToolBase
             (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth,
             (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight);
     }
-
-    /// <summary>
-    /// 基于时间的速度计算 + 指数移动平均平滑
-    /// </summary>
     private float ComputeSmoothedCalligraphyPressure(Point currentPixel, Point lastPixel)
     {
         long now = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -631,39 +572,16 @@ public partial class PenTool : ToolBase
         float dx = (float)(currentPixel.X - lastPixel.X);
         float dy = (float)(currentPixel.Y - lastPixel.Y);
         float distance = MathF.Sqrt(dx * dx + dy * dy);
-
-        // 基于时间的速度（像素/秒），而非每帧距离
         float velocity = distance / dt;
-
-        // 速度平滑（指数移动平均）
-        // smoothFactor 越小越平滑，0.15~0.3 适合书写笔
         _smoothedVelocity = _smoothedVelocity + (_smoothedVelocity == 0 ? 1.0f : AppConsts.PenVelocitySmoothFactor) * (velocity - _smoothedVelocity);
-
-        // 速度 → 压力映射（使用 sigmoid 曲线，比线性更自然）
-        // minSpeed: 低于此速度视为"停顿"，压力=1
-        // maxSpeed: 高于此速度视为"快速"，压力=minPressure
-
-        // 归一化速度 [0, 1]
         float normalizedSpeed = Math.Clamp(
             (_smoothedVelocity - AppConsts.CalligraphyMinSpeed) / (AppConsts.CalligraphyMaxSpeedPx - AppConsts.CalligraphyMinSpeed), 0f, 1f);
-
-        // Sigmoid 映射：中间速度变化更敏感，两端趋于平缓
-        // f(x) = 1 - x^power  (power < 1 使中间更敏感)
         float targetPressure = 1.0f - (1.0f - AppConsts.CalligraphyMinPressureVal) * MathF.Pow(normalizedSpeed, 0.6f);
-
-        // 压力平滑（关键！防止粗细跳变）
-        // 变细可以快一些（笔提起），变粗要慢一些（墨水扩散需要时间）
         float pressureSmoothFactor;
         if (targetPressure < _smoothedPressure)
-        {
-            // 变细（加速）— 响应快一些
             pressureSmoothFactor = Math.Clamp(dt * 8f, 0.05f, 0.5f);
-        }
         else
-        {
-            // 变粗（减速）— 响应慢一些，更自然
             pressureSmoothFactor = Math.Clamp(dt * 4f, 0.03f, 0.3f);
-        }
 
         _smoothedPressure += pressureSmoothFactor * (targetPressure - _smoothedPressure);
         _smoothedPressure = Math.Clamp(_smoothedPressure, (float)AppConsts.CalligraphyMinPressureVal, 1.0f);

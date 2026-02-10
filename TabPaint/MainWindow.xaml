@@ -154,7 +154,8 @@
                                  Orientation="Vertical"
                                    Style="{StaticResource RulerVisibilityStyle}"/>
                     <Border Grid.Row="0" Grid.Column="0" 
-        Background="{DynamicResource ChromeMediumBrush}" Opacity="0.12">
+        Background="{DynamicResource GlassBackgroundMediumBrush}"
+        ClipToBounds="True">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -166,7 +167,6 @@
                             </Style>
                         </Border.Style>
                     </Border>
-
 
                     <ScrollViewer Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  
                                   Style="{StaticResource FluentScrollViewer}" Name="ScrollContainer" 

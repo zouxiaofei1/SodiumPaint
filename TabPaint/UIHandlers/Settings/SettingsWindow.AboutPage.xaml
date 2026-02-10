@@ -15,40 +15,28 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <StackPanel Margin="24,24,44,24">
-
-        <!-- 顶部信息区域 -->
         <Border Background="Transparent" 
                 HorizontalAlignment="Center"
                 MaxWidth="400">
 
             <StackPanel HorizontalAlignment="Center">
-
-                <!-- 1. 图标 -->
                 <Image x:Name="AppIcon" 
                        Source="pack://application:,,,/Resources/TabPaint.ico" 
                        Width="84" Height="84" 
                        HorizontalAlignment="Center" 
                        RenderOptions.BitmapScalingMode="HighQuality"
                        Margin="0,0,0,16"/>
-
-                <!-- 2. 应用名称 -->
                 <TextBlock Text="TabPaint" 
                            HorizontalAlignment="Center"
                            FontSize="22" 
                            FontWeight="SemiBold" 
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-
-                <!-- 3. 副标题 -->
                 <TextBlock Text="{DynamicResource L_Settings_About_Subtitle}" 
                            HorizontalAlignment="Center"
                            Foreground="{DynamicResource TextSecondaryBrush}" 
                            FontSize="12" 
                            Margin="0,8,0,16"/>
-
-                <!-- 4. 开发者与版本号 (徽章样式) -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-
-                    <!-- 开发者徽章 -->
                     <Border BorderBrush="{DynamicResource BorderLightBrush}"  
                             Background="{DynamicResource GlassBackgroundMediumBrush}" 
                             BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
@@ -57,14 +45,11 @@
                             <TextBlock Text="zouxiaofei1" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
-
-                    <!-- 版本号徽章 -->
                     <Border BorderBrush="{DynamicResource BorderLightBrush}" 
                             Background="{DynamicResource GlassBackgroundMediumBrush}" 
                             BorderThickness="1" CornerRadius="4" Padding="8,4">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Ver." Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" FontSize="11"/>
-                            <!-- 这里改为绑定 UserControl 自身的 ProgramVersion 属性 -->
                             <TextBlock Text="{Binding ProgramVersion, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                        Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11"/>
                         </StackPanel>
@@ -74,14 +59,8 @@
 
             </StackPanel>
         </Border>
-
-        <!-- 分割线 -->
         <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}" Width="400" HorizontalAlignment="Center"/>
-
-        <!-- 按钮区域 -->
         <StackPanel Margin="0,10,0,0" HorizontalAlignment="Center" Width="300">
-
-            <!-- 按钮统一样式资源 -->
             <StackPanel.Resources>
                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                     <Setter Property="Height" Value="36"/>
@@ -109,8 +88,6 @@
                     </Setter>
                 </Style>
             </StackPanel.Resources>
-
-            <!-- GitHub 按钮 -->
             <Button Cursor="Hand" 
                     Background="{DynamicResource GlassBackgroundMediumBrush}"
                     Tag="https://github.com/zouxiaofei1/TabPaint" 
@@ -120,8 +97,6 @@
                     <TextBlock Text="{DynamicResource L_Settings_About_Github}"/>
                 </StackPanel>
             </Button>
-
-            <!-- 检查更新 按钮 -->
             <Button Cursor="Hand" 
                     Background="{DynamicResource GlassBackgroundMediumBrush}"
                     Tag="https://github.com/zouxiaofei1/TabPaint/releases" 
@@ -131,8 +106,6 @@
                     <TextBlock Text="{DynamicResource L_Settings_About_CheckUpdate}"/>
                 </StackPanel>
             </Button>
-
-            <!-- 帮助文档 按钮 -->
             <Button Cursor="Hand" 
                     Background="{DynamicResource GlassBackgroundMediumBrush}"
                     Tag="https://zouxiaofei1.github.io/tabpaint-site/guide/start/installation.html" 

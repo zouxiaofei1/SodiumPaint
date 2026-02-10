@@ -118,7 +118,6 @@ namespace TabPaint.Controls
             }
             else
             {
-                // 如果是 ImageSource (如 png/ico)
                 var imgSrc = TryFindResource(resourceKey) as ImageSource;
                 if (imgSrc != null)
                 {
@@ -148,11 +147,8 @@ namespace TabPaint.Controls
                         Width = 16,
                         Height = 16
                     };
-
-                    // 1. 设置 Geometry 数据
                     if (iconSource is string keyOrData)
                     {
-                        // 尝试作为资源 Key 查找
                         var geoRes = TryFindResource(keyOrData) as Geometry;
                         if (geoRes != null)
                         {
@@ -160,23 +156,14 @@ namespace TabPaint.Controls
                         }
                         else
                         {
-                            // 如果找不到资源，则尝试作为 Path Data 字符串解析
-                            try
-                            {
-                                path.Data = Geometry.Parse(keyOrData);
-                            }
+                            try   {   path.Data = Geometry.Parse(keyOrData); }
                             catch { /* 忽略解析错误 */ }
                         }
                     }
-                    else if (iconSource is Geometry geo)
-                    {
-                        path.Data = geo;
-                    }
+                    else if (iconSource is Geometry geo)  path.Data = geo;
 
-                    // 2. 关键修复：设置样式 (Fill vs Stroke)
                     if (isStrokePath)
                     {
-                        // 描边模式（用于形状）：内容透明，边框使用图标色
                         path.Fill = Brushes.Transparent;
                         path.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
                         path.StrokeThickness = 1.5;
@@ -184,17 +171,11 @@ namespace TabPaint.Controls
                         path.StrokeEndLineCap = PenLineCap.Round;
                         path.StrokeStartLineCap = PenLineCap.Round;
                     }
-                    else
-                    {
-                        // 填充模式（用于普通图标）：填充使用图标色
-                        path.SetResourceReference(Shape.FillProperty, "IconFillBrush");
-                    }
-
+                    else  path.SetResourceReference(Shape.FillProperty, "IconFillBrush");
                     item.Icon = path;
                 }
                 else
                 {
-                    // 处理 Image 图标
                     var img = new Image { Width = 16, Height = 16 };
                     if (iconSource is string key)
                         img.SetResourceReference(Image.SourceProperty, key);
@@ -205,7 +186,6 @@ namespace TabPaint.Controls
 
             return item;
         }
-        // --- 1. 选区菜单加载 ---
         private void OnSelectMenuOpened(object sender, RoutedEventArgs e)
         {
             if (_isSelectMenuLoaded) return;
@@ -216,8 +196,6 @@ namespace TabPaint.Controls
 
             _isSelectMenuLoaded = true;
         }
-
-        // --- 2. 折叠工具菜单加载 ---
         private void OnCollapsedToolsOpened(object sender, RoutedEventArgs e)
         {
             if (_isCollapsedToolsLoaded) return;
@@ -231,8 +209,6 @@ namespace TabPaint.Controls
 
             _isCollapsedToolsLoaded = true;
         }
-
-        // --- 3. 画刷菜单加载 ---
         private void OnBrushMenuOpened(object sender, RoutedEventArgs e)
         {
             if (_isBrushMenuLoaded) return;
@@ -254,13 +230,9 @@ namespace TabPaint.Controls
 
             _isBrushMenuLoaded = true;
         }
-
-        // --- 4. 形状菜单加载 (包含复杂的 Path Data) ---
         private void OnShapeMenuOpened(object sender, RoutedEventArgs e)
         {
             if (_isShapeMenuLoaded) return;
-
-            // 基础形状 (Icon资源) -> isPathIcon=true, isStrokePath=true
             StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Rectangle", "Icon_Shape_Rectangle", OnShapeStyleClick_Forward, "Rectangle", true, true));
             StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_RoundedRectangle", "Icon_Shape_RoundedRect", OnShapeStyleClick_Forward, "RoundedRectangle", true, true));
             StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Ellipse", "Icon_Shape_Ellipse", OnShapeStyleClick_Forward, "Ellipse", true, true));
@@ -268,9 +240,6 @@ namespace TabPaint.Controls
             StackPanelShape.Children.Add(CreateMenuItem("L_ToolBar_Shape_Arrow", "Icon_Shape_Arrow", OnShapeStyleClick_Forward, "Arrow", true, true));
 
             StackPanelShape.Children.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-
-            // 特殊形状 (Path String)
-            // 务必确保这里最后两个参数都是 TRUE
             string triangleData = "M 8,2 L 15,14 L 1,14 Z";
             string diamondData = "M 8,1 L 15,8 L 8,15 L 1,8 Z";
             string pentagonData = "M 8,1 L 15,6 L 12,15 L 4,15 L 1,6 Z";
@@ -285,9 +254,6 @@ namespace TabPaint.Controls
 
             _isShapeMenuLoaded = true;
         }
-
-
-        // --- 5. 旋转菜单加载 ---
         private void OnRotateMenuOpened(object sender, RoutedEventArgs e)
         {
             if (_isRotateMenuLoaded) return;
@@ -310,14 +276,9 @@ namespace TabPaint.Controls
         {
             SelectMainClick?.Invoke(this, e);
         }
-
-        // 2. 下拉菜单项点击转发
         private void OnSelectStyleClick_Forward(object sender, RoutedEventArgs e)
         {
-            // 关闭 Popup (可选，根据你的交互需求)
             SubMenuPopupSelect.IsOpen = false;
-
-            // 转发事件给 MainWindow
             SelectStyleClick?.Invoke(sender, e);
         }
         public void UpdateShapeIcon(string resourceKey)
@@ -341,8 +302,6 @@ namespace TabPaint.Controls
                 CurrentShapeIconHost.Content = path;
             }
         }
-   
-
         private static RoutedEvent RegisterEvent(string name)
         {
             return EventManager.RegisterRoutedEvent(name, RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(ToolBarControl));
@@ -391,7 +350,6 @@ namespace TabPaint.Controls
 
         private void OnColorButtonClick_Forward(object sender, RoutedEventArgs e)
         {
-            // 列表中的颜色块，sender是Button，DataContext是颜色Brush
             RaiseEvent(new RoutedEventArgs(ColorButtonClickEvent, sender));
         }
         private void OnToolBarSizeChanged(object sender, SizeChangedEventArgs e)
@@ -412,8 +370,6 @@ namespace TabPaint.Controls
                 {
                     ExpandedToolsPanel.Visibility = Visibility.Visible;
                     CollapsedToolsPanel.Visibility = Visibility.Collapsed;
-
-                    // 也可以在这里顺便关闭 Popup，防止菜单悬浮在空中
                     ToolsMenuToggle.IsChecked = false;
                 }
             }

@@ -308,10 +308,8 @@
         <Setter Property="Width" Value="Auto"/>
         <Setter Property="Height" Value="Auto"/>
         <Setter Property="Template">
-            <!-- 默认垂直模板占位，主要通过 Trigger 切换 -->
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ScrollBar}">
-                    <!-- 这里为了代码简洁，直接复用下面的逻辑，实际WPF建议在这里放默认方向的Template -->
                     <Grid />
                 </ControlTemplate>
             </Setter.Value>
@@ -403,7 +401,6 @@
     <!-- ComboBox 模板 -->
     <ControlTemplate x:Key="FluentComboBoxTemplate" TargetType="ComboBox">
         <Grid>
-            <!-- 背景层 -->
             <ToggleButton Name="ToggleButton"
                       Template="{StaticResource FluentComboBoxToggleButton}"
                       Focusable="false"
@@ -412,15 +409,11 @@
                       Background="{TemplateBinding Background}"
                       IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
                       ClickMode="Press"/>
-
-            <!-- 内容显示区域 (非编辑状态) -->
             <ContentPresenter Name="ContentSite" IsHitTestVisible="False"
                           Content="{TemplateBinding SelectionBoxItem}"
                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                           ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
                           Margin="10,0,24,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
-
-            <!-- 编辑框 -->
             <TextBox x:Name="PART_EditableTextBox"
                  Style="{x:Null}"
                  BorderThickness="0"
@@ -433,8 +426,6 @@
                  Focusable="True"
                  HorizontalAlignment="Stretch"
                  CaretBrush="{DynamicResource TextPrimaryBrush}"/>
-
-            <!-- 下拉弹窗 -->
             <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
                 <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
                     <Border x:Name="DropDownBorder" 
@@ -444,7 +435,6 @@
                             CornerRadius="6" 
                             Margin="0,4,0,4">
                         <Border.Effect>
-                            <!-- 阴影依然建议使用黑色低透明度，即使在暗色模式下，发光阴影对性能和原生感有影响，这里保持原样或微调 -->
                             <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.1" Direction="270" Color="Black"/>
                         </Border.Effect>
                         <ScrollViewer Margin="2" SnapsToDevicePixels="True">
@@ -472,9 +462,7 @@
     <Style x:Key="FluentComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="Padding" Value="8,4"/>
-        <!-- 更宽的内边距，触控/鼠标友好 -->
         <Setter Property="Margin" Value="4,2,4,2"/>
-        <!-- 项与项之间的间隔 -->
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -490,9 +478,7 @@
                         Padding="{TemplateBinding Padding}"
                         SnapsToDevicePixels="true"
                         CornerRadius="4">
-                        <!-- 这里的圆角是 Fluent 风格的关键 -->
                         <Grid>
-                            <!-- 左侧选中指示器 (Pill)，Win11 风格特征 -->
                             <Rectangle x:Name="Pill"
                                    HorizontalAlignment="Left"
                                    Width="3"
@@ -508,19 +494,13 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <!-- 1. 鼠标悬停 -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
                         </Trigger>
-
-                        <!-- 2. 选中状态 -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                             <Setter TargetName="Pill" Property="Visibility" Value="Visible"/>
-                            <!-- 显示左侧蓝条 -->
                         </Trigger>
-
-                        <!-- 3. 选中且鼠标悬停 (颜色稍微加深) -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="True"/>
@@ -528,8 +508,6 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="bd" Property="Background" Value="{DynamicResource ListItemPressedBrush}"/>
                         </MultiTrigger>
-
-                        <!-- 4. 禁用状态 -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
                         </Trigger>
@@ -672,7 +650,6 @@
                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                             VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                             <Grid>
-                                <!-- 选中状态：对号 (√) -->
                                 <Path x:Name="checkMark"
                                   Data="M1,5 L4.5,8.5 L11,1" 
                                   Stroke="{DynamicResource TextInverseBrush}"
@@ -690,7 +667,6 @@
                                         <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
                                     </Path.RenderTransform>
                                 </Path>
-                                <!-- 半选状态：横杠 (-) -->
                                 <Rectangle x:Name="indeterminateMark"
                                        Fill="{DynamicResource TextInverseBrush}"
                                        Width="10" Height="2"
@@ -712,7 +688,6 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <!-- 1. 鼠标悬停 (Unchecked) -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True"/>
@@ -721,8 +696,6 @@
                             <Setter TargetName="checkBoxBorder" Property="Background" Value="{DynamicResource ControlMouseOverBackgroundBrush}"/>
                             <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}"/>
                         </MultiTrigger>
-
-                        <!-- 2. 选中状态 (Checked) -->
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="checkBoxBorder" Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
                             <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
@@ -733,8 +706,6 @@
                                 </Setter.Value>
                             </Setter>
                         </Trigger>
-
-                        <!-- 3. 鼠标悬停 (Checked) -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True"/>
@@ -743,15 +714,11 @@
                             <Setter TargetName="checkBoxBorder" Property="Background" Value="{DynamicResource SystemAccentHoverBrush}"/>
                             <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{DynamicResource SystemAccentHoverBrush}"/>
                         </MultiTrigger>
-
-                        <!-- 4. 半选状态 (Indeterminate) -->
                         <Trigger Property="IsChecked" Value="{x:Null}">
                             <Setter TargetName="checkBoxBorder" Property="Background" Value="{DynamicResource SystemAccentBrush}"/>
                             <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
                             <Setter TargetName="indeterminateMark" Property="Opacity" Value="1"/>
                         </Trigger>
-
-                        <!-- 5. 禁用状态 -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="checkBoxBorder" Property="Background" Value="{DynamicResource ControlDisabledBackgroundBrush}"/>
                             <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{DynamicResource ControlDisabledBorderBrush}"/>
@@ -798,8 +765,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- ================= Slider 样式 (Thumb) ================= -->
     <Style x:Key="Win11SliderThumbStyle" TargetType="Thumb">
         <Setter Property="SnapsToDevicePixels" Value="true"/>
         <Setter Property="OverridesDefaultStyle" Value="true"/>
@@ -834,8 +799,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- ================= TextBox 样式 ================= -->
     <Style TargetType="{x:Type TextBox}">
         <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -846,7 +809,6 @@
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Height" Value="32"/>
         <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
-        <!-- 光标颜色也需要适配 -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
@@ -861,8 +823,6 @@
                                       Focusable="false"
                                       HorizontalScrollBarVisibility="Hidden"
                                       VerticalScrollBarVisibility="Hidden"/>
-
-                            <!-- 底部高亮条 -->
                             <Border x:Name="FocusBorder" 
                                 BorderBrush="{DynamicResource SystemAccentBrush}" 
                                 BorderThickness="0,0,0,2" 
@@ -891,9 +851,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- ================= Slider 样式 (Horizontal/Vertical) ================= -->
-    <!-- Vertical Slider -->
     <Style x:Key="Win11VerticalSliderStyle" TargetType="Slider">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
@@ -921,8 +878,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- Horizontal Slider -->
     <Style x:Key="Win11HorizontalSliderStyle" TargetType="{x:Type Slider}">
         <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -939,7 +894,6 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- 轨道背景 -->
                             <Border x:Name="TrackBackground"
                                 Grid.Row="1"
                                 Height="4"
@@ -949,7 +903,6 @@
 
                             <Track x:Name="PART_Track" Grid.Row="1">
                                 <Track.DecreaseRepeatButton>
-                                    <!-- 已填充颜色条 -->
                                     <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="{x:Type RepeatButton}">
@@ -976,7 +929,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <!-- 窗口右上角关闭按钮样式 -->
     <Style x:Key="WindowCloseButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -1000,17 +952,13 @@
                           SnapsToDevicePixels="True"/>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <!-- 悬停状态 -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#C42B1C"/>
-                            <!-- 红色背景 -->
                             <Setter Property="Foreground" Value="White"/>
                         </Trigger>
-                        <!-- 按下状态 -->
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#A82417"/>
                             <Setter Property="Foreground" Value="#E6E6E6"/>
-                            <!-- 稍微灰一点的白 -->
                             <Setter TargetName="border" Property="Opacity" Value="1.0"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -1112,8 +1060,6 @@
         <Setter Property="Padding" Value="4"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
-
-        <!-- 增加阴影效果 (之前可能写在 Popup 或 Border 上) -->
         <Setter Property="Effect">
             <Setter.Value>
                 <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Direction="270" Color="Black"/>
@@ -1123,14 +1069,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <!-- ✅ 正确：直接写 Border，不要外包 Popup -->
                     <Border CornerRadius="8" 
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         Padding="{TemplateBinding Padding}">
-
-                        <!-- 加上滚动条以防菜单太长 -->
                         <ScrollViewer Style="{DynamicResource FluentScrollViewer}" VerticalScrollBarVisibility="Auto">
                             <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" 
                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
@@ -1140,9 +1083,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-
-    <!-- Win11 风格 MenuItem 样式 -->
     <Style x:Key="Win11MenuItemStyle" TargetType="MenuItem">
         <Setter Property="Height" Value="32"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
@@ -1152,7 +1092,6 @@
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
                     <Grid>
-                        <!-- 主体背景 -->
                         <Border x:Name="Bg" 
                             Background="Transparent" 
                             CornerRadius="4" 
@@ -1165,8 +1104,6 @@
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="ShortcutGroup"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!-- 勾选标记 -->
                                 <Viewbox x:Name="CheckMark" 
                                      Grid.Column="0" 
                                      Width="14" Height="14" 
@@ -1181,30 +1118,22 @@
                                       StrokeLineJoin="Round"
                                       Fill="Transparent"/>
                                 </Viewbox>
-
-                                <!-- 图标 -->
                                 <ContentPresenter x:Name="Icon" 
                                               Grid.Column="0"
                                               ContentSource="Icon" 
                                               Margin="5,0" 
                                               VerticalAlignment="Center" 
                                               HorizontalAlignment="Center"/>
-
-                                <!-- 标题 -->
                                 <ContentPresenter Grid.Column="1" 
                                               ContentSource="Header" 
                                               VerticalAlignment="Center" 
                                               Margin="8,0,20,0"/>
-
-                                <!-- 快捷键 -->
                                 <TextBlock Grid.Column="2" 
                                        Text="{TemplateBinding InputGestureText}" 
                                        VerticalAlignment="Center" 
                                        Foreground="{DynamicResource TextTertiaryBrush}" 
                                        Margin="10,0,10,0" 
                                        FontSize="11"/>
-
-                                <!-- 子菜单箭头 -->
                                 <TextBlock x:Name="RightArrow" 
                                        Grid.Column="3"
                                        Text="&#xE76C;" 
@@ -1215,8 +1144,6 @@
                                        Visibility="Collapsed"/>
                             </Grid>
                         </Border>
-
-                        <!-- 子菜单弹出层 -->
                         <Popup x:Name="PART_Popup"
                            AllowsTransparency="True"
                            Focusable="False"
@@ -1248,8 +1175,6 @@
                             <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
                             <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
-
-                        <!-- 鼠标悬停: 使用极淡的背景 -->
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleSelectedBrush}"/>
                         </Trigger>
@@ -1266,7 +1191,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <!-- 分隔条样式 -->
     <Style x:Key="Win11MenuSeparatorStyle" TargetType="Separator">
         <Setter Property="Height" Value="1"/>
         <Setter Property="Margin" Value="4,4,4,4"/>
@@ -1283,8 +1207,6 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
-
-    <!-- 数字输入框样式 -->
     <Style TargetType="TextBox" x:Key="NumberInputStyle">
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Foreground" Value="{DynamicResource TextControlBrush}"/>
@@ -1332,8 +1254,6 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-
-                        <!-- 外部圆环 -->
                         <Border x:Name="OuterRing" 
                             Width="20" Height="20" 
                             CornerRadius="10" 
@@ -1341,8 +1261,6 @@
                             BorderBrush="{DynamicResource BorderMediumBrush}" 
                             Background="{DynamicResource ControlBackgroundBrush}"
                             VerticalAlignment="Center">
-
-                            <!-- 内部圆点 (初始隐藏/缩放为0) -->
                             <Ellipse x:Name="CheckGlyph" 
                                  Width="10" Height="10" 
                                  Fill="{DynamicResource SystemAccentBrush}" 
@@ -1352,14 +1270,10 @@
                                 </Ellipse.RenderTransform>
                             </Ellipse>
                         </Border>
-
-                        <!-- 文字内容 -->
                         <ContentPresenter Grid.Column="1" 
                                       Margin="{TemplateBinding Padding}" 
                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
                                       RecognizesAccessKey="True"/>
-
-                        <!-- 交互状态管理 -->
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualState x:Name="Normal"/>
@@ -1383,7 +1297,6 @@
                             <VisualStateGroup x:Name="CheckStates">
                                 <VisualState x:Name="Checked">
                                     <Storyboard>
-                                        <!-- 选中时圆点放大动画 -->
                                         <DoubleAnimation Storyboard.TargetName="CheckGlyph" 
                                                      Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
                                                      To="1" Duration="0:0:0.15">
@@ -1398,7 +1311,6 @@
                                                 <BackEase Amplitude="1" EasingMode="EaseOut"/>
                                             </DoubleAnimation.EasingFunction>
                                         </DoubleAnimation>
-                                        <!-- 选中时边框变色 -->
                                         <ColorAnimation Storyboard.TargetName="OuterRing" 
                                                     Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
                                                     To="{DynamicResource SystemAccentColor}" Duration="0:0:0.1"/>
@@ -1419,7 +1331,6 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <!-- 禁用状态 -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5"/>
                         </Trigger>
@@ -1457,7 +1368,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <!-- Fluent 风格按钮 -->
     <Style TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}"/>
@@ -1488,9 +1398,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-
-
     <!-- 圆形滑块样式 -->
     <Style x:Key="SliderThumbStyle" TargetType="{x:Type Thumb}">
         <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -1524,10 +1431,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Slider}">
                     <Grid Background="Transparent" VerticalAlignment="Center">
-                        <!-- 轨道 -->
                         <Border x:Name="TrackBackground" Height="4" CornerRadius="2" 
                                     Background="{DynamicResource SliderTrackBackgroundBrush}" VerticalAlignment="Center" Margin="5,0"/>
-                        <!-- 滑块 -->
                         <Track x:Name="PART_Track">
                             <Track.Thumb>
                                 <Thumb Style="{StaticResource SliderThumbStyle}" VerticalAlignment="Center"/>

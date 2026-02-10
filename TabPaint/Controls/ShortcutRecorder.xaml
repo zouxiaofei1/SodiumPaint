@@ -23,14 +23,12 @@
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
                 <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
-                <!-- 这里设置最小高度，增加控件高度 -->
                 <Setter Property="MinHeight" Value="28"/>
                 <Setter Property="Margin" Value="1"/>
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
                         <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
                         <Setter Property="BorderThickness" Value="1.5"/>
-                        <!-- 边框变粗 -->
                         <Setter Property="Background" Value="{DynamicResource ChromeMediumBrush}"/>
                     </DataTrigger>
                     <Trigger Property="IsMouseOver" Value="True">

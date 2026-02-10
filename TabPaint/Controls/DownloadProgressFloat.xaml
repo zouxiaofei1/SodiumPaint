@@ -9,7 +9,6 @@
              MouseDown="UserControl_MouseDown">
 
     <UserControl.Resources>
-        <!-- 简单的关闭按钮样式 -->
         <Style x:Key="TinyCloseButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -80,13 +79,9 @@
                            Margin="8,0,0,0" 
                            VerticalAlignment="Center"/>
             </StackPanel>
-
-            <!-- Row 0: 关闭按钮 -->
             <Button Grid.Row="0" Grid.Column="1" 
                     Style="{StaticResource TinyCloseButtonStyle}" 
                     Click="CloseButton_Click"/>
-
-            <!-- Row 1: 进度条 -->
             <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="4">
                 <Rectangle Fill="{DynamicResource BorderMediumBrush}" RadiusX="2" RadiusY="2" Opacity="0.3"/>
                 <Rectangle x:Name="ProgressBarFill" 
@@ -94,22 +89,16 @@
                            Fill="{DynamicResource SystemAccentBrush}" 
                            RadiusX="2" RadiusY="2" Width="0"/>
             </Grid>
-
-            <!-- Row 2: 速度和大小信息 (新增) -->
             <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,6,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
-                <!-- 左侧：已下载/总大小 -->
                 <TextBlock x:Name="SizeInfoText" 
                            Grid.Column="0"
                            Text="0 MB / 0 MB" 
                            FontSize="11" 
                            Foreground="{DynamicResource TextTertiaryBrush}"/>
-
-                <!-- 右侧：速度 -->
                 <TextBlock x:Name="SpeedText" 
                            Grid.Column="1"
                            Text="0 KB/s" 

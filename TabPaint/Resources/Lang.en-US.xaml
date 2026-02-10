@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- Plugins panel -->
     <sys:String x:Key="L_Settings_Plugins_Title">Plugins / AI Models</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Desc">Manage AI models and optional components. Models will be downloaded to the app cache directory.</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Desc">Manage AI models and optional components.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Title">Remove Background</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_RMBG_Desc">AI model for high-quality background removal.</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Model_SR_Title">Real-ESRGAN (Super Resolution)</sys:String>
@@ -13,9 +13,9 @@
     <sys:String x:Key="L_Settings_Plugins_Status_NotInstalled">Not Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">Downloading...</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Install">Install</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Install">Manage</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
-    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? You will need to redownload it to use the corresponding features.</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? </sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
     <!-- SettingsWindow Navigation -->
     <sys:String x:Key="L_Settings_Title">Settings</sys:String>
@@ -41,18 +41,14 @@
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Up">Scroll image</sys:String>
     <sys:String x:Key="L_Settings_General_MouseWheel_Option_Switch">Switch image</sys:String>
     <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Title">Always show tab close button</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">Always display the close button on image tabs, not just on hover</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_AlwaysShowTabClose_Desc">Always display the close button on image tabs.</sys:String>
     <sys:String x:Key="L_Menu_File_RecycleBin">File Recycle Bin</sys:String>
-    <sys:String x:Key="L_RecycleBin_Title">File Recycle Bin</sys:String>
-    <sys:String x:Key="L_RecycleBin_Empty">No temporary images</sys:String>
-    <sys:String x:Key="L_RecycleBin_DaysLeft_Format">Expires in {0} days</sys:String>
-    <sys:String x:Key="L_RecycleBin_Restore">Restore</sys:String>
-    <sys:String x:Key="L_RecycleBin_DeleteForever">Delete Forever</sys:String>
+
     <sys:String x:Key="L_Settings_Advanced_Undo_Header">Undo / Redo</sys:String>
     <sys:String x:Key="L_Settings_MaxGlobalUndoSteps">Global Undo Limit</sys:String>
-    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">Total undo steps across all tabs. Oldest records are cleared when limit is reached.</sys:String>
+    <sys:String x:Key="L_Settings_MaxGlobalUndoSteps_Desc">Total undo steps across all tabs.</sys:String>
     <sys:String x:Key="L_Settings_MaxUndoMemory">Max Undo Memory</sys:String>
-    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">Automatically clean oldest undo records when total memory used by all tabs exceeds this value.</sys:String>
+    <sys:String x:Key="L_Settings_MaxUndoMemory_Desc">Total undo memory limit across all tabs.</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Title">Theme</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Desc">Switch between light and dark modes</sys:String>
     <sys:String x:Key="L_Settings_General_Theme_Option_System">System</sys:String>
@@ -159,7 +155,7 @@
     <sys:String x:Key="L_Settings_Advanced_PixelThreshold_PaintMode">Paint mode</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Habits_Header">Interaction</sys:String>
     <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Title">Skip reset confirmation</sys:String>
-    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">Skip the second confirmation when clearing tabs or resetting workspace</sys:String>
+    <sys:String x:Key="L_Settings_Advanced_SkipResetConfirm_Desc">Skip the second confirmation when clearing tabs</sys:String>
     <sys:String x:Key="L_Settings_Advanced_Maintenance_Header">Maintenance</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset_Button">Clear all caches and settings</sys:String>
     <sys:String x:Key="L_Settings_Advanced_FactoryReset">Factory reset</sys:String>
@@ -175,6 +171,7 @@
     <sys:String x:Key="L_Common_OK">OK</sys:String>
     <sys:String x:Key="L_Common_Untitled">Untitled</sys:String>
     <sys:String x:Key="L_Common_Reset">Reset</sys:String>
+    <sys:String x:Key="L_Common_No">No</sys:String>
     <sys:String x:Key="L_Common_Cancel">Cancel</sys:String>
     <sys:String x:Key="L_Common_Error">Error</sys:String>
     <sys:String x:Key="L_Common_Tip">Tip</sys:String>
@@ -301,7 +298,6 @@
     <sys:String x:Key="L_Settings_About_Github">GitHub</sys:String>
     <sys:String x:Key="L_Settings_About_CheckUpdate">Check updates</sys:String>
     <sys:String x:Key="L_Settings_About_Help">Help</sys:String>
-    <sys:String x:Key="L_Settings_About_Help_ComingSoon">Help documentation is being written, stay tuned!</sys:String>
 
     <!-- ToolBar -->
     <sys:String x:Key="L_ToolBar_Tool_Select">Select area</sys:String>
@@ -629,9 +625,9 @@
     <sys:String x:Key="L_Load_Info_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">[New Image] Memory File</sys:String>
     <sys:String x:Key="L_Status_Unsaved" xmlns:sys="clr-namespace:System;assembly=mscorlib">Unsaved</sys:String>
     <sys:String x:Key="L_Msg_ResetWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Discard Changes</sys:String>
-    <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to reset the current workspace?&#x0a;· All 'Untitled' new canvases will be deleted&#x0a;· All open images will revert to disk state&#x0a;· Undo history, temporary cache, and session records will be cleared</sys:String>
+    <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to reset the current workspace? All new canvases will be deleted, All open images will revert to disk state.</sys:String>
     <sys:String x:Key="L_Msg_DeleteFile_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete File</sys:String>
-    <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to move file '{0}' to the Recycle Bin?&#x0a;This operation cannot be undone (depends on system settings).</sys:String>
+    <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to move file '{0}' to the Recycle Bin?&#x0a;This operation cannot be undone.</sys:String>
     <sys:String x:Key="L_Msg_SaveError_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save Failed</sys:String>
     <sys:String x:Key="L_Msg_SaveError_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">{0}&#x0a;&#x0a;Do you want to try [Save As] to another location?</sys:String>
     <sys:String x:Key="L_Msg_UnsavedClose_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Save Changes</sys:String>
@@ -762,8 +758,8 @@
     <sys:String x:Key="L_Toast_Upscale_Success">Upscale complete (400%)</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Error_Prefix">Upscale failed: {0}</sys:String>
     <sys:String x:Key="L_AI_Download_Title">Download Model</sys:String>
-    <sys:String x:Key="L_AI_Download_RMBG_Content">First time use requires downloading the background removal model (~170MB).&#x0a;Do you want to continue?</sys:String>
-    <sys:String x:Key="L_AI_Download_SR_Content">First time use requires downloading the super resolution model (~60MB).&#x0a;Do you want to continue?</sys:String>
+    <sys:String x:Key="L_AI_Download_RMBG_Content">First time use requires downloading the background removal model. Do you want to continue?</sys:String>
+    <sys:String x:Key="L_AI_Download_SR_Content">First time use requires downloading the super resolution model. Do you want to continue?</sys:String>
     <sys:String x:Key="L_Menu_Effect_Watermark">Watermark...</sys:String>
     <sys:String x:Key="L_Watermark_Title">Add Watermark</sys:String>
     <sys:String x:Key="L_Watermark_Type">Type</sys:String>
@@ -802,7 +798,7 @@
     <sys:String x:Key="L_AI_Eraser_Processing" xmlns:sys="clr-namespace:System;assembly=mscorlib">AI Processing...</sys:String>
     <sys:String x:Key="L_AI_Eraser_Success" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser applied successfully!</sys:String>
     <sys:String x:Key="L_AI_Eraser_Error_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Eraser error: {0}</sys:String>
-    <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">The AI Eraser requires downloading a repair model (LaMa) for the first time, which is about 200MB. &#x0a;It will be verified via MD5 after downloading. Continue?</sys:String>
+    <sys:String x:Key="L_AI_Download_Inpaint_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">The AI Eraser requires downloading a repair model  for the first time. Continue?</sys:String>
     <sys:String x:Key="L_Update_Found_Title">New Update Found</sys:String>
 
     <sys:String x:Key="L_Filter_Strength_Title">Adjust Intensity</sys:String>

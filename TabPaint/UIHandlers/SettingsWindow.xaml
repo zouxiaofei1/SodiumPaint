@@ -31,8 +31,6 @@
 
             <local:NonLinearConverter x:Key="NonLinearConverter"/>
             <local:ColorMatchConverter x:Key="ColorMatchConverter"/>
-
-            <!-- 汉堡菜单按钮样式 -->
             <Style x:Key="HamburgerButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -49,8 +47,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 导航项样式 -->
             <Style x:Key="NavListBoxItemStyle" TargetType="ListBoxItem">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -86,8 +82,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 窗口控制按钮样式 -->
             <Style x:Key="TitleBarButtonStyle" TargetType="Button">
                 <Setter Property="Width" Value="46"/>
                 <Setter Property="Height" Value="32"/>
@@ -143,9 +137,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- 标题栏 -->
             <RowDefinition Height="*"/>
-            <!-- 内容 -->
         </Grid.RowDefinitions>
 
         <!-- 1. 自定义标题栏 -->
@@ -185,7 +177,6 @@
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="{DynamicResource GlassBackgroundLowBrush}"/>
                         <Style.Triggers>
-                            <!-- 确保在窗口禁用（如弹出模态对话框）时，背景依然可见 -->
                             <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
                                 <Setter Property="Background" Value="{DynamicResource GlassBackgroundLowBrush}"/>
                             </DataTrigger>
@@ -195,11 +186,8 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- 汉堡菜单 -->
                         <RowDefinition Height="*"/>
-                        <!-- 上部列表 -->
                         <RowDefinition Height="Auto"/>
-                        <!-- 底部列表 -->
                     </Grid.RowDefinitions>
 
                     <!-- 汉堡菜单按钮 -->
@@ -311,20 +299,12 @@
             <!-- 右侧内容区 -->
             <Border Grid.Column="1" Background="Transparent" ClipToBounds="True">
                 <Grid>
-                    <!-- 主内容滚动区 -->
                     <ScrollViewer Style="{StaticResource FluentScrollViewer}" Padding="0" Margin="0" 
                                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="None">
-
-                        <!-- 核心修改：使用 ContentControl 动态加载 UserControl -->
                         <ContentControl x:Name="MainContent" Margin="0"/>
-
                     </ScrollViewer>
-
-                    <!-- Toast 通知区域 -->
                     <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" 
                                 Margin="0,10,20,0" Panel.ZIndex="999">
-
-                        <!-- 1. 更新通知 -->
                         <Border x:Name="UpdateToast"
                                 Background="{DynamicResource ThemeAccentBrush}"
                                 Padding="16,10" CornerRadius="4"
@@ -345,8 +325,6 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-
-                        <!-- 2. 保存成功通知 -->
                         <Border x:Name="SavedToast" 
                                 Background="{DynamicResource ThemeAccentBrush}" 
                                 Padding="16,10" CornerRadius="4"
@@ -363,7 +341,6 @@
                                 <TextBlock Text="{DynamicResource L_Settings_Toast_Saved}" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
-                        <!-- 3. 冲突通知 -->
                         <Border x:Name="ConflictToast" 
                                 Background="{DynamicResource DangerBrush}" 
                                 Padding="16,10" CornerRadius="4"

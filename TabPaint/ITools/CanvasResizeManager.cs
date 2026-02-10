@@ -224,7 +224,7 @@ namespace TabPaint
                 double invScale = 1.0 / (MainWindow.GetCurrentInstance()).zoomscale;
                 _previewBorder = new Rectangle
                 {
-                    Stroke = Brushes.Black,
+                    Stroke = (Brush)(Brush)System.Windows.Application.Current.FindResource("TextPrimaryBrush"),
                     StrokeDashArray = new DoubleCollection { 4, 4 },
                     StrokeThickness = 1 * invScale,
                     IsHitTestVisible = false
@@ -245,17 +245,11 @@ namespace TabPaint
                 // 1. 获取当前图像数据 (Undo 需要)
                 var currentBmp = mw._ctx.Surface.Bitmap; // 假设这是当前的 WriteableBitmap
                 var rect = new Int32Rect(0, 0, currentBmp.PixelWidth, currentBmp.PixelHeight);
-
-                // 获取全图数据用于 Undo
                 byte[] oldPixels = mw._undo.SafeExtractRegion(rect);
-
-                // 2. 创建新位图
                 var newBmp = new WriteableBitmap(newW, newH, currentBmp.DpiX, currentBmp.DpiY, PixelFormats.Bgra32, null);
                 byte[] whiteBg = new byte[newW * newH * 4];
                 for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = 255;
                 newBmp.WritePixels(new Int32Rect(0, 0, newW, newH), whiteBg, newBmp.BackBufferStride, 0);
-
-                // 3. 将旧图像绘制到新图像的指定偏移位置
                 int copyX = Math.Max(0, offsetX); // 在新图中的起始X
                 int copyY = Math.Max(0, offsetY); // 在新图中的起始Y
                 int srcX = offsetX < 0 ? -offsetX : 0; // 如果 offsetX 是正数(裁剪)，源图从 srcX 开始

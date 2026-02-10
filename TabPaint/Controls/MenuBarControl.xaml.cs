@@ -15,34 +15,25 @@ namespace TabPaint.Controls
 {
     public partial class MenuBarControl : UserControl
     {
-        // ================== 事件定义 (Bubbling) ==================
         private bool _isFileMenuLoaded = false;
         private bool _isEditMenuLoaded = false;
         private bool _isEffectMenuLoaded = false;
-        // File Menu
         public static readonly RoutedEvent NewClickEvent = EventManager.RegisterRoutedEvent("NewClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent OpenClickEvent = EventManager.RegisterRoutedEvent("OpenClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent SaveClickEvent = EventManager.RegisterRoutedEvent("SaveClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent SaveAsClickEvent = EventManager.RegisterRoutedEvent("SaveAsClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent ExitClickEvent = EventManager.RegisterRoutedEvent("ExitClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent RecycleBinClickEvent = EventManager.RegisterRoutedEvent("RecycleBinClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-        // Edit Menu
         public static readonly RoutedEvent CopyClickEvent = EventManager.RegisterRoutedEvent("CopyClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent CutClickEvent = EventManager.RegisterRoutedEvent("CutClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent PasteClickEvent = EventManager.RegisterRoutedEvent("PasteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent ResizeCanvasClickEvent = EventManager.RegisterRoutedEvent("ResizeCanvasClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
-        // Effects Menu
         public static readonly RoutedEvent BCEClickEvent = EventManager.RegisterRoutedEvent("BCEClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl)); // Brightness/Contrast/Exposure
         public static readonly RoutedEvent TTSClickEvent = EventManager.RegisterRoutedEvent("TTSClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl)); // Temp/Tint/Saturation
         public static readonly RoutedEvent BlackWhiteClickEvent = EventManager.RegisterRoutedEvent("BlackWhiteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
-        // Quick Actions
         public static readonly RoutedEvent UndoClickEvent = EventManager.RegisterRoutedEvent("UndoClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent RedoClickEvent = EventManager.RegisterRoutedEvent("RedoClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent SettingsClickEvent = EventManager.RegisterRoutedEvent("SettingsClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
-        // ================== 事件包装 ==================
         public event RoutedEventHandler NewClick { add { AddHandler(NewClickEvent, value); } remove { RemoveHandler(NewClickEvent, value); } }
         public event RoutedEventHandler OpenClick { add { AddHandler(OpenClickEvent, value); } remove { RemoveHandler(OpenClickEvent, value); } }
         public event RoutedEventHandler SaveClick { add { AddHandler(SaveClickEvent, value); } remove { RemoveHandler(SaveClickEvent, value); } }
@@ -59,8 +50,6 @@ namespace TabPaint.Controls
         public event RoutedEventHandler UndoClick { add { AddHandler(UndoClickEvent, value); } remove { RemoveHandler(UndoClickEvent, value); } }
         public event RoutedEventHandler RedoClick { add { AddHandler(RedoClickEvent, value); } remove { RemoveHandler(RedoClickEvent, value); } }
         public event RoutedEventHandler SettingsClick { add { AddHandler(SettingsClickEvent, value); } remove { RemoveHandler(SettingsClickEvent, value); } }
-
-        // ================== 公开属性 (为了让 MainWindow 能控制撤销重做状态) ==================
 
         public bool IsUndoEnabled
         {
@@ -130,16 +119,11 @@ namespace TabPaint.Controls
         {
             var item = new MenuItem
             {
-                // 尝试从资源字典获取字符串，如果失败则直接使用 Key (防止崩溃)
                 Header = TryGetResource(headerResKey) ?? headerResKey,
                 Style = (Style)FindResource("Win11MenuItemStyle")
             };
 
-            if (!string.IsNullOrEmpty(shortcutKey))
-            {
-                // 使用 ShortcutService 应用动态绑定，确保实时响应快捷键更改
-                ShortcutService.SetShortcutKey(item, shortcutKey);
-            }
+            if (!string.IsNullOrEmpty(shortcutKey)) ShortcutService.SetShortcutKey(item, shortcutKey);
 
             if (clickHandler != null)
             {
@@ -177,18 +161,11 @@ namespace TabPaint.Controls
             return item;
         }
 
-        private object TryGetResource(string key)
-        {
-            // TryFindResource 在找不到键时返回 null，而不是抛出异常
-            return this.TryFindResource(key);
-        }
-        // --- 1. 文件菜单加载逻辑 ---
+        private object TryGetResource(string key)    { return this.TryFindResource(key);}
         private void OnFileMenuOpened(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
             if (menuItem == null) return;
-
-            // 仅在第一次打开时加载静态项
             if (!_isFileMenuLoaded)
             {
                 menuItem.Items.Clear(); // 清除占位符
@@ -197,8 +174,6 @@ namespace TabPaint.Controls
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Open", "Open_Folder_Image", OnOpenClick, "File.Open"));
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_OpenFolder", "Open_Folder_Image", OnOpenWorkspaceClick, "File.OpenWorkspace"));
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_NewWindow", "New_Window_Image", OnNewWindowClick));
-
-                // 重新创建 RecentFilesMenuItem (因为我们在XAML里删除了它)
                 RecentFilesMenuItem = new MenuItem
                 {
                     Header = TryGetResource("L_Menu_File_Recent"),
@@ -212,7 +187,6 @@ namespace TabPaint.Controls
                 RecentFilesMenuItem.Icon = resetPath;
 
                 menuItem.Items.Add(RecentFilesMenuItem);
-             //   menuItem.Items.Add(CreateMenuItem("L_RecycleBin_Title", "Delete_Image", OnRecycleBinClick));
                 menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
 
                 menuItem.Items.Add(CreateMenuItem("L_Menu_File_Save", "Save_Normal_Image", OnSaveClick, "File.Save"));
@@ -222,12 +196,8 @@ namespace TabPaint.Controls
 
                 _isFileMenuLoaded = true;
             }
-
-            // 每次打开都要刷新“最近文件”列表 (动态部分)
             UpdateRecentFilesMenu();
         }
-
-        // --- 2. 编辑菜单加载逻辑 ---
         private void OnEditMenuOpened(object sender, RoutedEventArgs e)
         {
             if (_isEditMenuLoaded) return;
@@ -242,8 +212,6 @@ namespace TabPaint.Controls
 
             _isEditMenuLoaded = true;
         }
-
-        // --- 3. 效果菜单加载逻辑 (重头戏) ---
         private void OnEffectMenuOpened(object sender, RoutedEventArgs e)
         {
             if (_isEffectMenuLoaded) return;
@@ -345,8 +313,6 @@ namespace TabPaint.Controls
 
             _isEffectMenuLoaded = true;
         }
-
-        // ... (其余代码保持不变) ...
         private MenuItem RecentFilesMenuItem;
         private void OnNewTabClick(object sender, RoutedEventArgs e)
         {
@@ -370,10 +336,8 @@ namespace TabPaint.Controls
             }
             else
             {
-                // 1. 添加文件列表
                 foreach (var file in files)
                 {
-                    // 为了美观，菜单文字可以截断过长的路径，但 ToolTip 显示全路径
                     var headerText = file.Length > 50 ? "..." + file.Substring(file.Length - 50) : file;
 
                     var item = new MenuItem
@@ -386,26 +350,18 @@ namespace TabPaint.Controls
                     item.Click += OnRecentFileItemClick;
                     RecentFilesMenuItem.Items.Add(item);
                 }
-
-                // 2. 添加分割线
                 RecentFilesMenuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-
-                // 3. 添加清除按钮
                 var clearItem = new MenuItem { Header = LocalizationManager.GetString("L_Menu_Recent_Clear"), Style = (Style)FindResource("SubMenuItemStyle") };
                 clearItem.Click += (s, e) => { ClearRecentFilesClick?.Invoke(this, EventArgs.Empty); };
                 RecentFilesMenuItem.Items.Add(clearItem);
             }
         }
         public static readonly RoutedEvent DiscardAllClickEvent = EventManager.RegisterRoutedEvent("DiscardAllClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
-        // 2. 提供事件包装器
         public event RoutedEventHandler DiscardAllClick
         {
             add { AddHandler(DiscardAllClickEvent, value); }
             remove { RemoveHandler(DiscardAllClickEvent, value); }
         }
-
-        // 3. 按钮点击回调
         private void OnDiscardAllClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(DiscardAllClickEvent));
 
         private void OnRecentFileItemClick(object sender, RoutedEventArgs e)
@@ -417,15 +373,11 @@ namespace TabPaint.Controls
         }
         public static readonly RoutedEvent OpenWorkspaceClickEvent = EventManager.RegisterRoutedEvent(
     "OpenWorkspaceClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
-        // 2. 提供事件包装器
         public event RoutedEventHandler OpenWorkspaceClick
         {
             add { AddHandler(OpenWorkspaceClickEvent, value); }
             remove { RemoveHandler(OpenWorkspaceClickEvent, value); }
         }
-
-        // 3. 实现点击回调，触发事件
         private void OnOpenWorkspaceClick(object sender, RoutedEventArgs e)
         {
             RaiseEvent(new RoutedEventArgs(OpenWorkspaceClickEvent));
@@ -436,20 +388,15 @@ namespace TabPaint.Controls
         }
         public static readonly RoutedEvent NewWindowClickEvent = EventManager.RegisterRoutedEvent(
     "NewWindowClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
-
-        // 2. 提供事件包装器
         public event RoutedEventHandler NewWindowClick
         {
             add { AddHandler(NewWindowClickEvent, value); }
             remove { RemoveHandler(NewWindowClickEvent, value); }
         }
-
-        // 3. 实现点击回调，触发事件 (对应 XAML 中的 Click="OnNewWindowClick")
         private void OnNewWindowClick(object sender, RoutedEventArgs e)
         {
             RaiseEvent(new RoutedEventArgs(NewWindowClickEvent));
         }
-        // 在 MenuBarControl 类中添加
         public static readonly RoutedEvent SepiaClickEvent = EventManager.RegisterRoutedEvent("SepiaClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent OilPaintingClickEvent = EventManager.RegisterRoutedEvent("OilPaintingClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent VignetteClickEvent = EventManager.RegisterRoutedEvent("VignetteClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
@@ -473,7 +420,6 @@ namespace TabPaint.Controls
 
         private void OnSharpenClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SharpenClickEvent));
         private void OnBrownClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(BrownClickEvent));
-        // 在事件定义区域添加
         public static readonly RoutedEvent MosaicClickEvent = EventManager.RegisterRoutedEvent("MosaicClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent GaussianBlurClickEvent = EventManager.RegisterRoutedEvent("GaussianBlurClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
 

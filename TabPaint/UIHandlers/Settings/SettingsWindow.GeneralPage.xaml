@@ -25,8 +25,6 @@
                         <ControlTemplate TargetType="RadioButton">
                             <Grid Width="40" Height="40"
                       HorizontalAlignment="Center" VerticalAlignment="Center">
-
-                                <!-- 选中时的外圈 -->
                                 <Border x:Name="SelectionBorder" 
                             CornerRadius="16" 
                             BorderThickness="2" 
@@ -39,8 +37,6 @@
                                         <ScaleTransform ScaleX="1" ScaleY="1"/>
                                     </Border.RenderTransform>
                                 </Border>
-
-                                <!-- 颜色主体圆 -->
                                 <Border x:Name="ColorCircle" Width="22" Height="22" CornerRadius="11" 
                             Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -49,8 +45,6 @@
                                         <ScaleTransform x:Name="CircleScale" ScaleX="1" ScaleY="1"/>
                                     </Border.RenderTransform>
                                 </Border>
-
-                                <!-- 选中勾 ★核心修复★ -->
                                 <Canvas Width="12" Height="10" 
                             HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Path x:Name="CheckMark"
@@ -66,8 +60,6 @@
                                         </Path.RenderTransform>
                                     </Path>
                                 </Canvas>
-
-                                <!-- 深色勾影子（确保在浅色如黄色/灰色上也能看到） -->
                                 <Canvas Width="12" Height="10" 
                             HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Path x:Name="CheckMarkShadow"
@@ -86,8 +78,6 @@
                             </Grid>
 
                             <ControlTemplate.Triggers>
-
-                                <!-- ===== 悬浮 ===== -->
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Trigger.EnterActions>
                                         <BeginStoryboard x:Name="HoverEnter_BSB">
@@ -130,8 +120,6 @@
                                         </BeginStoryboard>
                                     </Trigger.ExitActions>
                                 </Trigger>
-
-                                <!-- ===== 按下 ===== -->
                                 <Trigger Property="IsPressed" Value="True">
                                     <Trigger.EnterActions>
                                         <BeginStoryboard x:Name="PressEnter_BSB">
@@ -174,8 +162,6 @@
                                         </BeginStoryboard>
                                     </Trigger.ExitActions>
                                 </Trigger>
-
-                                <!-- ===== 选中 ===== -->
                                 <Trigger Property="IsChecked" Value="True">
                                     <Trigger.EnterActions>
                                         <BeginStoryboard>
@@ -399,53 +385,33 @@
                         <WrapPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-
-                <!-- 蓝色 #0078D4 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#0078D4" 
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#0078D4}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 紫色 #9333EA -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#9333EA"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#9333EA}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 绿色 #107C10 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#107C10"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance},  Converter={StaticResource ColorMatchConverter}, ConverterParameter=#107C10}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 红色 #D13438 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#D13438"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#D13438}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 品红 #E3008C -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#E3008C"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#E3008C}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 灰色 #505050 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#505050"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#505050}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 橙色 #FF8C00 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FF8C00"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FF8C00}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 青色 #00B294 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#00B294"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#00B294}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 靛蓝 #4F46E5 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#4F46E5"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#4F46E5}"
                              Click="OnColorRadioClick"/>
-
-                <!-- 黄色 #FFB900 -->
                 <RadioButton Style="{StaticResource ColorRadioStyle}" Background="#FFB900"
                              IsChecked="{Binding Path=Current.ThemeAccentColor, Source={x:Static local:SettingsManager.Instance}, Converter={StaticResource ColorMatchConverter}, ConverterParameter=#FFB900}"
                              Click="OnColorRadioClick"/>

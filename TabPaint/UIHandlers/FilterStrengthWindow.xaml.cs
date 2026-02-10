@@ -18,9 +18,6 @@ namespace TabPaint.Windows
         {
             InitializeComponent();
             this.SupportFocusHighlight();
-            //MicaAcrylicManager.ApplyEffect(this);
-
-            // 如果传入了特定标题，覆盖默认标题
             if (!string.IsNullOrEmpty(title))
             {
                 TitleTextBlock.Text = title;
@@ -29,8 +26,6 @@ namespace TabPaint.Windows
             StrengthSlider.Minimum = min;
             StrengthSlider.Maximum = max;
             StrengthSlider.Value = initialValue;
-
-            // 初始化文本框
             UpdateTextBox(initialValue);
         }
         protected override void OnSourceInitialized(EventArgs e)
@@ -96,11 +91,7 @@ namespace TabPaint.Windows
         }
         private void RootGrid_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            // 如果点击的不是 TextBox，则强制将焦点转移给 Grid
-            if (!ValueTextBox.IsMouseOver)
-            {
-                RootGrid.Focus(); // 这里的 RootGrid 就是你在 XAML 里给 Grid 起的名字
-            }
+            if (!ValueTextBox.IsMouseOver)  RootGrid.Focus(); 
         }
 
         private void BtnMinimize_Click(object sender, RoutedEventArgs e)

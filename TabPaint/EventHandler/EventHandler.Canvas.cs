@@ -260,8 +260,6 @@ namespace TabPaint
         {
             ShowToast("L_Toast_AiOcr_NotAvailable");
         }
-
-        // 辅助方法：将 BitmapSource 转为 BMP 字节数组 (RapidOCR 接受)
         private byte[] BitmapSourceToBytes(BitmapSource source)
         {
             var encoder = new BmpBitmapEncoder();
@@ -430,8 +428,6 @@ namespace TabPaint
                     var resampledSource = ResampleBitmap(inputBmp, targetW, targetH);
                     inputBmp = new WriteableBitmap(resampledSource);
                 }
-
-                // 4. 执行推理
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
 
@@ -440,11 +436,7 @@ namespace TabPaint
                     _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Upscaling_Format"), p);
                     OnPropertyChanged(nameof(ImageSize));
                 });
-
-                // 注意这里传入的是处理后的 inputBmp，而不是直接传 _surface.Bitmap
                 var resultBitmap = await aiService.RunSuperResolutionAsync(modelPath, inputBmp, inferProgress);
-
-                // 5. 应用结果
                 ApplyUpscaleResult(resultBitmap);
                 GC.Collect(2, GCCollectionMode.Forced, true);
                 ShowToast("L_Toast_Apply_Success");
@@ -456,7 +448,6 @@ namespace TabPaint
             }
             catch (Exception ex)
             {
-                // 捕获溢出或其他异常
                 string errorMsg = ex.Message;
                 if (ex is OverflowException) errorMsg = "图片尺寸超出硬件/软件限制";
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_Upscale_Error_Prefix"), errorMsg));
@@ -474,8 +465,6 @@ namespace TabPaint
             }
         }
         private System.Threading.CancellationTokenSource _downloadCts;
-
-        // 通用的下载取消处理方法
         private void OnDownloadCancelRequested(object sender, EventArgs e)
         {
             if (_downloadCts != null && !_downloadCts.IsCancellationRequested)
@@ -484,16 +473,11 @@ namespace TabPaint
                 ShowToast("L_Toast_DownloadCancelled"); 
             }
         }
-
-
-        // 专门处理超分结果的应用逻辑 (因为画布尺寸变了)
         private void ApplyUpscaleResult(WriteableBitmap newBitmap)
         {
             var oldBitmap = _surface.Bitmap;
             int oldW = oldBitmap.PixelWidth;
             int oldH = oldBitmap.PixelHeight;
-
-            // 1. 记录 Undo (变换前)
             var undoRect = new Int32Rect(0, 0, oldW, oldH);
             byte[] undoPixels = new byte[oldH * oldBitmap.BackBufferStride];
             oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
@@ -501,19 +485,13 @@ namespace TabPaint
             // 2. 替换 Bitmap
             _surface.ReplaceBitmap(newBitmap);
             _bitmap = newBitmap;
-            BackgroundImage.Source = _bitmap; // 关键：更新显示源
-
-            // 3. 记录 Redo (变换后)
+            BackgroundImage.Source = _bitmap; 
             int newW = newBitmap.PixelWidth;
             int newH = newBitmap.PixelHeight;
             var redoRect = new Int32Rect(0, 0, newW, newH);
             byte[] redoPixels = new byte[newH * newBitmap.BackBufferStride];
             newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
-
-            // 4. 推入 Undo 栈 (利用你现有的 TransformAction)
             _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
-
-            // 5. 更新状态
             NotifyCanvasSizeChanged(newW, newH);
             SetUndoRedoButtonState();
 
@@ -523,9 +501,7 @@ namespace TabPaint
 
         private async void OnRemoveBackgroundClick(object sender, RoutedEventArgs e)
         {
-            // 1. 基础检查
             if (_surface?.Bitmap == null) return;
-           // _router.CleanUpSelectionandShape();
             var selectTool = _router.CurrentTool as SelectTool;
             bool isSelectionMode = selectTool != null && selectTool.HasActiveSelection;
             if (!isSelectionMode) _router.CleanUpSelectionandShape();
@@ -564,30 +540,19 @@ namespace TabPaint
                 byte[] resultPixels;
                 if (isSelectionMode)
                 {
-                    // ========== 关键修改：区分规则选区和不规则选区 ==========
                     if (selectTool.IsIrregularSelection)
                     {
-                        // --- 套索/魔棒模式：送完整包围盒像素给 AI ---
                         var boundingBoxBmp = selectTool.GetSelectionBoundingBoxBitmap(_ctx);
-                        if (boundingBoxBmp == null)
-                        {
-                            // 回退：使用裁剪后的位图
-                            boundingBoxBmp = selectTool.GetSelectionWriteableBitmap(this);
-                        }
+                        if (boundingBoxBmp == null) boundingBoxBmp = selectTool.GetSelectionWriteableBitmap(this);
                         if (boundingBoxBmp == null) return;
 
                         int newW = boundingBoxBmp.PixelWidth;
                         int newH = boundingBoxBmp.PixelHeight;
-
-                        // AI 推理：输入完整矩形区域
                         resultPixels = await aiService.RunInferenceAsync(modelPath, boundingBoxBmp);
-
-                        // 将 AI 结果与套索 mask 做交集
                         selectTool.ReplaceSelectionDataWithMask(_ctx, resultPixels, newW, newH);
                     }
                     else
                     {
-                        // --- 矩形选区模式：保持原有逻辑 ---
                         var cropBmp = selectTool.GetSelectionWriteableBitmap(this);
                         if (cropBmp == null) return;
 
@@ -605,11 +570,7 @@ namespace TabPaint
                 }
                 ShowToast("L_Toast_Apply_Success");
             }
-            catch (OperationCanceledException)
-            {
-                // 处理用户主动取消
-                DownloadProgressPopup.Finish();
-            }
+            catch (OperationCanceledException)  {  DownloadProgressPopup.Finish(); }
             catch (Exception ex)
             {
                 if (ex is DllNotFoundException ||
@@ -625,7 +586,6 @@ namespace TabPaint
             }
             finally
             {
-                // --- 清理逻辑 ---
                 _downloadCts?.Dispose();
                 _downloadCts = null;
                 _imageSize = statusText; // 恢复状态栏
@@ -639,9 +599,7 @@ namespace TabPaint
         private void ApplyAiResult(byte[] newPixels)
         {
             _undo.PushFullImageUndo();
-
-            // 更新 Bitmap
-            _surface.Bitmap.Lock();
+            _surface.Bitmap.Lock(); // 更新 Bitmap
             _surface.Bitmap.WritePixels(
                 new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight),
                 newPixels,
@@ -650,9 +608,7 @@ namespace TabPaint
             );
             _surface.Bitmap.AddDirtyRect(new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight));
             _surface.Bitmap.Unlock();
-
-            // 标记为脏，更新 UI
-            _ctx.IsDirty = true;
+            _ctx.IsDirty = true;//更新 UI
             CheckDirtyState();
             SetUndoRedoButtonState();
         }
@@ -694,11 +650,8 @@ namespace TabPaint
 
         private void OpacitySlider_Loaded(object sender, RoutedEventArgs e)
         {
-            // 尝试在可视树中查找 Slider 内部的 Thumb
-            if (OpacitySlider.Template != null)
-            {
+            if (OpacitySlider.Template != null)    // 尝试在可视树中查找 Slider 内部的 Thumb
                 _opacitySliderThumb = OpacitySlider.Template.FindName("Thumb", OpacitySlider) as Thumb;
-            }
         }
 
         private void OpacitySlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
@@ -707,10 +660,7 @@ namespace TabPaint
             {
                 toolTip.PlacementTarget = OpacitySlider;
                 toolTip.Placement = System.Windows.Controls.Primitives.PlacementMode.Right;
-
-                // 打开时先更新一次位置
                 UpdateToolTipOffset(toolTip);
-
                 toolTip.IsOpen = true;
             }
         }
@@ -734,10 +684,7 @@ namespace TabPaint
         {
             // 1. 获取 Slider 的实际高度
             double sliderHeight = OpacitySlider.ActualHeight;
-
             double thumbSize = 20;
-
-            // 3. 计算可滑动区域的有效高度
             double trackHeight = sliderHeight - thumbSize;
 
             double percent = (OpacitySlider.Value - OpacitySlider.Minimum) / (OpacitySlider.Maximum - OpacitySlider.Minimum);
@@ -799,8 +746,6 @@ namespace TabPaint
                     _isPanning = true;
                     _lastMousePosition = e.GetPosition(ScrollContainer);
                     ScrollContainer.CaptureMouse(); // 捕获鼠标，防止移出窗口失效
-
-                    // 【修改点】设置抓紧光标
                     SetViewCursor(true);
 
                     e.Handled = true;
@@ -811,10 +756,7 @@ namespace TabPaint
                     // 图片小于窗口，拖动窗口本身
                     if (e.ButtonState == MouseButtonState.Pressed)
                     {
-                        try
-                        {
-                            this.DragMove();
-                        }
+                        try{ this.DragMove(); }
                         catch { }
                         e.Handled = true;
                         return;
@@ -827,11 +769,7 @@ namespace TabPaint
                 // 检查点击的是否是左键
                 if (e.ChangedButton != MouseButton.Left) return;
 
-                if (IsVisualAncestorOf<System.Windows.Controls.Primitives.ScrollBar>(e.OriginalSource as DependencyObject))
-                {
-                    return;
-                }
-
+                if (IsVisualAncestorOf<System.Windows.Controls.Primitives.ScrollBar>(e.OriginalSource as DependencyObject))  return;
                 Point ptInCanvas = e.GetPosition(CanvasWrapper);
                 Point pixelPos = _ctx.ToPixel(ptInCanvas);
 

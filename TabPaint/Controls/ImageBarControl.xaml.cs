@@ -207,7 +207,6 @@ namespace TabPaint.Controls
             var tabData = _currentHoveredElement.DataContext as FileTabItem;
             if (tabData != null)
             {
-                // ★ 切换Tab时，先清理顶层的GIF/高清图，避免残留上一张
                 AnimationBehavior.SetSourceUri(PopupPreviewImage, null);
                 PopupPreviewImage.Source = null;
 
@@ -224,14 +223,11 @@ namespace TabPaint.Controls
                     PopupPreviewImage.Source = null;
                     CheckerboardBorder.Background = Brushes.Transparent;
                 }
-                // 2. 获取文件信息
                 string filePath = tabData.FilePath;
                 string backupPath = tabData.BackupPath;
                 bool hasBackup = !string.IsNullOrEmpty(backupPath) && File.Exists(backupPath);
                 string effectivePath = hasBackup ? backupPath : filePath;
                 bool isNewFile = string.IsNullOrEmpty(filePath) || filePath.StartsWith("::TABPAINT_NEW::");
-
-                // 2.1 优先确定显示尺寸
                 bool dimsFound = false;
                 if (tabData.IsSelected)
                 {
@@ -262,8 +258,6 @@ namespace TabPaint.Controls
                         dimsFound = true;
                     }
                 }
-
-                // 2.2 确定显示文件大小
                 if (hasBackup || (!isNewFile && File.Exists(filePath)))
                 {
                     try
@@ -278,8 +272,6 @@ namespace TabPaint.Controls
                     PopupFileSizeText.Text = "";
                     if (!dimsFound) PopupDimensionsText.Text = LocalizationManager.GetString("L_ImgBar_NewImage");
                 }
-
-                // 2.3 决定是否启动高清预览加载
                 _highResTimer.Stop();
                 if (!string.IsNullOrEmpty(effectivePath) && File.Exists(effectivePath))
                 {
@@ -295,8 +287,6 @@ namespace TabPaint.Controls
                         _highResTimer.Start();
                     }
                 }
-
-                // 3. 设置位置并打开
                 LargePreviewPopup.PlacementTarget = _currentHoveredElement;
 
                 if (!LargePreviewPopup.IsOpen) LargePreviewPopup.IsOpen = true;
@@ -360,8 +350,6 @@ namespace TabPaint.Controls
                 CheckerboardBorder.Background = GetCheckerboardBrush();
                 return;
             }
-
-            // 非 GIF 清除动画源
             AnimationBehavior.SetSourceUri(PopupPreviewImage, null);
 
             _previewCts = new CancellationTokenSource();
@@ -405,8 +393,6 @@ namespace TabPaint.Controls
             public int Width;
             public int Height;
         }
-
-        // 后台加载逻辑
         private PreviewResult LoadHighResPreviewInternal(string filePath, CancellationToken token)
         {
             var res = new PreviewResult();
@@ -414,7 +400,6 @@ namespace TabPaint.Controls
             {
                 using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    // 1. 读取尺寸 (BitmapDecoder 仅仅读取头部，非常快)
                     var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
                     if (decoder.Frames.Count > 0)
                     {
@@ -425,11 +410,8 @@ namespace TabPaint.Controls
                         res.Height = frame.PixelHeight;
 
                         if (token.IsCancellationRequested) return res;
-
-                        // 对于多帧图像（如ICO），直接从Frame创建以确保显示的是最大帧
                         if (decoder.Frames.Count > 1)
                         {
-                            // 如果是多帧，我们渲染这一帧并缩放到 300 宽
                             double scale = 300.0 / frame.PixelWidth;
                             if (scale > 1.0) scale = 1.0;
 
@@ -440,7 +422,6 @@ namespace TabPaint.Controls
                         }
                         else
                         {
-                            // 单帧图像按原有逻辑加载以支持 DecodePixelWidth 节省内存
                             fs.Position = 0;
                             var img = new BitmapImage();
                             img.BeginInit();
@@ -505,7 +486,6 @@ namespace TabPaint.Controls
 
         private void ImageBarControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // 获取当前窗口的句柄源
             var window = Window.GetWindow(this);
             if (window != null)
             {
@@ -516,7 +496,6 @@ namespace TabPaint.Controls
 
         private void ImageBarControl_Unloaded(object sender, RoutedEventArgs e)
         {
-            // 清理钩子，防止内存泄漏
             var window = Window.GetWindow(this);
             if (window != null)
             {

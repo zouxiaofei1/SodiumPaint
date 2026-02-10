@@ -88,12 +88,8 @@ namespace TabPaint.Behaviors
             {
                 element.SetValue(OriginalToolTipProperty, element.ToolTip);
             }
-
-            // 确保开始时显示的是基础提示
             var original = element.GetValue(OriginalToolTipProperty);
             if (original != null) element.ToolTip = original;
-
-            // 2. 启动计时器
             var timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1.5); 
             timer.Tick += (s, args) =>

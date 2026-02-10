@@ -1076,7 +1076,7 @@ namespace TabPaint
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
                 encoder.Save(fileStream);
             }
-        }// 修改原 LoadSession 方法，或者新建一个专门用于工作区切换加载的方法
+        }
         private void LoadSessionForCurrentWorkspace(string workspaceFilePath)
         {
             if (!File.Exists(_sessionPath) && !File.Exists(AppConsts.LegacySessionPath)) return;
@@ -1124,12 +1124,7 @@ namespace TabPaint
                             if (FileTabs.Any(t => t.Id == info.Id))
                             {
                                 var existingTab = FileTabs.First(t => t.Id == info.Id);
-                                if (info.IsCleanDiskFile)
-                                {
-                                    // 无需额外操作，文件已在列表中
-                                    continue;
-                                }
-
+                                if (info.IsCleanDiskFile)   continue;
                                 if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
                                 {
                                     existingTab.BackupPath = info.BackupPath;
@@ -1140,7 +1135,6 @@ namespace TabPaint
                             }
                             else
                             {
-                                // ★★★ 新增：恢复未编辑的磁盘文件 ★★★
                                 if (info.IsCleanDiskFile)
                                 {
                                     if (!string.IsNullOrEmpty(info.OriginalPath) && File.Exists(info.OriginalPath))

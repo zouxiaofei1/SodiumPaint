@@ -107,7 +107,6 @@ namespace TabPaint
 
                 if (isInternalCopy && _clipboardData != null && _clipboardWidth > 0 && _clipboardHeight > 0)
                 {
-                    // 直接使用内部缓存，完整保留 Alpha
                     sourceBitmap = BitmapSource.Create(
                         _clipboardWidth, _clipboardHeight,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
@@ -115,7 +114,6 @@ namespace TabPaint
                 }
                 else
                 {
-                    // ★ 优先级2：尝试从剪贴板读取 PNG 格式（保留透明度）
                     try
                     {
                         var dataObj = System.Windows.Clipboard.GetDataObject();
@@ -173,7 +171,6 @@ namespace TabPaint
             {
                 try
                 {
-                    // 检查扩展名过滤非图片文件
                     string ext = System.IO.Path.GetExtension(path).ToLower();
                     string[] allowed = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
                     if (!allowed.Contains(ext)) return null;
@@ -236,8 +233,6 @@ namespace TabPaint
                 if (_selectionData != null) CommitSelection(ctx);
 
                 if (sourceBitmap == null) return;
-
-                // 尺寸限制检查
                 const int maxSize = (int)AppConsts.MaxCanvasSize;
                 if (sourceBitmap.PixelWidth > maxSize || sourceBitmap.PixelHeight > maxSize)
                 {
@@ -264,11 +259,7 @@ namespace TabPaint
                     int h = sourceBitmap.PixelHeight;
                     int stride = w * 4;
                     byte[] rawPixels = new byte[h * stride];
-
-                    // 提取原始像素
                     sourceBitmap.CopyPixels(rawPixels, stride, 0);
-
-                    // 使用画布的 DPI 重新创建 BitmapSource
                     sourceBitmap = BitmapSource.Create(
                         w, h,
                         canvasDpiX, canvasDpiY, // 强行使用画布 DPI

@@ -17,7 +17,6 @@ namespace TabPaint
     {
         public static void GlobalExit()
         {
-            // 复制一份列表，避免在循环中修改集合导致异常
             var windows = Application.Current.Windows.Cast<Window>().ToList();
             foreach (Window window in windows)
             {
@@ -32,8 +31,6 @@ namespace TabPaint
             }
             Application.Current.Shutdown();
         }
-
-        // 保存 MainWindow 的静态引用，方便回调使用
         private static MainWindow _mainWindow;
         private static readonly string LogDirectory = System.IO.Path.Combine(
       Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -122,13 +119,11 @@ namespace TabPaint
         }
         protected override void OnStartup(StartupEventArgs e)
         {//680ms
-       
-            // 1. 立即启动配置预加载（并行）
             var settingsTask = Task.Run(() => SettingsManager.Instance);
 
-            // 启用分级 JIT 编译优化
+           
             try
-            {
+            { // 启用分级 JIT 编译优化
                 string profileRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TabPaint", "Profiles");
                 Directory.CreateDirectory(profileRoot);
                 System.Runtime.ProfileOptimization.SetProfileRoot(profileRoot);
@@ -150,15 +145,12 @@ namespace TabPaint
             {
                 Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    // 1. 首先尝试在所有窗口中查找是否已经打开
                     var (existingWindow, existingTab) = TabPaint.MainWindow.FindWindowHostingFile(filePath);
                     if (existingWindow != null && existingTab != null)
                     {
                         existingWindow.FocusAndSelectTab(existingTab);
                         return;
                     }
-
-                    // 2. 如果没找到，则在当前活动窗口打开
                     var targetWindow = TabPaint.MainWindow.GetCurrentInstance();
                     if (targetWindow != null)
                     {
@@ -257,8 +249,6 @@ namespace TabPaint
             {
                 ThemeManager.RefreshAccentColor(settings.ThemeAccentColor);
             }
-
-            // 语言变更：更新资源字典（已抽到 DynamicResource 的文本会即时更新）
             if (e.PropertyName == nameof(AppSettings.Language))
             {
                 LocalizationManager.ApplyLanguage(settings.Language);

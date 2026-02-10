@@ -31,8 +31,6 @@ namespace TabPaint
 
                 if (viewportRect.HasValue && zoomScale >= 1.0)
                 {
-                    // 放大时才做视口裁剪（缩小时降采样已经够快了）
-                    // viewportRect 是像素坐标系，需要转换为相对于选区的局部坐标
                     var vp = viewportRect.Value;
                     int margin = 2; // 多留2像素避免边缘闪烁
                     clipX0 = Math.Max(0, (int)Math.Floor(vp.Left - offsetX) - margin);
@@ -161,10 +159,6 @@ namespace TabPaint
                 sg.Freeze();
                 return sg;
             }
-
-            /// <summary>
-            /// 视口裁剪后生成边缘（放大视图时使用）
-            /// </summary>
             private Geometry GenerateClippedEdge(byte[] alphaMap, int width, int height,
                 int offsetX, int offsetY, int clipX0, int clipY0, int clipX1, int clipY1)
             {
@@ -624,17 +618,12 @@ namespace TabPaint
                         byte* basePtr = (byte*)ctx.Surface.Bitmap.BackBuffer;
                         int stride = ctx.Surface.Bitmap.BackBufferStride;
                         int maskStride = _selectionRect.Width * 4; // 遮罩的 stride
-
-                        // 预计算填充色
                         byte tB = 0, tG = 0, tR = 0, tA = 0;
                         bool writeAlpha = true;
                         if (clearMode == SelectionClearMode.Transparent) { tB = 0; tG = 0; tR = 0; tA = 0; writeAlpha = true; }
                         else if (clearMode == SelectionClearMode.White) { tB = 255; tG = 255; tR = 255; tA = 255; writeAlpha = true; }
-
-                        // 遍历区域
                         for (int y = 0; y < rect.Height; y++)
                         {
-                            // 注意边界检查，防止遮罩和实际rect尺寸微小差异导致越界
                             if (y * maskStride >= _selectionAlphaMap.Length) break;
 
                             byte* rowPtr = basePtr + (rect.Y + y) * stride + rect.X * 4;
@@ -644,7 +633,6 @@ namespace TabPaint
                                 int maskIndex = y * maskStride + x * 4 + 3; // Alpha通道
                                 if (maskIndex < _selectionAlphaMap.Length)
                                 {
-                                    // 只有当遮罩显示“此处被选中”（Alpha > 128）时，才清除画布上的像素
                                     if (_selectionAlphaMap[maskIndex] > 128)
                                     {
                                         rowPtr[0] = tB;
@@ -673,9 +661,6 @@ namespace TabPaint
                 int startY = (int)startPt.Y;
 
                 if (startX < 0 || startX >= w || startY < 0 || startY >= h) return;
-
-                // 1. 准备全图 Mask (bool array)
-                // 如果是 Shift 追加模式，我们需要保留之前的选中状态
                 bool[] mask = new bool[w * h];
 
                 if (union && _selectionData != null && _selectionAlphaMap != null)
@@ -710,8 +695,6 @@ namespace TabPaint
                     {
                         byte* ptr = (byte*)ctx.Surface.Bitmap.BackBuffer;
                         int stride = ctx.Surface.Bitmap.BackBufferStride;
-
-                        // 获取目标颜色 (B, G, R, A)
                         byte* startPx = ptr + startY * stride + startX * 4;
                         byte targetB = startPx[0];
                         byte targetG = startPx[1];
@@ -720,8 +703,6 @@ namespace TabPaint
 
                         Queue<int> q = new Queue<int>();
                         q.Enqueue(startX + startY * w);
-
-                        // 如果起始点还没被选中，才开始Fill
                         if (!mask[startX + startY * w])
                         {
                             mask[startX + startY * w] = true; // 标记访问
@@ -772,8 +753,6 @@ namespace TabPaint
                 {
                     ctx.Surface.Bitmap.Unlock();
                 }
-
-                // 3. 计算新的包围盒
                 int minX = w, maxX = 0, minY = h, maxY = 0;
                 bool hasSelection = false;
                 for (int y = 0; y < h; y++)
@@ -796,17 +775,11 @@ namespace TabPaint
                     Cleanup(ctx);
                     return;
                 }
-
-                // 4. 生成 _selectionData 和 _selectionAlphaMap
                 int newW = maxX - minX + 1;
                 int newH = maxY - minY + 1;
                 _selectionRect = new Int32Rect(minX, minY, newW, newH);
                 _originalRect = _selectionRect;
-
-                // 提取原始像素数据
                 byte[] rawData = ctx.Surface.ExtractRegion(_selectionRect);
-
-                // 生成 AlphaMap (BGRA格式)
                 int mapStride = newW * 4;
                 _selectionAlphaMap = new byte[newH * mapStride];
 
@@ -819,8 +792,6 @@ namespace TabPaint
                         bool selected = mask[globalY * w + globalX];
 
                         int pixelIdx = y * mapStride + x * 4;
-
-                        // 设置 AlphaMap: 选中则 Alpha=255, 否则 0
                         _selectionAlphaMap[pixelIdx + 0] = 0; // B
                         _selectionAlphaMap[pixelIdx + 1] = 0; // G
                         _selectionAlphaMap[pixelIdx + 2] = 0; // R
@@ -855,9 +826,6 @@ namespace TabPaint
 
                     byte[] fullPixels = ctx.Surface.ExtractRegion(clampedRect);
                     if (fullPixels == null) return null;
-
-                    // 如果已经 lift 了，需要把选区数据合成回去，
-                    // 因为画布上已经被清除了
                     if (_hasLifted && _selectionData != null)
                     {
                         int stride = clampedRect.Width * 4;
@@ -866,7 +834,6 @@ namespace TabPaint
                             byte srcA = _selectionData[i + 3];
                             if (srcA > 0)
                             {
-                                // Alpha 合成：选区数据覆盖到完整像素上
                                 if (srcA == 255)
                                 {
                                     fullPixels[i + 0] = _selectionData[i + 0];
@@ -899,16 +866,9 @@ namespace TabPaint
                     return null;
                 }
             }
-
-            /// <summary>
-            /// 是否是不规则选区（套索或魔棒）
-            /// </summary>
             public bool IsIrregularSelection =>
                 SelectionType == SelectionType.Lasso || SelectionType == SelectionType.MagicWand;
 
-            /// <summary>
-            /// 获取选区的 alpha mask 副本（外部只读用途）
-            /// </summary>
             public byte[] GetSelectionAlphaMapCopy()
             {
                 if (_selectionAlphaMap == null) return null;
@@ -916,10 +876,6 @@ namespace TabPaint
                 Buffer.BlockCopy(_selectionAlphaMap, 0, copy, 0, _selectionAlphaMap.Length);
                 return copy;
             }
-
-            /// <summary>
-            /// 将 AI 结果与套索/魔棒 mask 做交集后替换选区数据
-            /// </summary>
             public void ReplaceSelectionDataWithMask(ToolContext ctx, byte[] aiResultPixels, int w, int h)
             {
                 if (aiResultPixels == null || _selectionAlphaMap == null) return;
@@ -934,9 +890,6 @@ namespace TabPaint
                     ReplaceSelectionData(ctx, aiResultPixels, w, h);
                     return;
                 }
-
-                // 将 AI 结果与原始 mask 做交集：
-                // 只保留原套索/魔棒选中区域内的 AI 抠图结果
                 byte[] maskedResult = new byte[expectedLength];
                 Buffer.BlockCopy(aiResultPixels, 0, maskedResult, 0, expectedLength);
 
@@ -958,8 +911,6 @@ namespace TabPaint
                         // 套索内的区域：保留 AI 的结果（AI 已经做了前景/背景分离）
                     }
                 });
-
-                // 更新 alpha map 为交集结果
                 _selectionAlphaMap = new byte[expectedLength];
                 System.Threading.Tasks.Parallel.For(0, h, y =>
                 {
@@ -969,8 +920,6 @@ namespace TabPaint
                         _selectionAlphaMap[i + 3] = maskedResult[i + 3];
                     }
                 });
-
-                // 调用基础替换方法更新预览
                 _selectionData = maskedResult;
                 _selectionRect = new Int32Rect(_selectionRect.X, _selectionRect.Y, w, h);
                 _originalRect = _selectionRect;

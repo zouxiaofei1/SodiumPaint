@@ -246,11 +246,7 @@ namespace TabPaint
                 img.Freeze();
                 return img;
             }
-            catch
-            {
-                // 预览图解码失败可以忽略，直接返回 null，不影响主图尝试
-                return null;
-            }
+            catch { return null;}
         }
         private BitmapSource DecodeFullResBitmap(Stream stream, CancellationToken token)
         {
@@ -259,28 +255,20 @@ namespace TabPaint
             {
                 try
                 {
-                    // Skia 仍然需要能够从流中读取。
-                    // 注意：DecodeWithSkiaAndIcc 内部会处理流的位置。
                     var skiaBitmap = DecodeWithSkiaAndIcc(stream);
                     if (skiaBitmap != null) return skiaBitmap;
                 }
-                catch (Exception ex)
-                {
-                    // 如果 Skia 解码失败（比如不支持的格式），回退到下面的 WPF 原生解码
-                    Debug.WriteLine($"Skia ICC Decode failed, falling back to WPF: {ex.Message}");
-                }
+                catch (Exception ex){  Debug.WriteLine($"Skia ICC Decode failed, falling back to WPF: {ex.Message}");  }
             }
             try
             {
                 stream.Position = 0;
-                // 使用 BitmapCacheOption.OnLoad 确保流关闭后数据依然可用
                 var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
                 int frameIndex = GetLargestFrameIndex(decoder);
                 var frame = decoder.Frames[frameIndex];
 
                 if (decoder.Frames.Count > 1)
                 {
-                    // 针对 ICO 等多帧格式，立即转换为 Bgra32 并手动拷贝像素，确保脱离流依赖并保留透明度
                     var converted = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
                     int w = converted.PixelWidth;
                     int h = converted.PixelHeight;
@@ -403,21 +391,15 @@ namespace TabPaint
                 var (originalWidth, originalHeight) = dimensions.Value;
                 await HandleProgressDisplay(originalWidth, originalHeight, token); // 启动进度条逻辑
 
-                // 5. [UI阶段 0] 立即显示缓存的缩略图 (极大提升响应感)
-                bool hasThumbnail = await TryShowCachedThumbnail(filePath, token);
+             
+                bool hasThumbnail = await TryShowCachedThumbnail(filePath, token);   // 立即显示缓存的缩略图
 
-                // 6. 启动并行解码任务 (SVG 特殊处理已在 StartDecodingTasks 内部处理)
                 var decodingTasks = StartDecodingTasks(fs, filePath, token);
 
-                // 7. [UI阶段 1] 显示预览图 (如果是 SVG 或已有缩略图则可能跳过)
-                var previewBitmap = await decodingTasks.PreviewTask;
-                if (!token.IsCancellationRequested && previewBitmap != null)
-                {
-                    await ApplyPreviewImageToUI(filePath, previewBitmap, token);
-                }
-
-                // 8. [UI阶段 2] 等待完整大图并应用
-                var fullResBitmap = await decodingTasks.FullResTask;
+             
+                var previewBitmap = await decodingTasks.PreviewTask;   //  [UI阶段 1] 显示预览图 
+                if (!token.IsCancellationRequested && previewBitmap != null) await ApplyPreviewImageToUI(filePath, previewBitmap, token);
+                var fullResBitmap = await decodingTasks.FullResTask;  //  [阶段 2] 等待完整大图并应用
                 StopProgressSimulation(); // 停止进度条
 
                 if (lazyload) await Task.Delay(AppConsts.ImageLoadDelayLazyMs, token).ConfigureAwait(false); // LazyLoad 延迟
@@ -525,10 +507,6 @@ namespace TabPaint
             }
             else
             {
-                // 注意：由于是并行解码，不能直接共享同一个 FileStream 的 Position。
-                // 解决方案：为每个任务打开独立的流。
-                // 鉴于目标是减少大图内存占用，我们为预览图和全量解码都重新打开文件流。
-
                 string fileName = fs.Name;
 
                 var preview = Task.Run<BitmapSource>(() =>
@@ -574,47 +552,23 @@ namespace TabPaint
             await Dispatcher.InvokeAsync(() =>
             {
                 if (token.IsCancellationRequested) return;
-
-                // 1. 内存激进释放检查
-                if (Process.GetCurrentProcess().PrivateMemorySize64 > AppConsts.MemoryLimitForAggressiveRelease)
-                {
-                    GC.Collect(2, GCCollectionMode.Forced, true);
-                }
-
-                // 2. 转换为可写位图 (核心绘图表面)
+                if (Process.GetCurrentProcess().PrivateMemorySize64 > AppConsts.MemoryLimitForAggressiveRelease)  GC.Collect(2, GCCollectionMode.Forced, true);
                 _originalDpiX = fullResBitmap.DpiX;
                 _originalDpiY = fullResBitmap.DpiY;
-
-                // 转换逻辑封装
                 _bitmap = CreateWriteableBitmap(fullResBitmap);
-
-                // 释放原图资源
                 fullResBitmap = null;
-
-                // 3. 更新 UI 组件
                 RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
                 BackgroundImage.Source = _bitmap;
                 this.CurrentImageFullInfo = metadataInfo;
 
                 if (_surface == null) _surface = new CanvasSurface(_bitmap);
                 else _surface.Attach(_bitmap);
-
-                // 4. 重置编辑器状态
                 ResetEditorState(filePath);
-
-                // 5. 适配窗口
                 FitToWindow(needcanvasUpdateUI: false);
-                // CenterImage() 已经由 FitToWindow 内部通过 Dispatcher 调用，此处不再重复同步调用
-                // 以免出现布局未完成导致计算偏差。
-              //  _canvasResizer.UpdateUI();
-
-                // 6. GIF 特殊处理
                 HandleGifAnimation(physicalPath);
 
             }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
-
-        // 辅助方法: 通用的 UI 更新 (标题、Image源等)
         private void UpdateUIForImage(ImageSource source, string filePath, bool isPreview)
         {
             if (isPreview)
@@ -667,10 +621,7 @@ namespace TabPaint
         {
             string sizeString = FormatFileSize(byteLength);
 
-            await Dispatcher.InvokeAsync(() =>
-            {
-                this.FileSize = sizeString;
-            });
+            await Dispatcher.InvokeAsync(() =>  {   this.FileSize = sizeString; });
         }
 
         private void ResetEditorState(string filePath)
@@ -683,8 +634,6 @@ namespace TabPaint
             OnPropertyChanged(nameof(ImageSize));
             _hasUserManuallyZoomed = false;
         }
-
-        // 辅助方法: GIF 处理
         private void HandleGifAnimation(string physicalPath)
         {
             string ext = System.IO.Path.GetExtension(physicalPath)?.ToLower();
@@ -706,7 +655,6 @@ namespace TabPaint
         }
         private async Task LoadBlankCanvasAsync(string filePath, string reason = null)
         {
-            a.s("LoadBlankCanvasAsync");
             await Dispatcher.InvokeAsync(() =>
             {
                 int width = AppConsts.DefaultBlankCanvasWidth;
@@ -744,18 +692,12 @@ namespace TabPaint
                     var tab = FileTabs.FirstOrDefault(t => t.FilePath == filePath);
                     _currentFileName = tab?.FileName ?? LocalizationManager.GetString("L_Common_Untitled");
                 }
-                else
-                {
-                    _currentFileName = System.IO.Path.GetFileName(filePath);
-                }
-
+                else _currentFileName = System.IO.Path.GetFileName(filePath);
                 _currentFilePath = filePath;
 
                 // 设置底部栏信息
                 this.CurrentImageFullInfo = reason ?? LocalizationManager.GetString("L_Load_Info_Memory");
                 this.FileSize = LocalizationManager.GetString("L_Status_Unsaved");
-
-                // 初始化 Surface 和 Canvas
                 if (_surface == null) _surface = new CanvasSurface(_bitmap);
                 else _surface.Attach(_bitmap);
 

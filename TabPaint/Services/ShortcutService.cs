@@ -8,9 +8,6 @@ using System.Windows.Data;
 
 namespace TabPaint.Services
 {
-    /// <summary>
-    /// 提供全局快捷键变化的通知代理
-    /// </summary>
     public class ShortcutProvider : INotifyPropertyChanged
     {
         private static ShortcutProvider _instance;

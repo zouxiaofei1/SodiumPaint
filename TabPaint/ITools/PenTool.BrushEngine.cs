@@ -709,8 +709,6 @@ public partial class PenTool : ToolBase
             }
         });
     }
-
-
     private unsafe void DrawWatercolorStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
     {
         float radius = (float)ctx.PenThickness * 0.5f;
@@ -864,11 +862,6 @@ public partial class PenTool : ToolBase
             }
         });
     }
-
-    /// <summary>
-    /// 将一段线段细分为多个子段，每段的压力线性插值，
-    /// 确保粗细过渡平滑，不会出现突变。
-    /// </summary>
     private unsafe Int32Rect? DrawCalligraphySegmentSubdivided(
         ToolContext ctx, Point from, float fromP, Point to, float toP,
         byte* buffer, int stride, int w, int h)
@@ -877,24 +870,15 @@ public partial class PenTool : ToolBase
         float dy = (float)(to.Y - from.Y);
         float length = MathF.Sqrt(dx * dx + dy * dy);
 
-        if (length < 0.5f)
-        {
-            return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
-        }
-
-        // 细分步长：每 2~3 像素一个子段，确保粗细变化平滑
+        if (length < 0.5f)  return DrawBrushLineUnsafe(ctx, from, fromP, to, toP, buffer, stride, w, h);
         float baseThickness = (float)ctx.PenThickness;
         float maxRadiusChange = baseThickness * 0.15f; // 每子段最大半径变化
-
-        // 根据压力差计算需要的最小细分数
         float radiusDiff = MathF.Abs(toP - fromP) * baseThickness * 0.5f;
         int pressureSteps = radiusDiff > 0.1f ? (int)MathF.Ceiling(radiusDiff / maxRadiusChange) : 1;
 
-        // 根据距离计算细分数（每 2 像素一段）
         int distanceSteps = (int)MathF.Ceiling(length / 2.0f);
 
         int steps = Math.Max(1, Math.Max(pressureSteps, distanceSteps));
-        // 上限防止极端情况
         steps = Math.Min(steps, 500);
 
         float stepX = dx / steps;
@@ -940,19 +924,11 @@ public partial class PenTool : ToolBase
         if (!hit) return null;
         return new Int32Rect(minX, minY, maxX - minX, maxY - minY);
     }
-
-    /// <summary>
-    /// 内部版本，返回 Int32Rect 用于脏矩形合并。
-    /// 针对书写笔优化了边缘抗锯齿和压力响应曲线。
-    /// </summary>
     private unsafe Int32Rect? DrawRoundStrokeUnsafe_Internal(
         ToolContext ctx, Point p1, float p1P,
         Point p2, float p2P, byte* basePtr, int stride, int w, int h)
     {
         float baseThickness = (float)ctx.PenThickness;
-
-        // ★ 书写笔的压力→半径映射：使用更好的曲线
-        // 让细笔画不会太细（保持可读性），粗笔画有明显对比
         float minScale = 0.12f;  // 最细时为最粗的 12%
         float r1 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * EaseInOutPressure(p1P))) * 0.5f);
         float r2 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * EaseInOutPressure(p2P))) * 0.5f);
@@ -969,7 +945,6 @@ public partial class PenTool : ToolBase
         float alpha2 = globalOpacity;
 
         float maxR = MathF.Max(r1, r2);
-        // ★ 更好的抗锯齿羽化：至少 1px，但不超过半径的 15%
         float feather = MathF.Max(1.0f, MathF.Min(maxR * 0.15f, 2.0f));
 
         int xmin = Math.Max(0, (int)(MathF.Min((float)p1.X, (float)p2.X) - maxR - feather - 1));
@@ -1044,15 +1019,9 @@ public partial class PenTool : ToolBase
 
         return new Int32Rect(xmin, ymin, xmax - xmin + 1, ymax - ymin + 1);
     }
-
-    /// <summary>
-    /// 压力的 ease-in-out 曲线，让粗细变化更有"弹性"
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float EaseInOutPressure(float p)
     {
-        // Hermite 插值：在 0 和 1 附近变化缓慢，中间变化快
-        // 这让细笔画和粗笔画都更稳定，中间过渡更明显
         p = Math.Clamp(p, 0f, 1f);
         return p * p * (3f - 2f * p);
     }
@@ -1063,7 +1032,6 @@ public partial class PenTool : ToolBase
         CalligraphyPoint p2, CalligraphyPoint p3,
         byte* buffer, int stride, int w, int h)
     {
-        // p1→p2 之间的距离决定细分数
         float segDx = p2.X - p1.X;
         float segDy = p2.Y - p1.Y;
         float segLen = MathF.Sqrt(segDx * segDx + segDy * segDy);

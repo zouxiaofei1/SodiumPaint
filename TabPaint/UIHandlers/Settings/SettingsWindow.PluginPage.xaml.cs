@@ -10,7 +10,6 @@ namespace TabPaint.Pages
 {
     public partial class PluginPage : UserControl
     {
-        // 每个模型独立的 CancellationTokenSource
         private CancellationTokenSource _ctsRMBG;
         private CancellationTokenSource _ctsSR;
         private CancellationTokenSource _ctsInpaint;
@@ -97,9 +96,6 @@ namespace TabPaint.Pages
                                LocalizationManager.GetString("L_Settings_Plugins_Model_Inpaint_Title"),
                                _ctsInpaint);
         }
-
-        // ─── 核心安装方法：复用 DownloadProgressFloat ───
-
         private async Task InstallModel(
             AiService.AiTaskType type,
             TextBlock txtStatus,
@@ -171,7 +167,6 @@ namespace TabPaint.Pages
 
             try
             {
-                // 卸载前必须释放驻留的模型文件，否则删除会失败
                 AiService.Instance.ReleaseModel(type);
 
                 string modelName = type switch

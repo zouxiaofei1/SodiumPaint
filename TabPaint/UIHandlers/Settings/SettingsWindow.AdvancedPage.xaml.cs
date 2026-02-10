@@ -47,8 +47,6 @@ namespace TabPaint.Pages
         private void UnitToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (UndoMemoryTextBox == null) return;
-
-            // 获取当前显示的数值
             if (double.TryParse(UndoMemoryTextBox.Text, out double currentValue))
             {
                 // 先转换回 MB
@@ -91,16 +89,11 @@ namespace TabPaint.Pages
                     case MemoryUnit.KB: mbValue = value / 1024.0; break;
                     case MemoryUnit.GB: mbValue = value * 1024.0; break;
                 }
-
-                // 限制 MB 范围 (0 - 10GB)
                 if (mbValue < 0) mbValue = 0;
                 if (mbValue > 10240) mbValue = 10240;
 
                 SettingsManager.Instance.Current.MaxUndoMemoryMB = (int)mbValue;
-                // 使用完整路径调用静态方法
                 global::TabPaint.MainWindow.UndoRedoManager.CheckGlobalUndoLimits();
-                
-                // 刷新显示（处理四舍五入或范围限制后的值）
                 UpdateMemoryTextBox();
             }
             else
@@ -205,8 +198,6 @@ namespace TabPaint.Pages
                 }
             }
         }
-
-        // 限制输入只能是数字
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
             Regex regex = new Regex("[^0-9]+");

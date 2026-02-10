@@ -38,7 +38,6 @@ namespace TabPaint
 
             this.SupportFocusHighlight();
             this.Activated += SettingsWindow_Activated;
-            // 订阅设置变更事件以触发 Toast
             if (SettingsManager.Instance.Current != null)
             {
                 SettingsManager.Instance.Current.PropertyChanged += Settings_PropertyChanged;
@@ -46,7 +45,6 @@ namespace TabPaint
 
             this.Loaded += (s, e) =>
             {
-                //SetHighResIcon();
                 CheckUpdateOnLoad(); // <--- 调用自动检查
                     if (MainContent.Content == null)
                 { 
@@ -79,7 +77,6 @@ namespace TabPaint
             _conflictToastTimer.Interval = TimeSpan.FromSeconds(2.5);
             _conflictToastTimer.Tick += (s, args) => HideConflictToast();
         }
-
         public void ShowConflictToast(string featureName)
         {
             var conflictToast = this.FindName("ConflictToast") as Border;
@@ -108,10 +105,7 @@ namespace TabPaint
 
         private void ShowToast()
         {
-            // 重置计时器，如果已经在显示，则延长显示时间
             _toastTimer.Stop();
-
-            // 如果已经在显示，不需要重新跑动画，只需要重置时间
             if (SavedToast.Visibility != Visibility.Visible)
             {
                 AnimateShow(SavedToast);
@@ -133,8 +127,6 @@ namespace TabPaint
 
             string title = LocalizationManager.GetString("L_Update_Found_Title") ?? "New Update Available";
             TxtUpdateVer.Text = $"{versionTag} ready to download";
-
-            // 启用交互
             UpdateToast.IsHitTestVisible = true;
 
             _updateToastTimer.Stop();
@@ -159,24 +151,14 @@ namespace TabPaint
         {
             if (!string.IsNullOrEmpty(_latestVersionUrl))
             {
-                try
-                {
-                    Process.Start(new ProcessStartInfo(_latestVersionUrl) { UseShellExecute = true });
-                }
-                catch { }
+                try {  Process.Start(new ProcessStartInfo(_latestVersionUrl) { UseShellExecute = true });}catch { }
             }
-            // 调用新的隐藏方法
             HideUpdateToast();
         }
-
-
-
-
         private static bool _hasCheckedUpdateThisSession = false;
 
         private async void CheckUpdateOnLoad()
         {
-            // 如果希望每次打开设置窗口都检查，请去掉下面这行判断
             if (_hasCheckedUpdateThisSession) return;
 
             await CheckForUpdatesAsync(isManual: false);
@@ -206,12 +188,10 @@ namespace TabPaint
 
                         if (IsNewerVersion(ProgramVersion, latestVersionTag))
                         {
-                            // === 修改点：发现新版本，调用 Toast ===
                             ShowUpdateToast(latestVersionTag, releaseUrl);
                         }
                         else if (isManual)
                         {
-                            // 手动检查且是最新版，依然可以用 MessageBox 提示，或者也做一个简单的 Toast
                             FluentMessageBox.Show(
                                 LocalizationManager.GetString("L_Update_Latest_Desc") ?? "You are using the latest version.",
                                 LocalizationManager.GetString("L_Update_Latest_Title") ?? "Up to date",
@@ -257,17 +237,11 @@ namespace TabPaint
         private void AnimateHide(UIElement element)
         {
             if (element.Visibility == Visibility.Collapsed) return;
-
-            // 1. 透明度淡出
             var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
             element.BeginAnimation(UIElement.OpacityProperty, fadeOut);
-
-            // 2. 位移滑出 (向右滑出)
             if (element is FrameworkElement fe && fe.RenderTransform is TranslateTransform trans)
             {
                 var slideOut = new DoubleAnimation(50, TimeSpan.FromMilliseconds(200));
-
-                // 关键：动画结束后设置为 Collapsed，释放空间
                 slideOut.Completed += (s, e) =>
                 {
                     element.Visibility = Visibility.Collapsed;
@@ -275,11 +249,7 @@ namespace TabPaint
 
                 trans.BeginAnimation(TranslateTransform.XProperty, slideOut);
             }
-            else
-            {
-                // 如果没有 Transform，直接隐藏
-                element.Visibility = Visibility.Collapsed;
-            }
+            else  element.Visibility = Visibility.Collapsed;
         }
         
        
@@ -287,29 +257,17 @@ namespace TabPaint
         {
             try
             {
-                // 去掉 'v' 前缀并修剪空格
                 var current = Version.Parse(currentRaw.TrimStart('v', 'V').Trim());
                 var latest = Version.Parse(latestRaw.TrimStart('v', 'V').Trim());
 
                 return latest > current;
             }
-            catch
-            {
-                // 解析失败（比如版本号格式不对），默认不提示更新
-                return false;
-            }
+            catch {  return false; }
         }
         private void SettingsWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (e.NewSize.Width < 750 && _isNavExpanded)
-            {
-                SetSidebarState(false);
-            }
-            // 如果窗口变大且当前是收起状态 -> 自动展开 (可选，如果只希望单向自动收起，可注释掉下面这行)
-            else if (e.NewSize.Width >= 750 && !_isNavExpanded)
-            {
-                SetSidebarState(true);
-            }
+            if (e.NewSize.Width < 750 && _isNavExpanded)   SetSidebarState(false);
+            else if (e.NewSize.Width >= 750 && !_isNavExpanded)  SetSidebarState(true);
         }
         private void SetSidebarState(bool expand)
         {
@@ -319,22 +277,13 @@ namespace TabPaint
             _isNavExpanded = expand;
 
             double targetWidth = expand ? AppConsts.NavExpandedWidth : AppConsts.NavCollapsedWidth;
-
-            // 使用原生的 DoubleAnimation，非常稳定
             DoubleAnimation anim = new DoubleAnimation();
-            // 使用 ActualWidth 保证动画从当前宽度平滑过渡
             anim.From = SidebarBorder.ActualWidth;
             anim.To = targetWidth;
             anim.Duration = TimeSpan.FromMilliseconds(200);
             anim.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
-
-            // 对 Border 的 Width 属性进行动画，而不是 ColumnDefinition
             SidebarBorder.BeginAnimation(Border.WidthProperty, anim);
-
-            // 控制文字显示逻辑
             Visibility textVis = expand ? Visibility.Visible : Visibility.Collapsed;
-            // 2. 隐藏/显示所有文字
-
             if (TxtGeneral != null) TxtGeneral.Visibility = textVis;
             if (TxtPaint != null) TxtPaint.Visibility = textVis;
             if (TxtView != null) TxtView.Visibility = textVis;
@@ -346,8 +295,6 @@ namespace TabPaint
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-
-            // 确保句柄已经准备好
             var hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd == IntPtr.Zero)return;
             bool isDark = ThemeManager.CurrentAppliedTheme == AppTheme.Dark;
@@ -358,17 +305,10 @@ namespace TabPaint
             {
                 var chromeLow = FindResource("ChromeLowBrush") as Brush;
                 SidebarBorder.Background = chromeLow;
-              //  this.Background = FindResource("WindowBackgroundBrush") as Brush;
             }
         }
         private void SettingsWindow_Activated(object sender, EventArgs e)
         {
-            // 为了性能和避免闪烁，可以加个判断，如果已经是 Mica 则不重复设置
-            if (!MicaEnabled)
-            {
-                MicaAcrylicManager.ApplyEffect(this);
-                MicaEnabled = true;
-            }
         }
 
 
@@ -394,7 +334,6 @@ namespace TabPaint
 
         private void NavListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // 1. 【关键修复】防止在 InitializeComponent 过程中控件尚未加载完成时触发
             if (NavListBox == null || BottomListBox == null) return;
 
             if (_isInternalChange) return;
@@ -403,25 +342,10 @@ namespace TabPaint
             if (source == null || source.SelectedIndex == -1) return;
 
             _isInternalChange = true;
-
-            // 处理两个 ListBox 的互斥选中逻辑
-            if (source == NavListBox)
-            {
-                BottomListBox.SelectedIndex = -1;
-            }
-            else
-            {
-                NavListBox.SelectedIndex = -1;
-            }
-
-            // 获取选中的 Tag
+            if (source == NavListBox)  BottomListBox.SelectedIndex = -1; // 处理两个 ListBox 的互斥选中逻辑
+            else NavListBox.SelectedIndex = -1;
             string tag = "";
-            if (source.SelectedItem is ListBoxItem item && item.Tag != null)
-            {
-                tag = item.Tag.ToString();
-            }
-
-            // 核心逻辑：根据 Tag 切换页面
+            if (source.SelectedItem is ListBoxItem item && item.Tag != null) tag = item.Tag.ToString();
             NavigateToPage(tag);
 
             _isInternalChange = false;
@@ -437,12 +361,10 @@ namespace TabPaint
             {
                 switch (tag)
                 {
-                    // 注意：这里需要你创建对应的 UserControl
                     case "General": page = new Pages.GeneralPage(); break;
                     case "Paint": page = new Pages.PaintPage(); break;
                     case "View": page = new Pages.ViewPage(); break;
                     case "Shortcuts": page = new Pages.ShortcutsPage(); break;
-
                     case "Advanced":
                         page = new Pages.AdvancedPage();
                         break;
@@ -452,24 +374,12 @@ namespace TabPaint
                     case "About":
                         page = new Pages.AboutPage();
                         break;
-
                     default:
-                        // 默认或者找不到时显示空白或 General
-                        // page = new Pages.GeneralPage(); 
                         break;
                 }
-
-                if (page != null)
-                {
-                    _pages[tag] = page;
-                }
+                if (page != null)  _pages[tag] = page;
             }
-            else
-            {
-                page = _pages[tag];
-            }
-
-            // 将 SettingsWindow 的 MainContent 设置为对应的 Page
+            else page = _pages[tag];
             if (page != null)
             {
                 MainContent.Content = page;
@@ -499,10 +409,6 @@ namespace TabPaint
             }
         }
         #endregion
-
-      
-
-
     }
     public class GridLengthAnimation : AnimationTimeline
     {

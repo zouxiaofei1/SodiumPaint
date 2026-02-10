@@ -57,7 +57,6 @@ namespace TabPaint
         private readonly string _cacheDir;
 
         private const string Sr_ModelUrl_HF = AppConsts.Sr_ModelUrl_HF;
-        // 备用源 (由于 github release 国内下载慢，建议替换为你自己的 OSS 地址或者国内镜像)
         private const string Sr_ModelUrl_Mirror = AppConsts.Sr_ModelUrl_Mirror;
         private const string Sr_ModelName = AppConsts.Sr_ModelName;
         private const int TileSize = AppConsts.Sr_TileSize; // 切块大小，越小内存占用越低，但推理次数越多
@@ -68,12 +67,7 @@ namespace TabPaint
         private const string Inpaint_ModelName = AppConsts.Inpaint_ModelName;
         private const string Inpaint_MD5 = AppConsts.Inpaint_ExpectedMD5;
         // 检查模型是否准备好
-        public bool IsInpaintModelReady()
-        {
-            return File.Exists(Path.Combine(_cacheDir, Inpaint_ModelName));
-        }
-
-
+        public bool IsInpaintModelReady(){  return File.Exists(Path.Combine(_cacheDir, Inpaint_ModelName));  }
         private async Task<InferenceSession> GetSessionAsync(AiTaskType taskType, string modelPath)
         {
             await _sessionLock.WaitAsync();
@@ -133,7 +127,6 @@ namespace TabPaint
                 _sessionLock.Release();
             }
         }
-
         public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
         {
             int targetW = AppConsts.AiInpaintSize;
@@ -205,7 +198,6 @@ namespace TabPaint
         private DenseTensor<float> PreprocessImageBytesToTensor(byte[] pixels, int w, int h)
         {
             var tensor = new DenseTensor<float>(new[] { 1, 3, h, w });
-            // 假设输入是 BGRA 格式 (WPF 默认)
             Parallel.For(0, h, y =>
             {
                 for (int x = 0; x < w; x++)
@@ -233,7 +225,6 @@ namespace TabPaint
                     for (int x = 0; x < w; x++)
                     {
                         int offset = y * stride + x * 4;
-                        // LaMa 需要 Normalize 到 0-1 甚至可能有特定的 mean/std，通常 LaMa 是直接 0-255 归一化即可
                         tensor[0, 0, y, x] = ptr[offset + 2] / 255.0f; // R
                         tensor[0, 1, y, x] = ptr[offset + 1] / 255.0f; // G
                         tensor[0, 2, y, x] = ptr[offset + 0] / 255.0f; // B
@@ -243,8 +234,6 @@ namespace TabPaint
             wb.Unlock();
             return tensor;
         }
-
-        // 辅助方法：处理遮罩输入 (Mask 应该是单通道)
         private DenseTensor<float> PreprocessMask(WriteableBitmap bmp, int w, int h)
         {
             var resized = new TransformedBitmap(bmp, new ScaleTransform((double)w / bmp.PixelWidth, (double)h / bmp.PixelHeight));
@@ -383,8 +372,6 @@ namespace TabPaint
             string secondaryUrl = preferMirror ? urlMain : urlMirror;
 
             string finalPath = Path.Combine(_cacheDir, modelName);
-
-            // 1. 检查已存在的文件
             if (File.Exists(finalPath))
             {
                 if (expectedMd5 == null) return finalPath; // 未提供MD5，直接返回已存在文件（开发阶段用）
@@ -456,18 +443,13 @@ namespace TabPaint
                             {
                                 await fileStream.WriteAsync(buffer, 0, read, token);
                                 totalRead += read;
-
-                                // 限制更新频率，避免 UI 卡顿 (例如每 100ms 更新一次)
                                 if (progress != null)
                                 {
                                     long currentTime = stopwatch.ElapsedMilliseconds;
-                                    // 至少经过 100ms 或者下载完成了才更新
                                     if (currentTime - lastReportedTime > 100 || !isMoreToRead)
                                     {
                                         double timeDiffSeconds = (currentTime - lastReportedTime) / 1000.0;
                                         long bytesDiff = totalRead - lastReportedBytes;
-
-                                        // 防止除以零
                                         double speed = timeDiffSeconds > 0 ? bytesDiff / timeDiffSeconds : 0;
 
                                         var status = new AiDownloadStatus
@@ -505,7 +487,6 @@ namespace TabPaint
             }
             catch (OperationCanceledException)
             {
-                // 捕获取消异常，清理临时文件，然后重新抛出让上层知道是用户取消的
                 try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
                 throw;
             }
@@ -552,14 +533,9 @@ namespace TabPaint
             originalBmp.CopyPixels(originalPixels, origStride, 0); // 必须在主线程读原图
 
             var session = await GetSessionAsync(AiTaskType.RemoveBackground, modelPath);
-
-            // C. 后台线程
             return await Task.Run(() =>
             {
-                // 转换 Tensor
                 var tensor = PreprocessPixelsToTensor(inputPixels, targetW, targetH, inputStride);
-
-                // 推理
                 string inputName = session.InputMetadata.Keys.First();
                 var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor(inputName, tensor) };
                 
@@ -590,11 +566,8 @@ namespace TabPaint
             byte[] outputPixels = new byte[outH * outStride];
 
             var session = await GetSessionAsync(AiTaskType.SuperResolution, modelPath);
-
-            // 3. 运行推理 (后台线程)
             await Task.Run(() =>
             {
-                // 计算分块
                 int tilesX = (int)Math.Ceiling((double)w / TileSize);
                 int tilesY = (int)Math.Ceiling((double)h / TileSize);
                 int totalTiles = tilesX * tilesY;

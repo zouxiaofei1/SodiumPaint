@@ -153,10 +153,10 @@
                                 Click="Internal_OnSaveAllClick" PreviewMouseDoubleClick="Internal_OnSaveAllDoubleClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
                             <Path Data="{DynamicResource Save_Edit_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                         </Button>
-                        <Button services:ShortcutService.BaseToolTip="L_ImgBar_ClearUnedited" Click="Internal_OnClearUneditedClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22"  >
+                        <Button ToolTip="{DynamicResource L_ImgBar_ClearUnedited}" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22"  >
                             <Path Data="{DynamicResource Clear_Unedited_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="14" Height="14"/>
                         </Button>
-                        <Button services:ShortcutService.BaseToolTip="L_Menu_QA_DiscardAll" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
+                        <Button ToolTip="{DynamicResource L_Menu_QA_DiscardAll}" Click="Internal_OnDiscardAllClick" Padding ="2" Style="{StaticResource RoundedMenuButtonStyle}" Width="22" Height="22" >
                             <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource WarningBrush}" Width="14" Height="14"/>
                         </Button>
                     </StackPanel>
@@ -172,14 +172,11 @@
 
                 </StackPanel>
             </Border>
-
-            <!-- 2. 图片标签列表 -->
             <ScrollViewer FocusVisualStyle="{x:Null}" x:Name="FileTabsScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" 
                           PreviewMouseWheel="Internal_OnFileTabsWheelScroll" 
                           ScrollChanged="Internal_OnFileTabsScrollChanged" 
                           ManipulationBoundaryFeedback="Internal_ScrollViewer_ManipulationBoundaryFeedback">
                 <StackPanel Orientation="Horizontal">
-                    <!-- 左侧添加按钮 -->
                     <Button Name="LeftAddBtn"
         Click="Internal_OnPrependTabClick"
         services:ShortcutService.BaseToolTip="L_ImgBar_NewTabLeft">
@@ -234,7 +231,7 @@
                                                         <Path Data="{DynamicResource Cut_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                        
+
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_Edit_Paste}" 
                                                           services:ShortcutService.ShortcutKey="Edit.Paste"
                                                           Click="Internal_OnTabPasteClick" Tag="{Binding}">
@@ -289,7 +286,6 @@
                                             <TextBlock x:Name="TabLabel" Grid.Row="1" Text="{Binding DisplayName}" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" 
                                                        TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
 
-                                            <!-- 编辑状态红点 -->
                                             <Ellipse x:Name="DirtyDot" 
                                                  Width="8" Height="8" 
                                                  HorizontalAlignment="Left" 
@@ -297,8 +293,6 @@
                                                  Margin="0,0,0,0" 
                                                  IsHitTestVisible="False"
                                                  Fill="{DynamicResource DangerBrush}">
-                                                <!-- 直接在这里绑定 Fill -->
-
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -310,9 +304,6 @@
                                                     </Style>
                                                 </Ellipse.Style>
                                             </Ellipse>
-
-
-                                            <!-- 关闭按钮 (移动到 Grid 内部以便定位) -->
                                             <Button x:Name="CloseBtn" Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-6,0" 
                                                     Background="{DynamicResource GlassBackgroundHighBrush}" Style="{StaticResource OtherCloseButtonStyle}" BorderThickness="0" 
                                                     Click="Internal_OnFileTabCloseClick" Tag="{Binding}" Visibility="Hidden" Grid.RowSpan="2">
@@ -330,7 +321,6 @@
                                                 <Setter Property="Background" Value="Transparent"/>
                                                 <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
                                                 <Setter Property="BorderThickness" Value="1"/>
-                                                <!-- 默认(Expand)模式尺寸 -->
                                                 <Setter Property="Width" Value="120"/>
                                                 <Setter Property="Height" Value="80"/>
                                                 <Setter Property="ToolTip" Value="{Binding FileName}"/>
@@ -342,8 +332,6 @@
                                                         <Setter Property="Background" Value="{DynamicResource ListItemSelectedBackgroundBrush}"/>
                                                         <Setter Property="BorderBrush" Value="{DynamicResource ListItemSelectedBorderBrush}"/>
                                                     </DataTrigger>
-
-                                                    <!-- Compact 模式触发器 -->
                                                     <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
                                                         <Setter Property="Width" Value="150"/>
                                                         <Setter Property="ToolTip" Value="{x:Null}"/>
@@ -354,15 +342,12 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-
-                                    <!-- 插入线 -->
                                     <Border x:Name="InsertLine" Width="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" 
                                             Background="{DynamicResource BorderBrush}" Visibility="Collapsed" IsHitTestVisible="False" Margin="0,5,0,5" Padding="0,0,2,0" CornerRadius="2"/>
 
                                 </Grid>
 
                                 <DataTemplate.Triggers>
-                                    <!-- 鼠标悬浮显示关闭按钮 -->
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
                                     </Trigger>
@@ -371,26 +356,17 @@
                                         <Setter TargetName="CloseBtn" Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding IsCompactMode, ElementName=RootControl}" Value="True">
-                                        <!-- 隐藏图片 -->
                                         <Setter TargetName="ThumbImage" Property="Visibility" Value="Collapsed"/>
-
-                                        <!-- 调整文字布局 -->
                                         <Setter TargetName="TabLabel" Property="Grid.Row" Value="0"/>
                                         <Setter TargetName="TabLabel" Property="Grid.RowSpan" Value="2"/>
                                         <Setter TargetName="TabLabel" Property="HorizontalAlignment" Value="Left"/>
                                         <Setter TargetName="TabLabel" Property="TextAlignment" Value="Left"/>
                                         <Setter TargetName="TabLabel" Property="Margin" Value="14,0,20,0"/>
-                                        <!-- 左侧留给红点，右侧留给X -->
                                         <Setter TargetName="TabLabel" Property="VerticalAlignment" Value="Center"/>
-
-                                        <!-- 调整红点位置 -->
                                         <Setter TargetName="DirtyDot" Property="Margin" Value="2,0,0,0"/>
                                         <Setter TargetName="DirtyDot" Property="VerticalAlignment" Value="Center"/>
-
-                                        <!-- 调整关闭按钮位置 -->
                                         <Setter TargetName="CloseBtn" Property="VerticalAlignment" Value="Center"/>
                                         <Setter TargetName="CloseBtn" Property="Margin" Value="0,0,2,0"/>
-                                        <!-- 在Compact模式下，选中或悬浮都显示关闭按钮，体验更好 -->
                                     </DataTrigger>
                                 </DataTemplate.Triggers>
                             </DataTemplate>
@@ -427,7 +403,6 @@
                 <!-- 省略 Slider Template，保持原样 -->
                 <Slider.Template>
                     <ControlTemplate TargetType="Slider">
-                        <!-- 这里原样保留你提供的 Slider Template 代码 -->
                         <Grid Background="Transparent" x:Name="RootGrid">
                             <Border Width="4" CornerRadius="2" Background="{DynamicResource TextControlBrush}" Opacity="0.1" HorizontalAlignment="Center"/>
                             <Track x:Name="PART_Track" Orientation="Vertical">
@@ -533,8 +508,6 @@
                                            FontSize="11" 
                                            Foreground="{DynamicResource TextSecondaryBrush}"/>
                             </StackPanel>
-
-                            <!-- 文件大小 (例如: 2.5 MB) -->
                             <TextBlock x:Name="PopupFileSizeText" 
                                        Grid.Column="1" 
                                        Text="" 

@@ -30,8 +30,6 @@ namespace TabPaint
         public void Compress()
         {
             if (_isCompressed || _raw == null) return;
-
-            // 方案A: 使用内置 BrotliEncoder (无需NuGet)
             using var ms = new MemoryStream();
             using (var brotli = new BrotliStream(ms, CompressionLevel.Fastest))
             {
@@ -74,10 +72,7 @@ namespace TabPaint
     }
     public static class ListStackExtensions
     {
-        public static void Push<T>(this List<T> list, T item)
-        {
-            list.Add(item);
-        }
+        public static void Push<T>(this List<T> list, T item) {   list.Add(item); }
         public static T Pop<T>(this List<T> list)
         {
             if (list.Count == 0) throw new InvalidOperationException("Stack is empty");
@@ -198,13 +193,10 @@ namespace TabPaint
             private static void CompressColdActions(List<UndoAction> stack)
             {
                 if (stack.Count <= AppConsts.UndoHotZoneSize) return;
-
-                // 栈顶是最新的（热区），从底部开始压缩
                 int coldEnd = stack.Count - AppConsts.UndoHotZoneSize;
                 for (int i = 0; i < coldEnd; i++)
                 {
                     var action = stack[i];
-                    // 仅压缩大块数据
                     if (action.MemorySize > AppConsts.UndoCompressThreshold)
                     {
                         action.CompressAll();
@@ -429,15 +421,10 @@ namespace TabPaint
             public void PushExplicitImageUndo(WriteableBitmap oldBitmap)
             {
                 if (oldBitmap == null) return;
-                // 1. 确定区域
                 Int32Rect rect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
-
-                // 2. 提取像素数据
                 int stride = oldBitmap.BackBufferStride;
                 byte[] pixels = new byte[stride * oldBitmap.PixelHeight];
                 oldBitmap.CopyPixels(pixels, stride, 0);
-
-                // 3. 创建撤销动作 (由于滤镜不改变尺寸，使用 Draw 类型即可)
                 _undo.Push(new UndoAction(rect, pixels, UndoActionType.Draw));
                 _redo.Clear();  // 4. 清空重做链并更新 UI
                 TrimStack();
@@ -478,13 +465,11 @@ namespace TabPaint
             }
             public byte[] SafeExtractRegion(Int32Rect rect)
             {
-                // 检查合法范围，防止尺寸变化导致越界
                 if (rect.X < 0 || rect.Y < 0 ||
                     rect.X + rect.Width > _surface.Bitmap.PixelWidth ||
                     rect.Y + rect.Height > _surface.Bitmap.PixelHeight ||
                     rect.Width <= 0 || rect.Height <= 0)
                 {
-                    // 返回当前整图快照（安全退化）
                     int bytes = _surface.Bitmap.BackBufferStride * _surface.Bitmap.PixelHeight;
                     byte[] data = new byte[bytes];
                     _surface.Bitmap.Lock();

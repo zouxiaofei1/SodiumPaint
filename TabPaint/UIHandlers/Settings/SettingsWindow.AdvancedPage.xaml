@@ -33,8 +33,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 无边框版本的右侧Button -->
             <Style x:Key="RightPartButtonStyle_NoBorder" TargetType="Button">
                 <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
@@ -89,8 +87,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 组合输入框样式：右侧按钮 -->
             <Style x:Key="RightPartButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -124,11 +120,7 @@
 
     <StackPanel Margin="24,24,44,24">
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
-
-        <!-- 渲染设置 -->
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Render_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
-
-        <!-- 采样模式 -->
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220"/>

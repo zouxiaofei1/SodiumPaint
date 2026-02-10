@@ -11,19 +11,14 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 引用样式资源，确保在设计视图和运行时都能正确显示样式 -->
                 <ResourceDictionary Source="pack://application:,,,/Resources/SubWindowStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-
-    <!-- 原 PaintPanel 的内容，Margin="24" 保持一致 -->
     <StackPanel Margin="24">
         <TextBlock Text="{DynamicResource L_Settings_Paint_Title}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
         <TextBlock Text="{DynamicResource L_Settings_Paint_Habits_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
-
-        <!-- 自动弹出剪贴板图片 -->
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>

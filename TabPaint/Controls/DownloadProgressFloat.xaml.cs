@@ -116,8 +116,6 @@ namespace TabPaint.Controls
             this.ReleaseMouseCapture();
             base.OnMouseUp(e);
         }
-
-        // 辅助判断点击源
         private bool IsDescendantOf(DependencyObject node, Type type)
         {
             while (node != null)

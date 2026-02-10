@@ -35,14 +35,9 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <!-- 顶部间距/标题栏区域 -->
                 <RowDefinition Height="*"/>
-                <!-- 内容 -->
                 <RowDefinition Height="Auto"/>
-                <!-- 按钮 -->
             </Grid.RowDefinitions>
-
-            <!-- 标题 (可选，做得很淡，不占用交互空间) -->
             <TextBlock x:Name="TxtTitle" 
                        Grid.Row="0"
                        Text="Title" 
@@ -55,16 +50,11 @@
                             Style="{StaticResource WindowCloseButtonStyle}"
                             Click="BtnClose_Click"  HorizontalAlignment="Right"
                             WindowChrome.IsHitTestVisibleInChrome="True"/>
-            <!-- ================= 内容区 ================= -->
             <Grid Grid.Row="1" Margin="24,16,24,24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <!-- 图标列 -->
                     <ColumnDefinition Width="*"/>
-                    <!-- 文字列 -->
                 </Grid.ColumnDefinitions>
-
-                <!-- 图标容器 -->
                 <Viewbox x:Name="IconContainer" 
          Grid.Column="0" 
          Width="32" Height="32" 
@@ -75,10 +65,7 @@
           Fill="{DynamicResource SystemAccentBrush}" 
           Stretch="Uniform"
           Width="24" Height="24" />
-                    <!-- 增加：显式指定 Path 的原始视口大小 -->
                 </Viewbox>
-
-
                 <TextBlock x:Name="TxtMessage" 
                            Grid.Column="1"
                            Text="Message Content" 
@@ -87,11 +74,8 @@
                            LineHeight="22"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-          
-            </Grid>
 
-            <!-- ================= 按钮区 ================= -->
-            <!-- 使用略微不同的背景色区分按钮区，增加层次感 -->
+            </Grid>
             <Border Grid.Row="2" 
                     
                     Background="{DynamicResource SubtleHoverBrush}" 
@@ -110,7 +94,7 @@
                     <Button x:Name="BtnYes" Content="{DynamicResource L_Common_OK}" Style="{DynamicResource Win11PrimaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnYes_Click" Visibility="Collapsed"/>
                     <Button x:Name="BtnOk" Content="{DynamicResource L_Common_OK}" Style="{DynamicResource Win11PrimaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnOk_Click" Visibility="Collapsed"/>
 
-                    <Button x:Name="BtnNo" Content="{DynamicResource L_Common_Cancel}" Style="{DynamicResource Win11SecondaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnNo_Click" Visibility="Collapsed"/>
+                    <Button x:Name="BtnNo" Content="{DynamicResource L_Common_No}" Style="{DynamicResource Win11SecondaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnNo_Click" Visibility="Collapsed"/>
                     <Button x:Name="BtnCancel" Content="{DynamicResource L_Common_Cancel}" Style="{DynamicResource Win11SecondaryButtonStyle}" MinWidth="76" Height="32" Margin="8,0,0,0" Click="BtnCancel_Click" Visibility="Collapsed"/>
 
                 </StackPanel>

@@ -394,12 +394,9 @@ namespace TabPaint
 
             using (var dc = visual.RenderOpen())
             {
-                // === 关键修改：应用缩放变换 ===
                 if (renderScale != 1.0) dc.PushTransform(new ScaleTransform(renderScale, renderScale));
 
                 if (!onlyWatermark) dc.DrawImage(source, new Rect(0, 0, w, h));
-
-
                 if (settings.Opacity > 0)
                 {
                     dc.PushOpacity(settings.Opacity);
@@ -427,7 +424,6 @@ namespace TabPaint
 
                             if (settings.IsText && !string.IsNullOrEmpty(settings.Text))
                             {
-                                // 建议增加一个验证，确保 FontFamily 有效
                                 var tf = new Typeface(settings.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
                                 var ft = new FormattedText(
@@ -445,7 +441,6 @@ namespace TabPaint
                             {
                                 double iw = settings.ImageSource.PixelWidth;
                                 double ih = settings.ImageSource.PixelHeight;
-                                // 图片也基于原图尺寸计算缩放
                                 double scaleX = (cellW * 0.8) / iw;
                                 double scaleY = (cellH * 0.8) / ih;
                                 double finalScale = Math.Min(scaleX, scaleY) * settings.ImageScale;

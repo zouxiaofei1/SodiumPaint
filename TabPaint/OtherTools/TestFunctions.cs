@@ -249,26 +249,14 @@ namespace TabPaint
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b && b)
-            {
-                // 统一存储为6位格式
-                return NormalizeColor(parameter.ToString());
-            }
+            if (value is bool b && b) return NormalizeColor(parameter.ToString());// 统一存储为6位格式
             return Binding.DoNothing;
         }
-
-        /// <summary>
-        /// 将颜色字符串统一为 "#RRGGBB" 6位格式（去掉Alpha通道）
-        /// "#FF0078D4" -> "#0078D4"
-        /// "#0078D4"   -> "#0078D4"
-        /// </summary>
         private static string NormalizeColor(string color)
         {
             if (string.IsNullOrEmpty(color)) return string.Empty;
 
             color = color.Trim();
-
-            // #AARRGGBB (9字符) -> #RRGGBB
             if (color.Length == 9 && color.StartsWith("#"))
             {
                 return "#" + color.Substring(3);
@@ -383,36 +371,25 @@ namespace TabPaint
         {
             var settings = SettingsManager.Instance.Current;
             DateTime now = DateTime.Now;
-
-            // 如果已经有评分，且距离上次评分不足 30 天，则直接返回缓存值
-            if (settings.PerformanceScore > 0 && (now - settings.LastBenchmarkDate).TotalDays < 30)
-            {
-                return settings.PerformanceScore;
-            }
-
+            if (settings.PerformanceScore > 0 && (now - settings.LastBenchmarkDate).TotalDays < 30)return settings.PerformanceScore; //30 天内有评分返回缓存值
             double score = 0;
             var sw = Stopwatch.StartNew();
-
             try
             {
                 int coreCount = Environment.ProcessorCount;
                 if (coreCount >= 20) score += 2.5;       // i7-13700K, i9, R9 等
                 else if (coreCount >= 12) score += 2.0;  // 现代标压 i5/i7, R7
                 else if (coreCount >= 8) score += 1.5;   // 主流轻薄本
-                else if (coreCount >= 4) score += 0.5;   // 入门级/老旧双核
-                // 4核以下 0分
-
+                else if (coreCount >= 4) score += 0.5;   // 入门级/老旧双核4核以下 0分
                 long memKb = 0;
                 if (GetPhysicallyInstalledSystemMemory(out memKb))
                 {
                     long memGb = memKb / 1024 / 1024;
                     if (memGb >= 30) score += 1.5;       // 32GB及以上
                     else if (memGb >= 15) score += 1.0;  // 16GB
-                    else if (memGb >= 7) score += 0.5;   // 8GB
-                    // 8GB以下 0分
+                    else if (memGb >= 7) score += 0.5;   // 8GB// 8GB以下 0分
                 }
                 long cpuTicks = RunStrictMicroTest();
-
                 if (cpuTicks < 1800) score += 6.0;
                 else if (cpuTicks < 2200) score += 5.0;
                 else if (cpuTicks < 3000) score += 4.0;
@@ -420,21 +397,14 @@ namespace TabPaint
                 else if (cpuTicks < 6500) score += 2.0;   // 普通办公本区间
                 else if (cpuTicks < 9000) score += 1.0; 
                 double screenWidth = SystemParameters.PrimaryScreenWidth;
-                double screenHeight = SystemParameters.PrimaryScreenHeight;
-                // 大于 2K 分辨率 (约360万像素)
+                double screenHeight = SystemParameters.PrimaryScreenHeight; // 大于 2K 分辨率 (约360万像素)
                 if (screenWidth * screenHeight > 3600000)if (cpuTicks > 4500) score -= 1.5;
-               
                 if (score > 10) score = 10;
-                if (score < 1) score = 1;
-
-                // 缓存结果
+                if (score < 1) score = 1; // 缓存结果
                 settings.PerformanceScore = (int)Math.Round(score);
                 settings.LastBenchmarkDate = now;
             }
-            catch
-            {
-                return 4; // 发生异常给个及格分下的保守值
-            }
+            catch  {   return 4;   }
             finally
             {
                 sw.Stop();
@@ -442,19 +412,13 @@ namespace TabPaint
             }
             return (int)Math.Round(score);
         }
-
         private static long RunStrictMicroTest()
         {
             var sw = Stopwatch.StartNew();
             int result = 0;
-            for (int i = 1; i < 150000; i++)
-            {
-                result += (i * 3) ^ (i % 7);
-            }
+            for (int i = 1; i < 150000; i++)  result += (i * 3) ^ (i % 7);
             sw.Stop();
-
             if (result == 999999) Debug.WriteLine("");
-
             return sw.ElapsedTicks;
         }
     }
@@ -538,12 +502,8 @@ namespace TabPaint
 
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        #region s
-
-        public static void s<T>(T a)
-        {
-            System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        #region Debug工具
+        public static void s<T>(T a) { System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information); }
         public static void s(){ System.Windows.MessageBox.Show("空messagebox", "标题", MessageBoxButton.OK, MessageBoxImage.Information);}
         public static void msgbox<T>(T a) {System.Windows.MessageBox.Show(a.ToString(), "标题", MessageBoxButton.OK, MessageBoxImage.Information);}
         public static void s2<T>(T a) {Debug.Print(a.ToString()); }
@@ -551,11 +511,40 @@ namespace TabPaint
         {
             public static void s(params object[] args)
             {
-                // 可以根据需要拼接输出格式
                 string message = string.Join(" ", args);
                 Debug.WriteLine(message);
             }
         }
+        public class TimeRecorder
+        {
+            private Stopwatch _stopwatch;
+
+            public void Toggle(bool slient = false)
+            {
+                if (_stopwatch == null)
+                {
+                    _stopwatch = Stopwatch.StartNew();
+                    //    a.s("计时开始...");
+                }
+                else if (_stopwatch.IsRunning)
+                {
+                    _stopwatch.Stop();
+                    if (!slient)
+                        s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
+                    else
+                        a.s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒"); ;
+                }
+                else
+                {
+                    Console.WriteLine("计时器已结束。如需重新开始，请重置状态。");
+                }
+            }
+            public void Reset()
+            {
+                _stopwatch = null;
+            }
+        }
+
         #endregion
 
         private const double MinZoomReal = AppConsts.ZoomSliderMinReal;  // 10%
@@ -574,35 +563,7 @@ namespace TabPaint
             return MinZoomReal * Math.Pow(MaxZoomReal / MinZoomReal, percent);
         }
 
-        public class TimeRecorder
-        {
-            private Stopwatch _stopwatch;
-
-            public void Toggle(bool slient = false)
-            {
-                if (_stopwatch == null)
-                {
-                    _stopwatch = Stopwatch.StartNew();
-                //    a.s("计时开始...");
-                }
-                else if (_stopwatch.IsRunning)
-                {
-                    _stopwatch.Stop();
-                    if(!slient)
-                        s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒");
-                    else
-                       a.s($"耗时：{_stopwatch.Elapsed.TotalMilliseconds} 毫秒"); ;
-                }
-                else
-                {
-                    Console.WriteLine("计时器已结束。如需重新开始，请重置状态。");
-                }
-            }
-            public void Reset()
-            {
-                _stopwatch = null;
-            }
-        }
+        
 
     }
 }

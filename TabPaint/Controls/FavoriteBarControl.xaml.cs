@@ -372,8 +372,6 @@ namespace TabPaint.Controls
 
             border.Child = img;
             grid.Children.Add(border);
-
-            // ★ 删除按钮：使用动画样式，并通过 Grid 的 MouseEnter/Leave 控制
             var deleteBtn = new Button
             {
                 Width = 20,
@@ -388,12 +386,9 @@ namespace TabPaint.Controls
                 RenderTransformOrigin = new Point(0.5, 0.5),
                 RenderTransform = new ScaleTransform(0.7, 0.7)
             };
-            // 尝试应用基础样式
             try { deleteBtn.Style = (Style)FindResource("OtherCloseButtonStyle"); } catch { }
 
             grid.Children.Add(deleteBtn);
-
-            // ★ 删除按钮的淡入/淡出动画
             grid.MouseEnter += (s, e) =>
             {
                 var sb = new System.Windows.Media.Animation.Storyboard();
@@ -564,8 +559,6 @@ namespace TabPaint.Controls
         {
             var scrollViewer = sender as ScrollViewer;
             if (scrollViewer == null) return;
-
-            // 将垂直滚轮转换为水平滚动
             scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset - e.Delta);
             e.Handled = true;
         }

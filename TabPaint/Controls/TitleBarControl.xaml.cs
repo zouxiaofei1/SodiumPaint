@@ -16,8 +16,6 @@ namespace TabPaint.Controls
     {
         public TextBlock TitleTextControl => TitleTextBlock;
         public Button MaxBtn => MaxRestoreButton;
-
-        // --- 原有的路由事件定义 ---
         public static readonly RoutedEvent MinimizeClickEvent = EventManager.RegisterRoutedEvent(
             "MinimizeClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(TitleBarControl));
         public static readonly RoutedEvent MaximizeRestoreClickEvent = EventManager.RegisterRoutedEvent(
@@ -37,9 +35,7 @@ namespace TabPaint.Controls
         public event MouseButtonEventHandler TitleBarMouseDown;
         private async void TitleBarControl_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Loaded -= TitleBarControl_Loaded; // 避免重复执行
-
-            // 放到后台线程去加载和解码
+            this.Loaded -= TitleBarControl_Loaded; 
             var imageSource = await Task.Run(() =>
             {
                 var uri = new Uri("pack://application:,,,/Resources/TabPaint.ico");
@@ -51,8 +47,6 @@ namespace TabPaint.Controls
                 bitmap.Freeze(); // 关键：冻结对象，使其可以跨线程访问
                 return bitmap;
             });
-
-            // 回到 UI 线程赋值
             AppIcon.Source = imageSource;
         }
 
@@ -63,14 +57,9 @@ namespace TabPaint.Controls
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.OriginalSource is System.Windows.Controls.Button ||
-                (e.OriginalSource is FrameworkElement fe && fe.TemplatedParent is System.Windows.Controls.Button))
-            {
-                return;
-            }
-            if (e.OriginalSource == AppIcon || e.Source == AppIcon)
-            {
-                return;
-            }
+                (e.OriginalSource is FrameworkElement fe && fe.TemplatedParent is System.Windows.Controls.Button))   return;
+            if (e.OriginalSource == AppIcon || e.Source == AppIcon) return;
+
             TitleBarMouseDown?.Invoke(this, e);
         }
         public static readonly RoutedEvent ModeSwitchClickEvent = EventManager.RegisterRoutedEvent(
@@ -81,10 +70,7 @@ namespace TabPaint.Controls
             add => AddHandler(ModeSwitchClickEvent, value);
             remove => RemoveHandler(ModeSwitchClickEvent, value);
         }
-        private void OnModeSwitchClick(object sender, RoutedEventArgs e)
-        {
-            RaiseEvent(new RoutedEventArgs(ModeSwitchClickEvent));
-        }
+        private void OnModeSwitchClick(object sender, RoutedEventArgs e)  {  RaiseEvent(new RoutedEventArgs(ModeSwitchClickEvent));  }
         public void UpdateModeIcon(bool isViewMode)
         {
             string resourceKey = isViewMode ? "Paint_Mode_Image" : "View_Mode_Image";
@@ -96,11 +82,7 @@ namespace TabPaint.Controls
                 if (newImage == null)
                     newImage = this.TryFindResource(resourceKey) as Geometry;
 
-                if (newImage != null)
-                {
-                    ModeIconImage.Data = newImage;
-                }
-
+                if (newImage != null)    ModeIconImage.Data = newImage;
                 // 更新提示文字
                 ModeSwitchButton.ToolTip = isViewMode
              ? LocalizationManager.GetString("L_Mode_Switch_ToPaint")
@@ -127,12 +109,7 @@ namespace TabPaint.Controls
             // 原有逻辑：处理左键菜单 (增加 Left 按钮判断)
             if (e.ChangedButton == MouseButton.Left && IsLogoMenuEnabled)
             {
-                if (AppIcon.ContextMenu == null)
-                {
-                    LoadLogoContextMenu();
-                }
-
-                // 确保加载成功后再打开
+                if (AppIcon.ContextMenu == null)   LoadLogoContextMenu();
                 if (AppIcon.ContextMenu != null)
                 {
                     AppIcon.ContextMenu.PlacementTarget = AppIcon;
@@ -145,12 +122,8 @@ namespace TabPaint.Controls
         {
             try
             {
-                // 1. 动态读取独立的资源字典文件
-                // 注意：Uri 路径要根据你的实际项目结构调整，例如 "/TabPaint;component/Resources/TitleBarMenu.xaml"
                 var resourceUri = new Uri("pack://application:,,,/Controls/ContextMenus/TitleBarMenu.xaml");
                 var dictionary = new ResourceDictionary { Source = resourceUri };
-
-                // 2. 从字典中提取 ContextMenu
                 var menu = dictionary["LogoContextMenu"] as ContextMenu;
 
                 if (menu != null)
@@ -158,20 +131,12 @@ namespace TabPaint.Controls
                     // 简单粗暴的重新挂载事件方法：
                     foreach (var item in menu.Items)
                     {
-                        if (item is MenuItem menuItem)
-                        {
-                            BindMenuEvents(menuItem);
-                        }
+                        if (item is MenuItem menuItem) BindMenuEvents(menuItem);
                     }
-
-                    // 4. 赋值给控件
                     AppIcon.ContextMenu = menu;
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"加载菜单失败: {ex.Message}");
-            }
+            catch (Exception ex)  { System.Diagnostics.Debug.WriteLine($"加载菜单失败: {ex.Message}");  }
         }
         private void BindMenuEvents(MenuItem item)
         {
@@ -185,10 +150,7 @@ namespace TabPaint.Controls
             // 递归处理子菜单
             foreach (var subItem in item.Items)
             {
-                if (subItem is MenuItem subMenuItem)
-                {
-                    BindMenuEvents(subMenuItem);
-                }
+                if (subItem is MenuItem subMenuItem)   BindMenuEvents(subMenuItem);
             }
         }
 
@@ -201,8 +163,6 @@ namespace TabPaint.Controls
             add => AddHandler(HelpClickEvent, value);
             remove => RemoveHandler(HelpClickEvent, value);
         }
-
-        // 触发事件
         private void OnHelpClick(object sender, RoutedEventArgs e)
         {
             RaiseEvent(new RoutedEventArgs(HelpClickEvent));
@@ -241,7 +201,6 @@ namespace TabPaint.Controls
             if (relativePoint.Y < 60 && relativePoint.X > 20 && !MainWindow.GetCurrentInstance().IsViewMode)
             {
                 (MainWindow.GetCurrentInstance()).MaximizeWindowHandler();
-
                 e.Handled = true;
             }
         }

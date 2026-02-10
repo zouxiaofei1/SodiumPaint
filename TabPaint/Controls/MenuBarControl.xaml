@@ -17,32 +17,23 @@
     <Border Height="36" Background="{DynamicResource GlassBackgroundLowBrush}" AllowDrop="True" MouseLeftButtonDown="OnRootBorderMouseDown">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,0">
             <Menu DockPanel.Dock="Left" Background="Transparent" BorderThickness="0" FontSize="14" Padding="0" Margin="0">
-                <!-- 文件菜单 -->
                 <MenuItem Header="{DynamicResource L_Menu_File}" 
               Style="{StaticResource ModernMenuItemStyle}" 
               SubmenuOpened="OnFileMenuOpened" 
               Click="MenuItem_Click">
                     <MenuItem Visibility="Collapsed"/>
-                    <!-- 占位符 -->
                 </MenuItem>
-
-                <!-- 编辑菜单 -->
                 <MenuItem Header="{DynamicResource L_Menu_Edit}" 
               Style="{StaticResource ModernMenuItemStyle}"
               SubmenuOpened="OnEditMenuOpened">
                     <MenuItem Visibility="Collapsed"/>
-                    <!-- 占位符 -->
                 </MenuItem>
-
-                <!-- 效果菜单 -->
                 <MenuItem Header="{DynamicResource L_Menu_Effect}" 
               Style="{StaticResource ModernMenuItemStyle}"
               SubmenuOpened="OnEffectMenuOpened">
                     <MenuItem Visibility="Collapsed"/>
-                    <!-- 占位符 -->
                 </MenuItem>
             </Menu>
-            <!-- 快捷操作按钮 -->
             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderMediumBrush}" Margin="2,4"/>
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Margin="6,0" services:ShortcutService.BaseToolTip="L_Menu_QA_Save" services:ShortcutService.ShortcutKey="File.Save" Click="OnSaveClick" Style="{StaticResource RoundedMenuButtonStyle}">
@@ -63,7 +54,7 @@
                     <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="12" Height="12"/>
                 </Button>
                 <Button Margin="0,0,6,0" 
-                        services:ShortcutService.BaseToolTip="L_Menu_QA_DiscardAll" 
+                      ToolTip="{DynamicResource L_Menu_QA_DiscardAll}"
                         Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>

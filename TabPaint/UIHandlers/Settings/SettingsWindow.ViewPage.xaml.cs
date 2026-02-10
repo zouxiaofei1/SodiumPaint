@@ -2,11 +2,8 @@
 
 namespace TabPaint.Pages
 {
-    /// <summary>
-    /// Interaction logic for ViewPage.xaml
-    /// </summary>
     public partial class ViewPage : UserControl
-    {
+    { /// Interaction logic for ViewPage.xaml
         public ViewPage()
         {
             InitializeComponent();

@@ -23,8 +23,6 @@ namespace TabPaint
         private async Task SwitchWorkspaceToNewFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath)) return;
-
-            // 1. 跨窗口互斥检查
             var (existingWindow, existingTab) = FindWindowHostingFile(filePath);
             if (existingWindow != null && existingTab != null)
             {
@@ -54,8 +52,6 @@ namespace TabPaint
                 FileTabs.Clear();
                 _imageFiles.Clear(); // 清空之前的文件夹扫描缓存
                 _currentImageIndex = -1;
-
-                // 4. 重置画布状态
                 _undo?.ClearUndo();
                 _undo?.ClearRedo();
                 ResetDirtyTracker();
@@ -147,10 +143,8 @@ namespace TabPaint
         {
             double targetScale = zoomscale * ZoomTimes;
 
-            // 2. 获取屏幕中心点
             System.Windows.Point centerPoint = new System.Windows.Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
             _hasUserManuallyZoomed = true;
-            // 3. 启动平滑动画
             StartSmoothZoom(targetScale, centerPoint);
         }
         private void OnRotateLeftClick(object sender, RoutedEventArgs e)
@@ -180,9 +174,7 @@ namespace TabPaint
         }
         private void FontSettingChanged(object sender, RoutedEventArgs e)
         {
-            // 防止初始化时触发
             if (_tools == null || _router.CurrentTool != _tools.Text) return;
-            //(_tools.Text as TextTool)?.UpdateCurrentTextBoxAttributes();
             if (_router.CurrentTool is TextTool textTool)
             {
                 // 互斥逻辑：上下标不能同时存在
@@ -226,8 +218,6 @@ namespace TabPaint
             if (initialColor == Colors.Transparent) initialColor = Colors.Black;
 
             var dlg = new ModernColorPickerWindow(initialColor);
-            //dlg.Owner = this; // 确保在主窗口之上
-
             if (dlg.ShowOwnerModal(this) == true)
             {
                 var color = dlg.SelectedColor;
@@ -254,7 +244,6 @@ namespace TabPaint
                 && Enum.TryParse(tagString, out BrushStyle style))
             {
                 SetBrushStyle(style);
-                // 关闭 UserControl 里的 ToggleButton
                 MainToolBar.BrushToggle.IsChecked = false;
             }
         }
@@ -276,7 +265,6 @@ namespace TabPaint
                 case BrushStyle.Mosaic: resKey = "Mosaic_Image"; break;
                 case BrushStyle.AiEraser: resKey = "AIEraser_Image"; isPath = true; break;
                 case BrushStyle.GaussianBlur: resKey = "Blur_Image"; isPath = true;  break;
-                    // Pencil 和 Eraser 通常在基础工具栏有独立按钮，这里也可以不用处理，或者给个默认图标
             }
             if(MainToolBar!=null)
             MainToolBar.UpdateBrushIcon(resKey, isPath);
@@ -325,8 +313,6 @@ namespace TabPaint
             if (_isTextBarDragging)
             {
                 System.Windows.Point currentPoint = e.GetPosition(this);
-
-                // 1. 计算鼠标位移
                 double offsetX = currentPoint.X - _textBarLastPoint.X;
                 double offsetY = currentPoint.Y - _textBarLastPoint.Y;
 
@@ -436,11 +422,8 @@ namespace TabPaint
         }
 
         public enum SelectionType { Rectangle, Lasso, MagicWand }
-
-        // 2. 处理左侧主按钮点击
         private void OnSelectMainClick(object sender, RoutedEventArgs e)
         {
-            // 切换到选择工具，保持当前的选区模式
             _router.SetTool(_tools.Select);
         }
 
@@ -451,8 +434,6 @@ namespace TabPaint
             {
                 var selectTool = _tools.Select as SelectTool;
                 if (selectTool == null) return;
-
-                // 根据 Tag 切换模式
                 switch (tag)
                 {
                     case "Rectangle":
@@ -465,24 +446,15 @@ namespace TabPaint
                         selectTool.SelectionType = SelectionType.MagicWand;
                         break;
                 }
-
-                // 激活工具
                 _router.SetTool(_tools.Select);
-
-                // 关闭下拉菜单
                 MainToolBar.SubMenuPopupSelect.IsOpen = false;
-
-                // 触发 UI 刷新（高亮更新）
                 UpdateToolSelectionHighlight();
-
-                // 更新主按钮图标
                 UpdateSelectToolIcon(selectTool.SelectionType);
             }
         }
 
         private void UpdateSelectToolIcon(SelectionType type)
         {
-            // 获取 ContentControl
             var iconHost = MainToolBar.CurrentSelectIconHost;
             iconHost.Content = null;
 
@@ -513,7 +485,6 @@ namespace TabPaint
             }
             else
             {
-                // 恢复为矩形 Image
                 var rectImg = new System.Windows.Controls.Image
                 {
                     Source = (ImageSource)FindResource("Select_Image"),
@@ -535,33 +506,22 @@ namespace TabPaint
                 _ctx.PenStyle == BrushStyle.Eraser ||
                 _ctx.PenStyle == BrushStyle.AiEraser)
             {
-                // 这里设置为默认画笔样式，通常是 Brush 或 Round
                 _ctx.PenStyle = BrushStyle.Brush;
-
-                // 3. 必须手动触发 UI 更新，否则图标和属性栏不会变
                 UpdateBrushSplitButtonIcon(_ctx.PenStyle);
                 UpdateToolSelectionHighlight();
                 AutoSetFloatBarVisibility();
                 UpdateGlobalToolSettingsKey();
             }
         }
-
-        // 点击左侧形状按钮：切换到形状工具（保持当前 ShapeType）
         private void OnShapeMainClick(object sender, RoutedEventArgs e)
         {
-            if (!(_router.CurrentTool is ShapeTool))
-            {
-                _router.SetTool(_tools.Shape);
-            }
+            if (!(_router.CurrentTool is ShapeTool))  _router.SetTool(_tools.Shape);
         }
 
 
         private void FontSizeBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (!double.TryParse(TextMenu.FontSizeBox.Text, out _))
-            {
-                TextMenu.FontSizeBox.Text = _activeTextBox.FontSize.ToString(); // 还原为当前有效字号
-            }
+            if (!double.TryParse(TextMenu.FontSizeBox.Text, out _)) TextMenu.FontSizeBox.Text = _activeTextBox.FontSize.ToString(); // 还原为当前有效字号
         }
     }
 }

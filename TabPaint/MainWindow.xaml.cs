@@ -422,8 +422,6 @@ namespace TabPaint
                         existingWindow.FocusAndSelectTab(existingTab);
                         continue;
                     }
-
-                    // 2. 当前窗口去重
                     if (_imageFiles.Contains(file))
                     {
                         var tab = FileTabs.FirstOrDefault(t => string.Equals(t.FilePath, file, StringComparison.OrdinalIgnoreCase));
@@ -478,7 +476,6 @@ namespace TabPaint
 
                 double fitScale = Math.Min(scaleX, scaleY); // 保持纵横比适应
                 zoomscale = fitScale * addscale * AppConsts.FitToWindowMarginFactor;
-              //  a.s(addscale * AppConsts.FitToWindowMarginFactor,fitScale, viewWidth,imgWidth, viewHeight, imgHeight);
                 ZoomTransform.ScaleX = ZoomTransform.ScaleY = zoomscale;
                 UpdateSliderBarValue(zoomscale);
 
@@ -573,7 +570,6 @@ namespace TabPaint
 
             if (addedCount > 0)
             {
-                // 更新 Slider 范围
                 ImageFilesCount = _imageFiles.Count;
                 SetPreviewSlider();
 
@@ -621,7 +617,6 @@ namespace TabPaint
                 }
                 catch (Exception ex)
                 {
-                    // 避免因清理逻辑报错导致程序崩溃，仅记录日志
                     System.Diagnostics.Debug.WriteLine($"[TabPaint] DragTemp cleanup failed: {ex.Message}");
                 }
             });
@@ -630,23 +625,15 @@ namespace TabPaint
 
         private string GetPixelFormatString(System.Windows.Media.PixelFormat format)
         {
-            // 简单映射常见格式名
             return format.ToString().Replace("Rgb", "RGB").Replace("Bgr", "BGR");
         }
         private void CenterImage()
         {
             if (_bitmap == null || BackgroundImage == null || ScrollContainer == null)
                 return;
-
-            // 确保同步更新 Image 属性
             BackgroundImage.Width = BackgroundImage.Source.Width;
             BackgroundImage.Height = BackgroundImage.Source.Height;
-
-            // 强制布局更新以获得准确的 ExtentWidth/Height (包含 Margin 和 Scale)
             ScrollContainer.UpdateLayout();
-
-            // 计算居中偏移：(总内容长度 - 视口长度) / 2
-            // 这种方法配合 XAML 中 Grid 的 HorizontalAlignment="Center" 可以完美处理所有情况
             double targetOffsetH = (ScrollContainer.ExtentWidth - ScrollContainer.ViewportWidth) / 2;
             double targetOffsetV = (ScrollContainer.ExtentHeight - ScrollContainer.ViewportHeight) / 2;
 
@@ -680,8 +667,6 @@ namespace TabPaint
             }
             _toastTimer.Start();
         }
-
-        // 独立的淡出方法
         private void HideToast()
         {
             _toastTimer.Stop(); // 停止计时器
@@ -868,10 +853,7 @@ namespace TabPaint
             if (!SettingsManager.Instance.Current.ShowRulers || BackgroundImage == null) return;
 
             Point relativePoint = CanvasWrapper.TranslatePoint(new Point(0, 0), ScrollContainer);
-            // 获取 ZoomTransform 的当前缩放
             double currentZoom = ZoomTransform.ScaleX;
-
-            // 更新标尺
             RulerTop.OriginOffset = relativePoint.X;
             RulerTop.ZoomFactor = currentZoom;
             RulerTop.InvalidateVisual(); // 触发重绘
@@ -997,7 +979,6 @@ namespace TabPaint
             if (RulerTop == null || RulerLeft == null) return;
 
             var selectTool = _router?.CurrentTool as SelectTool;
-            // 也检查 _tools 中注册的 SelectTool（工具可能不是当前工具但仍有选区）
             if (selectTool == null)
                 selectTool = _tools?.Select as SelectTool;
 
@@ -1033,7 +1014,6 @@ namespace TabPaint
         }
         private void BindCanvasMenuEvents(object item)
         {
-            // 情况 A: 标准 MenuItem
             if (item is MenuItem menuItem)
             {
                 menuItem.Click -= OnCanvasMenuClickDispatcher;
@@ -1044,8 +1024,6 @@ namespace TabPaint
                         case "Copy": menuItem.Click += OnCopyClick; break;
                         case "Cut": menuItem.Click += OnCutClick; break;
                         case "Paste": menuItem.Click += OnPasteClick; break;
-
-                        // --- 小工具 ---
                         case "RemoveBackground": menuItem.Click += OnRemoveBackgroundClick; break;
                         case "ChromaKey": menuItem.Click += OnChromaKeyClick; break;
                         case "Ocr": menuItem.Click += OnOcrClick; break;
@@ -1057,8 +1035,6 @@ namespace TabPaint
                         case "AiOcr": menuItem.Click += OnAiOcrClick; break;
                     }
                 }
-
-                // 递归：如果 MenuItem 下面还有子菜单 (Items)
                 if (menuItem.Items.Count > 0)
                 {
                     foreach (var subItem in menuItem.Items)
@@ -1067,7 +1043,6 @@ namespace TabPaint
                     }
                 }
             }
-            // 情况 B: 自定义控件 DelayedMenuItem (重要！你的小工具都在这里面)
             else if (item is TabPaint.Controls.DelayedMenuItem delayedItem)
             {
                 foreach (var subItem in delayedItem.Items)
@@ -1085,8 +1060,6 @@ namespace TabPaint
             if (SelectionPreview == null) return;
 
             double currentZoomPercent = ZoomTransform.ScaleX * 100.0;
-
-            // 2. 获取设置阈值
             double threshold = SettingsManager.Instance.Current.PaintInterpolationThreshold;
 
             var mode = (currentZoomPercent >= threshold)

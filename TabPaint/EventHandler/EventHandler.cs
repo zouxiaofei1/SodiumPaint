@@ -33,37 +33,12 @@ namespace TabPaint
         }
         private bool HandleGlobalShortcuts(object sender, KeyEventArgs e)
         {
-            // --- 自定义部分 ---
-            if (IsShortcut("View.ToggleMode", e))
-            {
-                TriggerModeChange();
-                e.Handled = true;
-                return true;
-            }
-            if (IsShortcut("View.RotateLeft", e))
-            {
-                RotateBitmap(-90);
-                e.Handled = true;
-                return true;
-            }
-            if (IsShortcut("View.RotateRight", e))
-            {
-                RotateBitmap(90);
-                e.Handled = true;
-                return true;
-            }
-            if (IsShortcut("View.VerticalFlip", e))
-            {
-                OnFlipVerticalClick(sender, e);
-                e.Handled = true;
-                return true;
-            }
-            if (IsShortcut("View.HorizontalFlip", e))
-            {
-                OnFlipHorizontalClick(sender, e);
-                e.Handled = true;
-                return true;
-            }
+            if (IsShortcut("View.ToggleMode", e)) { TriggerModeChange(); e.Handled = true; return true; }
+            if (IsShortcut("View.RotateLeft", e)) { RotateBitmap(-90); e.Handled = true; return true; }
+            if (IsShortcut("View.RotateRight", e)) { RotateBitmap(90); e.Handled = true; return true; }
+            if (IsShortcut("View.VerticalFlip", e)) { OnFlipVerticalClick(sender, e); e.Handled = true; return true; }
+            if (IsShortcut("View.HorizontalFlip", e)) { OnFlipHorizontalClick(sender, e); e.Handled = true; return true; }
+
             bool isNext = IsShortcut("View.NextImage", e);
             bool isPrev = IsShortcut("View.PrevImage", e);
 
@@ -71,7 +46,6 @@ namespace TabPaint
             {
 
                 if (_router.CurrentTool is TextTool tx && tx._richTextBox != null) return false;
-                // 如果是第一次按下（而不是按住不放触发的重复事件），初始化时间
                 if (!_isNavigating)
                 {
                     _isNavigating = true;
@@ -84,12 +58,7 @@ namespace TabPaint
                 e.Handled = true;
                 return true;
             }
-            if (IsShortcut("View.FullScreen", e))
-            {
-                MaximizeWindowHandler();
-                e.Handled = true;
-                return true;
-            }
+            if (IsShortcut("View.FullScreen", e)) { MaximizeWindowHandler(); e.Handled = true; return true; }
             return false;
         }
 
@@ -102,7 +71,6 @@ namespace TabPaint
                     case Key.C:
                         if (_currentTabItem != null)
                         {
-                            // 复用已有的复制逻辑
                             CopyTabToClipboard(_currentTabItem);
                             ShowToast("L_Toast_Copied");
                         }
@@ -114,64 +82,15 @@ namespace TabPaint
 
         private void HandlePaintModeShortcuts(object sender, KeyEventArgs e)
         {
-            if (IsShortcut("Tool.SwitchToPen", e))
-            {
-                SetBrushStyle(BrushStyle.Pencil);
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToPick", e))
-            {
-                LastTool = _router.CurrentTool;
-                _router.SetTool(_tools.Eyedropper);
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToEraser", e))
-            {
-                SetBrushStyle(BrushStyle.Eraser);
-
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToSelect", e))
-            {
-                _router.SetTool(_tools.Select);
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToFill", e))
-            {
-                _router.SetTool(_tools.Fill);
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToText", e))
-            {
-                _router.SetTool(_tools.Text);
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToBrush", e))
-            {
-                SetBrushStyle(BrushStyle.Round);
-                e.Handled = true; return;
-            }
-
-            if (IsShortcut("Tool.SwitchToShape", e))
-            {
-                _router.SetTool(_tools.Shape);
-                e.Handled = true; return;
-            }
-            if (IsShortcut("View.ToggleMinimize", e))
-            {
-                if (this.WindowState != WindowState.Minimized)
-                {
-                    this.WindowState = WindowState.Minimized;
-                }
-                e.Handled = true;
-                return;
-            }
+            if (IsShortcut("Tool.SwitchToPen", e)) { SetBrushStyle(BrushStyle.Pencil); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToPick", e)) { LastTool = _router.CurrentTool; _router.SetTool(_tools.Eyedropper); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToEraser", e)) { SetBrushStyle(BrushStyle.Eraser); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToSelect", e)) { _router.SetTool(_tools.Select); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToFill", e)) { _router.SetTool(_tools.Fill); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToText", e)) { _router.SetTool(_tools.Text); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToBrush", e)) { SetBrushStyle(BrushStyle.Round); e.Handled = true; return; }
+            if (IsShortcut("Tool.SwitchToShape", e)) { _router.SetTool(_tools.Shape); e.Handled = true; return; }
+            if (IsShortcut("View.ToggleMinimize", e)) { if (this.WindowState != WindowState.Minimized) this.WindowState = WindowState.Minimized; e.Handled = true; return; }
             if (IsShortcut("Tool.ClipMonitor", e))
             {
                 var settings = SettingsManager.Instance.Current;
@@ -202,27 +121,22 @@ namespace TabPaint
                 if (_router.CurrentTool is TextTool ttt && ttt._richTextBox != null && ttt._richTextBox.IsKeyboardFocused)
                 {
                     switch (e.Key)
-                    {
-                        case Key.C: // 复制
-                        case Key.V: // 粘贴
-                        case Key.X: // 剪切
-                        case Key.A: // 全选
-                        case Key.Z: // 撤销 (建议加上，让用户能撤销输入的文字，而不是撤销整个文本框)
-                        case Key.Y: // 重做
+                    {// 复制粘贴剪切全选撤销重做
+                        case Key.C:
+                        case Key.V:
+                        case Key.X:
+                        case Key.A:
+                        case Key.Z:
+                        case Key.Y:
                             return;
                     }
                 }
                 switch (e.Key)
                 {
                     case Key.Z:
-                        if (_router.CurrentTool is TextTool textTool && textTool._richTextBox != null)
-                        {
-                            textTool.GiveUpText(_ctx); // 只取消文本框，不撤销画布
-                        }
-                        else
-                        {
-                            Undo(); // 正常撤销画布操作
-                        }
+                        if (_router.CurrentTool is TextTool textTool && textTool._richTextBox != null)// 只取消文本框，不撤销画布
+                            textTool.GiveUpText(_ctx); 
+                        else Undo(); 
                         e.Handled = true;
                         break;
 
@@ -289,7 +203,7 @@ namespace TabPaint
                         if (_router.CurrentTool is TextTool tx && tx._richTextBox != null) break;
                         if (_router.CurrentTool != _tools.Select) break;
                         _router.SetTool(_tools.Select);
-                        SelectTool stSelectAll = _router.GetSelectTool(); 
+                        SelectTool stSelectAll = _router.GetSelectTool();
                         if (stSelectAll.HasActiveSelection) stSelectAll.CommitSelection(_ctx);
                         stSelectAll.Cleanup(_ctx);
                         stSelectAll.SelectAll(_ctx, false);
@@ -310,14 +224,14 @@ namespace TabPaint
                             }
                             else if (SettingsManager.Instance.Current.EnableFileDeleteInPaintMode)
                                 if ((DateTime.Now - st.LastSelectionDeleteTime).TotalSeconds < AppConsts.DoubleClickTimeThreshold)
-                            {
-                                st.ResetLastDeleteTime();
+                                {
+                                    st.ResetLastDeleteTime();
                                     ShowToast("L_Toast_PressDeleteAgain");
                                 }
-                            else
-                            {
-                                HandleDeleteFileAction();
-                            }
+                                else
+                                {
+                                    HandleDeleteFileAction();
+                                }
                         }
                         e.Handled = true;
                         break;
@@ -346,28 +260,21 @@ namespace TabPaint
                 if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
                 {
                     switch (e.Key)
-                    {
-                        case Key.C: // 复制文本
-                        case Key.V: // 粘贴文本
-                        case Key.X: // 剪切文本
-                        case Key.A: // 全选文本
-                        case Key.Z: // 撤销输入
-                        case Key.Y: // 重做输入
+                    {// 复制粘贴剪切全选撤销重做
+                        case Key.C: 
+                        case Key.V: 
+                        case Key.X:
+                        case Key.A: 
+                        case Key.Z: 
+                        case Key.Y: 
                             return;
                     }
                 }
             }
             if (HandleGlobalShortcuts(sender, e)) return;
 
-            // 2. 根据模式分发
-            if (IsViewMode)
-            {
-                HandleViewModeShortcuts(sender, e);
-            }
-            else
-            {
-                HandlePaintModeShortcuts(sender, e);
-            }
+            if (IsViewMode) HandleViewModeShortcuts(sender, e);
+            else  HandlePaintModeShortcuts(sender, e);
         }
 
 
@@ -375,11 +282,7 @@ namespace TabPaint
         {
             var settings = SettingsManager.Instance.Current;
             if (settings.Shortcuts == null || !settings.Shortcuts.ContainsKey(actionName))
-            {
                 return false;
-
-
-            }
 
             var item = settings.Shortcuts[actionName];
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
@@ -402,8 +305,7 @@ namespace TabPaint
             {
                 _hwndSource = HwndSource.FromHwnd(helper.Handle);
                 _hwndSource.AddHook(WndProc);
-                // 默认注册监听，通过 bool 标志控制逻辑
-                AddClipboardFormatListener(helper.Handle);
+                AddClipboardFormatListener(helper.Handle); // 默认注册监听，通过 bool 标志控制逻辑
             }
         }
         private void MainWindow_Deactivated(object sender, EventArgs e)
@@ -423,10 +325,7 @@ namespace TabPaint
                     _draggingFromMaximized = true;
                     MouseMove += Border_MouseMoveFromMaximized;
                 }
-                else
-                {
-                    DragMove(); // 普通拖动
-                }
+                else   DragMove(); // 普通拖动
             }
         }
 
@@ -465,9 +364,6 @@ namespace TabPaint
         // 状态变量
         private uint _lastClipboardSequenceNumber = 0;
         private DateTime _lastClipboardActionTime = DateTime.MinValue;
-        // 计时器触发事件：真正的执行逻辑
-
-
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == AppConsts.WM_MOUSEHWHEEL)
@@ -491,11 +387,7 @@ namespace TabPaint
                     // 1. 获取当前剪切板的系统序列号
                     uint currentSeq = GetClipboardSequenceNumber();
 
-                    if (currentSeq == _lastClipboardSequenceNumber)
-                    {
-                        // 忽略
-                        return IntPtr.Zero;
-                    }
+                    if (currentSeq == _lastClipboardSequenceNumber)  return IntPtr.Zero;
 
                     var timeSinceLast = (DateTime.Now - _lastClipboardActionTime).TotalMilliseconds;
                     if (timeSinceLast < AppConsts.ClipboardCooldownMs)
@@ -569,9 +461,9 @@ namespace TabPaint
                         return ConvertDrawingBitmapToWPF(drawingBitmap);
                     }
                 }
-            catch (Exception)
-            {
-            }
+                catch (Exception)
+                {
+                }
             }
             if (dataObj.GetDataPresent("Bitmap"))
             {
@@ -586,7 +478,7 @@ namespace TabPaint
                 catch { }
             }
 
-            if (System.Windows.Clipboard.ContainsImage())  return System.Windows.Clipboard.GetImage();
+            if (System.Windows.Clipboard.ContainsImage()) return System.Windows.Clipboard.GetImage();
             return null;
         }
 
@@ -640,10 +532,7 @@ namespace TabPaint
                     if (bitmapSource != null)
                     {
                         string cachePath = SaveClipboardImageToCache(bitmapSource);
-                        if (!string.IsNullOrEmpty(cachePath))
-                        {
-                            filesToLoad.Add(cachePath);
-                        }
+                        if (!string.IsNullOrEmpty(cachePath))  filesToLoad.Add(cachePath);
                     }
                 }
                 if (filesToLoad.Count > 0)
@@ -693,7 +582,7 @@ namespace TabPaint
             bool isNext = IsShortcut("View.NextImage", e);
             bool isPrev = IsShortcut("View.PrevImage", e);
 
-            if (isNext || isPrev) 
+            if (isNext || isPrev)
             {
                 // 重置状态
                 _isNavigating = false;
@@ -711,10 +600,7 @@ namespace TabPaint
                 FocusManager.SetFocusedElement(focusScope, _activeTextBox);
 
                 // 2. 将焦点还给画布上的文本框，让用户可以继续打字
-                if (_activeTextBox != null)
-                {
-                    _activeTextBox.Focus();
-                }
+                if (_activeTextBox != null)  _activeTextBox.Focus();
                 e.Handled = true; // 阻止回车产生额外的换行或响铃
             }
         }
@@ -722,7 +608,7 @@ namespace TabPaint
         {
             if (MyStatusBar == null) return;
             MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
-            ZoomLevel = realScale.ToString("P0"); 
+            ZoomLevel = realScale.ToString("P0");
 
             // 更新滑块位置 (反向计算)
             double targetSliderVal = ZoomToSlider(realScale);
@@ -748,57 +634,54 @@ namespace TabPaint
         }
         private void SetZoom(double targetScale, Point? center = null, bool isIntermediate = false, bool slient = false)
         {
-      try
-            { 
-            double oldScale = zoomscale;
-            // 1. 计算最小缩放比例限制
-            double minrate = 1.0;
-            if (_bitmap != null)
+            try
             {
-                double maxDim = Math.Max(Math.Max(BackgroundImage.Width, _bitmap.PixelWidth), Math.Max(BackgroundImage.Height, _bitmap.PixelHeight));
-                if (maxDim > 0)
-                    minrate = 1500.0 / maxDim;
-            }
-            double newScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
+                double oldScale = zoomscale;
+                // 1. 计算最小缩放比例限制
+                double minrate = 1.0;
+                if (_bitmap != null)
+                {
+                    double maxDim = Math.Max(Math.Max(BackgroundImage.Width, _bitmap.PixelWidth), Math.Max(BackgroundImage.Height, _bitmap.PixelHeight));
+                    if (maxDim > 0)
+                        minrate = 1500.0 / maxDim;
+                }
+                double newScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
 
-            // 3. 确定缩放锚点
-            Point anchorPoint;
-            if (center.HasValue)
-            {
-                anchorPoint = center.Value;
-            }
-            else
-            {
-                anchorPoint = new Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
-            }
+                // 3. 确定缩放锚点
+                Point anchorPoint;
+                if (center.HasValue)
+                {
+                    anchorPoint = center.Value;
+                }
+                else
+                {
+                    anchorPoint = new Point(ScrollContainer.ViewportWidth / 2, ScrollContainer.ViewportHeight / 2);
+                }
 
-            // 4. 更新数据
-            zoomscale = newScale;
-            UpdateUIStatus(zoomscale);
-            ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
+                // 4. 更新数据
+                zoomscale = newScale;
+                UpdateUIStatus(zoomscale);
+                ZoomTransform.ScaleX = ZoomTransform.ScaleY = newScale;
 
-            RefreshBitmapScalingMode();
-            double offsetX = ScrollContainer.HorizontalOffset;
-            double offsetY = ScrollContainer.VerticalOffset;
+                RefreshBitmapScalingMode();
+                double offsetX = ScrollContainer.HorizontalOffset;
+                double offsetY = ScrollContainer.VerticalOffset;
 
-            double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
-            double newOffsetX = (offsetX + anchorPoint.X - margin) * (newScale / oldScale) + margin - anchorPoint.X;
-            double newOffsetY = (offsetY + anchorPoint.Y - margin) * (newScale / oldScale) + margin - anchorPoint.Y;
+                double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
+                double newOffsetX = (offsetX + anchorPoint.X - margin) * (newScale / oldScale) + margin - anchorPoint.X;
+                double newOffsetY = (offsetY + anchorPoint.Y - margin) * (newScale / oldScale) + margin - anchorPoint.Y;
 
-            ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
-            ScrollContainer.ScrollToVerticalOffset(newOffsetY);
-            if (IsViewMode) CheckBirdEyeVisibility();
-            if (!IsViewMode) UpdateSelectionScalingMode();
-            _canvasResizer.UpdateUI();
-            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
-            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
+                ScrollContainer.ScrollToHorizontalOffset(newOffsetX);
+                ScrollContainer.ScrollToVerticalOffset(newOffsetY);
+                if (IsViewMode) CheckBirdEyeVisibility();
+                if (!IsViewMode) UpdateSelectionScalingMode();
+                _canvasResizer.UpdateUI();
+                if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+                if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
 
 
-            UpdateRulerPositions(); UpdateSelectionToolBarPosition();
-            if (IsViewMode && _startupFinished && !slient) 
-            {
-                ShowToast(newScale.ToString("P0"));
-            }
+                UpdateRulerPositions(); UpdateSelectionToolBarPosition();
+                if (IsViewMode && _startupFinished && !slient) ShowToast(newScale.ToString("P0"));
             }
             catch (Exception)
             {
@@ -835,9 +718,7 @@ namespace TabPaint
                     CompositionTarget.Rendering += OnZoomRendering;
                 }
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception){ }
         }
         private void OnZoomRendering(object sender, EventArgs e)
         {
@@ -849,11 +730,11 @@ namespace TabPaint
             {
                 nextScale = _targetZoomScale;
                 isEnding = true;
-                StopSmoothZoom();return;
+                StopSmoothZoom(); return;
             }
             else
             {
-                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor /Math.Max(1, (PerformanceScore/2));
+                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor / Math.Max(1, (PerformanceScore / 2));
             }
 
             double oldScale = zoomscale;
@@ -861,16 +742,16 @@ namespace TabPaint
             // 2. 更新缩放 (View Model / UI)
             zoomscale = nextScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = nextScale;
-           
+
             double scaleRatio = nextScale / oldScale;
             double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
 
             _virtualScrollH = (_virtualScrollH + _zoomCenter.X - margin) * scaleRatio + margin - _zoomCenter.X;
             _virtualScrollV = (_virtualScrollV + _zoomCenter.Y - margin) * scaleRatio + margin - _zoomCenter.Y;
-          
+
             ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
             ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
-          
+
             UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
             _canvasResizer.UpdateUI();
@@ -911,7 +792,7 @@ namespace TabPaint
             if (isViewMode && !isCtrl && wheelMode == MouseWheelMode.SwitchImage)
             {
                 e.Handled = true;      // 滚轮向下(Delta < 0) -> 下一张; 滚轮向上(Delta > 0) -> 上一张
-          
+
                 if (e.Delta < 0) ShowNextImage();
                 else ShowPrevImage();
                 return;
@@ -928,7 +809,7 @@ namespace TabPaint
                 // 计算缩放系数
                 double deltaFactor = e.Delta > 0 ? ZoomTimes : 1 / ZoomTimes;
                 double targetScale = currentBase * deltaFactor;
-              
+
                 // 启动平滑缩放
                 StartSmoothZoom(targetScale, mousePos);
             }

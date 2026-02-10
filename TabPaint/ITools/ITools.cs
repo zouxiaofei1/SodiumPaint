@@ -40,8 +40,6 @@ namespace TabPaint
             // ========== 清除所有状态 ==========
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ToolsMenuToggle.ClearValue(Control.BorderBrushProperty);
-
-            // 画刷 SplitButton 清除
             MainToolBar.BrushSplitButtonBorder.BorderBrush = Brushes.Transparent;
             MainToolBar.BrushSplitButtonBorder.Background = Brushes.Transparent;
             MainToolBar.BrushMainButton.ClearValue(Control.BackgroundProperty);
@@ -49,9 +47,7 @@ namespace TabPaint
             MainToolBar.BrushMainButton.Tag = null;        // ← 清除 Tag
             MainToolBar.BrushToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.BrushToggle.ClearValue(Control.BorderBrushProperty);
-            MainToolBar.BrushToggle.Tag = null;             // ← 清除 Tag
-
-            // 形状 SplitButton 清除
+            MainToolBar.BrushToggle.Tag = null;             
             MainToolBar.ShapeSplitButtonBorder.BorderBrush = Brushes.Transparent;
             MainToolBar.ShapeSplitButtonBorder.Background = Brushes.Transparent;
             MainToolBar.ShapeMainButton.ClearValue(Control.BackgroundProperty);
@@ -59,9 +55,7 @@ namespace TabPaint
             MainToolBar.ShapeMainButton.Tag = null;         // ← 清除 Tag
             MainToolBar.ShapeToggle.ClearValue(Control.BackgroundProperty);
             MainToolBar.ShapeToggle.ClearValue(Control.BorderBrushProperty);
-            MainToolBar.ShapeToggle.Tag = null;             // ← 清除 Tag
-
-            // 选区 SplitButton 清除
+            MainToolBar.ShapeToggle.Tag = null;    
             MainToolBar.SelectSplitButtonBorder.BorderBrush = Brushes.Transparent;
             MainToolBar.SelectSplitButtonBorder.Background = Brushes.Transparent;
             MainToolBar.SelectMainButton.ClearValue(Control.BackgroundProperty);
@@ -86,12 +80,10 @@ namespace TabPaint
 
             if (!isBasicTool || _router.CurrentTool is SelectTool)
             {
-                // 画刷工具高亮
                 if (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Eraser && _ctx.PenStyle != BrushStyle.Pencil)
                 {
                     MainToolBar.BrushSplitButtonBorder.BorderBrush = accentBrush;
                     MainToolBar.BrushSplitButtonBorder.Background = accentSubtleBrush;
-                    // ★ 标记内部按钮为选中状态，抑制悬浮边框
                     MainToolBar.BrushMainButton.Tag = "Selected";
                     MainToolBar.BrushToggle.Tag = "Selected";
 
@@ -108,7 +100,6 @@ namespace TabPaint
                 {
                     MainToolBar.ShapeSplitButtonBorder.BorderBrush = accentBrush;
                     MainToolBar.ShapeSplitButtonBorder.Background = accentSubtleBrush;
-                    // ★ 标记
                     MainToolBar.ShapeMainButton.Tag = "Selected";
                     MainToolBar.ShapeToggle.Tag = "Selected";
 
@@ -186,7 +177,6 @@ namespace TabPaint
 
                 if (_router.CurrentTool is ShapeTool shapeTool)
                 {
-                    // ★ 只高亮外框，不直接设置内部按钮的 BorderBrush/Background
                     MainToolBar.ShapeSplitButtonBorder.BorderBrush = accentBrush;
                     MainToolBar.ShapeSplitButtonBorder.Background = accentSubtleBrush;
                     MainToolBar.ShapeMainButton.Tag = "Selected";
@@ -213,15 +203,11 @@ namespace TabPaint
                     {
                         if (targetTag != null && menuItem.Tag?.ToString() == targetTag)
                         {
-                            // 选中样式
                             menuItem.Background = Application.Current.FindResource("ToolAccentSubtleHoverBrush") as Brush;
-
-
                             menuItem.FontWeight = FontWeights.Bold;
                         }
                         else
                         {
-                            // 恢复默认
                             menuItem.ClearValue(Control.BackgroundProperty);
                             menuItem.ClearValue(Control.BorderBrushProperty);
                             menuItem.ClearValue(Control.BorderThicknessProperty);
@@ -272,27 +258,15 @@ namespace TabPaint
                         toolName = LocalizationManager.GetString("L_ToolBar_Tool_Text");
                         break;
                 }
-
-                // 4. 应用资源到 UI
                 if (resource is ImageSource imgSrc)
                 {
-                    // 如果是图片资源
                     MainToolBar.CurrentToolIcon.Source = imgSrc;
                     MainToolBar.CurrentToolIcon.Visibility = Visibility.Visible;
                 }
-
-                // 5. 更新提示文字
                 if (!string.IsNullOrEmpty(toolName))
-                {
                     MainToolBar.ToolsMenuToggle.ToolTip = toolName;
-                }
             }
-            catch (Exception ex)
-            {
-                // 防御性编程：如果资源找不到，避免崩溃
-                Console.WriteLine($"Error loading icon resource: {ex.Message}");
-            
-        }
+            catch (Exception ex){  Console.WriteLine($"Error loading icon resource: {ex.Message}");  }
 
         }
         private void UpdateCollapsedMenuHighlight(string toolTag)
@@ -385,7 +359,6 @@ namespace TabPaint
             {
                 if (!ViewElement.Dispatcher.CheckAccess())
                 {
-                    // 如果没有权限，切换到 UI 线程执行并返回结果
                     return (Point)ViewElement.Dispatcher.Invoke(() => ToPixel(viewPos));
                 }
 
@@ -463,7 +436,6 @@ namespace TabPaint
                     var points = e.StylusDevice.GetStylusPoints(_ctx.ViewElement);
                     if (points.Count > 0)
                     {
-                        // 获取最新的压力值 (0.0 - 1.0f)
                         return points[points.Count - 1].PressureFactor;
                     }
                 }
@@ -480,20 +452,15 @@ namespace TabPaint
                 }
                 if (e.StylusDevice != null)
                 {
-                    // 获取相对于ViewElement的所有高频点（包含历史轨迹）
                     var stylusPoints = e.StylusDevice.GetStylusPoints(_ctx.ViewElement);
 
                     if (stylusPoints.Count > 0)
                     {
-                        // 遍历所有点进行绘制，还原平滑曲线
                         for (int i = 0; i < stylusPoints.Count; i++)
                         {
                             var sp = stylusPoints[i];
                             var pt = new Point(sp.X, sp.Y);
-                            // 注意：PressureFactor 获取的是 0.0-1.0 的压力值
                             float pressure = sp.PressureFactor;
-
-                            // 每一个微小的移动都触发一次绘制
                             CurrentTool.OnPointerMove(_ctx, pt, pressure);
                         }
                         return; // 处理完毕，直接返回，不再执行下方的鼠标逻辑
