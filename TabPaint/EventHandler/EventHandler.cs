@@ -604,18 +604,21 @@ namespace TabPaint
                 e.Handled = true; // 阻止回车产生额外的换行或响铃
             }
         }
-        private void UpdateUIStatus(double realScale)
+        private void UpdateUIStatus(double realScale, bool updateSlider = true)
         {
             if (MyStatusBar == null) return;
             MyStatusBar.ZoomComboBox.Text = realScale.ToString("P0");
             ZoomLevel = realScale.ToString("P0");
 
-            // 更新滑块位置 (反向计算)
-            double targetSliderVal = ZoomToSlider(realScale);
-            _isInternalZoomUpdate = true;
-            MyStatusBar.ZoomSliderControl.Value = targetSliderVal;
-            _isInternalZoomUpdate = false;
+            if (updateSlider)
+            {
+                double targetSliderVal = ZoomToSlider(realScale);
+                _isInternalZoomUpdate = true;
+                MyStatusBar.ZoomSliderControl.Value = targetSliderVal;
+                _isInternalZoomUpdate = false;
+            }
         }
+
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             UpdateImageBarSliderState(); UpdateToolSelectionHighlight();
@@ -730,7 +733,7 @@ namespace TabPaint
             {
                 nextScale = _targetZoomScale;
                 isEnding = true;
-                StopSmoothZoom(); return;
+                StopSmoothZoom(); UpdateUIStatus(zoomscale, updateSlider: true); return;
             }
             else
             {
@@ -751,14 +754,13 @@ namespace TabPaint
 
             ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
             ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
-
-            UpdateUIStatus(zoomscale);
             RefreshBitmapScalingMode();
             _canvasResizer.UpdateUI();
             if (IsViewMode) CheckBirdEyeVisibility();
-            if (!IsViewMode) UpdateSelectionScalingMode();
-            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
-            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx); UpdateSelectionToolBarPosition();
+            if (!IsViewMode) UpdateSelectionScalingMode(); // return;
+           if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx); 
+            UpdateSelectionToolBarPosition();
             if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
 
         }

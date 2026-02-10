@@ -784,7 +784,7 @@ namespace TabPaint
                     var targetTab = FileTabs[session.ActiveTabIndex];
                     if (targetTab != _currentTabItem)
                     {
-                        SwitchToTab(targetTab, needsave: false);
+                      //  SwitchToTab(targetTab, needsave: false);
                     }
                 }
 
