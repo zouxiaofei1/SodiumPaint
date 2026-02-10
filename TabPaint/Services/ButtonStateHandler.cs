@@ -54,9 +54,10 @@ namespace TabPaint
                 else if (_router.CurrentTool is ShapeTool)  key = "Shape";
   
                 if (ThicknessSlider != null)  ThicknessSlider.IsEnabled = !isPencil;
-                SettingsManager.Instance.Current.CurrentToolKey = key;
+                this.CurrentToolKey = key;
 
-                _ctx.PenThickness = SettingsManager.Instance.Current.PenThickness;
+                _ctx.PenThickness = this.PenThickness;
+                _ctx.PenOpacity = this.PenOpacity;
             }
             finally   { _isUpdatingToolSettings = false;}
          

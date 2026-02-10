@@ -646,7 +646,7 @@ namespace TabPaint
             {
                 MainWindow newWindow = new MainWindow(tab.FilePath, !IsVirtualPath(tab.FilePath), tab, loadSession: false);
                 newWindow.Show();
-                CloseTab(tab, true); // 强制关闭，不提示保存
+                CloseTab(tab, slient: true, isMoving: true); // 强制关闭且标记为移动，不提示保存且保留备份文件
             }
             catch (Exception ex)
             {

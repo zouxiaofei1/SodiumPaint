@@ -403,6 +403,7 @@ namespace TabPaint
 
             try
             {
+                SaveAppState();
                 var favWin = FavoriteWindowManager.GetInstance();
                 if (favWin != null && favWin.IsLoaded)
                 {
@@ -416,6 +417,12 @@ namespace TabPaint
                     _hwndSource.RemoveHook(WndProc);
                     _hwndSource.Dispose();
                     _hwndSource = null;
+                }
+
+                if (_activeMonitorInstance == this)
+                {
+                    _activeMonitorInstance = null;
+                    TryTransferClipboardMonitor();
                 }
 
                 SaveAppState();
@@ -461,8 +468,6 @@ namespace TabPaint
             }
             finally
             {
-                // 确保窗口关闭
-                this.Close();
             }
         }
         private int GetNextAvailableUntitledNumber()
@@ -925,8 +930,11 @@ namespace TabPaint
                 _currentTabItem.CanvasVersion = _currentCanvasVersion;       // ★ 保存版本号
                 _currentTabItem.LastBackedUpVersion = _lastBackedUpVersion;  // ★ 保存备份版本号
 
-                // ★ 只在有未备份的编辑时才触发备份
-                if (hasNewEdits&&needsave)
+                // ★ 只在有未备份的编辑，或者备份文件丢失时才触发备份
+                bool backupMissing = (_currentTabItem.IsDirty || _currentTabItem.IsNew) &&
+                                    (string.IsNullOrEmpty(_currentTabItem.BackupPath) || !File.Exists(_currentTabItem.BackupPath));
+
+                if ((hasNewEdits || backupMissing) && needsave)
                 {
                     TriggerBackgroundBackup();
                 }

@@ -8,6 +8,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Security.Cryptography;
+using System.Windows.Interop;
+using System.Runtime.InteropServices;
+
 namespace TabPaint.Controls
 {
     public partial class FavoriteBarControl : UserControl
@@ -18,7 +21,11 @@ namespace TabPaint.Controls
 
         private string _currentPage = "Default";
         private const string ThumbnailDirName = ".thumbnails";
+        private const string OrderFileName = ".order";
         private const int FavoriteThumbnailSize = 150;
+        private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
+
+        private bool _isLoading = false;
 
         private StackPanel GetFavoriteStack()
         {
@@ -34,10 +41,65 @@ namespace TabPaint.Controls
                     LoadFavorites(_currentPage);
             };
 
+            this.Loaded += FavoriteBarControl_Loaded;
+            this.Unloaded += FavoriteBarControl_Unloaded;
             this.KeyDown += FavoriteBarControl_KeyDown;
             this.Focusable = true;
             this.AllowDrop = true;
         }
+
+        private void FavoriteBarControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                var source = HwndSource.FromHwnd(new WindowInteropHelper(window).Handle);
+                source?.AddHook(WndProc);
+            }
+        }
+
+        private void FavoriteBarControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                IntPtr handle = new WindowInteropHelper(window).Handle;
+                if (handle != IntPtr.Zero)
+                {
+                    var source = HwndSource.FromHwnd(handle);
+                    source?.RemoveHook(WndProc);
+                }
+            }
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == WM_MOUSEHWHEEL)
+            {
+                var scroller = this.FindName("FavoriteScroller") as ScrollViewer;
+                if (scroller != null && IsMouseOverControl(scroller))
+                {
+                    int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+                    scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset + delta);
+                    handled = true;
+                }
+            }
+            return IntPtr.Zero;
+        }
+
+        private bool IsMouseOverControl(UIElement control)
+        {
+            if (control == null || !control.IsVisible) return false;
+            var mousePos = Mouse.GetPosition(control);
+            var bounds = new Rect(0, 0, control.RenderSize.Width, control.RenderSize.Height);
+            return bounds.Contains(mousePos);
+        }
+
+        private void ScrollViewer_ManipulationBoundaryFeedback(object sender, ManipulationBoundaryFeedbackEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private string ComputeFileHash(string filePath)
         {
             using (var md5 = MD5.Create())
@@ -130,25 +192,93 @@ namespace TabPaint.Controls
             _currentPage = pageName;
             var stack = GetFavoriteStack();
             if (stack == null) return;
-            
-            stack.Children.Clear();
+
+            _isLoading = true;
+            try
+            {
+                stack.Children.Clear();
+
+                string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
+                if (!Directory.Exists(pagePath))
+                {
+                    Directory.CreateDirectory(pagePath);
+                }
+
+                var allFiles = Directory.GetFiles(pagePath)
+                                        .Where(f => AppConsts.IsSupportedImage(f))
+                                        .ToList();
+
+                // 加载自定义排序
+                var orderedFiles = LoadOrderList(pagePath, allFiles);
+
+                foreach (var file in orderedFiles)
+                {
+                    AddImageToUI(file);
+                }
+
+                AddPlusButton();
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+
+        private List<string> LoadOrderList(string pagePath, List<string> allFiles)
+        {
+            string orderFilePath = Path.Combine(pagePath, OrderFileName);
+            List<string> result = new List<string>();
+
+            if (File.Exists(orderFilePath))
+            {
+                try
+                {
+                    var lines = File.ReadAllLines(orderFilePath);
+                    foreach (var line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        string fullPath = Path.Combine(pagePath, line.Trim());
+                        if (allFiles.Contains(fullPath))
+                        {
+                            result.Add(fullPath);
+                            allFiles.Remove(fullPath);
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 将剩余不在排序列表中的文件（新添加的）按创建时间降序排列并加入
+            var remaining = allFiles.OrderByDescending(f => File.GetCreationTime(f)).ToList();
+            result.AddRange(remaining);
+
+            return result;
+        }
+
+        private void SaveOrder()
+        {
+            if (_isLoading) return;
+
+            var stack = GetFavoriteStack();
+            if (stack == null || string.IsNullOrEmpty(_currentPage)) return;
 
             string pagePath = Path.Combine(AppConsts.FavoriteDir, _currentPage);
-            if (!Directory.Exists(pagePath))
+            if (!Directory.Exists(pagePath)) return;
+
+            string orderFilePath = Path.Combine(pagePath, OrderFileName);
+            try
             {
-                Directory.CreateDirectory(pagePath);
+                var files = new List<string>();
+                foreach (var child in stack.Children)
+                {
+                    if (child is Grid grid && grid.Tag is string filePath)
+                    {
+                        files.Add(Path.GetFileName(filePath));
+                    }
+                }
+                File.WriteAllLines(orderFilePath, files);
             }
-
-            var files = Directory.GetFiles(pagePath)
-                                 .Where(f => AppConsts.IsSupportedImage(f))
-                                 .OrderByDescending(f => File.GetCreationTime(f));
-
-            foreach (var file in files)
-            {
-                AddImageToUI(file);
-            }
-
-            AddPlusButton();
+            catch { }
         }
 
         private void AddPlusButton()
@@ -274,6 +404,7 @@ namespace TabPaint.Controls
                 Width = 100,
                 Height = 100,
                 Margin = new Thickness(6),
+                Tag = filePath,
                 Style = (Style)FindResource("FavoriteItemStyle")  // ★ 应用动画样式
             };
 
@@ -353,6 +484,7 @@ namespace TabPaint.Controls
                         string thumbPath = GetThumbnailPath(filePath);
                         if (File.Exists(thumbPath)) File.Delete(thumbPath);
                         stack.Children.Remove(grid);
+                        SaveOrder();
                         FavoritesChanged?.Invoke(this, EventArgs.Empty);
                     }
                     catch { }
@@ -455,7 +587,11 @@ namespace TabPaint.Controls
                     data.SetData(DataFormats.FileDrop, new string[] { filePath });
                     var fileList = new System.Collections.Specialized.StringCollection { filePath };
                     data.SetFileDropList(fileList);
-                    DragDrop.DoDragDrop(border, data, DragDropEffects.Copy);
+                    
+                    // 标记为内部排序拖拽
+                    data.SetData("FavoriteItemReorder", filePath);
+                    
+                    DragDrop.DoDragDrop(border, data, DragDropEffects.Copy | DragDropEffects.Move);
                 }
             };
 
@@ -494,14 +630,16 @@ namespace TabPaint.Controls
             menu.Items.Add(deleteItem);
             border.ContextMenu = menu;
 
-            if (stack.Children.Count > 0)
+            var plusBtn = stack.Children.Cast<FrameworkElement>().FirstOrDefault(c => c.Style == FindResource("PlusButtonStyle"));
+            if (plusBtn != null)
             {
-                stack.Children.Insert(stack.Children.Count - 1, grid);
+                stack.Children.Insert(stack.Children.IndexOf(plusBtn), grid);
             }
             else
             {
                 stack.Children.Add(grid);
             }
+            SaveOrder();
         }
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -511,16 +649,94 @@ namespace TabPaint.Controls
 
         private void OnWrapPanelDragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data.GetDataPresent("FavoriteItemReorder"))
+            {
+                e.Effects = DragDropEffects.Move;
+                
+                // 实时排序预览
+                var stack = GetFavoriteStack();
+                if (stack != null)
+                {
+                    Point pos = e.GetPosition(stack);
+                    int index = CalculateInsertionIndex(stack, pos);
+                    string draggedPath = (string)e.Data.GetData("FavoriteItemReorder");
+                    
+                    MoveItemPreview(stack, draggedPath, index);
+                }
+            }
+            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effects = DragDropEffects.Copy;
             else
                 e.Effects = DragDropEffects.None;
             e.Handled = true;
         }
 
+        private int CalculateInsertionIndex(StackPanel stack, Point pos)
+        {
+            int index = 0;
+            var plusStyle = FindResource("PlusButtonStyle") as Style;
+            foreach (FrameworkElement child in stack.Children)
+            {
+                if (child.Style == plusStyle) break;
+                
+                Point childPos = child.TranslatePoint(new Point(0, 0), stack);
+                if (pos.X < childPos.X + child.ActualWidth / 2)
+                {
+                    return index;
+                }
+                index++;
+            }
+            return Math.Max(0, index); 
+        }
+
+        private void MoveItemPreview(StackPanel stack, string draggedPath, int targetIndex)
+        {
+            Grid draggedGrid = null;
+            int currentIndex = -1;
+            
+            for (int i = 0; i < stack.Children.Count; i++)
+            {
+                if (stack.Children[i] is Grid g && g.Tag as string == draggedPath)
+                {
+                    draggedGrid = g;
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            if (draggedGrid != null && currentIndex != targetIndex)
+            {
+                stack.Children.RemoveAt(currentIndex);
+                // 确保不会插入到 PlusButton 之后
+                int plusIndex = -1;
+                var plusStyle = FindResource("PlusButtonStyle") as Style;
+                for (int i = 0; i < stack.Children.Count; i++)
+                {
+                    if ((stack.Children[i] as FrameworkElement)?.Style == plusStyle)
+                    {
+                        plusIndex = i;
+                        break;
+                    }
+                }
+
+                if (plusIndex != -1 && targetIndex > plusIndex)
+                    targetIndex = plusIndex;
+
+                if (targetIndex >= stack.Children.Count)
+                    stack.Children.Add(draggedGrid);
+                else
+                    stack.Children.Insert(targetIndex, draggedGrid);
+            }
+        }
+
         private void OnWrapPanelDrop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data.GetDataPresent("FavoriteItemReorder"))
+            {
+                SaveOrder();
+                e.Effects = DragDropEffects.Move;
+            }
+            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 var files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 foreach (var file in files)
@@ -528,6 +744,7 @@ namespace TabPaint.Controls
                     AddFavoriteFile(file);
                 }
             }
+            e.Handled = true;
         }
 
         private void AddFavoriteFile(string filePath)
@@ -555,6 +772,7 @@ namespace TabPaint.Controls
             }
             catch { }
         }
+
         private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             var scrollViewer = sender as ScrollViewer;
@@ -562,7 +780,6 @@ namespace TabPaint.Controls
             scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset - e.Delta);
             e.Handled = true;
         }
-
 
         private void SaveAndAddImage(BitmapSource bitmap)
         {

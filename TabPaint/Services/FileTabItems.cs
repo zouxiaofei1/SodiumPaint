@@ -180,7 +180,7 @@ namespace TabPaint
             }
         }
 
-        public async void CloseTab(FileTabItem item, bool slient = false)
+        public async void CloseTab(FileTabItem item, bool slient = false, bool isMoving = false)
         {
             // 1. 脏检查
             if (item.IsDirty && !slient && !SettingsManager.Instance.Current.SkipResetConfirmation)
@@ -206,7 +206,7 @@ namespace TabPaint
             {
                 _imageFiles.Remove(pathToRemove);
             }
-            if (!string.IsNullOrEmpty(item.BackupPath))
+            if (!string.IsNullOrEmpty(item.BackupPath) && !isMoving)
             {
             //    s(item.BackupPath);
                 try { File.Delete(item.BackupPath); }

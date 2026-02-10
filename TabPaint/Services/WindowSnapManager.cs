@@ -307,8 +307,6 @@ namespace TabPaint.UIHandlers
                     _satellite.Top = aT;
                     break;
             }
-
-            ClampToWorkArea();
         }
 
         private void UpdateSnappedFollowAnchor()
@@ -348,8 +346,6 @@ namespace TabPaint.UIHandlers
                     _satellite.Top += dT;
                     break;
             }
-
-            ClampToWorkArea();
         }
 
         private double GetPerpendicularDelta(double deltaX, double deltaY)
@@ -390,8 +386,6 @@ namespace TabPaint.UIHandlers
                     _satellite.Top = _dragStartWindowPos.Y + deltaY;
                     break;
             }
-
-            ClampToWorkArea();
         }
 
         private void SnapToEdgeKeepingParallelPosition(double currentFreeLeft, double currentFreeTop)
@@ -417,8 +411,6 @@ namespace TabPaint.UIHandlers
                     _satellite.Top = currentFreeTop;
                     break;
             }
-
-            ClampToWorkArea();
         }
         public void SwitchAnchor(Window newAnchor)
         {
@@ -475,18 +467,6 @@ namespace TabPaint.UIHandlers
         {
             _satellite.Left = freeLeft;
             _satellite.Top = freeTop;
-            ClampToWorkArea();
-        }
-
-        private void ClampToWorkArea()
-        {
-            var wa = SystemParameters.WorkArea;
-            if (_satellite.Left < wa.Left) _satellite.Left = wa.Left;
-            if (_satellite.Top < wa.Top) _satellite.Top = wa.Top;
-            if (_satellite.Left + _satellite.Width > wa.Right)
-                _satellite.Left = wa.Right - _satellite.Width;
-            if (_satellite.Top + _satellite.Height > wa.Bottom)
-                _satellite.Top = wa.Bottom - _satellite.Height;
         }
 
         private static double HOverlap(double aL, double aR, double bL, double bR)

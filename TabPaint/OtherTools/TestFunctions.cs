@@ -435,6 +435,7 @@ namespace TabPaint
             return AppConsts.DynamicRangeDefaultMaxSize; // 其他画笔默认 400
         }
 
+        private string _lastToolKey;
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values.Length < 2 || values[0] == DependencyProperty.UnsetValue)
@@ -442,6 +443,7 @@ namespace TabPaint
 
             double thickness = System.Convert.ToDouble(values[0]);
             string toolKey = values[1] as string;
+            _lastToolKey = toolKey;
 
             double maxSize = GetMaxSizeForKey(toolKey);
             double ratio = (thickness - MinSize) / (maxSize - MinSize);
@@ -456,7 +458,7 @@ namespace TabPaint
         {
             if (value is double sliderVal)
             {
-                string toolKey = SettingsManager.Instance.Current.CurrentToolKey;
+                string toolKey = _lastToolKey ?? SettingsManager.Instance.Current.CurrentToolKey;
                 double maxSize = GetMaxSizeForKey(toolKey);
 
                 double t = Math.Max(0.0, Math.Min(1.0, sliderVal));

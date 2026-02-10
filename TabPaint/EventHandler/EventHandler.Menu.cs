@@ -523,7 +523,7 @@ namespace TabPaint
                 ThicknessTip.Visibility = Visibility.Collapsed;
                 return;
             }
-            double realSize = SettingsManager.Instance.Current.PenThickness;
+            double realSize = PenThickness;
 
             SetThicknessSlider_Pos(e.NewValue);
             UpdateThicknessPreviewPosition();
@@ -613,6 +613,26 @@ namespace TabPaint
         private async Task BatchResizeImages(int targetW, int targetH, double refScaleX, double refScaleY, bool isCanvasMode, bool keepRatio)
         {
             string currentTabId = _currentTabItem?.Id;
+
+            // 预处理：确保所有虚拟路径或无物理文件的标签页都有备份文件
+            foreach (var path in _imageFiles.ToList())
+            {
+                var tab = FileTabs.FirstOrDefault(t => t.FilePath == path);
+                if (tab == null) continue;
+                if (tab.Id == currentTabId) continue;
+
+                if (IsVirtualPath(path) && (string.IsNullOrEmpty(tab.BackupPath) || !File.Exists(tab.BackupPath)))
+                {
+                    // 为空白虚拟标签页生成备份图
+                    var blank = GenerateBlankThumbnail(); // 默认是 200x120，我们需要更大一点的吗？
+                    // 理想情况下应该用默认画布尺寸，但为了简单和支持虚拟路径应用，我们为其创建一个基本文件
+                    string fullPath = Path.Combine(_cacheDir, $"{tab.Id}.png");
+                    if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
+                    SaveBitmapToPng(blank, fullPath);
+                    tab.BackupPath = fullPath;
+                }
+            }
+
             var tasksInfo = _imageFiles
                 .Select(path =>
                 {
@@ -620,16 +640,23 @@ namespace TabPaint
                     if (existingTab != null && existingTab.Id == currentTabId) return null;
 
                     string sourcePath = path;
-                    string tabId = existingTab?.Id ?? Guid.NewGuid().ToString();
+                    string tabId = existingTab?.Id;
 
                     if (existingTab != null && !string.IsNullOrEmpty(existingTab.BackupPath) && File.Exists(existingTab.BackupPath))
                     {
                         sourcePath = existingTab.BackupPath;
                     }
+                    else if (_offScreenBackupInfos.TryGetValue(path, out var offlineInfo) && !string.IsNullOrEmpty(offlineInfo.BackupPath) && File.Exists(offlineInfo.BackupPath))
+                    {
+                        sourcePath = offlineInfo.BackupPath;
+                        tabId = offlineInfo.Id;
+                    }
+
+                    if (string.IsNullOrEmpty(tabId)) tabId = Guid.NewGuid().ToString();
 
                     return new { OriginalPath = path, SourcePath = sourcePath, TabId = tabId };
                 })
-                .Where(x => x != null && !string.IsNullOrEmpty(x.SourcePath) && (IsVirtualPath(x.SourcePath) || File.Exists(x.SourcePath)))
+                .Where(x => x != null && !string.IsNullOrEmpty(x.SourcePath) && File.Exists(x.SourcePath))
                 .ToList();
 
             if (tasksInfo.Count == 0) return;
@@ -667,7 +694,7 @@ namespace TabPaint
                                 {
                                     var bmp = new BitmapImage();
                                     bmp.BeginInit();
-                                    bmp.UriSource = new Uri(info.SourcePath);
+                                    bmp.UriSource = new Uri(Path.GetFullPath(info.SourcePath));
                                     bmp.CacheOption = BitmapCacheOption.OnLoad;
                                     bmp.EndInit();
                                     bmp.Freeze();
@@ -825,6 +852,24 @@ namespace TabPaint
             if (settings == null) return;
             string currentTabId = _currentTabItem?.Id;
 
+            // 预处理：确保所有虚拟路径或无物理文件的标签页都有备份文件
+            foreach (var path in _imageFiles.ToList())
+            {
+                var tab = FileTabs.FirstOrDefault(t => t.FilePath == path);
+                if (tab == null) continue;
+                if (tab.Id == currentTabId) continue;
+
+                if (IsVirtualPath(path) && (string.IsNullOrEmpty(tab.BackupPath) || !File.Exists(tab.BackupPath)))
+                {
+                    // 为空白虚拟标签页生成备份图
+                    var blank = GenerateBlankThumbnail(); 
+                    string fullPath = Path.Combine(_cacheDir, $"{tab.Id}.png");
+                    if (!Directory.Exists(_cacheDir)) Directory.CreateDirectory(_cacheDir);
+                    SaveBitmapToPng(blank, fullPath);
+                    tab.BackupPath = fullPath;
+                }
+            }
+
             var tasksInfo = _imageFiles
                 .Select(path =>
                 {
@@ -848,7 +893,7 @@ namespace TabPaint
 
                     return new { OriginalPath = path, SourcePath = sourcePath, TabId = tabId };
                 })
-                .Where(x => x != null && !string.IsNullOrEmpty(x.SourcePath) && (IsVirtualPath(x.SourcePath) || File.Exists(x.SourcePath)))
+                .Where(x => x != null && !string.IsNullOrEmpty(x.SourcePath) && File.Exists(x.SourcePath))
                 .ToList();
 
             if (tasksInfo.Count == 0) return;
@@ -888,7 +933,7 @@ namespace TabPaint
                                 {
                                     var bmp = new BitmapImage();
                                     bmp.BeginInit();
-                                    bmp.UriSource = new Uri(info.SourcePath);
+                                    bmp.UriSource = new Uri(Path.GetFullPath(info.SourcePath));
                                     bmp.CacheOption = BitmapCacheOption.OnLoad;
                                     bmp.EndInit();
                                     bmp.Freeze();

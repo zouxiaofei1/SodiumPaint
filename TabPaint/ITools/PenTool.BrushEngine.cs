@@ -134,7 +134,7 @@ public partial class PenTool : ToolBase
                 return LineBounds(px, px, (int)ctx.PenThickness * 2);
             case BrushStyle.GaussianBlur:
                 DrawBlurStrokeUnsafeParallel(ctx, px, buffer, stride, w, h);
-                float op = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+                float op = (float)ctx.PenOpacity;
                 int kRad = 1 + (int)(op * 49);
                 return LineBounds(px, px, (int)ctx.PenThickness + kRad * 2 + 5);
         }
@@ -152,7 +152,7 @@ public partial class PenTool : ToolBase
         int r = size / 2;
         if (r < 1) r = 1;
 
-        float opacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float opacity = (float)ctx.PenOpacity;
         int kernelRadius = 1 + (int)(opacity * r*0.2);
 
         int cx = (int)p.X;
@@ -346,6 +346,7 @@ public partial class PenTool : ToolBase
     }
 
 
+
     private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P,
      Point p2, float p2P, byte* basePtr, int stride, int w, int h)
     {
@@ -354,7 +355,7 @@ public partial class PenTool : ToolBase
         float r1 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * p1P)) * 0.5f);
         float r2 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * p2P)) * 0.5f);
 
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return;
 
         Color targetColor = ctx.PenColor;
@@ -410,7 +411,6 @@ public partial class PenTool : ToolBase
 
                 if (edgeFactor <= 0.002f) continue;
 
-                // 优化 3：使用定点数整数混合替代浮点混合
                 float dynamicOpacity = alpha1 + (alpha2 - alpha1) * t;
                 float desiredOpacity = dynamicOpacity * edgeFactor;
                 byte desiredLevel = (byte)(desiredOpacity * 255.0f);
@@ -420,28 +420,19 @@ public partial class PenTool : ToolBase
                 byte currentLevel = _currentStrokeMask[pixelIndex];
                 if (currentLevel >= desiredLevel) continue;
 
+                float currentOpacity = currentLevel * 0.00392157f; // 1/255
+                float delta = desiredOpacity - currentOpacity;
                 _currentStrokeMask[pixelIndex] = desiredLevel;
 
-                byte* bp = rowPtr + (long)x * 4;
-                if (desiredLevel >= 250) // 近乎不透明，直接赋值或简单混合
-                {
-                    bp[0] = (byte)targetB;
-                    bp[1] = (byte)targetG;
-                    bp[2] = (byte)targetR;
-                    bp[3] = (byte)targetA;
-                }
-                else
-                {
-                    // 使用整数位移模拟混合： (target * alpha + src * (255 - alpha)) / 255
-                    // 为了性能，简化为 (target * alpha + src * (256 - alpha)) >> 8
-                    int alpha = desiredLevel;
-                    int invAlpha = 256 - alpha;
+                if (delta <= 0.001f) continue;
+                float invOneMinusCurrent = 1.0f / (MathF.Max(0.001f, 1.0f - currentOpacity));
+                float blend = MathF.Min(delta * invOneMinusCurrent, 1.0f);
 
-                    bp[0] = (byte)(((int)targetB * alpha + bp[0] * invAlpha) >> 8);
-                    bp[1] = (byte)(((int)targetG * alpha + bp[1] * invAlpha) >> 8);
-                    bp[2] = (byte)(((int)targetR * alpha + bp[2] * invAlpha) >> 8);
-                    bp[3] = (byte)(((int)targetA * alpha + bp[3] * invAlpha) >> 8);
-                }
+                byte* bp = rowPtr + (long)x * 4;
+                bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
+                bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
+                bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
+                bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
             }
         });
     }
@@ -452,7 +443,7 @@ public partial class PenTool : ToolBase
         int x1 = (int)p2.X; int y1 = (int)p2.Y;
 
         Color targetColor = ctx.PenColor;
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return;
 
         float tB = targetColor.B, tG = targetColor.G, tR = targetColor.R, tA = targetColor.A;
@@ -499,7 +490,7 @@ public partial class PenTool : ToolBase
         int y = (int)p.Y - half;
         Color targetColor = isEraser ? Color.FromArgb(255, 255, 255, 255) : ctx.PenColor;
 
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return;
 
         float tB = targetColor.B; float tG = targetColor.G;
@@ -537,7 +528,7 @@ public partial class PenTool : ToolBase
         if (r < 1) r = 1;
 
         Color c = ctx.PenColor;
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return;
 
         float tB = c.B, tG = c.G, tR = c.R, tA = c.A;
@@ -604,7 +595,7 @@ public partial class PenTool : ToolBase
         var pattern = _sprayPatterns[_patternIndex];
         _patternIndex = (_patternIndex + 1) % _sprayPatterns.Count;
         Color targetColor = ctx.PenColor;
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return;
         float tB = targetColor.B; float tG = targetColor.G;
         float tR = targetColor.R; float tA = targetColor.A;
@@ -725,7 +716,7 @@ public partial class PenTool : ToolBase
         float radius = (float)ctx.PenThickness * 0.5f;
         if (radius < 0.5f) radius = 0.5f;
         Color targetColor = ctx.PenColor;
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return;
         float baseOpacity = globalOpacity * 0.5f;
         float tB = targetColor.B, tG = targetColor.G, tR = targetColor.R, tA = targetColor.A;
@@ -771,7 +762,7 @@ public partial class PenTool : ToolBase
     }
     private unsafe void DrawOilPaintStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h)
     {
-        double globalOpacity = TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        double globalOpacity = ctx.PenOpacity;
         float baseAlpha = (float)(0.2f * 255.0f / MathF.Max(1.0f, MathF.Sqrt((float)ctx.PenThickness))) * (float)globalOpacity;
         int alpha = (int)baseAlpha;
         if (alpha == 0) return;
@@ -830,7 +821,7 @@ public partial class PenTool : ToolBase
     {
         int r = (int)(ctx.PenThickness / 2.0);
         if (r < 1) r = 1;
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         byte baseAlpha = 30;
         Color c = Color.FromArgb((byte)(baseAlpha * globalOpacity), 255, 255, 0);
         int xmin = Math.Max(0, (int)Math.Min(p1.X, p2.X) - r);
@@ -944,7 +935,7 @@ public partial class PenTool : ToolBase
         float r1 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * EaseInOutPressure(p1P))) * 0.5f);
         float r2 = MathF.Max(0.5f, (baseThickness * (minScale + (1.0f - minScale) * EaseInOutPressure(p2P))) * 0.5f);
 
-        float globalOpacity = (float)TabPaint.SettingsManager.Instance.Current.PenOpacity;
+        float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return null;
 
         Color targetColor = ctx.PenColor;

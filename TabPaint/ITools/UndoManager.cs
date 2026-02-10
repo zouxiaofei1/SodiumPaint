@@ -18,7 +18,8 @@ namespace TabPaint
     {
         private byte[] _raw;           // 未压缩（热数据）
         private byte[] _compressed;    // 压缩后（冷数据）
-        private bool _isCompressed;
+        private volatile bool _isCompressed;
+        private readonly object _lock = new object();
         public int OriginalLength { get; }
 
         public CompressedBuffer(byte[] data)
@@ -29,31 +30,37 @@ namespace TabPaint
         }
         public void Compress()
         {
-            if (_isCompressed || _raw == null) return;
-            using var ms = new MemoryStream();
-            using (var brotli = new BrotliStream(ms, CompressionLevel.Fastest))
+            lock (_lock)
             {
-                brotli.Write(_raw, 0, _raw.Length);
+                if (_isCompressed || _raw == null) return;
+                using var ms = new MemoryStream();
+                using (var brotli = new BrotliStream(ms, CompressionLevel.Fastest))
+                {
+                    brotli.Write(_raw, 0, _raw.Length);
+                }
+                _compressed = ms.ToArray();
+                _raw = null;  // 释放原始数据
+                _isCompressed = true;
             }
-            _compressed = ms.ToArray();
-            _raw = null;  // 释放原始数据
-            _isCompressed = true;
         }
         public byte[] GetData()
         {
-            if (!_isCompressed) return _raw;
-
-            byte[] result = new byte[OriginalLength];
-            using var ms = new MemoryStream(_compressed);
-            using var brotli = new BrotliStream(ms, CompressionMode.Decompress);
-            int totalRead = 0;
-            while (totalRead < OriginalLength)
+            lock (_lock)
             {
-                int read = brotli.Read(result, totalRead, OriginalLength - totalRead);
-                if (read == 0) break;
-                totalRead += read;
+                if (!_isCompressed) return _raw;
+
+                byte[] result = new byte[OriginalLength];
+                using var ms = new MemoryStream(_compressed);
+                using var brotli = new BrotliStream(ms, CompressionMode.Decompress);
+                int totalRead = 0;
+                while (totalRead < OriginalLength)
+                {
+                    int read = brotli.Read(result, totalRead, OriginalLength - totalRead);
+                    if (read == 0) break;
+                    totalRead += read;
+                }
+                return result;
             }
-            return result;
         }
         public void Decompress()
         {
@@ -62,13 +69,31 @@ namespace TabPaint
             _compressed = null;
             _isCompressed = false;
         }
-        public long ActualMemorySize => _isCompressed
-            ? (_compressed?.Length ?? 0)
-            : (_raw?.Length ?? 0);
+        public long ActualMemorySize
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _isCompressed
+                        ? (_compressed?.Length ?? 0)
+                        : (_raw?.Length ?? 0);
+                }
+            }
+        }
 
-        public double CompressionRatio => _isCompressed && _compressed != null
-            ? (double)OriginalLength / _compressed.Length
-            : 1.0;
+        public double CompressionRatio
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _isCompressed && _compressed != null
+                        ? (double)OriginalLength / _compressed.Length
+                        : 1.0;
+                }
+            }
+        }
     }
     public static class ListStackExtensions
     {
@@ -119,6 +144,7 @@ namespace TabPaint
             public string DeletedFilePath { get; }
             public FileTabItem DeletedTab { get; }
             public int DeletedTabIndex { get; }
+            public long LastAccountedSize { get; set; }
             public long MemorySize =>
              (_pixelsBuf?.ActualMemorySize ?? 0) +
              (_undoPixelsBuf?.ActualMemorySize ?? 0) +
@@ -168,11 +194,36 @@ namespace TabPaint
             public List<UndoAction> _undo = new();
             public List<UndoAction> _redo = new();
 
+            private static long _globalUndoMemory = 0;
+            private static int _globalUndoSteps = 0;
+            private static readonly object _globalLimitLock = new object();
+
             public List<UndoAction> GetUndoStack() => _undo;
             public List<UndoAction> GetRedoStack() => _redo;
             private byte[]? _preStrokeSnapshot;
             private readonly List<Int32Rect> _strokeRects = new();
             public int UndoCount => _undo.Count;
+
+            private void UpdateGlobalStats(UndoAction action, bool adding)
+            {
+                lock (_globalLimitLock)
+                {
+                    if (adding)
+                    {
+                        long size = action.MemorySize;
+                        _globalUndoMemory += size;
+                        action.LastAccountedSize = size;
+                        _globalUndoSteps++;
+                    }
+                    else
+                    {
+                        _globalUndoMemory -= action.LastAccountedSize;
+                        _globalUndoSteps--;
+                        action.LastAccountedSize = 0;
+                    }
+                }
+            }
+
             private void UpdateUI()
             {
                 var mw = MainWindow.GetCurrentInstance();
@@ -199,7 +250,23 @@ namespace TabPaint
                     var action = stack[i];
                     if (action.MemorySize > AppConsts.UndoCompressThreshold)
                     {
-                        action.CompressAll();
+                        Task.Run(() =>
+                        {
+                            action.CompressAll();
+                            long newSize = action.MemorySize;
+                            lock (_globalLimitLock)
+                            {
+                                if (action.LastAccountedSize > 0) // 仍在栈中
+                                {
+                                    long diff = action.LastAccountedSize - newSize;
+                                    if (diff > 0)
+                                    {
+                                        _globalUndoMemory -= diff;
+                                        action.LastAccountedSize = newSize;
+                                    }
+                                }
+                            }
+                        });
                     }
                 }
             }
@@ -212,63 +279,44 @@ namespace TabPaint
                 long maxMemory = (long)settings.MaxUndoMemoryMB * 1024 * 1024;
                 int maxGlobalSteps = settings.MaxGlobalUndoSteps;
 
-                while (true)
+                lock (_globalLimitLock)
                 {
-                    long currentTotalMemory = 0;
-                    int currentTotalSteps = 0;
-                    var allStacks = new List<List<UndoAction>>();
-
-                    foreach (var tab in mw.FileTabs)
+                    while (_globalUndoMemory > maxMemory || _globalUndoSteps > maxGlobalSteps)
                     {
-                        List<UndoAction> u, r;
-                        if (tab == mw._currentTabItem && mw._undo != null)
+                        List<UndoAction> oldestStack = null;
+                        DateTime oldestTime = DateTime.MaxValue;
+
+                        foreach (var tab in mw.FileTabs)
                         {
-                            u = mw._undo._undo;
-                            r = mw._undo._redo;
-                        }
-                        else
-                        {
-                            u = tab.UndoStack;
-                            r = tab.RedoStack;
+                            var u = (tab == mw._currentTabItem && mw._undo != null) ? mw._undo._undo : tab.UndoStack;
+                            var r = (tab == mw._currentTabItem && mw._undo != null) ? mw._undo._redo : tab.RedoStack;
+
+                            if (u.Count > 0 && u[0].Timestamp < oldestTime) { oldestTime = u[0].Timestamp; oldestStack = u; }
+                            if (r.Count > 0 && r[0].Timestamp < oldestTime) { oldestTime = r[0].Timestamp; oldestStack = r; }
                         }
 
-                        foreach (var action in u) currentTotalMemory += action.MemorySize;
-                        foreach (var action in r) currentTotalMemory += action.MemorySize;
-                        currentTotalSteps += (u.Count + r.Count);
-
-                        if (u.Count > 0) allStacks.Add(u);
-                        if (r.Count > 0) allStacks.Add(r);
-                    }
-
-                    // 检查是否在限制内
-                    if (currentTotalMemory <= maxMemory && currentTotalSteps <= maxGlobalSteps)
-                        break;
-
-                    // 寻找全局最旧的操作 (Timestamp 最小的)
-                    List<UndoAction> oldestStack = null;
-                    DateTime oldestTime = DateTime.MaxValue;
-
-                    foreach (var stack in allStacks)
-                    {
-                        if (stack.Count > 0 && stack[0].Timestamp < oldestTime)
+                        if (oldestStack != null)
                         {
-                            oldestTime = stack[0].Timestamp;
-                            oldestStack = stack;
+                            var action = oldestStack[0];
+                            _globalUndoMemory -= action.LastAccountedSize;
+                            _globalUndoSteps--;
+                            action.LastAccountedSize = 0;
+                            oldestStack.RemoveAt(0);
                         }
+                        else break;
                     }
-
-                    if (oldestStack != null)
-                    {
-                        oldestStack.RemoveAt(0);
-                    }
-                    else break; // 无可清理
                 }
             }
 
             public void PushTransformAction(Int32Rect undoRect, byte[] undoPixels, Int32Rect redoRect, byte[] redoPixels)
             {//自动SetUndoRedoButtonState和_redo.Clear()
-                _undo.Add(new UndoAction(undoRect, undoPixels, redoRect, redoPixels));
+                var action = new UndoAction(undoRect, undoPixels, redoRect, redoPixels);
+                _undo.Add(action);
+                UpdateGlobalStats(action, true);
+
+                foreach (var r in _redo) UpdateGlobalStats(r, false);
                 _redo.Clear(); // 新操作截断重做链
+
                 TrimStack();
                 UpdateUI();
             }
@@ -301,7 +349,10 @@ namespace TabPaint
                 var combined = ClampRect(CombineRects(_strokeRects), (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelWidth, (MainWindow.GetCurrentInstance())._ctx.Bitmap.PixelHeight);
 
                 byte[] region = ExtractRegionFromSnapshot(_preStrokeSnapshot, combined, _surface.Bitmap.BackBufferStride);
-                _undo.Push(new UndoAction(combined, region, undoActionType));
+                var action = new UndoAction(combined, region, undoActionType);
+                _undo.Push(action);
+                UpdateGlobalStats(action, true);
+
                 TrimStack();
                 UpdateUI();
                 _preStrokeSnapshot = null;
@@ -312,7 +363,10 @@ namespace TabPaint
             public void internalUndoAction(UndoAction action)
             {
                 var redoPixels = _surface.ExtractRegion(action.Rect);
-                _redo.Push(new UndoAction(action.Rect, redoPixels));
+                var redoAction = new UndoAction(action.Rect, redoPixels);
+                _redo.Push(redoAction);
+                UpdateGlobalStats(redoAction, true);
+
                 // 执行 Undo
                 _surface.WriteRegion(action.Rect, action.Pixels);
             }
@@ -352,6 +406,8 @@ namespace TabPaint
                 if (!CanUndo || _surface?.Bitmap == null) return;
 
                 var action = _undo.Pop();
+                UpdateGlobalStats(action, false);
+
                 action.DecompressAll();
                 if (mw._router.CurrentTool is SelectTool selTool) selTool.Cleanup(mw._ctx);
 
@@ -359,7 +415,9 @@ namespace TabPaint
                 {
                     var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
                     var currentPixels = _surface.ExtractRegion(currentRect);
-                    _redo.Push(new UndoAction(currentRect, currentPixels, action.RedoRect, action.RedoPixels));
+                    var redoAction = new UndoAction(currentRect, currentPixels, action.RedoRect, action.RedoPixels);
+                    _redo.Push(redoAction);
+                    UpdateGlobalStats(redoAction, true);
 
                     var wb = new WriteableBitmap(action.UndoRect.Width, action.UndoRect.Height,
                             mw._ctx.Surface.Bitmap.DpiX, mw._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
@@ -373,7 +431,9 @@ namespace TabPaint
                     internalUndoAction(action);
                     if (action.ActionType == UndoActionType.Selection && _undo.Count > 0)
                     {
-                        var pairedAction = _undo.Pop(); pairedAction.DecompressAll();
+                        var pairedAction = _undo.Pop();
+                        UpdateGlobalStats(pairedAction, false);
+                        pairedAction.DecompressAll();
                         internalUndoAction(pairedAction);
                     }
                 }
@@ -388,6 +448,8 @@ namespace TabPaint
                 if (!CanRedo || _surface?.Bitmap == null) return;
 
                 var action = _redo.Pop();
+                UpdateGlobalStats(action, false);
+
                 action.DecompressAll();
                 if (action.ActionType == UndoActionType.Transform)
                 {
@@ -395,12 +457,15 @@ namespace TabPaint
                     var currentRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight);
                     var currentPixels = _surface.ExtractRegion(currentRect);
 
-                    _undo.Push(new UndoAction(
+                    var undoAction = new UndoAction(
                         currentRect,       // 撤销这个 Redo 会回到当前状态
                         currentPixels,
                         action.RedoRect,   // 执行这个 Redo 会回到裁剪后的状态
                         action.RedoPixels
-                    ));
+                    );
+                    _undo.Push(undoAction);
+                    UpdateGlobalStats(undoAction, true);
+
                     var wb = new WriteableBitmap(action.RedoRect.Width, action.RedoRect.Height,
                             (MainWindow.GetCurrentInstance())._ctx.Surface.Bitmap.DpiX, (MainWindow.GetCurrentInstance())._ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32, null);
                     wb.WritePixels(action.RedoRect, action.RedoPixels, wb.BackBufferStride, 0);
@@ -411,7 +476,10 @@ namespace TabPaint
                 {
                     // 准备 Undo Action
                     var undoPixels = _surface.ExtractRegion(action.Rect);
-                    _undo.Push(new UndoAction(action.Rect, undoPixels));
+                    var undoAction = new UndoAction(action.Rect, undoPixels);
+                    _undo.Push(undoAction);
+                    UpdateGlobalStats(undoAction, true);
+
                     _surface.WriteRegion(action.Rect, action.Pixels);
                 }
 
@@ -425,8 +493,13 @@ namespace TabPaint
                 int stride = oldBitmap.BackBufferStride;
                 byte[] pixels = new byte[stride * oldBitmap.PixelHeight];
                 oldBitmap.CopyPixels(pixels, stride, 0);
-                _undo.Push(new UndoAction(rect, pixels, UndoActionType.Draw));
+                var action = new UndoAction(rect, pixels, UndoActionType.Draw);
+                _undo.Push(action);
+                UpdateGlobalStats(action, true);
+
+                foreach (var r in _redo) UpdateGlobalStats(r, false);
                 _redo.Clear();  // 4. 清空重做链并更新 UI
+
                 TrimStack();
                 UpdateUI();
             }
@@ -440,7 +513,11 @@ namespace TabPaint
                     _surface.Bitmap.PixelHeight);
 
                 var currentPixels = SafeExtractRegion(rect);
-                _undo.Push(new UndoAction(rect, currentPixels));
+                var action = new UndoAction(rect, currentPixels);
+                _undo.Push(action);
+                UpdateGlobalStats(action, true);
+
+                foreach (var r in _redo) UpdateGlobalStats(r, false);
                 _redo.Clear();
                 TrimStack();
             }
@@ -482,8 +559,16 @@ namespace TabPaint
             }
 
             // 清空重做链
-            public void ClearRedo(){_redo.Clear();}
-            public void ClearUndo() {  _undo.Clear();  }
+            public void ClearRedo()
+            {
+                foreach (var r in _redo) UpdateGlobalStats(r, false);
+                _redo.Clear();
+            }
+            public void ClearUndo()
+            {
+                foreach (var u in _undo) UpdateGlobalStats(u, false);
+                _undo.Clear();
+            }
         }
     }
 }

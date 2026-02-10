@@ -37,6 +37,7 @@ namespace TabPaint
         public const double MaxZoom = 50.0;
         public const double ZoomSnapThreshold = 0.001;
         public const double ZoomLerpFactor = 1.0;
+        public const double WheelScrollFactor = 0.4;
 
         // --- UI 与交互参数 ---
         public const int ToastDuration = 1500;

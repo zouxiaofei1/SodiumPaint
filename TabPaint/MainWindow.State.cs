@@ -49,6 +49,7 @@ namespace TabPaint
         private static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
 
         private HwndSource _hwndSource;
+        private static MainWindow _activeMonitorInstance;
         private bool _isMonitoringClipboard = false;
         private string _fileSize = "0 KB";
         public string FileSize
@@ -109,17 +110,95 @@ namespace TabPaint
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-        private double _penThickness = AppConsts.DefaultPenThickness;
-        public double PenThickness
+        private Dictionary<string, ToolSettingsModel> _localPerToolSettings = SettingsManager.Instance.Current.PerToolSettings.ToDictionary(k => k.Key, v => v.Value.Clone());
+        public Dictionary<string, ToolSettingsModel> LocalPerToolSettings
         {
-            get => _penThickness;
+            get => _localPerToolSettings;
+            set { _localPerToolSettings = value; OnPropertyChanged(); }
+        }
+
+        private string _currentToolKey = SettingsManager.Instance.Current.CurrentToolKey;
+        public string CurrentToolKey
+        {
+            get => _currentToolKey;
             set
             {
-                if (_penThickness != value)
+                if (_currentToolKey != value)
                 {
-                    _penThickness = value;
+                    _currentToolKey = value;
+                    OnPropertyChanged();
                     OnPropertyChanged(nameof(PenThickness));
+                    OnPropertyChanged(nameof(PenOpacity));
+                }
+            }
+        }
+
+        public double PenThickness
+        {
+            get
+            {
+                if (_currentToolKey == "Pen_Pencil") return 1.0;
+                if (LocalPerToolSettings != null && LocalPerToolSettings.TryGetValue(_currentToolKey, out var settings))
+                {
+                    return settings.Thickness;
+                }
+                return 25.0; // Fallback
+            }
+            set
+            {
+                if (_currentToolKey == "Pen_Pencil") return;
+                if (LocalPerToolSettings == null)
+                {
+                    _localPerToolSettings = SettingsManager.Instance.Current.PerToolSettings.ToDictionary(k => k.Key, v => v.Value.Clone());
+                }
+
+                if (!LocalPerToolSettings.ContainsKey(_currentToolKey))
+                {
+                    LocalPerToolSettings[_currentToolKey] = new ToolSettingsModel();
+                }
+
+                // 只有当值确实改变，或者 _ctx 中的值不一致时才处理
+                bool valueChanged = Math.Abs(LocalPerToolSettings[_currentToolKey].Thickness - value) > 0.001;
+                bool ctxOutOfSync = _ctx != null && Math.Abs(_ctx.PenThickness - value) > 0.001;
+
+                if (valueChanged || ctxOutOfSync)
+                {
+                    LocalPerToolSettings[_currentToolKey].Thickness = value;
                     if (_ctx != null) _ctx.PenThickness = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public double PenOpacity
+        {
+            get
+            {
+                if (LocalPerToolSettings != null && LocalPerToolSettings.TryGetValue(_currentToolKey, out var settings))
+                {
+                    return settings.Opacity;
+                }
+                return 1.0;
+            }
+            set
+            {
+                if (LocalPerToolSettings == null)
+                {
+                    _localPerToolSettings = SettingsManager.Instance.Current.PerToolSettings.ToDictionary(k => k.Key, v => v.Value.Clone());
+                }
+                if (!LocalPerToolSettings.ContainsKey(_currentToolKey))
+                {
+                    LocalPerToolSettings[_currentToolKey] = new ToolSettingsModel();
+                }
+
+                bool valueChanged = Math.Abs(LocalPerToolSettings[_currentToolKey].Opacity - value) > 0.0001;
+                bool ctxOutOfSync = _ctx != null && Math.Abs(_ctx.PenOpacity - value) > 0.0001;
+
+                if (valueChanged || ctxOutOfSync)
+                {
+                    LocalPerToolSettings[_currentToolKey].Opacity = value;
+                    if (_ctx != null) _ctx.PenOpacity = value;
+                    OnPropertyChanged();
                 }
             }
         }

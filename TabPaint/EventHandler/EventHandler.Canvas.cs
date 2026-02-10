@@ -675,6 +675,12 @@ namespace TabPaint
 
         private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            if (!_isInitialLayoutComplete || _isUpdatingToolSettings) return;
+            if (OpacitySlider == null) return;
+
+            PenOpacity = e.NewValue;
+            if (_ctx != null) _ctx.PenOpacity = e.NewValue;
+
             if (OpacitySlider.ToolTip is System.Windows.Controls.ToolTip toolTip && toolTip.IsOpen)
             {
                 UpdateToolTipOffset(toolTip);

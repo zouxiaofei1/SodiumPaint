@@ -333,6 +333,19 @@ namespace TabPaint
             {
                 UpdateCanvasVisuals();
             }
+
+            if (e.PropertyName == nameof(AppSettings.EnableClipboardMonitor))
+            {
+                var settings = SettingsManager.Instance.Current;
+                if (settings.EnableClipboardMonitor)
+                {
+                    if (_activeMonitorInstance == null) _activeMonitorInstance = this;
+                }
+                else
+                {
+                    if (_activeMonitorInstance == this) _activeMonitorInstance = null;
+                }
+            }
         }
         private void UpdateCanvasVisuals()
         {
@@ -1086,7 +1099,10 @@ namespace TabPaint
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (!_programClosed)
+            {
+                _programClosed = true;
                 App.GlobalExit();
+            }
         }
         private void OnTitleBarCloseClick(object sender, RoutedEventArgs e)
         {

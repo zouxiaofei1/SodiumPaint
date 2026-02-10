@@ -378,8 +378,8 @@
 
                                 <Slider.Value>
                                     <MultiBinding Converter="{StaticResource DynamicSizeConverter}" Mode="TwoWay">
-                                        <Binding Source="{x:Static local:SettingsManager.Instance}" Path="Current.PenThickness" Mode="TwoWay"/>
-                                        <Binding Source="{x:Static local:SettingsManager.Instance}" Path="Current.CurrentToolKey" Mode="OneWay"/>
+                                        <Binding Path="PenThickness" Mode="TwoWay"/>
+                                        <Binding Path="CurrentToolKey" Mode="OneWay"/>
                                     </MultiBinding>
                                 </Slider.Value>
 
@@ -387,7 +387,7 @@
                                     <ToolTip Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4">
                                         <StackPanel Orientation="Horizontal">
                                             <!-- Tooltip 保持简单绑定即可，因为它只负责显示结果 -->
-                                            <TextBlock Text="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current.PenThickness, StringFormat={}{0:F0}}"/>
+                                            <TextBlock Text="{Binding Path=PenThickness, StringFormat={}{0:F0}}"/>
                                             <TextBlock Text="{DynamicResource L_Main_Unit_Pixel}" Margin="2,0,0,0"/>
                                         </StackPanel>
                                     </ToolTip>
@@ -417,7 +417,6 @@
                                     Orientation="Vertical" 
                                     Minimum="0" Maximum="1" 
                                     SmallChange="0.05" LargeChange="0.1"
-                                    DataContext="{Binding Source={x:Static local:SettingsManager.Instance}, Path=Current}"
                                     Value="{Binding PenOpacity, Mode=TwoWay}" 
                                     Margin="0,0,0,10"
                                     IsSnapToTickEnabled="False"

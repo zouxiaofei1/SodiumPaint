@@ -185,8 +185,7 @@ public partial class PenTool : ToolBase
 
             else
             {
-            var appSettings = TabPaint.SettingsManager.Instance.Current;
-            double globalOpacity = appSettings.PenOpacity;
+            double globalOpacity = ctx.PenOpacity;
             Color penColor = ctx.PenColor;
 
             if (_cachedFillBrush == null || _lastColor != penColor || Math.Abs(_lastOpacity - globalOpacity) > 0.001)

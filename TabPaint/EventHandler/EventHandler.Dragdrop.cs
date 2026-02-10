@@ -235,8 +235,8 @@ namespace TabPaint
                 {
                     // 跨窗口拖拽标签：将标签从原窗口移动到本窗口
                     
-                    // 1. 在原窗口移除
-                    sourceWindow.CloseTab(sourceTab, true);
+                    // 1. 在原窗口移除 (标记为正在移动，防止删除备份文件)
+                    sourceWindow.CloseTab(sourceTab, slient: true, isMoving: true);
 
                     // 2. 检查本窗口是否已存在
                     var existingTab = FileTabs.FirstOrDefault(t => t.Id == sourceTab.Id) ??

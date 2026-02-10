@@ -15,8 +15,12 @@ namespace TabPaint
 {
     public partial class App : Application
     {
+        private static bool _isExiting = false;
         public static void GlobalExit()
         {
+            if (_isExiting) return;
+            _isExiting = true;
+
             var windows = Application.Current.Windows.Cast<Window>().ToList();
             foreach (Window window in windows)
             {
@@ -26,7 +30,7 @@ namespace TabPaint
                 }
                 else
                 {
-                    window.Close();
+                    try { window.Close(); } catch { }
                 }
             }
             Application.Current.Shutdown();
@@ -222,9 +226,14 @@ namespace TabPaint
         }
         protected override void OnExit(ExitEventArgs e)
         {
-            AiService.Instance.ReleaseAllModels();
-            SingleInstance.Release();
+            try
+            {
+                AiService.Instance.ReleaseAllModels();
+                SingleInstance.Release();
+            }
+            catch { }
             base.OnExit(e);
+            Environment.Exit(0);
         }
 
         private void Settings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -254,16 +263,6 @@ namespace TabPaint
                 LocalizationManager.ApplyLanguage(settings.Language);
             }
 
-            if (e.PropertyName == nameof(AppSettings.PenThickness))
-            {
-                foreach (Window w in Application.Current.Windows)
-                {
-                    if (w is MainWindow mw && mw._ctx != null)
-                    {
-                        mw._ctx.PenThickness = settings.PenThickness;
-                    }
-                }
-            }
         }
 
     }

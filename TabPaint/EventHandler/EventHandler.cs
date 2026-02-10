@@ -306,6 +306,12 @@ namespace TabPaint
                 _hwndSource = HwndSource.FromHwnd(helper.Handle);
                 _hwndSource.AddHook(WndProc);
                 AddClipboardFormatListener(helper.Handle); // 默认注册监听，通过 bool 标志控制逻辑
+
+                // 如果全局配置开启且当前没有活跃实例，则抢占为活跃实例
+                if (SettingsManager.Instance.Current.EnableClipboardMonitor && _activeMonitorInstance == null)
+                {
+                    _activeMonitorInstance = this;
+                }
             }
         }
         private void MainWindow_Deactivated(object sender, EventArgs e)
@@ -374,7 +380,7 @@ namespace TabPaint
 
                     if (tilt != 0)
                     {
-                        double scrollAmount = tilt / 2.0;
+                        double scrollAmount = tilt * AppConsts.WheelScrollFactor;
                         ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + scrollAmount);
                         handled = true;
                     }
@@ -382,7 +388,7 @@ namespace TabPaint
             }
             if (msg == AppConsts.WM_CLIPBOARDUPDATE)
             {
-                if (SettingsManager.Instance.Current.EnableClipboardMonitor)
+                if (SettingsManager.Instance.Current.EnableClipboardMonitor && _activeMonitorInstance == this)
                 {
                     // 1. 获取当前剪切板的系统序列号
                     uint currentSeq = GetClipboardSequenceNumber();
@@ -440,7 +446,38 @@ namespace TabPaint
         }
         private void ClipboardMonitorToggle_Click(object sender, RoutedEventArgs e)
         {
+            // 配置会自动更新 (Two-Way Binding)
+            if (SettingsManager.Instance.Current.EnableClipboardMonitor)
+            {
+                // 手动开启时，将当前窗口设为活跃监听实例
+                _activeMonitorInstance = this;
+                OnClipboardContentChanged();
+            }
+            else
+            {
+                // 如果当前窗口是活跃实例且被关闭了监听，清空引用
+                if (_activeMonitorInstance == this)
+                {
+                    _activeMonitorInstance = null;
+                    // 尝试寻找下一个合适的窗口接管（如果有窗口也开启了开关但之前被抑制了）
+                    TryTransferClipboardMonitor();
+                }
+            }
+        }
 
+        private void TryTransferClipboardMonitor()
+        {
+            if (SettingsManager.Instance.Current.EnableClipboardMonitor)
+            {
+                foreach (Window window in Application.Current.Windows)
+                {
+                    if (window is MainWindow mw && mw != this && window.IsLoaded)
+                    {
+                        _activeMonitorInstance = mw;
+                        break;
+                    }
+                }
+            }
         }
 
         [DllImport("gdi32.dll")]
@@ -792,11 +829,11 @@ namespace TabPaint
         }
         private void OnMouseWheelZoom(object sender, MouseWheelEventArgs e)
         {
-            // 1. 处理 Shift + 滚轮 (水平滚动) - 优先级最高，保持不变
+            // 1. 处理 Shift + 滚轮 (水平滚动) - 优先级最高
             if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
                 e.Handled = true;
-                double scrollAmount = e.Delta > 0 ? -48 : 48;
+                double scrollAmount = -e.Delta * AppConsts.WheelScrollFactor;
                 ScrollContainer.ScrollToHorizontalOffset(ScrollContainer.HorizontalOffset + scrollAmount);
                 return;
             }
@@ -830,6 +867,13 @@ namespace TabPaint
 
                 // 启动平滑缩放
                 StartSmoothZoom(targetScale, mousePos);
+            }
+            else
+            {
+                // 接管垂直滚动，确保与水平滚动速率一致
+                e.Handled = true;
+                double scrollAmount = -e.Delta * AppConsts.WheelScrollFactor;
+                ScrollContainer.ScrollToVerticalOffset(ScrollContainer.VerticalOffset + scrollAmount);
             }
         }
 

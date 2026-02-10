@@ -94,6 +94,9 @@ namespace TabPaint
                         // 释放内存快照引用，交由新窗口的 _bitmap 接管
                         current.MemorySnapshot = null;
 
+                        // 强制重置备份追踪，确保在新窗口切换走之前能触发一次备份
+                        _lastBackedUpVersion = -1;
+
                         ResetDirtyTracker();
                         _savedUndoPoint = -1;
                         CheckDirtyState();
@@ -513,31 +516,41 @@ namespace TabPaint
         private (Task<BitmapSource> PreviewTask, Task<BitmapSource> FullResTask) StartDecodingTasks(FileStream fs, string filePath, CancellationToken token)
         {
             string extension = System.IO.Path.GetExtension(filePath)?.ToLower();
+            string fileName = fs.Name;
 
             if (extension == ".svg")
             {
-                string fileName = fs.Name;
                 var task = Task.Run<BitmapSource>(() =>
                 {
-                    using var svgFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-                    return DecodeSvg(svgFs, token);
+                    try
+                    {
+                        using var svgFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                        return DecodeSvg(svgFs, token);
+                    }
+                    catch { return null; }
                 }, token);
-                return (task, task); // SVG 预览图即原图
+                return (task, task);
             }
             else
             {
-                string fileName = fs.Name;
-
                 var preview = Task.Run<BitmapSource>(() =>
                 {
-                    using var previewFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-                    return DecodePreviewBitmap(previewFs, token);
+                    try
+                    {
+                        using var previewFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                        return DecodePreviewBitmap(previewFs, token);
+                    }
+                    catch { return null; }
                 }, token);
 
                 var full = Task.Run<BitmapSource>(() =>
                 {
-                    using var fullFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-                    return DecodeFullResBitmap(fullFs, token);
+                    try
+                    {
+                        using var fullFs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                        return DecodeFullResBitmap(fullFs, token);
+                    }
+                    catch { return null; }
                 }, token);
 
                 return (preview, full);
@@ -571,7 +584,6 @@ namespace TabPaint
             await Dispatcher.InvokeAsync(() =>
             {
                 if (token.IsCancellationRequested) return;
-                if (Process.GetCurrentProcess().PrivateMemorySize64 > AppConsts.MemoryLimitForAggressiveRelease)  GC.Collect(2, GCCollectionMode.Forced, true);
                 _originalDpiX = fullResBitmap.DpiX;
                 _originalDpiY = fullResBitmap.DpiY;
                 _bitmap = CreateWriteableBitmap(fullResBitmap);

@@ -331,6 +331,7 @@ namespace TabPaint
             public Color PenColor { get; set; } = Colors.Black;
             public Color EraserColor { get; set; } = Colors.White;
             public double PenThickness { get; set; } = 5.0;
+            public double PenOpacity { get; set; } = 1.0;
             public Image ViewElement { get; } // 例如 DrawImage
             public WriteableBitmap Bitmap => Surface.Bitmap;
             public Image SelectionPreview { get; } // 预览层

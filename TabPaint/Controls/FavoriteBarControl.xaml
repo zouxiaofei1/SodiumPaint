@@ -67,10 +67,12 @@
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Disabled" 
+        <ScrollViewer x:Name="FavoriteScroller" Grid.Row="1" VerticalScrollBarVisibility="Disabled" 
               HorizontalScrollBarVisibility="Auto" 
               Padding="6" 
               Style="{DynamicResource FluentScrollViewer}"
+              PanningMode="HorizontalOnly"
+              ManipulationBoundaryFeedback="ScrollViewer_ManipulationBoundaryFeedback"
               PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
             <StackPanel x:Name="FavoriteStackPanel" Orientation="Horizontal" Margin="4" AllowDrop="True" Drop="OnWrapPanelDrop" DragOver="OnWrapPanelDragOver"
                Background="Transparent"></StackPanel>

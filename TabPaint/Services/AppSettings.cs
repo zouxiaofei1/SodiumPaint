@@ -47,6 +47,15 @@ namespace TabPaint
     {
         public double Thickness { get; set; } = AppConsts.DefaultPenThickness;
         public double Opacity { get; set; } = AppConsts.DefaultPenOpacity;
+
+        public ToolSettingsModel Clone()
+        {
+            return new ToolSettingsModel
+            {
+                Thickness = this.Thickness,
+                Opacity = this.Opacity
+            };
+        }
     }
 
     public class ShortcutItem : INotifyPropertyChanged
@@ -141,6 +150,19 @@ namespace TabPaint
         private void SaveAppState()
         {
             var settings = TabPaint.SettingsManager.Instance.Current;
+
+            int mainWindowCount = Application.Current.Windows.OfType<MainWindow>().Count();
+            // 如果是最后一个窗口，或者程序正在退出过程中，则保存画笔参数到全局设置
+            if (mainWindowCount <= 1 || _programClosed)
+            {
+                // 只有最后一个窗口关闭时才保存画笔参数到设置
+                if (this.LocalPerToolSettings != null)
+                {
+                    settings.PerToolSettings = this.LocalPerToolSettings.ToDictionary(k => k.Key, v => v.Value.Clone());
+                }
+                settings.CurrentToolKey = this.CurrentToolKey;
+            }
+
             if (this.WindowState == System.Windows.WindowState.Maximized)
             {
                 // 最大化时，保存还原后的坐标和尺寸
@@ -249,8 +271,45 @@ namespace TabPaint
             {
                 var settings = TabPaint.SettingsManager.Instance.Current;
 
-                // 1. 恢复笔刷大小
-                if (_ctx != null) _ctx.PenThickness = settings.PenThickness;
+                // 初始化本地画笔参数
+                var existingWindows = Application.Current.Windows.OfType<MainWindow>()
+                    .Where(w => w != this && w.IsVisible).ToList();
+
+                if (existingWindows.Count > 0)
+                {
+                    // 继承旧窗口参数（克隆最后获得焦点的窗口）
+                    var refWindow = _lastFocusedInstance ?? existingWindows.FirstOrDefault(w => w != this);
+                    if (refWindow != null && refWindow.LocalPerToolSettings != null)
+                    {
+                        this.LocalPerToolSettings = refWindow.LocalPerToolSettings.ToDictionary(
+                            k => k.Key, v => v.Value.Clone());
+                        this.CurrentToolKey = refWindow.CurrentToolKey;
+                    }
+                }
+                else
+                {
+                    // 首个窗口：从设置读取
+                    if (settings.PerToolSettings != null)
+                    {
+                        this.LocalPerToolSettings = settings.PerToolSettings.ToDictionary(
+                            k => k.Key, v => v.Value.Clone());
+                    }
+                    this.CurrentToolKey = settings.CurrentToolKey;
+                }
+
+                // 显式同步到 Context 及其关联的 PenTool
+                if (_ctx != null)
+                {
+                    _ctx.PenThickness = this.PenThickness;
+                    _ctx.PenOpacity = this.PenOpacity;
+                }
+                
+                // 强制触发通知，确保 Slider 绑定刷新
+                OnPropertyChanged(nameof(PenThickness));
+                OnPropertyChanged(nameof(PenOpacity));
+
+                // 1. 恢复笔刷大小 (二次确认同步)
+                if (_ctx != null) _ctx.PenThickness = this.PenThickness;
                 // 2. 准备目标工具
                 ITool targetTool = null;
                 BrushStyle targetStyle = settings.LastBrushStyle;
