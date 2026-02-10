@@ -100,7 +100,7 @@ namespace TabPaint.Pages
             AiService.AiTaskType type,
             TextBlock txtStatus,
             Button btnInstall,
-            DownloadProgressFloat floatProgress,
+            TaskProgressFloat floatProgress,
             string taskName,
             CancellationTokenSource cts)
         {

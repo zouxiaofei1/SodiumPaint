@@ -340,6 +340,7 @@ namespace TabPaint
             }
         }
         private bool _isFirstRun = true; // 默认为 true
+        [JsonPropertyName("is_first_run")]
         public bool IsFirstRun
         {
             get => _isFirstRun;

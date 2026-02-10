@@ -257,6 +257,7 @@ namespace TabPaint
             if (ImageWidth > 0 && ImageHeight > 0)
             {
                 this.SetDialogResultSafe(true);
+
             }
             else
             {
@@ -264,6 +265,8 @@ namespace TabPaint
           LocalizationManager.GetString("L_ResizeCanvas_Error_InvalidSize"),
           LocalizationManager.GetString("L_Common_Error"));
             }
+            this.Close();
+
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

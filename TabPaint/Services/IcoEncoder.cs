@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using SkiaSharp;
 
 namespace TabPaint.Core
 {
@@ -14,11 +15,20 @@ namespace TabPaint.Core
             var imagesData = new List<byte[]>();
             sizes.Sort((a, b) => b.CompareTo(a));
 
+            // 1. 将源图转换为 SkiaBitmap (一次转换，多次缩放)
+            using var skSrc = new SKBitmap(source.PixelWidth, source.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+            source.CopyPixels(new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight), 
+                skSrc.GetPixels(), 
+                source.PixelHeight * (source.PixelWidth * 4), 
+                source.PixelWidth * 4);
+
             foreach (var size in sizes)
             {
-                var resized = ResizeAndFit(source, size);
-                var pngBytes = EncodeToPng(resized);
-                imagesData.Add(pngBytes);
+                // 2. 使用 SkiaSharp 高效缩放并保持比例居中
+                using var skDest = ResizeAndFitSkia(skSrc, size);
+                using var image = SKImage.FromBitmap(skDest);
+                using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                imagesData.Add(data.ToArray());
             }
 
             var writer = new BinaryWriter(outputStream);
@@ -49,14 +59,26 @@ namespace TabPaint.Core
             writer.Flush();
         }
 
-        private static byte[] EncodeToPng(BitmapSource bitmap)
+        private static SKBitmap ResizeAndFitSkia(SKBitmap source, int targetSize)
         {
-            using var ms = new MemoryStream();
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(bitmap));
-            encoder.Save(ms);
-            return ms.ToArray();
+            var dest = new SKBitmap(targetSize, targetSize, SKColorType.Bgra8888, SKAlphaType.Premul);
+            using var canvas = new SKCanvas(dest);
+            canvas.Clear(SKColors.Transparent);
+
+            float ratio = Math.Min((float)targetSize / source.Width, (float)targetSize / source.Height);
+            float newWidth = source.Width * ratio;
+            float newHeight = source.Height * ratio;
+            float x = (targetSize - newWidth) / 2;
+            float y = (targetSize - newHeight) / 2;
+
+            var destRect = new SKRect(x, y, x + newWidth, y + newHeight);
+            using var paint = new SKPaint { FilterQuality = SKFilterQuality.High, IsAntialias = true };
+            canvas.DrawBitmap(source, destRect, paint);
+            
+            return dest;
         }
+
+        [Obsolete("Use ResizeAndFitSkia for better performance")]
         private static BitmapSource ResizeAndFit(BitmapSource source, int targetSize)
         {
             var drawingVisual = new DrawingVisual();

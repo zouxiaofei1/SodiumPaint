@@ -242,36 +242,64 @@ namespace TabPaint
 
                 if (newW <= 0 || newH <= 0) return;
 
-                // 1. 获取当前图像数据 (Undo 需要)
-                var currentBmp = mw._ctx.Surface.Bitmap; // 假设这是当前的 WriteableBitmap
-                var rect = new Int32Rect(0, 0, currentBmp.PixelWidth, currentBmp.PixelHeight);
-                byte[] oldPixels = mw._undo.SafeExtractRegion(rect);
-                var newBmp = new WriteableBitmap(newW, newH, currentBmp.DpiX, currentBmp.DpiY, PixelFormats.Bgra32, null);
-                byte[] whiteBg = new byte[newW * newH * 4];
-                for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = 255;
-                newBmp.WritePixels(new Int32Rect(0, 0, newW, newH), whiteBg, newBmp.BackBufferStride, 0);
-                int copyX = Math.Max(0, offsetX); // 在新图中的起始X
-                int copyY = Math.Max(0, offsetY); // 在新图中的起始Y
-                int srcX = offsetX < 0 ? -offsetX : 0; // 如果 offsetX 是正数(裁剪)，源图从 srcX 开始
-                int srcY = offsetY < 0 ? -offsetY : 0;
+                var oldBmp = mw._ctx.Surface.Bitmap;
+                int oldW = oldBmp.PixelWidth;
+                int oldH = oldBmp.PixelHeight;
 
-                int copyW = Math.Min(rect.Width - srcX, newW - copyX);
-                int copyH = Math.Min(rect.Height - srcY, newH - copyY);
+                // 1. 捕获撤销像素
+                var undoRect = new Int32Rect(0, 0, oldW, oldH);
+                byte[] oldPixels = mw._undo.SafeExtractRegion(undoRect);
 
-                if (copyW > 0 && copyH > 0)
+                // 2. 创建新位图并直接内存操作 (优化：移除中间 byte[] 拷贝)
+                var newBmp = new WriteableBitmap(newW, newH, oldBmp.DpiX, oldBmp.DpiY, PixelFormats.Bgra32, null);
+                int newStride = newBmp.BackBufferStride;
+                int oldStride = oldBmp.BackBufferStride;
+
+                newBmp.Lock();
+                oldBmp.Lock();
+                try
                 {
-                    var srcRect = new Int32Rect(srcX, srcY, copyW, copyH);
-                    var srcPixels = mw._ctx.Surface.ExtractRegion(srcRect); // 这里需要支持从 Surface 获取指定区域
+                    unsafe
+                    {
+                        byte* pNew = (byte*)newBmp.BackBuffer;
+                        byte* pOld = (byte*)oldBmp.BackBuffer;
 
-                    newBmp.WritePixels(new Int32Rect(copyX, copyY, copyW, copyH), srcPixels, copyW * 4, 0);
+                        // 快速填充白色背景
+                        long totalSize = (long)newH * newStride;
+                        System.Runtime.InteropServices.MemoryMarshal.CreateSpan(ref *pNew, (int)totalSize).Fill(AppConsts.ColorComponentMax);
+
+                        int copyX = Math.Max(0, offsetX);
+                        int copyY = Math.Max(0, offsetY);
+                        int srcX = offsetX < 0 ? -offsetX : 0;
+                        int srcY = offsetY < 0 ? -offsetY : 0;
+
+                        int copyW = Math.Min(oldW - srcX, newW - copyX);
+                        int copyH = Math.Min(oldH - srcY, newH - copyY);
+
+                        if (copyW > 0 && copyH > 0)
+                        {
+                            int bytesPerRow = copyW * 4;
+                            for (int y = 0; y < copyH; y++)
+                            {
+                                byte* pSrcLine = pOld + (srcY + y) * oldStride + (srcX * 4);
+                                byte* pDestLine = pNew + (copyY + y) * newStride + (copyX * 4);
+                                Buffer.MemoryCopy(pSrcLine, pDestLine, bytesPerRow, bytesPerRow);
+                            }
+                        }
+                    }
+                    newBmp.AddDirtyRect(new Int32Rect(0, 0, newW, newH));
                 }
-                byte[] newPixels = new byte[newW * newH * 4];
-                newBmp.CopyPixels(newPixels, newBmp.BackBufferStride, 0);
+                finally
+                {
+                    oldBmp.Unlock();
+                    newBmp.Unlock();
+                }
 
-                mw._undo.PushTransformAction(
-                    rect, oldPixels,                // Undo: 回到旧尺寸，旧像素
-                    new Int32Rect(0, 0, newW, newH), newPixels // Redo: 回到新尺寸，新像素
-                );
+                // 3. 捕获重做像素
+                byte[] newPixels = new byte[newH * newStride];
+                newBmp.CopyPixels(new Int32Rect(0, 0, newW, newH), newPixels, newStride, 0);
+
+                mw._undo.PushTransformAction(undoRect, oldPixels, new Int32Rect(0, 0, newW, newH), newPixels);
                 mw._ctx.Surface.ReplaceBitmap(newBmp);
                 mw.NotifyCanvasSizeChanged(newW, newH);
                 mw._bitmap = newBmp;

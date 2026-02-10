@@ -7,15 +7,22 @@ using System.Windows.Media.Animation;
 
 namespace TabPaint.Controls
 {
-    public partial class DownloadProgressFloat : UserControl
+    public partial class TaskProgressFloat : UserControl
     {
         private bool _isDragging = false;
         private Point _startPoint;
         public event EventHandler CancelRequested;
         public bool IsDraggable { get; set; } = true;
-        public DownloadProgressFloat()
+        public TaskProgressFloat()
         {
             InitializeComponent();
+        }
+
+        public void SetIcon(string icon)
+        {
+            // 使用 FindName 以避免某些环境下的编译引用问题
+            var iconText = this.FindName("TaskIconText") as TextBlock;
+            if (iconText != null) iconText.Text = icon;
         }
 
         // 外部调用的更新方法
@@ -30,23 +37,65 @@ namespace TabPaint.Controls
 
             // 1. 更新百分比和进度条
             double p = Math.Max(0, Math.Min(100, status.Percentage));
-            PercentageText.Text = $"{p:F1}%";
+            var percentageText = this.FindName("PercentageText") as TextBlock;
+            if (percentageText != null) percentageText.Text = $"{p:F1}%";
 
             double totalWidth = this.ActualWidth > 0 ? this.ActualWidth - 26 : 274;
-            ProgressBarFill.Width = (p / 100.0) * totalWidth;
+            var progressBarFill = this.FindName("ProgressBarFill") as FrameworkElement;
+            if (progressBarFill != null) progressBarFill.Width = (p / 100.0) * totalWidth;
 
             if (!string.IsNullOrEmpty(taskName))
             {
-                TaskNameText.Text = taskName;
+                var taskNameText = this.FindName("TaskNameText") as TextBlock;
+                if (taskNameText != null) taskNameText.Text = taskName;
             }
 
             // 2. 更新大小信息 (例如: 15.4 MB / 120.5 MB)
             string currentSize = FormatFileSize(status.BytesReceived);
             string totalSize = status.TotalBytes > 0 ? FormatFileSize(status.TotalBytes) : "Unknown";
-            SizeInfoText.Text = $"{currentSize} / {totalSize}";
+            var sizeInfoText = this.FindName("SizeInfoText") as TextBlock;
+            if (sizeInfoText != null) sizeInfoText.Text = $"{currentSize} / {totalSize}";
 
             // 3. 更新速度信息 (例如: 2.5 MB/s)
-            SpeedText.Text = $"{FormatFileSize((long)status.SpeedBytesPerSecond)}/s";
+            var speedText = this.FindName("SpeedText") as TextBlock;
+            if (speedText != null) speedText.Text = $"{FormatFileSize((long)status.SpeedBytesPerSecond)}/s";
+        }
+
+        /// <summary>
+        /// 通用的进度更新方法，适用于非下载任务
+        /// </summary>
+        public void UpdateProgress(double percentage, string taskName = null, string leftText = null, string rightText = null)
+        {
+            if (this.Visibility != Visibility.Visible)
+            {
+                this.Visibility = Visibility.Visible;
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                this.BeginAnimation(OpacityProperty, fadeIn);
+            }
+
+            double p = Math.Max(0, Math.Min(100, percentage));
+            var percentageText = this.FindName("PercentageText") as TextBlock;
+            if (percentageText != null) percentageText.Text = $"{p:F1}%";
+
+            double totalWidth = this.ActualWidth > 0 ? this.ActualWidth - 26 : 274;
+            var progressBarFill = this.FindName("ProgressBarFill") as FrameworkElement;
+            if (progressBarFill != null) progressBarFill.Width = (p / 100.0) * totalWidth;
+
+            if (!string.IsNullOrEmpty(taskName))
+            {
+                var taskNameText = this.FindName("TaskNameText") as TextBlock;
+                if (taskNameText != null) taskNameText.Text = taskName;
+            }
+            if (leftText != null)
+            {
+                var sizeInfoText = this.FindName("SizeInfoText") as TextBlock;
+                if (sizeInfoText != null) sizeInfoText.Text = leftText;
+            }
+            if (rightText != null)
+            {
+                var speedText = this.FindName("SpeedText") as TextBlock;
+                if (speedText != null) speedText.Text = rightText;
+            }
         }
         private string FormatFileSize(long bytes)
         {

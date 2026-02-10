@@ -1,6 +1,6 @@
-﻿
-using System.ComponentModel;
-
+﻿using System.ComponentModel;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Windows;
 
 
@@ -18,11 +18,10 @@ namespace TabPaint
             {
                 fixed (byte* ptr = pixels)
                 {
-                    IntPtr dataPtr = (IntPtr)ptr;    // 转换为 IntPtr 以便在 Lambda 中捕获
+                    IntPtr basePtrInt = (IntPtr)ptr;
                     Parallel.For(0, (height + blockSize - 1) / blockSize, by =>
                     {
-                        byte* basePtr = (byte*)dataPtr;
-
+                        byte* basePtr = (byte*)basePtrInt;
                         int yStart = by * blockSize;
                         int yEnd = Math.Min(yStart + blockSize, height);
 
@@ -67,124 +66,120 @@ namespace TabPaint
                 }
             }
         }
+
         private void ProcessGaussianBlur(byte[] pixels, int width, int height, int stride, int radius)
-        {  // 5. 实现 Gaussian Blur 算法 (使用分离卷积以提高性能)
+        {
             int kernelSize = radius * 2 + 1;
-            double[] kernel = new double[kernelSize];
-            double sigma = radius / 2.0;
-            if (sigma < 1) sigma = 1;
-            double twoSigmaSquare = 2.0 * sigma * sigma;
-            double sum = 0.0;
+            float[] kernel = new float[kernelSize];
+            float sigma = Math.Max(radius / 2.0f, 1.0f);
+            float twoSigmaSquare = 2.0f * sigma * sigma;
+            float sum = 0.0f;
             for (int i = 0; i < kernelSize; i++)
             {
-                double x = i - radius;
-                kernel[i] = Math.Exp(-(x * x) / twoSigmaSquare);
+                float x = i - radius;
+                kernel[i] = (float)Math.Exp(-(x * x) / twoSigmaSquare);
                 sum += kernel[i];
             }
             for (int i = 0; i < kernelSize; i++) kernel[i] /= sum;
 
             byte[] tempPixels = new byte[pixels.Length];
-            Array.Copy(pixels, tempPixels, pixels.Length);
             unsafe
             {
-                fixed (byte* srcPtr = tempPixels)    // --- 第一步：水平模糊 ---
-                fixed (byte* destPtr = pixels)
-                fixed (double* kPtr = kernel)
+                fixed (byte* pixelsPtr = pixels)
+                fixed (byte* tempPtr = tempPixels)
+                fixed (float* kPtr = kernel)
                 {
-                    IntPtr sAddr = (IntPtr)srcPtr;
-                    IntPtr dAddr = (IntPtr)destPtr;
-                    IntPtr kAddr = (IntPtr)kPtr;
+                    IntPtr srcInt = (IntPtr)pixelsPtr;
+                    IntPtr destInt = (IntPtr)tempPtr;
+                    IntPtr kpInt = (IntPtr)kPtr;
 
+                    // Horizontal Pass
                     Parallel.For(0, height, y =>
                     {
-                        byte* sP = (byte*)sAddr;
-                        byte* dP = (byte*)dAddr;
-                        double* kernelP = (double*)kAddr;
+                        byte* src = (byte*)srcInt;
+                        byte* dest = (byte*)destInt;
+                        float* kp = (float*)kpInt;
 
-                        byte* srcRow = sP + y * stride;
-                        byte* destRow = dP + y * stride;
-
+                        byte* sRow = src + y * stride;
+                        byte* dRow = dest + y * stride;
                         for (int x = 0; x < width; x++)
                         {
-                            double r = 0, g = 0, b = 0;
+                            float b = 0, g = 0, r = 0;
                             for (int k = -radius; k <= radius; k++)
                             {
-                                int px = x + k;
-                                if (px < 0) px = 0; else if (px >= width) px = width - 1;
-                                int off = px * 4;
-                                double weight = kernelP[k + radius];
-                                b += srcRow[off] * weight;
-                                g += srcRow[off + 1] * weight;
-                                r += srcRow[off + 2] * weight;
+                                int px = Math.Clamp(x + k, 0, width - 1);
+                                byte* p = sRow + px * 4;
+                                float weight = kp[k + radius];
+                                b += p[0] * weight;
+                                g += p[1] * weight;
+                                r += p[2] * weight;
                             }
-                            destRow[x * 4] = (byte)b;
-                            destRow[x * 4 + 1] = (byte)g;
-                            destRow[x * 4 + 2] = (byte)r;
-                            destRow[x * 4 + 3] = srcRow[x * 4 + 3];
+                            byte* d = dRow + x * 4;
+                            d[0] = (byte)b;
+                            d[1] = (byte)g;
+                            d[2] = (byte)r;
+                            d[3] = sRow[x * 4 + 3];
                         }
                     });
-                }
-                Array.Copy(pixels, tempPixels, pixels.Length);     // 同步中间结果
-                fixed (byte* srcPtr = tempPixels)    // --- 第二步：垂直模糊 ---
-                fixed (byte* destPtr = pixels)
-                fixed (double* kPtr = kernel)
-                {
-                    IntPtr sAddr = (IntPtr)srcPtr;
-                    IntPtr dAddr = (IntPtr)destPtr;
-                    IntPtr kAddr = (IntPtr)kPtr;
 
+                    // Vertical Pass
                     Parallel.For(0, width, x =>
                     {
-                        byte* sP = (byte*)sAddr;
-                        byte* dP = (byte*)dAddr;
-                        double* kernelP = (double*)kAddr;
+                        byte* src = (byte*)srcInt;
+                        byte* dest = (byte*)destInt;
+                        float* kp = (float*)kpInt;
 
                         for (int y = 0; y < height; y++)
                         {
-                            double r = 0, g = 0, b = 0;
+                            float b = 0, g = 0, r = 0;
                             for (int k = -radius; k <= radius; k++)
                             {
-                                int py = y + k;
-                                if (py < 0) py = 0; else if (py >= height) py = height - 1;
-                                int off = py * stride + x * 4;
-                                double weight = kernelP[k + radius];
-                                b += sP[off] * weight;
-                                g += sP[off + 1] * weight;
-                                r += sP[off + 2] * weight;
+                                int py = Math.Clamp(y + k, 0, height - 1);
+                                byte* p = dest + py * stride + x * 4;
+                                float weight = kp[k + radius];
+                                b += p[0] * weight;
+                                g += p[1] * weight;
+                                r += p[2] * weight;
                             }
-                            int destOff = y * stride + x * 4;
-                            dP[destOff] = (byte)b;
-                            dP[destOff + 1] = (byte)g;
-                            dP[destOff + 2] = (byte)r;
-                            dP[destOff + 3] = sP[destOff + 3];
+                            byte* d = src + y * stride + x * 4;
+                            d[0] = (byte)b;
+                            d[1] = (byte)g;
+                            d[2] = (byte)r;
+                            // Alpha remains from src (already in pixels)
                         }
                     });
                 }
             }
         }
+
         private void ProcessBrown(byte[] pixels, int width, int height, int stride)
         {
+            float wr = (float)AppConsts.GrayWeightR;
+            float wg = (float)AppConsts.GrayWeightG;
+            float wb = (float)AppConsts.GrayWeightB;
+            float ar = (float)AppConsts.FilterBrownRAddition;
+            float ag = (float)AppConsts.FilterBrownGAddition;
+            float ab = (float)AppConsts.FilterBrownBAddition;
+
             unsafe
             {
                 fixed (byte* ptr = pixels)
                 {
-                    IntPtr ptrHandle = (IntPtr)ptr;
+                    IntPtr basePtrInt = (IntPtr)ptr;
                     Parallel.For(0, height, y =>
                     {
-                        byte* row = (byte*)ptrHandle + y * stride;
+                        byte* basePtr = (byte*)basePtrInt;
+                        byte* row = basePtr + y * stride;
                         for (int x = 0; x < width; x++)
                         {
-                            byte b = row[x * 4];
-                            byte g = row[x * 4 + 1];
-                            byte r = row[x * 4 + 2];
-                            double gray = r * AppConsts.GrayWeightR + g * AppConsts.GrayWeightG + b * AppConsts.GrayWeightB;
-                            double newR = gray + AppConsts.FilterBrownRAddition;
-                            double newG = gray + AppConsts.FilterBrownGAddition;
-                            double newB = gray + AppConsts.FilterBrownBAddition;
-
-                            row[x * 4 + 2] = (byte)Math.Clamp(newR, 0, 255); // R
-                            row[x * 4 + 1] = (byte)Math.Clamp(newG, 0, 255); // G
-                            row[x * 4] = (byte)Math.Clamp(newB, 0, 255); // B
+                            byte* p = row + x * 4;
+                            float b = p[0];
+                            float g = p[1];
+                            float r = p[2];
+                            float gray = r * wr + g * wg + b * wb;
+                            p[2] = (byte)Math.Clamp(gray + ar, 0, 255);
+                            p[1] = (byte)Math.Clamp(gray + ag, 0, 255);
+                            p[0] = (byte)Math.Clamp(gray + ab, 0, 255);
                         }
                     });
                 }
@@ -200,30 +195,31 @@ namespace TabPaint
                 fixed (byte* destPtr = pixels)
                 fixed (byte* srcPtr = srcPixels)
                 {
-                    IntPtr destHandle = (IntPtr)destPtr;
-                    IntPtr srcHandle = (IntPtr)srcPtr;
+                    IntPtr dpInt = (IntPtr)destPtr;
+                    IntPtr spInt = (IntPtr)srcPtr;
 
                     Parallel.For(1, height - 1, y => // 跳过边缘行
                     {
-                        byte* pSrc = (byte*)srcHandle;
-                        byte* pDestRow = (byte*)destHandle + y * stride;
-
+                        byte* dp = (byte*)dpInt;
+                        byte* sp = (byte*)spInt;
+                        byte* pDestRow = dp + y * stride;
                         for (int x = 1; x < width - 1; x++) // 跳过边缘列
                         {
                             int offset = y * stride + x * 4;
                             int sumB = 0, sumG = 0, sumR = 0;
                             for (int ky = -1; ky <= 1; ky++)
                             {
+                                byte* row = sp + (y + ky) * stride;
                                 for (int kx = -1; kx <= 1; kx++)
                                 {
-                                    int neighborOffset = (y + ky) * stride + (x + kx) * 4;
+                                    byte* p = row + (x + kx) * 4;
                                     int kernelVal = 0; 
                                     if((ky == 0 && kx == 0)) kernelVal= 5;
-                                    if(ky == 0 && (kx == -1 || kx ==1)) kernelVal= -1;
-                                    else if(kx ==0 && (ky == -1 || ky ==1)) kernelVal= -1;
-                                    sumB += pSrc[neighborOffset] * kernelVal;
-                                    sumG += pSrc[neighborOffset + 1] * kernelVal;
-                                    sumR += pSrc[neighborOffset + 2] * kernelVal;
+                                    else if(ky == 0 || kx == 0) kernelVal= -1; // 4-neighbor laplacian sharpen
+
+                                    sumB += p[0] * kernelVal;
+                                    sumG += p[1] * kernelVal;
+                                    sumR += p[2] * kernelVal;
                                 }
                             }
 
@@ -232,68 +228,76 @@ namespace TabPaint
                             pDestRow[x * 4 + 1] = (byte)Math.Clamp(sumG, 0, 255);
                             pDestRow[x * 4 + 2] = (byte)Math.Clamp(sumR, 0, 255);
                             // Alpha 保持原样
-                            pDestRow[x * 4 + 3] = pSrc[offset + 3];
+                            pDestRow[x * 4 + 3] = sp[offset + 3];
                         }
                     });
                 }
             }
         }
+
         private void ProcessSepia(byte[] pixels, int width, int height, int stride)
         {
+            float r1 = (float)AppConsts.SepiaR1, r2 = (float)AppConsts.SepiaR2, r3 = (float)AppConsts.SepiaR3;
+            float g1 = (float)AppConsts.SepiaG1, g2 = (float)AppConsts.SepiaG2, g3 = (float)AppConsts.SepiaG3;
+            float b1 = (float)AppConsts.SepiaB1, b2 = (float)AppConsts.SepiaB2, b3 = (float)AppConsts.SepiaB3;
+
             unsafe
             {
                 fixed (byte* ptr = pixels)
                 {
-                    IntPtr ptrHandle = (IntPtr)ptr;
+                    IntPtr basePtrInt = (IntPtr)ptr;
                     Parallel.For(0, height, y =>
                     {
-                        byte* row = (byte*)ptrHandle + y * stride;
+                        byte* basePtr = (byte*)basePtrInt;
+                        byte* row = basePtr + y * stride;
                         for (int x = 0; x < width; x++)
                         {
-                            int b = row[x * 4];
-                            int g = row[x * 4 + 1];
-                            int r = row[x * 4 + 2];
+                            byte* p = row + x * 4;
+                            int b = p[0];
+                            int g = p[1];
+                            int r = p[2];
 
-                            int tr = (int)(AppConsts.SepiaR1 * r + AppConsts.SepiaR2 * g + AppConsts.SepiaR3 * b);
-                            int tg = (int)(AppConsts.SepiaG1 * r + AppConsts.SepiaG2 * g + AppConsts.SepiaG3 * b);
-                            int tb = (int)(AppConsts.SepiaB1 * r + AppConsts.SepiaB2 * g + AppConsts.SepiaB3 * b);
+                            int tr = (int)(r1 * r + r2 * g + r3 * b);
+                            int tg = (int)(g1 * r + g2 * g + g3 * b);
+                            int tb = (int)(b1 * r + b2 * g + b3 * b);
 
-                            row[x * 4 + 2] = (byte)Math.Min(255, tr);
-                            row[x * 4 + 1] = (byte)Math.Min(255, tg);
-                            row[x * 4] = (byte)Math.Min(255, tb);
+                            p[2] = (byte)Math.Min(255, tr);
+                            p[1] = (byte)Math.Min(255, tg);
+                            p[0] = (byte)Math.Min(255, tb);
                         }
                     });
                 }
             }
         }
-
 
         private void ProcessVignette(byte[] pixels, int width, int height, int stride)
         {
-            double centerX = width / 2.0;
-            double centerY = height / 2.0;
-            double maxDist = Math.Sqrt(centerX * centerX + centerY * centerY);
+            float centerX = width / 2.0f;
+            float centerY = height / 2.0f;
+            float maxDistSq = centerX * centerX + centerY * centerY;
 
             unsafe
             {
                 fixed (byte* ptr = pixels)
                 {
-                    IntPtr ptrHandle = (IntPtr)ptr;
+                    IntPtr basePtrInt = (IntPtr)ptr;
                     Parallel.For(0, height, y =>
                     {
-                        byte* row = (byte*)ptrHandle + y * stride;
+                        byte* basePtr = (byte*)basePtrInt;
+                        byte* row = basePtr + y * stride;
+                        float dy = y - centerY;
+                        float dySq = dy * dy;
                         for (int x = 0; x < width; x++)
                         {
-                            double dx = x - centerX;
-                            double dy = y - centerY;
-                            double dist = Math.Sqrt(dx * dx + dy * dy);
+                            float dx = x - centerX;
+                            float distSq = dx * dx + dySq;
+                            float factor = 1.0f - distSq / maxDistSq;
+                            if (factor < 0) factor = 0;
 
-                            double factor = 1.0 - (dist / maxDist) * (dist / maxDist);
-                            factor = Math.Max(0, Math.Min(1, factor));
-
-                            row[x * 4] = (byte)(row[x * 4] * factor);
-                            row[x * 4 + 1] = (byte)(row[x * 4 + 1] * factor);
-                            row[x * 4 + 2] = (byte)(row[x * 4 + 2] * factor);
+                            byte* p = row + x * 4;
+                            p[0] = (byte)(p[0] * factor);
+                            p[1] = (byte)(p[1] * factor);
+                            p[2] = (byte)(p[2] * factor);
                         }
                     });
                 }
@@ -306,146 +310,136 @@ namespace TabPaint
             unsafe
             {
                 fixed (byte* destPtr = pixels)
+                fixed (byte* srcPtr = srcPixels)
                 {
-                    IntPtr destHandle = (IntPtr)destPtr;
-                    fixed (byte* srcPtr = srcPixels)
+                    IntPtr dpInt = (IntPtr)destPtr;
+                    IntPtr spInt = (IntPtr)srcPtr;
+
+                    Parallel.For(0, height, y =>
                     {
-                        IntPtr srcHandle = (IntPtr)srcPtr;
-
-                        Parallel.For(0, height, y =>
+                        byte* dp = (byte*)dpInt;
+                        byte* sp = (byte*)spInt;
+                        byte* destRow = dp + y * stride;
+                        for (int x = 0; x < width; x++)
                         {
-                            byte* pSrcStart = (byte*)srcHandle;
-                            byte* pDestStart = (byte*)destHandle;
-                            byte* destRow = pDestStart + y * stride;
-
-                            for (int x = 0; x < width; x++)
+                            int sumB = 0, sumG = 0, sumR = 0, count = 0;
+                            for (int ky = -2; ky <= 2; ky += 2)
                             {
-                                int sumB = 0, sumG = 0, sumR = 0, count = 0;
-
-                                // 3x3 卷积
-                                for (int ky = -2; ky <= 2; ky += 2)
+                                int py = Math.Clamp(y + ky, 0, height - 1);
+                                byte* srcRowK = sp + py * stride;
+                                for (int kx = -2; kx <= 2; kx += 2)
                                 {
-                                    int py = y + ky;
-                                    if (py < 0 || py >= height) continue;
-                                    for (int kx = -2; kx <= 2; kx += 2)
-                                    {
-                                        int px = x + kx;
-                                        if (px < 0 || px >= width) continue;
-
-                                        int offset = py * stride + px * 4;
-                                        sumB += pSrcStart[offset];
-                                        sumG += pSrcStart[offset + 1];
-                                        sumR += pSrcStart[offset + 2];
-                                        count++;
-                                    }
+                                    int px = Math.Clamp(x + kx, 0, width - 1);
+                                    byte* p = srcRowK + px * 4;
+                                    sumB += p[0];
+                                    sumG += p[1];
+                                    sumR += p[2];
+                                    count++;
                                 }
-
-                                byte blurB = (byte)(sumB / count);
-                                byte blurG = (byte)(sumG / count);
-                                byte blurR = (byte)(sumR / count);
-
-                                int curOff = y * stride + x * 4;
-                                byte origB = pSrcStart[curOff];
-                                byte origG = pSrcStart[curOff + 1];
-                                byte origR = pSrcStart[curOff + 2];
-
-                                // Screen Mode
-                                destRow[x * 4] = (byte)(255 - ((255 - origB) * (255 - blurB) / 255));
-                                destRow[x * 4 + 1] = (byte)(255 - ((255 - origG) * (255 - blurG) / 255));
-                                destRow[x * 4 + 2] = (byte)(255 - ((255 - origR) * (255 - blurR) / 255));
                             }
-                        });
-                    }
+
+                            float invCount = 1.0f / count;
+                            float blurB = sumB * invCount;
+                            float blurG = sumG * invCount;
+                            float blurR = sumR * invCount;
+
+                            byte* pOrig = sp + y * stride + x * 4;
+                            destRow[x * 4] = (byte)(255 - ((255 - pOrig[0]) * (255 - (int)blurB) / 255));
+                            destRow[x * 4 + 1] = (byte)(255 - ((255 - pOrig[1]) * (255 - (int)blurG) / 255));
+                            destRow[x * 4 + 2] = (byte)(255 - ((255 - pOrig[2]) * (255 - (int)blurR) / 255));
+                        }
+                    });
                 }
             }
         }
+
         private void ProcessOilPaint(byte[] pixels, int width, int height, int stride, int radius, int intensityLevels)
         {
+            // 优化：预先分配克隆数组，减少内部循环的计算
             byte[] srcPixels = (byte[])pixels.Clone();
 
             unsafe
             {
                 fixed (byte* destPtr = pixels)
+                fixed (byte* srcPtr = srcPixels)
                 {
-                    IntPtr destHandle = (IntPtr)destPtr;
-                    fixed (byte* srcPtr = srcPixels)
+                    IntPtr dpInt = (IntPtr)destPtr;
+                    IntPtr spInt = (IntPtr)srcPtr;
+
+                    Parallel.For(0, height, y =>
                     {
-                        IntPtr srcHandle = (IntPtr)srcPtr;
+                        byte* dp = (byte*)dpInt;
+                        byte* sp = (byte*)spInt;
+                        byte* destRow = dp + y * stride;
 
-                        Parallel.For(0, height, y =>
+                        // 性能优化：将象限统计移动到局部变量，减少内存写入
+                        for (int x = 0; x < width; x++)
                         {
-                            byte* pSrcStart = (byte*)srcHandle;
-                            byte* pDestStart = (byte*)destHandle;
-                            byte* destRow = pDestStart + y * stride;
+                            float s0=0, s1=0, s2=0, s3=0;
+                            int mr0=0, mg0=0, mb0=0, c0=0;
+                            int mr1=0, mg1=0, mb1=0, c1=0;
+                            int mr2=0, mg2=0, mb2=0, c2=0;
+                            int mr3=0, mg3=0, mb3=0, c3=0;
 
-                            // 线程局部变量
-                            float[] curSigma = new float[4];
-                            int[] curMeanR = new int[4];
-                            int[] curMeanG = new int[4];
-                            int[] curMeanB = new int[4];
-                            int[] curCnt = new int[4];
-
-                            for (int x = 0; x < width; x++)
+                            // 边界优化：手动处理 Clamp，减少调用开销
+                            for (int ky = -radius; ky <= radius; ky++)
                             {
-                                Array.Clear(curSigma, 0, 4);
-                                Array.Clear(curMeanR, 0, 4);
-                                Array.Clear(curMeanG, 0, 4);
-                                Array.Clear(curMeanB, 0, 4);
-                                Array.Clear(curCnt, 0, 4);
+                                int py = y + ky;
+                                if (py < 0) py = 0; else if (py >= height) py = height - 1;
+                                byte* rowK = sp + py * stride;
+                                bool upper = ky <= 0;
 
-                                for (int ky = -radius; ky <= radius; ky++)
+                                for (int kx = -radius; kx <= radius; kx++)
                                 {
-                                    int py = y + ky;
-                                    if (py < 0 || py >= height) continue;
-                                    for (int kx = -radius; kx <= radius; kx++)
+                                    int px = x + kx;
+                                    if (px < 0) px = 0; else if (px >= width) px = width - 1;
+
+                                    byte* p = rowK + px * 4;
+                                    byte b = p[0], g = p[1], r = p[2];
+                                    float val = (r + g + b) * 0.3333f;
+                                    float valSq = val * val;
+
+                                    if (upper)
                                     {
-                                        int px = x + kx;
-                                        if (px < 0 || px >= width) continue;
-
-                                        int q = (ky <= 0 ? 0 : 2) + (kx <= 0 ? 0 : 1);
-
-                                        int off = py * stride + px * 4;
-                                        byte b = pSrcStart[off];
-                                        byte g = pSrcStart[off + 1];
-                                        byte r = pSrcStart[off + 2];
-
-                                        curMeanR[q] += r;
-                                        curMeanG[q] += g;
-                                        curMeanB[q] += b;
-                                        curCnt[q]++;
-
-                                        float val = (r + g + b) / 3.0f;
-                                        curSigma[q] += val * val;
+                                        if (kx <= 0) { mr0 += r; mg0 += g; mb0 += b; c0++; s0 += valSq; }
+                                        else { mr1 += r; mg1 += g; mb1 += b; c1++; s1 += valSq; }
                                     }
-                                }
-
-                                int minVarIndex = 0;
-                                float minVar = float.MaxValue;
-
-                                for (int i = 0; i < 4; i++)
-                                {
-                                    if (curCnt[i] == 0) continue;
-                                    float cnt = curCnt[i];
-                                    float meanVal = (curMeanR[i] + curMeanG[i] + curMeanB[i]) / (3.0f * cnt);
-                                    float variance = (curSigma[i] / cnt) - (meanVal * meanVal);
-
-                                    if (variance < minVar)
+                                    else
                                     {
-                                        minVar = variance;
-                                        minVarIndex = i;
+                                        if (kx <= 0) { mr2 += r; mg2 += g; mb2 += b; c2++; s2 += valSq; }
+                                        else { mr3 += r; mg3 += g; mb3 += b; c3++; s3 += valSq; }
                                     }
-                                }
-
-                                int cntBest = curCnt[minVarIndex];
-                                if (cntBest > 0)
-                                {
-                                    destRow[x * 4] = (byte)(curMeanB[minVarIndex] / cntBest);
-                                    destRow[x * 4 + 1] = (byte)(curMeanG[minVarIndex] / cntBest);
-                                    destRow[x * 4 + 2] = (byte)(curMeanR[minVarIndex] / cntBest);
                                 }
                             }
-                        });
-                    }
+
+                            // 寻找方差最小的象限
+                            float minVar = float.MaxValue;
+                            int resR=0, resG=0, resB=0;
+
+                            // 辅助方法：内联方差计算
+                            void CheckQ(int r, int g, int b, int count, float sigma)
+                            {
+                                if (count == 0) return;
+                                float invC = 1.0f / count;
+                                float mean = (r + g + b) * 0.3333f * invC;
+                                float variance = (sigma * invC) - (mean * mean);
+                                if (variance < minVar)
+                                {
+                                    minVar = variance;
+                                    resR = (int)(r * invC); resG = (int)(g * invC); resB = (int)(b * invC);
+                                }
+                            }
+
+                            CheckQ(mr0, mg0, mb0, c0, s0);
+                            CheckQ(mr1, mg1, mb1, c1, s1);
+                            CheckQ(mr2, mg2, mb2, c2, s2);
+                            CheckQ(mr3, mg3, mb3, c3, s3);
+
+                            destRow[x * 4] = (byte)resB;
+                            destRow[x * 4 + 1] = (byte)resG;
+                            destRow[x * 4 + 2] = (byte)resR;
+                        }
+                    });
                 }
             }
         }

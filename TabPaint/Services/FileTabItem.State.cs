@@ -142,6 +142,7 @@ namespace TabPaint
             // 撤销栈支持
             public List<UndoAction> UndoStack { get; set; } = new();
             public List<UndoAction> RedoStack { get; set; } = new();
+            public BitmapSource? MemorySnapshot { get; set; }
             public DateTime LastAccessTime { get; set; } = DateTime.Now;
             public int SavedUndoPoint { get; set; } = 0;
             public long CanvasVersion { get; set; } = 0;
@@ -157,12 +158,11 @@ namespace TabPaint
                 // 0. 基础检查
                 if (Thumbnail != null) return;
 
-                // 确定 Key (通常用 FilePath，如果是未命名且有备份，用备份路径或ID)
-                string cacheKey = FilePath;
-                if (IsNew && !string.IsNullOrEmpty(BackupPath)) cacheKey = BackupPath;
+                // 确定 Key：优先使用备份路径（如果有修改），否则使用原始路径
+                string cacheKey = (!string.IsNullOrEmpty(BackupPath) && (IsDirty || IsNew)) ? BackupPath : FilePath;
                 if (string.IsNullOrEmpty(cacheKey)) return;
 
-                // 1. 【一级缓存检查】: 内存里有没有？有直接拿！
+                // 1. 【一级缓存检查】: 内存里有没有？
                 var cachedImage = MainWindow.GlobalThumbnailCache.Get(cacheKey);
                 if (cachedImage != null)
                 {

@@ -345,6 +345,7 @@ public partial class PenTool : ToolBase
         }
     }
 
+
     private unsafe void DrawRoundStrokeUnsafe(ToolContext ctx, Point p1, float p1P,
      Point p2, float p2P, byte* basePtr, int stride, int w, int h)
     {
@@ -409,6 +410,7 @@ public partial class PenTool : ToolBase
 
                 if (edgeFactor <= 0.002f) continue;
 
+                // 优化 3：使用定点数整数混合替代浮点混合
                 float dynamicOpacity = alpha1 + (alpha2 - alpha1) * t;
                 float desiredOpacity = dynamicOpacity * edgeFactor;
                 byte desiredLevel = (byte)(desiredOpacity * 255.0f);
@@ -418,19 +420,28 @@ public partial class PenTool : ToolBase
                 byte currentLevel = _currentStrokeMask[pixelIndex];
                 if (currentLevel >= desiredLevel) continue;
 
-                float currentOpacity = currentLevel * 0.00392157f; // 1/255
-                float delta = desiredOpacity - currentOpacity;
                 _currentStrokeMask[pixelIndex] = desiredLevel;
 
-                if (delta <= 0.001f) continue;
-                float invOneMinusCurrent = 1.0f / (MathF.Max(0.001f, 1.0f - currentOpacity));
-                float blend = MathF.Min(delta * invOneMinusCurrent, 1.0f);
-
                 byte* bp = rowPtr + (long)x * 4;
-                bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
-                bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
-                bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
-                bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
+                if (desiredLevel >= 250) // 近乎不透明，直接赋值或简单混合
+                {
+                    bp[0] = (byte)targetB;
+                    bp[1] = (byte)targetG;
+                    bp[2] = (byte)targetR;
+                    bp[3] = (byte)targetA;
+                }
+                else
+                {
+                    // 使用整数位移模拟混合： (target * alpha + src * (255 - alpha)) / 255
+                    // 为了性能，简化为 (target * alpha + src * (256 - alpha)) >> 8
+                    int alpha = desiredLevel;
+                    int invAlpha = 256 - alpha;
+
+                    bp[0] = (byte)(((int)targetB * alpha + bp[0] * invAlpha) >> 8);
+                    bp[1] = (byte)(((int)targetG * alpha + bp[1] * invAlpha) >> 8);
+                    bp[2] = (byte)(((int)targetR * alpha + bp[2] * invAlpha) >> 8);
+                    bp[3] = (byte)(((int)targetA * alpha + bp[3] * invAlpha) >> 8);
+                }
             }
         });
     }

@@ -83,15 +83,34 @@ namespace TabPaint
                         }
                     }
 
-                // 等待结束后，重新检查 BackupPath，因为它刚刚被后台线程更新了！
-                if (current != null && (current.IsDirty || current.IsNew) && !string.IsNullOrEmpty(current.BackupPath))
+                // 等待结束后，优先检查 MemorySnapshot，其次是 BackupPath
+                if (current != null && (current.IsDirty || current.IsNew))
                 {
-                    if (File.Exists(current.BackupPath)) actualSourcePath = current.BackupPath;
+                    if (current.MemorySnapshot != null)
+                    {
+                        // 直接从内存快照应用到 UI，跳过文件加载
+                        await ApplyFullImageToUI(current.MemorySnapshot, fileToLoad, current.BackupPath ?? fileToLoad, "Memory", CancellationToken.None);
 
+                        // 释放内存快照引用，交由新窗口的 _bitmap 接管
+                        current.MemorySnapshot = null;
+
+                        ResetDirtyTracker();
+                        _savedUndoPoint = -1;
+                        CheckDirtyState();
+                        return;
+                    }
+                    else if (!string.IsNullOrEmpty(current.BackupPath) && File.Exists(current.BackupPath))
+                    {
+                        actualSourcePath = current.BackupPath;
+                        isFileLoadedFromCache = true; // 标记从备份加载，需维持 Dirty
+                    }
                 }
                 await LoadImage(fileToLoad, actualSourcePath, lazyload);
 
-                ResetDirtyTracker();
+                if (!isFileLoadedFromCache)
+                {
+                    ResetDirtyTracker();
+                }
 
                 if (isFileLoadedFromCache)
                 {

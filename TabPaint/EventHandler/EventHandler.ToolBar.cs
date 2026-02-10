@@ -383,7 +383,7 @@ namespace TabPaint
 
             var cts = new System.Threading.CancellationTokenSource();
             EventHandler cancelHandler = (s, args) => cts.Cancel();
-            DownloadProgressPopup.CancelRequested += cancelHandler;
+            TaskProgressPopup.CancelRequested += cancelHandler;
 
             try
             {
@@ -394,29 +394,29 @@ namespace TabPaint
                 {
                     if (cts.Token.IsCancellationRequested) return;
                     ImageSize = LocalizationManager.GetString("L_AI_Downloading") + $"{status.Percentage:F0}% ";
-                    DownloadProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
+                    TaskProgressPopup.UpdateProgress(status, LocalizationManager.GetString("L_AI_Downloading"));
                 });
 
                 await aiService.PrepareModelAsync(taskType, dlProgress, cts.Token);
-                DownloadProgressPopup.Finish();
+                TaskProgressPopup.Finish();
                 ImageSize = oldStatus;
                 return true;
             }
             catch (OperationCanceledException)
             {
-                DownloadProgressPopup.Finish();
+                    TaskProgressPopup.Finish();
                 ShowToast("L_Toast_DownloadCancelled");
                 return false;
             }
             catch (Exception ex)
             {
-                DownloadProgressPopup.Finish();
+                TaskProgressPopup.Finish();
                 ShowToast(string.Format(LocalizationManager.GetString("L_AI_Eraser_Error_Prefix"), ex.Message));
                 return false;
             }
             finally
             {
-                DownloadProgressPopup.CancelRequested -= cancelHandler;
+                        TaskProgressPopup.CancelRequested -= cancelHandler;
                 cts.Dispose();
             }
         }

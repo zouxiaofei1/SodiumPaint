@@ -8,6 +8,8 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using TabPaint.Services;
 
 namespace TabPaint.Controls
 {
@@ -32,10 +34,65 @@ namespace TabPaint.Controls
             InitializeComponent(); this.Loaded += TitleBarControl_Loaded;
             UpdateModeIcon(false);
         }
+
+        private DispatcherTimer _helpHintTimer;
+
+        private void CheckFirstRunHelp()
+        {
+            if (SettingsManager.Instance.Current.IsFirstRun)
+            {
+                // 立即标记为已运行并保存，防止多次触发或意外退出导致状态未保存
+                SettingsManager.Instance.Current.IsFirstRun = false;
+                SettingsManager.Instance.Save();
+
+                // 延迟显示以确保窗口完全加载并可见
+                var delayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+                delayTimer.Tick += (s, e) =>
+                {
+                    delayTimer.Stop();
+                    ShowHelpHint();
+                };
+                delayTimer.Start();
+            }
+        }
+
+        private void ShowHelpHint()
+        {
+            var popup = this.FindName("HelpHintPopup") as Popup;
+            if (popup != null)
+            {
+                popup.IsOpen = true;
+
+                // 8秒后自动关闭
+                _helpHintTimer?.Stop();
+                _helpHintTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+                _helpHintTimer.Tick += (s, e) =>
+                {
+                    CloseHelpHint();
+                };
+                _helpHintTimer.Start();
+            }
+        }
+
+        private void CloseHelpHint()
+        {
+            var popup = this.FindName("HelpHintPopup") as Popup;
+            if (popup != null && popup.IsOpen)
+            {
+                popup.IsOpen = false;
+                _helpHintTimer?.Stop();
+            }
+        }
+
+        private void CloseHelpHint_Click(object sender, RoutedEventArgs e)
+        {
+            CloseHelpHint();
+        }
         public event MouseButtonEventHandler TitleBarMouseDown;
         private async void TitleBarControl_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Loaded -= TitleBarControl_Loaded; 
+            this.Loaded -= TitleBarControl_Loaded;
+            CheckFirstRunHelp();
             var imageSource = await Task.Run(() =>
             {
                 var uri = new Uri("pack://application:,,,/Resources/TabPaint.ico");
@@ -165,6 +222,7 @@ namespace TabPaint.Controls
         }
         private void OnHelpClick(object sender, RoutedEventArgs e)
         {
+            CloseHelpHint();
             RaiseEvent(new RoutedEventArgs(HelpClickEvent));
         }
 

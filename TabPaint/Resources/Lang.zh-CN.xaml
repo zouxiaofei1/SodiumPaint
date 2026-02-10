@@ -538,6 +538,7 @@
     <sys:String x:Key="L_Common_Tip">提示</sys:String>
 
     <sys:String x:Key="L_TitleBar_Help">帮助</sys:String>
+    <sys:String x:Key="L_Hint_ClickHelp">点击这里查看使用指南</sys:String>
     <sys:String x:Key="L_Help_Next">下一页</sys:String>
     <sys:String x:Key="L_Help_Prev">上一页</sys:String>
     <sys:String x:Key="L_Help_Close">关闭</sys:String>
@@ -804,5 +805,6 @@
 
     <sys:String x:Key="L_AI_Download_Inpaint_Content">首次使用 AI 橡皮擦需要下载修复模型。是否继续？</sys:String>
     <sys:String x:Key="L_AI_Status_Downloading_Inpaint">正在下载修复模型: {0:F1}%</sys:String>
+    <sys:String x:Key="L_Progress_Saving">正在保存图片...</sys:String>
 
 </ResourceDictionary>

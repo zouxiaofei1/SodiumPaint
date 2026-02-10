@@ -124,8 +124,7 @@ namespace TabPaint
             }
             this.ContentRendered += MainWindow_ContentRendered;
             DataContext = this;
-      
-            
+
             InitDebounceTimer();//0.3ms
             InitWheelLockTimer(); //0.4ms
             Loaded += MainWindow_Loaded;
@@ -396,6 +395,13 @@ namespace TabPaint
         {
             if (files == null || files.Length == 0) return;
 
+            bool showProgress = files.Length > 5;
+            if (showProgress)
+            {
+                TaskProgressPopup.SetIcon("📂");
+                TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Toast_BatchOpen_Title") ?? "Opening images...", $"0 / {files.Length}", "");
+            }
+
             int insertIndex = _imageFiles.Count;
             int uiInsertIndex = FileTabs.Count;
 
@@ -440,8 +446,16 @@ namespace TabPaint
                     _ = newTab.LoadThumbnailAsync(AppConsts.DefaultThumbnailWidth, AppConsts.DefaultThumbnailHeight);
                     if (firstNewTab == null) firstNewTab = newTab;
                     addedCount++;
+
+                    if (showProgress)
+                    {
+                        double p = (double)addedCount / files.Length * 100;
+                        TaskProgressPopup.UpdateProgress(p, null, $"{addedCount} / {files.Length}", "");
+                    }
                 }
             }
+
+            if (showProgress) TaskProgressPopup.Finish();
 
             if (firstNewTab != null)
             {

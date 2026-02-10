@@ -694,8 +694,7 @@ namespace TabPaint
         private double _targetZoomScale; // 动画最终要达到的缩放比例
         private Point _zoomCenter;       // 缩放中心（鼠标位置）
         private bool _isZoomAnimating = false;
-        private double _virtualScrollH;
-        private double _virtualScrollV;
+
         private void StartSmoothZoom(double targetScale, Point center)
         {
             try
@@ -711,58 +710,75 @@ namespace TabPaint
                 _targetZoomScale = Math.Clamp(targetScale, MinZoom * minrate, MaxZoom);
                 if (Math.Abs(_targetZoomScale - zoomscale) < 0.0001) return;
 
-                _zoomCenter = center;
+                // 重点：如果缩放中心改变，或者动画尚未开始，重新同步参考状态
+                // 这样可以避免在动画中途改变鼠标位置时，偏移量计算基于错误的旧起点
+                if (!_isZoomAnimating || (_zoomCenter != center))
+                {
+                    _zoomStartScale = zoomscale;
+                    _zoomStartScrollH = ScrollContainer.HorizontalOffset;
+                    _zoomStartScrollV = ScrollContainer.VerticalOffset;
+                    _zoomCenter = center;
+                }
+
                 if (!_isZoomAnimating)
                 {
-                    // 动画开始前，先以当前 UI 的真实位置作为起点
-                    _virtualScrollH = ScrollContainer.HorizontalOffset;
-                    _virtualScrollV = ScrollContainer.VerticalOffset;
                     _isZoomAnimating = true;
                     CompositionTarget.Rendering += OnZoomRendering;
                 }
             }
-            catch (Exception){ }
+            catch (Exception) { }
         }
         private void OnZoomRendering(object sender, EventArgs e)
         {
             double delta = _targetZoomScale - zoomscale;
-            bool isEnding = false;
             double nextScale;
+            bool isEnding = false;
 
-            if (Math.Abs(delta) < AppConsts.ZoomSnapThreshold || Math.Abs(delta) < 0.00001)
+            if (Math.Abs(delta) < AppConsts.ZoomSnapThreshold || Math.Abs(delta) < 0.000001)
             {
                 nextScale = _targetZoomScale;
                 isEnding = true;
-                StopSmoothZoom(); UpdateUIStatus(zoomscale, updateSlider: true); return;
             }
             else
             {
-                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor / Math.Max(1, (PerformanceScore / 2));
+                nextScale = zoomscale + delta * AppConsts.ZoomLerpFactor / Math.Max(1, (PerformanceScore / 2.0));
             }
 
-            double oldScale = zoomscale;
+            // 核心修复逻辑：基于进入动画时的初始状态进行绝对计算，而非累积计算
+            // 比例 = (当前比例 / 初始比例)
+            double totalScaleRatio = nextScale / _zoomStartScale;
 
-            // 2. 更新缩放 (View Model / UI)
+            // 这里的 margin 是布局边距补偿。
+            // 修正：滚动位置 = (初始滚动位置 + 鼠标相对位置 - 边距) * 比例 + 边距 - 鼠标相对位置
+            double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
+
+            double targetScrollH = (_zoomStartScrollH + _zoomCenter.X - margin) * totalScaleRatio + margin - _zoomCenter.X;
+            double targetScrollV = (_zoomStartScrollV + _zoomCenter.Y - margin) * totalScaleRatio + margin - _zoomCenter.Y;
+
+            // 应用缩放和滚动
             zoomscale = nextScale;
             ZoomTransform.ScaleX = ZoomTransform.ScaleY = nextScale;
 
-            double scaleRatio = nextScale / oldScale;
-            double margin = IsViewMode ? 5.0 : AppConsts.CanvasMargin;
+            ScrollContainer.ScrollToHorizontalOffset(targetScrollH);
+            ScrollContainer.ScrollToVerticalOffset(targetScrollV);
 
-            _virtualScrollH = (_virtualScrollH + _zoomCenter.X - margin) * scaleRatio + margin - _zoomCenter.X;
-            _virtualScrollV = (_virtualScrollV + _zoomCenter.Y - margin) * scaleRatio + margin - _zoomCenter.Y;
-
-            ScrollContainer.ScrollToHorizontalOffset(_virtualScrollH);
-            ScrollContainer.ScrollToVerticalOffset(_virtualScrollV);
+            // 刷新相关 UI 和状态
             RefreshBitmapScalingMode();
             _canvasResizer.UpdateUI();
             if (IsViewMode) CheckBirdEyeVisibility();
-            if (!IsViewMode) UpdateSelectionScalingMode(); // return;
-           if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
-            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx); 
+            if (!IsViewMode) UpdateSelectionScalingMode();
+            if (_tools.Select is SelectTool st) st.RefreshOverlay(_ctx);
+            if (_tools.Text is TextTool tx) tx.DrawTextboxOverlay(_ctx);
             UpdateSelectionToolBarPosition();
-            if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
+            UpdateRulerPositions();
 
+            if (isEnding)
+            {
+                StopSmoothZoom();
+                UpdateUIStatus(zoomscale, updateSlider: true);
+            }
+
+            if (IsViewMode && _startupFinished) { ShowToast(zoomscale.ToString("P0")); }
         }
 
 

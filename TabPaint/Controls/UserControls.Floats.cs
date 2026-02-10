@@ -23,21 +23,21 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
-        private DownloadProgressFloat _downloadProgressPopup;
+        private TaskProgressFloat _taskProgressPopup;
         private SelectionToolBar _selectionToolBar;
-        public DownloadProgressFloat DownloadProgressPopup
+        public TaskProgressFloat TaskProgressPopup
         {
             get
             {
-                if (_downloadProgressPopup == null)
+                if (_taskProgressPopup == null)
                 {
-                    _downloadProgressPopup = new DownloadProgressFloat();
-                    _downloadProgressPopup.HorizontalAlignment = HorizontalAlignment.Center;
-                    _downloadProgressPopup.VerticalAlignment = VerticalAlignment.Bottom;
-                    _downloadProgressPopup.CancelRequested += OnDownloadCancelRequested;
-                    DownloadProgressHolder.Content = _downloadProgressPopup;
+                    _taskProgressPopup = new TaskProgressFloat();
+                    _taskProgressPopup.HorizontalAlignment = HorizontalAlignment.Center;
+                    _taskProgressPopup.VerticalAlignment = VerticalAlignment.Bottom;
+                    _taskProgressPopup.CancelRequested += OnDownloadCancelRequested;
+                    TaskProgressHolder.Content = _taskProgressPopup;
                 }
-                return _downloadProgressPopup;
+                return _taskProgressPopup;
             }
         }
         public SelectionToolBar SelectionToolBar

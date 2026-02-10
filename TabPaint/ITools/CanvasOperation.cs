@@ -2,11 +2,15 @@
 //CanvasOperation.cs
 //关于图片的一些操作方法，包括画布尺寸调整、旋转、翻转、像素颜色获取和自动裁剪等功能。
 //
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
+using SkiaSharp;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -24,50 +28,64 @@ namespace TabPaint
 
             int oldW = oldBitmap.PixelWidth;
             int oldH = oldBitmap.PixelHeight;
+            int oldStride = oldBitmap.BackBufferStride;
+
+            // 1. 捕获撤销像素 (优化：直接从内存提取)
             var undoRect = new Int32Rect(0, 0, oldW, oldH);
-            byte[] undoPixels = new byte[oldH * oldBitmap.BackBufferStride];
-            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
+            byte[] undoPixels = _surface.ExtractRegion(undoRect);
+
+            // 2. 创建新位图
             var newBitmap = new WriteableBitmap(newWidth, newHeight, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
             int newStride = newBitmap.BackBufferStride;
-            byte[] whiteBg = new byte[newHeight * newStride];
-            for (int i = 0; i < whiteBg.Length; i++) whiteBg[i] = AppConsts.ColorComponentMax; // 简单的全白填充
-            newBitmap.WritePixels(new Int32Rect(0, 0, newWidth, newHeight), whiteBg, newStride, 0);
 
-            int destX = (newWidth - oldW) / 2;
-            int destY = (newHeight - oldH) / 2;
-            int srcX = 0;
-            int srcY = 0;
-            int copyW = oldW;
-            int copyH = oldH;
+            newBitmap.Lock();
+            oldBitmap.Lock();
+            try
+            {
+                unsafe
+                {
+                    byte* pNewBack = (byte*)newBitmap.BackBuffer;
+                    byte* pOldBack = (byte*)oldBitmap.BackBuffer;
 
-           
-            if (destX < 0) // 如果新图比旧图小（裁剪），需要调整源起始点和复制大小
-            {
-                srcX = -destX;      // 源图左边被裁掉的部分
-                copyW = newWidth;   // 复制宽度等于新图宽度
-                destX = 0;          // 在新图中从 0 开始贴
-            }
-            if (destY < 0)
-            {
-                srcY = -destY;
-                copyH = newHeight;
-                destY = 0;
-            }
-            // 确保不越界
-            copyW = Math.Min(copyW, oldW - srcX);
-            copyH = Math.Min(copyH, oldH - srcY);
+                    // 填充背景色 (通常为白色)
+                    long totalSize = (long)newHeight * newStride;
+                    System.Runtime.InteropServices.MemoryMarshal.CreateSpan(ref *pNewBack, (int)totalSize).Fill(AppConsts.ColorComponentMax);
 
-            if (copyW > 0 && copyH > 0)
-            {
-                var srcRect = new Int32Rect(srcX, srcY, copyW, copyH);
-                byte[] sourcePixels = new byte[copyH * oldBitmap.BackBufferStride]; // 这里的 Stride 还是旧图的
-                oldBitmap.CopyPixels(srcRect, sourcePixels, oldBitmap.BackBufferStride, 0);
-                var destRect = new Int32Rect(destX, destY, copyW, copyH);
-                newBitmap.WritePixels(destRect, sourcePixels, oldBitmap.BackBufferStride, 0);
+                    // 计算复制区域
+                    int destX = (newWidth - oldW) / 2;
+                    int destY = (newHeight - oldH) / 2;
+                    int srcX = 0, srcY = 0;
+                    int copyW = oldW, copyH = oldH;
+
+                    if (destX < 0) { srcX = -destX; copyW = newWidth; destX = 0; }
+                    if (destY < 0) { srcY = -destY; copyH = newHeight; destY = 0; }
+                    copyW = Math.Min(copyW, oldW - srcX);
+                    copyH = Math.Min(copyH, oldH - srcY);
+
+                    if (copyW > 0 && copyH > 0)
+                    {
+                        int bytesPerRow = copyW * AppConsts.BytesPerPixel;
+                        for (int y = 0; y < copyH; y++)
+                        {
+                            byte* pSrcLine = pOldBack + (srcY + y) * oldStride + (srcX * AppConsts.BytesPerPixel);
+                            byte* pDestLine = pNewBack + (destY + y) * newStride + (destX * AppConsts.BytesPerPixel);
+                            Buffer.MemoryCopy(pSrcLine, pDestLine, bytesPerRow, bytesPerRow);
+                        }
+                    }
+                }
+                newBitmap.AddDirtyRect(new Int32Rect(0, 0, newWidth, newHeight));
             }
+            finally
+            {
+                oldBitmap.Unlock();
+                newBitmap.Unlock();
+            }
+
+            // 3. 捕获重做像素
             var redoRect = new Int32Rect(0, 0, newWidth, newHeight);
-            byte[] redoPixels = new byte[newHeight * newBitmap.BackBufferStride];
-            newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
+            byte[] redoPixels = new byte[newHeight * newStride];
+            newBitmap.CopyPixels(redoRect, redoPixels, newStride, 0);
+
             _surface.ReplaceBitmap(newBitmap);
             _bitmap = newBitmap;
             _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
@@ -82,13 +100,13 @@ namespace TabPaint
             if (BackgroundImage.Source is not BitmapSource src || _surface?.Bitmap == null)
                 return;
 
-            var undoRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight); // --- 1. 捕获变换前的状态 (for UNDO) ---
+            var undoRect = new Int32Rect(0, 0, _surface.Bitmap.PixelWidth, _surface.Bitmap.PixelHeight); 
             var undoPixels = _surface.ExtractRegion(undoRect);
-            if (undoPixels == null) return; // 如果提取失败则中止
-            var transformedBmp = new TransformedBitmap(src, transform); // --- 2. 计算并生成变换后的新位图 (这是 REDO 的目标状态) ---
+            if (undoPixels == null) return; 
+            var transformedBmp = new TransformedBitmap(src, transform); 
             var newBitmap = new WriteableBitmap(transformedBmp);
 
-            var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);  // --- 3. 捕获变换后的状态 (for REDO) ---
+            var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);  
             int redoStride = newBitmap.BackBufferStride;
             var redoPixels = new byte[redoStride * redoRect.Height];
             newBitmap.CopyPixels(redoPixels, redoStride, 0);
@@ -98,30 +116,27 @@ namespace TabPaint
             _surface.Attach(_bitmap);
             _surface.ReplaceBitmap(_bitmap);
 
-            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   // --- 5. newBitmap.PixelWidth Undo 栈 ---
-            (MainWindow.GetCurrentInstance()).NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);   
+            NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
             SetUndoRedoButtonState();
         }
 
         private void RotateBitmap(int angle)
         {
-            var mw = MainWindow.GetCurrentInstance();
-            if (_tools.Select is SelectTool st && st.HasActiveSelection)  // 1. 检查当前工具是否为 SelectTool 且有活动选区
+            if (_tools.Select is SelectTool st && st.HasActiveSelection)  
             {
-                // 调用选区旋转
                 st.RotateSelection(_ctx, angle);
-                    return; // 结束，不旋转画布
+                return; 
             }
-            if (mw._router.CurrentTool is ShapeTool shapetool && mw._router.GetSelectTool()?._selectionData != null)
+            if (_router.CurrentTool is ShapeTool shapetool && _router.GetSelectTool()?._selectionData != null)
             {
-                mw._router.GetSelectTool()?.RotateSelection(_ctx, angle);
-                return; // 结束，不旋转画布
+                _router.GetSelectTool()?.RotateSelection(_ctx, angle);
+                return; 
             }
             ApplyTransform(new RotateTransform(angle));
             NotifyCanvasChanged();
             _canvasResizer.UpdateUI(); 
         }
-
 
         private Color GetPixelColor(int x, int y)
         {
@@ -134,7 +149,6 @@ namespace TabPaint
                     byte* ptr = (byte*)_bitmap.BackBuffer;
                     int stride = _bitmap.BackBufferStride;
                     byte* pixel = ptr + y * stride + x * AppConsts.BytesPerPixel;
-                    // BGRA 格式
                     return Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]);
                 }
             }
@@ -162,13 +176,15 @@ namespace TabPaint
             _bitmap.AddDirtyRect(new Int32Rect(x, y, 1, 1));
             _bitmap.Unlock();
         }
+
         private void FlipBitmap(bool flipVertical)
         {
             double cx = _bitmap.PixelWidth / 2.0;
             double cy = _bitmap.PixelHeight / 2.0;
             ApplyTransform(flipVertical ? new ScaleTransform(1, -1, cx, cy) : new ScaleTransform(-1, 1, cx, cy));
         }
-        private BitmapSource CreateWhiteThumbnail()  // 生成纯白缩略图
+
+        private BitmapSource CreateWhiteThumbnail()  
         {
             int w = AppConsts.DefaultThumbnailWidth; int h = AppConsts.DefaultThumbnailHeight;
             var bmp = new RenderTargetBitmap(w, h, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Pbgra32);
@@ -195,17 +211,15 @@ namespace TabPaint
             }
             return region;
         }
+
         private static Int32Rect ClampRect(Int32Rect rect, int maxWidth, int maxHeight)
         {
             int left = Math.Max(0, rect.X);
             int top = Math.Max(0, rect.Y);
-
             int right = Math.Min(maxWidth, rect.X + rect.Width);
             int bottom = Math.Min(maxHeight, rect.Y + rect.Height);
-
             int width = Math.Max(0, right - left);
             int height = Math.Max(0, bottom - top);
-
             return new Int32Rect(left, top, width, height);
         }
 
@@ -232,12 +246,12 @@ namespace TabPaint
             ctx.Surface.Bitmap.AddDirtyRect(rect);
             ctx.Surface.Bitmap.Unlock();
         }
+
         private void Clean_bitmap(int _bmpWidth, int _bmpHeight)
         {
             _bitmap = new WriteableBitmap(_bmpWidth, _bmpHeight, AppConsts.StandardDpi, AppConsts.StandardDpi, PixelFormats.Bgra32, null);
             BackgroundImage.Source = _bitmap;
 
-            // 填充白色背景
             _bitmap.Lock();
 
             if (_undo != null)
@@ -250,6 +264,7 @@ namespace TabPaint
                 _surface = new CanvasSurface(_bitmap);
             else
                 _surface.Attach(_bitmap);
+
             unsafe
             {
                 IntPtr pBackBuffer = _bitmap.BackBuffer;
@@ -269,13 +284,11 @@ namespace TabPaint
             _bitmap.AddDirtyRect(new Int32Rect(0, 0, _bmpWidth, _bmpHeight));
             _bitmap.Unlock();
 
-            // 调整窗口和画布大小
             double imgWidth = _bitmap.Width;
             double imgHeight = _bitmap.Height;
 
             NotifyCanvasSizeChanged(imgWidth, imgHeight);
             UpdateWindowTitle();
-
             FitToWindow();
             SetBrushStyle(BrushStyle.Round);
         }
@@ -284,64 +297,71 @@ namespace TabPaint
         {
             BackgroundImage.Width = pixwidth;
             BackgroundImage.Height = pixheight;
-            _imageSize = $"{pixwidth}×{pixheight}"+ LocalizationManager.GetString("L_Main_Unit_Pixel");
+            _imageSize = $"{pixwidth}×{pixheight}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
             OnPropertyChanged(nameof(ImageSize));
             UpdateWindowTitle();
         }
+
         private void ResizeCanvas(int newWidth, int newHeight)
         {
             var oldBitmap = _surface.Bitmap;
             if (oldBitmap == null) return;
             if (oldBitmap.PixelWidth == newWidth && oldBitmap.PixelHeight == newHeight) return;
+
             var undoRect = new Int32Rect(0, 0, oldBitmap.PixelWidth, oldBitmap.PixelHeight);
-            var undoPixels = new byte[oldBitmap.PixelHeight * oldBitmap.BackBufferStride];
-            oldBitmap.CopyPixels(undoRect, undoPixels, oldBitmap.BackBufferStride, 0);
+            var undoPixels = _surface.ExtractRegion(undoRect);
 
-            var transform = new ScaleTransform(
-                (double)newWidth / oldBitmap.PixelWidth,
-                (double)newHeight / oldBitmap.PixelHeight
-            );
-
-            var transformedBitmap = new TransformedBitmap(oldBitmap, transform);
-
-            System.Windows.Media.BitmapScalingMode wpfScalingMode;
-
-            // 获取当前设置
-            var appMode = SettingsManager.Instance.Current.ResamplingMode;
-
-            switch (appMode)
+            WriteableBitmap newBitmap;
+            try
             {
-                case AppResamplingMode.Bilinear:
-                    wpfScalingMode = BitmapScalingMode.Linear; // WPF中Linear即双线性
-                    break;
-                case AppResamplingMode.Fant:
-                    wpfScalingMode = BitmapScalingMode.Fant;   // 高质量幻像插值
-                    break;
-                case AppResamplingMode.HighQuality:
-                    wpfScalingMode = BitmapScalingMode.HighQuality; // 一般高质量
-                    break;
-                case AppResamplingMode.Auto:
-                default:
-                    wpfScalingMode = BitmapScalingMode.HighQuality;
-                    break;
+                BitmapSource bgraOld = (oldBitmap.Format == PixelFormats.Bgra32) ? oldBitmap : new FormatConvertedBitmap(oldBitmap, PixelFormats.Bgra32, null, 0);
+                using var skBitmap = new SKBitmap(bgraOld.PixelWidth, bgraOld.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+                bgraOld.CopyPixels(new Int32Rect(0, 0, bgraOld.PixelWidth, bgraOld.PixelHeight), skBitmap.GetPixels(), bgraOld.PixelHeight * (bgraOld.PixelWidth * 4), bgraOld.PixelWidth * 4);
+
+                SKFilterQuality quality = SKFilterQuality.High;
+                var appMode = SettingsManager.Instance.Current.ResamplingMode;
+                switch (appMode)
+                {
+                    case AppResamplingMode.Bilinear: quality = SKFilterQuality.Low; break;
+                    case AppResamplingMode.Fant: quality = SKFilterQuality.High; break;
+                    case AppResamplingMode.HighQuality: quality = SKFilterQuality.High; break;
+                }
+
+                using var scaledBitmap = new SKBitmap(newWidth, newHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+                skBitmap.ScalePixels(scaledBitmap, quality);
+
+                newBitmap = new WriteableBitmap(newWidth, newHeight, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
+                newBitmap.Lock();
+                unsafe
+                {
+                    long bytesToCopy = (long)newHeight * newBitmap.BackBufferStride;
+                    Buffer.MemoryCopy((void*)scaledBitmap.GetPixels(), (void*)newBitmap.BackBuffer, bytesToCopy, bytesToCopy);
+                }
+                newBitmap.AddDirtyRect(new Int32Rect(0, 0, newWidth, newHeight));
+                newBitmap.Unlock();
             }
-            RenderOptions.SetBitmapScalingMode(transformedBitmap, wpfScalingMode);
-            var newFormatedBitmap = new FormatConvertedBitmap(transformedBitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
-            var newBitmap = new WriteableBitmap(newFormatedBitmap);
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ResizeCanvas Skia Error: {ex.Message}");
+                var transform = new ScaleTransform((double)newWidth / oldBitmap.PixelWidth, (double)newHeight / oldBitmap.PixelHeight);
+                var transformedBitmap = new TransformedBitmap(oldBitmap, transform);
+                newBitmap = new WriteableBitmap(new FormatConvertedBitmap(transformedBitmap, PixelFormats.Bgra32, null, 0));
+            }
+
             var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
-            var redoPixels = new byte[newBitmap.PixelHeight * newBitmap.BackBufferStride];
+            byte[] redoPixels = new byte[newBitmap.PixelHeight * newBitmap.BackBufferStride];
             newBitmap.CopyPixels(redoRect, redoPixels, newBitmap.BackBufferStride, 0);
 
             _surface.ReplaceBitmap(newBitmap);
-            _ctx.Undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
+            _bitmap = newBitmap;
+            _undo.PushTransformAction(undoRect, undoPixels, redoRect, redoPixels);
 
             NotifyCanvasSizeChanged(newWidth, newHeight);
             NotifyCanvasChanged();
-            _bitmap = newBitmap;
             SetUndoRedoButtonState();
-            if (_canvasResizer != null)
-                _canvasResizer.UpdateUI();
+            if (_canvasResizer != null) _canvasResizer.UpdateUI();
         }
+
         private void ConvertToBlackAndWhite(WriteableBitmap bmp)
         {
             bmp.Lock();
@@ -354,21 +374,18 @@ namespace TabPaint
                 Parallel.For(0, height, y =>
                 {
                     byte* row = basePtr + y * stride;
-                    // 像素格式为 BGRA
                     for (int x = 0; x < width; x++)
                     {
-                        // 获取当前像素的 B, G, R 值
                         byte b = row[x * AppConsts.BytesPerPixel];
                         byte g = row[x * AppConsts.BytesPerPixel + 1];
                         byte r = row[x * AppConsts.BytesPerPixel + 2];
                         byte gray = (byte)(r * AppConsts.GrayWeightR + g * AppConsts.GrayWeightG + b * AppConsts.GrayWeightB); 
-                        row[x * AppConsts.BytesPerPixel] = gray; // Blue
-                        row[x * AppConsts.BytesPerPixel + 1] = gray; // Green
+                        row[x * AppConsts.BytesPerPixel] = gray;
+                        row[x * AppConsts.BytesPerPixel + 1] = gray;
                         row[x * AppConsts.BytesPerPixel + 2] = gray; 
                     }
                 });
             }
-            // 标记整个图像区域已更新
             bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
             bmp.Unlock();
         }
@@ -383,8 +400,6 @@ namespace TabPaint
 
             bmp.Lock();
             Int32Rect cropRect = new Int32Rect(0, 0, width, height);
-            bool contentFound = false;
-
             unsafe
             {
                 byte* basePtr = (byte*)bmp.BackBuffer;
@@ -402,7 +417,6 @@ namespace TabPaint
 
                 int top = 0, bottom = height - 1, left = 0, right = width - 1;
 
-                // 1. 扫描 Top
                 for (; top < height; top++)
                 {
                     bool rowHasContent = false;
@@ -414,7 +428,6 @@ namespace TabPaint
                     if (rowHasContent) break;
                 }
 
-                // 如果 top 到底都没找到内容，说明全是空白
                 if (top == height)
                 {
                     bmp.Unlock();
@@ -422,7 +435,6 @@ namespace TabPaint
                     return;
                 }
 
-                // 2. 扫描 Bottom
                 for (; bottom >= top; bottom--)
                 {
                     bool rowHasContent = false;
@@ -463,68 +475,70 @@ namespace TabPaint
             }
             ApplyAutoCrop(cropRect);
         }
+
         private BitmapSource ConvertToWhiteBackground(BitmapSource source)
         {
             if (source == null) return null;
-
-            // 1. 创建视觉对象
             var drawingVisual = new DrawingVisual();
             using (var context = drawingVisual.RenderOpen())
             {
-                // 2. 填充白色背景
                 var rect = new Rect(0, 0, source.PixelWidth, source.PixelHeight);
                 context.DrawRectangle(Brushes.White, null, rect);
-
-                // 3. 在上层绘制原图
                 context.DrawImage(source, rect);
             }
-            var rtb = new RenderTargetBitmap(
-                source.PixelWidth,
-                source.PixelHeight,
-                source.DpiX,
-                source.DpiY,
-                PixelFormats.Pbgra32);
-
+            var rtb = new RenderTargetBitmap(source.PixelWidth, source.PixelHeight, source.DpiX, source.DpiY, PixelFormats.Pbgra32);
             rtb.Render(drawingVisual);
-            rtb.Freeze(); // 冻结以提升性能
-
+            rtb.Freeze();
             return rtb;
         }
+
         private BitmapScalingMode GetWpfScalingMode()
         {
             var appMode = SettingsManager.Instance.Current.ResamplingMode;
             switch (appMode)
             {
-                case AppResamplingMode.Bilinear:
-                    return BitmapScalingMode.Linear;
+                case AppResamplingMode.Bilinear: return BitmapScalingMode.Linear;
                 case AppResamplingMode.Fant:
-                case AppResamplingMode.HighQuality:
-                    return BitmapScalingMode.HighQuality; // Fant 其实就是 HighQuality
-                case AppResamplingMode.Auto:
-                default:
-                    return BitmapScalingMode.Unspecified;
+                case AppResamplingMode.HighQuality: return BitmapScalingMode.HighQuality;
+                default: return BitmapScalingMode.Unspecified;
             }
         }
+
         private BitmapSource ResampleBitmap(BitmapSource source, int width, int height)
         {
-            var visual = new DrawingVisual();
-            using (var dc = visual.RenderOpen())
+            try
             {
-                RenderOptions.SetBitmapScalingMode(visual, GetWpfScalingMode());
-                dc.DrawImage(source, new Rect(0, 0, width, height));
+                BitmapSource bgraSrc = (source.Format == PixelFormats.Bgra32) ? source : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+                using var skSrc = new SKBitmap(bgraSrc.PixelWidth, bgraSrc.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+                bgraSrc.CopyPixels(new Int32Rect(0, 0, bgraSrc.PixelWidth, bgraSrc.PixelHeight), skSrc.GetPixels(), bgraSrc.PixelHeight * (bgraSrc.PixelWidth * 4), bgraSrc.PixelWidth * 4);
+
+                using var skDest = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+                SKFilterQuality quality = SKFilterQuality.High;
+                var appMode = SettingsManager.Instance.Current.ResamplingMode;
+                switch (appMode)
+                {
+                    case AppResamplingMode.Bilinear: quality = SKFilterQuality.Low; break;
+                    case AppResamplingMode.Fant: quality = SKFilterQuality.High; break;
+                    case AppResamplingMode.HighQuality: quality = SKFilterQuality.High; break;
+                }
+                skSrc.ScalePixels(skDest, quality);
+                return SkiaBitmapToWpfSource(skDest);
             }
-
-            double dpiX = source.DpiX;
-            double dpiY = source.DpiY;
-
-            var rtb = new RenderTargetBitmap(width, height, dpiX, dpiY, PixelFormats.Pbgra32);
-            rtb.Render(visual);
-            if (rtb.Format != PixelFormats.Bgra32)
+            catch (Exception ex)
             {
-                return new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0);
+                Debug.WriteLine($"ResampleBitmap Skia Error: {ex.Message}");
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                {
+                    RenderOptions.SetBitmapScalingMode(visual, GetWpfScalingMode());
+                    dc.DrawImage(source, new Rect(0, 0, width, height));
+                }
+                var rtb = new RenderTargetBitmap(width, height, source.DpiX, source.DpiY, PixelFormats.Pbgra32);
+                rtb.Render(visual);
+                return (rtb.Format != PixelFormats.Bgra32) ? new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0) : rtb;
             }
-            return rtb;
         }
+
         private void ApplyAutoCrop(Int32Rect cropRect)
         {
             var oldBitmap = _surface.Bitmap;
@@ -537,7 +551,6 @@ namespace TabPaint
             _surface.ReplaceBitmap(newBitmap);
             _bitmap = newBitmap;
             BackgroundImage.Source = _bitmap;
-
             _undo.PushTransformAction(undoRect, undoPixels, redoRect, newPixels);
             NotifyCanvasSizeChanged(newBitmap.PixelWidth, newBitmap.PixelHeight);
             NotifyCanvasChanged();
@@ -546,4 +559,3 @@ namespace TabPaint
         }
     }
 }
-   

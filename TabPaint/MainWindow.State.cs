@@ -306,10 +306,10 @@ namespace TabPaint
             get { return (bool)GetValue(IsViewModeProperty); }
             set { SetValue(IsViewModeProperty, value); }
         }
-        public TabPaint.Controls.MenuBarControl MainMenu;
-        public TabPaint.Controls.ToolBarControl MainToolBar;
-        public TabPaint.Controls.ImageBarControl MainImageBar;
-        public TabPaint.Controls.StatusBarControl MyStatusBar;
+        public Controls.MenuBarControl MainMenu;
+        public Controls.ToolBarControl MainToolBar;
+        public Controls.ImageBarControl MainImageBar;
+        public Controls.StatusBarControl MyStatusBar;
 
         private DispatcherTimer _toastTimer;
 
@@ -324,6 +324,12 @@ namespace TabPaint
         private readonly SolidColorBrush _darkBackgroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AppConsts.DarkBackgroundHex));
         public bool _currentFileExists = true; // 标记当前文件是否存在于磁盘
         private bool _hasUserManuallyZoomed = false;
+
+        // 缩放动画参考状态
+        private double _zoomStartScale;
+        private double _zoomStartScrollH;
+        private double _zoomStartScrollV;
+
         public static ThumbnailCache GlobalThumbnailCache = new ThumbnailCache(AppConsts.MaxThumbnailCacheCount);
         private bool _isUpdatingToolSettings = false;
         public static SemaphoreSlim _thumbnailSemaphore = new SemaphoreSlim(Environment.ProcessorCount);

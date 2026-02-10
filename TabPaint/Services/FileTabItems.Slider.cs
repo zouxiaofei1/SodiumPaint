@@ -123,7 +123,16 @@ namespace TabPaint
                 // 批量移除左侧
                 for (int i = 0; i < itemsToRemoveFromLeft; i++)
                 {
-                    if (FileTabs.Count > 0)  FileTabs.RemoveAt(0);
+                    if (FileTabs.Count > 0)
+                    {
+                        var tab = FileTabs[0];
+                        // 在移除前记录备份信息，防止信息丢失
+                        if (tab.IsDirty || !string.IsNullOrEmpty(tab.BackupPath))
+                        {
+                            UpdateSessionBackupInfo(tab.FilePath, tab.BackupPath, tab.IsDirty, tab.Id);
+                        }
+                        FileTabs.RemoveAt(0);
+                    }
                 }
                 double offsetCorrection = itemsToRemoveFromLeft * itemWidth;
                 MainImageBar.Scroller.ScrollToHorizontalOffset(currentOffset - offsetCorrection);
@@ -141,6 +150,12 @@ namespace TabPaint
             // 从后往前删，避免索引错乱
             while (FileTabs.Count > keepEndIndex)
             {
+                var tab = FileTabs[FileTabs.Count - 1];
+                // 在移除前记录备份信息
+                if (tab.IsDirty || !string.IsNullOrEmpty(tab.BackupPath))
+                {
+                    UpdateSessionBackupInfo(tab.FilePath, tab.BackupPath, tab.IsDirty, tab.Id);
+                }
                 FileTabs.RemoveAt(FileTabs.Count - 1);
             }
         }
@@ -453,6 +468,15 @@ namespace TabPaint
             else
             {
                 // 普通文件逻辑
+                
+                // 检查是否有离线备份信息需要恢复
+                if (_offScreenBackupInfos.TryGetValue(path, out var offlineInfo))
+                {
+                    newTab.Id = offlineInfo.Id;
+                    newTab.BackupPath = offlineInfo.BackupPath;
+                    newTab.IsDirty = offlineInfo.IsDirty;
+                }
+
                 newTab.IsLoading = true;
                 _ = newTab.LoadThumbnailAsync(100, 60);
             }

@@ -2,9 +2,12 @@
 //EventHandler.ImageBar.cs
 //标签栏相关的事件处理，包括标签切换、关闭、右键菜单功能（复制、文件夹打开）以及标签页排序逻辑。
 //
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -106,22 +109,95 @@ namespace TabPaint
 
             CreateNewTab(TabInsertPosition.AtStart, false);
         }
-        private void SaveAll(bool isDoubleClick)
+        private async void SaveAll(bool isDoubleClick)
         {
-            // 筛选出所有脏文件
-            var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
-            if (dirtyTabs.Count == 0) return;
             int successCount = 0;
+            var processedPaths = new HashSet<string>();
+
+            // 1. 统计脏数据
+            var dirtyTabs = FileTabs.Where(t => t.IsDirty).ToList();
+            if (IsVirtualPath(_currentTabItem?.FilePath) && !isDoubleClick)
+            {
+                // 如果当前未命名且不是双击，统计时排除它以保持逻辑一致
+                dirtyTabs = dirtyTabs.Where(t => !IsVirtualPath(t.FilePath)).ToList();
+            }
+
+            var offlineDirtyItems = new List<SessionTabInfo>();
+            if (_offScreenBackupInfos != null)
+            {
+                var visiblePaths = new HashSet<string>(FileTabs.Select(t => t.FilePath).Where(p => !string.IsNullOrEmpty(p)));
+                offlineDirtyItems = _offScreenBackupInfos.Values
+                    .Where(info => info.IsDirty && !info.IsNew && !visiblePaths.Contains(info.OriginalPath))
+                    .Where(info => !string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
+                    .ToList();
+            }
+
+            int totalToSave = dirtyTabs.Count + offlineDirtyItems.Count;
+            if (totalToSave == 0) return;
+
+            bool showProgress = totalToSave > 20;
+            if (showProgress)
+            {
+                TaskProgressPopup.SetIcon("\uE74E"); // Save icon
+                TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_Progress_Saving"));
+                TaskProgressPopup.Visibility = Visibility.Visible;
+            }
+
+            int currentProcessed = 0;
+
+            // 2. 处理当前内存中的标签页
             foreach (var tab in dirtyTabs)
             {
-                // 跳过没有路径的新建文件 (避免弹出10个保存对话框)
-                if (IsVirtualPath(tab.FilePath) && (!isDoubleClick)) continue;
+                if (!string.IsNullOrEmpty(tab.FilePath)) processedPaths.Add(tab.FilePath);
+
                 if (SaveSingleTab(tab)) successCount++;
+
+                currentProcessed++;
+                if (showProgress)
+                {
+                    TaskProgressPopup.UpdateProgress((double)currentProcessed / totalToSave * 100, LocalizationManager.GetString("L_Progress_Saving"));
+                    await Task.Delay(1); // 允许 UI 刷新
+                }
             }
+
+            // 3. 处理离线脏文件
+            foreach (var info in offlineDirtyItems)
+            {
+                if (processedPaths.Contains(info.OriginalPath)) continue;
+
+                try
+                {
+                    File.Copy(info.BackupPath, info.OriginalPath, true);
+                    info.IsDirty = false;
+                    successCount++;
+
+                    // 清理已同步的备份
+                    try { File.Delete(info.BackupPath); info.BackupPath = null; } catch { }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"SaveAll offline failed for {info.OriginalPath}: {ex.Message}");
+                }
+
+                currentProcessed++;
+                if (showProgress)
+                {
+                    TaskProgressPopup.UpdateProgress((double)currentProcessed / totalToSave * 100, LocalizationManager.GetString("L_Progress_Saving"));
+                    await Task.Delay(1); // 允许 UI 刷新
+                }
+            }
+
+            if (showProgress)
+            {
+                TaskProgressPopup.Finish();
+            }
+
             System.Windows.Application.Current.Dispatcher.InvokeAsync(() => { SaveSession(); }, System.Windows.Threading.DispatcherPriority.Background);
-            // 简单提示 (实际项目中建议用 Statusbar)
+
             if (successCount > 0)
                 ShowToast(string.Format(LocalizationManager.GetString("L_Toast_SavedCount_Format"), successCount));
+
+            UpdateWindowTitle();
         }
         private void OnSaveAllDoubleClick(object sender, RoutedEventArgs e)
         {
@@ -455,12 +531,39 @@ namespace TabPaint
             if (Math.Abs(diff.X) < _dragThreshold && Math.Abs(diff.Y) < _dragThreshold) return;
             try
             {
-                // 如果拖拽的是当前活跃标签，同步最新的撤销栈到对象中
+                // 如果拖拽的是当前活跃标签，同步最新的状态到对象中 (包含像素和撤销栈)
                 if (_mouseDownTabItem == _currentTabItem && _undo != null)
                 {
+                    // 1. 同步撤销栈
                     _mouseDownTabItem.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
                     _mouseDownTabItem.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
                     _mouseDownTabItem.SavedUndoPoint = _savedUndoPoint;
+                    _mouseDownTabItem.CanvasVersion = _currentCanvasVersion;
+                    _mouseDownTabItem.LastBackedUpVersion = _lastBackedUpVersion;
+
+                    // 2. 如果有改动，同步当前画布快照
+                    if (_mouseDownTabItem.IsDirty || _mouseDownTabItem.IsNew)
+                    {
+                        var bmp = GetCurrentCanvasSnapshotSafe();
+                        if (bmp != null)
+                        {
+                            // 优先存入内存快照，用于跨窗口瞬间传递
+                            _mouseDownTabItem.MemorySnapshot = bmp;
+
+                            // 后台异步备份到磁盘作为兜底
+                            if (string.IsNullOrEmpty(_mouseDownTabItem.BackupPath))
+                            {
+                                string cacheFileName = $"{_mouseDownTabItem.Id}.png";
+                                _mouseDownTabItem.BackupPath = System.IO.Path.Combine(_cacheDir, cacheFileName);
+                            }
+                            _ = Task.Run(() => {
+                                try { SaveBitmapToPng(bmp, _mouseDownTabItem.BackupPath); } catch { }
+                            });
+                            
+                            _mouseDownTabItem.LastBackupTime = DateTime.Now;
+                            _lastBackedUpVersion = _currentCanvasVersion; // 标记已同步
+                        }
+                    }
                 }
 
                 var dataObject = new System.Windows.DataObject();
@@ -515,42 +618,26 @@ namespace TabPaint
 
         private async Task TransferTabToNewWindow(FileTabItem tab)
         {
-            // 1. 如果是当前标签，先保存当前画布状态到撤销栈
+            // 1. 如果是当前标签，先同步最新状态
             if (tab == _currentTabItem)
             {
                 tab.UndoStack = new List<UndoAction>(_undo.GetUndoStack());
                 tab.RedoStack = new List<UndoAction>(_undo.GetRedoStack());
                 tab.SavedUndoPoint = _savedUndoPoint;
+                tab.MemorySnapshot = GetCurrentCanvasSnapshotSafe();
             }
-            if (tab.IsDirty || tab.IsNew)
-            {
-                try
-                {
-                    BitmapSource bitmapToSave = null;
 
-                    if (tab == _currentTabItem)
-                    {
-                        // 当前活跃标签：从画布获取最新像素
-                        bitmapToSave = GetCurrentCanvasSnapshotSafe();
-                    }
-                    if (bitmapToSave != null)
-                    {
-                        if (string.IsNullOrEmpty(tab.BackupPath))
-                        {
-                            string cacheFileName = $"{tab.Id}.png";
-                            tab.BackupPath = System.IO.Path.Combine(_cacheDir, cacheFileName);
-                        }
-                        using (var fs = new FileStream(tab.BackupPath, FileMode.Create))
-                        {
-                            var encoder = new PngBitmapEncoder();
-                            encoder.Frames.Add(BitmapFrame.Create(bitmapToSave));
-                            encoder.Save(fs);
-                        }
-                    }
-                }
-                catch (Exception ex)
+            // 2. 确保至少有内存快照或备份路径，否则尝试获取
+            if ((tab.IsDirty || tab.IsNew) && tab.MemorySnapshot == null)
+            {
+                if (!string.IsNullOrEmpty(tab.BackupPath) && File.Exists(tab.BackupPath))
                 {
-                    ShowToast($"Failed to save tab state: {ex.Message}"); return; // 备份失败就不要转移了，避免数据丢失
+                    // 已有备份，OK
+                }
+                else
+                {
+                    // 兜底：如果连快照都没有，补一个
+                    tab.MemorySnapshot = GetHighResImageForTab(tab);
                 }
             }
 
@@ -623,7 +710,7 @@ namespace TabPaint
             }
         }
 
-        private void OnFileTabDrop(object sender, System.Windows.DragEventArgs e)
+        private async void OnFileTabDrop(object sender, System.Windows.DragEventArgs e)
         {
             ClearDragFeedback(sender);
 
@@ -645,37 +732,52 @@ namespace TabPaint
                     {
                         // 1. 从原窗口移除
                         sourceWindow.CloseTab(sourceTab, true);
-                        bool alreadyExists = FileTabs.Any(t => t.Id == sourceTab.Id) ||
-                  (!IsVirtualPath(sourceTab.FilePath) &&
-                   FileTabs.Any(t => string.Equals(t.FilePath, sourceTab.FilePath, StringComparison.OrdinalIgnoreCase)));
-                        // 2. 插入到本窗口
-                        int newUIIndex = targetUIIndex;
-                        if (targetGrid != null)
+
+                        // 检查本窗口是否已经存在相同的标签（根据 ID 或 路径）
+                        var existingTab = FileTabs.FirstOrDefault(t => t.Id == sourceTab.Id) ??
+                                         FileTabs.FirstOrDefault(t => !IsVirtualPath(t.FilePath) && string.Equals(t.FilePath, sourceTab.FilePath, StringComparison.OrdinalIgnoreCase));
+
+                        if (existingTab != null)
                         {
-                            Point p = e.GetPosition(targetGrid);
-                            if (p.X >= targetGrid.ActualWidth / 2) newUIIndex++;
+                            // 如果已存在，将原标签的内存快照/状态同步给现有标签
+                            if (sourceTab.MemorySnapshot != null) existingTab.MemorySnapshot = sourceTab.MemorySnapshot;
+                            existingTab.UndoStack = sourceTab.UndoStack;
+                            existingTab.RedoStack = sourceTab.RedoStack;
+                            existingTab.IsDirty = sourceTab.IsDirty;
+
+                            await OpenImageAndTabs(existingTab.FilePath, nobackup: true);
                         }
-
-                        if (newUIIndex < 0) newUIIndex = 0;
-                        if (newUIIndex > FileTabs.Count) newUIIndex = FileTabs.Count;
-
-                        FileTabs.Insert(newUIIndex, sourceTab);
-
-                        // 3. 更新 _imageFiles
-                        if (!string.IsNullOrEmpty(sourceTab.FilePath))
+                        else
                         {
-                            int fileInsertIdx = 0;
-                            if (newUIIndex > 0)
+                            // 2. 插入到本窗口
+                            int newUIIndex = targetUIIndex;
+                            if (targetGrid != null)
                             {
-                                var prevTab = FileTabs[newUIIndex - 1];
-                                fileInsertIdx = _imageFiles.IndexOf(prevTab.FilePath) + 1;
+                                Point p = e.GetPosition(targetGrid);
+                                if (p.X >= targetGrid.ActualWidth / 2) newUIIndex++;
                             }
-                            if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
-                            _imageFiles.Insert(fileInsertIdx, sourceTab.FilePath);
-                        }
 
-                        // 4. 切换并激活
-                        SwitchToTab(sourceTab);
+                            if (newUIIndex < 0) newUIIndex = 0;
+                            if (newUIIndex > FileTabs.Count) newUIIndex = FileTabs.Count;
+
+                            FileTabs.Insert(newUIIndex, sourceTab);
+
+                            // 3. 更新 _imageFiles
+                            if (!string.IsNullOrEmpty(sourceTab.FilePath))
+                            {
+                                int fileInsertIdx = 0;
+                                if (newUIIndex > 0)
+                                {
+                                    var prevTab = FileTabs[newUIIndex - 1];
+                                    fileInsertIdx = _imageFiles.IndexOf(prevTab.FilePath) + 1;
+                                }
+                                if (fileInsertIdx < 0) fileInsertIdx = _imageFiles.Count;
+                                _imageFiles.Insert(fileInsertIdx, sourceTab.FilePath);
+                            }
+
+                            // 4. 切换并激活
+                            await OpenImageAndTabs(sourceTab.FilePath, nobackup: true);
+                        }
                         UpdateImageBarSliderState();
                     }
                     else if (targetTab != null && sourceTab != targetTab)

@@ -444,7 +444,7 @@ namespace TabPaint
             catch (OperationCanceledException)
             {
                
-                DownloadProgressPopup.Finish();
+               TaskProgressPopup.Finish();
             }
             catch (Exception ex)
             {
@@ -570,7 +570,7 @@ namespace TabPaint
                 }
                 ShowToast("L_Toast_Apply_Success");
             }
-            catch (OperationCanceledException)  {  DownloadProgressPopup.Finish(); }
+            catch (OperationCanceledException)  { TaskProgressPopup.Finish(); }
             catch (Exception ex)
             {
                 if (ex is DllNotFoundException ||

@@ -504,6 +504,34 @@ namespace TabPaint
             return candidate;
         }
         public HashSet<string> _closedTabIds = new HashSet<string>();
+        
+        // 用于存储那些已经被销毁（虚拟化）但仍有未保存备份的标签信息
+        private Dictionary<string, SessionTabInfo> _offScreenBackupInfos = new Dictionary<string, SessionTabInfo>();
+
+        private void UpdateSessionBackupInfo(string originalPath, string backupPath, bool isDirty, string id = null)
+        {
+            if (string.IsNullOrEmpty(originalPath)) return;
+
+            // 记录到离线字典中，以便 SaveSession 时包含它，也方便重建 Tab 时恢复
+            if (!_offScreenBackupInfos.TryGetValue(originalPath, out var info))
+            {
+                info = new SessionTabInfo
+                {
+                    Id = id ?? Guid.NewGuid().ToString(),
+                    OriginalPath = originalPath,
+                    IsNew = IsVirtualPath(originalPath)
+                };
+                _offScreenBackupInfos[originalPath] = info;
+            }
+            else if (!string.IsNullOrEmpty(id))
+            {
+                info.Id = id;
+            }
+
+            info.BackupPath = backupPath;
+            info.IsDirty = isDirty;
+        }
+
         private void SaveSession()
         {
           
@@ -552,6 +580,15 @@ namespace TabPaint
 
             var finalTabsToSave = new List<SessionTabInfo>();
             finalTabsToSave.AddRange(currentSessionTabs);
+
+            // 合并离线（虚拟化掉的）备份信息
+            foreach (var offscreen in _offScreenBackupInfos.Values)
+            {
+                if (!finalTabsToSave.Any(t => t.OriginalPath == offscreen.OriginalPath))
+                {
+                    finalTabsToSave.Add(offscreen);
+                }
+            }
           
             if (File.Exists(_sessionPath) || File.Exists(AppConsts.LegacySessionPath))
             {

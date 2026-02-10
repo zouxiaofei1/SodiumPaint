@@ -241,6 +241,7 @@
                                                 </MenuItem>
                                                 <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Menu_File_OpenFolder}" 
                                                           services:ShortcutService.ShortcutKey="File.OpenWorkspace"
+                                                          Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVis}}"
                                                           Click="Internal_OnTabOpenFolderClick" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Open_Folder_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
@@ -258,7 +259,9 @@
                                                         <Path Data="{DynamicResource NewFile_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_DeleteFile}" Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
+                                                <MenuItem Style="{StaticResource Win11MenuItemStyle}" Header="{DynamicResource L_Ctx_DeleteFile}" 
+                                                          Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVis}}"
+                                                          Click="Internal_OnTabFileDeleteClick" Foreground="Red" Tag="{Binding}">
                                                     <MenuItem.Icon>
                                                         <Path Data="{DynamicResource Delete_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                                                     </MenuItem.Icon>

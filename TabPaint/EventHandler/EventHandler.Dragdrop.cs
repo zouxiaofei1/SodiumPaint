@@ -65,33 +65,32 @@ namespace TabPaint
                 Point pos = e.GetPosition(this);
                 double threshold = GetDynamicImageBarThreshold();
 
+                // A. 标签栏区域：始终允许透传，以便子控件处理重排序或局部 Drop
+                if (pos.Y < threshold)
+                {
+                    HideDragOverlay();
+                    e.Effects = DragDropEffects.Move;
+                    // 注意：这里不设置 e.Handled = true
+                    return;
+                }
+
+                // B. 画布/其他区域
                 if (isCrossWindow)
                 {
-                    // 如果是在 ImageBar 区域，交给 ImageBar 处理（不要 Handled）
-                    if (pos.Y >= threshold)
-                    {
-                        HideDragOverlay();
-                        return;
-                    }
-
-                    // 否则（在画布、工具栏等），允许添加并显示 Overlay
                     e.Effects = DragDropEffects.Move;
                     ShowDragOverlay(
                         LocalizationManager.GetString("L_Drag_AddToList_Title"),
                         LocalizationManager.GetString("L_Drag_AddToList_Desc")
                     );
                     e.Handled = true;
-                    return;
                 }
-
-                // 同窗口内部拖拽
-                if (pos.Y < threshold && pos.Y > AppConsts.DragTitleBarThresholdY)
+                else
                 {
+                    // 同窗口拖到画布：由 DropZoneWindow 处理，全局遮罩隐藏
                     HideDragOverlay();
-                    e.Effects = DragDropEffects.None;
-                    e.Handled = true;
-                    return;
+                    e.Effects = DragDropEffects.Move;
                 }
+                return;
             }
 
             // 2. 检查是否有文件拖入
@@ -228,23 +227,40 @@ namespace TabPaint
             {
                 var sourceWindow = e.Data.GetData("TabPaintSourceWindow") as MainWindow;
                 var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
-                Point pos = e.GetPosition(this);
-
-                // 如果是在 ImageBar 区域落下，让 ImageBar 自己的逻辑处理
-                if (pos.Y >= GetDynamicImageBarThreshold()) return;
+                
+                // 此时已经是 Drop (非 PreviewDrop)，如果子控件已经处理了，这里不该再跑。
+                if (e.Handled) return;
 
                 if (sourceWindow != null && sourceWindow != this && sourceTab != null)
                 {
-                    // 跨窗口拖拽标签：将标签从原窗口移动到本窗口末尾
+                    // 跨窗口拖拽标签：将标签从原窗口移动到本窗口
+                    
+                    // 1. 在原窗口移除
                     sourceWindow.CloseTab(sourceTab, true);
-                    FileTabs.Add(sourceTab);
 
-                    if (!string.IsNullOrEmpty(sourceTab.FilePath))
+                    // 2. 检查本窗口是否已存在
+                    var existingTab = FileTabs.FirstOrDefault(t => t.Id == sourceTab.Id) ??
+                                     FileTabs.FirstOrDefault(t => !IsVirtualPath(t.FilePath) && string.Equals(t.FilePath, sourceTab.FilePath, StringComparison.OrdinalIgnoreCase));
+
+                    if (existingTab != null)
                     {
-                        _imageFiles.Add(sourceTab.FilePath);
+                        // 合并状态
+                        if (sourceTab.MemorySnapshot != null) existingTab.MemorySnapshot = sourceTab.MemorySnapshot;
+                        existingTab.UndoStack = sourceTab.UndoStack;
+                        existingTab.RedoStack = sourceTab.RedoStack;
+                        existingTab.IsDirty = sourceTab.IsDirty;
+                        await OpenImageAndTabs(existingTab.FilePath, nobackup: true);
                     }
-
-                    SwitchToTab(sourceTab);
+                    else
+                    {
+                        // 插入到末尾
+                        FileTabs.Add(sourceTab);
+                        if (!string.IsNullOrEmpty(sourceTab.FilePath))
+                        {
+                            _imageFiles.Add(sourceTab.FilePath);
+                        }
+                        await OpenImageAndTabs(sourceTab.FilePath, nobackup: true);
+                    }
                     UpdateImageBarSliderState();
                 }
 

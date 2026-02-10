@@ -278,11 +278,10 @@
 
                     <Border Grid.Row="1" Margin="20,0,20,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Background="{StaticResource CheckerboardBrush}" ClipToBounds="True">
                         <Grid>
-                            <Image x:Name="ImgWindowPreview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
-                                <Image.Effect>
-                                    <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2"/>
-                                </Image.Effect>
-                            </Image>
+                            <!-- 分层预览：底图层 -->
+                            <Image x:Name="ImgWindowBackground" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <!-- 分层预览：水印层 (实时矢量预览，移除昂贵的 DropShadowEffect 以确保流畅) -->
+                            <Image x:Name="ImgWindowPreview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Grid>
                     </Border>
                 </Grid>
