@@ -12,8 +12,6 @@ public class ShapeTool : ToolBase
 {
     public override string Name => "Shape";
     public override System.Windows.Input.Cursor Cursor => _isManipulating ? null : System.Windows.Input.Cursors.Cross;
-
-    // 1. 更新枚举，添加新形状
     public enum ShapeType { Rectangle, Ellipse, Line, RoundedRectangle, Arrow, Triangle, Diamond, Pentagon, Star, Bubble }
 
     public ShapeType _currentShapeType = ShapeType.Rectangle;
@@ -27,16 +25,11 @@ public class ShapeTool : ToolBase
     public override void SetCursor(ToolContext ctx)
     {
         System.Windows.Input.Mouse.OverrideCursor = null;
-        if (ctx.ViewElement != null)
-        {
-            ctx.ViewElement.Cursor = this.Cursor;
-        }
+        if (ctx.ViewElement != null)  ctx.ViewElement.Cursor = this.Cursor;
     }
 
-    public void SetShapeType(ShapeType type)
-    {
-        _currentShapeType = type;
-    }
+    public void SetShapeType(ShapeType type)=> _currentShapeType = type;
+
 
     private SelectTool GetSelectTool(MainWindow mw)
     {
@@ -57,8 +50,6 @@ public class ShapeTool : ToolBase
         if (mw.IsViewMode) return;
         var selectTool = GetSelectTool(mw);
         var px = ctx.ToPixel(viewPos);
-
-        // ... (保持原有的操控模式判断逻辑) ...
         if (_isManipulating && selectTool != null)
         {
             if (!selectTool.HasActiveSelection)
@@ -167,42 +158,27 @@ public class ShapeTool : ToolBase
             ctx.EditorOverlay.Children.Remove(_previewShape);
             _previewShape = null;
         }
-
-        // 计算图形区域
         var rawRect = MakeRect(_startPoint, endPoint);
         if (rawRect.Width <= 1 || rawRect.Height <= 1) return;
 
         // 计算 Padding (箭头需要额外空间)
         double arrowScale = 0;
-        if (_currentShapeType == ShapeType.Arrow)
-        {
-            arrowScale = Gethandlength(_startPoint, endPoint);
-        }
+        if (_currentShapeType == ShapeType.Arrow) arrowScale = Gethandlength(_startPoint, endPoint);
         double padding = ctx.PenThickness / 2.0 + 2 + arrowScale;
 
         // 计算有效绘制区域
-        Rect shapeGlobalBounds = new Rect(
-            rawRect.X - padding,
-            rawRect.Y - padding,
-            rawRect.Width + padding * 2,
-            rawRect.Height + padding * 2
-        );
+        Rect shapeGlobalBounds = new Rect(  rawRect.X - padding, rawRect.Y - padding, rawRect.Width + padding * 2, rawRect.Height + padding * 2);
         Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
         Rect validBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
 
-        // 如果完全在画布外，直接不画
-        if (validBounds == Rect.Empty || validBounds.Width <= 0 || validBounds.Height <= 0)
-            return;
-
-        // 生成位图
+       
+        if (validBounds == Rect.Empty || validBounds.Width <= 0 || validBounds.Height <= 0) return; // 如果完全在画布外，直接不画
         var shapeBitmap = RenderShapeToBitmapClipped(_startPoint, endPoint, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
 
         var selectTool = GetSelectTool(mw);
         if (selectTool != null && shapeBitmap != null)
         {
             bool isCtrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-
-            // 1. 先将生成的图片加载到 SelectTool 中 (这是通用步骤)
             selectTool.InsertImageAsSelection(ctx, shapeBitmap, false);
 
             int finalX = (int)validBounds.X;
@@ -234,7 +210,6 @@ public class ShapeTool : ToolBase
             }
         }
     }
-
     public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
     {
         var mw = ctx.ParentWindow;
@@ -290,12 +265,7 @@ public class ShapeTool : ToolBase
             }
             pen.Freeze();
 
-            Rect logicalRect = new Rect(
-                Math.Min(globalStart.X, globalEnd.X),
-                Math.Min(globalStart.Y, globalEnd.Y),
-                Math.Abs(globalStart.X - globalEnd.X),
-                Math.Abs(globalStart.Y - globalEnd.Y)
-            );
+            Rect logicalRect = new Rect(Math.Min(globalStart.X, globalEnd.X), Math.Min(globalStart.Y, globalEnd.Y), Math.Abs(globalStart.X - globalEnd.X),Math.Abs(globalStart.Y - globalEnd.Y)  );
 
             switch (_currentShapeType)
             {
@@ -316,13 +286,11 @@ public class ShapeTool : ToolBase
                 case ShapeType.Arrow:
                     dc.DrawGeometry(null, pen, BuildArrowGeometry(globalStart, globalEnd, Gethandlength(globalStart, globalEnd)));
                     break;
-
-                // 新增形状渲染
                 case ShapeType.Triangle:
                     dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 3, -Math.PI / 2));
                     break;
                 case ShapeType.Diamond:
-                    dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 4, 0)); // 菱形即旋转的矩形
+                    dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 4, 0));
                     break;
                 case ShapeType.Pentagon:
                     dc.DrawGeometry(null, pen, BuildRegularPolygon(logicalRect, 5, -Math.PI / 2));
@@ -358,7 +326,6 @@ public class ShapeTool : ToolBase
         }
         else
         {
-            // 对于 Path 类型的形状，我们需要重新生成 Data
             if (_previewShape is System.Windows.Shapes.Path path)
             {
                 Rect r = new Rect(x, y, w, h);
@@ -386,7 +353,6 @@ public class ShapeTool : ToolBase
             }
             else
             {
-                // 基础形状 (Rect, Ellipse)
                 Canvas.SetLeft(_previewShape, x);
                 Canvas.SetTop(_previewShape, y);
                 _previewShape.Width = w;
@@ -504,7 +470,6 @@ public class ShapeTool : ToolBase
             ctx.LineTo(tailStart, true, true);
             ctx.LineTo(tailTip, true, true);
             ctx.LineTo(tailEnd, true, true);
-
             ctx.LineTo(new Point(bodyRect.Left + radius, bodyRect.Bottom), true, true);
             ctx.ArcTo(new Point(bodyRect.Left, bodyRect.Bottom - radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
             ctx.LineTo(new Point(bodyRect.Left, bodyRect.Top + radius), true, true);
@@ -514,12 +479,5 @@ public class ShapeTool : ToolBase
         return geometry;
     }
 
-    private static Int32Rect MakeRect(Point p1, Point p2)
-    {
-        int x = (int)Math.Min(p1.X, p2.X);
-        int y = (int)Math.Min(p1.Y, p2.Y);
-        int w = Math.Abs((int)p1.X - (int)p2.X);
-        int h = Math.Abs((int)p1.Y - (int)p2.Y);
-        return new Int32Rect(x, y, w, h);
-    }
+
 }

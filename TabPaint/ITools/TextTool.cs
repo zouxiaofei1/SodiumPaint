@@ -24,20 +24,16 @@ namespace TabPaint
                 if (_richTextBox == null) return;
                 var table = new Table();
                 table.CellSpacing = 0;
-                // 表格边框颜色（黑色）
                 table.BorderBrush = Brushes.Black;
                 table.BorderThickness = new Thickness(1);
                 for (int x = 0; x < cols; x++) table.Columns.Add(new TableColumn());
                 table.RowGroups.Add(new TableRowGroup());
-
-                // 创建行和单元格
                 for (int r = 0; r < rows; r++)
                 {
                     var row = new TableRow();
                     table.RowGroups[0].Rows.Add(row);
                     for (int c = 0; c < cols; c++)
                     {
-                        // 单元格内容
                         var cell = new TableCell(new Paragraph(new Run("")));
                         cell.BorderBrush = Brushes.Gray;
                         cell.BorderThickness = new Thickness(0.5);
@@ -50,25 +46,17 @@ namespace TabPaint
                 if (!selection.IsEmpty) selection.Text = ""; // 删除选中文本
 
                 TextPointer ptr = selection.Start;
-
-                // 如果光标在段落中，我们需要把段落拆开，或者在当前段落后插入
                 Paragraph curPara = ptr.Paragraph;
 
                 if (curPara != null)
                 {
-                    if (curPara.Parent is FlowDocument doc)
-                    {
-                        doc.Blocks.InsertAfter(curPara, table);
-                    }
-                    else if (curPara.Parent is Section sec)
-                    {
-                        sec.Blocks.InsertAfter(curPara, table);
-                    }
+                    if (curPara.Parent is FlowDocument doc) doc.Blocks.InsertAfter(curPara, table);
+                    else if (curPara.Parent is Section sec) sec.Blocks.InsertAfter(curPara, table);
                     else _richTextBox.Document.Blocks.Add(table);
                     TextPointer cellPtr = table.RowGroups[0].Rows[0].Cells[0].ContentStart;
                     _richTextBox.CaretPosition = cellPtr;
                 }
-                else  _richTextBox.Document.Blocks.Add(table);
+                else _richTextBox.Document.Blocks.Add(table);
                 _richTextBox.Focus();
             }
 
@@ -78,17 +66,13 @@ namespace TabPaint
                 if (_richTextBox == null) return;
                 var mw = MainWindow.GetCurrentInstance();
                 var selection = _richTextBox.Selection;
-
-                // 1. 上下标 (使用 BaselineAlignment)
-                if (mw.TextMenu.SubscriptBtn.IsChecked == true)
+                if (mw.TextMenu.SubscriptBtn.IsChecked == true)  // 1. 上下标
                     selection.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Subscript);
                 else if (mw.TextMenu.SuperscriptBtn.IsChecked == true)
                     selection.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Superscript);
                 else
                     selection.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Baseline);
-
-                // 2. 高亮 (Text Background)
-                if (mw.TextMenu.HighlightBtn.IsChecked == true)
+                if (mw.TextMenu.HighlightBtn.IsChecked == true)// 2. 高亮
                     selection.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
                 else
                     selection.ApplyPropertyValue(TextElement.BackgroundProperty, null); // 清除高亮
@@ -96,21 +80,16 @@ namespace TabPaint
                 // 3. 字体/粗体/斜体同步
                 selection.ApplyPropertyValue(TextElement.FontWeightProperty, (mw.TextMenu.BoldBtn.IsChecked == true) ? FontWeights.Bold : FontWeights.Normal);
                 selection.ApplyPropertyValue(TextElement.FontStyleProperty, (mw.TextMenu.ItalicBtn.IsChecked == true) ? FontStyles.Italic : FontStyles.Normal);
-
-                // 4. 装饰线
-                var decors = new TextDecorationCollection();
+                var decors = new TextDecorationCollection(); // 4. 装饰线
                 if (mw.TextMenu.UnderlineBtn.IsChecked == true) decors.Add(TextDecorations.Underline);
                 if (mw.TextMenu.StrikeBtn.IsChecked == true) decors.Add(TextDecorations.Strikethrough);
                 selection.ApplyPropertyValue(Inline.TextDecorationsProperty, decors);
-
-                // 5. 调用 ApplyTextSettings 更新整体属性（如阴影、对齐）
                 ApplyTextSettings(_richTextBox);
             }
 
             public override void Cleanup(ToolContext ctx)
             {
                 MainWindow mw = MainWindow.GetCurrentInstance();
-
                 if (_richTextBox != null && ctx.EditorOverlay.Children.Contains(_richTextBox))
                 {
                     ctx.EditorOverlay.Children.Remove(_richTextBox);
@@ -122,35 +101,26 @@ namespace TabPaint
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
                 }
                 mw.HideTextToolbar();
-
-                // 5️⃣ 重置工具状态
                 _dragging = false;
                 _resizing = false;
                 _currentAnchor = ResizeAnchor.None;
                 _textRect = new Int32Rect();
                 lag = 0;
-
                 Mouse.OverrideCursor = null;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(true);
             }
             public void GiveUpText(ToolContext ctx)
             {
                 Cleanup(ctx);
-                //if (hastext)
-                {
-                    ctx.Undo.Undo();
-                    ctx.Undo._redo.Pop();
-                    (MainWindow.GetCurrentInstance()).SetUndoRedoButtonState();
-                }
+                ctx.Undo.Undo();
+                ctx.Undo._redo.Pop();
+                (MainWindow.GetCurrentInstance()).SetUndoRedoButtonState();
+
             }
             public override void SetCursor(ToolContext ctx)
             {
                 System.Windows.Input.Mouse.OverrideCursor = null;
-
-                if (ctx.ViewElement != null)
-                {
-                    ctx.ViewElement.Cursor = this.Cursor;
-                }
+                if (ctx.ViewElement != null)  ctx.ViewElement.Cursor = this.Cursor;
             }
             private List<Point> GetHandlePositions(Int32Rect rect)
             {
@@ -161,7 +131,7 @@ namespace TabPaint
                 double y2 = rect.Y + rect.Height;
                 double mx = (x1 + x2) / 2;
                 double my = (y1 + y2) / 2;
-               
+
                 handles.Add(new Point(x1, y1)); // TL
                 handles.Add(new Point(mx, y1)); // TM
                 handles.Add(new Point(x2, y1)); // TR
@@ -170,7 +140,6 @@ namespace TabPaint
                 handles.Add(new Point(x1, y2)); // BL
                 handles.Add(new Point(mx, y2)); // BM
                 handles.Add(new Point(x2, y2)); // BR
-
                 return handles;
             }
 
@@ -216,14 +185,11 @@ namespace TabPaint
                     Canvas.SetTop(handle, p.Y - AppConsts.SelectToolHandleSize * invScale / 2);
                     overlay.Children.Add(handle);
                 }
-
                 overlay.IsHitTestVisible = false;
                 overlay.Visibility = Visibility.Visible;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
-
-            // 判断是否点击到句柄
-            private ResizeAnchor HitTestTextboxHandle(Point px)
+            private ResizeAnchor HitTestTextboxHandle(Point px)// 判断是否点击到句柄
             {
                 if (_richTextBox == null) return ResizeAnchor.None;
                 double size = AppConsts.TextToolHandleHitTestSize / (MainWindow.GetCurrentInstance()).zoomscale;
@@ -289,11 +255,7 @@ namespace TabPaint
                                 break;
                         }
                     }
-                    else if (IsInsideBorder(px))
-                    {
-                        // 命中虚线边框 -> 显示移动光标 (十字箭头) ✨✨✨
-                        Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeAll;
-                    }
+                    else if (IsInsideBorder(px)) Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeAll;
                     else
                     {
                         // 既没中句柄也没中边框 -> 恢复默认
@@ -306,8 +268,6 @@ namespace TabPaint
                 {
                     double dx = px.X - _startMouse.X;
                     double dy = px.Y - _startMouse.Y;
-
-                    // A. 处理调整大小 (Resizing)
                     if (_resizing)
                     {
                         double rightEdge = _startX + _startW;
@@ -389,8 +349,6 @@ namespace TabPaint
             private void AutoFitContent(System.Windows.Controls.RichTextBox rtb)
             {
                 if (rtb == null) return;
-
-                // 1. 解除显式的宽高限制，启用自适应
                 rtb.Width = double.NaN;
                 rtb.Height = double.NaN;
 
@@ -411,8 +369,6 @@ namespace TabPaint
                 if (_richTextBox != null)
                 {
                     Point pixelPos = ctx.ToPixel(viewPos); // 转换为像素坐标用于检测
-
-                    // 1. 检测是否点击了【调整手柄】 (Resize)
                     var anchor = HitTestTextboxHandle(pixelPos);
                     if (anchor != ResizeAnchor.None)
                     {
@@ -442,8 +398,6 @@ namespace TabPaint
                             ctx.EditorOverlay.CaptureMouse();
                         return;
                     }
-
-                    // 3. 检测是否点击了【文本框内部】 (Edit / Focus)
                     double left = Canvas.GetLeft(_richTextBox);
                     double top = Canvas.GetTop(_richTextBox);
                     bool inside = pixelPos.X >= left && pixelPos.X <= left + _richTextBox.ActualWidth &&
@@ -494,14 +448,10 @@ namespace TabPaint
                 double w = _richTextBox.ActualWidth;
                 double h = _richTextBox.ActualHeight;
                 double borderThickness = Math.Max(AppConsts.TextToolBorderThicknessMin / (MainWindow.GetCurrentInstance()).zoomscale, AppConsts.TextToolBorderThicknessMax);
-
-                // 外矩形 (扩大边框宽度)
                 bool inOuter = px.X >= x - borderThickness &&
                                px.X <= x + w + borderThickness &&
                                px.Y >= y - borderThickness &&
                                px.Y <= y + h + borderThickness;
-
-                // 内矩形 (缩小边框宽度)
                 bool inInner = px.X >= x + borderThickness &&
                                px.X <= x + w - borderThickness &&
                                px.Y >= y + borderThickness &&
@@ -540,7 +490,6 @@ namespace TabPaint
                     ctx.EditorOverlay.Children.Add(_richTextBox);
 
                     (MainWindow.GetCurrentInstance()).ShowTextToolbarFor(_richTextBox);
-
                     _richTextBox.Focus();
                 }
             }
@@ -551,15 +500,14 @@ namespace TabPaint
                 {
                     if (e.Key == Key.Delete && rtb.Selection.IsEmpty && new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd).Text.Trim() == "")
                     {
-                        // 逻辑：删除空框
                         CleanUpUI(ctx);
                         e.Handled = true;
                     }
                 };
 
                 // 当内容变化时，可能需要更新选区框大小（如果我们要自适应高度）
-                rtb.TextChanged += (s, e) => {  AutoFitContent(rtb);};
-               
+                rtb.TextChanged += (s, e) => { AutoFitContent(rtb); };
+
             }
             public void CommitText(ToolContext ctx)
             {
@@ -696,7 +644,7 @@ namespace TabPaint
                     Background = Brushes.Transparent, // 必须透明
                     Padding = new Thickness(AppConsts.TextToolPadding),
                     AcceptsReturn = true,
-                    AcceptsTab = true, 
+                    AcceptsTab = true,
                     Document = new FlowDocument()
                     {
                         PagePadding = new Thickness(0), // 去除文档默认边距
@@ -718,7 +666,7 @@ namespace TabPaint
                 var mw = MainWindow.GetCurrentInstance();
                 if (tb == null) return;
                 if (mw.TextMenu == null) return;
-               
+
                 if (mw.TextMenu.FontFamilyBox.SelectedValue != null) // 1. 字体与大小
                     tb.FontFamily = new FontFamily(mw.TextMenu.FontFamilyBox.SelectedValue.ToString());
 
@@ -771,77 +719,7 @@ namespace TabPaint
                 lag = 2;
                 if (mw._canvasResizer != null) mw._canvasResizer.SetHandleVisibility(false);
             }
-            private unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx, double globalOpacity)
-            {
-                int opacityScale = (int)(globalOpacity * 255);
-
-                if (opacityScale <= 0) return;
-
-                fixed (byte* pSrcBase = sourcePixels)
-                fixed (byte* pDstBase = destPixels)
-                {
-                    for (int row = 0; row < height; row++)
-                    {
-                        byte* pSrcRow = pSrcBase + sourceStartIdx + (row * stride);
-                        byte* pDstRow = pDstBase + (row * stride);
-
-                        for (int col = 0; col < width; col++)
-                        {
-                            byte rawSrcA = pSrcRow[3];
-                            if (rawSrcA == 0)
-                            {
-                                pSrcRow += 4;
-                                pDstRow += 4;
-                                continue;
-                            }
-
-                            int srcA, srcR, srcG, srcB;
-
-                            if (opacityScale == 255)
-                            {
-                                srcB = pSrcRow[0];// 满不透明度，直接读取
-                                srcG = pSrcRow[1];
-                                srcR = pSrcRow[2];
-                                srcA = rawSrcA;
-                            }
-                            else
-                            {
-                                srcB = (pSrcRow[0] * opacityScale) / 255;
-                                srcG = (pSrcRow[1] * opacityScale) / 255;
-                                srcR = (pSrcRow[2] * opacityScale) / 255;
-                                srcA = (rawSrcA * opacityScale) / 255;
-                            }
-
-                            if (srcA == 0)
-                            {
-                                pSrcRow += 4;
-                                pDstRow += 4;
-                                continue;
-                            }
-
-                            if (srcA == 255)
-                            {
-                                pDstRow[0] = (byte)srcB;
-                                pDstRow[1] = (byte)srcG;
-                                pDstRow[2] = (byte)srcR;
-                                pDstRow[3] = 255; // 目标 alpha 变成 255
-                            }
-                            else
-                            {
-                                int invAlpha = 255 - srcA;// Alpha 混合: Out = Src + Dst * (1 - SrcA)
-
-                                pDstRow[0] = (byte)(srcB + (pDstRow[0] * invAlpha) / 255); // B
-                                pDstRow[1] = (byte)(srcG + (pDstRow[1] * invAlpha) / 255); // G
-                                pDstRow[2] = (byte)(srcR + (pDstRow[2] * invAlpha) / 255); // R
-                                pDstRow[3] = (byte)(srcA + (pDstRow[3] * invAlpha) / 255); // A
-                            }
-
-                            pSrcRow += 4;
-                            pDstRow += 4;
-                        }
-                    }
-                }
-            }
+       
             private void SetupTextBoxEvents(ToolContext ctx, System.Windows.Controls.RichTextBox rtb)
             {
                 // 绘制虚线框和句柄
@@ -952,10 +830,7 @@ namespace TabPaint
                     ctx.EditorOverlay.CaptureMouse();
                     e.Handled = true;
                 }
-                else
-                {
-                    OnPointerDown(ctx, pos);
-                }
+                else   OnPointerDown(ctx, pos);
             }
         }
     }

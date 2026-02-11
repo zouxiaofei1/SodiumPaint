@@ -73,25 +73,14 @@ namespace TabPaint
             await _sessionLock.WaitAsync();
             try
             {
-                if (_sessions.TryGetValue(taskType, out var session))
-                {
-                    return session;
-                }
-
+                if (_sessions.TryGetValue(taskType, out var session))  return session;
                 var options = taskType == AiTaskType.Inpainting ? new SessionOptions() : GetSessionOptions();
-                if (taskType == AiTaskType.Inpainting)
-                {
-                    options.AppendExecutionProvider_CPU();
-                }
-
+                if (taskType == AiTaskType.Inpainting)  options.AppendExecutionProvider_CPU();
                 var newSession = await Task.Run(() => new InferenceSession(modelPath, options));
                 _sessions[taskType] = newSession;
                 return newSession;
             }
-            finally
-            {
-                _sessionLock.Release();
-            }
+            finally  { _sessionLock.Release(); }
         }
 
         public void ReleaseModel(AiTaskType taskType)
@@ -105,10 +94,7 @@ namespace TabPaint
                     _sessions.Remove(taskType);
                 }
             }
-            finally
-            {
-                _sessionLock.Release();
-            }
+            finally  {  _sessionLock.Release(); }
         }
 
         public void ReleaseAllModels()
@@ -116,16 +102,10 @@ namespace TabPaint
             _sessionLock.Wait();
             try
             {
-                foreach (var session in _sessions.Values)
-                {
-                    session.Dispose();
-                }
+                foreach (var session in _sessions.Values)   {  session.Dispose(); }
                 _sessions.Clear();
             }
-            finally
-            {
-                _sessionLock.Release();
-            }
+            finally { _sessionLock.Release();  }
         }
         public async Task<byte[]> RunInpaintingAsync(string modelPath, byte[] imagePixels, byte[] maskPixels, int origW, int origH)
         {
@@ -162,7 +142,6 @@ namespace TabPaint
                 for (int x = 0; x < w; x++)
                 {
                     int offset = (y * w + x) * 4;
-                    // 只要 alpha > 0 或者有红色，就判定为 mask
                     float val = pixels[offset + 3] > 0 ? 1.0f : 0.0f;
                     tensor[0, 0, y, x] = val;
                 }
@@ -179,19 +158,15 @@ namespace TabPaint
                 for (int x = 0; x < w; x++)
                 {
                     int offset = y * stride + x * 4;
-
                     float r = tensor[0, 0, y, x];
                     float g = tensor[0, 1, y, x];
                     float b = tensor[0, 2, y, x];
-
-                    // 修复点：范围应为 0-255，直接转 byte
                     pixels[offset + 0] = (byte)Math.Clamp(b, 0, 255); // Blue
                     pixels[offset + 1] = (byte)Math.Clamp(g, 0, 255); // Green
                     pixels[offset + 2] = (byte)Math.Clamp(r, 0, 255); // Red
                     pixels[offset + 3] = 255; // Alpha
                 }
             });
-
             return pixels;
         }
 
@@ -257,7 +232,6 @@ namespace TabPaint
             wb.Unlock();
             return tensor;
         }
-
         public bool IsModelReady(AiTaskType taskType)
         {
             string modelName;
@@ -312,16 +286,12 @@ namespace TabPaint
             _bestGpuId = bestId;
             return bestId;
         }
-
         private SessionOptions GetSessionOptions()
         {
             var options = new SessionOptions();
             int gpuId = GetBestGpuDeviceId();
 
-            try
-            {
-                options.AppendExecutionProvider_DML(gpuId);
-            }
+            try  {   options.AppendExecutionProvider_DML(gpuId);  }
             catch
             {
                 if (gpuId != 0)
@@ -329,16 +299,12 @@ namespace TabPaint
                     try  { options.AppendExecutionProvider_DML(0);}
                     catch{ options.AppendExecutionProvider_CPU();}
                 }
-                else
-                {
-                    options.AppendExecutionProvider_CPU();
-                }
+                else  options.AppendExecutionProvider_CPU();
             }
             return options;
         }
         public async Task<string> PrepareModelAsync(AiTaskType taskType, IProgress<AiDownloadStatus> progress, System.Threading.CancellationToken token)
         {
-            // --- 配置部分 ---
             string modelName;
             string expectedMd5;
             string urlMain;
@@ -376,10 +342,7 @@ namespace TabPaint
             {
                 if (expectedMd5 == null) return finalPath; // 未提供MD5，直接返回已存在文件（开发阶段用）
                 // 验证现有文件完整性
-                if (await VerifyMd5Async(finalPath, expectedMd5))
-                {
-                    return finalPath; // 文件存在且校验通过
-                }
+                if (await VerifyMd5Async(finalPath, expectedMd5))  return finalPath; // 文件存在且校验通过
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"[AI] MD5 mismatch for existing file. Deleting {modelName}...");
@@ -392,8 +355,6 @@ namespace TabPaint
             {
                 client.DefaultRequestHeaders.Add("User-Agent", "TabPaint-Client/1.0");
                 client.Timeout = TimeSpan.FromMinutes(AppConsts.AiDownloadTimeoutMinutes);
-
-                // 传入 token
                 if (!await DownloadAndValidateAsync(client, primaryUrl, finalPath, expectedMd5, progress, token))
                 {
                     // 传入 token
@@ -470,8 +431,6 @@ namespace TabPaint
                         } while (isMoreToRead);
                     }
                 }
-
-                // ... (MD5 校验和重命名代码保持不变) ...
                 if (await VerifyMd5Async(tempPath, expectedMd5))
                 {
                     if (File.Exists(destPath)) File.Delete(destPath);
@@ -496,7 +455,6 @@ namespace TabPaint
                 try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
                 return false;
             }
-            return false;
         }
         private async Task<bool> VerifyMd5Async(string filePath, string expectedMd5)
         {
@@ -638,8 +596,6 @@ namespace TabPaint
             // 计算放大后的有效区域
             int validTargetH = validH * ScaleFactor;
             int validTargetW = validW * ScaleFactor;
-
-            // 只循环有效区域，Tensor 中多余的 Padding 部分直接忽略
             Parallel.For(0, validTargetH, y =>
             {
                 int finalY = destY + y;
@@ -722,12 +678,10 @@ namespace TabPaint
                     if (offset + 3 < resultPixels.Length)
                     {
                         byte originalAlpha = resultPixels[offset + 3];
-                        // 混合 Alpha
                         resultPixels[offset + 3] = (byte)(originalAlpha * Math.Clamp(alphaVal, 0, 1));
                     }
                 }
             });
-
             return resultPixels;
         }
     }

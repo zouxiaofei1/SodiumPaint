@@ -1,6 +1,6 @@
 ﻿//
 //EventHandler.Dragdrop.cs
-//处理全局的文件拖拽和文本拖拽逻辑，支持将图片拖入标签栏或画布，以及将文本拖入创建文字图层。
+//拖入
 //
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -223,28 +223,20 @@ namespace TabPaint
                 e.Handled = true;
                 return;
             }
-            if (e.Data.GetDataPresent("TabPaintInternalDrag"))
+            if (e.Data.GetDataPresent("TabPaintInternalDrag")) // 跨窗口拖拽标签：将标签从原窗口移动到本窗口
             {
                 var sourceWindow = e.Data.GetData("TabPaintSourceWindow") as MainWindow;
                 var sourceTab = e.Data.GetData("TabPaintReorderItem") as FileTabItem;
-                
-                // 此时已经是 Drop (非 PreviewDrop)，如果子控件已经处理了，这里不该再跑。
                 if (e.Handled) return;
 
                 if (sourceWindow != null && sourceWindow != this && sourceTab != null)
                 {
-                    // 跨窗口拖拽标签：将标签从原窗口移动到本窗口
-                    
-                    // 1. 在原窗口移除 (标记为正在移动，防止删除备份文件)
                     sourceWindow.CloseTab(sourceTab, slient: true, isMoving: true);
-
-                    // 2. 检查本窗口是否已存在
                     var existingTab = FileTabs.FirstOrDefault(t => t.Id == sourceTab.Id) ??
                                      FileTabs.FirstOrDefault(t => !IsVirtualPath(t.FilePath) && string.Equals(t.FilePath, sourceTab.FilePath, StringComparison.OrdinalIgnoreCase));
 
                     if (existingTab != null)
                     {
-                        // 合并状态
                         if (sourceTab.MemorySnapshot != null) existingTab.MemorySnapshot = sourceTab.MemorySnapshot;
                         existingTab.UndoStack = sourceTab.UndoStack;
                         existingTab.RedoStack = sourceTab.RedoStack;
@@ -253,7 +245,6 @@ namespace TabPaint
                     }
                     else
                     {
-                        // 插入到末尾
                         FileTabs.Add(sourceTab);
                         if (!string.IsNullOrEmpty(sourceTab.FilePath))
                         {

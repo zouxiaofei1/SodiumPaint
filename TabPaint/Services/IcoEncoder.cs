@@ -14,8 +14,6 @@ namespace TabPaint.Core
         {
             var imagesData = new List<byte[]>();
             sizes.Sort((a, b) => b.CompareTo(a));
-
-            // 1. 将源图转换为 SkiaBitmap (一次转换，多次缩放)
             using var skSrc = new SKBitmap(source.PixelWidth, source.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
             source.CopyPixels(new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight), 
                 skSrc.GetPixels(), 
@@ -24,7 +22,6 @@ namespace TabPaint.Core
 
             foreach (var size in sizes)
             {
-                // 2. 使用 SkiaSharp 高效缩放并保持比例居中
                 using var skDest = ResizeAndFitSkia(skSrc, size);
                 using var image = SKImage.FromBitmap(skDest);
                 using var data = image.Encode(SKEncodedImageFormat.Png, 100);
@@ -76,26 +73,6 @@ namespace TabPaint.Core
             canvas.DrawBitmap(source, destRect, paint);
             
             return dest;
-        }
-
-        [Obsolete("Use ResizeAndFitSkia for better performance")]
-        private static BitmapSource ResizeAndFit(BitmapSource source, int targetSize)
-        {
-            var drawingVisual = new DrawingVisual();
-            using (var dc = drawingVisual.RenderOpen())
-            {
-                double ratio = Math.Min((double)targetSize / source.PixelWidth, (double)targetSize / source.PixelHeight);
-                double newWidth = source.PixelWidth * ratio;
-                double newHeight = source.PixelHeight * ratio;
-                double x = (targetSize - newWidth) / 2;
-                double y = (targetSize - newHeight) / 2;
-                dc.DrawImage(source, new Rect(x, y, newWidth, newHeight));
-            }
-
-            var renderBitmap = new RenderTargetBitmap(targetSize, targetSize, 96, 96, PixelFormats.Pbgra32);
-            renderBitmap.Render(drawingVisual);
-            if (renderBitmap.CanFreeze) renderBitmap.Freeze();
-            return renderBitmap;
         }
     }
 }

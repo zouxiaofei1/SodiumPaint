@@ -468,7 +468,7 @@ namespace TabPaint.UIHandlers
             _satellite.Left = freeLeft;
             _satellite.Top = freeTop;
         }
-
+        public Window AnchorWindow => _anchor;
         private static double HOverlap(double aL, double aR, double bL, double bR)
             => Math.Max(0, Math.Min(aR, bR) - Math.Max(aL, bL));
 

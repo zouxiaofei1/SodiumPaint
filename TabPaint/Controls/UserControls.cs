@@ -151,8 +151,6 @@ SetZoom(targetScale, slient: true);
             MainToolBar.SelectMainClick += OnSelectMainClick;
             MainToolBar.SelectStyleClick += OnSelectStyleClick;
             ToolBarHolder.Content = MainToolBar;
-
-            // 确保工具栏加载后更新高亮状态
             UpdateToolSelectionHighlight();
             UpdateColorHighlight();
             SetCropButtonState();

@@ -402,8 +402,7 @@
             <!-- 3. 预览滑块 -->
             <Slider Grid.Column="2" x:Name="PreviewSlider" Orientation="Vertical" Minimum="0" Maximum="100" Width="24" Margin="0,4,4,4" IsDirectionReversed="True" IsMoveToPointEnabled="True" 
                     ValueChanged="Internal_PreviewSlider_ValueChanged"  
-                    PreviewMouseWheel="Internal_Slider_PreviewMouseWheel">
-                <!-- 省略 Slider Template，保持原样 -->
+                    PreviewMouseWheel="Internal_Slider_PreviewMouseWheel"> 
                 <Slider.Template>
                     <ControlTemplate TargetType="Slider">
                         <Grid Background="Transparent" x:Name="RootGrid">
@@ -477,31 +476,25 @@
                     </Border.Effect>
 
                     <StackPanel Orientation="Vertical">
-                        <!-- 图片容器，增加最大宽高限制防止过大 -->
-            
                         <Border CornerRadius="4" ClipToBounds="True">
-                            <!-- 内层 Border 的背景就是棋盘格，尺寸完全由 Image 撑开 -->
                             <Border x:Name="CheckerboardBorder" Background="Transparent">
                                 <Grid>
                                     <Image x:Name="PopupPreviewImageBase" 
                    MaxHeight="120" MaxWidth="200" Stretch="Uniform"
                    IsHitTestVisible="False"/>
-                                <Image x:Name="PopupPreviewImage" 
+                                    <Image x:Name="PopupPreviewImage" 
                                        gif:AnimationBehavior.AutoStart="True"
                                        gif:AnimationBehavior.RepeatBehavior="Forever"
                                        MaxHeight="120" MaxWidth="200" Stretch="Uniform"/>
                                 </Grid>
                             </Border>
                         </Border>
-
                         <!-- 信息区 -->
                         <Grid Margin="0,6,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-
-                            <!-- 尺寸信息 (例如: 1920x1080) -->
                             <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
                                 <Path Data="{DynamicResource Picture_Image}"
            Fill="{DynamicResource TextSecondaryBrush}" 

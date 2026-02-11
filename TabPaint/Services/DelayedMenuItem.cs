@@ -44,13 +44,10 @@ namespace TabPaint.Controls
         {
             if (_closeTimer.IsEnabled)  _closeTimer.Stop();
             base.OnMouseEnter(e);
-
         }
-
         private void CloseTimer_Tick(object sender, EventArgs e)
         {
             _closeTimer.Stop();
-
             if (!this.IsMouseOver)
             {
                 SetCurrentValue(IsSubmenuOpenProperty, false);

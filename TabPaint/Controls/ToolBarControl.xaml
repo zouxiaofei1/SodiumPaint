@@ -17,7 +17,6 @@
 
     <Border Height="50" Background="{DynamicResource GlassBackgroundMediumBrush}" AllowDrop="True" ClipToBounds="False" SizeChanged="OnToolBarSizeChanged">
         <DockPanel LastChildFill="False" VerticalAlignment="Center" Margin="1,7,1,0" >
-            <!-- 基础工具 -->
             <StackPanel x:Name="ExpandedToolsPanel" Orientation="Horizontal" Margin="0,0,0,7" >
                 <Grid Margin="6,0,1,0">
                     <Border x:Name="SelectSplitButtonBorder" 
@@ -37,7 +36,6 @@
                         </Border.Style>
 
                         <StackPanel Orientation="Horizontal">
-                            <!-- 左半部分：点击直接触发当前选区模式 -->
                             <Button x:Name="SelectMainButton" x:FieldModifier="public"
                     Click="OnSelectMainButtonClick" 
                     services:ShortcutService.BaseToolTip="L_ToolBar_Tool_Select"
@@ -66,8 +64,6 @@
 
                         <Border Name="SubmenuBorderSelect" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                             <StackPanel x:Name="StackPanelSelect">
-                                <!-- 命名 StackPanel -->
-                                <!-- 动态生成 -->
                             </StackPanel>
                         </Border>
                     </Popup>
@@ -89,8 +85,6 @@
                     <Image Source="{DynamicResource Text_Image}" Width="16" Height="16" />
                 </Button>
             </StackPanel>
-
-            <!-- 2. 折叠模式：工具集合菜单 (默认隐藏) -->
             <Grid x:Name="CollapsedToolsPanel" Visibility="Collapsed" Margin="6,0,6,7">
                 <ToggleButton x:Name="ToolsMenuToggle" ToolTip="{DynamicResource L_ToolBar_Tool_DrawTools}"  Checked="OnCollapsedToolsOpened" Style="{StaticResource DropDownButtonStyle}">
                     <Image x:Name="CurrentToolIcon" Source="{DynamicResource ColorPickerPencil_Image}" Width="16" Height="16" />
@@ -102,12 +96,11 @@
            StaysOpen="{Binding IsMouseOver, ElementName=ToolsMenuToggle}">
                     <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel x:Name="CollapsedMenuItems">
-                           
+
                         </StackPanel>
                     </Border>
                 </Popup>
             </Grid>
-
             <!-- 画刷菜单 (Split Button) -->
             <Grid Margin="0,0,0,7">
                 <Border x:Name="BrushSplitButtonBorder" 
@@ -115,12 +108,9 @@
                         BorderThickness="1" 
                         Background="Transparent" 
                         BorderBrush="Transparent">
-
-                    <!-- 定义外层 Border 的悬浮样式 -->
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
-                                <!-- 当鼠标悬浮在整个 Border 范围内时，改变背景色 -->
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource ControlMouseOverBackgroundBrush}"/>
                                 </Trigger>
@@ -154,8 +144,6 @@
                        StaysOpen="{Binding IsMouseOver, ElementName=BrushToggle}">
                     <Border Name="SubmenuBorderBrush" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel x:Name="StackPanelBrush">
-                            <!-- 命名 -->
-                            <!-- 动态生成 -->
                         </StackPanel>
                     </Border>
                 </Popup>
@@ -203,15 +191,11 @@
                         </ToggleButton>
                     </StackPanel>
                 </Border>
-
-                <!-- Popup 保持不变 ... -->
                 <Popup x:Name="SubMenuPopupShape" IsOpen="{Binding IsChecked, ElementName=ShapeToggle, Mode=TwoWay}"
            PlacementTarget="{Binding ElementName=ShapeSplitButtonBorder}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" 
            StaysOpen="{Binding IsMouseOver, ElementName=ShapeToggle}">
                     <Border Name="SubmenuBorderShape" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel x:Name="StackPanelShape">
-                            <!-- 命名 -->
-                            <!-- 动态生成 -->
                         </StackPanel>
                     </Border>
                 </Popup>
@@ -232,8 +216,6 @@
            PlacementTarget="{Binding ElementName=RotateFlipMenuToggle}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="None" StaysOpen="{Binding IsMouseOver, ElementName=RotateFlipMenuToggle}">
                     <Border Name="SubmenuBorder" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="3,0" Padding="2">
                         <StackPanel x:Name="StackPanelRotate">
-                            <!-- 命名 -->
-                            <!-- 动态生成 -->
                         </StackPanel>
                     </Border>
                 </Popup>

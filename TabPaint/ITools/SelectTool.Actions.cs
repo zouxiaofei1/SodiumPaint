@@ -90,9 +90,6 @@ namespace TabPaint
                 mw.SelectionSize = $"{w}×{h}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
                 mw.UpdateSelectionToolBarPosition();
             }
-
-
-            // 确保 GetSelectionCroppedBitmap 返回的是 WriteableBitmap 以便 AI 服务使用
             public WriteableBitmap GetSelectionWriteableBitmap(MainWindow mw)
             {
                 var source = GetSelectionCroppedBitmap(mw);
@@ -149,8 +146,6 @@ namespace TabPaint
 
                 // 提取整幅像素
                 _selectionData = ctx.Surface.ExtractRegion(_selectionRect);
-
-                // 如果提取失败或为空，直接返回
                 if (_selectionData == null || _selectionData.Length < _selectionRect.Width * _selectionRect.Height * 4)
                     return;
 
@@ -216,8 +211,6 @@ namespace TabPaint
                         _originalRect.Width, _originalRect.Height,
                         ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
                         PixelFormats.Bgra32, null, _selectionData, _originalRect.Width * 4);
-
-                    // 【替换旧逻辑】
                     var resizedBitmap = (ctx.ParentWindow).ResampleBitmap(src, finalWidth, finalHeight);
 
                     finalStride = resizedBitmap.PixelWidth * 4;
@@ -231,21 +224,9 @@ namespace TabPaint
                     finalStride = finalWidth * 4;
                 }
 
-                var newBitmap = new WriteableBitmap(
-                    finalWidth,
-                    finalHeight,
-                    ctx.Surface.Bitmap.DpiX,
-                    ctx.Surface.Bitmap.DpiY,
-                    PixelFormats.Bgra32,
-                    null
-                );
+                var newBitmap = new WriteableBitmap(finalWidth,finalHeight, ctx.Surface.Bitmap.DpiX,  ctx.Surface.Bitmap.DpiY, PixelFormats.Bgra32,null);
 
-                newBitmap.WritePixels(
-                    new Int32Rect(0, 0, finalWidth, finalHeight),
-                    finalSelectionData,
-                    finalStride,
-                    0
-                );
+                newBitmap.WritePixels(new Int32Rect(0, 0, finalWidth, finalHeight),finalSelectionData,finalStride,  0 );
 
                 var redoRect = new Int32Rect(0, 0, newBitmap.PixelWidth, newBitmap.PixelHeight);
                 int redoStride = newBitmap.BackBufferStride;
@@ -303,12 +284,7 @@ namespace TabPaint
                     _isWandAdjusting = true; // 标记开始调整容差
                     _wandStartPoint = px;
                     _startPixel = px; // 借用这个记录一下，方便计算距离
-                   // _wandTolerance = 0; // 初始点击容差为 0
-
-                    // 记录点击点的颜色
                     _wandStartColor = mw.GetPixelColor((int)px.X, (int)px.Y);
-
-                    // 如果没有按 Shift，先清除旧选区 (视觉上)
                     if (!isShift)
                     {
                         HidePreview(ctx);
@@ -356,8 +332,6 @@ namespace TabPaint
                 {
                     // 1. 坐标转换
                     Point windowPos = ctx.ViewElement.TranslatePoint(viewPos, mw);
-
-                    // 2. 获取 Tab
                     var targetTab = mw.MainImageBar.GetTabFromPoint(windowPos);
 
                     if (targetTab != null && targetTab != mw._currentTabItem)
@@ -640,8 +614,6 @@ namespace TabPaint
 
                     double ratioX = (double)_selectionRect.Width / (double)_originalRect.Width;
                     double ratioY = (double)_selectionRect.Height / (double)_originalRect.Height;
-
-                    // 计算在预览自身坐标系中的有效显示范围
                     double visibleX = (int)Math.Max(0, -offsetX / ratioX);
                     double visibleY = (int)Math.Max(0, -offsetY / ratioY);
 
@@ -692,7 +664,6 @@ namespace TabPaint
                 // 2. 执行清除 (区分矩形模式和套索模式)
                 if (IsIrregularSelection && _selectionAlphaMap != null)
                 {
-                    // 套索模式：精确清除
                     ClearLassoRegion(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
                 }
                 else  ClearRect(ctx, ClampRect(_originalRect, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight), ctx.EraserColor);
@@ -715,10 +686,6 @@ namespace TabPaint
                             e.Handled = true;
                             CopySelection(ctx);
                             break;
-                            //case Key.V:
-                            //    PasteSelection(ctx, false);
-                            //    e.Handled = true;
-                            //    break;
                     }
                 }
                 else
@@ -865,17 +832,12 @@ namespace TabPaint
             public Rect GetViewportInPixelCoords(ToolContext ctx)
             {
                 var mw = ctx.ParentWindow;
-                // ScrollViewer 的可见区域（WPF 坐标）
                 var sv = mw.ScrollContainer; // 你的 ScrollViewer 引用
                 if (sv == null) return Rect.Empty;
-
-                // 视口左上角和右下角在 View 坐标系中的位置
                 Point topLeft = new Point(sv.HorizontalOffset, sv.VerticalOffset);
                 Point bottomRight = new Point(
                     sv.HorizontalOffset + sv.ViewportWidth,
                     sv.VerticalOffset + sv.ViewportHeight);
-
-                // 转换为像素坐标
                 Point pxTL = ctx.ToPixel(topLeft);
                 Point pxBR = ctx.ToPixel(bottomRight);
 

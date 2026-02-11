@@ -23,6 +23,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+        private bool _fontsLoaded = false;
         private const int WM_NCHITTEST = AppConsts.WM_NCHITTEST;
         private const int HTLEFT = AppConsts.HTLEFT;
         private const int HTRIGHT = AppConsts.HTRIGHT;

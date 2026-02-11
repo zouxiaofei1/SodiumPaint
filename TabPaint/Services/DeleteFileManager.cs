@@ -4,11 +4,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using static TabPaint.MainWindow;
-
-//
-
-//
-
 namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged

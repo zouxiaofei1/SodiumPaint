@@ -41,11 +41,8 @@ namespace TabPaint.Controls
         {
             if (SettingsManager.Instance.Current.IsFirstRun)
             {
-                // 立即标记为已运行并保存，防止多次触发或意外退出导致状态未保存
                 SettingsManager.Instance.Current.IsFirstRun = false;
                 SettingsManager.Instance.Save();
-
-                // 延迟显示以确保窗口完全加载并可见
                 var delayTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
                 delayTimer.Tick += (s, e) =>
                 {
@@ -62,10 +59,8 @@ namespace TabPaint.Controls
             if (popup != null)
             {
                 popup.IsOpen = true;
-
-                // 8秒后自动关闭
                 _helpHintTimer?.Stop();
-                _helpHintTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+                _helpHintTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
                 _helpHintTimer.Tick += (s, e) =>
                 {
                     CloseHelpHint();
@@ -99,9 +94,9 @@ namespace TabPaint.Controls
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.UriSource = uri;
-                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 关键：立即加载到内存
+                bitmap.CacheOption = BitmapCacheOption.OnLoad; 
                 bitmap.EndInit();
-                bitmap.Freeze(); // 关键：冻结对象，使其可以跨线程访问
+                bitmap.Freeze();
                 return bitmap;
             });
             AppIcon.Source = imageSource;
@@ -162,8 +157,6 @@ namespace TabPaint.Controls
                 e.Handled = true;
                 return;
             }
-
-            // 原有逻辑：处理左键菜单 (增加 Left 按钮判断)
             if (e.ChangedButton == MouseButton.Left && IsLogoMenuEnabled)
             {
                 if (AppIcon.ContextMenu == null)   LoadLogoContextMenu();
@@ -185,7 +178,6 @@ namespace TabPaint.Controls
 
                 if (menu != null)
                 {
-                    // 简单粗暴的重新挂载事件方法：
                     foreach (var item in menu.Items)
                     {
                         if (item is MenuItem menuItem) BindMenuEvents(menuItem);
@@ -210,8 +202,6 @@ namespace TabPaint.Controls
                 if (subItem is MenuItem subMenuItem)   BindMenuEvents(subMenuItem);
             }
         }
-
-        // 定义事件
         public static readonly RoutedEvent HelpClickEvent = EventManager.RegisterRoutedEvent(
             "HelpClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(TitleBarControl));
 

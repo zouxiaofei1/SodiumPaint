@@ -29,10 +29,7 @@ namespace TabPaint.Controls
             InitializeComponent();
         }
 
-        private static void OnCurrentItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            // Binding is used in XAML now
-        }
+        private static void OnCurrentItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {  }
         private void UserControl_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl ||
@@ -50,15 +47,12 @@ namespace TabPaint.Controls
             }
             e.Handled = true; 
             Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
-
-            // 获取修饰键
             ModifierKeys modifiers = Keyboard.Modifiers;
 
             // 冲突检查逻辑
             var settings = SettingsManager.Instance.Current;
             if (settings != null && settings.Shortcuts != null)
             {
-                // 查找除了当前项以外，是否已经有功能占用了这个组合键
                 var conflict = settings.Shortcuts.FirstOrDefault(kvp => 
                     kvp.Value != CurrentItem && // 排除自己
                     key != Key.None && // 忽略 None 键的冲突
@@ -67,22 +61,16 @@ namespace TabPaint.Controls
 
                 if (conflict.Value != null)
                 {
-                    // 发现冲突：清除旧的
                     conflict.Value.Key = Key.None;
                     conflict.Value.Modifiers = ModifierKeys.None;
-                    
-                    // 尝试通知 SettingsWindow 显示 Toast
                     var window = Window.GetWindow(this) as SettingsWindow;
                     if (window != null)
                     {
-                        // 尝试获取冲突功能的名称
                         string featureName = GetFriendlyName(conflict.Key);
                         window.ShowConflictToast(featureName);
                     }
                 }
             }
-
-            // 更新数据对象
             if (CurrentItem == null) CurrentItem = new ShortcutItem();
 
             CurrentItem.Key = key;
@@ -95,7 +83,6 @@ namespace TabPaint.Controls
             this.Focus();
             if (e.OriginalSource is DependencyObject source)
             {
-                // 向上查找看是不是点到了 Button
                 var parent = System.Windows.Media.VisualTreeHelper.GetParent(source);
                 while (parent != null && parent != this)
                 {
@@ -103,7 +90,6 @@ namespace TabPaint.Controls
                     parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
                 }
             }
-
             e.Handled = true;
 
         }
@@ -118,22 +104,16 @@ namespace TabPaint.Controls
 
         private string GetFriendlyName(string shortcutId)
         {
-            // 1. 尝试直接拼接 L_Settings_Shortcuts_ 为前缀的资源 Key (例如 L_Settings_Shortcuts_File_Open)
             string resourceKey = "L_Settings_Shortcuts_" + shortcutId.Replace(".", "_");
             string name = LocalizationManager.GetString(resourceKey);
             if (name != resourceKey) return name;
 
-            // 2. 尝试去掉前缀后的名称 (例如 L_Settings_Shortcuts_ToggleMode)
             resourceKey = "L_Settings_Shortcuts_" + (shortcutId.Contains(".") ? shortcutId.Split('.')[1] : shortcutId);
             name = LocalizationManager.GetString(resourceKey);
             if (name != resourceKey) return name;
-
-            // 3. 尝试通用工具前缀 (L_ToolBar_...)
             resourceKey = "L_ToolBar_" + shortcutId.Replace("Tool.SwitchTo", "");
             name = LocalizationManager.GetString(resourceKey);
             if (name != resourceKey) return name;
-
-            // 4. 尝试菜单前缀 (L_Menu_...)
             resourceKey = "L_Menu_" + shortcutId.Replace(".", "_");
             name = LocalizationManager.GetString(resourceKey);
             if (name != resourceKey) return name;

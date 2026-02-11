@@ -161,7 +161,6 @@ namespace TabPaint.Controls
         {
             RaiseEvent(new ZoomRoutedEventArgs(ZoomChangedEvent, zoom));
         }
-
         private void OnStatusBarSizeChanged(object sender, SizeChangedEventArgs e)
         {
             double w = e.NewSize.Width;

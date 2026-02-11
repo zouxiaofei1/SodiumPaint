@@ -18,7 +18,63 @@ namespace TabPaint
     {
         public partial class SelectTool : ToolBase
         {
+            private void StartDragDropOperation(ToolContext ctx)
+            {
+                if (_selectionData == null) return;
 
+                int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
+                int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
+                byte[] data = _selectionData;
+                if (width == 0 || height == 0) return;
+                int stride = width * 4;
+                int expectedStride = _originalRect.Width * 4;
+                int actualStride = _selectionData.Length / _originalRect.Height;
+                int dataStride = Math.Min(expectedStride, actualStride);
+                var bitmapSource = BitmapSource.Create(
+                    width, height,
+                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                    PixelFormats.Bgra32, null,
+                    data, dataStride);
+
+                string tempFilePath = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(),
+                    $"selection_{Guid.NewGuid()}.png"
+                );
+                // s(tempFilePath);
+                try
+                {
+                    using (var fileStream = new System.IO.FileStream(tempFilePath, System.IO.FileMode.Create))
+                    {
+                        PngBitmapEncoder encoder = new PngBitmapEncoder();
+                        encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                        encoder.Save(fileStream);
+                    }
+
+                    var dataObject = new System.Windows.DataObject();
+
+                    dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
+                    dataObject.SetData("TabPaintSelectionDrag", true); dataObject.SetData("TabPaintSourceWindow", ctx.ParentWindow.GetHashCode());
+
+                    if (_hasLifted)
+                    {
+                        ctx.Undo.Undo();
+                        _hasLifted = false;
+                    }
+                    HidePreview(ctx);
+                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+
+                    DragDrop.DoDragDrop(ctx.ViewElement, dataObject, System.Windows.DragDropEffects.Copy);
+                    _originalRect = new Int32Rect();
+                    _transformStep = 0;
+                    _selectionData = null;
+                    ctx.IsDirty = true;
+                }
+                catch (Exception ex) { }
+                finally
+                {
+                    if (System.IO.File.Exists(tempFilePath)) DeleteFileWithDelay(tempFilePath, 5000); // 延迟 5秒
+                }
+            }
             private void CopyToSystemClipboard(ToolContext ctx)
             {
                 if (_selectionData == null) return;

@@ -238,7 +238,7 @@ public partial class PenTool : ToolBase
                 _maskImageOverlay.Width = ctx.ViewElement.ActualWidth;
                 _maskImageOverlay.Height = ctx.ViewElement.ActualHeight;
             }
-            ctx.CapturePointer();
+            ctx.CapturePointer(); System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Cross;
             _drawing = true;
             _lastPixel = ctx.ToPixel(viewPos);
             _lastPressure = pressure;
@@ -300,7 +300,7 @@ public partial class PenTool : ToolBase
         }
 
 
-        ctx.CapturePointer();
+        ctx.CapturePointer(); System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Cross;
         var px = ctx.ToPixel(viewPos);
         ctx.Undo.BeginStroke();
         _drawing = true;
@@ -494,7 +494,7 @@ public partial class PenTool : ToolBase
         }
         ctx.Undo.CommitStroke();
         ctx.IsDirty = true;
-        ctx.ReleasePointerCapture();
+        ctx.ReleasePointerCapture(); System.Windows.Input.Mouse.OverrideCursor = null;
 
         if (ctx.PenStyle == BrushStyle.AiEraser) {  ApplyAiEraser(ctx);  return;   }
     }

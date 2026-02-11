@@ -36,16 +36,12 @@
             </Setter>
         </Style>
     </UserControl.Resources>
-
-    <!-- 容器：使用 Mica 风格的半透明背景 -->
     <Border CornerRadius="8" 
             Background="{DynamicResource PanelBackgroundBrush}" 
             BorderBrush="{DynamicResource BorderLightBrush}" 
             BorderThickness="1"
             Padding="12,10"
             MinWidth="300" MaxWidth="400">
-        <!-- 稍微加宽一点 -->
-
         <Border.Effect>
             <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.15" Direction="270"/>
         </Border.Effect>
@@ -53,18 +49,13 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <!-- 标题 -->
                 <RowDefinition Height="Auto"/>
-                <!-- 进度条 -->
                 <RowDefinition Height="Auto"/>
-                <!-- 详情信息 (新增) -->
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-
-            <!-- Row 0: 标题和百分比 -->
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
                 <TextBlock x:Name="TaskIconText" Text="☁️" Margin="0,0,6,0" VerticalAlignment="Center"/>
                 <TextBlock x:Name="TaskNameText" 

@@ -12,6 +12,9 @@
     <sys:String x:Key="L_Settings_Toast_Saved">设置已保存</sys:String>
     <sys:String x:Key="L_Settings_Toast_Conflict">快捷键与“{0}”冲突，已自动重置旧项</sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">插件</sys:String>
+    <sys:String x:Key="L_ImgBar_NewImage">新图片</sys:String>
+    <sys:String x:Key="L_CreateNewWorkSpate">选择图片以建立新工作区</sys:String>
+    
     <!-- 插件面板 -->
     <sys:String x:Key="L_Settings_Plugins_Title">插件与 AI 模型</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Desc">管理 AI 模型和可选组件。</sys:String>

@@ -25,6 +25,7 @@ namespace TabPaint
 {
     public partial class MainWindow : System.Windows.Window, INotifyPropertyChanged
     {
+       
         private void UpdateGlobalToolSettingsKey()
         {
             _isUpdatingToolSettings = true;
@@ -59,10 +60,7 @@ namespace TabPaint
                 _ctx.PenThickness = this.PenThickness;
                 _ctx.PenOpacity = this.PenOpacity;
             }
-            finally   { _isUpdatingToolSettings = false;}
-         
-               
-            
+            finally   { _isUpdatingToolSettings = false;}  
         }
 
         public void UpdateCurrentColor(Color color, bool secondColor = false) // 更新前景色按钮颜色
@@ -86,7 +84,6 @@ namespace TabPaint
         public async void MaximizeWindowHandler()
         {
             if (_isProcessingMaximizeWindow) return; // 如果正在冷却中，直接跳过
-
             _isProcessingMaximizeWindow = true;
             ExecuteMaximizeLogic();
            await Task.Delay(500);
@@ -105,8 +102,6 @@ namespace TabPaint
                 Top = workArea.Top - (SystemParameters.BorderWidth) * 2;
                 Width = workArea.Width + (SystemParameters.BorderWidth * 4);
                 Height = workArea.Height + (SystemParameters.BorderWidth * 4);
-
-
             }
             else
             {
@@ -127,10 +122,7 @@ namespace TabPaint
         }
         private async void SetBrushStyle(BrushStyle style)
         {//设置画笔样式，所有画笔都是pen工具
-            if (style == BrushStyle.AiEraser)
-            {
-                if (!await EnsureAiModelReadyAsync(AiService.AiTaskType.Inpainting)) return;
-            }
+            if (style == BrushStyle.AiEraser)  if (!await EnsureAiModelReadyAsync(AiService.AiTaskType.Inpainting)) return;
             _router.SetTool(_tools.Pen);
             _ctx.PenStyle = style;
             UpdateBrushSplitButtonIcon(style);
@@ -148,13 +140,8 @@ namespace TabPaint
                 new Size(ThicknessSlider.ActualWidth, ThicknessSlider.ActualHeight));
 
             double trackHeight = ThicknessSlider.ActualHeight;
-
-   
             double relativeValue = (ThicknessSlider.Maximum - sliderProgressValue) / (ThicknessSlider.Maximum - ThicknessSlider.Minimum);
-
-            // 防止除以 0 或越界
             if (double.IsNaN(relativeValue)) relativeValue = 0;
-
             double offsetY = relativeValue * trackHeight;
             ThicknessTip.Margin = new Thickness(80, offsetY + rect.Top - 10, 0, 0);
         }
@@ -187,9 +174,6 @@ namespace TabPaint
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;
         }
-
-
-
         private void UpdateWindowTitle()
         {
           
@@ -222,17 +206,14 @@ namespace TabPaint
                     countInfo = $" ({currentIndex + 1}/{total})";
                 }
             }
-
-            // 4. 拼接标题
             string newTitle = $"{dirtyMark}{displayFileName}{countInfo} - TabPaint";
 
-            // 5. 更新 UI
             this.Title = newTitle;
             if (AppTitleBar.TitleTextControl != null) AppTitleBar.TitleTextControl.Text = newTitle;
           
         }
 
-        private bool _fontsLoaded = false;
+
 
         private void EnsureFontsLoaded()
         {

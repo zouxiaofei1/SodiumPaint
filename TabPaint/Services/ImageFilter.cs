@@ -2,6 +2,8 @@
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 
 //
@@ -269,7 +271,122 @@ namespace TabPaint
                 }
             }
         }
+        private void ProcessAutoLevels()
+        {
+            if (_surface?.Bitmap == null) return;
+            _router.CleanUpSelectionandShape();
+            _undo.PushFullImageUndo();
 
+            var bmp = _surface.Bitmap;
+            bmp.Lock();
+            try
+            {
+                unsafe
+                {
+                    byte* basePtr = (byte*)bmp.BackBuffer;
+                    int stride = bmp.BackBufferStride;
+                    int height = bmp.PixelHeight;
+                    int width = bmp.PixelWidth;
+                    long totalPixels = width * height;
+
+                    int[] histR = new int[256];
+                    int[] histG = new int[256];
+                    int[] histB = new int[256];
+                    for (int y = 0; y < height; y++)
+                    {
+                        byte* row = basePtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            histB[row[x * 4]]++;
+                            histG[row[x * 4 + 1]]++;
+                            histR[row[x * 4 + 2]]++;
+                        }
+                    }
+                    float clipPercent = 0.005f;
+                    int threshold = (int)(totalPixels * clipPercent);
+
+                    void GetMinMax(int[] hist, out byte min, out byte max)
+                    {
+                        min = 0; max = 255;
+                        int count = 0;
+                        for (int i = 0; i < 256; i++)
+                        {
+                            count += hist[i];
+                            if (count > threshold) { min = (byte)i; break; }
+                        }
+                        count = 0;
+                        for (int i = 255; i >= 0; i--)
+                        {
+                            count += hist[i];
+                            if (count > threshold) { max = (byte)i; break; }
+                        }
+                    }
+
+                    GetMinMax(histB, out byte minB, out byte maxB);
+                    GetMinMax(histG, out byte minG, out byte maxG);
+                    GetMinMax(histR, out byte minR, out byte maxR);
+
+                    byte[] lutR = BuildLevelLut(minR, maxR);
+                    byte[] lutG = BuildLevelLut(minG, maxG);
+                    byte[] lutB = BuildLevelLut(minB, maxB);
+
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* row = basePtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            row[x * 4] = lutB[row[x * 4]];
+                            row[x * 4 + 1] = lutG[row[x * 4 + 1]];
+                            row[x * 4 + 2] = lutR[row[x * 4 + 2]];
+                        }
+                    });
+                }
+                bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
+            }
+            finally
+            {
+                bmp.Unlock();
+            }
+
+            NotifyCanvasChanged();
+            SetUndoRedoButtonState();
+            ShowToast("L_Toast_Effect_AutoLevels");
+        }
+
+        private BitmapSource ResizeBitmapCanvas(BitmapSource source, int targetW, int targetH)
+        {
+            var rtb = new RenderTargetBitmap(targetW, targetH, 96, 96, PixelFormats.Pbgra32);
+            var dv = new DrawingVisual();
+            using (var ctx = dv.RenderOpen())
+            {
+                double x = (targetW - source.PixelWidth) / 2.0;
+                double y = (targetH - source.PixelHeight) / 2.0;
+                ctx.DrawImage(source, new Rect(x, y, source.PixelWidth, source.PixelHeight));
+            }
+            rtb.Render(dv);
+            return rtb;
+        }
+        private byte[] BuildLevelLut(byte min, byte max)
+        {
+            byte[] lut = new byte[256];
+            if (max <= min)
+            {
+                for (int i = 0; i < 256; i++) lut[i] = (byte)i;
+                return lut;
+            }
+
+            float scale = 255.0f / (max - min);
+            for (int i = 0; i < 256; i++)
+            {
+                if (i <= min) lut[i] = 0;
+                else if (i >= max) lut[i] = 255;
+                else
+                {
+                    lut[i] = (byte)((i - min) * scale);
+                }
+            }
+            return lut;
+        }
         private void ProcessVignette(byte[] pixels, int width, int height, int stride)
         {
             float centerX = width / 2.0f;

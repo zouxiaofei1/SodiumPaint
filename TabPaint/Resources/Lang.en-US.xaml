@@ -17,6 +17,8 @@
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? </sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
+    <sys:String x:Key="L_ImgBar_NewImage">New Image</sys:String>
+    <sys:String x:Key="L_CreateNewWorkSpate">Create New WorkSpace</sys:String>
     <!-- SettingsWindow Navigation -->
     <sys:String x:Key="L_Settings_Title">Settings</sys:String>
     <sys:String x:Key="L_Settings_Nav_General">General</sys:String>
@@ -367,7 +369,6 @@
     <sys:String x:Key="L_TitleBar_Minimize">Minimize</sys:String>
     <sys:String x:Key="L_TitleBar_Maximize">Maximize</sys:String>
     <sys:String x:Key="L_TitleBar_Close">Close</sys:String>
-
     <!-- Adjust Windows -->
     <sys:String x:Key="L_AdjustBCE_Title">Adjust Image</sys:String>
     <sys:String x:Key="L_AdjustBCE_Brightness">Brightness</sys:String>

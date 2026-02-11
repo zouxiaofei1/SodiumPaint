@@ -397,8 +397,6 @@ namespace TabPaint.Controls
 
             double availableWidth = this.ActualWidth - leftUsedWidth - rightPadding;
             if (availableWidth < 0) availableWidth = 0;
-
-            // 4. 计算能放下多少列 (每列宽 buttonWidth)
             int visibleColumns = (int)(availableWidth / buttonWidth);
 
             if (visibleColumns > 11) visibleColumns = 11;

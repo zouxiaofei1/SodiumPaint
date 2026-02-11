@@ -37,11 +37,7 @@ namespace TabPaint
         public BitmapSource Get(string key)
         {
             if (string.IsNullOrEmpty(key)) return null;
-
-            if (_cache.TryGetValue(key, out var bitmap))
-            {
-                return bitmap;
-            }
+            if (_cache.TryGetValue(key, out var bitmap))return bitmap;
             return null;
         }
 

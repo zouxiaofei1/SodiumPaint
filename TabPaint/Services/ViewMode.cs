@@ -25,10 +25,7 @@ namespace TabPaint
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
-            {
-                return b ? Visibility.Collapsed : Visibility.Visible;
-            }
+            if (value is bool b)  return b ? Visibility.Collapsed : Visibility.Visible;
             return Visibility.Visible;
         }
 
@@ -66,11 +63,7 @@ namespace TabPaint
                         var resourceInfo = Application.GetResourceStream(uri);
                         if (resourceInfo != null)   _cachedCursorOpen = new Cursor(resourceInfo.Stream);
                     }
-                    catch
-                    {
-                        // 如果加载失败，回退到系统默认的 ScrollAll (类似移动图标)
-                        _cachedCursorOpen = Cursors.ScrollAll;
-                    }
+                    catch { _cachedCursorOpen = Cursors.ScrollAll; }
                 }
                 return _cachedCursorOpen;
             }
@@ -86,16 +79,9 @@ namespace TabPaint
                     {
                         var uri = new Uri("pack://application:,,,/Resources/Cursors/Closedhand.cur");
                         var resourceInfo = Application.GetResourceStream(uri);
-                        if (resourceInfo != null)
-                        {
-                            _cachedCursorClosed = new Cursor(resourceInfo.Stream);
-                        }
+                        if (resourceInfo != null)   _cachedCursorClosed = new Cursor(resourceInfo.Stream);
                     }
-                    catch
-                    {
-                        // 加载失败回退
-                        _cachedCursorClosed = Cursors.SizeAll;
-                    }
+                    catch {  _cachedCursorClosed = Cursors.SizeAll;    }
                 }
                 return _cachedCursorClosed;
             }
@@ -103,11 +89,7 @@ namespace TabPaint
         private void SetViewCursor(bool isPressed = false)
         {
             if (!IsViewMode) return;
-            if (isPressed)
-            {
-                // 设置 OverrideCursor 强制覆盖全程序光标，确保拖拽出控件范围也不变
-                Mouse.OverrideCursor = CursorClosedHand;
-            }
+            if (isPressed)   Mouse.OverrideCursor = CursorClosedHand;
             else
             {
                 // 松开时清除强制覆盖，并设置当前控件光标

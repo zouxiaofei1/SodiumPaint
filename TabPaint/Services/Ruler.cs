@@ -117,8 +117,6 @@ namespace TabPaint
                 drawingContext.DrawLine(edgePen, new Point(0, screenEnd), new Point(ActualWidth, screenEnd));
             }
         }
-
-
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);

@@ -29,12 +29,8 @@ namespace TabPaint
             int oldW = oldBitmap.PixelWidth;
             int oldH = oldBitmap.PixelHeight;
             int oldStride = oldBitmap.BackBufferStride;
-
-            // 1. 捕获撤销像素 (优化：直接从内存提取)
             var undoRect = new Int32Rect(0, 0, oldW, oldH);
             byte[] undoPixels = _surface.ExtractRegion(undoRect);
-
-            // 2. 创建新位图
             var newBitmap = new WriteableBitmap(newWidth, newHeight, oldBitmap.DpiX, oldBitmap.DpiY, PixelFormats.Bgra32, null);
             int newStride = newBitmap.BackBufferStride;
 
@@ -46,12 +42,8 @@ namespace TabPaint
                 {
                     byte* pNewBack = (byte*)newBitmap.BackBuffer;
                     byte* pOldBack = (byte*)oldBitmap.BackBuffer;
-
-                    // 填充背景色 (通常为白色)
                     long totalSize = (long)newHeight * newStride;
                     System.Runtime.InteropServices.MemoryMarshal.CreateSpan(ref *pNewBack, (int)totalSize).Fill(AppConsts.ColorComponentMax);
-
-                    // 计算复制区域
                     int destX = (newWidth - oldW) / 2;
                     int destY = (newHeight - oldH) / 2;
                     int srcX = 0, srcY = 0;
@@ -80,8 +72,6 @@ namespace TabPaint
                 oldBitmap.Unlock();
                 newBitmap.Unlock();
             }
-
-            // 3. 捕获重做像素
             var redoRect = new Int32Rect(0, 0, newWidth, newHeight);
             byte[] redoPixels = new byte[newHeight * newStride];
             newBitmap.CopyPixels(redoRect, redoPixels, newStride, 0);
@@ -152,10 +142,7 @@ namespace TabPaint
                     return Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]);
                 }
             }
-            finally
-            {
-                _bitmap.Unlock();
-            }
+            finally {  _bitmap.Unlock(); }
         }
 
         private void DrawPixel(int x, int y, Color color)
@@ -183,7 +170,6 @@ namespace TabPaint
             double cy = _bitmap.PixelHeight / 2.0;
             ApplyTransform(flipVertical ? new ScaleTransform(1, -1, cx, cy) : new ScaleTransform(-1, 1, cx, cy));
         }
-
         private BitmapSource CreateWhiteThumbnail()  
         {
             int w = AppConsts.DefaultThumbnailWidth; int h = AppConsts.DefaultThumbnailHeight;
@@ -361,7 +347,6 @@ namespace TabPaint
             SetUndoRedoButtonState();
             if (_canvasResizer != null) _canvasResizer.UpdateUI();
         }
-
         private void ConvertToBlackAndWhite(WriteableBitmap bmp)
         {
             bmp.Lock();
@@ -389,7 +374,6 @@ namespace TabPaint
             bmp.AddDirtyRect(new Int32Rect(0, 0, bmp.PixelWidth, bmp.PixelHeight));
             bmp.Unlock();
         }
-
         private void AutoCrop()
         {
             if (_surface?.Bitmap == null) return;
@@ -538,7 +522,14 @@ namespace TabPaint
                 return (rtb.Format != PixelFormats.Bgra32) ? new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0) : rtb;
             }
         }
-
+        public static Int32Rect MakeRect(Point p1, Point p2)
+        {
+            int x = (int)Math.Min(p1.X, p2.X);
+            int y = (int)Math.Min(p1.Y, p2.Y);
+            int w = Math.Abs((int)p1.X - (int)p2.X);
+            int h = Math.Abs((int)p1.Y - (int)p2.Y);
+            return new Int32Rect(x, y, w, h);
+        }
         private void ApplyAutoCrop(Int32Rect cropRect)
         {
             var oldBitmap = _surface.Bitmap;
@@ -556,6 +547,77 @@ namespace TabPaint
             NotifyCanvasChanged();
             _canvasResizer.UpdateUI();
             ShowToast(string.Format("Cropped: {0}x{1}", cropRect.Width, cropRect.Height));
+        }
+        private static unsafe void AlphaBlendBatch(byte[] sourcePixels, byte[] destPixels, int width, int height, int stride, int sourceStartIdx, double globalOpacity)
+        {
+            int opacityScale = (int)(globalOpacity * 255);
+
+            if (opacityScale <= 0) return;
+
+            fixed (byte* pSrcBase = sourcePixels)
+            fixed (byte* pDstBase = destPixels)
+            {
+                for (int row = 0; row < height; row++)
+                {
+                    byte* pSrcRow = pSrcBase + sourceStartIdx + (row * stride);
+                    byte* pDstRow = pDstBase + (row * stride);
+
+                    for (int col = 0; col < width; col++)
+                    {
+                        byte rawSrcA = pSrcRow[3];
+                        if (rawSrcA == 0)
+                        {
+                            pSrcRow += 4;
+                            pDstRow += 4;
+                            continue;
+                        }
+
+                        int srcA, srcR, srcG, srcB;
+
+                        if (opacityScale == 255)
+                        {
+                            srcB = pSrcRow[0];// 满不透明度，直接读取
+                            srcG = pSrcRow[1];
+                            srcR = pSrcRow[2];
+                            srcA = rawSrcA;
+                        }
+                        else
+                        {
+                            srcB = (pSrcRow[0] * opacityScale) / 255;
+                            srcG = (pSrcRow[1] * opacityScale) / 255;
+                            srcR = (pSrcRow[2] * opacityScale) / 255;
+                            srcA = (rawSrcA * opacityScale) / 255;
+                        }
+
+                        if (srcA == 0)
+                        {
+                            pSrcRow += 4;
+                            pDstRow += 4;
+                            continue;
+                        }
+
+                        if (srcA == 255)
+                        {
+                            pDstRow[0] = (byte)srcB;
+                            pDstRow[1] = (byte)srcG;
+                            pDstRow[2] = (byte)srcR;
+                            pDstRow[3] = 255; // 目标 alpha 变成 255
+                        }
+                        else
+                        {
+                            int invAlpha = 255 - srcA;// Alpha 混合: Out = Src + Dst * (1 - SrcA)
+
+                            pDstRow[0] = (byte)(srcB + (pDstRow[0] * invAlpha) / 255); // B
+                            pDstRow[1] = (byte)(srcG + (pDstRow[1] * invAlpha) / 255); // G
+                            pDstRow[2] = (byte)(srcR + (pDstRow[2] * invAlpha) / 255); // R
+                            pDstRow[3] = (byte)(srcA + (pDstRow[3] * invAlpha) / 255); // A
+                        }
+
+                        pSrcRow += 4;
+                        pDstRow += 4;
+                    }
+                }
+            }
         }
     }
 }

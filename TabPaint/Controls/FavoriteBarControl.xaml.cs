@@ -24,6 +24,7 @@ namespace TabPaint.Controls
         private const string OrderFileName = ".order";
         private const int FavoriteThumbnailSize = 150;
         private const int WM_MOUSEHWHEEL = AppConsts.WM_MOUSEHWHEEL;
+        private Point? _dragStartPoint = null;
 
         private bool _isLoading = false;
 
@@ -247,8 +248,6 @@ namespace TabPaint.Controls
                 }
                 catch { }
             }
-
-            // 将剩余不在排序列表中的文件（新添加的）按创建时间降序排列并加入
             var remaining = allFiles.OrderByDescending(f => File.GetCreationTime(f)).ToList();
             result.AddRange(remaining);
 
@@ -405,7 +404,7 @@ namespace TabPaint.Controls
                 Height = 100,
                 Margin = new Thickness(6),
                 Tag = filePath,
-                Style = (Style)FindResource("FavoriteItemStyle")  // ★ 应用动画样式
+                Style = (Style)FindResource("FavoriteItemStyle") 
             };
 
             var border = new Border
@@ -440,7 +439,6 @@ namespace TabPaint.Controls
 
             Action doDelete = () =>
             {
-                // ★ 删除时播放缩小淡出动画
                 var removeStoryboard = new System.Windows.Media.Animation.Storyboard();
 
                 var scaleXAnim = new System.Windows.Media.Animation.DoubleAnimation
@@ -523,54 +521,14 @@ namespace TabPaint.Controls
             grid.Children.Add(deleteBtn);
             grid.MouseEnter += (s, e) =>
             {
-                var sb = new System.Windows.Media.Animation.Storyboard();
-                var fadeIn = new System.Windows.Media.Animation.DoubleAnimation { To = 1, Duration = TimeSpan.FromMilliseconds(150) };
-                System.Windows.Media.Animation.Storyboard.SetTarget(fadeIn, deleteBtn);
-                System.Windows.Media.Animation.Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
-
-                var scaleX = new System.Windows.Media.Animation.DoubleAnimation
-                {
-                    To = 1,
-                    Duration = TimeSpan.FromMilliseconds(200),
-                    EasingFunction = new System.Windows.Media.Animation.BackEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut, Amplitude = 0.3 }
-                };
-                System.Windows.Media.Animation.Storyboard.SetTarget(scaleX, deleteBtn);
-                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleX, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
-
-                var scaleY = new System.Windows.Media.Animation.DoubleAnimation
-                {
-                    To = 1,
-                    Duration = TimeSpan.FromMilliseconds(200),
-                    EasingFunction = new System.Windows.Media.Animation.BackEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut, Amplitude = 0.3 }
-                };
-                System.Windows.Media.Animation.Storyboard.SetTarget(scaleY, deleteBtn);
-                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleY, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
-
-                sb.Children.Add(fadeIn);
-                sb.Children.Add(scaleX);
-                sb.Children.Add(scaleY);
-                sb.Begin();
+                border.BorderBrush = (Brush)FindResource("SystemAccentHoverBrush");
+                border.BorderThickness = new Thickness(1);
             };
 
             grid.MouseLeave += (s, e) =>
             {
-                var sb = new System.Windows.Media.Animation.Storyboard();
-                var fadeOut = new System.Windows.Media.Animation.DoubleAnimation { To = 0, Duration = TimeSpan.FromMilliseconds(100) };
-                System.Windows.Media.Animation.Storyboard.SetTarget(fadeOut, deleteBtn);
-                System.Windows.Media.Animation.Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
-
-                var scaleX = new System.Windows.Media.Animation.DoubleAnimation { To = 0.7, Duration = TimeSpan.FromMilliseconds(100) };
-                System.Windows.Media.Animation.Storyboard.SetTarget(scaleX, deleteBtn);
-                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleX, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
-
-                var scaleY = new System.Windows.Media.Animation.DoubleAnimation { To = 0.7, Duration = TimeSpan.FromMilliseconds(100) };
-                System.Windows.Media.Animation.Storyboard.SetTarget(scaleY, deleteBtn);
-                System.Windows.Media.Animation.Storyboard.SetTargetProperty(scaleY, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
-
-                sb.Children.Add(fadeOut);
-                sb.Children.Add(scaleX);
-                sb.Children.Add(scaleY);
-                sb.Begin();
+                border.BorderBrush = (Brush)FindResource("BorderBrush");
+                border.BorderThickness = new Thickness(1);
             };
 
             deleteBtn.Click += (s, e) =>
@@ -581,26 +539,34 @@ namespace TabPaint.Controls
 
             border.MouseMove += (s, e) =>
             {
-                if (e.LeftButton == MouseButtonState.Pressed)
+                if (e.LeftButton == MouseButtonState.Pressed && _dragStartPoint.HasValue)
                 {
-                    DataObject data = new DataObject();
-                    data.SetData(DataFormats.FileDrop, new string[] { filePath });
-                    var fileList = new System.Collections.Specialized.StringCollection { filePath };
-                    data.SetFileDropList(fileList);
-                    
-                    // 标记为内部排序拖拽
-                    data.SetData("FavoriteItemReorder", filePath);
-                    
-                    DragDrop.DoDragDrop(border, data, DragDropEffects.Copy | DragDropEffects.Move);
+                    Point current = e.GetPosition(border);
+                    Vector diff = current - _dragStartPoint.Value;
+
+                    if (Math.Abs(diff.X) > 20  ||
+                        Math.Abs(diff.Y) > 20)
+                    {
+                        _dragStartPoint = null;
+                        DataObject data = new DataObject();
+                        data.SetData(DataFormats.FileDrop, new string[] { filePath });
+                        var fileList = new System.Collections.Specialized.StringCollection { filePath };
+                        data.SetFileDropList(fileList);
+                        data.SetData("FavoriteItemReorder", filePath);
+                        DragDrop.DoDragDrop(border, data, DragDropEffects.Copy | DragDropEffects.Move);
+                    }
                 }
             };
-
+            border.MouseLeftButtonUp += (s, e) =>    {  _dragStartPoint = null; };
             border.MouseLeftButtonDown += (s, e) =>
             {
                 if (e.ClickCount == 2)
                 {
                     ImageSelected?.Invoke(filePath);
+                    _dragStartPoint = null;
+                    return;
                 }
+                _dragStartPoint = e.GetPosition(border);
             };
 
             var menu = new ContextMenu { Style = (Style)FindResource("Win11ContextMenuStyle") };
@@ -631,21 +597,12 @@ namespace TabPaint.Controls
             border.ContextMenu = menu;
 
             var plusBtn = stack.Children.Cast<FrameworkElement>().FirstOrDefault(c => c.Style == FindResource("PlusButtonStyle"));
-            if (plusBtn != null)
-            {
-                stack.Children.Insert(stack.Children.IndexOf(plusBtn), grid);
-            }
-            else
-            {
-                stack.Children.Add(grid);
-            }
+            if (plusBtn != null)  stack.Children.Insert(stack.Children.IndexOf(plusBtn), grid);
+            else stack.Children.Add(grid);
             SaveOrder();
         }
 
-        private void OnCloseClick(object sender, RoutedEventArgs e)
-        {
-            CloseRequested?.Invoke(this, EventArgs.Empty);
-        }
+        private void OnCloseClick(object sender, RoutedEventArgs e) { CloseRequested?.Invoke(this, EventArgs.Empty); }
 
         private void OnWrapPanelDragOver(object sender, DragEventArgs e)
         {
@@ -666,8 +623,8 @@ namespace TabPaint.Controls
             }
             else if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effects = DragDropEffects.Copy;
-            else
-                e.Effects = DragDropEffects.None;
+            else    e.Effects = DragDropEffects.None;
+            
             e.Handled = true;
         }
 
@@ -680,10 +637,7 @@ namespace TabPaint.Controls
                 if (child.Style == plusStyle) break;
                 
                 Point childPos = child.TranslatePoint(new Point(0, 0), stack);
-                if (pos.X < childPos.X + child.ActualWidth / 2)
-                {
-                    return index;
-                }
+                if (pos.X < childPos.X + child.ActualWidth / 2) return index;
                 index++;
             }
             return Math.Max(0, index); 
@@ -712,16 +666,10 @@ namespace TabPaint.Controls
                 var plusStyle = FindResource("PlusButtonStyle") as Style;
                 for (int i = 0; i < stack.Children.Count; i++)
                 {
-                    if ((stack.Children[i] as FrameworkElement)?.Style == plusStyle)
-                    {
-                        plusIndex = i;
-                        break;
-                    }
+                    if ((stack.Children[i] as FrameworkElement)?.Style == plusStyle){  plusIndex = i;  break; }
                 }
 
-                if (plusIndex != -1 && targetIndex > plusIndex)
-                    targetIndex = plusIndex;
-
+                if (plusIndex != -1 && targetIndex > plusIndex) targetIndex = plusIndex;
                 if (targetIndex >= stack.Children.Count)
                     stack.Children.Add(draggedGrid);
                 else
@@ -752,7 +700,6 @@ namespace TabPaint.Controls
             if (!AppConsts.IsSupportedImage(filePath)) return;
             try
             {
-                // ★ 去重检查
                 if (IsDuplicateInPage(filePath)) return;
 
                 string fileName = Path.GetFileName(filePath);
@@ -764,7 +711,6 @@ namespace TabPaint.Controls
                 {
                     destPath = Path.Combine(pagePath, Path.GetFileNameWithoutExtension(fileName) + $"_{i++}" + Path.GetExtension(fileName));
                 }
-
                 File.Copy(filePath, destPath);
                 EnsureThumbnail(destPath);
                 AddImageToUI(destPath);
@@ -785,7 +731,6 @@ namespace TabPaint.Controls
         {
             try
             {
-                // ★ 去重检查
                 if (IsDuplicateBitmapInPage(bitmap)) return;
 
                 string fileName = string.Format("Pasted_{0:yyyyMMdd_HHmmss}.png", DateTime.Now);

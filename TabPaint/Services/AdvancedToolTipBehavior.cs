@@ -19,7 +19,6 @@ namespace TabPaint.Behaviors
         {
             return obj.GetValue(DetailedToolTipProperty);
         }
-
         public static void SetDetailedToolTip(DependencyObject obj, object value)
         {
             obj.SetValue(DetailedToolTipProperty, value);
@@ -70,8 +69,7 @@ namespace TabPaint.Behaviors
 
         private static void Element_ToolTipOpening(object sender, ToolTipEventArgs e)
         {
-            // 确保每次打开Tooltip时，先显示原始的基础提示
-            var element = sender as FrameworkElement;
+            var element = sender as FrameworkElement;        // 确保每次打开Tooltip时，先显示原始的基础提示
             var original = element.GetValue(OriginalToolTipProperty);
             if (original != null)
             {
@@ -95,16 +93,11 @@ namespace TabPaint.Behaviors
             timer.Tick += (s, args) =>
             {
                 timer.Stop();
-                // 切换到详细提示
-                var detailed = GetDetailedToolTip(element);
+                var detailed = GetDetailedToolTip(element);   // 切换到详细提示
                 if (detailed != null)
                 {
                     element.ToolTip = detailed;
-
-                    if (element.ToolTip is ToolTip tt)
-                    {
-                        tt.IsOpen = true;
-                    }
+                    if (element.ToolTip is ToolTip tt)  tt.IsOpen = true;  
                 }
             };
 
@@ -115,8 +108,6 @@ namespace TabPaint.Behaviors
         {
             var element = sender as FrameworkElement;
             if (element == null) return;
-
-            // 1. 停止计时器
             var timer = element.GetValue(TimerProperty) as DispatcherTimer;
             if (timer != null)
             {

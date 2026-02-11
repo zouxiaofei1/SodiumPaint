@@ -31,8 +31,6 @@ namespace TabPaint
             _binPath = Path.Combine(_folderPath, "settings.bin");
             Load(); // 初始化时尝试加载，如果失败则创建默认
         }
-
-        // 单例访问点
         public static SettingsManager Instance
         {
             get
@@ -79,9 +77,6 @@ namespace TabPaint
                     loaded = true;
                 }
             }
-
-
-            // 2. 如果二进制加载不可用或失败，回退到 JSON 加载
             if (!loaded)
             {
                 if (File.Exists(_filePath))
@@ -93,7 +88,6 @@ namespace TabPaint
                             Current = JsonSerializer.Deserialize(stream, AppSettingsJsonContext.Default.AppSettings);
                         }
                         loaded = true;
-                        // 加载 JSON 成功后，立即异步或同步转换一份 .bin 供下次快速启动
                         SaveBinary();
                     }
                     catch (Exception ex)
@@ -102,28 +96,20 @@ namespace TabPaint
                     }
                 }
             }
-
-            // 3. 兜底逻辑：如果都没有成功，则创建默认设置
             if (!loaded)
             {
                 Current = new AppSettings();
                 Save(); // 初始化时同时创建 .json 和 .bin
             }
         }
-
-        // 保存设置
-        public void Save()
+        public void Save()// 保存设置
         {
             try
             {
                 if (!Directory.Exists(_folderPath)) Directory.CreateDirectory(_folderPath);
-
-                // 1. 写入 JSON (保证可读性和备份)
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string jsonString = JsonSerializer.Serialize(Current, options);
                 File.WriteAllText(_filePath, jsonString);
-
-                // 2. 写入二进制 (保证下次启动速度)
                 SaveBinary();
             }
             catch (Exception ex)

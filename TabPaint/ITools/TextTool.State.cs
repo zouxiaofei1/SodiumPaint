@@ -22,13 +22,8 @@ namespace TabPaint
     {
         private void FontSettingChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_router.CurrentTool is TextTool textTool)
-            {
-                textTool.UpdateCurrentTextBoxAttributes();
-            }
-
+            if (_router.CurrentTool is TextTool textTool)  textTool.UpdateCurrentTextBoxAttributes();
         }
-
         public class TextStyleInfo
         {
             public string Text { get; set; }
@@ -42,19 +37,12 @@ namespace TabPaint
         public void ApplyDetectedTextStyle(TextStyleInfo style)
         {
             if (style == null) return;
-
-            // 1. 应用字体
-            if (style.FontFamily != null)  TextMenu.FontFamilyBox.SelectedValue = style.FontFamily;
-
+            if (style.FontFamily != null)  TextMenu.FontFamilyBox.SelectedValue = style.FontFamily;   // 1. 应用字体
             double fontSizeInPoints = style.FontSize * 72.0 / 96.0;
             TextMenu.FontSizeBox.Text = Math.Round(fontSizeInPoints).ToString();
-
-            // 3. 应用粗体/斜体
-            TextMenu.BoldBtn.IsChecked = (style.FontWeight >= FontWeights.Bold);
+            TextMenu.BoldBtn.IsChecked = (style.FontWeight >= FontWeights.Bold);  // 3. 应用粗体/斜体
             TextMenu.ItalicBtn.IsChecked = (style.FontStyle == FontStyles.Italic || style.FontStyle == FontStyles.Oblique);
-
-            // 4. 应用下划线/删除线
-            TextMenu.UnderlineBtn.IsChecked = false;
+            TextMenu.UnderlineBtn.IsChecked = false; // 4. 应用下划线/删除线
             TextMenu.StrikeBtn.IsChecked = false;
             if (style.TextDecorations != null)
             {
@@ -64,12 +52,9 @@ namespace TabPaint
                     if (dec.Location == TextDecorationLocation.Strikethrough) TextMenu.StrikeBtn.IsChecked = true;
                 }
             }
-
-            // 5. 应用颜色
-            if (style.Foreground != null)
+            if (style.Foreground != null)  // 5. 应用颜色
             {
                 SelectedBrush = style.Foreground;
-
                 _ctx.PenColor = style.Foreground.Color;
                 UpdateCurrentColor(_ctx.PenColor, useSecondColor);
             }

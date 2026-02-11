@@ -168,63 +168,7 @@ namespace TabPaint
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(localX, localY);
             }
 
-            private void StartDragDropOperation(ToolContext ctx)
-            {
-                if (_selectionData == null) return;
 
-                int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
-                int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
-                byte[] data = _selectionData;
-                if (width == 0 || height == 0) return;
-                int stride = width * 4;
-                int expectedStride = _originalRect.Width * 4;
-                int actualStride = _selectionData.Length / _originalRect.Height;
-                int dataStride = Math.Min(expectedStride, actualStride);
-                var bitmapSource = BitmapSource.Create(
-                    width, height,
-                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
-                    PixelFormats.Bgra32, null,
-                    data, dataStride);
-
-                string tempFilePath = System.IO.Path.Combine(
-                    System.IO.Path.GetTempPath(),
-                    $"selection_{Guid.NewGuid()}.png"
-                );
-               // s(tempFilePath);
-                try
-                {
-                    using (var fileStream = new System.IO.FileStream(tempFilePath, System.IO.FileMode.Create))
-                    {
-                        PngBitmapEncoder encoder = new PngBitmapEncoder();
-                        encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-                        encoder.Save(fileStream);
-                    }
-
-                    var dataObject = new System.Windows.DataObject();
-
-                    dataObject.SetData(System.Windows.DataFormats.FileDrop, new string[] { tempFilePath });
-                    dataObject.SetData("TabPaintSelectionDrag", true); dataObject.SetData("TabPaintSourceWindow", ctx.ParentWindow.GetHashCode());
-
-                    if (_hasLifted)
-                    {
-                        ctx.Undo.Undo();
-                        _hasLifted = false;
-                    }
-                    HidePreview(ctx);
-                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
-
-                    DragDrop.DoDragDrop(ctx.ViewElement, dataObject, System.Windows.DragDropEffects.Copy);
-                    _originalRect = new Int32Rect();
-                    _transformStep = 0;
-                    _selectionData = null;
-                    ctx.IsDirty = true;
-                }
-                catch (Exception ex) { }
-                finally
-                {
-                    if (System.IO.File.Exists(tempFilePath)) DeleteFileWithDelay(tempFilePath, 5000); // 延迟 5秒
-                }
-            }
             private void DeleteFileWithDelay(string filePath, int delayMilliseconds)
             {
                 // 使用 Task.Run 启动一个后台线程，不阻塞 UI
@@ -232,7 +176,6 @@ namespace TabPaint
                 {
                     try
                     {
-                        //等待指定时间删除
                         await Task.Delay(delayMilliseconds);
                         if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
                     }
@@ -395,14 +338,7 @@ namespace TabPaint
                 ctx.SelectionPreview.Visibility = Visibility.Collapsed;
             }
 
-            private static Int32Rect MakeRect(Point p1, Point p2)
-            {
-                int x = (int)Math.Min(p1.X, p2.X);
-                int y = (int)Math.Min(p1.Y, p2.Y);
-                int w = Math.Abs((int)p1.X - (int)p2.X);
-                int h = Math.Abs((int)p1.Y - (int)p2.Y);
-                return new Int32Rect(x, y, w, h);
-            }
+
 
             public bool IsPointInSelection(Point px)
             {
@@ -413,12 +349,7 @@ namespace TabPaint
                               px.Y < _selectionRect.Y + _selectionRect.Height;
 
                 if (!inRect) return false;
-
-                // 2. 矩形选区：包围盒内即视为选中
                 if (SelectionType == SelectionType.Rectangle) return true;
-
-                // 3. 套索和魔棒：如果已经变换过（移动/缩放），AlphaMap 坐标已失效，
-                //    直接用包围盒判断即可（因为上面已经通过了 inRect 检查）
                 if (_transformStep > 0) return true;
 
                 // 4. 未变换过：精确检查 AlphaMap

@@ -170,7 +170,6 @@ namespace TabPaint
                 UpdateBasicColorTooltips();
             };
         }
-
         private void UpdateBasicColorTooltips()
         {
             foreach (var child in BasicColorsGrid.Children)
@@ -637,13 +636,9 @@ namespace TabPaint
 
             foreach (var color in _customColors)
             {
-                // Color.ToString() 默认返回 #AARRGGBB 格式
                 hexList.Add(color.ToString());
             }
-
-            // 更新设置对象
             SettingsManager.Instance.Current.CustomColors = hexList;
-            // 写入文件
             SettingsManager.Instance.Save();
         }
 
@@ -658,7 +653,6 @@ namespace TabPaint
 
                     if (i < _customColors.Count)
                     {
-                        // === 有颜色 ===
                         var c = _customColors[i];
                         var btn = new Button
                         {

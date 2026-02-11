@@ -11,7 +11,7 @@ namespace TabPaint
     public static class AppConsts
     {
         // --- 版本信息 ---
-        public const string ProgramVersion = "v0.9.5.1";
+        public const string ProgramVersion = "v0.9.5.2";
 
         // --- Win32 消息常量 ---
         public const int WM_NCHITTEST = 0x0084;
@@ -146,7 +146,7 @@ namespace TabPaint
         public const double ImageBarAddButtonWidthFallback = 46.0;
 
         // --- 导航栏参数 ---
-        public const double NavExpandedWidth = 220;
+        public const double NavExpandedWidth = 170;
         public const double NavCollapsedWidth = 48;
 
         // --- 选择与拖拽定时 (ms) ---

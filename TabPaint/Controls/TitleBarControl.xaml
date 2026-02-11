@@ -34,7 +34,7 @@
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <Button Width="40" Height="30" x:Name="HelpButton"
-            services:ShortcutService.BaseToolTip="L_TitleBar_Help"
+            ToolTip="{DynamicResource L_TitleBar_Help}"
             Click="OnHelpClick"
             Style="{StaticResource TitleBarButtonStyle}"
             Margin="0,0,4,0">
@@ -43,7 +43,6 @@
 
                 <Popup x:Name="HelpHintPopup" PlacementTarget="{Binding ElementName=HelpButton}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade" VerticalOffset="2" StaysOpen="False" HorizontalOffset="-80">
                     <Grid Margin="10">
-                        <!-- 气泡小箭头 -->
                         <Path Data="M 0,8 L 8,0 L 16,8 Z" Fill="{DynamicResource SystemAccentColorLightBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,91,0"/>
                         
                         <Border Background="{DynamicResource GlassBackgroundBrush}" 

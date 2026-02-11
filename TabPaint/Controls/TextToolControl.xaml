@@ -15,8 +15,6 @@
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
     </UserControl.Resources>
-
-    <!-- 这里的 Border 就是原来的 TextEditBar -->
     <Border x:Name="MainBorder" 
             Background="{DynamicResource ChromeLowBrush}" 
             BorderBrush="{DynamicResource BorderLightBrush}" 
@@ -34,14 +32,11 @@
         </Border.Effect>
 
         <StackPanel Orientation="Horizontal">
-            <!-- 字体选择 -->
             <ComboBox x:Name="FontFamilyBox" 
                       Style="{StaticResource FluentComboBoxStyle}" 
                       Width="160" 
                       IsEditable="True" 
                       Background="{DynamicResource ControlBackgroundBrush}"/>
-
-            <!-- 字号 -->
             <ComboBox x:Name="FontSizeBox" Style="{StaticResource FluentComboBoxStyle}" Width="70" 
                       IsEditable="True" Text="24">
                 <sys:Double>9</sys:Double>

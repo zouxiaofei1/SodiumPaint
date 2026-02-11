@@ -165,13 +165,12 @@
         <!-- 2. 主体区域 -->
         <Grid Grid.Row="1" Background="Transparent">
             <Grid.ColumnDefinitions>
-                <!-- 侧边栏宽度，支持动画 -->
                 <ColumnDefinition Width="Auto" x:Name="NavColumn"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- 左侧导航栏 -->
-            <Border Grid.Column="0" x:Name="SidebarBorder" Width="220"
+            <Border Grid.Column="0" x:Name="SidebarBorder" Width="180"
                     BorderBrush="{DynamicResource BorderBrush}">
                 <Border.Style>
                     <Style TargetType="Border">

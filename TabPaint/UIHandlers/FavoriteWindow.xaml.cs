@@ -26,9 +26,21 @@ namespace TabPaint.UIHandlers
             InitializeComponent();
             this.SupportFocusHighlight();
             this.Loaded += (s, e) => LoadPages();
-            this.SourceInitialized += OnSourceInitialized;
+            this.SourceInitialized += OnSourceInitialized; ThemeManager.ThemeChanged += OnThemeChanged;
         }
+        private void OnThemeChanged()
+        {
+          
+            Dispatcher.Invoke(() =>
+            {
+                // 更新窗口暗色模式
+                ThemeManager.SetWindowImmersiveDarkMode(this, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
+                MicaAcrylicManager.ApplyEffect(this);
 
+                // 重新加载内容（代码创建的控件会重新取色）
+                RefreshContent();
+            });
+        }
         private void OnSourceInitialized(object sender, EventArgs e)
         {
             ThemeManager.SetWindowImmersiveDarkMode(this, ThemeManager.CurrentAppliedTheme == AppTheme.Dark);
@@ -37,14 +49,14 @@ namespace TabPaint.UIHandlers
 
         protected override void OnClosed(EventArgs e)
         {
-           if(_snapManager!=null) _snapManager.Detach();
+            ThemeManager.ThemeChanged -= OnThemeChanged;
+            if (_snapManager!=null) _snapManager.Detach();
             base.OnClosed(e);
         }
         public void AttachToAnchor(Window newAnchor)
         {
             if (_snapManager == null)
             {
-                // 首次创建
                 _snapManager = new WindowSnapManager(this, newAnchor, SnapEdge.Bottom);
                 _snapManager.SnapStateChanged += OnSnapStateChanged;
 
@@ -54,7 +66,6 @@ namespace TabPaint.UIHandlers
                 }
                 else
                 {
-                    // 延迟到 Loaded 后 Attach
                     void handler(object s, RoutedEventArgs ev)
                     {
                         _snapManager.Attach();
@@ -65,19 +76,57 @@ namespace TabPaint.UIHandlers
             }
             else
             {
-                // 切换锚点
                 _snapManager.SwitchAnchor(newAnchor);
             }
+
+            // 吸附状态下立即绑定 Owner
+            if (_snapManager.IsSnapped)
+            {
+                SetOwnerSafe(newAnchor);
+            }
         }
+
         public void RefreshContent()
         {
             GetFavoriteContent()?.LoadFavorites(_activePage);
             RefreshPageTabs();
         }
+        private void ClearOwner()
+        {
+            try
+            {
+                if (this.Owner != null)
+                {
+                    this.Owner = null;
+                }
+            }
+            catch { }
+        }
+        private void SetOwnerSafe(Window newOwner)
+        {
+            try
+            {
+                if (this.Owner == newOwner) return;
+                // 必须先清除旧 Owner，否则跨窗口切换会抛异常
+                this.Owner = null;
+                if (newOwner != null && newOwner.IsLoaded && newOwner.IsVisible)
+                {
+                    this.Owner = newOwner;
+                }
+            }
+            catch { }
+        }
 
         private void OnSnapStateChanged(SnapEdge edge, bool isSnapped)
         {
-            // 布局切换逻辑保持不变
+            if (isSnapped)
+            {
+                SetOwnerSafe(_snapManager.AnchorWindow);
+            }
+            else
+            {
+                ClearOwner();
+            }
         }
         #region 拖动（转发给 SnapManager）
 
@@ -98,17 +147,19 @@ namespace TabPaint.UIHandlers
         }
         public void SwitchAnchorKeepPosition(Window newAnchor)
         {
-            _snapManager?.SwitchAnchorKeepPosition(newAnchor);
+            _snapManager?.SwitchAnchorKeepPosition(newAnchor); if (_snapManager?.IsSnapped == true)
+            {
+                SetOwnerSafe(newAnchor);
+            }
         }
         public bool IsSnapped => _snapManager?.IsSnapped ?? false;
         private void StarIcon_MouseMove(object sender, MouseEventArgs e)
         {
             var cursorPos = _snapManager.GetCursorPosDIU();
             _snapManager.UpdateDrag(cursorPos);
-
-            // ★ 拖拽过程中检测最近的 MainWindow，动态切换锚点
             if (!_snapManager.IsSnapped)
             {
+                ClearOwner();
                 var nearest = FavoriteWindowManager.FindNearestMainWindow(cursorPos);
                 if (nearest != null && nearest != FavoriteWindowManager.CurrentAnchor)
                 {
@@ -129,8 +180,12 @@ namespace TabPaint.UIHandlers
                 var nearest = FavoriteWindowManager.FindNearestMainWindow(cursorPos);
                 if (nearest != null)
                 {
-                    FavoriteWindowManager.SwitchAnchor(nearest);
+                    FavoriteWindowManager.SwitchAnchor(nearest); SetOwnerSafe(nearest);
                 }
+            }
+            else
+            {
+                ClearOwner();
             }
 
             var element = sender as UIElement;
@@ -207,8 +262,8 @@ namespace TabPaint.UIHandlers
                 {
                     Content = page.Length > 2 ? page.Substring(0, 2) : page,
                     Style = (Style)FindResource("RoundedMenuButtonStyle"),
-                    Width = 32,
-                    Height = 32,
+                    Width = 36,
+                    Height = 36,
                     ToolTip = page,
                     Tag = page
                 };
@@ -216,7 +271,13 @@ namespace TabPaint.UIHandlers
                 if (page == _activePage)
                 {
                     btn.Background = (Brush)FindResource("SystemAccentBrush");
-                    btn.Foreground = Brushes.White;
+                    var normalBrush = (Brush)FindResource("TextInverseBrush");   // 浅色=白, 深色=黑
+                    var hoverBrush = (Brush)FindResource("TextPrimaryBrush");    // 浅色=黑, 深色=白
+
+                    btn.Foreground = normalBrush;
+
+                    btn.MouseEnter += (s, e) => ((Button)s).Foreground = hoverBrush;
+                    btn.MouseLeave += (s, e) => ((Button)s).Foreground = normalBrush;
                 }
 
                 btn.Click += (s, e) =>

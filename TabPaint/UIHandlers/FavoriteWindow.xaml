@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TabPaint.UIHandlers"
         xmlns:controls="clr-namespace:TabPaint.Controls"
         mc:Ignorable="d"
-        Title="Favorite" Height="150" Width="450"
+        Title="Favorite" Height="150" Width="450" MinHeight="130" MinWidth="120"
         WindowStyle="None" AllowsTransparency="False" Background="Transparent"
         PreviewMouseLeftButtonDown="StarIcon_MouseLeftButtonDown"
         ShowInTaskbar="False">
@@ -53,10 +53,29 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" 
-                          HorizontalScrollBarVisibility="Disabled" 
-                          Style="{DynamicResource FluentScrollViewer}">
+              HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer.Template>
+                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                            <Grid>
+                                <ScrollBar x:Name="PART_VerticalScrollBar"
+                           Style="{StaticResource ThinScrollBar}"
+                           Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                           Value="{Binding VerticalOffset, Mode=OneWay,
+                RelativeSource={RelativeSource TemplatedParent}}"
+                           ViewportSize="{TemplateBinding ViewportHeight}"
+                           Maximum="{TemplateBinding ScrollableHeight}"
+                           HorizontalAlignment="Left"
+                            />
+
+                                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                        CanContentScroll="{TemplateBinding CanContentScroll}"
+                                        Margin="{TemplateBinding Padding}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </ScrollViewer.Template>
                     <StackPanel x:Name="PagesStackPanel" VerticalAlignment="Bottom"/>
                 </ScrollViewer>
+
 
                 <Button Grid.Row="1" Click="AddPage_Click" 
                     Style="{StaticResource RoundedMenuButtonStyle}" 

@@ -16,7 +16,7 @@ namespace TabPaint
         public static bool IsLazyIconsLoaded { get; private set; } = false;
         private const string RegistryKeyPath = AppConsts.RegistryKeyPathThemes;
         private const string RegistryValueName = AppConsts.RegistryValueNameLightTheme;
-
+        public static event Action ThemeChanged;
         public static AppTheme CurrentAppliedTheme { get; private set; }
 
         // 监听系统颜色改变
@@ -89,14 +89,11 @@ namespace TabPaint
                 
                 CurrentAppliedTheme = targetTheme;
             }
-
-            // 更新窗口样式和背景
             UpdateWindowStyle(isDark);
            
             if (!IsWin11()) ApplyWin10FallbackBackground(isDark);
+            RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor); 
 
-            // 强调色更新涉及 UI 资源，必须在 UI 线程执行。4ms 耗时较低，直接执行以确保界面一致性。
-            RefreshAccentColor(SettingsManager.Instance.Current.ThemeAccentColor);
         }
         private static void ReloadIconDictionary(string path)
         {
@@ -107,8 +104,6 @@ namespace TabPaint
             if (existing != null) mergedDicts.Remove(existing);
             mergedDicts.Add(new ResourceDictionary { Source = uri });
         }
-
-        // 新增：公开方法供 MainWindow 调用以加载 Lazy Icons
         public static void LoadLazyIcons()
         {
             if (IsLazyIconsLoaded) return;
@@ -119,12 +114,7 @@ namespace TabPaint
                 IsLazyIconsLoaded = true;
             }, System.Windows.Threading.DispatcherPriority.Background); // 使用 Background 优先级，不阻塞 UI
         }
-        private static bool IsWin11()
-        {
-            return Environment.OSVersion.Version.Build >= 22000;
-        }
-
-        // 【新增方法】Win10 专用背景覆盖
+        private static bool IsWin11()  {return Environment.OSVersion.Version.Build >= 22000;}
         private static void ApplyWin10FallbackBackground(bool isDark)
         {
             var resources = Application.Current.Resources;
@@ -140,7 +130,6 @@ namespace TabPaint
             }
             else
             {
-                // Win10 浅色模式：使用经典的 Windows 灰白
                 var win10LightBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F3F3F3"));
                 win10LightBg.Freeze();
 
@@ -155,19 +144,10 @@ namespace TabPaint
                 hexColor = SettingsManager.Instance.Current.ThemeAccentColor;
             }
             UpdateAccentResources(hexColor);
-
-            // 重新加载图标字典以刷新内部对强调色的引用 (DrawingImage 内部的 DynamicResource)
-            if (!IsLazyIconsLoaded)
-            {
-                ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
-            }
-            else
-            {
-                ReloadIconDictionary("Resources/Icons/Icons.xaml");
-            }
-
+            if (!IsLazyIconsLoaded)  ReloadIconDictionary("Resources/Icons/Icons_Essential.xaml");
+            else  ReloadIconDictionary("Resources/Icons/Icons.xaml");
             MainWindow mw = (MainWindow.GetCurrentInstance());
-            mw?.UpdateToolSelectionHighlight();
+            mw?.UpdateToolSelectionHighlight(); ThemeChanged?.Invoke();
         }
 
         private static void UpdateAccentResources(string hexColor)
@@ -266,10 +246,7 @@ namespace TabPaint
                     var bgBrush =Brushes.Transparent ;
                     window.Background = bgBrush;
                 }
-                else
-                {
-                    MicaAcrylicManager.ApplyEffect(window);
-                }
+                else MicaAcrylicManager.ApplyEffect(window);
             }
         }
         [DllImport("dwmapi.dll")]
@@ -292,10 +269,7 @@ namespace TabPaint
             {
                 // 尝试旧版本的 Attribute
                 attribute = AppConsts.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
-                if (DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(int)) != 0)
-                {
-                    success = false;
-                }
+                if (DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(int)) != 0)  success = false;
             }
 
             if (success)

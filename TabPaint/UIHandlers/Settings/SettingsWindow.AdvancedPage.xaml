@@ -123,15 +123,16 @@
         <TextBlock Text="{DynamicResource L_Settings_Advanced_Render_Header}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220"/>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="{DynamicResource L_Settings_Advanced_Resampling_Title}"/>
                 <TextBlock Text="{DynamicResource L_Settings_Advanced_Resampling_Desc}" Foreground="{DynamicResource TextTertiaryBrush}" FontSize="11" Margin="0,2,0,0"/>
             </StackPanel>
 
-            <ComboBox Grid.Column="1" 
+            <ComboBox Grid.Column="2" Width="120"
                       Style="{StaticResource FluentComboBoxStyle}"
                       SelectedValue="{Binding Path=Current.ResamplingMode, Mode=TwoWay, Source={x:Static local:SettingsManager.Instance}}"
                       SelectedValuePath="Tag" 

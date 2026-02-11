@@ -5,7 +5,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices; // 用于处理底层消息
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -26,19 +25,13 @@ namespace TabPaint.Controls
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
-            {
-                return b ? Visibility.Collapsed : Visibility.Visible;
-            }
+            if (value is bool b)  return b ? Visibility.Collapsed : Visibility.Visible;
             return Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is Visibility v)
-            {
-                return v != Visibility.Visible;
-            }
+            if (value is Visibility v) return v != Visibility.Visible;
             return false;
         }
     }
@@ -121,16 +114,11 @@ namespace TabPaint.Controls
                 _hoverTimer.Start();
             }
         }
-
-
-        // 4. 鼠标离开 Tab
         private void Internal_OnTabMouseLeave(object sender, MouseEventArgs e)
         {
             _hoverTimer.Stop(); // 还没显示的就别显示了
             _closeTimer.Start(); // 准备关闭
         }
-
-        // 3. 关闭定时器触发
         private void CloseTimer_Tick(object sender, EventArgs e)
         {
             _closeTimer.Stop();
@@ -189,8 +177,6 @@ namespace TabPaint.Controls
             PopupPreviewImageBase.Source = null;  // ★ 清理底层
             CheckerboardBorder.Background = Brushes.Transparent;
         }
-
-        // 5. 定时器触发（0.5s 后）
         private void HoverTimer_Tick(object sender, EventArgs e)
         {
             _hoverTimer.Stop();
@@ -282,10 +268,7 @@ namespace TabPaint.Controls
                         PopupPreviewImageBase.Source = null;
                         UpdateCheckerboardVisibility(cached);
                     }
-                    else
-                    {
-                        _highResTimer.Start();
-                    }
+                    else _highResTimer.Start();
                 }
                 LargePreviewPopup.PlacementTarget = _currentHoveredElement;
 
@@ -314,8 +297,7 @@ namespace TabPaint.Controls
 
                 if (decoder.Frames.Count > 0)
                 {
-                    // ★ 对多帧图像（ICO等）选择最大帧，与预览渲染逻辑一致
-                    int bestIndex = GetLargestFrameIndex(decoder);
+                    int bestIndex = GetLargestFrameIndex(decoder); //多帧图像（ICO等）选择最大帧，与预览渲染逻辑一致
                     var frame = decoder.Frames[bestIndex];
                     return (frame.PixelWidth, frame.PixelHeight);
                 }
@@ -340,9 +322,7 @@ namespace TabPaint.Controls
 
             if (string.IsNullOrEmpty(effectivePath) || !File.Exists(effectivePath)) return;
 
-            _previewCts?.Cancel();
-
-            // GIF 特殊处理
+            _previewCts?.Cancel(); // GIF 特殊处理
             if (effectivePath.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
             {
                 AnimationBehavior.AddLoadedHandler(PopupPreviewImage, OnGifLoaded);
@@ -403,7 +383,6 @@ namespace TabPaint.Controls
                     var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
                     if (decoder.Frames.Count > 0)
                     {
-                        // 1.ico显示最大一帧（复用逻辑）
                         int bestIndex = GetLargestFrameIndex(decoder);
                         var frame = decoder.Frames[bestIndex];
                         res.Width = frame.PixelWidth;
@@ -440,7 +419,6 @@ namespace TabPaint.Controls
             }
             return res;
         }
-
         private int GetLargestFrameIndex(BitmapDecoder decoder)
         {
             if (decoder.Frames == null || decoder.Frames.Count == 0) return 0;
@@ -469,7 +447,6 @@ namespace TabPaint.Controls
             }
             return bestIndex;
         }
-
         private string FormatFileSize(long bytes)
         {
             string[] suffixes = { "B", "KB", "MB", "GB" };
@@ -482,8 +459,6 @@ namespace TabPaint.Controls
             }
             return string.Format("{0:n1} {1}", number, suffixes[counter]);
         }
-
-
         private void ImageBarControl_Loaded(object sender, RoutedEventArgs e)
         {
             var window = Window.GetWindow(this);
@@ -493,7 +468,6 @@ namespace TabPaint.Controls
                 source?.AddHook(WndProc);
             }
         }
-
         private void ImageBarControl_Unloaded(object sender, RoutedEventArgs e)
         {
             var window = Window.GetWindow(this);

@@ -39,7 +39,6 @@ namespace TabPaint.Services
                 }
             };
         }
-
         private static void RefreshAllToolTips()
         {
             for (int i = _monitoredElements.Count - 1; i >= 0; i--)

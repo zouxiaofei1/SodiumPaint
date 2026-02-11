@@ -106,15 +106,10 @@ namespace TabPaint.Controls
         public event RoutedEventHandler WatermarkClick { add { AddHandler(WatermarkClickEvent, value); } remove { RemoveHandler(WatermarkClickEvent, value); } }
 
         private void OnWatermarkClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(WatermarkClickEvent));
-
-
-
         public event EventHandler<string> RecentFileClick;
         public event EventHandler ClearRecentFilesClick;
 
         public event RoutedEventHandler NewTabClick;
-
-
         private MenuItem CreateMenuItem(string headerResKey, string iconResKey, RoutedEventHandler clickHandler, string shortcutKey = null)
         {
             var item = new MenuItem
@@ -125,12 +120,7 @@ namespace TabPaint.Controls
 
             if (!string.IsNullOrEmpty(shortcutKey)) ShortcutService.SetShortcutKey(item, shortcutKey);
 
-            if (clickHandler != null)
-            {
-                item.Click += clickHandler;
-            }
-
-            // 创建图标 Path
+            if (clickHandler != null)item.Click += clickHandler;
             if (!string.IsNullOrEmpty(iconResKey))
             {
                 var iconGeometry = TryGetResource(iconResKey) as Geometry;
@@ -144,7 +134,7 @@ namespace TabPaint.Controls
                         Height = 16
                     };
                     path.SetResourceReference(Shape.FillProperty, "IconFillBrush");
-                    if (iconResKey == "Exit_Image" || iconResKey == "Resize_Image")
+                    if (iconResKey == "Exit_Image" )
                     {
                         path.Fill = Brushes.Transparent;
                         path.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
@@ -153,11 +143,9 @@ namespace TabPaint.Controls
                         path.StrokeEndLineCap = PenLineCap.Round;
                         path.StrokeStartLineCap = PenLineCap.Round;
                     }
-
                     item.Icon = path;
                 }
             }
-
             return item;
         }
 
@@ -179,8 +167,6 @@ namespace TabPaint.Controls
                     Header = TryGetResource("L_Menu_File_Recent"),
                     Style = (Style)FindResource("Win11MenuItemStyle")
                 };
-
-                // 图标
                 var resetPath = new Path { Stretch = Stretch.Uniform, Width = 16, Height = 16 };
                 resetPath.SetResourceReference(Shape.FillProperty, "IconFillBrush");
                 resetPath.SetResourceReference(Path.DataProperty, "Reset_Image");
@@ -219,11 +205,8 @@ namespace TabPaint.Controls
             if (menuItem == null) return;
 
             menuItem.Items.Clear();
-
-            // 基础调整
             var bceItem = CreateMenuItem("L_Menu_Effect_BCE", "Brightness_Image", OnBCEClick, "Effect.Brightness");
-            // 修正BCE图标样式 (原XAML是Stroke)
-            if (bceItem.Icon is Path p)
+            if (bceItem.Icon is Path p) // 修正BCE图标样式
             {
                 p.Fill = Brushes.Transparent;
                 p.SetResourceReference(Shape.StrokeProperty, "IconFillBrush");
@@ -245,8 +228,6 @@ namespace TabPaint.Controls
             menuItem.Items.Add(autoLevelsItem);
 
             menuItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-
-            // --- 滤镜子菜单 ---
             var filterItem = new MenuItem
             {
                 Header = TryGetResource("L_Menu_Effect_Filter"),
@@ -256,9 +237,7 @@ namespace TabPaint.Controls
             filterIcon.SetResourceReference(Path.DataProperty, "Filter_Image");
             filterIcon.SetResourceReference(Shape.FillProperty, "IconFillBrush");
             filterItem.Icon = filterIcon;
-
-            // 填充滤镜子项
-            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sepia", "Sepia_Image", OnSepiaClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sepia", "Sepia_Image", OnSepiaClick)); // 填充滤镜子项
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Oil", "OilPaint_Image", OnOilPaintingClick));
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Vignette", "Vignette_Image", OnVignetteClick));
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Glow", "Glow_Image", OnGlowClick));
@@ -268,7 +247,6 @@ namespace TabPaint.Controls
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_BW", "Black_And_White_Image", OnBlackWhiteClick, "Effect.Grayscale"));
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Invert", "Invert_Color_Image", OnInvertClick, "Effect.Invert"));
 
-            // 锐化 (PathData 也是硬编码的)
             var sharpenItem = CreateMenuItem("L_Menu_Effect_Sharpen", null, OnSharpenClick);
             var shPath = new Path
             {
@@ -283,8 +261,6 @@ namespace TabPaint.Controls
 
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Brown", "Sepia_Image", OnBrownClick));
             filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Mosaic", "Mosaic_Image", OnMosaicClick));
-
-            // 高斯模糊 (PathData 硬编码)
             var blurItem = CreateMenuItem("L_Menu_Effect_GaussianBlur", null, OnGaussianBlurClick);
             var blurPath = new Path
             {
@@ -298,11 +274,8 @@ namespace TabPaint.Controls
             filterItem.Items.Add(blurItem);
 
             menuItem.Items.Add(filterItem);
-
-            // 画布调整
             menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick, "Effect.Resize"));
-            // 水印 (Stroke样式)
-            var wmItem = CreateMenuItem("L_Menu_Effect_Watermark", "Watermark_Image", OnWatermarkClick);
+            var wmItem = CreateMenuItem("L_Menu_Effect_Watermark", "Watermark_Image", OnWatermarkClick);// 画布调整
             if (wmItem.Icon is Path wp)
             {
                 wp.Fill = Brushes.Transparent;

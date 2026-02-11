@@ -54,8 +54,6 @@ namespace TabPaint
                 // 获取当前画布尺寸
                 double w = (MainWindow.GetCurrentInstance()).BackgroundImage.Source.Width;
                 double h = (MainWindow.GetCurrentInstance()).BackgroundImage.Source.Height;
-
-                // 确保 Overlay 大小与图片一致
                 _overlay.Width = w;
                 _overlay.Height = h;
 
@@ -132,19 +130,13 @@ namespace TabPaint
                 var rect = sender as Rectangle;
                 rect.ReleaseMouseCapture();
                 _isResizing = false;
-
-                // 计算最终矩形
                 var currentPoint = e.GetPosition((MainWindow.GetCurrentInstance()).CanvasWrapper);
                 var finalRect = CalculateNewRect(currentPoint); // 这里拿到的是相对于原图左上角的 Rect
-
-                // 移除预览框
                 if (_previewBorder != null)
                 {
                     _overlay.Children.Remove(_previewBorder);
                     _previewBorder = null;
                 }
-
-                // 提交更改
                 ApplyResize(finalRect);
             }
 
@@ -167,7 +159,6 @@ namespace TabPaint
                 switch (_currentAnchor)
                 {
                     case ResizeAnchor.TopLeft:
-                        // 1. 计算宽度，限制最小值1，限制最大值 MaxCanvasSize
                         newW = Math.Min(MaxCanvasSize, Math.Max(1, startW - dx));
                         newX = rightEdge - newW;
 
@@ -181,7 +172,6 @@ namespace TabPaint
                         break;
 
                     case ResizeAnchor.TopRight:
-                        // 向右拉伸，X保持为0，只限制宽度
                         newW = Math.Min(MaxCanvasSize, Math.Max(1, startW + dx));
 
                         newH = Math.Min(MaxCanvasSize, Math.Max(1, startH - dy));
@@ -216,9 +206,6 @@ namespace TabPaint
 
                 return new Rect(newX, newY, newW, newH);
             }
-
-
-
             private void CreatePreviewBorder()
             {
                 double invScale = 1.0 / (MainWindow.GetCurrentInstance()).zoomscale;
@@ -245,12 +232,8 @@ namespace TabPaint
                 var oldBmp = mw._ctx.Surface.Bitmap;
                 int oldW = oldBmp.PixelWidth;
                 int oldH = oldBmp.PixelHeight;
-
-                // 1. 捕获撤销像素
                 var undoRect = new Int32Rect(0, 0, oldW, oldH);
                 byte[] oldPixels = mw._undo.SafeExtractRegion(undoRect);
-
-                // 2. 创建新位图并直接内存操作 (优化：移除中间 byte[] 拷贝)
                 var newBmp = new WriteableBitmap(newW, newH, oldBmp.DpiX, oldBmp.DpiY, PixelFormats.Bgra32, null);
                 int newStride = newBmp.BackBufferStride;
                 int oldStride = oldBmp.BackBufferStride;
@@ -263,8 +246,6 @@ namespace TabPaint
                     {
                         byte* pNew = (byte*)newBmp.BackBuffer;
                         byte* pOld = (byte*)oldBmp.BackBuffer;
-
-                        // 快速填充白色背景
                         long totalSize = (long)newH * newStride;
                         System.Runtime.InteropServices.MemoryMarshal.CreateSpan(ref *pNew, (int)totalSize).Fill(AppConsts.ColorComponentMax);
 
@@ -294,8 +275,6 @@ namespace TabPaint
                     oldBmp.Unlock();
                     newBmp.Unlock();
                 }
-
-                // 3. 捕获重做像素
                 byte[] newPixels = new byte[newH * newStride];
                 newBmp.CopyPixels(new Int32Rect(0, 0, newW, newH), newPixels, newStride, 0);
 
@@ -320,16 +299,13 @@ namespace TabPaint
                 {
                     scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + (resizeRect.X * scale) - padding);
                 }
-                // 向右扩展：检查右边缘是否在视野内
                 else if (resizeRect.Width > _startRect.Width) // 宽度变大了
                 {
                     double newVisualWidth = resizeRect.Width * scale;
-                    // 如果新宽度超出了视口，且是为了看右边
                     if (_currentAnchor == ResizeAnchor.RightMiddle ||
                         _currentAnchor == ResizeAnchor.TopRight ||
                         _currentAnchor == ResizeAnchor.BottomRight)
                     {
-                        // 稍微向右滚动一点，露出右边缘，但不一定滚到底
                         scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset + (resizeRect.Width - _startRect.Width) * scale + padding);
                     }
                 }
