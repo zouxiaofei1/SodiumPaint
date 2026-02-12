@@ -49,7 +49,7 @@
                             <TextBlock x:Name="TxtStatusRMBG" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
-                            <Button x:Name="BtnInstallRMBG" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallRMBG_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnInstallRMBG" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallRMBG_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                             <Button x:Name="BtnUninstallRMBG" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallRMBG_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                         </StackPanel>
                         <!-- 内嵌进度条 -->
@@ -74,7 +74,7 @@
                             <TextBlock x:Name="TxtStatusSR" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
-                            <Button x:Name="BtnInstallSR" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallSR_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnInstallSR" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallSR_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                             <Button x:Name="BtnUninstallSR" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallSR_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                         </StackPanel>
                         <controls:TaskProgressFloat x:Name="FloatSR" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>
@@ -98,7 +98,7 @@
                             <TextBlock x:Name="TxtStatusInpaint" Text="Checking..." FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
-                            <Button x:Name="BtnInstallInpaint" Content="{DynamicResource L_Settings_Plugins_Install}" Click="InstallInpaint_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
+                            <Button x:Name="BtnInstallInpaint" Content="{DynamicResource L_Settings_Plugins_InstallReal}" Click="InstallInpaint_Click" Style="{StaticResource Win11PrimaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                             <Button x:Name="BtnUninstallInpaint" Content="{DynamicResource L_Settings_Plugins_Uninstall}" Click="UninstallInpaint_Click" Style="{StaticResource Win11SecondaryButtonStyle}" Width="80" Height="32" Visibility="Collapsed"/>
                         </StackPanel>
                         <controls:TaskProgressFloat x:Name="FloatInpaint" IsDraggable="False" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0"/>

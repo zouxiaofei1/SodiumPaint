@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
@@ -34,7 +35,8 @@ namespace TabPaint
             private ResizeAnchor _currentAnchor = ResizeAnchor.None;
             private Point _startDragPoint;
             private Int32Rect _startRect; // 拖拽开始时的画布尺寸
-            private Rectangle _previewBorder; // 拖拽时的虚线框
+            private Rectangle _previewBorderWhite; // 拖拽时的白色底框
+            private Rectangle _previewBorderBlack; // 拖拽时的黑色虚线框
 
             // 样式配置
             private const double HandleSize = AppConsts.CanvasResizeHandleSize;
@@ -71,7 +73,7 @@ namespace TabPaint
                         Width = size,
                         Height = size,
                         Fill = Brushes.White,
-                        Stroke = new SolidColorBrush(Color.FromRgb(160, 160, 160)), // 建议改用浅灰色
+                        Stroke = new SolidColorBrush(Color.FromRgb(160, 160, 160)), 
                         StrokeThickness = 1 * invScale,
                         Tag = kvp.Key, // 存储锚点类型
                         Cursor = GetCursor(kvp.Key)
@@ -88,6 +90,33 @@ namespace TabPaint
 
                     _overlay.Children.Add(rect);
                 }
+            }
+
+            public void ShowPreviewRect(Rect rect)
+            {
+                if (_previewBorderWhite == null) CreatePreviewBorder();
+
+                _overlay.Width = Math.Max(_overlay.Width, rect.Right);
+                _overlay.Height = Math.Max(_overlay.Height, rect.Bottom);
+
+                Canvas.SetLeft(_previewBorderWhite, rect.X);
+                Canvas.SetTop(_previewBorderWhite, rect.Y);
+                _previewBorderWhite.Width = Math.Max(1, rect.Width);
+                _previewBorderWhite.Height = Math.Max(1, rect.Height);
+
+                Canvas.SetLeft(_previewBorderBlack, rect.X);
+                Canvas.SetTop(_previewBorderBlack, rect.Y);
+                _previewBorderBlack.Width = Math.Max(1, rect.Width);
+                _previewBorderBlack.Height = Math.Max(1, rect.Height);
+
+                _previewBorderWhite.Visibility = Visibility.Visible;
+                _previewBorderBlack.Visibility = Visibility.Visible;
+            }
+
+            public void HidePreviewRect()
+            {
+                if (_previewBorderWhite != null) _previewBorderWhite.Visibility = Visibility.Collapsed;
+                if (_previewBorderBlack != null) _previewBorderBlack.Visibility = Visibility.Collapsed;
             }
 
             private void OnHandleDown(object sender, MouseButtonEventArgs e)
@@ -117,10 +146,22 @@ namespace TabPaint
                 var rect = CalculateNewRect(currentPoint);
 
                 // 更新预览框位置和大小
-                Canvas.SetLeft(_previewBorder, rect.X);
-                Canvas.SetTop(_previewBorder, rect.Y);
-                _previewBorder.Width = Math.Max(1, rect.Width);
-                _previewBorder.Height = Math.Max(1, rect.Height);
+                double left = rect.X;
+                double top = rect.Y;
+                double width = Math.Max(1, rect.Width);
+                double height = Math.Max(1, rect.Height);
+
+                _mainWindow.UpdateImageSizeStatus(width, height);
+
+                Canvas.SetLeft(_previewBorderWhite, left);
+                Canvas.SetTop(_previewBorderWhite, top);
+                _previewBorderWhite.Width = width;
+                _previewBorderWhite.Height = height;
+
+                Canvas.SetLeft(_previewBorderBlack, left);
+                Canvas.SetTop(_previewBorderBlack, top);
+                _previewBorderBlack.Width = width;
+                _previewBorderBlack.Height = height;
             }
 
             private void OnHandleUp(object sender, MouseButtonEventArgs e)
@@ -132,10 +173,15 @@ namespace TabPaint
                 _isResizing = false;
                 var currentPoint = e.GetPosition(_mainWindow.CanvasWrapper);
                 var finalRect = CalculateNewRect(currentPoint); // 这里拿到的是相对于原图左上角的 Rect
-                if (_previewBorder != null)
+                if (_previewBorderWhite != null)
                 {
-                    _overlay.Children.Remove(_previewBorder);
-                    _previewBorder = null;
+                    _overlay.Children.Remove(_previewBorderWhite);
+                    _previewBorderWhite = null;
+                }
+                if (_previewBorderBlack != null)
+                {
+                    _overlay.Children.Remove(_previewBorderBlack);
+                    _previewBorderBlack = null;
                 }
                 ApplyResize(finalRect);
             }
@@ -209,14 +255,38 @@ namespace TabPaint
             private void CreatePreviewBorder()
             {
                 double invScale = 1.0 / _mainWindow.zoomscale;
-                _previewBorder = new Rectangle
+                double thickness = AppConsts.SelectToolOutlineThickness * invScale;
+
+                // 白色底线
+                _previewBorderWhite = new Rectangle
                 {
-                    Stroke = (Brush)(Brush)System.Windows.Application.Current.FindResource("TextPrimaryBrush"),
-                    StrokeDashArray = new DoubleCollection { 4, 4 },
-                    StrokeThickness = 1 * invScale,
+                    Stroke = Brushes.White,
+                    StrokeThickness = thickness,
+                    IsHitTestVisible = false,
+                    Opacity = 0.8
+                };
+
+                // 黑色虚线（蚂蚁线）
+                _previewBorderBlack = new Rectangle
+                {
+                    Stroke = _mainWindow._darkBackgroundBrush,
+                    StrokeDashArray = new DoubleCollection { AppConsts.SelectToolDashLength, AppConsts.SelectToolDashLength },
+                    StrokeThickness = thickness,
                     IsHitTestVisible = false
                 };
-                _overlay.Children.Add(_previewBorder);
+
+                // 蚂蚁线动画
+                DoubleAnimation animation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = AppConsts.SelectToolAnimationTo,
+                    Duration = new Duration(TimeSpan.FromSeconds(AppConsts.SelectToolAnimationDurationSeconds)),
+                    RepeatBehavior = RepeatBehavior.Forever
+                };
+                _previewBorderBlack.BeginAnimation(Shape.StrokeDashOffsetProperty, animation);
+
+                _overlay.Children.Add(_previewBorderWhite);
+                _overlay.Children.Add(_previewBorderBlack);
             }
 
             private void ApplyResize(Rect newBounds)

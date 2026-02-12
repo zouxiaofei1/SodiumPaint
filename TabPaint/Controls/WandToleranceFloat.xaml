@@ -5,77 +5,62 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TabPaint.Controls"
              mc:Ignorable="d" 
-             d:DesignHeight="80" d:DesignWidth="240"
+             d:DesignHeight="50" d:DesignWidth="360"
              Visibility="Collapsed"
              MouseDown="UserControl_MouseDown">
-
-    <UserControl.Resources>
-        <Style x:Key="SmallNumericTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="SelectionBrush" Value="{DynamicResource SystemAccentBrush}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Name="Border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderDarkBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
-                                <Setter TargetName="Border" Property="BorderThickness" Value="1"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>
 
     <Border CornerRadius="12" 
             Background="{DynamicResource PanelBackgroundBrush}" 
             BorderBrush="{DynamicResource BorderLightBrush}" 
             BorderThickness="1"
+            Width="340"
             Padding="12,8">
         <Border.Effect>
             <DropShadowEffect BlurRadius="15" ShadowDepth="4" Opacity="0.1" Direction="270"/>
         </Border.Effect>
 
-        <StackPanel Orientation="Vertical">
-            <Grid Margin="0,0,0,8">
-                <TextBlock Text="{DynamicResource L_Tool_MagicWand_Tolerance}" 
-                           FontSize="12" 
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           VerticalAlignment="Center"/>
-                <TextBox x:Name="ToleranceInput" 
-                         HorizontalAlignment="Right"
-                         Width="40" Height="22"
-                         FontSize="11"
-                         Style="{StaticResource SmallNumericTextBoxStyle}"
-                         Text="20"
-                         PreviewKeyDown="ToleranceInput_PreviewKeyDown"
-                         LostFocus="ToleranceInput_LostFocus"/>
-            </Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
 
-            <Slider x:Name="ToleranceSlider"
-                    Style="{StaticResource Win11HorizontalSliderStyle}"
+            <TextBlock Grid.Column="0" 
+                       Text="{DynamicResource L_Tool_MagicWand_Tolerance}" 
+                       FontSize="12" 
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,0"/>
+
+            <Slider Grid.Column="1" 
+                    x:Name="ToleranceSlider"
+                    Style="{DynamicResource Win11HorizontalSliderStyle}"
                     Minimum="0" Maximum="255"
                     Value="20"
+                    VerticalAlignment="Center"
                     IsSnapToTickEnabled="True" TickFrequency="1"
+                    Margin="0,0,10,0"
                     ValueChanged="ToleranceSlider_ValueChanged"/>
-        </StackPanel>
+
+            <ComboBox Grid.Column="2" 
+                      x:Name="ToleranceCombo" 
+                      Style="{DynamicResource FluentComboBoxStyle}"
+                      IsEditable="True"
+                      FontSize="12"
+                      Height="28"
+                      VerticalAlignment="Center">
+                <ComboBoxItem Content="0"/>
+                <ComboBoxItem Content="10"/>
+                <ComboBoxItem Content="20"/>
+                <ComboBoxItem Content="32"/>
+                <ComboBoxItem Content="50"/>
+                <ComboBoxItem Content="80"/>
+                <ComboBoxItem Content="100"/>
+                <ComboBoxItem Content="150"/>
+                <ComboBoxItem Content="255"/>
+            </ComboBox>
+        </Grid>
     </Border>
 </UserControl>

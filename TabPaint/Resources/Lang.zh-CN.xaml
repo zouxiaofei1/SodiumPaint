@@ -28,6 +28,7 @@
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">已安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">正在下载...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Install">管理</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallReal">安装</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">卸载</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">确定要卸载此 AI 模型吗？</sys:String>
     <sys:String x:Key="L_Settings_General_Title">通用</sys:String>
@@ -191,6 +192,7 @@
     <sys:String x:Key="L_Main_Ctx_ScreenPicker">屏幕取色器</sys:String>
     <sys:String x:Key="L_Main_Ctx_CopyHex">复制颜色代码 (#HEX)</sys:String>
     <sys:String x:Key="L_Main_Ctx_AutoCrop">智能裁切空白</sys:String>
+    <sys:String x:Key="L_Main_Ctx_Rotate">自由旋转</sys:String>
     <sys:String x:Key="L_Main_Ctx_AddBorder">一键加边框</sys:String>
     <sys:String x:Key="L_Main_Ctx_AI_SuperRes">4x超分辨率</sys:String>
 
@@ -279,6 +281,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Highlighter">荧光笔</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Mosaic">马赛克</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Blur">模糊</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Gradient">渐变</sys:String>
     <sys:String x:Key="L_ToolBar_AIEraser">智能擦除</sys:String>
     <sys:String x:Key="L_ToolBar_Shape">形状</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Rectangle">矩形</sys:String>
@@ -297,6 +300,9 @@
     <sys:String x:Key="L_ToolBar_Rotate_Left">向左旋转90°</sys:String>
     <sys:String x:Key="L_ToolBar_Rotate_Right">向右旋转90°</sys:String>
     <sys:String x:Key="L_ToolBar_Rotate_180">旋转180°</sys:String>
+    <sys:String x:Key="L_ToolBar_FreeRotate">自由旋转</sys:String>
+    <sys:String x:Key="L_Rotation_Angle">角度</sys:String>
+    <sys:String x:Key="L_Selection_Rotate">旋转选区</sys:String>
     <sys:String x:Key="L_ToolBar_Flip_Vertical">垂直翻转</sys:String>
     <sys:String x:Key="L_ToolBar_Flip_Horizontal">水平翻转</sys:String>
     <sys:String x:Key="L_ToolBar_CustomColor">自定义颜色</sys:String>
@@ -751,6 +757,7 @@
     <sys:String x:Key="L_StatusBar_FitToWindow">适应窗口大小</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomOut">缩小</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomIn">放大</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling">正在超分...</sys:String>
     <sys:String x:Key="L_AI_Status_Upscaling_Format">正在超分... {0:0}%</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Success">超分辨率处理完成 (400%)</sys:String>
     <sys:String x:Key="L_StatusBar_Favorite_ToolTip">收藏</sys:String>

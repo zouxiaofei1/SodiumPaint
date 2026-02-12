@@ -29,8 +29,8 @@ public partial class PenTool : ToolBase
     private float _smoothedPressure = 1.0f;       // 平滑后的压力值
     private float _smoothedVelocity = 0f;          // 平滑后的速度
     private long _lastTimestamp = 0;                // 上次事件时间戳
-    private readonly List<CalligraphyPoint> _calliPoints = new();
-    private struct CalligraphyPoint
+    private readonly List<StrokePoint> _strokePoints = new();
+    private struct StrokePoint
     {
         public float X, Y;
         public float Pressure;    // 平滑后的压力
@@ -225,6 +225,7 @@ public partial class PenTool : ToolBase
         if ((MainWindow.GetCurrentInstance()).IsViewMode) return;
         if ((MainWindow.GetCurrentInstance())._router.CurrentTool != (MainWindow.GetCurrentInstance())._tools.Pen) return;
 
+        var px = ctx.ToPixel(viewPos);
         UpdateCursorVisual(ctx, viewPos); // 更新光标
         if (ctx.PenStyle == BrushStyle.AiEraser)
         {
@@ -257,13 +258,17 @@ public partial class PenTool : ToolBase
         }
 
 
-        if (ctx.PenStyle == BrushStyle.Calligraphy)
+        if (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser)
         {
-            pressure = 1.0f;
-            _smoothedPressure = 1.0f;  // 起笔时压力满
+            if (ctx.PenStyle == BrushStyle.Calligraphy) pressure = 1.0f;
+            _smoothedPressure = pressure;
             _smoothedVelocity = 0f;
             _lastTimestamp = 0;
-            _calliPoints.Clear();
+            _strokePoints.Clear();
+            // Catmull-Rom 需要重复首点来触发起始段绘制
+            var startPt = new StrokePoint { X = (float)px.X, Y = (float)px.Y, Pressure = pressure };
+            _strokePoints.Add(startPt);
+            _strokePoints.Add(startPt);
         }
         int totalPixels = ctx.Surface.Width * ctx.Surface.Height;
         if (_currentStrokeMask == null || _currentStrokeMask.Length != totalPixels || _maskWidth != ctx.Surface.Width)
@@ -311,7 +316,6 @@ public partial class PenTool : ToolBase
 
 
         ctx.CapturePointer(); System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Cross;
-        var px = ctx.ToPixel(viewPos);
         _brushSeed = (uint)_rnd.Value.Next();
         ctx.Undo.BeginStroke();
         _drawing = true;
@@ -364,26 +368,27 @@ public partial class PenTool : ToolBase
             return;
         }
 
-        if (ctx.PenStyle == BrushStyle.Calligraphy)
+        if (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser)
         {
-            pressure = ComputeSmoothedCalligraphyPressure(px, _lastPixel);
+            if (ctx.PenStyle == BrushStyle.Calligraphy)
+                pressure = ComputeSmoothedCalligraphyPressure(px, _lastPixel);
 
-            _calliPoints.Add(new CalligraphyPoint
+            _strokePoints.Add(new StrokePoint
             {
                 X = (float)px.X,
                 Y = (float)px.Y,
                 Pressure = pressure
             });
-            if (_calliPoints.Count >= 4)
+
+            if (_strokePoints.Count >= 4)
             {
-                int n = _calliPoints.Count;
-                var p0 = _calliPoints[n - 4];
-                var p1 = _calliPoints[n - 3];
-                var p2 = _calliPoints[n - 2];
-                var p3 = _calliPoints[n - 1];
+                int n = _strokePoints.Count;
+                var p0 = _strokePoints[n - 4];
+                var p1 = _strokePoints[n - 3];
+                var p2 = _strokePoints[n - 2];
+                var p3 = _strokePoints[n - 1];
 
                 ctx.Surface.Bitmap.Lock();
-
                 try
                 {
                     unsafe
@@ -407,14 +412,20 @@ public partial class PenTool : ToolBase
                         }
                     }
                 }
-                finally
-                {
-                    ctx.Surface.Bitmap.Unlock();
-                }
+                finally { ctx.Surface.Bitmap.Unlock(); }
 
-                if (_calliPoints.Count > 100)
-                    _calliPoints.RemoveRange(0, 50);
+                if (_strokePoints.Count > 100)
+                    _strokePoints.RemoveRange(0, 50);
 
+                _lastPixel = px;
+                _lastPressure = pressure;
+                return;
+            }
+            else
+            {
+                // 点还不够，先连直线以减少延迟感，或者等待。
+                // 样条曲线通常需要 4 个点来绘制中间那段 (p1-p2)。
+                // 为了避免起笔断触，可以先画一小段。
                 _lastPixel = px;
                 _lastPressure = pressure;
                 return;
@@ -483,8 +494,46 @@ public partial class PenTool : ToolBase
            style == BrushStyle.Mosaic;  
     }
 
-    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f) {StopDrawing(ctx); }
-    public override void StopAction(ToolContext ctx) { StopDrawing(ctx);  }
+    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
+    {
+        if (_drawing && (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser))
+        {
+            // 通过重复尾点完成样条曲线的最后一段
+            if (_strokePoints.Count >= 1)
+            {
+                var last = _strokePoints[_strokePoints.Count - 1];
+                _strokePoints.Add(last);
+                if (_strokePoints.Count >= 4)
+                {
+                    int n = _strokePoints.Count;
+                    ctx.Surface.Bitmap.Lock();
+                    try
+                    {
+                        unsafe
+                        {
+                            byte* buf = (byte*)ctx.Surface.Bitmap.BackBuffer;
+                            int s = ctx.Surface.Bitmap.BackBufferStride;
+                            int bw = ctx.Surface.Bitmap.PixelWidth;
+                            int bh = ctx.Surface.Bitmap.PixelHeight;
+                            var dirty = DrawCatmullRomSegment(ctx, _strokePoints[n - 4], _strokePoints[n - 3], _strokePoints[n - 2], _strokePoints[n - 1], buf, s, bw, bh);
+                            if (dirty.HasValue)
+                            {
+                                var fr = ClampRect(dirty.Value, bw, bh);
+                                if (fr.Width > 0 && fr.Height > 0)
+                                {
+                                    ctx.Surface.Bitmap.AddDirtyRect(fr);
+                                    ctx.Undo.AddDirtyRect(fr);
+                                }
+                            }
+                        }
+                    }
+                    finally { ctx.Surface.Bitmap.Unlock(); }
+                }
+            }
+        }
+        StopDrawing(ctx);
+    }
+    public override void StopAction(ToolContext ctx) { StopDrawing(ctx); }
 
     public void StopDrawing(ToolContext ctx)
     {

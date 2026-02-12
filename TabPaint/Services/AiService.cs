@@ -507,7 +507,7 @@ namespace TabPaint
                 }
             });
         }
-        public async Task<WriteableBitmap> RunSuperResolutionAsync(string modelPath, WriteableBitmap inputBitmap, IProgress<double> progress)
+        public async Task<WriteableBitmap> RunSuperResolutionAsync(string modelPath, WriteableBitmap inputBitmap, IProgress<double> progress, System.Threading.CancellationToken token = default)
         {
             // 1. 获取原图数据
             int w = inputBitmap.PixelWidth;
@@ -535,6 +535,7 @@ namespace TabPaint
                 {
                     for (int x = 0; x < w; x += TileSize)
                     {
+                        token.ThrowIfCancellationRequested();
                         int validW = Math.Min(TileSize, w - x);
                         int validH = Math.Min(TileSize, h - y);
                         var tileTensor = ExtractTileToTensor(inputPixels, x, y, validW, validH, TileSize, stride, w, h);

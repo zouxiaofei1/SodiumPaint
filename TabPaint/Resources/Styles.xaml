@@ -144,6 +144,60 @@
     </Style>
 
     <!-- Win11 风格工具图标按钮 (无边框，悬停微背景) -->
+    <!-- Win11 风格 TextBox 样式 (带底部边框高亮) -->
+    <Style x:Key="FluentTextBoxStyle" TargetType="{x:Type TextBox}">
+        <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBox}">
+                    <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4" 
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                      Focusable="false"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden"/>
+                            <Border x:Name="FocusBorder" 
+                                BorderBrush="{DynamicResource SystemAccentBrush}" 
+                                BorderThickness="0,0,0,2" 
+                                CornerRadius="4"
+                                Visibility="Collapsed"
+                                VerticalAlignment="Bottom"
+                                Height="2"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlMouseOverBackgroundBrush}"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="true">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                            <Setter TargetName="FocusBorder" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource SystemAccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter TargetName="border" Property="Opacity" Value="0.56"/>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource ControlDisabledBackgroundBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="Win11ToolIconBtn" TargetType="Button">
         <Setter Property="ToolTipService.InitialShowDelay" Value="10" />
         <Setter Property="ToolTipService.ShowDuration" Value="20000" />

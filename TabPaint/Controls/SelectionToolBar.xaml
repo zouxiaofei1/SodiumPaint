@@ -42,6 +42,11 @@
                     services:ShortcutService.ShortcutKey="Tool.OCR">
                 <Path Data="{DynamicResource Scan_Text_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
             </Button>
+            <ToggleButton x:Name="RotateBtn" Style="{StaticResource RoundedMenuToggleButtonStyle}" 
+                    services:ShortcutService.BaseToolTip="L_Main_Ctx_Rotate">
+                <Path Data="{DynamicResource Rotate_Right_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
+
+            </ToggleButton>
         </StackPanel>
     </Border>
 </UserControl>

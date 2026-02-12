@@ -324,6 +324,21 @@ namespace TabPaint
         [JsonPropertyName("last_brush_style")]
         public BrushStyle LastBrushStyle { get; set; } = BrushStyle.Round;
 
+        private bool _isSelectionRotateEnabled = false;
+        [JsonPropertyName("is_selection_rotate_enabled")]
+        public bool IsSelectionRotateEnabled
+        {
+            get => _isSelectionRotateEnabled;
+            set
+            {
+                if (_isSelectionRotateEnabled != value)
+                {
+                    _isSelectionRotateEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -583,6 +598,22 @@ namespace TabPaint
                 }
             }
         }
+
+        private bool _isCompactColorPicker = false;
+        [JsonPropertyName("is_compact_color_picker")]
+        public bool IsCompactColorPicker
+        {
+            get => _isCompactColorPicker;
+            set
+            {
+                if (_isCompactColorPicker != value)
+                {
+                    _isCompactColorPicker = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private int _performanceScore = -1;
         [JsonPropertyName("performance_score")]
         public int PerformanceScore

@@ -110,8 +110,8 @@ namespace TabPaint
         public const double MaxCanvasSize = 16384.0;
         public const double StandardDpi = 96.0;
         public const int BytesPerPixel = 4;
-        public const int DefaultBlankCanvasWidth = 2400;
-        public const int DefaultBlankCanvasHeight = 1800;
+        public const int DefaultBlankCanvasWidth = 1600;
+        public const int DefaultBlankCanvasHeight = 1200;
 
         // --- 文本工具参数 ---
         public const double DefaultFontSize = 24.0;
@@ -308,7 +308,7 @@ namespace TabPaint
 
         // --- 服务与性能配置 ---
         public const int MaxDiskConcurrency = 4;
-        public const int AppSettingsBinaryVersion = 1;
+        public const int AppSettingsBinaryVersion = 2;
 
         public static bool IsSupportedImage(string path)
         {

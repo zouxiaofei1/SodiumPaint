@@ -212,6 +212,7 @@ namespace TabPaint
                 case BrushStyle.Mosaic: resKey = "Mosaic_Image"; break;
                 case BrushStyle.AiEraser: resKey = "AIEraser_Image"; isPath = true; break;
                 case BrushStyle.GaussianBlur: resKey = "Blur_Image"; isPath = true;  break;
+                case BrushStyle.Gradient: resKey = "Brush_Normal_Image"; isPath = true; break;
             }
             if(MainToolBar!=null)
             MainToolBar.UpdateBrushIcon(resKey, isPath);

@@ -51,6 +51,10 @@ namespace TabPaint
             public Int32Rect _selectionRect;
             public Int32Rect _originalRect;
             public byte[]? _selectionData;
+            private byte[]? _preRotationSelectionData;
+            private int _preRotationDataWidth, _preRotationDataHeight;
+            private Int32Rect _preRotationRect;
+            private double _rotationAngle = 0;
             private int _transformStep = 0; // 0 = 未操作，>0 = 已操作
             private byte[]? _clipboardData;
             private int _clipboardWidth;
@@ -64,7 +68,7 @@ namespace TabPaint
             private DispatcherTimer _tabSwitchTimer;
             private FileTabItem _pendingTab;
             private int _wandTolerance = AppConsts.DefaultWandTolerance; // 当前容差
-            private Point _wandStartPoint; // 点击的起始点
+            private Point _wandStartPoint = new Point(-1, -1); // 点击的起始点
             private Color _wandStartColor; // 起始点的颜色
             private bool _isWandAdjusting = false; // 是否正在拖拽调整容差
             private bool[] _wandMaskBuffer; // 用于缓存全图的选中状态(bool)，避免重复申请内存

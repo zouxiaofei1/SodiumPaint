@@ -35,8 +35,16 @@ namespace TabPaint
                 _selectionData = null;
                 _selectionAlphaMap = null;  // 添加
                 _selectionGeometry = null;  // 添加
+                _preRotationDataWidth = 0;
+                _preRotationDataHeight = 0;
                 _isWandAdjusting = false;   // 添加
-                lag = 0; ctx.ParentWindow.UpdateSelectionToolBarPosition(); ctx.ParentWindow.ClearRulerSelection();
+                lag = 0; 
+                ctx.ParentWindow.UpdateSelectionToolBarPosition(); 
+                ctx.ParentWindow.ClearRulerSelection();
+                if (ctx.ParentWindow.SelectionRotatePopup != null)
+                {
+                    ctx.ParentWindow.SelectionRotatePopup.Visibility = Visibility.Collapsed;
+                }
             }
 
             public void RefreshOverlay(ToolContext ctx)
@@ -58,11 +66,13 @@ namespace TabPaint
                 double diff = mw.CanvasWrapper.RenderSize.Width -
                               (int)mw.CanvasWrapper.RenderSize.Width;
 
+                double currentAngle = (_preRotationSelectionData != null) ? _rotationAngle : 0;
+                Int32Rect drawRect = (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01) ? _preRotationRect : rect;
+
                 if (SelectionType == SelectionType.Lasso && _selectionGeometry != null)
                 {
-                    DrawIrregularContour(ctx, overlay, _selectionGeometry, rect, invScale, diff);
+                    DrawIrregularContour(ctx, overlay, _selectionGeometry, drawRect, invScale, diff, true, currentAngle);
                 }
-
                 else if (SelectionType == SelectionType.MagicWand && _selectionAlphaMap != null && !_isWandAdjusting)
                 {
                     // 优先使用缓存的 Geometry，避免每次重算
@@ -78,9 +88,9 @@ namespace TabPaint
 
                     if (_selectionGeometry != null)
                     {
-                        DrawIrregularContour(ctx, overlay, _selectionGeometry, rect, invScale, diff, false);
+                        DrawIrregularContour(ctx, overlay, _selectionGeometry, drawRect, invScale, diff, false, currentAngle);
                     }
-                    else DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);// 回退到矩形框
+                    else DrawRectangleOverlay(ctx, overlay, drawRect, invScale, diff, currentAngle);
                 }
                 else if (SelectionType == SelectionType.MagicWand && _isWandAdjusting)
                 {
@@ -88,7 +98,7 @@ namespace TabPaint
                 }
                 else
                 {
-                    DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);
+                    DrawRectangleOverlay(ctx, overlay, drawRect, invScale, diff, currentAngle);
                 }
 
                 mw.UpdateSelectionScalingMode();
@@ -98,22 +108,35 @@ namespace TabPaint
             public Int32Rect GetSelectionRect() => _selectionRect;
             public ResizeAnchor HitTestHandle(Point px, Int32Rect rect)
             {
+                Int32Rect targetRect = rect;
+                Point targetPx = px;
+
+                // 如果处于旋转过程中，需要将点击点逆向旋转回去进行判定
+                if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)
+                {
+                    targetRect = _preRotationRect;
+                    double centerX = targetRect.X + targetRect.Width / 2.0;
+                    double centerY = targetRect.Y + targetRect.Height / 2.0;
+                    var rt = new RotateTransform(-_rotationAngle, centerX, centerY);
+                    targetPx = rt.Transform(px);
+                }
+
                 double size = AppConsts.SelectToolHandleSize / ctxForTimer.ParentWindow.zoomscale; // 句柄大小
-                double x1 = rect.X;
-                double y1 = rect.Y;
-                double x2 = rect.X + rect.Width;
-                double y2 = rect.Y + rect.Height;
+                double x1 = targetRect.X;
+                double y1 = targetRect.Y;
+                double x2 = targetRect.X + targetRect.Width;
+                double y2 = targetRect.Y + targetRect.Height;
                 double mx = (x1 + x2) / 2;
                 double my = (y1 + y2) / 2;
 
-                if (Math.Abs(px.X - x1) <= size && Math.Abs(px.Y - y1) <= size) return ResizeAnchor.TopLeft;
-                if (Math.Abs(px.X - mx) <= size && Math.Abs(px.Y - y1) <= size) return ResizeAnchor.TopMiddle;
-                if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - y1) <= size) return ResizeAnchor.TopRight;
-                if (Math.Abs(px.X - x1) <= size && Math.Abs(px.Y - my) <= size) return ResizeAnchor.LeftMiddle;
-                if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - my) <= size) return ResizeAnchor.RightMiddle;
-                if (Math.Abs(px.X - x1) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomLeft;
-                if (Math.Abs(px.X - mx) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomMiddle;
-                if (Math.Abs(px.X - x2) <= size && Math.Abs(px.Y - y2) <= size) return ResizeAnchor.BottomRight;
+                if (Math.Abs(targetPx.X - x1) <= size && Math.Abs(targetPx.Y - y1) <= size) return ResizeAnchor.TopLeft;
+                if (Math.Abs(targetPx.X - mx) <= size && Math.Abs(targetPx.Y - y1) <= size) return ResizeAnchor.TopMiddle;
+                if (Math.Abs(targetPx.X - x2) <= size && Math.Abs(targetPx.Y - y1) <= size) return ResizeAnchor.TopRight;
+                if (Math.Abs(targetPx.X - x1) <= size && Math.Abs(targetPx.Y - my) <= size) return ResizeAnchor.LeftMiddle;
+                if (Math.Abs(targetPx.X - x2) <= size && Math.Abs(targetPx.Y - my) <= size) return ResizeAnchor.RightMiddle;
+                if (Math.Abs(targetPx.X - x1) <= size && Math.Abs(targetPx.Y - y2) <= size) return ResizeAnchor.BottomLeft;
+                if (Math.Abs(targetPx.X - mx) <= size && Math.Abs(targetPx.Y - y2) <= size) return ResizeAnchor.BottomMiddle;
+                if (Math.Abs(targetPx.X - x2) <= size && Math.Abs(targetPx.Y - y2) <= size) return ResizeAnchor.BottomRight;
 
                 return ResizeAnchor.None;
             }
@@ -165,7 +188,7 @@ namespace TabPaint
 
               double diff = ctx.ParentWindow.CanvasWrapper.RenderSize.Width - (int)ctx.ParentWindow.CanvasWrapper.RenderSize.Width;
                 // 计算位移
-                double localX = pixelX * scaleX+diff*0.75 ;
+                double localX = pixelX * scaleX+diff*0.75 ;//不要动这里
                 double localY = pixelY * scaleY;
                 ctx.SelectionPreview.RenderTransform = new TranslateTransform(localX, localY);
             }
@@ -245,17 +268,30 @@ namespace TabPaint
                     ctx.ParentWindow.NotifyCanvasChanged();
                 }
 
-                HidePreview(ctx); 
+                HidePreview(ctx);
+                if (ctx.SelectionOverlay != null)
+                {
+                    ctx.SelectionOverlay.Children.Clear();
+                    ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
+                }
+
                 IsPasted = false;
                 _hasLifted = false;
                 _selectionData = null;
+                _selectionAlphaMap = null;
+                _selectionGeometry = null;
+                _preRotationSelectionData = null;
+                _rotationAngle = 0;
+
                 lag = 1;
                 _transformStep = 0;
+                _selectionRect = new Int32Rect();
                 _originalRect = new Int32Rect();
                 var mw = ctx.ParentWindow;
                 mw.SetUndoRedoButtonState();
                 ResetPreviewState(ctx);
                 mw.UpdateSelectionToolBarPosition();
+                mw.ClearRulerSelection();
             }
             private void BlendPixels(WriteableBitmap targetBmp, int x, int y, int w, int h, byte[] sourcePixels, int sourceStride)
             {
@@ -351,6 +387,24 @@ namespace TabPaint
 
             public bool IsPointInSelection(Point px)
             {
+                // 如果处于旋转过程中
+                if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)
+                {
+                    double centerX = _preRotationRect.X + _preRotationRect.Width / 2.0;
+                    double centerY = _preRotationRect.Y + _preRotationRect.Height / 2.0;
+                    var rt = new RotateTransform(-_rotationAngle, centerX, centerY);
+                    Point pxPrime = rt.Transform(px);
+
+                    bool inOriginalRect = pxPrime.X >= _preRotationRect.X &&
+                                          pxPrime.X < _preRotationRect.X + _preRotationRect.Width &&
+                                          pxPrime.Y >= _preRotationRect.Y &&
+                                          pxPrime.Y < _preRotationRect.Y + _preRotationRect.Height;
+
+                    if (!inOriginalRect) return false;
+                    if (SelectionType == SelectionType.Rectangle) return true;
+                    // 如果是不规则选区，继续走下方的 AlphaMap 判定（UpdateRotation 已更新了 AlphaMap 分辨率和内容）
+                }
+
                 // 1. 先检查包围盒
                 bool inRect = px.X >= _selectionRect.X &&
                               px.X < _selectionRect.X + _selectionRect.Width &&

@@ -54,7 +54,17 @@ namespace TabPaint
             {
                 LastSelectionDeleteTime = DateTime.MinValue;
             }
-      
+
+            public void RefreshWandPreview(ToolContext ctx)
+            {
+                if (SelectionType != SelectionType.MagicWand || _wandStartPoint.X < 0) return;
+
+                _isWandAdjusting = true;
+                bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+                RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
+                _isWandAdjusting = false;
+            }
+
             public void ReplaceSelectionData(ToolContext ctx, byte[] newPixels, int w, int h)
             {
                 if (newPixels == null) return;
@@ -261,10 +271,25 @@ namespace TabPaint
                         _transformStep++;
                         _resizing = true; mw.UpdateSelectionToolBarPosition();
                         _startMouse = px;
-                        _startW = _selectionRect.Width;
-                        _startH = _selectionRect.Height;
-                        _startX = _selectionRect.X;
-                        _startY = _selectionRect.Y;
+                        if (_preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01)
+                        {
+                            // 旋转状态下，缩放参考系应该是旋转前的矩形
+                            double centerX = _preRotationRect.X + _preRotationRect.Width / 2.0;
+                            double centerY = _preRotationRect.Y + _preRotationRect.Height / 2.0;
+                            var rt = new RotateTransform(-_rotationAngle, centerX, centerY);
+                            _startMouse = rt.Transform(px);
+                            _startW = _preRotationRect.Width;
+                            _startH = _preRotationRect.Height;
+                            _startX = _preRotationRect.X;
+                            _startY = _preRotationRect.Y;
+                        }
+                        else
+                        {
+                            _startW = _selectionRect.Width;
+                            _startH = _selectionRect.Height;
+                            _startX = _selectionRect.X;
+                            _startY = _selectionRect.Y;
+                        }
                         ctx.ViewElement.CaptureMouse();
                         return;
                     }
@@ -385,12 +410,24 @@ namespace TabPaint
                 {   // 缩放逻辑
                     if (!_hasLifted) LiftSelectionFromCanvas(ctx);
 
+                    // 如果在旋转状态下缩放
+                    bool inRotation = _preRotationSelectionData != null && Math.Abs(_rotationAngle) > 0.01;
+                    Point currentPx = px;
+                    if (inRotation)
+                    {
+                        // 将鼠标点变换到旋转前的坐标系进行缩放计算
+                        double centerX = _preRotationRect.X + _preRotationRect.Width / 2.0;
+                        double centerY = _preRotationRect.Y + _preRotationRect.Height / 2.0;
+                        var rt = new RotateTransform(-_rotationAngle, centerX, centerY);
+                        currentPx = rt.Transform(px);
+                    }
+
                     double fixedRight = _startX + _startW;
                     double fixedBottom = _startY + _startH;
 
                     bool isShiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-                    double dx = px.X - _startMouse.X;
-                    double dy = px.Y - _startMouse.Y;
+                    double dx = currentPx.X - _startMouse.X;
+                    double dy = currentPx.Y - _startMouse.Y;
 
                     double proposedW = _startW;
                     double proposedH = _startH;
@@ -470,48 +507,67 @@ namespace TabPaint
                         finalY = _startY;
                     }
 
-                    // 6. 应用结果
-                    _selectionRect.Width = (int)proposedW;
-                    _selectionRect.Height = (int)proposedH;
-                    _selectionRect.X = (int)finalX;
-                    _selectionRect.Y = (int)finalY;
-                    if (_originalRect.Width > 0 && _originalRect.Height > 0)
+                    if (inRotation)
                     {
-                        double scaleX = (double)_selectionRect.Width / _originalRect.Width;
-                        double scaleY = (double)_selectionRect.Height / _originalRect.Height;
+                        // 更新逻辑矩形
+                        _preRotationRect.Width = (int)Math.Max(1, proposedW);
+                        _preRotationRect.Height = (int)Math.Max(1, proposedH);
+                        _preRotationRect.X = (int)finalX;
+                        _preRotationRect.Y = (int)finalY;
 
-                        var tg = ctx.SelectionPreview.RenderTransform as TransformGroup;
-                        if (tg == null)
-                        {
-                            tg = new TransformGroup();
-                            tg.Children.Add(new ScaleTransform(scaleX, scaleY));
-                            tg.Children.Add(new TranslateTransform(_selectionRect.X, _selectionRect.Y));
-                            ctx.SelectionPreview.RenderTransform = tg;
-                        }
-                        else
-                        {
-                            var s = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
-                            if (s == null)
-                            {
-                                s = new ScaleTransform(1, 1);
-                                tg.Children.Insert(0, s);
-                            }
-                            s.ScaleX = scaleX;
-                            s.ScaleY = scaleY;
+                        // 同步更新 _selectionRect 坐标
+                        _selectionRect = _preRotationRect;
 
-                            var t = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
-                            if (t == null)
-                            {
-                                t = new TranslateTransform(0, 0);
-                                tg.Children.Add(t);
-                            }
-                            t.X = _selectionRect.X;
-                            t.Y = _selectionRect.Y;
-                        }
-                        ctx.SelectionPreview.Visibility = Visibility.Visible;
+                        // 重新旋转渲染
+                        UpdateRotation(ctx, (int)_rotationAngle, false);
                     }
+                    else
+                    {
+                        // 普通缩放应用结果
+                        _selectionRect.Width = (int)proposedW;
+                        _selectionRect.Height = (int)proposedH;
+                        _selectionRect.X = (int)finalX;
+                        _selectionRect.Y = (int)finalY;
+                        if (_originalRect.Width > 0 && _originalRect.Height > 0)
+                        {
+                            double scaleX = (double)_selectionRect.Width / _originalRect.Width;
+                            double scaleY = (double)_selectionRect.Height / _originalRect.Height;
+
+                            var tg = ctx.SelectionPreview.RenderTransform as TransformGroup;
+                            if (tg == null)
+                            {
+                                tg = new TransformGroup();
+                                tg.Children.Add(new ScaleTransform(scaleX, scaleY));
+                                tg.Children.Add(new TranslateTransform(_selectionRect.X, _selectionRect.Y));
+                                ctx.SelectionPreview.RenderTransform = tg;
+                            }
+                            else
+                            {
+                                var s = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
+                                if (s == null)
+                                {
+                                    s = new ScaleTransform(1, 1);
+                                    tg.Children.Insert(0, s);
+                                }
+                                s.ScaleX = scaleX;
+                                s.ScaleY = scaleY;
+
+                                var t = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
+                                if (t == null)
+                                {
+                                    t = new TranslateTransform(0, 0);
+                                    tg.Children.Add(t);
+                                }
+                                t.X = _selectionRect.X;
+                                t.Y = _selectionRect.Y;
+                            }
+                            ctx.SelectionPreview.Visibility = Visibility.Visible;
+                        }
+                        DrawOverlay(ctx, _selectionRect);
+                    }
+                    
                     UpdateStatusBarSelectionSize(mw); mw.UpdateSelectionToolBarPosition();
-                    DrawOverlay(ctx, _selectionRect); mw.UpdateRulerSelection();
+                    mw.UpdateRulerSelection();
                     return;
                 }
 
@@ -581,8 +637,18 @@ namespace TabPaint
                         }
                     }
                     int newX = (int)(px.X - _clickOffset.X);
-                    int newY = (int)(px.Y - _clickOffset.Y); _selectionRect.X = newX;
+                    int newY = (int)(px.Y - _clickOffset.Y);
+                    int dx = newX - _selectionRect.X;
+                    int dy = newY - _selectionRect.Y;
+                    _selectionRect.X = newX;
                     _selectionRect.Y = newY;
+
+                    if (_preRotationSelectionData != null)
+                    {
+                        _preRotationRect.X += dx;
+                        _preRotationRect.Y += dy;
+                    }
+
                     mw.UpdateSelectionToolBarPosition();
                     var tg = ctx.SelectionPreview.RenderTransform as TransformGroup;
                     if (tg != null)
@@ -696,86 +762,149 @@ namespace TabPaint
                             DeleteSelection(ctx);
                             e.Handled = true;
                             break;
+                        case Key.Escape:
+                            if (SelectionType == SelectionType.MagicWand)
+                            {
+                                Cleanup(ctx);
+                                e.Handled = true;
+                            }
+                            break;
                     }
+                }
+            }
+
+            public void PrepareRotation(ToolContext ctx)
+            {
+                if (_selectionData == null) return;
+                _rotationAngle = 0;
+                if (!_hasLifted) LiftSelectionFromCanvas(ctx);
+
+                // 如果有缩放，先应用缩放 (Bake current scale into pixels)
+                if (_originalRect.Width > 0 && (_selectionRect.Width != _originalRect.Width || _selectionRect.Height != _originalRect.Height))
+                {
+                    var mw = ctx.ParentWindow;
+                    var bmp = GetSelectionCroppedBitmap(mw);
+                    if (bmp != null)
+                    {
+                        int w = bmp.PixelWidth;
+                        int h = bmp.PixelHeight;
+                        int stride = w * 4;
+                        byte[] pixels = new byte[h * stride];
+                        bmp.CopyPixels(pixels, stride, 0);
+                        _selectionData = pixels;
+                        _originalRect = _selectionRect;
+                    }
+                }
+
+                // 备份原始状态以便实时旋转
+                _preRotationSelectionData = (byte[])_selectionData.Clone();
+                _preRotationDataWidth = _selectionRect.Width;
+                _preRotationDataHeight = _selectionRect.Height;
+                _preRotationRect = _selectionRect;
+                _originalRect = _selectionRect;
+                _transformStep++;
+            }
+
+            public void UpdateRotation(ToolContext ctx, int angle, bool commit)
+            {
+                if (_preRotationSelectionData == null || ctx == null) return;
+                _rotationAngle = angle;
+
+                // 使用备份数据旋转，避免误差累积
+                // 注意：这里必须使用原始像素数据的尺寸，而不是当前逻辑尺寸（可能缩放过）
+                int dataW = _preRotationDataWidth;
+                int dataH = _preRotationDataHeight;
+                int stride = dataW * 4;
+
+                var srcBmp = BitmapSource.Create(
+                    dataW, dataH,
+                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                    PixelFormats.Bgra32, null,
+                    _preRotationSelectionData, stride);
+
+                // 当前逻辑尺寸（支持旋转中的缩放）
+                double logicW = _preRotationRect.Width;
+                double logicH = _preRotationRect.Height;
+
+                var rotateTransform = new RotateTransform(angle, logicW / 2.0, logicH / 2.0);
+                Rect rect = new Rect(0, 0, logicW, logicH);
+                Rect rotatedBounds = rotateTransform.TransformBounds(rect);
+
+                int newW = (int)Math.Ceiling(rotatedBounds.Width);
+                int newH = (int)Math.Ceiling(rotatedBounds.Height);
+                if (newW <= 0) newW = 1;
+                if (newH <= 0) newH = 1;
+
+                DrawingVisual dv = new DrawingVisual();
+                using (DrawingContext dc = dv.RenderOpen())
+                {
+                    // 直接在 RenderOptions 设置高质量渲染以减少旋转锯齿
+                    RenderOptions.SetBitmapScalingMode(dv, BitmapScalingMode.HighQuality);
+                    RenderOptions.SetEdgeMode(dv, EdgeMode.Unspecified);
+
+                    dc.PushTransform(new TranslateTransform(-rotatedBounds.X, -rotatedBounds.Y));
+                    dc.PushTransform(new RotateTransform(angle, logicW / 2.0, logicH / 2.0));
+                    dc.DrawImage(srcBmp, rect);
+                }
+
+                RenderTargetBitmap rtb = new RenderTargetBitmap(
+                    newW, newH,
+                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                    PixelFormats.Pbgra32);
+                rtb.Render(dv);
+
+                // 将渲染结果转回 Bgra32 以保持格式一致性
+                var finalBmp = new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0);
+
+                // 更新选区矩形，保持中心位置
+                double centerX = _preRotationRect.X + _preRotationRect.Width / 2.0;
+                double centerY = _preRotationRect.Y + _preRotationRect.Height / 2.0;
+                int newX = (int)Math.Round(centerX - newW / 2.0);
+                int newY = (int)Math.Round(centerY - newH / 2.0);
+
+                int newStride = newW * 4;
+                byte[] newPixels = new byte[newH * newStride];
+                finalBmp.CopyPixels(newPixels, newStride, 0);
+
+                _selectionData = newPixels;
+                _selectionRect = new Int32Rect(newX, newY, newW, newH);
+                _originalRect = _selectionRect;
+
+                // 更新 AlphaMap (用于不规则选区的 hit test 和清除)
+                if (_selectionAlphaMap != null)
+                {
+                    _selectionAlphaMap = new byte[newPixels.Length];
+                    for (int i = 0; i < newPixels.Length; i += 4)
+                    {
+                        _selectionAlphaMap[i + 3] = newPixels[i + 3];
+                    }
+                }
+
+                // 更新预览
+                ctx.SelectionPreview.Source = finalBmp;
+                ctx.SelectionPreview.RenderTransform = new TranslateTransform(newX, newY);
+                ctx.SelectionPreview.Width = newW;
+                ctx.SelectionPreview.Height = newH;
+                ctx.SelectionPreview.Visibility = Visibility.Visible;
+
+                DrawOverlay(ctx, _selectionRect);
+                var mw = ctx.ParentWindow;
+                mw.UpdateSelectionToolBarPosition();
+                mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
+                mw.UpdateRulerSelection();
+
+                if (commit)
+                {
+                    _preRotationSelectionData = null;
+                    _rotationAngle = 0;
+                    ctx.IsDirty = true;
                 }
             }
 
             public void RotateSelection(ToolContext ctx, int angle)
             {
-                if (_selectionData == null || _originalRect.Width == 0 || _originalRect.Height == 0) return;
-
-                int oldW = _originalRect.Width;
-                int oldH = _originalRect.Height;
-                int stride = oldW * 4;
-
-                var srcBmp = BitmapSource.Create(
-                    oldW, oldH,
-                    ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
-                    PixelFormats.Bgra32, null,
-                    _selectionData, stride);
-
-                var transform = new TransformedBitmap(srcBmp, new RotateTransform(angle));
-
-                int newOriginalW = transform.PixelWidth;
-                int newOriginalH = transform.PixelHeight;
-                int newStride = newOriginalW * 4;
-
-                byte[] newPixels = new byte[newOriginalH * newStride];
-                transform.CopyPixels(newPixels, newStride, 0);
-
-                _selectionData = newPixels;
-                _originalRect.Width = newOriginalW;
-                _originalRect.Height = newOriginalH;
-
-                // 计算旋转后的中心点位置，保持中心不变
-                double centerX = _selectionRect.X + _selectionRect.Width / 2.0;
-                double centerY = _selectionRect.Y + _selectionRect.Height / 2.0;
-
-                int newSelectionW = _selectionRect.Width;
-                int newSelectionH = _selectionRect.Height;
-
-                // 如果旋转90或270度，交换选区的宽高
-                if (angle % 180 != 0)
-                {
-                    newSelectionW = _selectionRect.Height;
-                    newSelectionH = _selectionRect.Width;
-                }
-
-                int newX = (int)Math.Round(centerX - newSelectionW / 2.0);
-                int newY = (int)Math.Round(centerY - newSelectionH / 2.0);
-
-                _selectionRect = new Int32Rect(newX, newY, newSelectionW, newSelectionH);
-                // 更新源图片
-                var previewBmp = new WriteableBitmap(transform);
-                ctx.SelectionPreview.Source = previewBmp;
-
-                double dpiScaleX = 96.0 / ctx.Surface.Bitmap.DpiX;
-                double dpiScaleY = 96.0 / ctx.Surface.Bitmap.DpiY;
-
-                ctx.SelectionPreview.Width = newOriginalW * dpiScaleX;
-                ctx.SelectionPreview.Height = newOriginalH * dpiScaleY;
-
-                double scaleX = (double)newSelectionW / newOriginalW;
-                double scaleY = (double)newSelectionH / newOriginalH;
-
-                // 应用变换：缩放 + 位移
-                var tg = new TransformGroup();
-                tg.Children.Add(new ScaleTransform(scaleX, scaleY));
-                tg.Children.Add(new TranslateTransform(newX * dpiScaleX, newY * dpiScaleY));
-
-                ctx.SelectionPreview.RenderTransform = tg;
-
-                // 确保对齐
-                Canvas.SetLeft(ctx.SelectionPreview, 0);
-                Canvas.SetTop(ctx.SelectionPreview, 0);
-                ctx.SelectionPreview.Visibility = Visibility.Visible;
-
-                // 刷新虚线框
-                DrawOverlay(ctx, _selectionRect);
-                var mw = ctx.ParentWindow;
-                mw.UpdateSelectionToolBarPosition();
-                mw.SelectionSize = $"{_selectionRect.Width}×{_selectionRect.Height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
-                mw.SetCropButtonState(); mw.UpdateRulerSelection();mw._canvasResizer.UpdateUI();
+                PrepareRotation(ctx);
+                UpdateRotation(ctx, angle, true);
             }
             public BitmapSource GetSelectionCroppedBitmap(MainWindow mw)
             {
@@ -919,9 +1048,17 @@ namespace TabPaint
 
                     Point relativePoint = ctx.SelectionPreview.TranslatePoint(new Point(0, 0), ctx.ViewElement);
                     Point pixelPoint = ctx.ToPixel(relativePoint);
+
+                    int oldX = _selectionRect.X;
+                    int oldY = _selectionRect.Y;
                     _selectionRect.X = (int)Math.Round(pixelPoint.X);
                     _selectionRect.Y = (int)Math.Round(pixelPoint.Y);
 
+                    if (_preRotationSelectionData != null)
+                    {
+                        _preRotationRect.X += (_selectionRect.X - oldX);
+                        _preRotationRect.Y += (_selectionRect.Y - oldY);
+                    }
                 }
 
                 if (_resizing)

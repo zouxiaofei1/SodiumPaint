@@ -25,6 +25,7 @@ namespace TabPaint
     {
         private TaskProgressFloat _taskProgressPopup;
         private SelectionToolBar _selectionToolBar;
+        private SelectionRotateFloat _selectionRotatePopup;
         public TaskProgressFloat TaskProgressPopup
         {
             get
@@ -52,9 +53,26 @@ namespace TabPaint
                     _selectionToolBar.CopyClick += SelectionToolBar_CopyClick;
                     _selectionToolBar.AiRemoveBgClick += SelectionToolBar_AiRemoveBgClick;
                     _selectionToolBar.OcrClick += SelectionToolBar_OcrClick;
+                    _selectionToolBar.RotateClick += SelectionToolBar_RotateClick;
                     SelectionToolHolder.Content = _selectionToolBar;
                 }
                 return _selectionToolBar;
+            }
+        }
+
+        public SelectionRotateFloat SelectionRotatePopup
+        {
+            get
+            {
+                if (_selectionRotatePopup == null)
+                {
+                    _selectionRotatePopup = new SelectionRotateFloat();
+                    _selectionRotatePopup.HorizontalAlignment = HorizontalAlignment.Center;
+                    _selectionRotatePopup.VerticalAlignment = VerticalAlignment.Bottom;
+                    _selectionRotatePopup.AngleChanged += SelectionRotatePopup_AngleChanged;
+                    SelectionRotateHolder.Content = _selectionRotatePopup;
+                }
+                return _selectionRotatePopup;
             }
         }
 

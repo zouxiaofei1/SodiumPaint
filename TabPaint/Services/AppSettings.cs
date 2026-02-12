@@ -161,6 +161,9 @@ namespace TabPaint
                     settings.PerToolSettings = this.LocalPerToolSettings.ToDictionary(k => k.Key, v => v.Value.Clone());
                 }
                 settings.CurrentToolKey = this.CurrentToolKey;
+
+                if (_router?.CurrentTool != null) settings.LastToolName = _router.CurrentTool.GetType().Name;
+                if (_ctx != null) settings.LastBrushStyle = _ctx.PenStyle;
             }
 
             if (this.WindowState == System.Windows.WindowState.Maximized)
@@ -181,8 +184,7 @@ namespace TabPaint
                 settings.WindowWidth = this.Width;
                 settings.WindowState = (int)System.Windows.WindowState.Normal;
             }
-            if (_router?.CurrentTool != null) settings.LastToolName = _router.CurrentTool.GetType().Name;
-            if (_ctx != null) settings.LastBrushStyle = _ctx.PenStyle;
+
             if (MainImageBar != null)
             {
                 settings.IsImageBarCompact = MainImageBar.IsCompactMode;
@@ -275,20 +277,44 @@ namespace TabPaint
                 var existingWindows = Application.Current.Windows.OfType<MainWindow>()
                     .Where(w => w != this && w.IsVisible).ToList();
 
-                if (existingWindows.Count > 0)
+                ITool targetTool = null;
+                BrushStyle targetStyle = settings.LastBrushStyle;
+                string lastToolName = settings.LastToolName;
+
+                // 寻找参照窗口：优先选最后获得焦点的，其次选其他窗口中第一个
+                MainWindow refWindow = null;
+                if (_lastFocusedInstance != null && _lastFocusedInstance != this && _lastFocusedInstance.IsVisible)
                 {
-                    // 继承旧窗口参数（克隆最后获得焦点的窗口）
-                    var refWindow = _lastFocusedInstance ?? existingWindows.FirstOrDefault(w => w != this);
-                    if (refWindow != null && refWindow.LocalPerToolSettings != null)
+                    refWindow = _lastFocusedInstance;
+                }
+                else
+                {
+                    refWindow = existingWindows.FirstOrDefault();
+                }
+
+                if (refWindow != null)
+                {
+                    // 1. 继承画笔参数
+                    if (refWindow.LocalPerToolSettings != null)
                     {
                         this.LocalPerToolSettings = refWindow.LocalPerToolSettings.ToDictionary(
                             k => k.Key, v => v.Value.Clone());
                         this.CurrentToolKey = refWindow.CurrentToolKey;
                     }
+
+                    // 2. 继承源窗口当前的工具和样式
+                    if (refWindow._router?.CurrentTool != null)
+                    {
+                        lastToolName = refWindow._router.CurrentTool.GetType().Name;
+                    }
+                    if (refWindow._ctx != null)
+                    {
+                        targetStyle = refWindow._ctx.PenStyle;
+                    }
                 }
                 else
                 {
-                    // 首个窗口：从设置读取
+                    // 首个窗口：从全局设置读取
                     if (settings.PerToolSettings != null)
                     {
                         this.LocalPerToolSettings = settings.PerToolSettings.ToDictionary(
@@ -297,24 +323,19 @@ namespace TabPaint
                     this.CurrentToolKey = settings.CurrentToolKey;
                 }
 
-                // 显式同步到 Context 及其关联的 PenTool
+                // 同步笔刷大小和透明度到当前上下文
                 if (_ctx != null)
                 {
                     _ctx.PenThickness = this.PenThickness;
                     _ctx.PenOpacity = this.PenOpacity;
                 }
                 
-                // 强制触发通知，确保 Slider 绑定刷新
+                // 通知 UI 更新
                 OnPropertyChanged(nameof(PenThickness));
                 OnPropertyChanged(nameof(PenOpacity));
 
-                // 1. 恢复笔刷大小 (二次确认同步)
-                if (_ctx != null) _ctx.PenThickness = this.PenThickness;
-                // 2. 准备目标工具
-                ITool targetTool = null;
-                BrushStyle targetStyle = settings.LastBrushStyle;
-
-                switch (settings.LastToolName)
+                // 准备对应的工具实例
+                switch (lastToolName)
                 {
                     case "EyedropperTool": targetTool = _tools.Eyedropper; break;
                     case "FillTool": targetTool = _tools.Fill; break;
@@ -326,20 +347,25 @@ namespace TabPaint
                         targetTool = _tools.Pen;
                         break;
                 }
+
                 if (MainImageBar != null)
                 {
-                    // 这里直接赋值，ImageBarControl 内部的 OnCompactModeChanged 会处理高度变化动画
                     MainImageBar.IsCompactMode = settings.IsImageBarCompact;
                 }
-                // 3. 设置上下文样式
+
+                // 最终应用工具
                 if (_ctx != null) _ctx.PenStyle = targetStyle;
                 if (_router != null)
                 {
-                    if (settings.LastToolName == "PenTool")
+                    if (lastToolName == "PenTool")
                     {
-                        SetBrushStyle(_ctx.PenStyle);
+                        // 如果是画笔工具，通过 SetBrushStyle 激活对应的子样式（如橡皮擦）
+                        SetBrushStyle(targetStyle);
                     }
-                    else _router.SetTool(targetTool);
+                    else if (targetTool != null)
+                    {
+                        _router.SetTool(targetTool);
+                    }
                 }
 
             }

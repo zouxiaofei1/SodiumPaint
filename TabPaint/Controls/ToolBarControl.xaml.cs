@@ -227,6 +227,7 @@ namespace TabPaint.Controls
             StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Mosaic", "Mosaic_Image", OnBrushStyleClick_Forward, "Mosaic", true));
             StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Blur", "Blur_Image", OnBrushStyleClick_Forward, "GaussianBlur", true));
             StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_AIEraser", "AIEraser_Image", OnBrushStyleClick_Forward, "AiEraser", true));
+            StackPanelBrush.Children.Add(CreateMenuItem("L_ToolBar_Brush_Gradient", "Brush_Normal_Image", OnBrushStyleClick_Forward, "Gradient", true));
 
             _isBrushMenuLoaded = true;
         }

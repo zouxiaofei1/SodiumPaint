@@ -21,6 +21,9 @@ namespace TabPaint.Controls
         }
         public void UpdateProgress(AiDownloadStatus status, string taskName = null)
         {
+            var bottomGrid = this.FindName("BottomInfoGrid") as FrameworkElement;
+            if (bottomGrid != null) bottomGrid.Visibility = Visibility.Visible;
+
             if (this.Visibility != Visibility.Visible)
             {
                 this.Visibility = Visibility.Visible;
@@ -52,6 +55,15 @@ namespace TabPaint.Controls
         }
         public void UpdateProgress(double percentage, string taskName = null, string leftText = null, string rightText = null)
         {
+            var bottomGrid = this.FindName("BottomInfoGrid") as FrameworkElement;
+            if (bottomGrid != null)
+            {
+                if (string.IsNullOrEmpty(leftText) && string.IsNullOrEmpty(rightText))
+                    bottomGrid.Visibility = Visibility.Collapsed;
+                else
+                    bottomGrid.Visibility = Visibility.Visible;
+            }
+
             if (this.Visibility != Visibility.Visible)
             {
                 this.Visibility = Visibility.Visible;

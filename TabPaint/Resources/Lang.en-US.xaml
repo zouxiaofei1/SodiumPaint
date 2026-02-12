@@ -14,6 +14,7 @@
     <sys:String x:Key="L_Settings_Plugins_Status_Installed">Installed</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Status_Downloading">Downloading...</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Install">Manage</sys:String>
+    <sys:String x:Key="L_Settings_Plugins_InstallReal">Install</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall">Uninstall</sys:String>
     <sys:String x:Key="L_Settings_Plugins_Uninstall_Confirm">Are you sure you want to uninstall this AI model? </sys:String>
     <sys:String x:Key="L_Settings_Nav_Plugins">Plugins</sys:String>
@@ -325,6 +326,7 @@
     <sys:String x:Key="L_ToolBar_Brush_Highlighter">Highlighter</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Mosaic">Mosaic</sys:String>
     <sys:String x:Key="L_ToolBar_Brush_Blur">Blur</sys:String>
+    <sys:String x:Key="L_ToolBar_Brush_Gradient">Gradient</sys:String>
     <sys:String x:Key="L_ToolBar_Shape">Shape</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_Rectangle">Rectangle</sys:String>
     <sys:String x:Key="L_ToolBar_Shape_RoundedRectangle">Rounded rectangle</sys:String>
@@ -335,6 +337,8 @@
     <sys:String x:Key="L_ToolBar_Crop">Crop selection</sys:String>
     <sys:String x:Key="L_ToolBar_RotateFlip">Rotate/Flip</sys:String>
     <sys:String x:Key="L_ToolBar_Rotate_180">Rotate 180°</sys:String>
+    <sys:String x:Key="L_Rotation_Angle">Angle</sys:String>
+    <sys:String x:Key="L_Selection_Rotate">Rotate Selection</sys:String>
     <sys:String x:Key="L_ToolBar_Flip_Vertical">Flip vertical</sys:String>
     <sys:String x:Key="L_ToolBar_Flip_Horizontal">Flip horizontal</sys:String>
     <sys:String x:Key="L_ToolBar_CustomColor">Custom color</sys:String>
@@ -757,6 +761,7 @@
     <sys:String x:Key="L_StatusBar_Favorite_ToolTip">Image Favorites</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomOut">Zoom Out</sys:String>
     <sys:String x:Key="L_StatusBar_ZoomIn">Zoom In</sys:String>
+    <sys:String x:Key="L_AI_Status_Upscaling">Upscaling...</sys:String>
     <sys:String x:Key="L_AI_Status_Upscaling_Format">Upscaling... {0:0}%</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Success">Upscale complete (400%)</sys:String>
     <sys:String x:Key="L_Toast_Upscale_Error_Prefix">Upscale failed: {0}</sys:String>

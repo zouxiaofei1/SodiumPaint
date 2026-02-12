@@ -289,8 +289,12 @@ namespace TabPaint
                     if (_router?.CurrentTool is SelectTool selectTool)
                     {
                         selectTool.SetWandTolerance(val);
+                        selectTool.RefreshWandPreview(_ctx);
                     }
                 };
+
+                // 选区旋转悬浮窗初始化
+                SelectionRotatePopup.AngleChanged += SelectionRotatePopup_AngleChanged;
 
                 // Canvas 事件
                 CanvasWrapper.MouseDown += OnCanvasMouseDown;
@@ -1109,8 +1113,15 @@ namespace TabPaint
         {
             if (!_programClosed)
             {
-                _programClosed = true;
-                App.GlobalExit();
+                int otherVisibleWindows = Application.Current.Windows.OfType<MainWindow>().Count(w => w != this && w.IsVisible);
+                if (otherVisibleWindows == 0)
+                {
+                    App.GlobalExit();
+                }
+                else
+                {
+                    OnClosing();
+                }
             }
         }
         private void OnTitleBarCloseClick(object sender, RoutedEventArgs e)
@@ -1216,20 +1227,70 @@ namespace TabPaint
             if (SelectionToolHolder != null) SelectionToolHolder.Visibility = Visibility.Collapsed;
         }
 
+        private void SelectionToolBar_RotateClick(object sender, RoutedEventArgs e)
+        {
+            var settings = SettingsManager.Instance.Current;
+            settings.IsSelectionRotateEnabled = !settings.IsSelectionRotateEnabled;
+
+            if (settings.IsSelectionRotateEnabled)
+            {
+                SelectionRotatePopup.SetValue(0);
+                SelectionRotatePopup.Visibility = Visibility.Visible;
+                if (_router?.CurrentTool is SelectTool st)
+                {
+                    st.PrepareRotation(_ctx);
+                }
+            }
+            else
+            {
+                SelectionRotatePopup.Visibility = Visibility.Collapsed;
+            }
+            SettingsManager.Instance.Save();
+            UpdateSelectionToolBarPosition();
+        }
+
+        private void SelectionRotatePopup_AngleChanged(object sender, RoutedEventArgs e)
+        {
+            if (SelectionRotatePopup != null)
+            {
+                if (int.TryParse(SelectionRotatePopup.RotateValueText.Text, out int angle))
+                {
+                    if (_router?.CurrentTool is SelectTool st)
+                    {
+                        st.UpdateRotation(_ctx, angle, false);
+                    }
+                }
+            }
+        }
+
         public void UpdateSelectionToolBarPosition()
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
             var selectTool = _router?.CurrentTool as SelectTool; if (selectTool == null) return;
-            var holder = this.SelectionToolHolder; // 引用 XAML 中的 ContentControl
+            var holder = this.FindName("SelectionToolHolder") as ContentControl;
             if (holder == null) return;
+            var rotateHolder = this.FindName("SelectionRotateHolder") as ContentControl;
+
+            var settings = SettingsManager.Instance.Current;
 
             if (!IsViewMode && selectTool.HasActiveSelection && (selectTool._selectionRect.Width + selectTool._selectionRect.Height >= 150))
             {
+                // 确保工具栏已加载
+                if (holder.Content == null) { var bar = this.SelectionToolBar; }
+                this.SelectionToolBar.IsRotateChecked = settings.IsSelectionRotateEnabled;
+                if (settings.IsSelectionRotateEnabled && SelectionRotatePopup.Visibility != Visibility.Visible)
+                {
+                    SelectionRotatePopup.SetValue(0);
+                    SelectionRotatePopup.Visibility = Visibility.Visible;
+                    selectTool.PrepareRotation(_ctx);
+                }
+
                 Int32Rect rect = selectTool._selectionRect;
 
                 if (rect.Width <= 0 || rect.Height <= 0)
                 {
                     holder.Visibility = Visibility.Collapsed;
+                    if (rotateHolder != null) rotateHolder.Visibility = Visibility.Collapsed;
                     return;
                 }
 
@@ -1243,7 +1304,7 @@ namespace TabPaint
                 double selLeft = rootPos.X;
                 double selWidth = rootPosEnd.X - rootPos.X;
                 double toolbarHeight = 45;
-                double toolbarWidth = 140;
+                double toolbarWidth = 160;
 
                 double top = selTop - toolbarHeight - 10;
                 double left = selLeft + (selWidth - toolbarWidth) / 2;
@@ -1255,14 +1316,57 @@ namespace TabPaint
                 if (left + toolbarWidth > this.ActualWidth - 10) left = this.ActualWidth - toolbarWidth - 10;
                 holder.Margin = new Thickness(left, top, 0, 0);
                 holder.Visibility = Visibility.Visible;
+
+                // 旋转控制面板跟随
+                if (rotateHolder != null && _selectionRotatePopup != null && _selectionRotatePopup.Visibility == Visibility.Visible)
+                {
+                    double rotateHeight = 40;
+                    double rotateWidth = 240;
+
+                    // 默认放在选区底部下方
+                    double rTop = rootPosEnd.Y + 10;
+
+                    // 如果工具栏已经因为上方空间不足而移到了选区下方，则旋转面板顺延到工具栏下方
+                    if (top >= rootPosEnd.Y)
+                    {
+                        rTop = top + toolbarHeight + 5;
+                    }
+
+                    double rLeft = selLeft + (selWidth - rotateWidth) / 2;
+
+                    // 底部边界检查：如果下方放不下，则翻转到上方
+                    if (rTop + rotateHeight > this.ActualHeight - 20)
+                    {
+                        if (top < selTop) // 工具栏在上方
+                        {
+                            rTop = top - rotateHeight - 5; // 放在工具栏上方
+                        }
+                        else
+                        {
+                            rTop = selTop - rotateHeight - 10; // 放在选区上方
+                        }
+                    }
+
+                    if (rLeft < 10) rLeft = 10;
+                    if (rLeft + rotateWidth > this.ActualWidth - 10) rLeft = this.ActualWidth - rotateWidth - 10;
+
+                    rotateHolder.Margin = new Thickness(rLeft, rTop, 0, 0);
+                    rotateHolder.Visibility = Visibility.Visible;
+                }
+                else if (rotateHolder != null)
+                {
+                    rotateHolder.Visibility = Visibility.Collapsed;
+                }
             }
             else
             {
                 holder.Visibility = Visibility.Collapsed;
+                if (rotateHolder != null) rotateHolder.Visibility = Visibility.Collapsed;
             }
         }
 
         public void SyncTextToolbarState(RichTextBox rtb)
+
         {
             var selection = rtb.Selection;
             var weight = selection.GetPropertyValue(TextElement.FontWeightProperty);// 字体粗细

@@ -57,7 +57,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock x:Name="TaskIconText" Text="☁️" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TaskIconText" Text="☁️" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                 <TextBlock x:Name="TaskNameText" 
                            Text="Downloading..." 
                            FontWeight="SemiBold" FontSize="12"
@@ -80,7 +80,7 @@
                            Fill="{DynamicResource SystemAccentBrush}" 
                            RadiusX="2" RadiusY="2" Width="0"/>
             </Grid>
-            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,6,0,0">
+            <Grid x:Name="BottomInfoGrid" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,6,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>

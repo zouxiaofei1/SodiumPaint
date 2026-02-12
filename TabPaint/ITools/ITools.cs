@@ -32,6 +32,7 @@ namespace TabPaint
                 EyedropperTool => "EyedropperTool",
                 FillTool => "FillTool",
                 TextTool => "TextTool",
+                GradientTool => "GradientTool",
                 _ => ""
             };
 
@@ -147,6 +148,7 @@ namespace TabPaint
                         TextTool => MainToolBar.TextButton,
                         PenTool when _ctx.PenStyle == BrushStyle.Eraser => MainToolBar.EraserButton,
                         PenTool when _ctx.PenStyle == BrushStyle.Pencil => MainToolBar.PenButton,
+                        GradientTool => MainToolBar.BrushMainButton,
                         _ => null
                     };
 
@@ -256,6 +258,10 @@ namespace TabPaint
                     case "TextTool":
                         resource = FindResource("Text_Image"); // 它是 Geometry
                         toolName = LocalizationManager.GetString("L_ToolBar_Tool_Text");
+                        break;
+                    case "GradientTool":
+                        resource = FindResource("Brush_Normal_Image");
+                        toolName = LocalizationManager.GetString("L_ToolBar_Brush_Gradient");
                         break;
                 }
                 if (resource is ImageSource imgSrc)
@@ -404,6 +410,7 @@ namespace TabPaint
             public ITool Select { get; } = new SelectTool();//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             public ITool Text { get; } = new TextTool();
             public ITool Shape { get; } = new ShapeTool();
+            public ITool Gradient { get; } = new GradientTool();
         }
 
         public class InputRouter /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

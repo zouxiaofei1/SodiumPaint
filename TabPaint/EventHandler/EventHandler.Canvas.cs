@@ -91,6 +91,7 @@ namespace TabPaint
             if (_isLoadingImage) return;
             Point pos = e.GetPosition(CanvasWrapper);
             _router.ViewElement_MouseUp(pos, e);
+            UpdateSelectionToolBarPosition();
         }
 
         private void OnCanvasMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)

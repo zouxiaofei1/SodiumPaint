@@ -167,6 +167,7 @@ namespace TabPaint
                     writer.Write(Current.EnableClipboardMonitor);
                     writer.Write(Current.LastToolName ?? "");
                     writer.Write((int)Current.LastBrushStyle);
+                    writer.Write(Current.IsSelectionRotateEnabled);
                     writer.Write(Current.ShowRulers);
                     writer.Write((int)Current.ResamplingMode);
                     writer.Write(Current.ViewInterpolationThreshold);
@@ -252,6 +253,7 @@ namespace TabPaint
                     settings.EnableClipboardMonitor = reader.ReadBoolean();
                     settings.LastToolName = reader.ReadString();
                     settings.LastBrushStyle = (BrushStyle)reader.ReadInt32();
+                    settings.IsSelectionRotateEnabled = reader.ReadBoolean();
                     settings.ShowRulers = reader.ReadBoolean();
                     settings.ResamplingMode = (AppResamplingMode)reader.ReadInt32();
                     settings.ViewInterpolationThreshold = reader.ReadDouble();

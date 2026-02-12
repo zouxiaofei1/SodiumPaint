@@ -10,6 +10,7 @@ namespace TabPaint
 {
     public partial class ResizeCanvasDialog : Window
     {
+        public event Action<int, int, bool> PreviewChanged;
         private const int MaxPixelSize = (int)AppConsts.MaxCanvasSize;
         public int ImageWidth { get; private set; }
         public int ImageHeight { get; private set; }
@@ -149,6 +150,7 @@ namespace TabPaint
 
             UpdateInfoText();
             _isUpdating = false;
+            PreviewChanged?.Invoke(ImageWidth, ImageHeight, IsCanvasResizeMode);
         }
         private void OnHeightChanged(int newHeight, bool fromSlider)
         {
@@ -181,6 +183,7 @@ namespace TabPaint
 
             UpdateInfoText();
             _isUpdating = false;
+            PreviewChanged?.Invoke(ImageWidth, ImageHeight, IsCanvasResizeMode);
         }
         private void WidthSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -236,6 +239,8 @@ namespace TabPaint
 
             if (IsCanvasResizeMode) InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Canvas");
             else InfoTextBlock.Text = LocalizationManager.GetString("L_ResizeCanvas_Desc_Resample");
+
+            PreviewChanged?.Invoke(ImageWidth, ImageHeight, IsCanvasResizeMode);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

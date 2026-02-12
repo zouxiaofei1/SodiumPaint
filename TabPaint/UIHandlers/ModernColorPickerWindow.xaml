@@ -148,14 +148,62 @@
             </Grid.RowDefinitions>
             <Border Grid.Row="0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Background="Transparent" CornerRadius="8,8,0,0" MouseLeftButtonDown="TitleBar_MouseDown" Margin="0,0,0,00">
                 <Grid Margin="14,4,14,4">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" x:Name="TitleArea">
                         <Image x:Name="AppIcon" Source="pack://application:,,,/Resources/TabPaint.ico" Width="24" Height="24" Margin="0,0,12,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                        <TextBlock Text="{DynamicResource L_ColorPicker_Title}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TitleText" Text="{DynamicResource L_ColorPicker_Title}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Button HorizontalAlignment="Right" Width="46" Height="32" Style="{StaticResource WindowCloseButtonStyle}" Click="CancelButton_Click" VerticalAlignment="Top" Margin="0,-4,-14,0"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-14,0">
+                        <Button x:Name="ToggleCompactBtn" Width="46" Height="32" Style="{StaticResource WindowMinimizeButtonStyle}" Click="ToggleCompact_Click" ToolTip="Compact Mode">
+                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="12" x:Name="ToggleBtnIcon"/>
+                        </Button>
+                        <Button x:Name="CloseBtn" Width="46" Height="32" Style="{StaticResource WindowCloseButtonStyle}" Click="CancelButton_Click"/>
+                    </StackPanel>
                 </Grid>
             </Border>
-            <Grid Grid.Row="1" Background="{DynamicResource GlassBackgroundMediumBrush}" Height="350" Margin="0,0,0,0">
+
+            <Grid x:Name="CompactModeRoot" Grid.Row="1" Grid.RowSpan="3" Visibility="Collapsed" Background="{DynamicResource GlassBackgroundMediumBrush}">
+                <StackPanel Margin="12,10,12,12">
+                    <!-- Color Wheel -->
+                    <Grid x:Name="WheelContainer" Width="180" Height="180" Margin="0,0,0,10" 
+                          MouseLeftButtonDown="Wheel_MouseDown" MouseMove="Wheel_MouseMove" MouseLeftButtonUp="Wheel_MouseUp" Cursor="Cross" Background="Transparent">
+                        <Ellipse IsHitTestVisible="False">
+                            <Ellipse.Fill>
+                                <ImageBrush x:Name="WheelImageBrush"/>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <Canvas IsHitTestVisible="False">
+                            <Ellipse x:Name="WheelCursor" Width="14" Height="14" Stroke="White" StrokeThickness="2" Margin="-7,-7,0,0">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="0" Color="Black" Opacity="0.5"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
+                        </Canvas>
+                    </Grid>
+
+                    <!-- Primary/Secondary Colors -->
+                    <Grid Height="28" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="CompactPrimaryBtn" Style="{StaticResource MiniColorSwatch}" Width="24" Height="24" Click="CompactPrimaryBtn_Click" ToolTip="Primary Color"/>
+                            <Button x:Name="CompactSecondaryBtn" Style="{StaticResource MiniColorSwatch}" Width="24" Height="24" Margin="12,0,0,0" Click="CompactSecondaryBtn_Click" ToolTip="Secondary Color"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Sliders -->
+                    <TextBlock Text="{DynamicResource L_ColorPicker_Brightness}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,2"/>
+                    <Slider x:Name="BrightnessSlider" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,10" ValueChanged="CompactSlider_ValueChanged" Style="{StaticResource Win11HorizontalSliderStyle}"/>
+
+                    <TextBlock Text="{DynamicResource L_ColorPicker_Saturation}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,2"/>
+                    <Slider x:Name="SaturationSlider" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,0" ValueChanged="CompactSlider_ValueChanged" Style="{StaticResource Win11HorizontalSliderStyle}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid x:Name="NormalModeRoot" Grid.Row="1" Grid.RowSpan="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Background="{DynamicResource GlassBackgroundMediumBrush}" Height="350" Margin="0,0,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="280"/>
                     <ColumnDefinition Width="45"/>
@@ -312,7 +360,7 @@
                     </Grid>
                 </StackPanel>
             </Grid>
-            <Grid Grid.Row="2" Background="{DynamicResource GlassBackgroundMediumBrush}"  >
+            <Grid Grid.Row="2" Background="{DynamicResource GlassBackgroundMediumBrush}" x:Name="BasicColorsArea">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="350"/>
                     <ColumnDefinition Width="Auto"/>
@@ -475,11 +523,12 @@
                     </UniformGrid>
                 </StackPanel>
             </Grid>
-            <Grid Grid.Row="3" Height="56" Margin="24,0,24,0">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{DynamicResource L_Common_OK}" Width="100" Height="32" Style="{StaticResource FluentAccentButton}" Click="OkButton_Click" Margin="0,0,10,0"/>
-                    <Button Content="{DynamicResource L_Common_Cancel}" Width="100" Height="32" Style="{StaticResource FluentButton}" Click="CancelButton_Click"/>
-                </StackPanel>
+                <Grid Grid.Row="2" Height="56" Margin="24,0,24,0" x:Name="OkCancelArea">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="{DynamicResource L_Common_OK}" Width="100" Height="32" Style="{StaticResource FluentAccentButton}" Click="OkButton_Click" Margin="0,0,10,0"/>
+                        <Button Content="{DynamicResource L_Common_Cancel}" Width="100" Height="32" Style="{StaticResource FluentButton}" Click="CancelButton_Click"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Grid>
     </Border>

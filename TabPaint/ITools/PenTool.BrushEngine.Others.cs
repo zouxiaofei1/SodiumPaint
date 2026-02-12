@@ -444,15 +444,26 @@ public partial class PenTool : ToolBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe Int32Rect? DrawCatmullRomSegment(
         ToolContext ctx,
-        CalligraphyPoint p0, CalligraphyPoint p1,
-        CalligraphyPoint p2, CalligraphyPoint p3,
+        StrokePoint p0, StrokePoint p1,
+        StrokePoint p2, StrokePoint p3,
         byte* buffer, int stride, int w, int h)
     {
         float segDx = p2.X - p1.X;
         float segDy = p2.Y - p1.Y;
         float segLen = MathF.Sqrt(segDx * segDx + segDy * segDy);
-        int steps = Math.Max(1, (int)MathF.Ceiling(segLen / 1.5f));
-        steps = Math.Min(steps, 300);
+        
+        float thickness = (float)ctx.PenThickness;
+        // 动态步长策略：
+        // 1. 小笔刷 (<32px): 保持高密度 (1.5px 步长)，确保曲线圆滑且无多边形感。
+        // 2. 大笔刷 (>100px): 采样步长随半径增大，最大可达半径的 40%。
+        // 因为大半径笔刷在极短距离内的形状变化肉眼不可见，减少采样可极大提升性能。
+        float stepSize;
+        if (thickness < 32) stepSize = 1.5f;
+        else if (thickness < 128) stepSize = thickness * 0.15f;
+        else stepSize = thickness * 0.35f; // 1200px 时步长约为 420px
+
+        int steps = Math.Max(1, (int)MathF.Ceiling(segLen / stepSize));
+        if (steps > 150) steps = 150;
 
         int minX = int.MaxValue, minY = int.MaxValue;
         int maxX = int.MinValue, maxY = int.MinValue;

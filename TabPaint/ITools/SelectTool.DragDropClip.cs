@@ -380,6 +380,19 @@ namespace TabPaint
                     startX = (int)(px.X - imgW / 2.0);
                     startY = (int)(px.Y - imgH / 2.0);
                 }
+                else
+                {
+                    // 如果屏幕窗口显示不全画布，则粘贴到视图左上角（而不是画布左上角）
+                    var sv = mw.ScrollContainer;
+                    if (sv != null && (sv.ExtentWidth > sv.ViewportWidth || sv.ExtentHeight > sv.ViewportHeight))
+                    {
+                        // 将视图左上角 (0,0) 转换到画布像素坐标
+                        Point viewTopLeft = sv.TranslatePoint(new Point(0, 0), ctx.ViewElement);
+                        Point pixelPos = ctx.ToPixel(viewTopLeft);
+                        startX = (int)Math.Max(0, pixelPos.X);
+                        startY = (int)Math.Max(0, pixelPos.Y);
+                    }
+                }
 
                 _selectionRect = new Int32Rect(startX, startY, imgW, imgH);
                 _originalRect = _selectionRect;

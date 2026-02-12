@@ -228,8 +228,14 @@ namespace TabPaint
             if (BackgroundImage.Source is BitmapSource source)
             {
                 double pixels = source.PixelWidth * source.PixelHeight;
-                delayMs = pixels / AppConsts.AutoSavePerformanceFactor / PerformanceScore;
+                // 确保 PerformanceScore 不为 0，防止除以零导致 delayMs 为无穷大
+                int score = Math.Max(1, PerformanceScore);
+                delayMs = pixels / AppConsts.AutoSavePerformanceFactor / score;
             }
+
+            // 限制延迟时间在 100ms 到 60s 之间，防止 TimeSpan 溢出或延迟过长
+            delayMs = Math.Clamp(delayMs, 100, 60000);
+
             _autoSaveTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
             _autoSaveTimer.Start();
             CheckDirtyState();
@@ -592,6 +598,14 @@ namespace TabPaint
 
                     if (oldSession != null && oldSession.Tabs != null)
                     {
+                        // 预先收集当前已分配的编号，防止合并时冲突
+                        var usedUntitledNumbers = new HashSet<int>();
+                        foreach (var t in finalTabsToSave)
+                        {
+                            if (t.IsNew || IsVirtualPath(t.OriginalPath))
+                                usedUntitledNumbers.Add(t.UntitledNumber);
+                        }
+
                         foreach (var oldTab in oldSession.Tabs)
                         {
                             if (_closedTabIds.Contains(oldTab.Id)) continue;
@@ -613,7 +627,25 @@ namespace TabPaint
                             if (isDifferentDir)
                             {
                                 if (!finalTabsToSave.Any(t => t.Id == oldTab.Id))
+                                {
+                                    // 检查未命名编号冲突
+                                    if (oldTab.IsNew || IsVirtualPath(oldTab.OriginalPath))
+                                    {
+                                        while (usedUntitledNumbers.Contains(oldTab.UntitledNumber))
+                                        {
+                                            oldTab.UntitledNumber++;
+                                            // 同步更新虚拟路径
+                                            if (IsVirtualPath(oldTab.OriginalPath))
+                                            {
+                                                int sep = oldTab.OriginalPath.IndexOf("::");
+                                                string idPart = sep >= 0 ? oldTab.OriginalPath.Substring(sep) : $"::{oldTab.Id}";
+                                                oldTab.OriginalPath = $"{VirtualFilePrefix}{oldTab.UntitledNumber}{idPart}";
+                                            }
+                                        }
+                                        usedUntitledNumbers.Add(oldTab.UntitledNumber);
+                                    }
                                     finalTabsToSave.Add(oldTab);
+                                }
                             }
                         }
                     }
@@ -730,6 +762,22 @@ namespace TabPaint
                     }
                     else
                     {
+                        // 检查并修复未命名编号冲突
+                        if (info.IsNew || IsVirtualPath(info.OriginalPath))
+                        {
+                            bool conflict = FileTabs.Any(t => (t.IsNew || IsVirtualPath(t.FilePath)) && t.UntitledNumber == info.UntitledNumber);
+                            if (conflict)
+                            {
+                                info.UntitledNumber = GetNextAvailableUntitledNumber();
+                                if (IsVirtualPath(info.OriginalPath))
+                                {
+                                    int sep = info.OriginalPath.IndexOf("::");
+                                    string idPart = sep >= 0 ? info.OriginalPath.Substring(sep) : $"::{info.Id}";
+                                    info.OriginalPath = $"{VirtualFilePrefix}{info.UntitledNumber}{idPart}";
+                                }
+                            }
+                        }
+
                         tab = new FileTabItem(info.OriginalPath)
                         {
                             Id = info.Id,
@@ -1132,6 +1180,22 @@ namespace TabPaint
                                 }
                                 else if (!string.IsNullOrEmpty(info.BackupPath) && File.Exists(info.BackupPath))
                                 {
+                                    // 检查并修复未命名编号冲突
+                                    if (info.IsNew || IsVirtualPath(info.OriginalPath))
+                                    {
+                                        bool conflict = FileTabs.Any(t => (t.IsNew || IsVirtualPath(t.FilePath)) && t.UntitledNumber == info.UntitledNumber);
+                                        if (conflict)
+                                        {
+                                            info.UntitledNumber = GetNextAvailableUntitledNumber();
+                                            if (IsVirtualPath(info.OriginalPath))
+                                            {
+                                                int sep = info.OriginalPath.IndexOf("::");
+                                                string idPart = sep >= 0 ? info.OriginalPath.Substring(sep) : $"::{info.Id}";
+                                                info.OriginalPath = $"{VirtualFilePrefix}{info.UntitledNumber}{idPart}";
+                                            }
+                                        }
+                                    }
+
                                     var tab = new FileTabItem(info.OriginalPath)
                                     {
                                         Id = info.Id,

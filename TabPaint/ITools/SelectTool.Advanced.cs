@@ -344,26 +344,34 @@ namespace TabPaint
                 return paths;
             }
             private void DrawIrregularContour(ToolContext ctx, Canvas overlay, Geometry geometry,
-    Int32Rect rect, double invScale, double diff, bool applyTransform = true)
+    Int32Rect rect, double invScale, double diff, bool applyTransform = true, double angle = 0)
             {
                 var mw = ctx.ParentWindow;
 
                 Geometry drawGeometry = geometry;
+                TransformGroup tg = new TransformGroup();
+
                 if (applyTransform)
                 {
-                    var cloneGeom = geometry.Clone();
-                    cloneGeom.Transform = new TranslateTransform(rect.X + diff * 0.75, rect.Y);
-                    drawGeometry = cloneGeom;
+                    tg.Children.Add(new TranslateTransform(rect.X + diff * 0.75, rect.Y));
                 }
-                else
+                else if (Math.Abs(diff) > 0.001)
                 {
-                    // 魔棒模式下，偏移已经在生成时处理了，只需要处理 diff
-                    if (Math.Abs(diff) > 0.001)
-                    {
-                        var cloneGeom = geometry.Clone();
-                        cloneGeom.Transform = new TranslateTransform(diff * 0.75, 0);
-                        drawGeometry = cloneGeom;
-                    }
+                    tg.Children.Add(new TranslateTransform(diff * 0.75, 0));
+                }
+
+                if (Math.Abs(angle) > 0.01)
+                {
+                    double centerX = rect.X + rect.Width / 2.0;
+                    double centerY = rect.Y + rect.Height / 2.0;
+                    tg.Children.Add(new RotateTransform(angle, centerX, centerY));
+                }
+
+                if (tg.Children.Count > 0)
+                {
+                    var cloneGeom = geometry.Clone();
+                    cloneGeom.Transform = tg;
+                    drawGeometry = cloneGeom;
                 }
 
                 // 白色底线
@@ -400,13 +408,17 @@ namespace TabPaint
                 overlay.Children.Add(blackPath);
 
                 // 绘制 8 个句柄（在包围盒上）
-                DrawHandles(ctx, overlay, rect, invScale, diff);
+                DrawHandles(ctx, overlay, rect, invScale, diff, angle);
             }
 
-            private void DrawRectangleOverlay(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff)
+            private void DrawRectangleOverlay(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff, double angle = 0)
             {
                 var mw = ctx.ParentWindow;
                 var geometry = new RectangleGeometry(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
+                if (Math.Abs(angle) > 0.01)
+                {
+                    geometry.Transform = new RotateTransform(angle, rect.X + rect.Width / 2.0, rect.Y + rect.Height / 2.0);
+                }
 
                 // 白色底线
                 var whiteBase = new System.Windows.Shapes.Path
@@ -440,14 +452,26 @@ namespace TabPaint
                 overlay.Children.Add(outlinePath);
 
                 // 绘制句柄
-                DrawHandles(ctx, overlay, rect, invScale, diff);
+                DrawHandles(ctx, overlay, rect, invScale, diff, angle);
             }
-            private void DrawHandles(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff)
+            private void DrawHandles(ToolContext ctx, Canvas overlay, Int32Rect rect, double invScale, double diff, double angle = 0)
             {
-                if (SelectionType != SelectionType.Rectangle) return;
+                if (SelectionType != SelectionType.Rectangle && !_hasLifted && _transformStep == 0) return;
+
                 var mw = ctx.ParentWindow;
 
-                foreach (var p in GetHandlePositions(rect))
+                var handles = GetHandlePositions(rect);
+                if (Math.Abs(angle) > 0.01)
+                {
+                    var center = new Point(rect.X + rect.Width / 2.0, rect.Y + rect.Height / 2.0);
+                    var rt = new RotateTransform(angle, center.X, center.Y);
+                    for (int i = 0; i < handles.Count; i++)
+                    {
+                        handles[i] = rt.Transform(handles[i]);
+                    }
+                }
+
+                foreach (var p in handles)
                 {
                     var handle = new System.Windows.Shapes.Rectangle
                     {

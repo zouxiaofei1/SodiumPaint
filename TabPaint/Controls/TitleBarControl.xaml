@@ -55,7 +55,7 @@
                                 <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.2" Color="Black"/>
                             </Border.Effect>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="💡" Margin="0,0,8,0" VerticalAlignment="Center" FontSize="14"/>
+                                <TextBlock Text="💡" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"/>
                                 <TextBlock Text="{DynamicResource L_Hint_ClickHelp}" 
                                            Foreground="{DynamicResource TextPrimaryBrush}" 
                                            FontSize="13" 

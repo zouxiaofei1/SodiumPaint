@@ -283,9 +283,14 @@ namespace TabPaint
         {
             BackgroundImage.Width = pixwidth;
             BackgroundImage.Height = pixheight;
-            _imageSize = $"{pixwidth}×{pixheight}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
-            OnPropertyChanged(nameof(ImageSize));
+            UpdateImageSizeStatus(pixwidth, pixheight);
             UpdateWindowTitle();
+        }
+
+        public void UpdateImageSizeStatus(double width, double height)
+        {
+            _imageSize = $"{(int)width}×{(int)height}" + LocalizationManager.GetString("L_Main_Unit_Pixel");
+            OnPropertyChanged(nameof(ImageSize));
         }
 
         private void ResizeCanvas(int newWidth, int newHeight)

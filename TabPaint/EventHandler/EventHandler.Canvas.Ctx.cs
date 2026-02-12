@@ -331,6 +331,9 @@ namespace TabPaint
 
             // 2. 状态保存与 UI 锁定
             var statusText = _imageSize;
+            _downloadCts = new System.Threading.CancellationTokenSource();
+            EventHandler cancelHandler = (s, args) => _downloadCts.Cancel();
+            TaskProgressPopup.CancelRequested += cancelHandler;
 
             try
             {
@@ -354,13 +357,15 @@ namespace TabPaint
                 }
                 _imageSize = LocalizationManager.GetString("L_AI_Status_Thinking");
                 OnPropertyChanged(nameof(ImageSize));
+                TaskProgressPopup.UpdateProgress(0, LocalizationManager.GetString("L_AI_Status_Upscaling"), "", "");
 
                 var inferProgress = new Progress<double>(p =>
                 {
                     _imageSize = string.Format(LocalizationManager.GetString("L_AI_Status_Upscaling_Format"), p);
                     OnPropertyChanged(nameof(ImageSize));
+                    TaskProgressPopup.UpdateProgress(p, LocalizationManager.GetString("L_AI_Status_Upscaling"), "", "");
                 });
-                var resultBitmap = await aiService.RunSuperResolutionAsync(modelPath, inputBmp, inferProgress);
+                var resultBitmap = await aiService.RunSuperResolutionAsync(modelPath, inputBmp, inferProgress, _downloadCts.Token);
                 ApplyUpscaleResult(resultBitmap);
                 GC.Collect(2, GCCollectionMode.Forced, true);
                 ShowToast("L_Toast_Apply_Success");
@@ -378,6 +383,8 @@ namespace TabPaint
             }
             finally
             {
+                TaskProgressPopup.CancelRequested -= cancelHandler;
+                TaskProgressPopup.Finish();
                 _downloadCts?.Dispose();
                 _downloadCts = null;
                 if (_surface?.Bitmap != null)

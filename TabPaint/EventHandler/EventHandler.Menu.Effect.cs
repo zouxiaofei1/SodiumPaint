@@ -10,6 +10,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
+using TabPaint.Windows;
 
 namespace TabPaint
 {
@@ -17,14 +19,14 @@ namespace TabPaint
     {
         private void OnMosaicClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new TabPaint.Windows.FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_Mosaic"), 10, 2, 100);
+            var dialog = new FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_Mosaic"), 10, 2, 100);
             dialog.Owner = this;
             dialog.ShowOwnerModal(this);
             if (dialog.IsConfirmed)  ApplyFilter(FilterType.Mosaic, dialog.ResultValue);
         }
         private void OnGaussianBlurClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new TabPaint.Windows.FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_GaussianBlur"), 5, 1, 50);
+            var dialog = new FilterStrengthWindow(LocalizationManager.GetString("L_Menu_Effect_GaussianBlur"), 5, 1, 50);
             dialog.Owner = this;
             dialog.ShowOwnerModal(this);
             if (dialog.IsConfirmed)   ApplyFilter(FilterType.GaussianBlur, dialog.ResultValue);
@@ -186,7 +188,31 @@ namespace TabPaint
             _router.CleanUpSelectionandShape();
             int originalW = _surface.Bitmap.PixelWidth;
             int originalH = _surface.Bitmap.PixelHeight;
+
+            var oldScalingMode = RenderOptions.GetBitmapScalingMode(BackgroundImage);
+            _canvasResizer.SetHandleVisibility(false);
             var dialog = new ResizeCanvasDialog(originalW, originalH);
+
+            dialog.PreviewChanged += (w, h, isCanvasMode) =>
+            {
+                if (isCanvasMode)
+                {
+                    RenderOptions.SetBitmapScalingMode(BackgroundImage, oldScalingMode);
+                    BackgroundImage.RenderTransform = Transform.Identity;
+                    double offsetX = -(w - originalW) / 2.0;
+                    double offsetY = -(h - originalH) / 2.0;
+                    _canvasResizer.ShowPreviewRect(new Rect(offsetX, offsetY, w, h));
+                }
+                else
+                {
+                    RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.Linear);
+                    double sx = (double)w / originalW;
+                    double sy = (double)h / originalH;
+                    BackgroundImage.RenderTransform = new ScaleTransform(sx, sy);
+                    _canvasResizer.ShowPreviewRect(new Rect(0, 0, w, h));
+                }
+            };
+
             if (dialog.ShowOwnerModal(this) == true)
             {
                 int targetWidth = dialog.ImageWidth;
@@ -195,6 +221,9 @@ namespace TabPaint
                 bool keepRatio = dialog.IsAspectRatioLocked;
                 double scaleX = (double)targetWidth / originalW;
                 double scaleY = (double)targetHeight / originalH;
+
+                ClearResizePreview(oldScalingMode);
+
                 if (isCanvasMode) ResizeCanvasDimensions(targetWidth, targetHeight);
                 else ResizeCanvas(targetWidth, targetHeight);
 
@@ -205,6 +234,19 @@ namespace TabPaint
                     await BatchResizeImages(targetWidth, targetHeight, scaleX, scaleY, isCanvasMode, keepRatio);
                 }
             }
+            else
+            {
+                ClearResizePreview(oldScalingMode);
+            }
+        }
+
+        private void ClearResizePreview(BitmapScalingMode originalScalingMode)
+        {
+            RenderOptions.SetBitmapScalingMode(BackgroundImage, originalScalingMode);
+            BackgroundImage.RenderTransform = Transform.Identity;
+            _canvasResizer.HidePreviewRect();
+            _canvasResizer.SetHandleVisibility(true);
+            _canvasResizer.UpdateUI();
         }
 
   

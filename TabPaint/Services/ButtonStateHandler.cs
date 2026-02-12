@@ -53,6 +53,7 @@ namespace TabPaint
                         case BrushStyle.Brush: key = "Pen_Brush"; break;
                     }
                 }
+                else if (_router.CurrentTool is GradientTool) key = "Gradient";
                 else if (_router.CurrentTool is ShapeTool)  key = "Shape";
   
                 if (ThicknessSlider != null)  ThicknessSlider.IsEnabled = !isPencil;
@@ -122,13 +123,20 @@ namespace TabPaint
             else SetMaximizeIcon();
         }
         private async void SetBrushStyle(BrushStyle style)
-        {//设置画笔样式，所有画笔都是pen工具
+        {//设置画笔样式，大部分画笔都是pen工具
             if (style == BrushStyle.AiEraser)  if (!await EnsureAiModelReadyAsync(AiService.AiTaskType.Inpainting)) return;
-            _router.SetTool(_tools.Pen);
-            _ctx.PenStyle = style;
+            if (style == BrushStyle.Gradient)
+            {
+                _router.SetTool(_tools.Gradient);
+            }
+            else
+            {
+                _router.SetTool(_tools.Pen);
+                _ctx.PenStyle = style;
+            }
             UpdateBrushSplitButtonIcon(style);
             UpdateToolSelectionHighlight();
-            _tools.Pen.SetCursor(_ctx);
+            _router.CurrentTool.SetCursor(_ctx);
             AutoSetFloatBarVisibility();
             UpdateGlobalToolSettingsKey();
         }
@@ -312,7 +320,7 @@ namespace TabPaint
             bool showThickness = (_router.CurrentTool is PenTool && _ctx.PenStyle != BrushStyle.Pencil) || _router.CurrentTool is ShapeTool;
             showThickness = showThickness && !IsViewMode;
 
-            bool showOpacity = _router.CurrentTool is PenTool || _router.CurrentTool is TextTool/* || _router.CurrentTool is ShapeTool*/;
+            bool showOpacity = _router.CurrentTool is PenTool || _router.CurrentTool is TextTool || _router.CurrentTool is GradientTool;
             showOpacity = showOpacity && !IsViewMode;
 
             mw.ThicknessPanel.Visibility = showThickness ? Visibility.Visible : Visibility.Collapsed;
@@ -365,7 +373,7 @@ namespace TabPaint
 
         public void SetUndoRedoButtonState()
         {
-            if (MainMenu == null) return;
+            if (MainMenu == null || _undo == null) return;
             UpdateBrushAndButton(MainMenu.BtnUndo, MainMenu.IconUndo, _undo.CanUndo);
             UpdateBrushAndButton(MainMenu.BtnRedo, MainMenu.IconRedo, _undo.CanRedo);
         }

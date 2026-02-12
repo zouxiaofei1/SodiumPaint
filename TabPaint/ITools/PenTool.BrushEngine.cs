@@ -160,12 +160,15 @@ public partial class PenTool : ToolBase
         if (globalOpacity <= 0.005f) return;
 
         Color targetColor = ctx.PenColor;
-        float targetB = targetColor.B, targetG = targetColor.G, targetR = targetColor.R, targetA = targetColor.A;
+        float tB = targetColor.B, tG = targetColor.G, tR = targetColor.R, tA = targetColor.A;
+        
+        // 预计算压力感应相关的透明度
         float alpha1 = globalOpacity * (0.2f + 0.8f * MathF.Sqrt(p1P));
         float alpha2 = globalOpacity * (0.2f + 0.8f * MathF.Sqrt(p2P));
 
         float maxR = MathF.Max(r1, r2);
         float feather = MathF.Max(1.0f, maxR * 0.08f);
+        float invTwoFeather = 1.0f / (2.0f * feather);
 
         int xmin = Math.Max(0, (int)(MathF.Min((float)p1.X, (float)p2.X) - maxR - feather - 1));
         int ymin = Math.Max(0, (int)(MathF.Min((float)p1.Y, (float)p2.Y) - maxR - feather - 1));
@@ -185,7 +188,8 @@ public partial class PenTool : ToolBase
             for (int x = xmin; x <= xmax; x++)
             {
                 float pxDx = (float)(x - p1.X);
-                float t = lenSq > 1e-6f ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
+                float t = lenSq > 1e-6f ? (pxDx * dx + pyDy * dy) * invLenSq : 0;
+                if (t < 0) t = 0; else if (t > 1) t = 1;
 
                 float currentR = r1 + (r2 - r1) * t;
                 float projx = (float)p1.X + t * dx, projy = (float)p1.Y + t * dy;
@@ -193,20 +197,23 @@ public partial class PenTool : ToolBase
                 float distSq = dX * dX + dY * dY;
 
                 float outerR = currentR + feather;
-                float outerRSq = outerR * outerR;
-                if (distSq > outerRSq) continue;
+                if (distSq > outerR * outerR) continue;
 
-                float innerR = MathF.Max(0, currentR - feather);
-                float innerRSq = innerR * innerR;
+                float innerR = currentR - feather;
                 float edgeFactor;
-                if (distSq <= innerRSq)
+                if (innerR <= 0) 
+                {
+                    float dist = MathF.Sqrt(distSq);
+                    edgeFactor = Math.Clamp((outerR - dist) / (outerR), 0, 1);
+                }
+                else if (distSq <= innerR * innerR)
                 {
                     edgeFactor = 1.0f;
                 }
                 else
                 {
                     float dist = MathF.Sqrt(distSq);
-                    edgeFactor = (outerR - dist) / (outerR - innerR);
+                    edgeFactor = (outerR - dist) * invTwoFeather;
                     edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
                 }
 
@@ -221,19 +228,19 @@ public partial class PenTool : ToolBase
                 byte currentLevel = _currentStrokeMask[pixelIndex];
                 if (currentLevel >= desiredLevel) continue;
 
-                float currentOpacity = currentLevel * 0.00392157f; // 1/255
+                float currentOpacity = currentLevel * 0.00392157f;
                 float delta = desiredOpacity - currentOpacity;
                 _currentStrokeMask[pixelIndex] = desiredLevel;
 
                 if (delta <= 0.001f) continue;
-                float invOneMinusCurrent = 1.0f / (MathF.Max(0.001f, 1.0f - currentOpacity));
-                float blend = MathF.Min(delta * invOneMinusCurrent, 1.0f);
+                float blend = delta / (MathF.Max(0.001f, 1.0f - currentOpacity));
+                if (blend > 1.0f) blend = 1.0f;
 
                 byte* bp = rowPtr + (long)x * 4;
-                bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
-                bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
-                bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
-                bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
+                bp[0] = (byte)(bp[0] + (tB - bp[0]) * blend);
+                bp[1] = (byte)(bp[1] + (tG - bp[1]) * blend);
+                bp[2] = (byte)(bp[2] + (tR - bp[2]) * blend);
+                bp[3] = (byte)(bp[3] + (tA - bp[3]) * blend);
             }
         });
     }
@@ -400,13 +407,19 @@ public partial class PenTool : ToolBase
         float globalOpacity = (float)ctx.PenOpacity;
         if (globalOpacity <= 0.005f) return null;
 
-        Color targetColor = ctx.PenColor;
+        bool isEraser = ctx.PenStyle == BrushStyle.Eraser;
+        Color targetColor = isEraser ? Color.FromRgb(255, 255, 255) : ctx.PenColor;
         float targetB = targetColor.B, targetG = targetColor.G;
         float targetR = targetColor.R, targetA = targetColor.A;
 
-        // 书写笔不需要压力影响透明度，保持墨色浓郁
+        // 书写笔保持墨色浓郁；普通圆笔恢复压力感应透明度
         float alpha1 = globalOpacity;
         float alpha2 = globalOpacity;
+        if (ctx.PenStyle == BrushStyle.Round)
+        {
+            alpha1 *= (0.2f + 0.8f * MathF.Sqrt(p1P));
+            alpha2 *= (0.2f + 0.8f * MathF.Sqrt(p2P));
+        }
 
         float maxR = MathF.Max(r1, r2);
         float feather = MathF.Max(1.0f, MathF.Min(maxR * 0.15f, 2.0f));
@@ -420,66 +433,128 @@ public partial class PenTool : ToolBase
         float lenSq = dx * dx + dy * dy;
         float invLenSq = lenSq > 1e-6f ? 1.0f / lenSq : 0;
 
-        Parallel.For(ymin, ymax + 1, (y) =>
+        // 子段绘制极小 ROI 时单线程开销低。
+        // 但对于大画笔（如 1200px），单线程处理成千上万个像素会严重阻塞。
+        // 这里采用动态调度：如果 ROI 面积较大，使用并行处理。
+        long area = (long)(xmax - xmin + 1) * (ymax - ymin + 1);
+        const int ParallelAreaThreshold = 40000; // 约 200x200 像素以上开启并行
+
+        if (area > ParallelAreaThreshold)
         {
-            byte* rowPtr = basePtr + (long)y * stride;
-            int rowIdx = y * w;
-            float pyDy = (float)(y - p1.Y);
-
-            for (int x = xmin; x <= xmax; x++)
+            Parallel.For(ymin, ymax + 1, (y) =>
             {
-                float pxDx = (float)(x - p1.X);
-                float t = lenSq > 1e-6f
-                    ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
+                byte* rowPtr = basePtr + (long)y * stride;
+                int rowIdx = y * w;
+                float pyDy = (float)(y - p1.Y);
 
-                // ★ 半径沿线段平滑插值
-                float currentR = r1 + (r2 - r1) * t;
-                float projx = (float)p1.X + t * dx;
-                float projy = (float)p1.Y + t * dy;
-                float dX = x - projx, dY = y - projy;
-                float distSq = dX * dX + dY * dY;
-
-                float outerR = currentR + feather;
-                if (distSq > outerR * outerR) continue;
-
-                float innerR = MathF.Max(0, currentR - feather);
-                float edgeFactor;
-                if (distSq <= innerR * innerR)
+                for (int x = xmin; x <= xmax; x++)
                 {
-                    edgeFactor = 1.0f;
+                    float pxDx = (float)(x - p1.X);
+                    float t = lenSq > 1e-6f ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
+
+                    float currentR = r1 + (r2 - r1) * t;
+                    float projx = (float)p1.X + t * dx;
+                    float projy = (float)p1.Y + t * dy;
+                    float dX = x - projx, dY = y - projy;
+                    float distSq = dX * dX + dY * dY;
+
+                    float outerR = currentR + feather;
+                    if (distSq > outerR * outerR) continue;
+
+                    float innerR = MathF.Max(0, currentR - feather);
+                    float edgeFactor;
+                    if (distSq <= innerR * innerR) edgeFactor = 1.0f;
+                    else
+                    {
+                        float dist = MathF.Sqrt(distSq);
+                        edgeFactor = (outerR - dist) / (outerR - innerR);
+                        edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
+                    }
+
+                    if (edgeFactor <= 0.002f) continue;
+
+                    float dynamicOpacity = alpha1 + (alpha2 - alpha1) * t;
+                    float desiredOpacity = dynamicOpacity * edgeFactor;
+                    byte desiredLevel = (byte)(desiredOpacity * 255.0f);
+                    if (desiredLevel == 0) continue;
+
+                    int pixelIndex = rowIdx + x;
+                    byte currentLevel = _currentStrokeMask[pixelIndex];
+                    if (currentLevel >= desiredLevel) continue;
+
+                    float currentOpacity = currentLevel * (1f / 255f);
+                    float delta = desiredOpacity - currentOpacity;
+                    _currentStrokeMask[pixelIndex] = desiredLevel;
+
+                    if (delta <= 0.001f) continue;
+                    float blend = MathF.Min(delta / MathF.Max(0.001f, 1.0f - currentOpacity), 1.0f);
+
+                    byte* bp = rowPtr + (long)x * 4;
+                    bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
+                    bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
+                    bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
+                    bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
                 }
-                else
+            });
+        }
+        else
+        {
+            for (int y = ymin; y <= ymax; y++)
+            {
+                byte* rowPtr = basePtr + (long)y * stride;
+                int rowIdx = y * w;
+                float pyDy = (float)(y - p1.Y);
+
+                for (int x = xmin; x <= xmax; x++)
                 {
-                    float dist = MathF.Sqrt(distSq);
-                    edgeFactor = (outerR - dist) / (outerR - innerR);
-                    // Smoothstep 抗锯齿
-                    edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
+                    float pxDx = (float)(x - p1.X);
+                    float t = lenSq > 1e-6f ? Math.Clamp((pxDx * dx + pyDy * dy) * invLenSq, 0, 1) : 0;
+
+                    float currentR = r1 + (r2 - r1) * t;
+                    float projx = (float)p1.X + t * dx;
+                    float projy = (float)p1.Y + t * dy;
+                    float dX = x - projx, dY = y - projy;
+                    float distSq = dX * dX + dY * dY;
+
+                    float outerR = currentR + feather;
+                    if (distSq > outerR * outerR) continue;
+
+                    float innerR = MathF.Max(0, currentR - feather);
+                    float edgeFactor;
+                    if (distSq <= innerR * innerR) edgeFactor = 1.0f;
+                    else
+                    {
+                        float dist = MathF.Sqrt(distSq);
+                        edgeFactor = (outerR - dist) / (outerR - innerR);
+                        edgeFactor = edgeFactor * edgeFactor * (3.0f - 2.0f * edgeFactor);
+                    }
+
+                    if (edgeFactor <= 0.002f) continue;
+
+                    float dynamicOpacity = alpha1 + (alpha2 - alpha1) * t;
+                    float desiredOpacity = dynamicOpacity * edgeFactor;
+                    byte desiredLevel = (byte)(desiredOpacity * 255.0f);
+                    if (desiredLevel == 0) continue;
+
+                    int pixelIndex = rowIdx + x;
+                    byte currentLevel = _currentStrokeMask[pixelIndex];
+                    if (currentLevel >= desiredLevel) continue;
+
+                    float currentOpacity = currentLevel * (1f / 255f);
+                    float delta = desiredOpacity - currentOpacity;
+                    _currentStrokeMask[pixelIndex] = desiredLevel;
+
+                    if (delta <= 0.001f) continue;
+                    float blend = MathF.Min(delta / MathF.Max(0.001f, 1.0f - currentOpacity), 1.0f);
+
+                    byte* bp = rowPtr + (long)x * 4;
+                    bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
+                    bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
+                    bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
+                    bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
                 }
-
-                if (edgeFactor <= 0.002f) continue;
-
-                float desiredOpacity = globalOpacity * edgeFactor;
-                byte desiredLevel = (byte)(desiredOpacity * 255.0f);
-                if (desiredLevel == 0) continue;
-
-                int pixelIndex = rowIdx + x;
-                byte currentLevel = _currentStrokeMask[pixelIndex];
-                if (currentLevel >= desiredLevel) continue;
-
-                float currentOpacity = currentLevel * (1f / 255f);
-                float delta = desiredOpacity - currentOpacity;
-                _currentStrokeMask[pixelIndex] = desiredLevel;
-
-                if (delta <= 0.001f) continue;
-                float blend = MathF.Min(delta / MathF.Max(0.001f, 1.0f - currentOpacity), 1.0f);
-
-                byte* bp = rowPtr + (long)x * 4;
-                bp[0] = (byte)(bp[0] + (targetB - bp[0]) * blend);
-                bp[1] = (byte)(bp[1] + (targetG - bp[1]) * blend);
-                bp[2] = (byte)(bp[2] + (targetR - bp[2]) * blend);
-                bp[3] = (byte)(bp[3] + (targetA - bp[3]) * blend);
             }
-        });
+        }
 
         return new Int32Rect(xmin, ymin, xmax - xmin + 1, ymax - ymin + 1);
     }
