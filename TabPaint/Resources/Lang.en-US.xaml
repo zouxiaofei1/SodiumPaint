@@ -306,6 +306,7 @@
     <sys:String x:Key="L_ToolBar_Tool_Select">Select area</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Select_Lasso">Lasso Selection</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand">Magic Wand</sys:String>
+    <sys:String x:Key="L_Tool_MagicWand_Tolerance">Magic Wand Tolerance</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Pen">Pencil</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_PickColor">Pick color</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Eraser">Eraser</sys:String>

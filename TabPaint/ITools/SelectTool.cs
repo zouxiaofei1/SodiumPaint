@@ -19,6 +19,14 @@ namespace TabPaint
 
         public partial class SelectTool : ToolBase
         {
+            public void SetWandTolerance(int val)
+            {
+                _wandTolerance = val;
+            }
+            public int GetWandTolerance()
+            {
+                return _wandTolerance;
+            }
 
             public SelectionType SelectionType { get; set; } = SelectionType.Rectangle;
             public bool IsPasted = false;
@@ -60,6 +68,8 @@ namespace TabPaint
             private Color _wandStartColor; // 起始点的颜色
             private bool _isWandAdjusting = false; // 是否正在拖拽调整容差
             private bool[] _wandMaskBuffer; // 用于缓存全图的选中状态(bool)，避免重复申请内存
+            private byte[] _wandAlphaBuffer; // 用于缓存选区的 AlphaMap
+            private byte[] _wandPreviewBuffer; // 用于缓存预览遮罩的像素
             public enum ResizeAnchor
             {
                 None,

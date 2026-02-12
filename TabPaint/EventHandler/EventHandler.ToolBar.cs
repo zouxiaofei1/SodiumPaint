@@ -294,7 +294,13 @@ namespace TabPaint
                         break;
                     case "MagicWand": // 新增逻辑
                         selectTool.SelectionType = SelectionType.MagicWand;
+                        WandTolerancePopup.Tolerance = selectTool.GetWandTolerance();
+                        WandTolerancePopup.Show();
                         break;
+                }
+                if (selectTool.SelectionType != SelectionType.MagicWand)
+                {
+                    WandTolerancePopup.Hide();
                 }
                 _router.SetTool(_tools.Select);
                 MainToolBar.SubMenuPopupSelect.IsOpen = false;

@@ -15,6 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using TabPaint.Services;
+using TabPaint.Controls;
 using static TabPaint.MainWindow;
 
 //
@@ -316,6 +317,15 @@ namespace TabPaint
 
             mw.ThicknessPanel.Visibility = showThickness ? Visibility.Visible : Visibility.Collapsed;
             mw.OpacityPanel.Visibility = showOpacity ? Visibility.Visible : Visibility.Collapsed;
+
+            // 魔棒容差窗口显示逻辑
+            if (mw.WandTolerancePopup != null)
+            {
+                var selectTool = mw._tools?.Select as SelectTool;
+                bool isWand = mw._router?.CurrentTool is SelectTool && selectTool?.SelectionType == SelectionType.MagicWand;
+                if (isWand && !mw.IsViewMode) mw.WandTolerancePopup.Show();
+                else mw.WandTolerancePopup.Hide();
+            }
 
             var rows = mw.ToolPanelGrid.RowDefinitions;
             Grid.SetRow(mw.OpacityPanel, 3);

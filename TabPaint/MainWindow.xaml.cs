@@ -283,6 +283,15 @@ namespace TabPaint
                 Select = new SelectTool();
                 this.Deactivated += MainWindow_Deactivated;
 
+                // 魔棒容差悬浮窗初始化
+                WandTolerancePopup.ToleranceChanged += (s, val) =>
+                {
+                    if (_router?.CurrentTool is SelectTool selectTool)
+                    {
+                        selectTool.SetWandTolerance(val);
+                    }
+                };
+
                 // Canvas 事件
                 CanvasWrapper.MouseDown += OnCanvasMouseDown;
                 CanvasWrapper.MouseMove += OnCanvasMouseMove;
@@ -1210,21 +1219,20 @@ namespace TabPaint
         public void UpdateSelectionToolBarPosition()
         {
             // 如果还没初始化且当前没有选区，直接返回，避免不必要的实例化
-            var selectTool = _router?.CurrentTool as SelectTool;if (selectTool == null) return;
-            if (_selectionToolBar == null && (selectTool == null || !selectTool.HasActiveSelection)) return;
-
-            if(selectTool._selectionRect.Width+ selectTool._selectionRect.Height<150)return;
-            var toolbar = this.SelectionToolBar;
+            var selectTool = _router?.CurrentTool as SelectTool; if (selectTool == null) return;
             var holder = this.SelectionToolHolder; // 引用 XAML 中的 ContentControl
+            if (holder == null) return;
 
-            if (!IsViewMode && selectTool != null && selectTool.HasActiveSelection)
+            if (!IsViewMode && selectTool.HasActiveSelection && (selectTool._selectionRect.Width + selectTool._selectionRect.Height >= 150))
             {
                 Int32Rect rect = selectTool._selectionRect;
+
                 if (rect.Width <= 0 || rect.Height <= 0)
                 {
                     holder.Visibility = Visibility.Collapsed;
                     return;
                 }
+
                 Point p1 = _ctx.FromPixel(new Point(rect.X, rect.Y));
                 Point p2 = _ctx.FromPixel(new Point(rect.X + rect.Width, rect.Y + rect.Height));
 

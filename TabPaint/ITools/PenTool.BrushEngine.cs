@@ -369,7 +369,7 @@ public partial class PenTool : ToolBase
                 int pixelIndex = rowIdx + x;
                 if (_currentStrokeMask[pixelIndex] >= 255) continue;
                 
-                uint hash = (uint)(x * 73856093 ^ y * 19349663);
+                uint hash = (uint)(x * 73856093 ^ y * 19349663 ^ _brushSeed);
                 hash = (hash ^ (hash >> 16)) * 0x45d9f3b;
                 hash = hash ^ (hash >> 16);
                 float noise = (hash & 0xFF) / 255.0f;

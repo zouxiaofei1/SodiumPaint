@@ -65,8 +65,11 @@ namespace TabPaint
 
                     DragDrop.DoDragDrop(ctx.ViewElement, dataObject, System.Windows.DragDropEffects.Copy);
                     _originalRect = new Int32Rect();
+                    _selectionRect = new Int32Rect();
                     _transformStep = 0;
                     _selectionData = null;
+                    DrawOverlay(ctx, _selectionRect);
+                    ctx.ParentWindow.UpdateSelectionToolBarPosition();
                     ctx.IsDirty = true;
                 }
                 catch (Exception ex) { }

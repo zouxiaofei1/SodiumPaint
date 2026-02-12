@@ -40,6 +40,7 @@ public partial class PenTool : ToolBase
     private byte[] _currentStrokeMask;
     private int _maskWidth;
     private int _maskHeight;
+    private uint _brushSeed;
     private Int32Rect _lastStrokeDirtyRect; // 记录上一笔的脏矩形，用于局部清理 Mask
     private WriteableBitmap _maskBitmap; // 专门用于存储 mask 数据的位图
     private Image _maskImageOverlay;     // 用于显示红色遮罩的控件
@@ -109,11 +110,20 @@ public partial class PenTool : ToolBase
     }
     private void UpdateCursorVisual(ToolContext ctx, Point viewPos)
     {
-    if (_brushCursor == null || _cursorTransform == null) return;
+        if (_brushCursor == null || _cursorTransform == null) return;
         var t = new TimeRecorder(); t.Toggle();
         double size = ctx.PenThickness;
 
-    // ★ 修改：始终显示十字光标，不再因为有自定义光标就隐藏
+        // 如果处于预览模式（显示尺寸小于原始尺寸），缩放光标以维持视觉比例一致
+        if (ctx.FullImageWidth > 0 && ctx.ViewElement?.Source is BitmapSource bs)
+        {
+            if (bs.PixelWidth < ctx.FullImageWidth)
+            {
+                size *= (double)bs.PixelWidth / ctx.FullImageWidth;
+            }
+        }
+
+        // ★ 修改：始终显示十字光标，不再因为有自定义光标就隐藏
     if (ctx.ViewElement != null && ctx.ViewElement.Cursor != System.Windows.Input.Cursors.Cross)
     {
         ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Cross;
@@ -302,6 +312,7 @@ public partial class PenTool : ToolBase
 
         ctx.CapturePointer(); System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Cross;
         var px = ctx.ToPixel(viewPos);
+        _brushSeed = (uint)_rnd.Value.Next();
         ctx.Undo.BeginStroke();
         _drawing = true;
         _lastPixel = px;

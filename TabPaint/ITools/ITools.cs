@@ -339,6 +339,9 @@ namespace TabPaint
             public Canvas EditorOverlay { get; }
             public BrushStyle PenStyle { get; set; } = BrushStyle.Pencil;
 
+            public int FullImageWidth { get; set; }
+            public int FullImageHeight { get; set; }
+
             // 文档状态
             // public string CurrentFilePath { get; set; } = string.Empty;
             public bool IsDirty { get; set; } = false;

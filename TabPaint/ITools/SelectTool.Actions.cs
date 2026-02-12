@@ -855,6 +855,10 @@ namespace TabPaint
                     _selecting = false;
                     _isWandAdjusting = false;
 
+                    // 释放鼠标时，执行最后一次魔棒算法以提取正式数据
+                    bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+                    RunMagicWand(ctx, _wandStartPoint, _wandTolerance, isShift);
+
                     if (_selectionAlphaMap != null && _selectionRect.Width > 0 && _selectionRect.Height > 0)
                     {
                         _originalRect = _selectionRect;

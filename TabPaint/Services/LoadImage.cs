@@ -117,9 +117,18 @@ namespace TabPaint
 
                 if (isFileLoadedFromCache)
                 {
-                    _savedUndoPoint = -1;
+                    // 仅当标签页原先就是脏状态时，加载备份后才维持脏状态
+                    if (current != null && current.IsDirty)
+                    {
+                        _savedUndoPoint = -1;
+                    }
+                    else
+                    {
+                        ResetDirtyTracker();
+                    }
                     CheckDirtyState();
                 }
+
 
             }
             finally
@@ -411,6 +420,11 @@ namespace TabPaint
                 }
 
                 var (originalWidth, originalHeight) = dimensions.Value;
+                if (_ctx != null)
+                {
+                    _ctx.FullImageWidth = originalWidth;
+                    _ctx.FullImageHeight = originalHeight;
+                }
                 await HandleProgressDisplay(originalWidth, originalHeight, token); // 启动进度条逻辑
 
              
@@ -587,6 +601,11 @@ namespace TabPaint
                 _originalDpiX = fullResBitmap.DpiX;
                 _originalDpiY = fullResBitmap.DpiY;
                 _bitmap = CreateWriteableBitmap(fullResBitmap);
+                if (_ctx != null)
+                {
+                    _ctx.FullImageWidth = _bitmap.PixelWidth;
+                    _ctx.FullImageHeight = _bitmap.PixelHeight;
+                }
                 fullResBitmap = null;
                 RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
                 BackgroundImage.Source = _bitmap;
@@ -595,7 +614,7 @@ namespace TabPaint
                 if (_surface == null) _surface = new CanvasSurface(_bitmap);
                 else _surface.Attach(_bitmap);
                 ResetEditorState(filePath);
-                FitToWindow(needcanvasUpdateUI: false);
+                FitToWindow(needcanvasUpdateUI: true);
                 HandleGifAnimation(physicalPath);
 
             }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
@@ -614,7 +633,7 @@ namespace TabPaint
 
             if (isPreview)
             {
-               if(_startupFinished) FitToWindow(needcanvasUpdateUI:false);
+               if(_startupFinished) FitToWindow(needcanvasUpdateUI:true);
                 CenterImage();
                 BackgroundImage.InvalidateVisual();
             }
@@ -716,6 +735,12 @@ namespace TabPaint
                 _originalDpiX = 96.0;
                 _originalDpiY = 96.0;
 
+                if (_ctx != null)
+                {
+                    _ctx.FullImageWidth = width;
+                    _ctx.FullImageHeight = height;
+                }
+
                 RenderOptions.SetBitmapScalingMode(BackgroundImage, BitmapScalingMode.NearestNeighbor);
                 BackgroundImage.Source = _bitmap;
                 if (IsVirtualPath(filePath))
@@ -747,7 +772,7 @@ namespace TabPaint
                 if (!string.IsNullOrEmpty(reason)) ShowToast(reason);
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    FitToWindow(viewHeightoffset: _startupFinished ?0:- 72,needcanvasUpdateUI: false);
+                    FitToWindow(viewHeightoffset: _startupFinished ?0:- 72,needcanvasUpdateUI: true);
                     CenterImage();
 
                 }), DispatcherPriority.Loaded);

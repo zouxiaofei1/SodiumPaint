@@ -503,6 +503,14 @@
                         VerticalAlignment="Top"
                         Panel.ZIndex="300"
                         IsTabStop="False" Focusable="False"/>
+
+        <controls:WandToleranceFloat x:Name="WandTolerancePopup"
+                                     Visibility="Collapsed"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Top"
+                                     Margin="0,80,0,0"
+                                     Panel.ZIndex="250"
+                                     IsTabStop="False" Focusable="False"/>
         <!-- 粗细提示 -->
         <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
             <TextBlock x:Name="ThicknessTipText" Foreground="{DynamicResource TextInverseBrush}" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>

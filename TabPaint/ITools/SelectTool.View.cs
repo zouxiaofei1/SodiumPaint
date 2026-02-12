@@ -65,18 +65,20 @@ namespace TabPaint
 
                 else if (SelectionType == SelectionType.MagicWand && _selectionAlphaMap != null && !_isWandAdjusting)
                 {
-                    // 生成轮廓 Geometry
-                    var wandGeometry = GeneratePixelEdgeGeometry(
-                        _selectionAlphaMap,
-                        rect.Width,
-                        rect.Height,
-                        rect.X,
-                        rect.Y);
-
-                    if (wandGeometry != null)
+                    // 优先使用缓存的 Geometry，避免每次重算
+                    if (_selectionGeometry == null)
                     {
-                        _selectionGeometry = wandGeometry; // 缓存起来供后续使用
-                        DrawIrregularContour(ctx, overlay, wandGeometry, rect, invScale, diff, false);
+                        _selectionGeometry = GeneratePixelEdgeGeometry(
+                            _selectionAlphaMap,
+                            rect.Width,
+                            rect.Height,
+                            rect.X,
+                            rect.Y);
+                    }
+
+                    if (_selectionGeometry != null)
+                    {
+                        DrawIrregularContour(ctx, overlay, _selectionGeometry, rect, invScale, diff, false);
                     }
                     else DrawRectangleOverlay(ctx, overlay, rect, invScale, diff);// 回退到矩形框
                 }
@@ -202,50 +204,57 @@ namespace TabPaint
             }
             public void CommitSelection(ToolContext ctx, bool shape = false)
             {
-              
                 if (_selectionData == null) return;
-                // 1. 准备撤销记录
-                ctx.Undo.BeginStroke();
-                ctx.Undo.AddDirtyRect(_selectionRect);
 
-                // 2. 准备源数据 (处理缩放)
-                byte[] finalData = _selectionData;
-                int finalWidth = _selectionRect.Width;
-                int finalHeight = _selectionRect.Height;
-                int finalStride = finalWidth * 4;
-                if (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height)
+                // 只有当选区已经从画布提起来过（移动/缩放过），或者是粘贴进来的，才需要写回画布
+                if (_hasLifted || IsPasted || _transformStep > 0)
                 {
-                    if (_originalRect.Width <= 0 || _originalRect.Height <= 0) return;
-                    int expectedStride = _originalRect.Width * 4;
-                    int actualStride = _selectionData.Length / _originalRect.Height;
-                    int dataStride = Math.Min(expectedStride, actualStride);
+                    // 1. 准备撤销记录
+                    ctx.Undo.BeginStroke();
+                    ctx.Undo.AddDirtyRect(_selectionRect);
 
-                    // 创建原始 BitmapSource
-                    var src = BitmapSource.Create(
-                        _originalRect.Width, _originalRect.Height,
-                        ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
-                        PixelFormats.Bgra32, null, _selectionData, dataStride);
-                    var resized = ctx.ParentWindow.ResampleBitmap(src, finalWidth, finalHeight);
+                    // 2. 准备源数据 (处理缩放)
+                    byte[] finalData = _selectionData;
+                    int finalWidth = _selectionRect.Width;
+                    int finalHeight = _selectionRect.Height;
+                    int finalStride = finalWidth * 4;
+                    if (_originalRect.Width != _selectionRect.Width || _originalRect.Height != _selectionRect.Height)
+                    {
+                        if (_originalRect.Width <= 0 || _originalRect.Height <= 0) return;
+                        int expectedStride = _originalRect.Width * 4;
+                        int actualStride = _selectionData.Length / _originalRect.Height;
+                        int dataStride = Math.Min(expectedStride, actualStride);
 
-                    // 提取像素数据
-                    finalStride = resized.PixelWidth * 4;
-                    finalData = new byte[finalHeight * finalStride];
-                    resized.CopyPixels(finalData, finalStride, 0);
+                        // 创建原始 BitmapSource
+                        var src = BitmapSource.Create(
+                            _originalRect.Width, _originalRect.Height,
+                            ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY,
+                            PixelFormats.Bgra32, null, _selectionData, dataStride);
+                        var resized = ctx.ParentWindow.ResampleBitmap(src, finalWidth, finalHeight);
+
+                        // 提取像素数据
+                        finalStride = resized.PixelWidth * 4;
+                        finalData = new byte[finalHeight * finalStride];
+                        resized.CopyPixels(finalData, finalStride, 0);
+                    }
+                    // 3. 执行透明度混合写入 (Alpha Blending)
+                    BlendPixels(ctx.Surface.Bitmap, _selectionRect.X, _selectionRect.Y, finalWidth, finalHeight, finalData, finalStride);
+
+                    ctx.Undo.CommitStroke(shape ? UndoActionType.Draw : UndoActionType.Selection);   //清理
+                    ctx.IsDirty = true;
+                    ctx.ParentWindow.NotifyCanvasChanged();
                 }
-                // 3. 执行透明度混合写入 (Alpha Blending)
-                BlendPixels(ctx.Surface.Bitmap, _selectionRect.X, _selectionRect.Y, finalWidth, finalHeight, finalData, finalStride);
 
-                ctx.Undo.CommitStroke(shape ? UndoActionType.Draw : UndoActionType.Selection);   //清理
-                HidePreview(ctx); IsPasted = false;
+                HidePreview(ctx); 
+                IsPasted = false;
+                _hasLifted = false;
                 _selectionData = null;
-                ctx.IsDirty = true;
                 lag = 1;
                 _transformStep = 0;
                 _originalRect = new Int32Rect();
                 var mw = ctx.ParentWindow;
                 mw.SetUndoRedoButtonState();
                 ResetPreviewState(ctx);
-                mw.NotifyCanvasChanged();
                 mw.UpdateSelectionToolBarPosition();
             }
             private void BlendPixels(WriteableBitmap targetBmp, int x, int y, int w, int h, byte[] sourcePixels, int sourceStride)

@@ -260,6 +260,7 @@
     <sys:String x:Key="L_ToolBar_Tool_Select">选择区域</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Select_Lasso">套索选择</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Select_MagicWand">魔棒</sys:String>
+    <sys:String x:Key="L_Tool_MagicWand_Tolerance">魔棒容差</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Pen">铅笔</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_PickColor">取颜色</sys:String>
     <sys:String x:Key="L_ToolBar_Tool_Eraser">橡皮擦</sys:String>

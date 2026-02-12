@@ -469,19 +469,40 @@ namespace TabPaint
 
                 try
                 {
-                    // 创建半透明遮罩图像
                     int stride = rect.Width * 4;
-                    byte[] previewPixels = new byte[rect.Height * stride];
+                    int totalBytes = rect.Height * stride;
 
-                    // 选中区域显示为半透明蓝色
-                    for (int i = 0; i < _selectionAlphaMap.Length; i += 4)
+                    // 1. 缓冲区重用，减少 GC 压力
+                    if (_wandPreviewBuffer == null || _wandPreviewBuffer.Length < totalBytes)
                     {
-                        if (_selectionAlphaMap[i + 3] > 128)
+                        _wandPreviewBuffer = new byte[totalBytes];
+                    }
+                    else
+                    {
+                        Array.Clear(_wandPreviewBuffer, 0, totalBytes);
+                    }
+
+                    // 2. Unsafe 像素处理
+                    unsafe
+                    {
+                        fixed (byte* pSrc = _selectionAlphaMap)
+                        fixed (byte* pDst = _wandPreviewBuffer)
                         {
-                            previewPixels[i + 0] = 255;  // B
-                            previewPixels[i + 1] = 100;  // G
-                            previewPixels[i + 2] = 100;  // R
-                            previewPixels[i + 3] = 80;   // A (半透明)
+                            int pixelCount = rect.Width * rect.Height;
+                            uint* srcPtr = (uint*)pSrc;
+                            uint* dstPtr = (uint*)pDst;
+
+                            // 预计算颜色值：B=255, G=100, R=100, A=80 (0x506464FF)
+                            uint previewColor = 0x506464FF;
+
+                            for (int i = 0; i < pixelCount; i++)
+                            {
+                                // 检查 Alpha 通道 (位于 uint 的最高字节或根据字节序判断，这里简单通过 byte 指针检查或 uint 掩码)
+                                if ((srcPtr[i] & 0xFF000000) > 0x80000000)
+                                {
+                                    dstPtr[i] = previewColor;
+                                }
+                            }
                         }
                     }
 
@@ -490,7 +511,7 @@ namespace TabPaint
                         96, 96,
                         PixelFormats.Bgra32,
                         null,
-                        previewPixels,
+                        _wandPreviewBuffer,
                         stride);
 
                     var maskImage = new System.Windows.Controls.Image
@@ -661,7 +682,20 @@ namespace TabPaint
                 int startY = (int)startPt.Y;
 
                 if (startX < 0 || startX >= w || startY < 0 || startY >= h) return;
-                bool[] mask = new bool[w * h];
+
+                // 1. 缓冲区重用逻辑
+                if (_wandMaskBuffer == null || _wandMaskBuffer.Length != w * h)
+                {
+                    _wandMaskBuffer = new bool[w * h];
+                }
+                else
+                {
+                    Array.Clear(_wandMaskBuffer, 0, _wandMaskBuffer.Length);
+                }
+                bool[] mask = _wandMaskBuffer;
+
+                int minX = w, maxX = 0, minY = h, maxY = 0;
+                bool hasSelection = false;
 
                 if (union && _selectionData != null && _selectionAlphaMap != null)
                 {
@@ -683,12 +717,19 @@ namespace TabPaint
                                 if (globalX >= 0 && globalX < w && globalY >= 0 && globalY < h)
                                 {
                                     mask[globalY * w + globalX] = true;
+                                    // 实时更新边界
+                                    if (globalX < minX) minX = globalX;
+                                    if (globalX > maxX) maxX = globalX;
+                                    if (globalY < minY) minY = globalY;
+                                    if (globalY > maxY) maxY = globalY;
+                                    hasSelection = true;
                                 }
                             }
                         }
                     }
                 }
-                ctx.Surface.Bitmap.Lock();     // 2. 执行泛洪填充 (BFS)
+
+                ctx.Surface.Bitmap.Lock();
                 try
                 {
                     unsafe
@@ -703,13 +744,16 @@ namespace TabPaint
 
                         Queue<int> q = new Queue<int>();
                         q.Enqueue(startX + startY * w);
+
                         if (!mask[startX + startY * w])
                         {
-                            mask[startX + startY * w] = true; // 标记访问
-
-                            // 4-邻域偏移
-                            int[] dx = { 0, 0, 1, -1 };
-                            int[] dy = { 1, -1, 0, 0 };
+                            mask[startX + startY * w] = true;
+                            // 初始点边界
+                            if (startX < minX) minX = startX;
+                            if (startX > maxX) maxX = startX;
+                            if (startY < minY) minY = startY;
+                            if (startY > maxY) maxY = startY;
+                            hasSelection = true;
 
                             while (q.Count > 0)
                             {
@@ -717,31 +761,29 @@ namespace TabPaint
                                 int cx = curr % w;
                                 int cy = curr / w;
 
-                                for (int i = 0; i < 4; i++)
+                                // 4-邻域直接展开，避免数组分配和循环开销
+                                if (cy + 1 < h) CheckAndEnqueue(cx, cy + 1);
+                                if (cy - 1 >= 0) CheckAndEnqueue(cx, cy - 1);
+                                if (cx + 1 < w) CheckAndEnqueue(cx + 1, cy);
+                                if (cx - 1 >= 0) CheckAndEnqueue(cx - 1, cy);
+
+                                void CheckAndEnqueue(int nx, int ny)
                                 {
-                                    int nx = cx + dx[i];
-                                    int ny = cy + dy[i];
-
-                                    if (nx >= 0 && nx < w && ny >= 0 && ny < h)
+                                    int nIdx = nx + ny * w;
+                                    if (!mask[nIdx])
                                     {
-                                        int nIdx = nx + ny * w;
-                                        if (!mask[nIdx]) // 未访问过
+                                        byte* currPtr = ptr + ny * stride + nx * 4;
+                                        if (Math.Abs(currPtr[0] - targetB) <= tolerance &&
+                                            Math.Abs(currPtr[1] - targetG) <= tolerance &&
+                                            Math.Abs(currPtr[2] - targetR) <= tolerance &&
+                                            Math.Abs(currPtr[3] - targetA) <= tolerance)
                                         {
-                                            byte* currPtr = ptr + ny * stride + nx * 4;
-                                            byte b = currPtr[0];
-                                            byte g = currPtr[1];
-                                            byte r = currPtr[2];
-                                            byte a = currPtr[3];
-                                            bool match = (Math.Abs(b - targetB) <= tolerance) &&
-                                                         (Math.Abs(g - targetG) <= tolerance) &&
-                                                         (Math.Abs(r - targetR) <= tolerance) &&
-                                                         (Math.Abs(a - targetA) <= tolerance);
-
-                                            if (match)
-                                            {
-                                                mask[nIdx] = true;
-                                                q.Enqueue(nIdx);
-                                            }
+                                            mask[nIdx] = true;
+                                            q.Enqueue(nIdx);
+                                            if (nx < minX) minX = nx;
+                                            if (nx > maxX) maxX = nx;
+                                            if (ny < minY) minY = ny;
+                                            if (ny > maxY) maxY = ny;
                                         }
                                     }
                                 }
@@ -753,51 +795,51 @@ namespace TabPaint
                 {
                     ctx.Surface.Bitmap.Unlock();
                 }
-                int minX = w, maxX = 0, minY = h, maxY = 0;
-                bool hasSelection = false;
-                for (int y = 0; y < h; y++)
-                {
-                    for (int x = 0; x < w; x++)
-                    {
-                        if (mask[y * w + x])
-                        {
-                            if (x < minX) minX = x;
-                            if (x > maxX) maxX = x;
-                            if (y < minY) minY = y;
-                            if (y > maxY) maxY = y;
-                            hasSelection = true;
-                        }
-                    }
-                }
 
                 if (!hasSelection)
                 {
                     Cleanup(ctx);
                     return;
                 }
+
                 int newW = maxX - minX + 1;
                 int newH = maxY - minY + 1;
                 _selectionRect = new Int32Rect(minX, minY, newW, newH);
                 _originalRect = _selectionRect;
-                byte[] rawData = ctx.Surface.ExtractRegion(_selectionRect);
+
                 int mapStride = newW * 4;
                 _selectionAlphaMap = new byte[newH * mapStride];
 
+                // 局部化处理 mask 数据，仅扫描选区范围内
+                for (int y = 0; y < newH; y++)
+                {
+                    int globalY = minY + y;
+                    for (int x = 0; x < newW; x++)
+                    {
+                        int globalX = minX + x;
+                        if (mask[globalY * w + globalX])
+                        {
+                            _selectionAlphaMap[y * mapStride + x * 4 + 3] = 255;
+                        }
+                    }
+                }
+
+                // 如果正在调整中，不提取像素，也不更新预览图，只更新叠加层 (蓝紫色遮罩)
+                if (_isWandAdjusting)
+                {
+                    DrawOverlay(ctx, _selectionRect);
+                    return;
+                }
+
+                // 调整结束，提取正式选区数据
+                byte[] rawData = ctx.Surface.ExtractRegion(_selectionRect);
                 for (int y = 0; y < newH; y++)
                 {
                     for (int x = 0; x < newW; x++)
                     {
-                        int globalX = minX + x;
-                        int globalY = minY + y;
-                        bool selected = mask[globalY * w + globalX];
-
-                        int pixelIdx = y * mapStride + x * 4;
-                        _selectionAlphaMap[pixelIdx + 0] = 0; // B
-                        _selectionAlphaMap[pixelIdx + 1] = 0; // G
-                        _selectionAlphaMap[pixelIdx + 2] = 0; // R
-                        _selectionAlphaMap[pixelIdx + 3] = selected ? (byte)255 : (byte)0; // A
-                        if (!selected)
-                        {   // 同时处理 _selectionData：未选中区域设为透明
+                        if (_selectionAlphaMap[y * mapStride + x * 4 + 3] == 0)
+                        {
+                            int pixelIdx = y * mapStride + x * 4;
                             rawData[pixelIdx + 0] = 0;
                             rawData[pixelIdx + 1] = 0;
                             rawData[pixelIdx + 2] = 0;
