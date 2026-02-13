@@ -95,8 +95,12 @@ namespace TabPaint
             }
             else
             {
+                // 如果是主窗口且是 Win10，我们保持 AllowsTransparency 逻辑
+                if (window is MainWindow)
+                {
+                    window.Background = Brushes.Transparent;
+                }
                 ApplyFallbackBackground(window);
-                //      DisableEffect(window);
             }
         }
         public static void DisableEffect(Window window)
@@ -147,14 +151,27 @@ namespace TabPaint
             }
             gradient.Freeze();
 
-            // 设置基础背景
-            window.Background = gradient;
-
-            // 叠加噪点纹理（通过在窗口 Grid 最底层添加一个 Rectangle）
-            // 需要窗口的根元素是 Grid
-            if (window.Content is Grid rootGrid)
+            // 如果是 MainWindow，我们应用背景到 WindowRootBorder 以支持透明阴影
+            if (window is MainWindow mw)
             {
-                // 检查是否已经添加过
+                var border = mw.FindName("WindowRootBorder") as Border;
+                if (border != null)
+                {
+                    border.Background = gradient;
+                }
+            }
+            else
+            {
+                window.Background = gradient;
+            }
+
+            // 叠加噪点纹理（在 MainWindow 中，LayoutRoot 是更好的选择）
+            Grid rootGrid = null;
+            if (window is MainWindow mw2) rootGrid = mw2.FindName("LayoutRoot") as Grid;
+            if (rootGrid == null && window.Content is Grid g) rootGrid = g;
+
+            if (rootGrid != null)
+            {
                 const string NOISE_TAG = "Win10NoiseOverlay";
                 var existing = rootGrid.Children.OfType<System.Windows.Shapes.Rectangle>()
                     .FirstOrDefault(r => r.Tag as string == NOISE_TAG);
@@ -173,9 +190,6 @@ namespace TabPaint
                         HorizontalAlignment = HorizontalAlignment.Stretch,
                         VerticalAlignment = VerticalAlignment.Stretch,
                     };
-                    // 插入到最底层
-                    if (rootGrid.RowDefinitions.Count > 0) Grid.SetRowSpan(noiseRect, rootGrid.RowDefinitions.Count);
-                    if (rootGrid.ColumnDefinitions.Count > 0) Grid.SetColumnSpan(noiseRect, rootGrid.ColumnDefinitions.Count);
                     Panel.SetZIndex(noiseRect, -1);
                     rootGrid.Children.Insert(0, noiseRect);
                 }

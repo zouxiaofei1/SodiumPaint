@@ -17,7 +17,7 @@ namespace TabPaint.UIHandlers
 
         private void DropZoneWindow_DragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent("TabPaintReorderItem"))
+            if (e.Data.GetDataPresent("TabPaintReorderItem") || e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
                 e.Effects = DragDropEffects.Move;
                 e.Handled = true;
@@ -26,7 +26,7 @@ namespace TabPaint.UIHandlers
 
         private void DropZoneWindow_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent("TabPaintReorderItem"))
+            if (e.Data.GetDataPresent("TabPaintReorderItem") || e.Data.GetDataPresent("TabPaintSelectionDrag"))
             {
                 TabDropped?.Invoke(this, e);
                 e.Handled = true;

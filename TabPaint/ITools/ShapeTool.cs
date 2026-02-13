@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -8,81 +9,96 @@ using System.Windows.Shapes;
 using TabPaint;
 using static TabPaint.MainWindow;
 
-public class ShapeTool : ToolBase
+public partial class ShapeTool : ToolBase
 {
     public override string Name => "Shape";
-    public override System.Windows.Input.Cursor Cursor => _isManipulating ? null : System.Windows.Input.Cursors.Cross;
+    public override System.Windows.Input.Cursor Cursor => _isEditing ? System.Windows.Input.Cursors.Arrow : System.Windows.Input.Cursors.Cross;
     public enum ShapeType { Rectangle, Ellipse, Line, RoundedRectangle, Arrow, Triangle, Diamond, Pentagon, Star, Bubble }
 
     public ShapeType _currentShapeType = ShapeType.Rectangle;
     public ShapeType CurrentShapeType => _currentShapeType;
     private Point _startPoint;
     private bool _isDrawing;
-    private bool _isManipulating = false;
+    private bool _isEditing = false;
+    private Rect _editingRect;
+    private double _rotationAngle = 0;
     private System.Windows.Shapes.Shape _previewShape;
-    private int lag = 0;
+    
+    // 专业模式相关
+    private enum ManipulationAnchor { None, N, S, W, E, NW, NE, SW, SE, Move, Rotate }
+    private ManipulationAnchor _activeAnchor = ManipulationAnchor.None;
+    private Point _lastMousePos;
+    private Point _startMouse;
+    private double _startW, _startH, _startX, _startY;
+    private readonly List<FrameworkElement> _handleVisuals = new List<FrameworkElement>();
+    private const double HandleSize = 8;
+    private const double HitRange = 12;
+    private const double RotateHandleOffset = 30;
 
     public override void SetCursor(ToolContext ctx)
     {
         System.Windows.Input.Mouse.OverrideCursor = null;
-        if (ctx.ViewElement != null)  ctx.ViewElement.Cursor = this.Cursor;
+        if (ctx.ViewElement != null) ctx.ViewElement.Cursor = this.Cursor;
     }
 
-    public void SetShapeType(ShapeType type)=> _currentShapeType = type;
-
-
-    private SelectTool GetSelectTool(MainWindow mw)
+    public void SetShapeType(ShapeType type)
     {
-        return mw._tools.Select as SelectTool;
+        if (_isEditing && CurrentContext != null) CommitActiveShape(CurrentContext); // 如果切换形状类型时正在编辑，先提交
+        _currentShapeType = type;
     }
 
-    public void GiveUpSelection(ToolContext ctx)
-    {
-        if (ctx == null) return;
-        var mw = ctx.ParentWindow;
-        GetSelectTool(mw)?.CommitSelection(ctx, true);
-        GetSelectTool(mw)?.Cleanup(ctx);
-    }
+    private ToolContext CurrentContext;
 
     public override void OnPointerDown(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
         var mw = ctx.ParentWindow;
         if (mw.IsViewMode) return;
-        var selectTool = GetSelectTool(mw);
+        CurrentContext = ctx;
         var px = ctx.ToPixel(viewPos);
-        if (_isManipulating && selectTool != null)
-        {
-            if (!selectTool.HasActiveSelection)
-            {
-                _isManipulating = false;
-                goto DrawingLogic;
-            }
-            bool hitHandle = selectTool.HitTestHandle(px, selectTool._selectionRect) != SelectTool.ResizeAnchor.None;
-            bool hitContent = selectTool.IsPointInSelection(px);
 
-            if (hitHandle || hitContent)
+        if (_isEditing)
+        {
+            _activeAnchor = HitTestAnchors(ctx, px);
+            if (_activeAnchor != ManipulationAnchor.None)
             {
-                selectTool.OnPointerDown(ctx, viewPos);
+                _lastMousePos = px;
+                _startMouse = px;
+                _startW = _editingRect.Width;
+                _startH = _editingRect.Height;
+                _startX = _editingRect.X;
+                _startY = _editingRect.Y;
+
+                if (Math.Abs(_rotationAngle) > 0.01)
+                {
+                    Point center = new Point(_editingRect.Left + _editingRect.Width / 2, _editingRect.Top + _editingRect.Height / 2);
+                    var rt = new RotateTransform(-_rotationAngle, center.X, center.Y);
+                    _startMouse = rt.Transform(px);
+                }
+
+                ctx.CapturePointer();
                 return;
             }
             else
             {
-                selectTool.CommitSelection(ctx, true);
-                selectTool.Cleanup(ctx);
-                selectTool.lag = 0;
-                _isManipulating = false;
-                lag = 1;
+                // 点击外部，提交
+                CommitActiveShape(ctx);
+                // 继续处理，允许立即开始画新形状
             }
         }
 
-    DrawingLogic:
-        if (lag > 0) { lag--; return; }
-
-        _startPoint = ctx.ToPixel(viewPos);
+        _startPoint = px;
+        CreatePreviewShape(ctx);
+        UpdatePreviewShape(ctx, _startPoint, _startPoint, ctx.PenThickness);
+        
         _isDrawing = true;
         ctx.CapturePointer();
+        
+        if (_previewShape != null) ctx.EditorOverlay.Children.Add(_previewShape);
+    }
 
-        // 2. 初始化预览形状
+    private void CreatePreviewShape(ToolContext ctx)
+    {
+        _previewShape = null;
         switch (_currentShapeType)
         {
             case ShapeType.Rectangle:
@@ -97,7 +113,6 @@ public class ShapeTool : ToolBase
             case ShapeType.Line:
                 _previewShape = new System.Windows.Shapes.Line();
                 break;
-            // 所有复杂形状都使用 Path
             case ShapeType.Arrow:
             case ShapeType.Triangle:
             case ShapeType.Diamond:
@@ -108,149 +123,453 @@ public class ShapeTool : ToolBase
                 break;
         }
 
-        _previewShape.Stroke = new SolidColorBrush(ctx.PenColor);
-        _previewShape.StrokeThickness = ctx.PenThickness;
-        _previewShape.Fill = null;
-
-        // Line, Arrow 以及新的复杂形状是基于 Path Data 的，不需要设置 Canvas Left/Top，或者在 Update 时处理
-        if (_currentShapeType == ShapeType.Rectangle ||
-            _currentShapeType == ShapeType.RoundedRectangle ||
-            _currentShapeType == ShapeType.Ellipse)
+        if (_previewShape != null)
         {
-            Canvas.SetLeft(_previewShape, _startPoint.X);
-            Canvas.SetTop(_previewShape, _startPoint.Y);
+            _previewShape.Stroke = new SolidColorBrush(ctx.PenColor);
+            _previewShape.StrokeThickness = ctx.PenThickness;
+            _previewShape.Fill = null;
+            _previewShape.IsHitTestVisible = false;
         }
-
-        ctx.EditorOverlay.Children.Add(_previewShape);
     }
 
     public override void OnPointerMove(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        var mw = ctx.ParentWindow;
-        if (_isManipulating) { GetSelectTool(mw)?.OnPointerMove(ctx, viewPos); return; }
-        if (!_isDrawing || _previewShape == null) return;
-
-        var current = ctx.ToPixel(viewPos);
-        UpdatePreviewShape(_startPoint, current, ctx.PenThickness);
-
-        int w = (int)Math.Abs(current.X - _startPoint.X);
-        int h = (int)Math.Abs(current.Y - _startPoint.Y);
-        mw.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
-    }
-    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
-    {
-        var mw = ctx.ParentWindow;
-        if (_isManipulating)
+        var px = ctx.ToPixel(viewPos);
+        if (!_isDrawing && _isEditing)
         {
-            GetSelectTool(mw)?.OnPointerUp(ctx, viewPos);
-            return;
+            // 更新悬停光标
+            UpdateCursorByPos(ctx, px);
         }
 
-        if (!_isDrawing) return;
-
-        var endPoint = ctx.ToPixel(viewPos);
-        _isDrawing = false;
-        ctx.ReleasePointerCapture();
-
-        // 移除正在绘制的预览线框
-        if (_previewShape != null)
+        if (_isDrawing)
         {
-            ctx.EditorOverlay.Children.Remove(_previewShape);
-            _previewShape = null;
+            UpdatePreviewShape(ctx, _startPoint, px, ctx.PenThickness);
+            int w = (int)Math.Abs(px.X - _startPoint.X);
+            int h = (int)Math.Abs(px.Y - _startPoint.Y);
+            ctx.ParentWindow.SelectionSize = string.Format(LocalizationManager.GetString("L_Selection_Size_Format"), w, h);
         }
-        var rawRect = MakeRect(_startPoint, endPoint);
-        if (rawRect.Width <= 1 || rawRect.Height <= 1) return;
-
-        // 计算 Padding (箭头需要额外空间)
-        double arrowScale = 0;
-        if (_currentShapeType == ShapeType.Arrow) arrowScale = Gethandlength(_startPoint, endPoint);
-        double padding = ctx.PenThickness / 2.0 + 2 + arrowScale;
-
-        // 计算有效绘制区域
-        Rect shapeGlobalBounds = new Rect(  rawRect.X - padding, rawRect.Y - padding, rawRect.Width + padding * 2, rawRect.Height + padding * 2);
-        Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
-        Rect validBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
-
-       
-        if (validBounds == Rect.Empty || validBounds.Width <= 0 || validBounds.Height <= 0) return; // 如果完全在画布外，直接不画
-        var shapeBitmap = RenderShapeToBitmapClipped(_startPoint, endPoint, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
-
-        var selectTool = GetSelectTool(mw);
-        if (selectTool != null && shapeBitmap != null)
+        else if (_isEditing && _activeAnchor != ManipulationAnchor.None)
         {
-            bool isCtrlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-            selectTool.InsertImageAsSelection(ctx, shapeBitmap, false);
-
-            int finalX = (int)validBounds.X;
-            int finalY = (int)validBounds.Y;
-            selectTool._selectionRect = new Int32Rect(finalX, finalY, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight);
-            selectTool._originalRect = selectTool._selectionRect;
-
-            if (isCtrlPressed)
+            if (_activeAnchor == ManipulationAnchor.Rotate)
             {
-                double uiScaleX = ctx.ViewElement.ActualWidth / ctx.Surface.Bitmap.PixelWidth;
-                double uiScaleY = ctx.ViewElement.ActualHeight / ctx.Surface.Bitmap.PixelHeight;
-                ctx.SelectionPreview.Width = selectTool._selectionRect.Width * uiScaleX;  // 设置预览层的大小
-                ctx.SelectionPreview.Height = selectTool._selectionRect.Height * uiScaleY;
-                var tg = new TransformGroup();
-                tg.Children.Add(new ScaleTransform(1, 1)); // 初始比例 1:1
-                tg.Children.Add(new TranslateTransform(finalX, finalY));
-                ctx.SelectionPreview.RenderTransform = tg;
-                ctx.SelectionPreview.Clip = new RectangleGeometry(new Rect(0, 0, shapeBitmap.PixelWidth, shapeBitmap.PixelHeight));
-                selectTool.RefreshOverlay(ctx);
-                selectTool.UpdateStatusBarSelectionSize(mw);
-                _isManipulating = true;
+                Point center = new Point(_editingRect.Left + _editingRect.Width / 2, _editingRect.Top + _editingRect.Height / 2);
+                Vector v = px - center;
+                _rotationAngle = Math.Atan2(v.Y, v.X) * 180 / Math.PI + 90;
+            }
+            else if (_activeAnchor == ManipulationAnchor.Move)
+            {
+                Vector delta = px - _lastMousePos;
+                _editingRect.X += delta.X;
+                _editingRect.Y += delta.Y;
             }
             else
             {
-                selectTool.CommitSelection(ctx, true);
-                selectTool.Cleanup(ctx);
-                _isManipulating = false;
-                selectTool.lag = 0;
+                Point currentMouse = px;
+                if (Math.Abs(_rotationAngle) > 0.01)
+                {
+                    Point startCenter = new Point(_startX + _startW / 2, _startY + _startH / 2);
+                    var rt = new RotateTransform(-_rotationAngle, startCenter.X, startCenter.Y);
+                    currentMouse = rt.Transform(px);
+                }
+                ApplyResizing(currentMouse);
             }
+            _lastMousePos = px;
+            UpdatePreviewFromRect(ctx);
+            RefreshHandles(ctx);
         }
     }
-    public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
+
+    public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        var mw = ctx.ParentWindow;
-        if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        if (_isDrawing)
         {
-            if (_isManipulating)
+            _isDrawing = false;
+            ctx.ReleasePointerCapture();
+            
+            var endPoint = ctx.ToPixel(viewPos);
+            _editingRect = new Rect(_startPoint, endPoint);
+
+            if (_editingRect.Width <= 1 && _editingRect.Height <= 1)
             {
-                var st = GetSelectTool(mw);
-                if (st != null && st.HasActiveSelection)
-                {
-                    st.Cleanup(ctx);
-                    ctx.Undo.Redo();
-                    _isManipulating = false;
-                    mw.SetUndoRedoButtonState();
-                    e.Handled = true;
-                    return;
-                }
+                ClearPreview(ctx);
+                return;
+            }
+
+            if (SettingsManager.Instance.Current.IsShapeToolProMode)
+            {
+                _isEditing = true;
+                RefreshHandles(ctx);
+                if (ctx.ViewElement != null) ctx.ViewElement.Cursor = System.Windows.Input.Cursors.Arrow;
+            }
+            else
+            {
+                CommitActiveShape(ctx);
             }
         }
-        if (_isManipulating)
+        else if (_isEditing)
         {
-            var st = GetSelectTool(mw);
-            if (st != null)
+            _activeAnchor = ManipulationAnchor.None;
+            ctx.ReleasePointerCapture();
+        }
+    }
+
+    private void ApplyResizing(Point currentMouse)
+    {
+        double dx = currentMouse.X - _startMouse.X;
+        double dy = currentMouse.Y - _startMouse.Y;
+
+        double fixedRight = _startX + _startW;
+        double fixedBottom = _startY + _startH;
+
+        double proposedW = _startW;
+        double proposedH = _startH;
+        double x = _startX;
+        double y = _startY;
+
+        bool isShiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+
+        switch (_activeAnchor)
+        {
+            case ManipulationAnchor.NW:
+                proposedW = _startW - dx;
+                proposedH = _startH - dy;
+                break;
+            case ManipulationAnchor.NE:
+                proposedW = _startW + dx;
+                proposedH = _startH - dy;
+                break;
+            case ManipulationAnchor.SW:
+                proposedW = _startW - dx;
+                proposedH = _startH + dy;
+                break;
+            case ManipulationAnchor.SE:
+                proposedW = _startW + dx;
+                proposedH = _startH + dy;
+                break;
+            case ManipulationAnchor.N:
+                proposedH = _startH - dy;
+                break;
+            case ManipulationAnchor.S:
+                proposedH = _startH + dy;
+                break;
+            case ManipulationAnchor.W:
+                proposedW = _startW - dx;
+                break;
+            case ManipulationAnchor.E:
+                proposedW = _startW + dx;
+                break;
+        }
+
+        if (isShiftDown && _startW > 0 && _startH > 0)
+        {
+            double ratio = _startW / _startH;
+            if (_activeAnchor == ManipulationAnchor.NW || _activeAnchor == ManipulationAnchor.NE ||
+                _activeAnchor == ManipulationAnchor.SW || _activeAnchor == ManipulationAnchor.SE)
             {
-                st.OnKeyDown(ctx, e);
-                if (!st.HasActiveSelection) _isManipulating = false;
+                if (Math.Abs(proposedW / _startW) > Math.Abs(proposedH / _startH))
+                    proposedH = proposedW / ratio;
+                else
+                    proposedW = proposedH * ratio;
+            }
+        }
+
+        proposedW = Math.Max(1, proposedW);
+        proposedH = Math.Max(1, proposedH);
+
+        // 根据锚点计算 X/Y，确保对角点固定
+        if (_activeAnchor == ManipulationAnchor.NW || _activeAnchor == ManipulationAnchor.W || _activeAnchor == ManipulationAnchor.SW)
+            x = fixedRight - proposedW;
+
+        if (_activeAnchor == ManipulationAnchor.NW || _activeAnchor == ManipulationAnchor.N || _activeAnchor == ManipulationAnchor.NE)
+            y = fixedBottom - proposedH;
+
+        _editingRect = new Rect(x, y, proposedW, proposedH);
+    }
+
+    public void RefreshPreview(ToolContext ctx)
+    {
+        if (_previewShape == null || !_isEditing) return;
+        _previewShape.Stroke = new SolidColorBrush(ctx.PenColor);
+        UpdatePreviewFromRect(ctx);
+        RefreshHandles(ctx);
+    }
+
+    private void UpdatePreviewFromRect(ToolContext ctx)
+    {
+        if (_previewShape == null) return;
+        UpdatePreviewShape(ctx, _editingRect.TopLeft, _editingRect.BottomRight, ctx.PenThickness);
+    }
+
+    private void UpdateCursorByPos(ToolContext ctx, Point px)
+    {
+        var anchor = HitTestAnchors(ctx, px);
+        System.Windows.Input.Cursor cursor = this.Cursor;
+
+        switch (anchor)
+        {
+            case ManipulationAnchor.NW:
+            case ManipulationAnchor.SE:
+                cursor = System.Windows.Input.Cursors.SizeNWSE;
+                break;
+            case ManipulationAnchor.NE:
+            case ManipulationAnchor.SW:
+                cursor = System.Windows.Input.Cursors.SizeNESW;
+                break;
+            case ManipulationAnchor.N:
+            case ManipulationAnchor.S:
+                cursor = System.Windows.Input.Cursors.SizeNS;
+                break;
+            case ManipulationAnchor.W:
+            case ManipulationAnchor.E:
+                cursor = System.Windows.Input.Cursors.SizeWE;
+                break;
+            case ManipulationAnchor.Move:
+                cursor = System.Windows.Input.Cursors.SizeAll;
+                break;
+            case ManipulationAnchor.Rotate:
+                cursor = System.Windows.Input.Cursors.Hand;
+                break;
+        }
+
+        if (ctx.ViewElement != null && ctx.ViewElement.Cursor != cursor)
+        {
+            ctx.ViewElement.Cursor = cursor;
+        }
+    }
+
+    private void RefreshHandles(ToolContext ctx)
+    {
+        foreach (var h in _handleVisuals) ctx.EditorOverlay.Children.Remove(h);
+        _handleVisuals.Clear();
+
+        if (!_isEditing) return;
+
+        double zoom = ctx.ParentWindow.zoomscale;
+        double adaptiveHandleSize = HandleSize / zoom;
+        double adaptiveThickness = 1.0 / zoom;
+
+        ManipulationAnchor[] anchors = { ManipulationAnchor.NW, ManipulationAnchor.N, ManipulationAnchor.NE, ManipulationAnchor.W, ManipulationAnchor.E, ManipulationAnchor.SW, ManipulationAnchor.S, ManipulationAnchor.SE, ManipulationAnchor.Rotate };
+        
+        // 绘制连接旋转手柄的线
+        Point pN = ctx.FromPixel(GetAnchorPoint(ctx, ManipulationAnchor.N));
+        Point pR = ctx.FromPixel(GetAnchorPoint(ctx, ManipulationAnchor.Rotate));
+        var line = new System.Windows.Shapes.Line
+        {
+            X1 = pN.X, Y1 = pN.Y, X2 = pR.X, Y2 = pR.Y,
+            Stroke = Brushes.DeepSkyBlue,
+            StrokeThickness = adaptiveThickness,
+            IsHitTestVisible = false
+        };
+        ctx.EditorOverlay.Children.Add(line);
+        _handleVisuals.Add(line);
+        
+        foreach (var anchor in anchors)
+        {
+            Point p = ctx.FromPixel(GetAnchorPoint(ctx, anchor));
+            var ellipse = new Ellipse
+            {
+                Width = adaptiveHandleSize,
+                Height = adaptiveHandleSize,
+                Fill = anchor == ManipulationAnchor.Rotate ? Brushes.DeepSkyBlue : Brushes.White,
+                Stroke = Brushes.DeepSkyBlue,
+                StrokeThickness = adaptiveThickness,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(ellipse, p.X - adaptiveHandleSize / 2);
+            Canvas.SetTop(ellipse, p.Y - adaptiveHandleSize / 2);
+            ctx.EditorOverlay.Children.Add(ellipse);
+            _handleVisuals.Add(ellipse);
+        }
+    }
+
+    private Point GetAnchorPoint(ToolContext ctx, ManipulationAnchor anchor)
+    {
+        Point p;
+        double zoom = ctx.ParentWindow.zoomscale;
+        double adaptiveRotateOffset = RotateHandleOffset / zoom;
+
+        switch (anchor)
+        {
+            case ManipulationAnchor.NW: p = _editingRect.TopLeft; break;
+            case ManipulationAnchor.N: p = new Point(_editingRect.Left + _editingRect.Width / 2, _editingRect.Top); break;
+            case ManipulationAnchor.NE: p = _editingRect.TopRight; break;
+            case ManipulationAnchor.W: p = new Point(_editingRect.Left, _editingRect.Top + _editingRect.Height / 2); break;
+            case ManipulationAnchor.E: p = new Point(_editingRect.Right, _editingRect.Top + _editingRect.Height / 2); break;
+            case ManipulationAnchor.SW: p = _editingRect.BottomLeft; break;
+            case ManipulationAnchor.S: p = new Point(_editingRect.Left + _editingRect.Width / 2, _editingRect.Bottom); break;
+            case ManipulationAnchor.SE: p = _editingRect.BottomRight; break;
+            case ManipulationAnchor.Rotate: p = new Point(_editingRect.Left + _editingRect.Width / 2, _editingRect.Top - adaptiveRotateOffset); break;
+            default: p = new Point(); break;
+        }
+
+        if (Math.Abs(_rotationAngle) > 0.01 && anchor != ManipulationAnchor.Move && anchor != ManipulationAnchor.None)
+        {
+            var rt = new RotateTransform(_rotationAngle, _editingRect.Left + _editingRect.Width / 2, _editingRect.Top + _editingRect.Height / 2);
+            p = rt.Transform(p);
+        }
+        return p;
+    }
+
+    private ManipulationAnchor HitTestAnchors(ToolContext ctx, Point p)
+    {
+        double zoom = ctx.ParentWindow.zoomscale;
+        double adaptiveHitRange = HitRange / zoom;
+
+        ManipulationAnchor[] anchors = { ManipulationAnchor.Rotate, ManipulationAnchor.NW, ManipulationAnchor.NE, ManipulationAnchor.SW, ManipulationAnchor.SE, ManipulationAnchor.N, ManipulationAnchor.S, ManipulationAnchor.W, ManipulationAnchor.E };
+        foreach (var anchor in anchors)
+        {
+            Point ap = GetAnchorPoint(ctx, anchor);
+            if (Math.Abs(p.X - ap.X) <= adaptiveHitRange && Math.Abs(p.Y - ap.Y) <= adaptiveHitRange) return anchor;
+        }
+        if (_editingRect.Contains(p)) return ManipulationAnchor.Move;
+        return ManipulationAnchor.None;
+    }
+
+    private void CommitActiveShape(ToolContext ctx)
+    {
+        if (_previewShape == null) return;
+
+        // 计算包含描边的完整边界
+        double arrowScale = 0;
+        if (_currentShapeType == ShapeType.Arrow) arrowScale = Gethandlength(_editingRect.TopLeft, _editingRect.BottomRight);
+        double padding = ctx.PenThickness / 2.0 + 2 + arrowScale;
+
+        Rect shapeGlobalBounds = new Rect(_editingRect.X - padding, _editingRect.Y - padding, _editingRect.Width + padding * 2, _editingRect.Height + padding * 2);
+        if (Math.Abs(_rotationAngle) > 0.01)
+        {
+            var rt = new RotateTransform(_rotationAngle, _editingRect.X + _editingRect.Width / 2, _editingRect.Y + _editingRect.Height / 2);
+            shapeGlobalBounds = rt.TransformBounds(shapeGlobalBounds);
+        }
+
+        Rect canvasBounds = new Rect(0, 0, ctx.Surface.Bitmap.PixelWidth, ctx.Surface.Bitmap.PixelHeight);
+        Rect intersectBounds = Rect.Intersect(shapeGlobalBounds, canvasBounds);
+
+        if (intersectBounds != Rect.Empty && intersectBounds.Width >= 1 && intersectBounds.Height >= 1)
+        {
+            // 关键：对齐到整数像素边界，消除偏移错位
+            int ix = (int)Math.Floor(intersectBounds.X);
+            int iy = (int)Math.Floor(intersectBounds.Y);
+            int iw = (int)Math.Ceiling(intersectBounds.Right) - ix;
+            int ih = (int)Math.Ceiling(intersectBounds.Bottom) - iy;
+            Rect validBounds = new Rect(ix, iy, iw, ih);
+
+            var shapeBitmap = RenderShapeToBitmapClipped(_editingRect.TopLeft, _editingRect.BottomRight, validBounds, ctx.PenColor, ctx.PenThickness, ctx.Surface.Bitmap.DpiX, ctx.Surface.Bitmap.DpiY);
+            if (shapeBitmap != null)
+            {
+                ctx.Undo.BeginStroke();
+                
+                int stride = iw * 4;
+                byte[] pixels = new byte[stride * ih];
+                shapeBitmap.CopyPixels(pixels, stride, 0);
+                
+                ctx.Surface.WriteRegion(new Int32Rect(ix, iy, iw, ih), pixels, stride, false);
+                
+                ctx.Undo.AddDirtyRect(new Int32Rect(ix, iy, iw, ih));
+                ctx.Undo.CommitStroke();
+                
+                ctx.ParentWindow.SetUndoRedoButtonState();
+            }
+        }
+
+        ClearPreview(ctx);
+    }
+
+    private void ClearPreview(ToolContext ctx)
+    {
+        if (_previewShape != null) ctx.EditorOverlay.Children.Remove(_previewShape);
+        foreach (var h in _handleVisuals) ctx.EditorOverlay.Children.Remove(h);
+        _handleVisuals.Clear();
+        _previewShape = null;
+        _isEditing = false;
+        _rotationAngle = 0;
+        if (ctx.ViewElement != null) ctx.ViewElement.Cursor = this.Cursor;
+    }
+
+    public void GiveUpSelection(ToolContext ctx)
+    {
+        ClearPreview(ctx);
+    }
+
+    public override void OnKeyDown(ToolContext ctx, KeyEventArgs e)
+    {
+        if (e.IsRepeat) return;
+
+        Key key = (e.Key == Key.System ? e.SystemKey : e.Key);
+        if (key == Key.LeftAlt || key == Key.RightAlt)
+        {
+            // 单击 Alt 切换模式
+            bool newState = !SettingsManager.Instance.Current.IsShapeToolProMode;
+            SettingsManager.Instance.Current.IsShapeToolProMode = newState;
+
+            string toastKey = newState ? "L_Toast_ShapeProMode_On" : "L_Toast_ShapeProMode_Off";
+            ctx.ParentWindow.ShowToast(LocalizationManager.GetString(toastKey));
+
+            // 如果关闭了专业模式且正在编辑，立即提交
+            if (!newState && _isEditing)
+            {
+                CommitActiveShape(ctx);
+            }
+            else if (newState && _previewShape != null && !_isEditing && !_isDrawing)
+            {
+                // 如果开启了专业模式且有预览形状且当前没在画，进入编辑状态
+                _isEditing = true;
+                RefreshHandles(ctx);
+            }
+            
+            // 立即刷新光标
+            if (ctx.ViewElement != null)
+            {
+                var px = ctx.ToPixel(Mouse.GetPosition(ctx.ViewElement));
+                UpdateCursorByPos(ctx, px);
+            }
+            
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            if (_isEditing)
+            {
+                ClearPreview(ctx);
+                e.Handled = true;
                 return;
             }
         }
+        
+        if (e.Key == Key.Enter && _isEditing)
+        {
+            CommitActiveShape(ctx);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && _isEditing)
+        {
+            ClearPreview(ctx);
+            e.Handled = true;
+            return;
+        }
+
         base.OnKeyDown(ctx, e);
     }
+
     private BitmapSource RenderShapeToBitmapClipped(Point globalStart, Point globalEnd, Rect validBounds, Color color, double thickness, double dpiX, double dpiY)
     {
-        int pixelWidth = (int)Math.Ceiling(validBounds.Width);
-        int pixelHeight = (int)Math.Ceiling(validBounds.Height);
+        int pixelWidth = (int)validBounds.Width;
+        int pixelHeight = (int)validBounds.Height;
         if (pixelWidth <= 0 || pixelHeight <= 0) return null;
 
         DrawingVisual drawingVisual = new DrawingVisual();
         using (DrawingContext dc = drawingVisual.RenderOpen())
         {
+            // 使用整数偏移
             dc.PushTransform(new TranslateTransform(-validBounds.X, -validBounds.Y));
+            if (Math.Abs(_rotationAngle) > 0.01)
+            {
+                dc.PushTransform(new RotateTransform(_rotationAngle, _editingRect.X + _editingRect.Width / 2, _editingRect.Y + _editingRect.Height / 2));
+            }
+
             Pen pen = new Pen(new SolidColorBrush(color), thickness);
 
             if (_currentShapeType == ShapeType.Rectangle || _currentShapeType == ShapeType.Diamond || _currentShapeType == ShapeType.Triangle)
@@ -265,7 +584,7 @@ public class ShapeTool : ToolBase
             }
             pen.Freeze();
 
-            Rect logicalRect = new Rect(Math.Min(globalStart.X, globalEnd.X), Math.Min(globalStart.Y, globalEnd.Y), Math.Abs(globalStart.X - globalEnd.X),Math.Abs(globalStart.Y - globalEnd.Y)  );
+            Rect logicalRect = new Rect(Math.Min(globalStart.X, globalEnd.X), Math.Min(globalStart.Y, globalEnd.Y), Math.Abs(globalStart.X - globalEnd.X), Math.Abs(globalStart.Y - globalEnd.Y));
 
             switch (_currentShapeType)
             {
@@ -302,6 +621,8 @@ public class ShapeTool : ToolBase
                     dc.DrawGeometry(null, pen, BuildBubbleGeometry(logicalRect));
                     break;
             }
+
+            if (Math.Abs(_rotationAngle) > 0.01) dc.Pop();
             dc.Pop();
         }
 
@@ -311,28 +632,44 @@ public class ShapeTool : ToolBase
         return bmp;
     }
 
-    // 4. 预览更新
-    private void UpdatePreviewShape(Point start, Point end, double thickness)
+    private void UpdatePreviewShape(ToolContext ctx, Point start, Point end, double thickness)
     {
+        if (ctx?.ViewElement == null || _previewShape == null) return;
+
         double x = Math.Min(start.X, end.X);
         double y = Math.Min(start.Y, end.Y);
         double w = Math.Abs(end.X - start.X);
         double h = Math.Abs(end.Y - start.Y);
 
+        double viewScale = ctx.ViewElement.ActualWidth / ctx.FullImageWidth;
+        double displayThickness = thickness * viewScale;
+
         if (_currentShapeType == ShapeType.Line)
         {
-            var line = (System.Windows.Shapes.Line)_previewShape;
-            line.X1 = start.X; line.Y1 = start.Y; line.X2 = end.X; line.Y2 = end.Y;
+            var line = _previewShape as System.Windows.Shapes.Line;
+            if (line == null) return;
+            Point p1 = ctx.FromPixel(start);
+            Point p2 = ctx.FromPixel(end);
+            line.X1 = p1.X; line.Y1 = p1.Y; line.X2 = p2.X; line.Y2 = p2.Y;
+            line.StrokeThickness = displayThickness;
         }
         else
         {
+            Point viewPos = ctx.FromPixel(new Point(x, y));
+            Point viewSize = ctx.FromPixel(new Point(x + w, y + h));
+            double vw = viewSize.X - viewPos.X;
+            double vh = viewSize.Y - viewPos.Y;
+
             if (_previewShape is System.Windows.Shapes.Path path)
             {
-                Rect r = new Rect(x, y, w, h);
+                Rect r = new Rect(viewPos.X, viewPos.Y, vw, vh);
+                Point vStart = ctx.FromPixel(start);
+                Point vEnd = ctx.FromPixel(end);
+
                 switch (_currentShapeType)
                 {
                     case ShapeType.Arrow:
-                        path.Data = BuildArrowGeometry(start, end, Gethandlength(start, end));
+                        path.Data = BuildArrowGeometry(vStart, vEnd, Gethandlength(vStart, vEnd));
                         break;
                     case ShapeType.Triangle:
                         path.Data = BuildRegularPolygon(r, 3, -Math.PI / 2);
@@ -350,134 +687,27 @@ public class ShapeTool : ToolBase
                         path.Data = BuildBubbleGeometry(r);
                         break;
                 }
+                path.StrokeThickness = displayThickness;
             }
             else
             {
-                Canvas.SetLeft(_previewShape, x);
-                Canvas.SetTop(_previewShape, y);
-                _previewShape.Width = w;
-                _previewShape.Height = h;
+                Canvas.SetLeft(_previewShape, viewPos.X);
+                Canvas.SetTop(_previewShape, viewPos.Y);
+                _previewShape.Width = Math.Max(0, vw);
+                _previewShape.Height = Math.Max(0, vh);
+                _previewShape.StrokeThickness = displayThickness;
             }
         }
+
+        if (_previewShape != null)
+        {
+            _previewShape.RenderTransformOrigin = new Point(0.5, 0.5);
+            _previewShape.RenderTransform = new RotateTransform(_rotationAngle);
+        }
     }
+
     private double Gethandlength(Point start, Point end)
     {
         return Math.Pow(Math.Pow(start.X - end.X, 2) + Math.Pow(start.Y - end.Y, 2), 0.5) * AppConsts.ArrowHeadRatio;
     }
-    private Geometry BuildArrowGeometry(Point start, Point end, double headLength)
-    {
-        Vector vec = end - start;
-        if (vec.LengthSquared < 0.001) vec = new Vector(0, 1);
-        vec.Normalize();
-        if (Double.IsNaN(vec.X)) vec = new Vector(1, 0);
-
-        Vector backVec = -vec;
-        double angle = AppConsts.ArrowAngleDegrees;
-        Matrix m1 = Matrix.Identity; m1.Rotate(angle);
-        Matrix m2 = Matrix.Identity; m2.Rotate(-angle);
-
-        Vector wing1 = m1.Transform(backVec) * headLength;
-        Vector wing2 = m2.Transform(backVec) * headLength;
-        Point p1 = end + wing1;
-        Point p2 = end + wing2;
-
-        StreamGeometry geometry = new StreamGeometry();
-        using (StreamGeometryContext ctx = geometry.Open())
-        {
-            ctx.BeginFigure(start, false, false);
-            ctx.LineTo(end, true, false);
-            ctx.LineTo(p1, true, false);
-            ctx.BeginFigure(end, false, false);
-            ctx.LineTo(p2, true, false);
-        }
-        geometry.Freeze();
-        return geometry;
-    }
-    private Geometry BuildRegularPolygon(Rect rect, int sides, double startAngle) // 构造正多边形 
-    {
-        StreamGeometry geometry = new StreamGeometry();
-        using (StreamGeometryContext ctx = geometry.Open())
-        {
-            double centerX = rect.X + rect.Width / 2.0;
-            double centerY = rect.Y + rect.Height / 2.0;
-            double radiusX = rect.Width / 2.0;
-            double radiusY = rect.Height / 2.0;
-
-            for (int i = 0; i < sides; i++)
-            {
-                double angle = startAngle + 2 * Math.PI * i / sides;
-                double x = centerX + radiusX * Math.Cos(angle);
-                double y = centerY + radiusY * Math.Sin(angle);
-                Point pt = new Point(x, y);
-
-                if (i == 0) ctx.BeginFigure(pt, true, true);
-                else ctx.LineTo(pt, true, false);
-            }
-        }
-        geometry.Freeze();
-        return geometry;
-    }
-    private Geometry BuildStarGeometry(Rect rect) // 构造五角星
-    {
-        StreamGeometry geometry = new StreamGeometry();
-        using (StreamGeometryContext ctx = geometry.Open())
-        {
-            double centerX = rect.X + rect.Width / 2.0;
-            double centerY = rect.Y + rect.Height / 2.0;
-            double radiusX = rect.Width / 2.0;
-            double radiusY = rect.Height / 2.0;
-            double innerRadiusRatio = AppConsts.ShapeToolStarInnerRadiusRatio; // 内圆比例
-
-            int numPoints = 5;
-            double angleStep = Math.PI / numPoints;
-            double currentAngle = -Math.PI / 2; // 顶点朝上
-
-            for (int i = 0; i < numPoints * 2; i++)
-            {
-                double rX = (i % 2 == 0) ? radiusX : radiusX * innerRadiusRatio;
-                double rY = (i % 2 == 0) ? radiusY : radiusY * innerRadiusRatio;
-
-                double x = centerX + rX * Math.Cos(currentAngle);
-                double y = centerY + rY * Math.Sin(currentAngle);
-                Point pt = new Point(x, y);
-
-                if (i == 0) ctx.BeginFigure(pt, true, true);
-                else ctx.LineTo(pt, true, false);
-
-                currentAngle += angleStep;
-            }
-        }
-        geometry.Freeze();
-        return geometry;
-    }
-    private Geometry BuildBubbleGeometry(Rect rect)   // 构造对话气泡
-    {
-        StreamGeometry geometry = new StreamGeometry();
-        using (StreamGeometryContext ctx = geometry.Open())
-        {
-            double radius = Math.Min(rect.Width, rect.Height) * AppConsts.ShapeToolBubbleRadiusRatio;
-            double tailHeight = rect.Height * AppConsts.ShapeToolBubbleTailHeightRatio;
-            double bodyHeight = rect.Height - tailHeight;
-            Rect bodyRect = new Rect(rect.X, rect.Y, rect.Width, bodyHeight);
-            Point tailStart = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailStartRatio, rect.Y + bodyHeight);
-            Point tailTip = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailStartRatio, rect.Y + rect.Height);
-            Point tailEnd = new Point(rect.X + rect.Width * AppConsts.ShapeToolBubbleTailEndRatio, rect.Y + bodyHeight);
-            ctx.BeginFigure(new Point(bodyRect.X + radius, bodyRect.Y), true, true);
-            ctx.LineTo(new Point(bodyRect.Right - radius, bodyRect.Top), true, true);
-            ctx.ArcTo(new Point(bodyRect.Right, bodyRect.Top + radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-            ctx.LineTo(new Point(bodyRect.Right, bodyRect.Bottom - radius), true, true);
-            ctx.ArcTo(new Point(bodyRect.Right - radius, bodyRect.Bottom), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-            ctx.LineTo(tailStart, true, true);
-            ctx.LineTo(tailTip, true, true);
-            ctx.LineTo(tailEnd, true, true);
-            ctx.LineTo(new Point(bodyRect.Left + radius, bodyRect.Bottom), true, true);
-            ctx.ArcTo(new Point(bodyRect.Left, bodyRect.Bottom - radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-            ctx.LineTo(new Point(bodyRect.Left, bodyRect.Top + radius), true, true);
-            ctx.ArcTo(new Point(bodyRect.Left + radius, bodyRect.Top), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, true);
-        }
-        geometry.Freeze();
-        return geometry;
-    }
-
-
 }

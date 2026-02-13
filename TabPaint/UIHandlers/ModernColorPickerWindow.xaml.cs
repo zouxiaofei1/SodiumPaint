@@ -18,6 +18,8 @@ namespace TabPaint
         private bool _isCompact;
         private bool _isDraggingWheel = false;
 
+        public bool IsSecondaryColor { get; set; } = false;
+
         private static readonly Dictionary<Color, string> StandardColorNames = new Dictionary<Color, string>
         {
             { Colors.White, "L_Color_White" }, { Colors.Snow, "L_Color_Snow" },  { Colors.Honeydew, "L_Color_Honeydew" }, { Colors.MintCream, "L_Color_MintCream" },
@@ -160,11 +162,12 @@ namespace TabPaint
         private double _currentVal = 1;
         private double _currentAlpha = 255;
 
-        public ModernColorPickerWindow(Color initialColor)
+        public ModernColorPickerWindow(Color initialColor, bool isSecondary = false)
         {
             InitializeComponent();
             this.SupportFocusHighlight();
             SelectedColor = initialColor;
+            IsSecondaryColor = isSecondary;
 
             _isCompact = SettingsManager.Instance.Current.IsCompactColorPicker;
 
@@ -197,12 +200,22 @@ namespace TabPaint
             {
                 NormalModeRoot.Visibility = Visibility.Collapsed;
                 CompactModeRoot.Visibility = Visibility.Visible;
-                this.Width = 210;
-                this.Height = 360;
-                this.MinWidth = 210;
-                this.MinHeight = 360;
+
+                this.MinWidth = 0;
+                this.MinHeight = 0;
+                this.MaxWidth = double.PositiveInfinity;
+                this.MaxHeight = double.PositiveInfinity;
+
+                this.Width = 180;
+                this.Height = 260;
+                this.MinWidth = 180;
+                this.MinHeight = 260;
+                this.MaxWidth = 180;
+                this.MaxHeight = 260;
+
                 this.ResizeMode = ResizeMode.NoResize;
                 TitleText.Visibility = Visibility.Collapsed;
+
                 if (ToggleBtnIcon != null) ToggleBtnIcon.Text = "\uE76C"; // ChevronRight
                 ToggleCompactBtn.ToolTip = "Normal Mode";
 
@@ -216,10 +229,14 @@ namespace TabPaint
             {
                 CompactModeRoot.Visibility = Visibility.Collapsed;
                 NormalModeRoot.Visibility = Visibility.Visible;
-                this.Width = 700;
-                this.Height = 640;
+                
+                this.MaxWidth = double.PositiveInfinity;
+                this.MaxHeight = double.PositiveInfinity;
                 this.MinWidth = 650;
                 this.MinHeight = 640;
+                this.Width = 700;
+                this.Height = 640;
+
                 this.ResizeMode = ResizeMode.CanResize;
                 TitleText.Visibility = Visibility.Visible;
                 if (ToggleBtnIcon != null) ToggleBtnIcon.Text = "\uE76B"; // ChevronLeft
@@ -238,6 +255,7 @@ namespace TabPaint
             _isCompact = !_isCompact;
             SettingsManager.Instance.Current.IsCompactColorPicker = _isCompact;
             SettingsManager.Instance.Save();
+
             ApplyModeUI();
             UpdateUI();
         }
@@ -407,9 +425,9 @@ namespace TabPaint
                     UpdateHueColorVisual();
                 }
 
-                if (_isCompact && this.Owner is MainWindow mw)
+                if (this.Owner is MainWindow mw)
                 {
-                    mw.UpdateCurrentColor(SelectedColor, false);
+                    mw.UpdateCurrentColor(SelectedColor, IsSecondaryColor);
                 }
             }
             finally { _isUpdatingInputs = false; }
@@ -839,6 +857,7 @@ namespace TabPaint
                             ToolTip = GetFriendlyColorName(c)
                         };
                         btn.Click += (s, e2) => { _currentAlpha = c.A; SetColorFromRgb(c.R, c.G, c.B); UpdateUI(); };
+
                         slot.Children.Add(btn);
                     }
                     else

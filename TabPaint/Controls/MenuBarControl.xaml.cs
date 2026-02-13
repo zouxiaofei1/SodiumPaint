@@ -50,6 +50,8 @@ namespace TabPaint.Controls
         public event RoutedEventHandler UndoClick { add { AddHandler(UndoClickEvent, value); } remove { RemoveHandler(UndoClickEvent, value); } }
         public event RoutedEventHandler RedoClick { add { AddHandler(RedoClickEvent, value); } remove { RemoveHandler(RedoClickEvent, value); } }
         public event RoutedEventHandler SettingsClick { add { AddHandler(SettingsClickEvent, value); } remove { RemoveHandler(SettingsClickEvent, value); } }
+        public static readonly RoutedEvent DiscardImageClickEvent = EventManager.RegisterRoutedEvent("DiscardImageClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public event RoutedEventHandler DiscardImageClick { add { AddHandler(DiscardImageClickEvent, value); } remove { RemoveHandler(DiscardImageClickEvent, value); } }
 
         public bool IsUndoEnabled
         {
@@ -273,6 +275,11 @@ namespace TabPaint.Controls
             blurItem.Icon = blurPath;
             filterItem.Items.Add(blurItem);
 
+            filterItem.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_RedEye", null, OnRedEyeClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Sketch", null, OnSketchClick));
+            filterItem.Items.Add(CreateMenuItem("L_Menu_Effect_Edge", null, OnEdgeClick));
+
             menuItem.Items.Add(filterItem);
             menuItem.Items.Add(CreateMenuItem("L_Menu_Effect_Resize", "Resize_Image", OnResizeCanvasClick, "Effect.Resize"));
             var wmItem = CreateMenuItem("L_Menu_Effect_Watermark", "Watermark_Image", OnWatermarkClick);// 画布调整
@@ -336,6 +343,7 @@ namespace TabPaint.Controls
             remove { RemoveHandler(DiscardAllClickEvent, value); }
         }
         private void OnDiscardAllClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(DiscardAllClickEvent));
+        private void OnDiscardImageClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(DiscardImageClickEvent));
 
         private void OnRecentFileItemClick(object sender, RoutedEventArgs e)
         {
@@ -395,12 +403,21 @@ namespace TabPaint.Controls
         private void OnBrownClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(BrownClickEvent));
         public static readonly RoutedEvent MosaicClickEvent = EventManager.RegisterRoutedEvent("MosaicClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
         public static readonly RoutedEvent GaussianBlurClickEvent = EventManager.RegisterRoutedEvent("GaussianBlurClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent RedEyeClickEvent = EventManager.RegisterRoutedEvent("RedEyeClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent SketchClickEvent = EventManager.RegisterRoutedEvent("SketchClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
+        public static readonly RoutedEvent EdgeClickEvent = EventManager.RegisterRoutedEvent("EdgeClick", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(MenuBarControl));
 
         public event RoutedEventHandler MosaicClick { add { AddHandler(MosaicClickEvent, value); } remove { RemoveHandler(MosaicClickEvent, value); } }
         public event RoutedEventHandler GaussianBlurClick { add { AddHandler(GaussianBlurClickEvent, value); } remove { RemoveHandler(GaussianBlurClickEvent, value); } }
+        public event RoutedEventHandler RedEyeClick { add { AddHandler(RedEyeClickEvent, value); } remove { RemoveHandler(RedEyeClickEvent, value); } }
+        public event RoutedEventHandler SketchClick { add { AddHandler(SketchClickEvent, value); } remove { RemoveHandler(SketchClickEvent, value); } }
+        public event RoutedEventHandler EdgeClick { add { AddHandler(EdgeClickEvent, value); } remove { RemoveHandler(EdgeClickEvent, value); } }
 
         private void OnMosaicClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(MosaicClickEvent));
         private void OnGaussianBlurClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(GaussianBlurClickEvent));
+        private void OnRedEyeClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(RedEyeClickEvent));
+        private void OnSketchClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(SketchClickEvent));
+        private void OnEdgeClick(object sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(EdgeClickEvent));
 
     }
 }

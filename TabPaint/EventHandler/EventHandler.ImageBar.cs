@@ -237,6 +237,32 @@ namespace TabPaint
                     await TransferTabToNewWindow(tab);
                 }
             }
+            else if (e.Data.GetDataPresent("TabPaintSelectionDrag"))
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        await CreateNewWindowFromSelection(files[0]);
+                    }
+                }
+            }
+        }
+
+        private async Task CreateNewWindowFromSelection(string filePath)
+        {
+            try
+            {
+                // 创建新窗口，并将临时文件路径传递过去
+                // fileExists 参数应设为 true，因为临时文件已经创建
+                MainWindow newWindow = new MainWindow(filePath, fileExists: true, initialTab: null, loadSession: false);
+                newWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                ShowToast("Failed to create new window from selection: " + ex.Message);
+            }
         }
 
         private async Task TransferTabToNewWindow(FileTabItem tab)

@@ -167,20 +167,36 @@ namespace TabPaint
             }
         }
 
+        private ModernColorPickerWindow? _activeColorPicker;
         private void OnCustomColorClick(object sender, RoutedEventArgs e)
         {
+            if (_activeColorPicker != null && _activeColorPicker.IsVisible)
+            {
+                _activeColorPicker.Focus();
+                return;
+            }
+
             System.Windows.Media.Color initialColor = _ctx.PenColor;
             if (initialColor == Colors.Transparent) initialColor = Colors.Black;
 
-            var dlg = new ModernColorPickerWindow(initialColor);
-            if (dlg.ShowOwnerModal(this) == true)
+            _activeColorPicker = new ModernColorPickerWindow(initialColor, useSecondColor);
+            _activeColorPicker.Owner = this;
+            
+            bool isCompact = SettingsManager.Instance.Current.IsCompactColorPicker;
+            if (isCompact)
             {
-                var color = dlg.SelectedColor;
-                var brush = new SolidColorBrush(color);
-                SelectedBrush = brush;
-
-                _ctx.PenColor = color;
-                UpdateCurrentColor(_ctx.PenColor, useSecondColor);
+                _activeColorPicker.Show();
+            }
+            else
+            {
+                if (_activeColorPicker.ShowOwnerModal(this) == true)
+                {
+                    var color = _activeColorPicker.SelectedColor;
+                    var brush = new SolidColorBrush(color);
+                    SelectedBrush = brush;
+                    _ctx.PenColor = color;
+                    UpdateCurrentColor(_ctx.PenColor, useSecondColor);
+                }
             }
         }
         private void OnTextClick(object sender, RoutedEventArgs e) => _router.SetTool(_tools.Text);

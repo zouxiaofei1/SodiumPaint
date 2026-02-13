@@ -97,7 +97,7 @@ namespace TabPaint
 
             Brush highlightBrush = new SolidColorBrush(Color.FromArgb(15, accentColor.R, accentColor.G, accentColor.B));
             if (highlightBrush.CanFreeze) highlightBrush.Freeze();
-            Brush edgeBrush = new SolidColorBrush(Color.FromArgb(12, accentColor.R, accentColor.G, accentColor.B));
+            Brush edgeBrush = new SolidColorBrush(Color.FromArgb(200, accentColor.R, accentColor.G, accentColor.B));
             if (edgeBrush.CanFreeze) edgeBrush.Freeze();
             Pen edgePen = new Pen(edgeBrush, 1);
             edgePen.Freeze();
@@ -106,15 +106,15 @@ namespace TabPaint
             {
                 drawingContext.DrawRectangle(highlightBrush, null,
                     new Rect(screenStart, 0, screenEnd - screenStart, ActualHeight));
-                drawingContext.DrawLine(edgePen, new Point(screenStart, 0), new Point(screenStart, ActualHeight));
-                drawingContext.DrawLine(edgePen, new Point(screenEnd, 0), new Point(screenEnd, ActualHeight));
+                drawingContext.DrawLine(edgePen, new Point(screenStart + 0.5, 0), new Point(screenStart + 0.5, ActualHeight));
+                drawingContext.DrawLine(edgePen, new Point(screenEnd - 0.5, 0), new Point(screenEnd - 0.5, ActualHeight));
             }
             else
             {
                 drawingContext.DrawRectangle(highlightBrush, null,
                     new Rect(0, screenStart, ActualWidth, screenEnd - screenStart));
-                drawingContext.DrawLine(edgePen, new Point(0, screenStart), new Point(ActualWidth, screenStart));
-                drawingContext.DrawLine(edgePen, new Point(0, screenEnd), new Point(ActualWidth, screenEnd));
+                drawingContext.DrawLine(edgePen, new Point(0, screenStart + 0.5), new Point(ActualWidth, screenStart + 0.5));
+                drawingContext.DrawLine(edgePen, new Point(0, screenEnd - 0.5), new Point(ActualWidth, screenEnd - 0.5));
             }
         }
         protected override void OnRender(DrawingContext drawingContext)

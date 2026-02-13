@@ -488,11 +488,20 @@ public partial class PenTool : ToolBase
             float curP = c0 * p0.Pressure + c1 * p1.Pressure + c2 * p2.Pressure + c3 * p3.Pressure;
             curP = Math.Clamp(curP, 0.1f, 1.0f);
 
-            var rect = DrawRoundStrokeUnsafe_Internal(
-                ctx,
-                new Point(prevX, prevY), prevP,
-                new Point(curX, curY), curP,
-                buffer, stride, w, h);
+            Int32Rect? rect;
+            if (ctx.PenStyle == BrushStyle.Square || ctx.PenStyle == BrushStyle.Eraser)
+            {
+                DrawSquareStrokeLineUnsafe(ctx, new Point(prevX, prevY), prevP, new Point(curX, curY), curP, buffer, stride, w, h);
+                rect = LineBounds(new Point(prevX, prevY), new Point(curX, curY), (int)ctx.PenThickness + 2);
+            }
+            else
+            {
+                rect = DrawRoundStrokeUnsafe_Internal(
+                    ctx,
+                    new Point(prevX, prevY), prevP,
+                    new Point(curX, curY), curP,
+                    buffer, stride, w, h);
+            }
 
             if (rect.HasValue)
             {

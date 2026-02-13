@@ -21,6 +21,7 @@ namespace TabPaint
             private void StartDragDropOperation(ToolContext ctx)
             {
                 if (_selectionData == null) return;
+                EnsureRotationBaked(ctx);
 
                 int width = _originalRect.Width > 0 ? _originalRect.Width : _selectionRect.Width;
                 int height = _originalRect.Height > 0 ? _originalRect.Height : _selectionRect.Height;
@@ -63,7 +64,19 @@ namespace TabPaint
                     HidePreview(ctx);
                     ctx.SelectionOverlay.Visibility = Visibility.Collapsed;
 
-                    DragDrop.DoDragDrop(ctx.ViewElement, dataObject, System.Windows.DragDropEffects.Copy);
+                    // 显示 DropZone 提示
+                    var mw = ctx.ParentWindow;
+                    if (mw._dropZone == null)
+                    {
+                        mw._dropZone = new UIHandlers.DropZoneWindow();
+                        mw._dropZone.TabDropped += mw.OnDropZoneTabDropped;
+                    }
+                    mw._dropZone.ShowAtBottom();
+
+                    DragDrop.DoDragDrop(ctx.ViewElement, dataObject, DragDropEffects.Copy | DragDropEffects.Move);
+
+                    if (mw._dropZone != null) mw._dropZone.Hide();
+
                     _originalRect = new Int32Rect();
                     _selectionRect = new Int32Rect();
                     _transformStep = 0;
@@ -274,6 +287,7 @@ namespace TabPaint
             public void CopySelection(ToolContext ctx)
             {
                 if (_selectionData == null) SelectAll(ctx, false);
+                EnsureRotationBaked(ctx);
 
                 if (_selectionData != null)
                 {

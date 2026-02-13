@@ -32,13 +32,16 @@ namespace TabPaint
             if (dialog.IsConfirmed)   ApplyFilter(FilterType.GaussianBlur, dialog.ResultValue);
 
         }
+        private void OnRedEyeClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.RedEye);
+        private void OnSketchClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sketch);
+        private void OnEdgeClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Edge);
 
         private void OnSepiaClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sepia);
         private void OnOilPaintingClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.OilPainting);
         private void OnVignetteClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Vignette);
         private void OnGlowClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Glow);
 
-        private enum FilterType { Sepia, OilPainting, Vignette, Glow, Sharpen, Brown, Mosaic, GaussianBlur }
+        private enum FilterType { Sepia, OilPainting, Vignette, Glow, Sharpen, Brown, Mosaic, GaussianBlur, RedEye, Sketch, Edge }
 
         private void OnSharpenClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Sharpen);
         private void OnBrownClick(object sender, RoutedEventArgs e) => ApplyFilter(FilterType.Brown);
@@ -84,6 +87,15 @@ namespace TabPaint
                         break;
                     case FilterType.GaussianBlur:
                         ProcessGaussianBlur(rawPixels, width, height, stride, strength);
+                        break;
+                    case FilterType.RedEye:
+                        ProcessRedEyeRemoval(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.Sketch:
+                        ProcessPencilSketch(rawPixels, width, height, stride);
+                        break;
+                    case FilterType.Edge:
+                        ProcessEdgeDetection(rawPixels, width, height, stride);
                         break;
                 }
             });

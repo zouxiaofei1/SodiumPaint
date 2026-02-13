@@ -112,6 +112,7 @@ SetZoom(targetScale, slient: true);
             MainMenu.SettingsClick += OnSettingsClick;
             MainMenu.NewTabClick += OnNewTabClick;
             MainMenu.DiscardAllClick += OnDiscardAllClick;
+            MainMenu.DiscardImageClick += OnDiscardImageClick;
             MainMenu.SepiaClick += OnSepiaClick;
             MainMenu.OilPaintingClick += OnOilPaintingClick;
             MainMenu.VignetteClick += OnVignetteClick;
@@ -120,6 +121,9 @@ SetZoom(targetScale, slient: true);
             MainMenu.BrownClick += OnBrownClick;
             MainMenu.MosaicClick += OnMosaicClick;
             MainMenu.GaussianBlurClick += OnGaussianBlurClick;
+            MainMenu.RedEyeClick += OnRedEyeClick;
+            MainMenu.SketchClick += OnSketchClick;
+            MainMenu.EdgeClick += OnEdgeClick;
             MenuBarHolder.Content = MainMenu;
 
             SetUndoRedoButtonState();

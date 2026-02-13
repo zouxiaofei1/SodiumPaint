@@ -353,11 +353,7 @@ namespace TabPaint
 
                 if (applyTransform)
                 {
-                    tg.Children.Add(new TranslateTransform(rect.X + diff * 0.75, rect.Y));
-                }
-                else if (Math.Abs(diff) > 0.001)
-                {
-                    tg.Children.Add(new TranslateTransform(diff * 0.75, 0));
+                    tg.Children.Add(new TranslateTransform(rect.X, rect.Y));
                 }
 
                 if (Math.Abs(angle) > 0.01)
@@ -365,6 +361,11 @@ namespace TabPaint
                     double centerX = rect.X + rect.Width / 2.0;
                     double centerY = rect.Y + rect.Height / 2.0;
                     tg.Children.Add(new RotateTransform(angle, centerX, centerY));
+                }
+
+                if (Math.Abs(diff) > 0.001)
+                {
+                    tg.Children.Add(new TranslateTransform(diff * 0.75, 0));
                 }
 
                 if (tg.Children.Count > 0)
@@ -415,10 +416,16 @@ namespace TabPaint
             {
                 var mw = ctx.ParentWindow;
                 var geometry = new RectangleGeometry(new Rect(rect.X, rect.Y, rect.Width, rect.Height));
+                
+                TransformGroup tg = new TransformGroup();
+
                 if (Math.Abs(angle) > 0.01)
                 {
-                    geometry.Transform = new RotateTransform(angle, rect.X + rect.Width / 2.0, rect.Y + rect.Height / 2.0);
+                    tg.Children.Add(new RotateTransform(angle, rect.X + rect.Width / 2.0, rect.Y + rect.Height / 2.0));
                 }
+                
+                tg.Children.Add(new TranslateTransform(diff * 0.75, 0));
+                geometry.Transform = tg;
 
                 // 白色底线
                 var whiteBase = new System.Windows.Shapes.Path

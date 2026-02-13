@@ -49,7 +49,11 @@ namespace TabPaint
 
             public void RefreshOverlay(ToolContext ctx)
             {
-                if (_selectionRect.Width > 0 && _selectionRect.Height > 0)   DrawOverlay(ctx, _selectionRect);
+                if (_selectionRect.Width > 0 && _selectionRect.Height > 0)
+                {
+                    UpdatePreviewTransform(ctx);
+                    DrawOverlay(ctx, _selectionRect);
+                }
             }
 
 
@@ -228,6 +232,7 @@ namespace TabPaint
             public void CommitSelection(ToolContext ctx, bool shape = false)
             {
                 if (_selectionData == null) return;
+                EnsureRotationBaked(ctx);
 
                 // 只有当选区已经从画布提起来过（移动/缩放过），或者是粘贴进来的，才需要写回画布
                 if (_hasLifted || IsPasted || _transformStep > 0)

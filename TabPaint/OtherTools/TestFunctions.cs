@@ -15,6 +15,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 //
 //TabPaint主程序
@@ -111,6 +112,35 @@ namespace TabPaint
                 shouldHighlight = false;
             }
 
+            if (window is MainWindow mainWindow && !mainWindow.IsWin11)
+            {
+                var border = mainWindow.FindName("WindowRootBorder") as Border;
+                if (border != null)
+                {
+                    if (shouldHighlight)
+                    {
+                        border.BorderBrush = window.FindResource("SystemAccentPressedBrush") as Brush ?? border.BorderBrush;
+                        if (border.Effect is DropShadowEffect shadow)
+                        {
+                            var newShadow = shadow.Clone();
+                            newShadow.Opacity = 0.6;
+                            border.Effect = newShadow;
+                        }
+                    }
+                    else
+                    {
+                        border.BorderBrush = window.FindResource("BorderMediumBrush") as Brush ?? border.BorderBrush;
+                        if (border.Effect is DropShadowEffect shadow)
+                        {
+                            var newShadow = shadow.Clone();
+                            newShadow.Opacity = 0.3;
+                            border.Effect = newShadow;
+                        }
+                    }
+                }
+                return;
+            }
+
             if (shouldHighlight)
             {
                 var accentBrush = window.FindResource("SystemAccentPressedBrush") as SolidColorBrush;
@@ -176,12 +206,12 @@ namespace TabPaint
                 typeof(WindowHelper),
                 new PropertyMetadata(false));
 
-        public static bool? ShowOwnerModal(this Window dialog, Window owner)
+        public static bool? ShowOwnerModal(this Window dialog, Window owner, bool disableOwner = true)
         {
             if (owner != null)
             {
                 dialog.Owner = owner;
-                owner.IsEnabled = false;
+                if (disableOwner) owner.IsEnabled = false;
             }
 
             dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -206,7 +236,7 @@ namespace TabPaint
                 if (owner != null)
                 {
                     owner.Closing -= ownerClosing;
-                    owner.IsEnabled = true;
+                    if (disableOwner) owner.IsEnabled = true;
                     if (owner.IsVisible)
                         owner.Activate();
                 }

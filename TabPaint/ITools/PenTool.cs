@@ -258,7 +258,7 @@ public partial class PenTool : ToolBase
         }
 
 
-        if (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser)
+        if (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser || ctx.PenStyle == BrushStyle.Square)
         {
             if (ctx.PenStyle == BrushStyle.Calligraphy) pressure = 1.0f;
             _smoothedPressure = pressure;
@@ -368,7 +368,7 @@ public partial class PenTool : ToolBase
             return;
         }
 
-        if (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser)
+        if (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser || ctx.PenStyle == BrushStyle.Square)
         {
             if (ctx.PenStyle == BrushStyle.Calligraphy)
                 pressure = ComputeSmoothedCalligraphyPressure(px, _lastPixel);
@@ -490,13 +490,16 @@ public partial class PenTool : ToolBase
                style == BrushStyle.Highlighter ||
                style == BrushStyle.Watercolor ||
                style == BrushStyle.Crayon ||
-               style == BrushStyle.Calligraphy  ||style == BrushStyle.Brush ||
-           style == BrushStyle.Mosaic;  
+               style == BrushStyle.Calligraphy ||
+               style == BrushStyle.Brush ||
+               style == BrushStyle.Mosaic ||
+               style == BrushStyle.Square ||
+               style == BrushStyle.Eraser;
     }
 
     public override void OnPointerUp(ToolContext ctx, Point viewPos, float pressure = 1.0f)
     {
-        if (_drawing && (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser))
+        if (_drawing && (ctx.PenStyle == BrushStyle.Calligraphy || ctx.PenStyle == BrushStyle.Round || ctx.PenStyle == BrushStyle.Eraser || ctx.PenStyle == BrushStyle.Square))
         {
             // 通过重复尾点完成样条曲线的最后一段
             if (_strokePoints.Count >= 1)

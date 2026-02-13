@@ -69,6 +69,10 @@ public partial class PenTool : ToolBase
     {
         switch (ctx.PenStyle)
         {
+            case BrushStyle.Square:
+            case BrushStyle.Eraser:
+                DrawSquareStrokeLineUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
+                return LineBounds(p1, p2, (int)ctx.PenThickness + 2);
             case BrushStyle.Round:
             case BrushStyle.Calligraphy:
                 DrawRoundStrokeUnsafe(ctx, p1, p1Pressure, p2, p2Pressure, buffer, stride, w, h);
@@ -290,6 +294,63 @@ public partial class PenTool : ToolBase
             if (e2 <= dx) { err += dx; y0 += sy; }
         }
     }
+    private unsafe void DrawSquareStrokeLineUnsafe(ToolContext ctx, Point p1, float p1P, Point p2, float p2P, byte* basePtr, int stride, int w, int h)
+    {
+        float size = (float)ctx.PenThickness;
+        float half = size * 0.5f;
+
+        float globalOpacity = (float)ctx.PenOpacity;
+        if (globalOpacity <= 0.005f) return;
+
+        bool isEraser = ctx.PenStyle == BrushStyle.Eraser;
+        Color targetColor = isEraser ? Color.FromArgb(255, 255, 255, 255) : ctx.PenColor;
+        float tB = targetColor.B, tG = targetColor.G, tR = targetColor.R, tA = targetColor.A;
+
+        // 计算包含起终点方块的 ROI
+        int xmin = Math.Max(0, (int)(MathF.Min((float)p1.X, (float)p2.X) - half - 1));
+        int ymin = Math.Max(0, (int)(MathF.Min((float)p1.Y, (float)p2.Y) - half - 1));
+        int xmax = Math.Min(w - 1, (int)(MathF.Max((float)p1.X, (float)p2.X) + half + 1));
+        int ymax = Math.Min(h - 1, (int)(MathF.Max((float)p1.Y, (float)p2.Y) + half + 1));
+
+        float dx = (float)(p2.X - p1.X), dy = (float)(p2.Y - p1.Y);
+        float lenSq = dx * dx + dy * dy;
+        float invLenSq = lenSq > 1e-6f ? 1.0f / lenSq : 0;
+
+        Parallel.For(ymin, ymax + 1, (y) =>
+        {
+            byte* rowPtr = basePtr + (long)y * stride;
+            int rowIdx = y * w;
+            float py = (float)y;
+
+            for (int x = xmin; x <= xmax; x++)
+            {
+                float px = (float)x;
+                // 计算投影参数 t
+                float t = lenSq > 1e-6f ? ((px - (float)p1.X) * dx + (py - (float)p1.Y) * dy) * invLenSq : 0;
+                t = Math.Clamp(t, 0, 1);
+
+                // 当前时间点 t 的中心位置
+                float curCenterX = (float)p1.X + t * dx;
+                float curCenterY = (float)p1.Y + t * dy;
+
+                // 判断像素是否在当前位置的方块内
+                // 方块是轴对齐的 (AABB)
+                if (MathF.Abs(px - curCenterX) <= half && MathF.Abs(py - curCenterY) <= half)
+                {
+                    int pixelIndex = rowIdx + x;
+                    if (_currentStrokeMask[pixelIndex] >= 255) continue;
+                    _currentStrokeMask[pixelIndex] = 255;
+
+                    byte* p = rowPtr + (long)x * 4;
+                    p[0] = (byte)(p[0] + (tB - p[0]) * globalOpacity);
+                    p[1] = (byte)(p[1] + (tG - p[1]) * globalOpacity);
+                    p[2] = (byte)(p[2] + (tR - p[2]) * globalOpacity);
+                    p[3] = (byte)(p[3] + (tA - p[3]) * globalOpacity);
+                }
+            }
+        });
+    }
+
     private unsafe void DrawSquareStrokeUnsafe(ToolContext ctx, Point p, byte* basePtr, int stride, int w, int h, bool isEraser)
     {
         int size = (int)ctx.PenThickness;

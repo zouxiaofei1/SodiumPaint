@@ -162,12 +162,20 @@ namespace TabPaint
                 bool valueChanged = Math.Abs(LocalPerToolSettings[_currentToolKey].Thickness - value) > 0.001;
                 bool ctxOutOfSync = _ctx != null && Math.Abs(_ctx.PenThickness - value) > 0.001;
 
-                if (valueChanged || ctxOutOfSync)
+        if (valueChanged || ctxOutOfSync)
+        {
+            LocalPerToolSettings[_currentToolKey].Thickness = value;
+            if (_ctx != null)
+            {
+                _ctx.PenThickness = value;
+                // 实时同步 ShapeTool 预览
+                if (_router?.CurrentTool is ShapeTool shapeTool)
                 {
-                    LocalPerToolSettings[_currentToolKey].Thickness = value;
-                    if (_ctx != null) _ctx.PenThickness = value;
-                    OnPropertyChanged();
+                    shapeTool.RefreshPreview(_ctx);
                 }
+            }
+            OnPropertyChanged();
+        }
             }
         }
 
@@ -198,7 +206,15 @@ namespace TabPaint
                 if (valueChanged || ctxOutOfSync)
                 {
                     LocalPerToolSettings[_currentToolKey].Opacity = value;
-                    if (_ctx != null) _ctx.PenOpacity = value;
+                    if (_ctx != null)
+                    {
+                        _ctx.PenOpacity = value;
+                        // 实时同步 ShapeTool 预览
+                        if (_router?.CurrentTool is ShapeTool shapeTool)
+                        {
+                            shapeTool.RefreshPreview(_ctx);
+                        }
+                    }
                     OnPropertyChanged();
                 }
             }

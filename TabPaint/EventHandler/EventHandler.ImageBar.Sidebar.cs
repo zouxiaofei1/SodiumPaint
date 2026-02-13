@@ -296,5 +296,80 @@ namespace TabPaint
             }
         }
 
+        private async void OnDiscardImageClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentTabItem == null) return;
+
+            if (!SettingsManager.Instance.Current.SkipResetConfirmation)
+            {
+                var result = FluentMessageBox.Show(
+                  LocalizationManager.GetString("L_Msg_ResetImage_Content") ?? "Are you sure you want to discard changes for this image?",
+                  LocalizationManager.GetString("L_Msg_ResetWorkspace_Title"),
+                  MessageBoxButton.YesNo
+                 );
+
+                if (result != MessageBoxResult.Yes) return;
+            }
+
+            if (_currentTabItem.IsNew)
+            {
+                // 如果是新创建但未保存的文件，重置为空白画布
+                _currentTabItem.IsDirty = false;
+                _currentTabItem.BackupPath = null;
+                _currentTabItem.UndoStack?.Clear();
+                _currentTabItem.RedoStack?.Clear();
+                _currentTabItem.SavedUndoPoint = 0;
+                _currentTabItem.CanvasVersion = 0;
+                _currentTabItem.LastBackedUpVersion = -1;
+
+                if (_surface != null && _surface.Bitmap != null)
+                {
+                    try
+                    {
+                        _surface.Bitmap.Lock();
+                        int w = _surface.Bitmap.PixelWidth;
+                        int h = _surface.Bitmap.PixelHeight;
+                        int stride = _surface.Bitmap.BackBufferStride;
+                        unsafe
+                        {
+                            byte* pPixels = (byte*)_surface.Bitmap.BackBuffer;
+                            int len = h * stride;
+                            for (int i = 0; i < len; i++) pPixels[i] = 255;
+                        }
+                        _surface.Bitmap.AddDirtyRect(new Int32Rect(0, 0, w, h));
+                        _surface.Bitmap.Unlock();
+                    }
+                    catch { }
+                }
+
+                _currentTabItem.Thumbnail = GenerateBlankThumbnail();
+                ResetDirtyTracker();
+                UpdateWindowTitle();
+                ShowToast(LocalizationManager.GetString("L_Toast_ImageReset"));
+            }
+            else if (_currentTabItem.IsDirty)
+            {
+                // 如果是已存在但有更改的文件，重新加载
+                _currentTabItem.IsDirty = false;
+                _currentTabItem.BackupPath = null;
+                _currentTabItem.IsLoading = true;
+                
+                // 清理选区和形状
+                _router.CleanUpSelectionandShape();
+
+                // 重新从原始路径加载
+                await OpenImageAndTabs(_currentTabItem.FilePath);
+                
+                ResetDirtyTracker();
+                UpdateTabThumbnail(_currentTabItem);
+                _currentTabItem.IsLoading = false;
+                
+                UpdateWindowTitle();
+                ShowToast(LocalizationManager.GetString("L_Toast_ImageReset"));
+            }
+            
+            GC.Collect();
+            UpdateImageBarSliderState();
+        }
     }
 }

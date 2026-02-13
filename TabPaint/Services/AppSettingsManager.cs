@@ -182,6 +182,7 @@ namespace TabPaint
                     writer.Write(Current.SkipResetConfirmation);
                     writer.Write(Current.AutoPopupOnClipboardImage);
                     writer.Write(Current.EnableFileDeleteInPaintMode);
+                    writer.Write(Current.IsShapeToolProMode);
                     writer.Write(Current.ViewUseDarkCanvasBackground);
                     writer.Write(Current.ThemeAccentColor ?? "");
                     writer.Write(Current.PerformanceScore);
@@ -268,6 +269,7 @@ namespace TabPaint
                     settings.SkipResetConfirmation = reader.ReadBoolean();
                     settings.AutoPopupOnClipboardImage = reader.ReadBoolean();
                     settings.EnableFileDeleteInPaintMode = reader.ReadBoolean();
+                    settings.IsShapeToolProMode = reader.ReadBoolean();
                     settings.ViewUseDarkCanvasBackground = reader.ReadBoolean();
                     settings.ThemeAccentColor = reader.ReadString();
                     settings.PerformanceScore = reader.ReadInt32();

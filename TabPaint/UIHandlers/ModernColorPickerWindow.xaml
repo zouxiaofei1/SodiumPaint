@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{DynamicResource L_ColorPicker_Title}"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize"   AllowsTransparency="False" Height="640" Width="700"  MinHeight="640" MinWidth="650"
+        ResizeMode="CanResize"   AllowsTransparency="False" 
         Background="Transparent" 
         WindowStyle="None">
     <WindowChrome.WindowChrome>
@@ -164,7 +164,7 @@
             <Grid x:Name="CompactModeRoot" Grid.Row="1" Grid.RowSpan="3" Visibility="Collapsed" Background="{DynamicResource GlassBackgroundMediumBrush}">
                 <StackPanel Margin="12,10,12,12">
                     <!-- Color Wheel -->
-                    <Grid x:Name="WheelContainer" Width="180" Height="180" Margin="0,0,0,10" 
+                    <Grid x:Name="WheelContainer" Width="150" Height="150" Margin="0,0,0,10" 
                           MouseLeftButtonDown="Wheel_MouseDown" MouseMove="Wheel_MouseMove" MouseLeftButtonUp="Wheel_MouseUp" Cursor="Cross" Background="Transparent">
                         <Ellipse IsHitTestVisible="False">
                             <Ellipse.Fill>
@@ -172,7 +172,7 @@
                             </Ellipse.Fill>
                         </Ellipse>
                         <Canvas IsHitTestVisible="False">
-                            <Ellipse x:Name="WheelCursor" Width="14" Height="14" Stroke="White" StrokeThickness="2" Margin="-7,-7,0,0">
+                            <Ellipse x:Name="WheelCursor" Width="12" Height="12" Stroke="White" StrokeThickness="2" Margin="-6,-6,0,0">
                                 <Ellipse.Effect>
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="0" Color="Black" Opacity="0.5"/>
                                 </Ellipse.Effect>
@@ -180,22 +180,24 @@
                         </Canvas>
                     </Grid>
 
-                    <!-- Primary/Secondary Colors -->
-                    <Grid Height="28" Margin="0,0,0,12">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button x:Name="CompactPrimaryBtn" Style="{StaticResource MiniColorSwatch}" Width="24" Height="24" Click="CompactPrimaryBtn_Click" ToolTip="Primary Color"/>
-                            <Button x:Name="CompactSecondaryBtn" Style="{StaticResource MiniColorSwatch}" Width="24" Height="24" Margin="12,0,0,0" Click="CompactSecondaryBtn_Click" ToolTip="Secondary Color"/>
+                    <!-- Primary/Secondary Colors & Brightness -->
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,8,0">
+                            <Button x:Name="CompactPrimaryBtn" Style="{StaticResource MiniColorSwatch}" Width="22" Height="22" Click="CompactPrimaryBtn_Click" ToolTip="Primary Color"/>
+                            <Button x:Name="CompactSecondaryBtn" Style="{StaticResource MiniColorSwatch}" Width="22" Height="22" Margin="4,0,0,0" Click="CompactSecondaryBtn_Click" ToolTip="Secondary Color"/>
                         </StackPanel>
+                        <Slider x:Name="BrightnessSlider" Grid.Column="1" Minimum="0" Maximum="100" Value="100" ValueChanged="CompactSlider_ValueChanged" Style="{StaticResource Win11HorizontalSliderStyle}" ToolTip="{DynamicResource L_ColorPicker_Brightness}" VerticalAlignment="Center"/>
                     </Grid>
 
-                    <!-- Sliders -->
-                    <TextBlock Text="{DynamicResource L_ColorPicker_Brightness}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,2"/>
-                    <Slider x:Name="BrightnessSlider" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,10" ValueChanged="CompactSlider_ValueChanged" Style="{StaticResource Win11HorizontalSliderStyle}"/>
-
-                    <TextBlock Text="{DynamicResource L_ColorPicker_Saturation}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,2"/>
-                    <Slider x:Name="SaturationSlider" Minimum="0" Maximum="100" Value="100" Margin="0,0,0,0" ValueChanged="CompactSlider_ValueChanged" Style="{StaticResource Win11HorizontalSliderStyle}"/>
+                    <!-- Hidden Saturation Slider -->
+                    <Slider x:Name="SaturationSlider" Visibility="Collapsed" Minimum="0" Maximum="100" Value="100"/>
                 </StackPanel>
             </Grid>
+
 
             <Grid x:Name="NormalModeRoot" Grid.Row="1" Grid.RowSpan="3">
                 <Grid.RowDefinitions>
@@ -360,7 +362,7 @@
                     </Grid>
                 </StackPanel>
             </Grid>
-            <Grid Grid.Row="2" Background="{DynamicResource GlassBackgroundMediumBrush}" x:Name="BasicColorsArea">
+            <Grid Grid.Row="1" Background="{DynamicResource GlassBackgroundMediumBrush}" x:Name="BasicColorsArea">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="350"/>
                     <ColumnDefinition Width="Auto"/>
@@ -523,7 +525,7 @@
                     </UniformGrid>
                 </StackPanel>
             </Grid>
-                <Grid Grid.Row="2" Height="56" Margin="24,0,24,0" x:Name="OkCancelArea">
+                <Grid Grid.Row="3" Height="56" Margin="24,0,24,0" x:Name="OkCancelArea">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="{DynamicResource L_Common_OK}" Width="100" Height="32" Style="{StaticResource FluentAccentButton}" Click="OkButton_Click" Margin="0,0,10,0"/>
                         <Button Content="{DynamicResource L_Common_Cancel}" Width="100" Height="32" Style="{StaticResource FluentButton}" Click="CancelButton_Click"/>

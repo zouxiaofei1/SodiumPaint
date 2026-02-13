@@ -51,9 +51,9 @@ namespace TabPaint
             public Int32Rect _selectionRect;
             public Int32Rect _originalRect;
             public byte[]? _selectionData;
-            private byte[]? _preRotationSelectionData;
+            internal byte[]? _preRotationSelectionData;
             private int _preRotationDataWidth, _preRotationDataHeight;
-            private Int32Rect _preRotationRect;
+            internal Int32Rect _preRotationRect;
             private double _rotationAngle = 0;
             private int _transformStep = 0; // 0 = 未操作，>0 = 已操作
             private byte[]? _clipboardData;

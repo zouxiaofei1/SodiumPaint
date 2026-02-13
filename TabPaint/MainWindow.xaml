@@ -11,14 +11,11 @@
         MinHeight="345" MinWidth="430"
         Top="100" Left="100"
         SizeToContent="Manual"
-        AllowsTransparency="False" 
-        Background="{DynamicResource WindowBackgroundBrush}"
-      
+        Background="Transparent"
         WindowStyle="None"
         SizeChanged="Window_SizeChanged" 
         Closing="Window_Closing"
         PreviewKeyUp="Window_KeyUp"
-    
         x:Name="RootWindow">
 
     <WindowChrome.WindowChrome>
@@ -28,14 +25,14 @@
             ResizeBorderThickness="4"
             CornerRadius="0"/>
     </WindowChrome.WindowChrome>
+
     <Window.Resources>
-    
         <ResourceDictionary>
-     
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
             <local:ZoomToInverseValueConverter x:Key="ZoomToInverseValueConverter"/>
+            
             <Storyboard x:Key="FadeInDragOverlay">
                 <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Visibility">
                     <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
@@ -60,7 +57,6 @@
                 </DoubleAnimation>
             </Storyboard>
 
-            <!-- 新增：拖拽遮罩淡出动画 (透明度 1->0) -->
             <Storyboard x:Key="FadeOutDragOverlay">
                 <DoubleAnimation Storyboard.TargetName="DragOverlay" Storyboard.TargetProperty="Opacity"
                           To="0" Duration="0:0:0.15"/>
@@ -68,10 +64,9 @@
                     <DiscreteObjectKeyFrame KeyTime="0:0:0.15" Value="{x:Static Visibility.Collapsed}"/>
                 </ObjectAnimationUsingKeyFrames>
             </Storyboard>
+
             <Style x:Key="RulerVisibilityStyle" TargetType="{x:Type local:Ruler}">
                 <Setter Property="Visibility" Value="Collapsed"/>
-          
-                <!-- 默认隐藏 -->
                 <Style.Triggers>
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
@@ -83,478 +78,290 @@
                 </Style.Triggers>
             </Style>
         </ResourceDictionary>
-        
     </Window.Resources>
 
-    <!-- 主容器背景 -->
-    <Grid Background="Transparent" PreviewDragOver="OnGlobalDragOver"
-          Drop="OnGlobalDrop"
-          PreviewDragLeave="OnGlobalDragLeave">
-        <DockPanel LastChildFill="True">
-
-            <!-- #region 1. 自定义标题栏 (TitleBar) -->
-            <controls:TitleBarControl x:Name="AppTitleBar" 
+    <!-- 唯一的顶级 Grid -->
+    <Grid x:Name="OuterGrid" Background="Transparent" PreviewDragOver="OnGlobalDragOver" Drop="OnGlobalDrop" PreviewDragLeave="OnGlobalDragLeave">
+        <Border x:Name="WindowRootBorder" ClipToBounds="True">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                    <Style.Triggers>
+                        <!-- Win11 样式 -->
+                        <DataTrigger Binding="{Binding IsWin11, ElementName=RootWindow}" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="CornerRadius" Value="0"/>
+                        </DataTrigger>
+                        <!-- Win10 样式 -->
+                        <DataTrigger Binding="{Binding IsWin11, ElementName=RootWindow}" Value="False">
+                            <Setter Property="Margin" Value="12"/>
+                            <Setter Property="CornerRadius" Value="8"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect x:Name="WindowShadow" BlurRadius="12" ShadowDepth="0" Opacity="0.4" Color="Black" RenderingBias="Performance"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            
+            <!-- Border 内部唯一的容器 Grid -->
+            <Grid x:Name="LayoutRoot">
+                <DockPanel LastChildFill="True">
+                    <!-- 1. 自定义标题栏 -->
+                    <controls:TitleBarControl x:Name="AppTitleBar" 
                           DockPanel.Dock="Top" 
                           MinimizeClick="Minimize_Click"
                           MaximizeRestoreClick="MaximizeRestore_Click"
                           CloseClick="Close_Click"
                           TitleBarMouseDown="Border_MouseLeftButtonDown"
                           ModeSwitchClick="OnTitleBarModeSwitch" />
-            <!-- #endregion -->
 
-            <!-- #region 2. 菜单栏 (MenuBar) -->
-            <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top"
-                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-            <!-- #endregion -->
+                    <!-- 2. 菜单栏 -->
+                    <ContentControl x:Name="MenuBarHolder" DockPanel.Dock="Top"
+                          Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
-            <!-- 分割线 -->
-            <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"        
-                       Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
+                    <!-- 分割线 -->
+                    <Rectangle DockPanel.Dock="Top" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"        
+                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
-            <!-- #region 3. 工具栏 (ToolBar) -->
-            <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top" 
-                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-            <!-- #endregion -->
+                    <!-- 3. 工具栏 -->
+                    <ContentControl x:Name="ToolBarHolder" DockPanel.Dock="Top" 
+                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
-            <!-- #region 4. 图片列表栏 (ImageBar) -->
-            <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top"
-                IsTabStop="False" Focusable="False"/>
-            <!-- #endregion -->
+                    <!-- 4. 图片列表栏 -->
+                    <ContentControl x:Name="ImageBarHolder" DockPanel.Dock="Top" IsTabStop="False" Focusable="False"/>
 
-            <!-- #region 5. 底部状态栏 (StatusBar) -->
-            <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
-                Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
-            <!-- #endregion -->
+                    <!-- 5. 底部状态栏 -->
+                    <ContentControl x:Name="StatusBarHolder" DockPanel.Dock="Bottom"
+                               Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"/>
 
-            <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"/>
+                    <Rectangle DockPanel.Dock="Bottom" Height="1" Fill="{DynamicResource BorderLightBrush}" SnapsToDevicePixels="True"/>
 
-            <!-- #region 6. 主画布区域 (Canvas) -->
-            <Grid ClipToBounds="False" Background="Transparent">
-                <Grid.Resources>
-                    <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
-                </Grid.Resources>
+                    <!-- 6. 主画布区域 -->
+                    <Grid ClipToBounds="False" Background="Transparent">
+                        <Grid.Resources>
+                            <local:ScaleToTileRectConverter x:Key="ScaleToTileRectConverter"/>
+                        </Grid.Resources>
 
-                <Grid ClipToBounds="False">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                        <Grid ClipToBounds="False">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                    <!-- 顶部标尺 -->
-                    <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" 
-                                 Orientation="Horizontal"      
-                                 Style="{StaticResource RulerVisibilityStyle}"
-/>
+                            <local:Ruler x:Name="RulerTop" Grid.Row="0" Grid.Column="1" Height="20" Orientation="Horizontal" Style="{StaticResource RulerVisibilityStyle}"/>
+                            <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" Orientation="Vertical" Style="{StaticResource RulerVisibilityStyle}"/>
+                            
+                            <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource GlassBackgroundMediumBrush}" ClipToBounds="True">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Visibility, ElementName=RulerTop}" Value="Visible">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
 
-                    <!-- 左侧标尺 -->
-                    <local:Ruler x:Name="RulerLeft" Grid.Row="1" Grid.Column="0" Width="20" 
-                                 Orientation="Vertical"
-                                   Style="{StaticResource RulerVisibilityStyle}"/>
-                    <Border Grid.Row="0" Grid.Column="0" 
-        Background="{DynamicResource GlassBackgroundMediumBrush}"
-        ClipToBounds="True">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Visibility, ElementName=RulerTop}" Value="Visible">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                    </Border>
-
-                    <ScrollViewer Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  
+                            <ScrollViewer Grid.Row="1" Grid.Column="1" ContextMenuOpening="OnScrollContainerContextMenuOpening"  
                                   Style="{StaticResource FluentScrollViewer}" Name="ScrollContainer" 
                                   FocusVisualStyle="{x:Null}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" 
                                   PreviewMouseWheel="OnMouseWheelZoom" Background="Transparent" 
                                   PreviewMouseDown="OnScrollContainerMouseDown" PreviewMouseMove="OnScrollContainerMouseMove"  
                                   PreviewMouseUp="OnScrollContainerMouseUp" MouseDoubleClick="OnScrollContainerDoubleClick" 
                                   AllowDrop="True" ScrollChanged="ScrollContainer_ScrollChanged" >
-                      
 
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="False">
-                            <Grid.Resources>
-                                <Thickness x:Key="BigMargin">200,200,200,200</Thickness>
-                                <Thickness x:Key="SmallMargin">5,5,5,5</Thickness>
-                            </Grid.Resources>
-                            <Grid.Style>
-                                <Style TargetType="Grid">
-                                    <Setter Property="Margin" Value="{StaticResource BigMargin}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
-                                            <Setter Property="Margin" Value="{StaticResource SmallMargin}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Grid.Style>
-                            <Grid Name="CanvasWrapper" ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
-                                <Grid.Background>
-                                    <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
-                                        <DrawingBrush.Viewport>
-                                            <Binding ElementName="ZoomTransform" Path="ScaleX" 
-                                                     Converter="{StaticResource ScaleToTileRectConverter}" 
-                                                     ConverterParameter="20"/>
-                                        </DrawingBrush.Viewport>
-                                        <DrawingBrush.Drawing>
-                                            <DrawingGroup>
-                                                <GeometryDrawing Brush="{DynamicResource ChromeMediumBrush}">
-                                                    <GeometryDrawing.Geometry>
-                                                        <RectangleGeometry Rect="0,0,20,20"/>
-                                                    </GeometryDrawing.Geometry>
-                                                </GeometryDrawing>
-                                                <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
-                                                    <GeometryDrawing.Geometry>
-                                                        <GeometryGroup>
-                                                            <RectangleGeometry Rect="0,0,10,10"/>
-                                                            <RectangleGeometry Rect="10,10,10,10"/>
-                                                        </GeometryGroup>
-                                                    </GeometryDrawing.Geometry>
-                                                </GeometryDrawing>
-                                            </DrawingGroup>
-                                        </DrawingBrush.Drawing>
-                                    </DrawingBrush>
-                                </Grid.Background>
+                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="False">
+                                    <Grid.Resources>
+                                        <Thickness x:Key="BigMargin">200,200,200,200</Thickness>
+                                        <Thickness x:Key="SmallMargin">5,5,5,5</Thickness>
+                                    </Grid.Resources>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Margin" Value="{StaticResource BigMargin}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="True">
+                                                    <Setter Property="Margin" Value="{StaticResource SmallMargin}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Grid Name="CanvasWrapper" ClipToBounds="False" HorizontalAlignment="Center" VerticalAlignment="Center" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                                        <Grid.Background>
+                                            <DrawingBrush TileMode="Tile" ViewportUnits="Absolute">
+                                                <DrawingBrush.Viewport>
+                                                    <Binding ElementName="ZoomTransform" Path="ScaleX" Converter="{StaticResource ScaleToTileRectConverter}" ConverterParameter="20"/>
+                                                </DrawingBrush.Viewport>
+                                                <DrawingBrush.Drawing>
+                                                    <DrawingGroup>
+                                                        <GeometryDrawing Brush="{DynamicResource ChromeMediumBrush}">
+                                                            <GeometryDrawing.Geometry><RectangleGeometry Rect="0,0,20,20"/></GeometryDrawing.Geometry>
+                                                        </GeometryDrawing>
+                                                        <GeometryDrawing Brush="{DynamicResource CheckerboardDarkBrush}">
+                                                            <GeometryDrawing.Geometry>
+                                                                <GeometryGroup>
+                                                                    <RectangleGeometry Rect="0,0,10,10"/>
+                                                                    <RectangleGeometry Rect="10,10,10,10"/>
+                                                                </GeometryGroup>
+                                                            </GeometryDrawing.Geometry>
+                                                        </GeometryDrawing>
+                                                    </DrawingGroup>
+                                                </DrawingBrush.Drawing>
+                                            </DrawingBrush>
+                                        </Grid.Background>
 
-                                <Grid.LayoutTransform>
-                                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
-                                </Grid.LayoutTransform>
-                                <Grid Name="ImageContentLayer" ClipToBounds="True">
-                               
-                                <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                                    <Image Name="WatermarkPreviewLayer" 
-                                   Stretch="Fill"
-                                   HorizontalAlignment="Left" 
-                                   VerticalAlignment="Top"
-                                   SnapsToDevicePixels="True"
-                                   IsHitTestVisible="False"
-                                   Visibility="Collapsed"  RenderOptions.BitmapScalingMode="Linear"/>
-                                    <Image Name="GifPlayerImage"
-                                       Stretch="None"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Top"
-                                       SnapsToDevicePixels="True"
-                                       Visibility="Collapsed"
-                                       gif:AnimationBehavior.AutoStart="True"
-                                       gif:AnimationBehavior.RepeatBehavior="Forever" />
-                                    <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
-                                    <!-- 3. 选区预览层 -->
-                                <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
+                                        <Grid.LayoutTransform>
+                                            <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                                        </Grid.LayoutTransform>
+                                        
+                                        <Grid Name="ImageContentLayer" ClipToBounds="True">
+                                            <Image Name="BackgroundImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                            <Image Name="WatermarkPreviewLayer" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" IsHitTestVisible="False" Visibility="Collapsed" RenderOptions.BitmapScalingMode="Linear"/>
+                                            <Image Name="GifPlayerImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" SnapsToDevicePixels="True" Visibility="Collapsed" gif:AnimationBehavior.AutoStart="True" gif:AnimationBehavior.RepeatBehavior="Forever" />
+                                            <Canvas Name="EditorOverlayCanvas" Background="Transparent" IsHitTestVisible="False" Visibility="Visible"/>
+                                            <Image Name="SelectionPreview" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" RenderOptions.EdgeMode="Aliased" Margin="0" SnapsToDevicePixels="True" Visibility="Collapsed"/>
+                                        </Grid>
+                                    </Grid>
+
+                                    <Canvas Name="SelectionOverlayCanvas" Panel.ZIndex="100" Visibility="Collapsed" IsHitTestVisible="False" Background="Transparent" UseLayoutRounding="False" SnapsToDevicePixels="False">
+                                        <Canvas.LayoutTransform><Binding ElementName="CanvasWrapper" Path="LayoutTransform"/></Canvas.LayoutTransform>
+                                        <Canvas.Width><Binding ElementName="BackgroundImage" Path="ActualWidth"/></Canvas.Width>
+                                        <Canvas.Height><Binding ElementName="BackgroundImage" Path="ActualHeight"/></Canvas.Height>
+                                    </Canvas>
+
+                                    <Border Name="StaticCanvasBorder" Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}" IsHitTestVisible="False" SnapsToDevicePixels="True" UseLayoutRounding="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                        <Border.Margin><Thickness Left="-1" Top="-1" Right="-1" Bottom="-1"/></Border.Margin>
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Effect" Value="{x:Null}"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False"/>
+                                                            <Condition Binding="{Binding ElementName=ZoomTransform, Path=ScaleX, Converter={StaticResource ScaleToTileRectConverter}, ConverterParameter=1.5_IsLess}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="0" BlurRadius="20" Opacity="0.25" RenderingBias="Performance"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+
+                                    <Canvas Name="CanvasResizeOverlay" Visibility="Visible" IsHitTestVisible="True" Background="{x:Null}" UseLayoutRounding="False" SnapsToDevicePixels="False" ClipToBounds="False">
+                                        <Canvas.LayoutTransform><Binding ElementName="CanvasWrapper" Path="LayoutTransform"/></Canvas.LayoutTransform>
+                                    </Canvas>
                                 </Grid>
-                                <!-- 5. 编辑器层 -->
-                              
-                            </Grid>
-                            <Canvas Name="SelectionOverlayCanvas" 
-                                    Panel.ZIndex="100" 
-                                    Visibility="Collapsed" 
-                                    IsHitTestVisible="False" 
-                                    Background="Transparent" 
-                                    UseLayoutRounding="False" 
-                                    SnapsToDevicePixels="False">
+                            </ScrollViewer>
+                        </Grid>
 
-                                <Canvas.LayoutTransform>
-                                    <Binding ElementName="CanvasWrapper" Path="LayoutTransform"/>
-                                </Canvas.LayoutTransform>
-                                <Canvas.Width>
-                                    <Binding ElementName="BackgroundImage" Path="ActualWidth"/>
-                                </Canvas.Width>
-                                <Canvas.Height>
-                                    <Binding ElementName="BackgroundImage" Path="ActualHeight"/>
-                                </Canvas.Height>
-                            </Canvas>
+                        <Rectangle x:Name="ThicknessPreview" IsHitTestVisible="False" Fill="Transparent" Stroke="{DynamicResource ToolAccentBrush}" StrokeThickness="2" Width="40" Height="40" Visibility="Collapsed" Opacity="0.6" StrokeDashArray="3 2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-                            <Border Name="StaticCanvasBorder"
-        Visibility="{Binding IsViewMode, ElementName=RootWindow, Converter={StaticResource InverseBoolToVis}}"
-        IsHitTestVisible="False"
-        SnapsToDevicePixels="True"
-        UseLayoutRounding="True"
-        HorizontalAlignment="Stretch" 
-        VerticalAlignment="Stretch"
-        BorderBrush="{DynamicResource BorderLightBrush}" 
-        BorderThickness="1">
+                        <Grid x:Name="ToolPanelGrid" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="15,20,0,5" Width="42" Panel.ZIndex="100">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1*"/>
+                                <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
+                                <RowDefinition Height="15"/>
+                                <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
+                                <RowDefinition Height="1*"/>
+                            </Grid.RowDefinitions>
 
-                                <!-- 1. 新增：开启位图缓存 -->
-  
-                                <Border.Margin>
-                                    <Thickness Left="-1" Top="-1" Right="-1" Bottom="-1"/>
-                                </Border.Margin>
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Effect" Value="{x:Null}"/>
-                                        <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsViewMode, ElementName=RootWindow}" Value="False"/>
-                                                    <!-- 当缩放倍数小于 1.5 (150%) 时才显示阴影 -->
-                                                    <Condition Binding="{Binding ElementName=ZoomTransform, Path=ScaleX, Converter={StaticResource ScaleToTileRectConverter}, ConverterParameter=1.5_IsLess}" Value="True"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Effect">
-                                                    <Setter.Value>
-                                                        <!-- 你的原有阴影设置 -->
-                                                        <DropShadowEffect Color="Black" 
-                                              Direction="270" 
-                                              ShadowDepth="0" 
-                                              BlurRadius="20" 
-                                              Opacity="0.25" 
-                                              RenderingBias="Performance"/>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </MultiDataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
+                            <Border Grid.Row="1" x:Name="ThicknessPanel" CornerRadius="12" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1">
+                                <Border.Resources><local:DynamicRangeConverter x:Key="DynamicSizeConverter"/></Border.Resources>
+                                <Border.Effect><DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/></Border.Effect>
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                    <Image Grid.Row="0" Source="{DynamicResource Stroke_Width_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
+                                    <Slider Grid.Row="1" x:Name="ThicknessSlider" Style="{StaticResource Win11VerticalSliderStyle}" Orientation="Vertical" Minimum="0" Maximum="1" SmallChange="0.005" LargeChange="0.05" IsSnapToTickEnabled="False" Margin="0,0,0,10" Thumb.DragStarted="ThicknessSlider_DragStarted" Thumb.DragCompleted="ThicknessSlider_DragCompleted" ValueChanged="ThicknessSlider_ValueChanged">
+                                        <Slider.Value>
+                                            <MultiBinding Converter="{StaticResource DynamicSizeConverter}" Mode="TwoWay">
+                                                <Binding Path="PenThickness" Mode="TwoWay"/><Binding Path="CurrentToolKey" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </Slider.Value>
+                                        <Slider.ToolTip>
+                                            <ToolTip Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Path=PenThickness, StringFormat={}{0:F0}}"/><TextBlock Text="{DynamicResource L_Main_Unit_Pixel}" Margin="2,0,0,0"/>
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </Slider.ToolTip>
+                                    </Slider>
+                                </Grid>
                             </Border>
 
-                            <Canvas Name="CanvasResizeOverlay" 
-                                    Visibility="Visible" 
-                                    IsHitTestVisible="True" 
-                                    Background="{x:Null}"  
-                                    UseLayoutRounding="False"
-                                    SnapsToDevicePixels="False"
-                                    ClipToBounds="False">
-                                <Canvas.LayoutTransform>
-                                    <Binding ElementName="CanvasWrapper" Path="LayoutTransform"/>
-                                </Canvas.LayoutTransform>
-                            </Canvas>
+                            <Border Grid.Row="3" x:Name="OpacityPanel" CornerRadius="12" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1">
+                                <Border.Effect><DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/></Border.Effect>
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                    <Image Grid.Row="0" Source="{DynamicResource Opacity_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
+                                    <Slider Grid.Row="1" x:Name="OpacitySlider" Style="{StaticResource Win11VerticalSliderStyle}" Orientation="Vertical" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1" Value="{Binding PenOpacity, Mode=TwoWay}" Margin="0,0,0,10" IsSnapToTickEnabled="False" Loaded="OpacitySlider_Loaded" Thumb.DragStarted="OpacitySlider_DragStarted" Thumb.DragCompleted="OpacitySlider_DragCompleted" ValueChanged="OpacitySlider_ValueChanged">
+                                        <Slider.ToolTip>
+                                            <ToolTip x:Name="OpacityToolTip" Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4" Placement="Right" HorizontalOffset="10">
+                                                <StackPanel Orientation="Horizontal"><TextBlock Text="{Binding PenOpacity, StringFormat={}{0:P0}, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                                            </ToolTip>
+                                        </Slider.ToolTip>
+                                    </Slider>
+                                </Grid>
+                            </Border>
                         </Grid>
-                    </ScrollViewer>
-                </Grid>
 
-                <Rectangle x:Name="ThicknessPreview" 
-                           IsHitTestVisible="False" 
-                           Fill="Transparent" 
-                           Stroke="{DynamicResource ToolAccentBrush}" 
-                           StrokeThickness="2" 
-                           Width="40" Height="40" 
-                           Visibility="Collapsed" 
-                           Opacity="0.6" 
-                           StrokeDashArray="3 2" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center"/>
-
-                <Grid x:Name="ToolPanelGrid" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="15,20,0,5" Width="42" Panel.ZIndex="100">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="1*"/>
-                        <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
-                        <RowDefinition Height="15"/>
-                        <RowDefinition Height="10000*" MaxHeight="280" MinHeight="140"/>
-                        <RowDefinition Height="1*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- 背景色和边框色统一 -->
-                    <Border Grid.Row="1" x:Name="ThicknessPanel" CornerRadius="12" 
-                            Background="{DynamicResource PanelBackgroundBrush}" 
-                            BorderBrush="{DynamicResource BorderMediumBrush}" 
-                            BorderThickness="1">
-                        <Border.Resources>
-                            <local:DynamicRangeConverter x:Key="DynamicSizeConverter"/>
-                        </Border.Resources>
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
-                        </Border.Effect>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <!-- 图标 -->
-                            <Image Grid.Row="0" Source="{DynamicResource Stroke_Width_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
-
-                            <!-- Slider Tooltip 颜色统一 -->
-                            <Slider Grid.Row="1" x:Name="ThicknessSlider" 
-                Style="{StaticResource Win11VerticalSliderStyle}" 
-                Orientation="Vertical" 
-                Minimum="0" Maximum="1"
-                SmallChange="0.005" LargeChange="0.05"
-                IsSnapToTickEnabled="False"
-                Margin="0,0,0,10"
-                Thumb.DragStarted="ThicknessSlider_DragStarted" 
-                Thumb.DragCompleted="ThicknessSlider_DragCompleted" 
-                ValueChanged="ThicknessSlider_ValueChanged">
-
-                                <Slider.Value>
-                                    <MultiBinding Converter="{StaticResource DynamicSizeConverter}" Mode="TwoWay">
-                                        <Binding Path="PenThickness" Mode="TwoWay"/>
-                                        <Binding Path="CurrentToolKey" Mode="OneWay"/>
-                                    </MultiBinding>
-                                </Slider.Value>
-
-                                <Slider.ToolTip>
-                                    <ToolTip Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4">
-                                        <StackPanel Orientation="Horizontal">
-                                            <!-- Tooltip 保持简单绑定即可，因为它只负责显示结果 -->
-                                            <TextBlock Text="{Binding Path=PenThickness, StringFormat={}{0:F0}}"/>
-                                            <TextBlock Text="{DynamicResource L_Main_Unit_Pixel}" Margin="2,0,0,0"/>
-                                        </StackPanel>
-                                    </ToolTip>
-                                </Slider.ToolTip>
-                            </Slider>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="3" x:Name="OpacityPanel" CornerRadius="12" 
-                            Background="{DynamicResource PanelBackgroundBrush}" 
-                            BorderBrush="{DynamicResource BorderMediumBrush}" 
-                            BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="15" Opacity="0.15" ShadowDepth="2"/>
-                        </Border.Effect>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- 图标 -->
-                            <Image Grid.Row="0" Source="{DynamicResource Opacity_Image}" Margin="0,12,0,4" Width="16" Height="16"/>
-
-                            <Slider Grid.Row="1" x:Name="OpacitySlider" 
-                                    Style="{StaticResource Win11VerticalSliderStyle}" 
-                                    Orientation="Vertical" 
-                                    Minimum="0" Maximum="1" 
-                                    SmallChange="0.05" LargeChange="0.1"
-                                    Value="{Binding PenOpacity, Mode=TwoWay}" 
-                                    Margin="0,0,0,10"
-                                    IsSnapToTickEnabled="False"
-                                    Loaded="OpacitySlider_Loaded"  
-                                    Thumb.DragStarted="OpacitySlider_DragStarted"
-                                    Thumb.DragCompleted="OpacitySlider_DragCompleted"
-                                    ValueChanged="OpacitySlider_ValueChanged">
-                                <Slider.ToolTip>
-                                    <ToolTip x:Name="OpacityToolTip" Background="{DynamicResource TextPrimaryBrush}" Foreground="{DynamicResource TextInverseBrush}" BorderThickness="0" Padding="8,4" Placement="Right" HorizontalOffset="10">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding PenOpacity, StringFormat={}{0:P0}, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <TextBlock Text="" Margin="2,0,0,0"/>
-                                        </StackPanel>
-                                    </ToolTip>
-                                </Slider.ToolTip>
-                            </Slider>
-                        </Grid>
-                    </Border>
-
-                </Grid>
-
-                <Border x:Name="BirdEyePanel" 
-                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                        Margin="0,0,25,25"
-                        Width="140" Height="120"
-                        Background="{DynamicResource ControlBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1"
-                        CornerRadius="4"
-                        Visibility="Collapsed">
-
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="10" Opacity="0.2" ShadowDepth="2"/>
-                    </Border.Effect>
-
-                    <Grid Margin="5">
-                        <!-- 1. 缩略图底图 -->
-                        <Image x:Name="BirdEyeImage" Stretch="Uniform" 
-                               Source="{Binding ElementName=BackgroundImage, Path=Source}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                        <!-- 2. 交互层 Canvas -->
-                        <Canvas x:Name="BirdEyeCanvas" 
-                                Background="Transparent"
-                                Width="{Binding ElementName=BirdEyeImage, Path=ActualWidth}"
-                                Height="{Binding ElementName=BirdEyeImage, Path=ActualHeight}"
-                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                MouseDown="BirdEyeCanvas_MouseDown"
-                                MouseMove="BirdEyeCanvas_MouseMove"
-                                MouseUp="BirdEyeCanvas_MouseUp">
-
-                            <!-- 3. 视野框 (Viewport Rect) -->
-                            <!-- 背景色模拟透明蓝 #200078D7 -->
-                            <Border x:Name="BirdEyeViewport" 
-                                    BorderBrush="{DynamicResource SystemAccentHoverBrush}" 
-                                    BorderThickness="2" 
-                                    Background="{DynamicResource SystemAccentHoverBrush}"
-                                    Opacity="0.2"
-                                    IsHitTestVisible="False"/>
-                        </Canvas>
+                        <Border x:Name="BirdEyePanel" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,25,25" Width="140" Height="120" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1" CornerRadius="4" Visibility="Collapsed">
+                            <Border.Effect><DropShadowEffect BlurRadius="10" Opacity="0.2" ShadowDepth="2"/></Border.Effect>
+                            <Grid Margin="5">
+                                <Image x:Name="BirdEyeImage" Stretch="Uniform" Source="{Binding ElementName=BackgroundImage, Path=Source}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Canvas x:Name="BirdEyeCanvas" Background="Transparent" Width="{Binding ElementName=BirdEyeImage, Path=ActualWidth}" Height="{Binding ElementName=BirdEyeImage, Path=ActualHeight}" HorizontalAlignment="Center" VerticalAlignment="Center" MouseDown="BirdEyeCanvas_MouseDown" MouseMove="BirdEyeCanvas_MouseMove" MouseUp="BirdEyeCanvas_MouseUp">
+                                    <Border x:Name="BirdEyeViewport" BorderBrush="{DynamicResource SystemAccentHoverBrush}" BorderThickness="2" Background="{DynamicResource SystemAccentHoverBrush}" Opacity="0.2" IsHitTestVisible="False"/>
+                                </Canvas>
+                            </Grid>
+                        </Border>
                     </Grid>
+                </DockPanel>
+
+                <!-- 浮动层 (必须与 DockPanel 平级) -->
+                <ContentControl x:Name="TextToolHolder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="200" IsTabStop="False"/>
+                <ContentControl x:Name="TaskProgressHolder" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,60" Panel.ZIndex="150" IsTabStop="False" Focusable="False"/>
+                <ContentControl x:Name="SelectionToolHolder" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False" IsHitTestVisible="True"/>
+                <ContentControl x:Name="SelectionRotateHolder" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="300" IsTabStop="False" Focusable="False"/>
+                <controls:WandToleranceFloat x:Name="WandTolerancePopup" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,80,0,0" Panel.ZIndex="250" IsTabStop="False" Focusable="False"/>
+                
+                <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
+                    <TextBlock x:Name="ThicknessTipText" Foreground="{DynamicResource TextInverseBrush}" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>
                 </Border>
+
+                <Grid x:Name="NotificationLayer" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,120" IsHitTestVisible="False">
+                    <Border x:Name="InfoToast" Background="{DynamicResource TextControlBrush}" CornerRadius="20" Padding="20,8" Opacity="0">
+                        <Border.Effect><DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3"/></Border.Effect>
+                        <TextBlock x:Name="InfoToastText" Text="{DynamicResource L_Main_Toast_Info}" Foreground="{DynamicResource TextInverseBrush}" FontSize="14" VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+
+                <!-- 拖拽遮罩层 -->
+                <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="{DynamicResource GlassBackgroundDragOverlay}" RenderTransformOrigin="0.5,0.5">
+                    <Grid.RenderTransform><ScaleTransform ScaleX="1" ScaleY="1"/></Grid.RenderTransform>
+                    <Rectangle Stroke="{DynamicResource BorderMediumBrush}" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Path x:Name="DragOverlayIcon" Width="64" Height="64" Fill="{DynamicResource TextInverseBrush}" Stretch="Uniform" Margin="0,0,0,20" Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                        <TextBlock x:Name="DragOverlayText" Text="{DynamicResource L_Main_Drag_DropToOpen}" Foreground="{DynamicResource TextInverseBrush}" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
+                        <TextBlock x:Name="DragOverlaySubText" Text="{DynamicResource L_Main_Drag_ReleaseToConfirm}" Foreground="{DynamicResource BorderMediumBrush}" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
-            <!-- #endregion -->
-        </DockPanel>
-
-        <!-- #region 7. 浮动层 (Floating Layers) -->
-        <ContentControl x:Name="TextToolHolder" 
-                        Visibility="Collapsed" 
-                        HorizontalAlignment="Center" 
-                        VerticalAlignment="Top" 
-                        Margin="0,80,0,0" 
-                        Panel.ZIndex="200"
-                        IsTabStop="False"/>
-
-        <ContentControl x:Name="TaskProgressHolder"
-                        HorizontalAlignment="Center" 
-                        VerticalAlignment="Bottom" 
-                        Margin="0,0,0,60" 
-                        Panel.ZIndex="150"
-                        IsTabStop="False" Focusable="False"/>
-        <ContentControl x:Name="SelectionToolHolder"
-                        Visibility="Collapsed"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Panel.ZIndex="300"
-                        IsTabStop="False" Focusable="False" IsHitTestVisible="True"/>
-
-        <ContentControl x:Name="SelectionRotateHolder"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Panel.ZIndex="300"
-                        IsTabStop="False" Focusable="False"/>
-
-        <controls:WandToleranceFloat x:Name="WandTolerancePopup"
-                                     Visibility="Collapsed"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Top"
-                                     Margin="0,80,0,0"
-                                     Panel.ZIndex="250"
-                                     IsTabStop="False" Focusable="False"/>
-
-        <!-- 粗细提示 -->
-        <Border x:Name="ThicknessTip" Background="{DynamicResource TextControlBrush}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0" Visibility="Collapsed">
-            <TextBlock x:Name="ThicknessTipText" Foreground="{DynamicResource TextInverseBrush}" FontSize="12" TextWrapping="NoWrap" TextAlignment="Center"/>
         </Border>
-
-        <!-- 通知层 -->
-        <Grid x:Name="NotificationLayer" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,120" IsHitTestVisible="False">
-            <Border x:Name="InfoToast" Background="{DynamicResource TextControlBrush}" CornerRadius="20" Padding="20,8" Opacity="0">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
-                </Border.Effect>
-                <TextBlock x:Name="InfoToastText" Text="{DynamicResource L_Main_Toast_Info}" Foreground="{DynamicResource TextInverseBrush}" FontSize="14" VerticalAlignment="Center"/>
-            </Border>
-        </Grid>
-        <!-- #endregion -->
-
-        <!-- #region 8. 拖拽遮罩层 (Drag Overlay) -->
-        <Grid x:Name="DragOverlay" Visibility="Collapsed" IsHitTestVisible="False" Background="{DynamicResource GlassBackgroundDragOverlay}" RenderTransformOrigin="0.5,0.5">
-            <Grid.RenderTransform>
-                <ScaleTransform ScaleX="1" ScaleY="1"/>
-            </Grid.RenderTransform>
-            <Rectangle Stroke="{DynamicResource BorderMediumBrush}" StrokeThickness="3" RadiusX="20" RadiusY="20" Margin="40" StrokeDashArray="4 2"/>
-
-            <!-- 文字和图标内容 -->
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <!-- 图标 -->
-                <Path x:Name="DragOverlayIcon" Width="64" Height="64" Fill="{DynamicResource TextInverseBrush}" Stretch="Uniform" Margin="0,0,0,20"
-                      Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-
-                <!-- 提示文字 -->
-                <TextBlock x:Name="DragOverlayText" Text="{DynamicResource L_Main_Drag_DropToOpen}" Foreground="{DynamicResource TextInverseBrush}" FontSize="28" FontWeight="Light" TextAlignment="Center"/>
-
-                <!-- 副标题 -->
-                <TextBlock x:Name="DragOverlaySubText" Text="{DynamicResource L_Main_Drag_ReleaseToConfirm}" Foreground="{DynamicResource BorderMediumBrush}" FontSize="16" Margin="0,10,0,0" TextAlignment="Center"/>
-            </StackPanel>
-        </Grid>
-        <!-- #endregion -->
     </Grid>
 </Window>

@@ -82,6 +82,8 @@
     <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">Fill color only (keep alpha)</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Allow Delete key to delete file</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">Allow pressing Delete to delete the current file</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">Shape Tool Professional Mode</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">Allow resizing and repositioning shapes after drawing (Toggle with Alt)</sys:String>
 
     <!-- View panel -->
     <sys:String x:Key="L_Settings_View_Title">View</sys:String>
@@ -283,6 +285,9 @@
     <sys:String x:Key="L_Menu_Effect_BW">Black &amp; white</sys:String>
     <sys:String x:Key="L_Menu_Effect_Invert">Invert</sys:String>
     <sys:String x:Key="L_Menu_Effect_AutoLevels">Auto levels</sys:String>
+    <sys:String x:Key="L_Menu_Effect_RedEye">Red eye removal</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sketch">Pencil sketch</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Edge">Edge detection</sys:String>
     <sys:String x:Key="L_Menu_Effect_Resize">Resize</sys:String>
 
     <!-- Quick Actions Tooltips -->
@@ -291,6 +296,7 @@
     <sys:String x:Key="L_Menu_QA_Redo">Redo</sys:String>
     <sys:String x:Key="L_Menu_QA_NewTab">New tab</sys:String>
     <sys:String x:Key="L_Menu_QA_DiscardAll">Discard all changes</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardImage">Discard changes for this image</sys:String>
 
     <sys:String x:Key="L_Menu_QA_Settings">Settings</sys:String>
 
@@ -580,6 +586,9 @@
     <sys:String x:Key="L_Toast_DragFailed">Drag failed:</sys:String>
     <sys:String x:Key="L_Toast_Effect_Inverted">Invert applied</sys:String>
     <sys:String x:Key="L_Toast_Effect_AutoLevels">Auto levels applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_RedEye">Red eye removal applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sketch">Pencil sketch applied</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Edge">Edge detection applied</sys:String>
     <sys:String x:Key="L_Toast_Effect_BW">Black to white applied</sys:String>
     <sys:String x:Key="L_Toast_FileNotFound">File no longer exists, cannot locate folder.</sys:String>
     <sys:String x:Key="L_Toast_PasteFailed">Paste image failed:</sys:String>
@@ -594,6 +603,8 @@
     <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ Image too large, auto-downscaled for display</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">Read folder failed:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">Startup load failed:</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_On">Shape Pro Mode: ON (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_Off">Shape Pro Mode: OFF (Alt)</sys:String>
 
     <!-- New Toast Messages -->
     <sys:String x:Key="L_Toast_BorderAdded" xmlns:sys="clr-namespace:System;assembly=mscorlib">Added 2px border</sys:String>
@@ -623,7 +634,7 @@
     <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Prepare drag file error: {0}</sys:String>
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Drag start failed: {0}</sys:String>
     <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix" xmlns:sys="clr-namespace:System;assembly=mscorlib">Switch workspace failed: {0}</sys:String>
-
+    <sys:String x:Key="L_Toast_ImageReset">Reset Success</sys:String>
 
     <!-- New Replacements for Hardcoded Strings -->
     <sys:String x:Key="L_Load_Reason_Empty" xmlns:sys="clr-namespace:System;assembly=mscorlib">File is empty, blank canvas created.</sys:String>
@@ -632,6 +643,7 @@
     <sys:String x:Key="L_Load_Info_Memory" xmlns:sys="clr-namespace:System;assembly=mscorlib">[New Image] Memory File</sys:String>
     <sys:String x:Key="L_Status_Unsaved" xmlns:sys="clr-namespace:System;assembly=mscorlib">Unsaved</sys:String>
     <sys:String x:Key="L_Msg_ResetWorkspace_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Discard Changes</sys:String>
+    <sys:String x:Key="L_Msg_ResetImage_Content">Are you sure to reset this image? This is not revertable.</sys:String>
     <sys:String x:Key="L_Msg_ResetWorkspace_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to reset the current workspace? All new canvases will be deleted, All open images will revert to disk state.</sys:String>
     <sys:String x:Key="L_Msg_DeleteFile_Title" xmlns:sys="clr-namespace:System;assembly=mscorlib">Delete File</sys:String>
     <sys:String x:Key="L_Msg_DeleteFile_Content" xmlns:sys="clr-namespace:System;assembly=mscorlib">Are you sure you want to move file '{0}' to the Recycle Bin?&#x0a;This operation cannot be undone.</sys:String>

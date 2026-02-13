@@ -346,6 +346,18 @@ namespace TabPaint
                 _restoreBounds = new Rect(Left, Top, Width, Height);
                 _maximized = true;
 
+                if (!IsWin11)
+                {
+                    var border = FindName("WindowRootBorder") as System.Windows.Controls.Border;
+                    if (border != null)
+                    {
+                        border.Margin = new Thickness(0);
+                        border.CornerRadius = new CornerRadius(0);
+                        border.BorderThickness = new Thickness(0);
+                        border.Effect = null;
+                    }
+                }
+
                 var workArea = SystemParameters.WorkArea;
                 Left = workArea.Left;
                 Top = workArea.Top;
@@ -356,7 +368,20 @@ namespace TabPaint
                 SetRestoreIcon();
                 WindowState = WindowState.Normal;
             }
-
+            else if (WindowState == WindowState.Normal)
+            {
+                if (!IsWin11)
+                {
+                    var border = FindName("WindowRootBorder") as System.Windows.Controls.Border;
+                    if (border != null)
+                    {
+                        border.Margin = new Thickness(12);
+                        border.CornerRadius = new CornerRadius(8);
+                        border.BorderThickness = new Thickness(1);
+                        border.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 12, ShadowDepth = 0, Opacity = 0.4, Color = Colors.Black, RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance };
+                    }
+                }
+            }
         }
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
@@ -382,7 +407,7 @@ namespace TabPaint
 
                 // 2. 将焦点还给画布上的文本框，让用户可以继续打字
                 if (_activeTextBox != null)  _activeTextBox.Focus();
-                e.Handled = true; // 阻止回车产生额外的换行或响铃
+                e.Handled = true; // 阻止回车产生额外的换行 or 响铃
             }
         }
         private void UpdateUIStatus(double realScale, bool updateSlider = true)

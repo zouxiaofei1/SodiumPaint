@@ -470,6 +470,182 @@ namespace TabPaint
             }
         }
 
+        private void ProcessRedEyeRemoval(byte[] pixels, int width, int height, int stride)
+        {
+            unsafe
+            {
+                fixed (byte* ptr = pixels)
+                {
+                    IntPtr basePtrInt = (IntPtr)ptr;
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* basePtr = (byte*)basePtrInt;
+                        byte* row = basePtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            byte* p = row + x * 4;
+                            int b = p[0];
+                            int g = p[1];
+                            int r = p[2];
+
+                            // 简单的红眼检测：红色分量显著高于绿蓝分量
+                            if (r > 128 && r > g * 2 && r > b * 2)
+                            {
+                                p[2] = (byte)((g + b) / 2);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        private void ProcessEdgeDetection(byte[] pixels, int width, int height, int stride)
+        {
+            byte[] srcPixels = (byte[])pixels.Clone();
+            unsafe
+            {
+                fixed (byte* destPtr = pixels)
+                fixed (byte* srcPtr = srcPixels)
+                {
+                    IntPtr dpInt = (IntPtr)destPtr;
+                    IntPtr spInt = (IntPtr)srcPtr;
+
+                    Parallel.For(1, height - 1, y =>
+                    {
+                        byte* dp = (byte*)dpInt;
+                        byte* sp = (byte*)spInt;
+                        byte* pDestRow = dp + y * stride;
+                        for (int x = 1; x < width - 1; x++)
+                        {
+                            // Sobel 算子
+                            // Gx: -1 0 1    Gy: -1 -2 -1
+                            //     -2 0 2         0  0  0
+                            //     -1 0 1         1  2  1
+                            float gxR = 0, gxG = 0, gxB = 0;
+                            float gyR = 0, gyG = 0, gyB = 0;
+
+                            for (int ky = -1; ky <= 1; ky++)
+                            {
+                                byte* row = sp + (y + ky) * stride;
+                                for (int kx = -1; kx <= 1; kx++)
+                                {
+                                    byte* p = row + (x + kx) * 4;
+                                    float valB = p[0];
+                                    float valG = p[1];
+                                    float valR = p[2];
+
+                                    int weightX = 0;
+                                    if (kx == -1) weightX = (ky == 0) ? -2 : -1;
+                                    else if (kx == 1) weightX = (ky == 0) ? 2 : 1;
+
+                                    int weightY = 0;
+                                    if (ky == -1) weightY = (kx == 0) ? -2 : -1;
+                                    else if (ky == 1) weightY = (kx == 0) ? 2 : 1;
+
+                                    gxB += valB * weightX; gxG += valG * weightX; gxR += valR * weightX;
+                                    gyB += valB * weightY; gyG += valG * weightY; gyR += valR * weightY;
+                                }
+                            }
+
+                            int resB = (int)Math.Sqrt(gxB * gxB + gyB * gyB);
+                            int resG = (int)Math.Sqrt(gxG * gxG + gyG * gyG);
+                            int resR = (int)Math.Sqrt(gxR * gxR + gyR * gyR);
+
+                            pDestRow[x * 4] = (byte)Math.Clamp(resB, 0, 255);
+                            pDestRow[x * 4 + 1] = (byte)Math.Clamp(resG, 0, 255);
+                            pDestRow[x * 4 + 2] = (byte)Math.Clamp(resR, 0, 255);
+                        }
+                    });
+                }
+            }
+        }
+
+        private void ProcessPencilSketch(byte[] pixels, int width, int height, int stride)
+        {
+            // 1. 转灰度
+            byte[] grayPixels = new byte[pixels.Length];
+            float wr = (float)AppConsts.GrayWeightR;
+            float wg = (float)AppConsts.GrayWeightG;
+            float wb = (float)AppConsts.GrayWeightB;
+
+            unsafe
+            {
+                fixed (byte* srcP = pixels)
+                fixed (byte* grayP = grayPixels)
+                {
+                    IntPtr sPtr = (IntPtr)srcP;
+                    IntPtr gPtr = (IntPtr)grayP;
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* sRow = (byte*)sPtr + y * stride;
+                        byte* gRow = (byte*)gPtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            byte b = sRow[x * 4], g = sRow[x * 4 + 1], r = sRow[x * 4 + 2];
+                            byte gray = (byte)(r * wr + g * wg + b * wb);
+                            gRow[x * 4] = gRow[x * 4 + 1] = gRow[x * 4 + 2] = gray;
+                            gRow[x * 4 + 3] = sRow[x * 4 + 3];
+                        }
+                    });
+                }
+            }
+
+            // 2. 复制灰度图并反转
+            byte[] invertedGray = (byte[])grayPixels.Clone();
+            unsafe
+            {
+                fixed (byte* invP = invertedGray)
+                {
+                    IntPtr iPtr = (IntPtr)invP;
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* iRow = (byte*)iPtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            iRow[x * 4] = (byte)(255 - iRow[x * 4]);
+                            iRow[x * 4 + 1] = (byte)(255 - iRow[x * 4 + 1]);
+                            iRow[x * 4 + 2] = (byte)(255 - iRow[x * 4 + 2]);
+                        }
+                    });
+                }
+            }
+
+            // 3. 对反转图进行高斯模糊
+            ProcessGaussianBlur(invertedGray, width, height, stride, 5);
+
+            // 4. 颜色减淡混合 (Color Dodge): Result = Gray / (255 - BlurredInverted)
+            unsafe
+            {
+                fixed (byte* destP = pixels)
+                fixed (byte* grayP = grayPixels)
+                fixed (byte* blurP = invertedGray)
+                {
+                    IntPtr dPtr = (IntPtr)destP;
+                    IntPtr gPtr = (IntPtr)grayP;
+                    IntPtr bPtr = (IntPtr)blurP;
+
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* dRow = (byte*)dPtr + y * stride;
+                        byte* gRow = (byte*)gPtr + y * stride;
+                        byte* bRow = (byte*)bPtr + y * stride;
+                        for (int x = 0; x < width; x++)
+                        {
+                            for (int i = 0; i < 3; i++)
+                            {
+                                int a = gRow[x * 4 + i];
+                                int b = bRow[x * 4 + i];
+                                // Color Dodge
+                                int res = b == 255 ? 255 : Math.Min(255, (a << 8) / (255 - b));
+                                dRow[x * 4 + i] = (byte)res;
+                            }
+                            dRow[x * 4 + 3] = gRow[x * 4 + 3];
+                        }
+                    });
+                }
+            }
+        }
+
         private void ProcessOilPaint(byte[] pixels, int width, int height, int stride, int radius, int intensityLevels)
         {
             // 优化：预先分配克隆数组，减少内部循环的计算

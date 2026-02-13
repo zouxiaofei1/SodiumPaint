@@ -54,8 +54,8 @@
                     <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="12" Height="12"/>
                 </Button>
                 <Button Margin="0,0,6,0" 
-                      ToolTip="{DynamicResource L_Menu_QA_DiscardAll}"
-                        Click="OnDiscardAllClick" Style="{StaticResource RoundedMenuButtonStyle}">
+                      ToolTip="{DynamicResource L_Menu_QA_DiscardImage}"
+                        Click="OnDiscardImageClick" Style="{StaticResource RoundedMenuButtonStyle}">
                     <Path Data="{DynamicResource Reset_Image}" Stretch="Uniform" Fill="{DynamicResource IconFillBrush}" Width="16" Height="16"/>
                 </Button>
             </StackPanel>

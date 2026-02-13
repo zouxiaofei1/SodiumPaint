@@ -79,8 +79,14 @@ namespace TabPaint
                 ForegroundBrush = new SolidColorBrush(color);
                 OnPropertyChanged(nameof(ForegroundBrush)); // 通知绑定刷新
                 ForegroundColor = color;
+                if (!useSecondColor) _ctx.PenColor = color;
             }
 
+            // 实时同步 ShapeTool 预览
+            if (_router?.CurrentTool is ShapeTool shapeTool)
+            {
+                shapeTool.RefreshPreview(_ctx);
+            }
         }
         private bool _isProcessingMaximizeWindow = false;
         public async void MaximizeWindowHandler()
@@ -175,10 +181,12 @@ namespace TabPaint
                 ThicknessPreview.RadiusX = size / 2;
                 ThicknessPreview.RadiusY = size / 2;
             }
-            if (_ctx.PenStyle == BrushStyle.Eraser)
-                ThicknessPreview.Stroke = Brushes.Black; 
+            if (_ctx.PenStyle == BrushStyle.Highlighter)
+                ThicknessPreview.Stroke = Brushes.Yellow;
+            else if (_ctx.PenStyle == BrushStyle.Eraser)
+                ThicknessPreview.Stroke = Brushes.Black;
             else
-                ThicknessPreview.Stroke = Brushes.Purple;
+                ThicknessPreview.Stroke = new SolidColorBrush(_ctx.PenColor);
 
             ThicknessPreview.Fill = Brushes.Transparent;
             ThicknessPreview.StrokeThickness = 2;

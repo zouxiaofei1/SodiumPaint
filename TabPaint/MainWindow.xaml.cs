@@ -94,8 +94,15 @@ namespace TabPaint
         }
 
 
+        public bool IsWin11 => MicaAcrylicManager.IsWin11();
+
         public MainWindow(string path, bool? fileExists = null, FileTabItem? initialTab = null, bool loadSession = true)
         {
+            if (!MicaAcrylicManager.IsWin11())
+            {
+                this.AllowsTransparency = true;
+            }
+
             _shouldLoadSession = loadSession;
             _workingPath = path;
             _currentFilePath = path;  
@@ -220,10 +227,18 @@ namespace TabPaint
             //Dispatcher.BeginInvoke(new Action(() =>
             //{
                 base.OnSourceInitialized(e); //17ms
-                                            
-                MicaAcrylicManager.ApplyEffect(this);
 
-            MicaEnabled = true; var currentSettings = SettingsManager.Instance.Current;//共0.7ms
+                if (IsWin11)
+                {
+                    MicaAcrylicManager.ApplyEffect(this);
+                    MicaEnabled = true;
+                }
+                else
+                {
+                    MicaEnabled = false;
+                }
+
+            var currentSettings = SettingsManager.Instance.Current;//共0.7ms
             bool isDark = (ThemeManager.CurrentAppliedTheme == AppTheme.Dark) || (currentSettings.StartInViewMode && currentSettings.ViewUseDarkCanvasBackground && _currentFileExists);
             ThemeManager.SetWindowImmersiveDarkMode(this, isDark); 
 
@@ -1273,7 +1288,10 @@ namespace TabPaint
 
             var settings = SettingsManager.Instance.Current;
 
-            if (!IsViewMode && selectTool.HasActiveSelection && (selectTool._selectionRect.Width + selectTool._selectionRect.Height >= 150))
+            double viewportArea = ScrollContainer.ViewportWidth * ScrollContainer.ViewportHeight;
+            double selectionScreenArea = (selectTool._selectionRect.Width * zoomscale) * (selectTool._selectionRect.Height * zoomscale);
+
+            if (!IsViewMode && selectTool.HasActiveSelection && (viewportArea > 0 && (selectionScreenArea / viewportArea) > 0.015))
             {
                 // 确保工具栏已加载
                 if (holder.Content == null) { var bar = this.SelectionToolBar; }
@@ -1286,6 +1304,8 @@ namespace TabPaint
                 }
 
                 Int32Rect rect = selectTool._selectionRect;
+                // 旋转过程中使用稳定的原始矩形作为定位基准，避免工具栏随包围盒跳动
+                if (selectTool._preRotationSelectionData != null) rect = selectTool._preRotationRect;
 
                 if (rect.Width <= 0 || rect.Height <= 0)
                 {

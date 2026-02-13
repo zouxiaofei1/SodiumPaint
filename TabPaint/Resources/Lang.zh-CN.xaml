@@ -59,7 +59,7 @@
     <sys:String x:Key="L_Settings_General_Language_Option_En">English</sys:String>
     <sys:String x:Key="L_Ico_Title">导出图标</sys:String>
     <sys:String x:Key="L_Ico_AddSize">添加尺寸</sys:String>
-    <sys:String x:Key="L_Ico_Error_NoSize">请至少添加一个图标尺寸。</sys:String>
+    <sys:String x:Key="L_Ico_Error_NoSize">至少添加一个图标尺寸。</sys:String>
     <sys:String x:Key="L_Settings_Advanced_OpenCache_Title">打开缓存目录</sys:String>
     <sys:String x:Key="L_Settings_Advanced_OpenCache_Desc">查看位于 AppData 的临时文件和缓存</sys:String>
     <!-- Paint panel -->
@@ -74,6 +74,8 @@
     <sys:String x:Key="L_Settings_Paint_SelectionClear_PreserveAlpha">仅填充颜色 (保留 Alpha)</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Title">Delete 键删除当前图片</sys:String>
     <sys:String x:Key="L_Settings_Paint_EnableFileDelete_Desc">单击 Delete 删除至回收站，2秒内可 Ctrl+Z 撤销</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Title">形状工具专业模式</sys:String>
+    <sys:String x:Key="L_Settings_Paint_ShapeToolProMode_Desc">绘制后可手动调整形状大小与位置 (按 Alt 键切换)</sys:String>
 
     <!-- View panel -->
     <sys:String x:Key="L_Settings_View_Title">看图设置</sys:String>
@@ -236,6 +238,9 @@
     <sys:String x:Key="L_Menu_Effect_BW">黑白</sys:String>
     <sys:String x:Key="L_Menu_Effect_Invert">反色</sys:String>
     <sys:String x:Key="L_Menu_Effect_AutoLevels">自动色阶</sys:String>
+    <sys:String x:Key="L_Menu_Effect_RedEye">消除红眼</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Sketch">铅笔素描</sys:String>
+    <sys:String x:Key="L_Menu_Effect_Edge">边缘检测</sys:String>
     <sys:String x:Key="L_Menu_Effect_Resize">调整大小</sys:String>
 
     <!-- Menu bar quick actions tooltips -->
@@ -245,6 +250,7 @@
     <sys:String x:Key="L_Menu_QA_Redo">重做</sys:String>
     <sys:String x:Key="L_Menu_QA_NewTab">新建标签页</sys:String>
     <sys:String x:Key="L_Menu_QA_DiscardAll">放弃所有更改</sys:String>
+    <sys:String x:Key="L_Menu_QA_DiscardImage">放弃这张图片更改</sys:String>
     <sys:String x:Key="L_Drag_DropZone_Title">拖拽到此处创建新窗口</sys:String>
     <sys:String x:Key="L_Drag_DropZone_Desc">释放鼠标以在独立窗口中打开此标签页</sys:String>
     <sys:String x:Key="L_Menu_QA_Settings">设置</sys:String>
@@ -584,6 +590,8 @@
     <sys:String x:Key="L_Toast_ImageTooLarge">⚠️ 图片过大，已自动压缩显示</sys:String>
     <sys:String x:Key="L_Toast_ReadFolderFailed_Prefix">读取文件夹失败:</sys:String>
     <sys:String x:Key="L_Toast_LoadFailed_Prefix">启动加载失败:</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_On">专业模式开启 (Alt)</sys:String>
+    <sys:String x:Key="L_Toast_ShapeProMode_Off">专业模式关闭 (Alt)</sys:String>
 
     <sys:String x:Key="L_Toast_BorderAdded">已添加 2px 边框</sys:String>
     <sys:String x:Key="L_Toast_CropFailed_Prefix">裁切失败: {0}</sys:String>
@@ -617,14 +625,15 @@
     <sys:String x:Key="L_Toast_PrepareDragFailed_Prefix">准备拖拽文件失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_DragStartFailed_Prefix">启动拖拽失败: {0}</sys:String>
     <sys:String x:Key="L_Toast_SwitchWorkspaceFailed_Prefix">切换工作区失败: {0}</sys:String>
-
-
+    <sys:String x:Key="L_Toast_ImageReset">已重置图片</sys:String>
+    
     <sys:String x:Key="L_Load_Reason_Empty">文件为空，已创建空白画布</sys:String>
     <sys:String x:Key="L_Load_Reason_Header">文件头部损坏或格式不支持，已创建空白画布</sys:String>
     <sys:String x:Key="L_Load_Reason_Corrupt">文件损坏或格式不支持，已创建空白画布</sys:String>
     <sys:String x:Key="L_Load_Info_Memory">[新建图像] 内存文件</sys:String>
     <sys:String x:Key="L_Status_Unsaved">未保存</sys:String>
     <sys:String x:Key="L_Msg_ResetWorkspace_Title">放弃更改</sys:String>
+    <sys:String x:Key="L_Msg_ResetImage_Content">是否放弃这张图片更改？该操作不可撤销。</sys:String>
     <sys:String x:Key="L_Msg_ResetWorkspace_Content">确定要重置当前工作区吗？所有新建画布将被删除，所有打开的图片将还原至磁盘文件状态。</sys:String>
     <sys:String x:Key="L_Msg_DeleteFile_Title">删除文件</sys:String>
     <sys:String x:Key="L_Msg_DeleteFile_Content">确定要将文件 '{0}' 放入回收站吗？&#x0a;此操作不可撤销。</sys:String>
@@ -806,6 +815,9 @@
     <sys:String x:Key="L_Toast_Effect_Brown">已应用褐色</sys:String>
     <sys:String x:Key="L_Toast_Effect_Mosaic">已应用马赛克</sys:String>
     <sys:String x:Key="L_Toast_Effect_GaussianBlur">已应用高斯模糊</sys:String>
+    <sys:String x:Key="L_Toast_Effect_RedEye">已应用消除红眼</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Sketch">已应用铅笔素描</sys:String>
+    <sys:String x:Key="L_Toast_Effect_Edge">已应用边缘检测</sys:String>
     <sys:String x:Key="L_Update_Found_Title">发现新版本</sys:String>
     <!-- AI Eraser (Inpainting) -->
     <sys:String x:Key="L_Filter_Strength_Title">调整强度</sys:String>
